@@ -32,7 +32,7 @@ class NoerdInstallCommand extends Command
         
         $this->info('Installing noerd content...');
         
-        $sourceDir = base_path('app-modules/noerd/content');
+        $sourceDir = base_path('vendor/nywerk/noerd/content');
         $targetDir = base_path('content');
         
         if (!is_dir($sourceDir)) {
