@@ -1,0 +1,6 @@
+title: ''
+description: ''
+fields:
+  - { name: userRole.key, label: Schlüssel, type: text, colspan: 6 }
+  - { name: userRole.name, label: Name, type: text, colspan: 6 }
+  - { name: userRole.description, label: Beschreibung, type: text, colspan: 6 }
