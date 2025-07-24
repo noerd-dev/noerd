@@ -1,9 +1,8 @@
 <?php
 
-namespace Nywerk\Noerd\Console\Commands;
+namespace Nywerk\Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 
 class NoerdInstallCommand extends Command
 {
@@ -29,31 +28,31 @@ class NoerdInstallCommand extends Command
         if ($this->option('dry-run')) {
             $this->warn('DRY RUN MODE - No files will actually be copied');
         }
-        
+
         $this->info('Installing noerd content...');
-        
-        $sourceDir = base_path('vendor/nywerk/noerd/content');
+
+        $sourceDir = base_path('vendor/noerd/noerd/content');
         $targetDir = base_path('content');
-        
+
         if (!is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
             return 1;
         }
-        
+
         if (!is_dir($targetDir)) {
             $this->error("Target directory not found: {$targetDir}");
             return 1;
         }
-        
+
         try {
             $results = $this->copyDirectoryContents($sourceDir, $targetDir);
-            
+
             $this->displaySummary($results);
-            
+
             if (!$this->option('dry-run')) {
                 $this->info('Noerd content successfully installed!');
             }
-            
+
             return 0;
         } catch (\Exception $e) {
             $this->error('Error installing noerd content: ' . $e->getMessage());
@@ -103,7 +102,7 @@ class NoerdInstallCommand extends Command
                             $results['skipped_files']++;
                             continue;
                         }
-                        
+
                         $choice = $this->choice(
                             "File already exists: {$relativePath}. What do you want to do?",
                             ['skip', 'overwrite', 'overwrite-all'],
@@ -119,7 +118,7 @@ class NoerdInstallCommand extends Command
                             $this->input->setOption('force', true);
                         }
                     }
-                    
+
                     $this->line("<comment>Overwriting:</comment> {$relativePath}");
                     $results['overwritten_files']++;
                 } else {
@@ -156,4 +155,4 @@ class NoerdInstallCommand extends Command
             ]
         );
     }
-} 
+}
