@@ -1,5 +1,5 @@
 {
-    "name": "@nywerk/noerd",
+    "name": "@noerd/noerd",
     "version": "1.0.0",
     "description": "Noerd Module - Core UI Components and Helpers",
     "type": "module",
@@ -21,4 +21,4 @@
         "node": ">=18.0.0",
         "npm": ">=8.0.0"
     }
-} 
+}
