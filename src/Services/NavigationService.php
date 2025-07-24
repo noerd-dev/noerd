@@ -52,7 +52,7 @@ class NavigationService
 
     private function invoiceFeatureEnabled(): bool
     {
-        return (bool) env('INVOICE_FEATURE_ENABLED', true);
+        return (bool) env('INVOICE_FEATURE_ENABLED', false);
     }
 
     private function roleFeatureEnabled(): bool
