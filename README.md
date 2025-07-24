@@ -64,9 +64,3 @@ npm update
 # Rebuild CSS
 npm run build-css
 ```
-
-## 🛠️ Customization
-
-1. Edit `resources/css/noerd.css` for style changes
-2. Modify `tailwind.config.js` for theme adjustments
-3. Run `npm run build-css` to compile changes
