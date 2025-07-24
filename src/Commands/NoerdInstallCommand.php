@@ -39,9 +39,15 @@ class NoerdInstallCommand extends Command
             return 1;
         }
 
+        // Create target directory if it doesn't exist
         if (!is_dir($targetDir)) {
-            $this->error("Target directory not found: {$targetDir}");
-            return 1;
+            if (!$this->option('dry-run')) {
+                if (!mkdir($targetDir, 0755, true)) {
+                    $this->error("Failed to create target directory: {$targetDir}");
+                    return 1;
+                }
+            }
+            $this->info("Created target directory: {$targetDir}");
         }
 
         try {
