@@ -1,0 +1,6 @@
+title: 'User'
+description: ''
+fields:
+  - { name: user.email, label: E-Mail, type: text }
+  - { name: user.name, label: Name, type: text }
+
