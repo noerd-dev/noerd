@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
 use Nywerk\Noerd\Commands\AddUsersToDefaultTenant;
+use Nywerk\Noerd\Commands\InstallCommand;
 use Nywerk\Noerd\Commands\MakeUserAdmin;
 use Nywerk\Noerd\Middleware\SetupMiddleware;
 use Nywerk\Noerd\View\Components\AppLayout;
@@ -36,6 +37,7 @@ class NoerdServiceProvider extends ServiceProvider
             $this->commands([
                 MakeUserAdmin::class,
                 AddUsersToDefaultTenant::class,
+                InstallCommand::class,
             ]);
         }
     }
