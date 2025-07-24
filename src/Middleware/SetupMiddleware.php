@@ -16,6 +16,12 @@ class SetupMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $user = auth()->user();
+        if (! $user->selected_tenant_id) {
+            $user->selected_tenant_id = $user->tenants->first()->id;
+            $user->save();
+        }
+        
         session(['currentApp' => 'SETUP']);
 
         if (!Auth::user()->isAdmin()) {
