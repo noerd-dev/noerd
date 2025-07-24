@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
 use Nywerk\Noerd\Commands\AddUsersToDefaultTenant;
+use Nywerk\Noerd\Commands\CopyComponentsToModulesCommand;
 use Nywerk\Noerd\Commands\InstallCommand;
 use Nywerk\Noerd\Commands\MakeUserAdmin;
-use Nywerk\Noerd\Console\Commands\CopyComponentsToModulesCommand;
-use Nywerk\Noerd\Console\Commands\NoerdInstallCommand;
+use Nywerk\Noerd\Commands\NoerdInstallCommand;
 use Nywerk\Noerd\Middleware\SetupMiddleware;
 use Nywerk\Noerd\View\Components\AppLayout;
 
