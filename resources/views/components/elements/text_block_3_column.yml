@@ -1,0 +1,6 @@
+title: ''
+description: ''
+fields:
+  - { name: model.text1, label: Text links, type: translatableRichText, colspan: 4 }
+  - { name: model.text1, label: Text mitte, type: translatableRichText, colspan: 4 }
+  - { name: model.text3, label: Text rechts, type: translatableRichText, colspan: 4 }

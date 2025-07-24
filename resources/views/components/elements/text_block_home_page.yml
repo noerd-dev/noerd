@@ -1,0 +1,5 @@
+title: ''
+description: ''
+fields:
+  - { name: model.title, label: Text, type: translatableText, colspan: 4 }
+  - { name: model.description, label: Text, type: translatableRichText, colspan: 8 }

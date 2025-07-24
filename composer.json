@@ -1,0 +1,28 @@
+{
+	"name": "nywerk/noerd",
+	"description": "",
+	"type": "library",
+	"version": "dev-master",
+	"license": "proprietary",
+    "require": {
+        "laravel/breeze": "^2.0",
+        "laravel/framework": "^12.0",
+        "wireui/heroicons": "^2.9"
+    },
+	"autoload": {
+		"psr-4": {
+			"Nywerk\\Noerd\\": "src/",
+			"Nywerk\\Noerd\\Tests\\": "tests/",
+			"Nywerk\\Noerd\\Database\\Factories\\": "database/factories/",
+			"Nywerk\\Noerd\\Database\\Seeders\\": "database/seeders/"
+		}
+	},
+	"minimum-stability": "stable",
+	"extra": {
+		"laravel": {
+			"providers": [
+				"Nywerk\\Noerd\\Providers\\NoerdServiceProvider"
+			]
+		}
+	}
+}

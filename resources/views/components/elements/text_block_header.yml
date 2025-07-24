@@ -1,0 +1,13 @@
+title: ''
+description: ''
+fields:
+  - { name: model.title, live: true, label: Text, type: translatableText, colspan: 4 }
+  - { name: model.toppage, label: 'Übergeordnete Seite', type: select,
+      options: [
+        '',
+        'Projekte',
+        'Leistungen',
+        'Kontakt',
+      ],
+      colspan: 4 }
+  - { name: model.description, label: Text, type: translatableRichText, colspan: 8 }
