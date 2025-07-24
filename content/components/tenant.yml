@@ -1,0 +1,5 @@
+title: 'Mandant'
+description: ''
+fields:
+  - { name: model.name, label: Name, type: text, colspan: 6 }
+  - { name: logo, label: Logo, type: image, colspan: 6 }

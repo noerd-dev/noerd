@@ -35,7 +35,7 @@ class StaticConfigHelper
             $content = file_get_contents(base_path('content/apps/' . $app . '/components/' . $userGroup . '/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
-        
+
         // 3. Check app-specific default component in content/apps
         if (file_exists(base_path('content/apps/' . $app . '/components/default/' . $component . '.yml'))) {
             $content = file_get_contents(base_path('content/apps/' . $app . '/components/default/' . $component . '.yml'));
@@ -54,8 +54,7 @@ class StaticConfigHelper
             return Yaml::parse($content ?: '');
         }
 
-        // Return empty array if component not found
-        return [];
+        throw new Exception('Component not found: ' . $component);
     }
 
     public static function getNavigationStructure(): ?array
@@ -101,19 +100,19 @@ class StaticConfigHelper
     {
         $results = [];
         $componentMapping = self::getComponentToModuleMapping();
-        
+
         // Process default components
         $defaultComponentsPath = base_path('content/components/default');
         if (is_dir($defaultComponentsPath)) {
             $results['default'] = self::copyComponentsFromDirectory($defaultComponentsPath, $componentMapping, 'default');
         }
-        
+
         // Process admin components
         $adminComponentsPath = base_path('content/components/admin');
         if (is_dir($adminComponentsPath)) {
             $results['admin'] = self::copyComponentsFromDirectory($adminComponentsPath, $componentMapping, 'admin');
         }
-        
+
         return $results;
     }
 
@@ -124,11 +123,11 @@ class StaticConfigHelper
     {
         $results = [];
         $files = glob($sourceDir . '/*.yml');
-        
+
         foreach ($files as $file) {
             $componentName = basename($file, '.yml');
             $module = $componentMapping[$componentName] ?? null;
-            
+
             if ($module) {
                 $success = self::copyComponentToModule($file, $module, $componentName);
                 $results[] = [
@@ -147,7 +146,7 @@ class StaticConfigHelper
                 ];
             }
         }
-        
+
         return $results;
     }
 
@@ -158,14 +157,14 @@ class StaticConfigHelper
     {
         $targetDir = base_path("app-modules/{$module}/content/components");
         $targetFile = $targetDir . "/{$componentName}.yml";
-        
+
         // Create directory if it doesn't exist
         if (!is_dir($targetDir)) {
             if (!mkdir($targetDir, 0755, true)) {
                 return false;
             }
         }
-        
+
         // Copy the file
         return copy($sourceFile, $targetFile);
     }
@@ -179,10 +178,10 @@ class StaticConfigHelper
             // Product related
             'product' => 'product',
             'product-group' => 'product',
-            
+
             // Customer related
             'customer' => 'customer',
-            
+
             // Delivery/Liefertool related
             'deliverySlot' => 'liefertool',
             'deliveryBlock' => 'liefertool',
@@ -192,64 +191,64 @@ class StaticConfigHelper
             'vehicle-configuration-component' => 'liefertool',
             'vehicleAssembly' => 'liefertool',
             'area-component' => 'liefertool',
-            
+
             // Order related
             'orderConfirmation' => 'order',
-            
+
             // Voucher related
             'voucher' => 'voucher',
-            
+
             // Shop related
             'shop-notification' => 'shop',
             'store' => 'shop',
-            
+
             // Menu/Canteen related
             'menu' => 'canteen',
-            
+
             // Content/CMS related
             'page' => 'content',
             'site' => 'content',
             'text-content-component' => 'content',
             'textDocument' => 'content',
-            
+
             // Legal register related
             'law' => 'legal-register',
             'lawReadOnly' => 'legal-register',
             'duty' => 'legal-register',
             'dutyReadOnly' => 'legal-register',
-            
+
             // Production planning related
             'assembly-component' => 'production-planning',
             'part-component' => 'production-planning',
             'selectPart' => 'production-planning',
-            
+
             // Harvester/PDM related
             'project' => 'harvester-project',
             'project-booking' => 'harvester-project',
             'sawmill' => 'pdm',
-            
-            // UKI related  
+
+            // UKI related
             'mode' => 'uki',
             'mode-exception' => 'uki',
             'times' => 'uki',
-            
+
             // Settings related
             'setting' => 'settings',
             'globalParameter' => 'settings',
             'tenant' => 'settings',
             'user' => 'settings',
             'userRole' => 'settings',
-            
+
             // Document analyzer related
             'ocr-scanner-component' => 'document-analyzer',
-            
+
             // Media related
             'prompt' => 'media',
             'promptCreate' => 'media',
-            
+
             // Additional fields - could be used by multiple modules, default to content
             'additionalField' => 'content',
-            
+
             // Accounting related
             'accounting' => 'accounting',
         ];
