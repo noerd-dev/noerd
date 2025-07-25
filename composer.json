@@ -7,6 +7,8 @@
     "require": {
         "laravel/breeze": "^2.0",
         "laravel/framework": "^12.0",
+        "livewire/livewire": "^3.4",
+        "livewire/volt": "^v1.6.7",
         "wireui/heroicons": "^2.9"
     },
     "autoload": {
