@@ -9,6 +9,7 @@ use Nywerk\Noerd\Models\UserRole;
 
 uses(FakeOrderTrait::class);
 uses(Tests\TestCase::class);
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 $testSettings = [
     'componentName' => 'user-component',

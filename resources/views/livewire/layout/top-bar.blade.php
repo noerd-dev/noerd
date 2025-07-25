@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
-use Nywerk\Noerd\Livewire\Actions\Logout;
 
 new class extends Component {
 
@@ -15,11 +14,14 @@ new class extends Component {
         $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;
     }
 
-    public function logout(Logout $logout)
+    public function logout()
     {
-        $logout();
+        Auth::guard('web')->logout();
 
-        $this->redirect('/', navigate: false);
+        Session::invalidate();
+        Session::regenerateToken();
+
+        $this->redirect('/login', navigate: false);
     }
 
     public function changeClient()
@@ -158,7 +160,7 @@ new class extends Component {
                                    role="menuitem"
                                    tabindex="-1" id="user-menu-item-0">{{__('Profile')}}</a>
 
-                                <a href="/#" wire:click="logout" class="block px-4 py-2 text-sm text-gray-700"
+                                <a wire:click="logout" class="block px-4 py-2 cursor-pointer text-sm text-gray-700"
                                    role="menuitem"
                                    tabindex="-1" id="user-menu-item-2">{{__('Sign Out')}}</a>
                             </div>
