@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
-use Nywerk\Noerd\Livewire\Actions\Logout;
 
 new #[Layout('noerd::components.layouts.auth')] class extends Component {
     /**
@@ -26,11 +25,9 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
     /**
      * Log the current user out of the application.
      */
-    public function logout(Logout $logout): void
+    public function logout(): void
     {
-        $logout();
-
-        $this->redirect('/', navigate: true);
+        // TODO
     }
 }; ?>
 

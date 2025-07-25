@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
-use Nywerk\Noerd\Livewire\Actions\Logout;
 
 new class extends Component {
     public string $password = '';
@@ -10,15 +9,9 @@ new class extends Component {
     /**
      * Delete the currently authenticated user.
      */
-    public function deleteUser(Logout $logout): void
+    public function deleteUser(): void
     {
-        $this->validate([
-            'password' => ['required', 'string', 'current_password'],
-        ]);
-
-        tap(Auth::user(), $logout(...))->delete();
-
-        $this->redirect('/', navigate: true);
+        // TODO
     }
 }; ?>
 
