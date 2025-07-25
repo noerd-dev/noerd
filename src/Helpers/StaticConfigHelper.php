@@ -12,43 +12,15 @@ class StaticConfigHelper
 {
     public static function getComponentFields(string $component): array
     {
-        $client = Tenant::select('id', 'module')->where('id', Auth::user()->selected_tenant_id)->first();
-        $app = mb_strtolower($client->module);
+
         $userGroup = 'admin'; // Auth::user()->user_group;
 
-        // Priority order for component loading:
-        // 1. Module-specific component (in app-modules)
-        // 2. App-specific user group component (in content/apps)
-        // 3. App-specific default component (in content/apps)
-        // 4. Global user group component (in content/components)
-        // 5. Global default component (in content/components)
 
-        // 1. Check for module-specific component in app-modules
-        $moduleComponentPath = base_path("app-modules/{$app}/content/components/{$component}.yml");
-        if (file_exists($moduleComponentPath)) {
-            $content = file_get_contents($moduleComponentPath);
-            return Yaml::parse($content ?: '');
-        }
-
-        // 2. Check app-specific user group component in content/apps
-        if (file_exists(base_path('content/apps/' . $app . '/components/' . $userGroup . '/' . $component . '.yml'))) {
-            $content = file_get_contents(base_path('content/apps/' . $app . '/components/' . $userGroup . '/' . $component . '.yml'));
-            return Yaml::parse($content ?: '');
-        }
-
-        // 3. Check app-specific default component in content/apps
-        if (file_exists(base_path('content/apps/' . $app . '/components/default/' . $component . '.yml'))) {
-            $content = file_get_contents(base_path('content/apps/' . $app . '/components/default/' . $component . '.yml'));
-            return Yaml::parse($content ?: '');
-        }
-
-        // 4. Check global user group component
         if (file_exists(base_path('content/components/' . $userGroup . '/' . $component . '.yml'))) {
             $content = file_get_contents(base_path('content/components/' . $userGroup . '/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
 
-        // 5. Fallback to global default component
         if (file_exists(base_path('content/components/default/' . $component . '.yml'))) {
             $content = file_get_contents(base_path('content/components/default/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
