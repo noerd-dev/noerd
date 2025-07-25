@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Volt\Volt;
+use Nywerk\Noerd\Controllers\DashboardController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
     Volt::route('setup', 'setup.users-table')->name('setup');
@@ -8,3 +9,9 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Volt::route('user-roles', 'setup.user-roles-table')->name('user-roles');
     Volt::route('tenant', 'setup.tenant-component')->name('tenant');
 });
+
+Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::view('profile', 'noerd::profile')->name('profile');
+});
+

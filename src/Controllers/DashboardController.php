@@ -3,10 +3,11 @@
 namespace Nywerk\Noerd\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 
-class StartController extends Controller
+class DashboardController extends Controller
 {
-    public function __invoke(): \Illuminate\Http\RedirectResponse
+    public function __invoke(): RedirectResponse
     {
         $route = auth()->user()->selectedTenant()?->tenantApps->first()->route;
 
