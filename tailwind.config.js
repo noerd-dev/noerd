@@ -10,7 +10,7 @@ export default {
     ],
 
     safelist: [
-        'grid-cols-2',
+        'lg:flex',
         'grid-cols-3',
         'grid-cols-4',
         'grid-cols-5',
