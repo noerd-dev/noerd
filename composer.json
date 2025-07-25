@@ -1,28 +1,28 @@
 {
-	"name": "noerd/noerd",
-	"description": "",
-	"type": "library",
-	"version": "dev-master",
-	"license": "proprietary",
+    "name": "noerd/noerd",
+    "description": "",
+    "type": "library",
+    "version": "dev-master",
+    "license": "proprietary",
     "require": {
         "laravel/breeze": "^2.0",
         "laravel/framework": "^12.0",
         "wireui/heroicons": "^2.9"
     },
-	"autoload": {
-		"psr-4": {
-			            "Noerd\\Noerd\\": "src/",
+    "autoload": {
+        "psr-4": {
+            "Noerd\\Noerd\\": "src/",
             "Noerd\\Noerd\\Tests\\": "tests/",
             "Noerd\\Noerd\\Database\\Factories\\": "database/factories/",
             "Noerd\\Noerd\\Database\\Seeders\\": "database/seeders/"
-		}
-	},
-	"minimum-stability": "stable",
-	"extra": {
-		"laravel": {
-			"providers": [
-				                "Noerd\\Noerd\\Providers\\NoerdServiceProvider"
-			]
-		}
-	}
+        }
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Noerd\\Noerd\\Providers\\NoerdServiceProvider"
+            ]
+        }
+    }
 }
