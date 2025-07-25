@@ -38,7 +38,7 @@
            showSidebar: '{{$showSidebar}}',
            }">
 
-    @inject('navigation', 'Nywerk\Noerd\Services\NavigationService')
+    @inject('navigation', 'Noerd\Noerd\Services\NavigationService')
 
     <!-- Content -->
     <main class="h-full"

@@ -3,9 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Nywerk\Noerd\Models\Profile;
-use Nywerk\Noerd\Models\Tenant;
-use Nywerk\Noerd\Models\User;
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\User;
 
 return new class extends Migration {
     /**

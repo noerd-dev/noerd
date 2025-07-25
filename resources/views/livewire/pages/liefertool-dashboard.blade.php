@@ -1,6 +1,6 @@
 <?php
 
-use Nywerk\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 use Livewire\Volt\Component;

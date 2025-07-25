@@ -1,11 +1,11 @@
 <?php
 
-use Nywerk\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\Tenant;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
-use Nywerk\Noerd\Helpers\StaticConfigHelper;
-use Nywerk\Noerd\Traits\NoerdModelTrait;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Traits\NoerdModelTrait;
 
 new class extends Component {
 

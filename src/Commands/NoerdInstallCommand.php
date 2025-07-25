@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Commands;
+namespace Noerd\Noerd\Commands;
 
 use Illuminate\Console\Command;
 

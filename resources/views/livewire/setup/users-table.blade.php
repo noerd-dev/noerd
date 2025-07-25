@@ -1,9 +1,9 @@
 <?php
 
-use Nywerk\Noerd\Models\User;
+use Noerd\Noerd\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
-use Nywerk\Noerd\Traits\NoerdTableTrait;
+use Noerd\Noerd\Traits\NoerdTableTrait;
 
 new class extends Component {
 
