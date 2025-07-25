@@ -1,8 +1,8 @@
 <?php
 
-namespace Nywerk\Noerd\Services;
+namespace Noerd\Noerd\Services;
 
-use Nywerk\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 
 class NavigationService
 {

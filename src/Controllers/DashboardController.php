@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Controllers;
+namespace Noerd\Noerd\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;

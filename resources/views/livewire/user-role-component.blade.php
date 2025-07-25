@@ -1,10 +1,10 @@
 <?php
 
-use Nywerk\Noerd\Models\UserRole;
+use Noerd\Noerd\Models\UserRole;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Nywerk\Noerd\Helpers\StaticConfigHelper;
-use Nywerk\Noerd\Traits\NoerdModelTrait;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Traits\NoerdModelTrait;
 
 new class extends Component {
 

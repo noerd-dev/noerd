@@ -6,11 +6,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Nywerk\Liefertool\Jobs\SendNewUserMail;
-use Nywerk\Noerd\Helpers\StaticConfigHelper;
-use Nywerk\Noerd\Models\Profile;
-use Nywerk\Noerd\Models\User;
-use Nywerk\Noerd\Models\UserRole;
-use Nywerk\Noerd\Traits\NoerdModelTrait;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\User;
+use Noerd\Noerd\Models\UserRole;
+use Noerd\Noerd\Traits\NoerdModelTrait;
 
 new class extends Component {
 
@@ -96,7 +96,7 @@ new class extends Component {
                 'email',
                 'max:255',
             ],
-            'tenantAccess' => ['array', 'min:1', new \Nywerk\Noerd\Rules\AtLeastOneTrue()],
+            'tenantAccess' => ['array', 'min:1', new \Noerd\Noerd\Rules\AtLeastOneTrue()],
         ]);
 
         if (!$this->userId) {

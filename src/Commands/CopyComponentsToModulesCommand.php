@@ -1,9 +1,9 @@
 <?php
 
-namespace Nywerk\Noerd\Commands;
+namespace Noerd\Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Nywerk\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 
 class CopyComponentsToModulesCommand extends Command
 {

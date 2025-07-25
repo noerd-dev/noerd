@@ -1,11 +1,11 @@
 <?php
 
-namespace Nywerk\Noerd\Helpers;
+namespace Noerd\Noerd\Helpers;
 
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Nywerk\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper

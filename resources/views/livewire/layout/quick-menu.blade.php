@@ -1,6 +1,6 @@
 <?php
 
-use Nywerk\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\Tenant;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 

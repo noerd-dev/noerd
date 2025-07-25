@@ -1,6 +1,6 @@
 <?php
 
-use Nywerk\Noerd\Models\User;
+use Noerd\Noerd\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;

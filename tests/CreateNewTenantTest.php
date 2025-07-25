@@ -3,11 +3,11 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 use Nywerk\Liefertool\Tests\Traits\FakeOrderTrait;
-use Nywerk\Noerd\Models\Profile;
-use Nywerk\Noerd\Models\Tenant;
-use Nywerk\Noerd\Models\TenantApp;
-use Nywerk\Noerd\Models\User;
-use Nywerk\Noerd\Models\UserRole;
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\TenantApp;
+use Noerd\Noerd\Models\User;
+use Noerd\Noerd\Models\UserRole;
 
 uses(FakeOrderTrait::class);
 uses(Tests\TestCase::class);

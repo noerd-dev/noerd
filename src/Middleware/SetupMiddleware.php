@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Middleware;
+namespace Noerd\Noerd\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
