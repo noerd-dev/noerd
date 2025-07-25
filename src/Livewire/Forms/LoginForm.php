@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Livewire\Forms;
+namespace Noerd\Noerd\Livewire\Forms;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;

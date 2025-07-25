@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Models;
+namespace Noerd\Noerd\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

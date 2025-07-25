@@ -1,4 +1,4 @@
-@inject('navigation', 'Nywerk\Noerd\Services\NavigationService')
+@inject('navigation', 'Noerd\Noerd\Services\NavigationService')
 
 <div>
     <!-- Static sidebar for mobile -->

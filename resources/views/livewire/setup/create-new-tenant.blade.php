@@ -1,7 +1,7 @@
 <?php
 
-use Nywerk\Noerd\Models\Profile;
-use Nywerk\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 
@@ -44,7 +44,7 @@ new class extends Component {
         // copy all profiles (change later with app installation)
         $userRoles = auth()->user()->selectedTenant()?->userRoles;
         foreach ($userRoles as $userRole) {
-            $copyUserRole = new \Nywerk\Noerd\Models\UserRole();
+            $copyUserRole = new \Noerd\Noerd\Models\UserRole();
             $copyUserRole->key = $userRole->key;
             $copyUserRole->name = $userRole->name;
             $copyUserRole->description = $userRole->description;

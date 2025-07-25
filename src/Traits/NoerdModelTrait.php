@@ -1,10 +1,10 @@
 <?php
 
-namespace Nywerk\Noerd\Traits;
+namespace Noerd\Noerd\Traits;
 
 use Livewire\Attributes\On;
 use Livewire\WithPagination;
-use Nywerk\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 
 trait NoerdModelTrait
 {

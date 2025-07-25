@@ -1,18 +1,18 @@
 <?php
 
-namespace Nywerk\Noerd\Providers;
+namespace Noerd\Noerd\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
-use Nywerk\Noerd\Commands\AddUsersToDefaultTenant;
+use Noerd\Noerd\Commands\AddUsersToDefaultTenant;
 
-use Nywerk\Noerd\Commands\InstallCommand;
-use Nywerk\Noerd\Commands\MakeUserAdmin;
-use Nywerk\Noerd\Commands\NoerdInstallCommand;
-use Nywerk\Noerd\Middleware\SetupMiddleware;
-use Nywerk\Noerd\View\Components\AppLayout;
+use Noerd\Noerd\Commands\InstallCommand;
+use Noerd\Noerd\Commands\MakeUserAdmin;
+use Noerd\Noerd\Commands\NoerdInstallCommand;
+use Noerd\Noerd\Middleware\SetupMiddleware;
+use Noerd\Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {

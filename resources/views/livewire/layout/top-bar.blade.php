@@ -128,7 +128,7 @@ new class extends Component {
                                     <option value="{{$client->id}}">{{$client->name}}</option>
                                 @endforeach
                                 @if(auth()->user()->id === 1)
-                                    @foreach(\Nywerk\Noerd\Models\Tenant::where('lost', 0)->get() as $client)
+                                    @foreach(\Noerd\Noerd\Models\Tenant::where('lost', 0)->get() as $client)
                                         <option value="{{$client->id}}">{{$client->name}}</option>
                                     @endforeach
                                 @endif

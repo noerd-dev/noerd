@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Volt\Volt;
-use Nywerk\Noerd\Controllers\DashboardController;
+use Noerd\Noerd\Controllers\DashboardController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
     Volt::route('setup', 'setup.users-table')->name('setup');

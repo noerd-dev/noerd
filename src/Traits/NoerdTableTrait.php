@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Traits;
+namespace Noerd\Noerd\Traits;
 
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;

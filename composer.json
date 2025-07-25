@@ -11,17 +11,17 @@
     },
 	"autoload": {
 		"psr-4": {
-			"Nywerk\\Noerd\\": "src/",
-			"Nywerk\\Noerd\\Tests\\": "tests/",
-			"Nywerk\\Noerd\\Database\\Factories\\": "database/factories/",
-			"Nywerk\\Noerd\\Database\\Seeders\\": "database/seeders/"
+			            "Noerd\\Noerd\\": "src/",
+            "Noerd\\Noerd\\Tests\\": "tests/",
+            "Noerd\\Noerd\\Database\\Factories\\": "database/factories/",
+            "Noerd\\Noerd\\Database\\Seeders\\": "database/seeders/"
 		}
 	},
 	"minimum-stability": "stable",
 	"extra": {
 		"laravel": {
 			"providers": [
-				"Nywerk\\Noerd\\Providers\\NoerdServiceProvider"
+				                "Noerd\\Noerd\\Providers\\NoerdServiceProvider"
 			]
 		}
 	}

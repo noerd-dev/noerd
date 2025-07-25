@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Models;
+namespace Noerd\Noerd\Models;
 
 use Carbon\Carbon;
 use Database\Factories\TenantFactory;

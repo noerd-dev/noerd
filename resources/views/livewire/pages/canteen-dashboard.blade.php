@@ -30,7 +30,7 @@ new class extends Component {
         $ordersTotal = Order::where('tenant_id', Auth::user()->selected_tenant_id)
             ->count();
         $pickingCount = $orderRepository->getPickingPositionsCanteen()->count();
-        $restaurant = \Nywerk\Noerd\Models\Tenant::where('id', Auth::user()->selected_tenant_id)->first();
+        $restaurant = \Noerd\Noerd\Models\Tenant::where('id', Auth::user()->selected_tenant_id)->first();
 
         return [
             'customersCount' => $customersCount,

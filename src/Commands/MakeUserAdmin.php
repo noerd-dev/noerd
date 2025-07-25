@@ -1,11 +1,11 @@
 <?php
 
-namespace Nywerk\Noerd\Commands;
+namespace Noerd\Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Nywerk\Noerd\Models\User;
-use Nywerk\Noerd\Models\Profile;
-use Nywerk\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\User;
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Tenant;
 
 class MakeUserAdmin extends Command
 {
@@ -53,7 +53,7 @@ class MakeUserAdmin extends Command
 
         // Get all tenants the user has access to
         $userTenants = $user->tenants;
-        
+
         if ($userTenants->isEmpty()) {
             $this->error('User has no tenant access. Cannot make admin without tenant access.');
             return self::FAILURE;
@@ -121,4 +121,4 @@ class MakeUserAdmin extends Command
 
         return self::SUCCESS;
     }
-} 
+}

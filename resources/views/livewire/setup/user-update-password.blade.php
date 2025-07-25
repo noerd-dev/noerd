@@ -19,7 +19,7 @@ new class extends Component {
             'password' => ['required', 'string', 'confirmed'],
         ]);
 
-        $user = \Nywerk\Noerd\Models\User::find($this->userId);
+        $user = \Noerd\Noerd\Models\User::find($this->userId);
         $user->password = bcrypt($this->password);
         $user->save();
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Nywerk\Noerd\Models;
+namespace Noerd\Noerd\Models;
 
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

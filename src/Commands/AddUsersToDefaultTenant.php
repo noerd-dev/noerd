@@ -1,12 +1,12 @@
 <?php
 
-namespace Nywerk\Noerd\Commands;
+namespace Noerd\Noerd\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Nywerk\Noerd\Models\Profile;
-use Nywerk\Noerd\Models\Tenant;
-use Nywerk\Noerd\Models\User;
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\User;
 
 class AddUsersToDefaultTenant extends Command
 {
