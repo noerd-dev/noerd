@@ -71,11 +71,6 @@ return new class extends Migration {
                     ]);
                 }
             }
-
-            // Set this tenant as selected_tenant_id for users who don't have one
-            User::whereNull('selected_tenant_id')->update([
-                'selected_tenant_id' => $defaultTenant->id
-            ]);
         }
     }
 
