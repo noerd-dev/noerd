@@ -106,6 +106,7 @@ Use `noerd-clean.css` which has the Tailwind header comment removed:
 php artisan noerd:install --clean
 ```
 
+
 **Solution 2: Exclude from PostCSS processing**
 
 In your `vite.config.js`, exclude the noerd.css file from PostCSS:
