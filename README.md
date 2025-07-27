@@ -6,7 +6,6 @@ A modular UI framework for Laravel applications with pre-compiled Tailwind CSS 4
 
 ### Quick Installation (Recommended)
 
-
 ```bash
 # Install CSS to public/css/noerd.css
 php artisan noerd:install
@@ -106,7 +105,6 @@ Use `noerd-clean.css` which has the Tailwind header comment removed:
 ```bash
 php artisan noerd:install --clean
 ```
-
 
 **Solution 2: Exclude from PostCSS processing**
 
