@@ -55,8 +55,13 @@ class MakeUserAdmin extends Command
         $userTenants = $user->tenants;
 
         if ($userTenants->isEmpty()) {
-            $this->error('User has no tenant access. Cannot make admin without tenant access.');
-            return self::FAILURE;
+            // Assign to all tenants if no specific tenant access
+            $userTenants = Tenant::all();
+            foreach ($userTenants as $userTenant) {
+                if (!$user->tenants->contains($userTenant)) {
+                    $user->tenants()->attach($userTenant->id, ['profile_id' => null]);
+                }
+            }
         }
 
         $this->info("User has access to {$userTenants->count()} tenant(s).");
