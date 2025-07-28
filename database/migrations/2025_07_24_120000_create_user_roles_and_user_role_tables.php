@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,7 @@ return new class extends Migration
     {
         // Create user_roles table if it doesn't exist
         if (!Schema::hasTable('user_roles')) {
-            Schema::create('user_roles', function (Blueprint $table) {
+            Schema::create('user_roles', function (Blueprint $table): void {
                 $table->id();
                 $table->unsignedBigInteger('tenant_id')->nullable();
                 $table->string('key');
@@ -31,7 +30,7 @@ return new class extends Migration
 
         // Create user_role pivot table if it doesn't exist
         if (!Schema::hasTable('user_role')) {
-            Schema::create('user_role', function (Blueprint $table) {
+            Schema::create('user_role', function (Blueprint $table): void {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('user_role_id');
@@ -39,11 +38,11 @@ return new class extends Migration
 
                 // Note: Foreign key constraints are not added here since the referenced tables
                 // might be in different modules. They should be handled at the application level.
-                
+
                 // Indexes for performance
                 $table->index('user_id');
                 $table->index('user_role_id');
-                
+
                 // Unique constraint to prevent duplicate assignments
                 $table->unique(['user_id', 'user_role_id']);
             });
@@ -58,4 +57,4 @@ return new class extends Migration
         Schema::dropIfExists('user_role');
         Schema::dropIfExists('user_roles');
     }
-}; 
+};

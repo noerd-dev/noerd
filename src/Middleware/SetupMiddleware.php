@@ -21,7 +21,7 @@ class SetupMiddleware
             $user->selected_tenant_id = $user->tenants->first()->id;
             $user->save();
         }
-        
+
         session(['currentApp' => 'SETUP']);
 
         if (!Auth::user()->isAdmin()) {

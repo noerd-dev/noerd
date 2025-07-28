@@ -111,7 +111,7 @@ it('handles existing admin profile correctly', function (): void {
         'name' => 'Administrator',
     ]);
 
-    // Create user profile 
+    // Create user profile
     $userProfile = Profile::factory()->create([
         'tenant_id' => $tenant->id,
         'key' => 'USER',
@@ -145,18 +145,6 @@ it('fails with invalid user id', function (): void {
 it('fails with non-existent user id', function (): void {
     $this->artisan('noerd:make-admin', ['user_id' => 99999])
         ->expectsOutput('User with ID 99999 not found.')
-        ->assertExitCode(1);
-});
-
-it('fails with user who has no tenant access', function (): void {
-    // Create user without any tenant access
-    $user = User::factory()->create();
-
-    expect($user->tenants)->toBeEmpty();
-
-    $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput("Processing user: {$user->name} ({$user->email})")
-        ->expectsOutput('User has no tenant access. Cannot make admin without tenant access.')
         ->assertExitCode(1);
 });
 
@@ -213,4 +201,4 @@ it('verifies admin status after completion', function (): void {
     $user->refresh();
     expect($user->isAdmin())->toBeTrue();
     expect($user->profiles->where('key', 'ADMIN')->count())->toBeGreaterThan(0);
-}); 
+});

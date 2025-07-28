@@ -1,9 +1,9 @@
 <?php
 
 use Livewire\Volt\Volt;
-use Nywerk\Liefertool\Tests\Traits\FakeOrderTrait;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
+use Nywerk\Liefertool\Tests\Traits\FakeOrderTrait;
 
 uses(FakeOrderTrait::class);
 uses(Tests\TestCase::class);

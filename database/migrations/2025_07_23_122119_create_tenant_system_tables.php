@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,7 @@ return new class extends Migration
     {
         // Create tenant_apps table
         if (!Schema::hasTable('tenant_apps')) {
-            Schema::create('tenant_apps', function (Blueprint $table) {
+            Schema::create('tenant_apps', function (Blueprint $table): void {
                 $table->id();
                 $table->string('title');
                 $table->string('name');
@@ -26,7 +25,7 @@ return new class extends Migration
 
         // Create tenants table
         if (!Schema::hasTable('tenants')) {
-            Schema::create('tenants', function (Blueprint $table) {
+            Schema::create('tenants', function (Blueprint $table): void {
                 $table->id();
                 $table->string('name');
                 $table->string('hash')->unique();
@@ -57,7 +56,7 @@ return new class extends Migration
 
         // Create profiles table (before users_tenants because of foreign key)
         if (!Schema::hasTable('profiles')) {
-            Schema::create('profiles', function (Blueprint $table) {
+            Schema::create('profiles', function (Blueprint $table): void {
                 $table->id();
                 $table->string('key');
                 $table->string('name');
@@ -68,7 +67,7 @@ return new class extends Migration
 
         // Create tenant_app table (pivot table)
         if (!Schema::hasTable('tenant_app')) {
-            Schema::create('tenant_app', function (Blueprint $table) {
+            Schema::create('tenant_app', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('tenant_app_id')->constrained('tenant_apps')->onDelete('cascade');
                 $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
@@ -78,7 +77,7 @@ return new class extends Migration
 
         // Create users_tenants table (pivot table)
         if (!Schema::hasTable('users_tenants')) {
-            Schema::create('users_tenants', function (Blueprint $table) {
+            Schema::create('users_tenants', function (Blueprint $table): void {
                 $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
                 $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
                 $table->foreignId('profile_id')->nullable()->constrained('profiles');

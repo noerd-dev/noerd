@@ -14,4 +14,3 @@ Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::view('profile', 'noerd::profile')->name('profile');
 });
-

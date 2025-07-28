@@ -2,31 +2,69 @@
 
 namespace Noerd\Noerd\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 class NoerdInstallCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'noerd:install-content {--force : Overwrite existing files without asking} {--dry-run : Show what would be copied without actually copying}';
+    protected $signature = 'noerd:install {--force : Overwrite existing files without asking}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Install noerd content to the local content directory';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        if ($this->option('dry-run')) {
-            $this->warn('DRY RUN MODE - No files will actually be copied');
+        $sourceFileName = 'noerd.css';
+
+        // Define paths
+        $sourceFile = __DIR__ . '/../../dist/' . $sourceFileName;
+        $targetDir = public_path('css');
+        $targetFile = $targetDir . '/noerd.css';
+
+        // Check if source file exists
+        if (!File::exists($sourceFile)) {
+            $this->error("Source file not found: {$sourceFile}");
+            $this->info('Please run "npm run build-css" in the noerd module directory first.');
+            return self::FAILURE;
+        }
+
+        // Create target directory if it doesn't exist
+        if (!File::exists($targetDir)) {
+            File::makeDirectory($targetDir, 0755, true);
+            $this->info("Created directory: {$targetDir}");
+        }
+
+        // Check if target file exists and handle accordingly
+        if (File::exists($targetFile) && !$this->option('force')) {
+            if (!$this->confirm("File {$targetFile} already exists. Overwrite?")) {
+                $this->info('Installation cancelled.');
+                return self::SUCCESS;
+            }
+        }
+
+        // Copy the file
+        try {
+            File::copy($sourceFile, $targetFile);
+
+            $version = $useClean ? 'clean version (without Tailwind header)' : 'standard version';
+            $this->info("✅ Successfully installed Noerd UI CSS ({$version})");
+            $this->line("   Source: {$sourceFile}");
+            $this->line("   Target: {$targetFile}");
+
+            // Show usage instructions
+            $this->newLine();
+            $this->info('📝 Usage in your Blade templates:');
+            $this->line('<link rel="stylesheet" href="{{ asset(\'css/noerd.css\') }}">');
+
+            $this->newLine();
+            $this->info('🎨 Available CSS classes: noerd-input, noerd-button-primary, noerd-nav-link, etc.');
+            $this->info('📖 Documentation: app-modules/noerd/README.md');
+
+        } catch (Exception $e) {
+            $this->error("Failed to copy file: {$e->getMessage()}");
+            return self::FAILURE;
         }
 
         $this->info('Installing noerd content...');
@@ -60,7 +98,7 @@ class NoerdInstallCommand extends Command
             }
 
             return 0;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Error installing noerd content: ' . $e->getMessage());
             return 1;
         }
@@ -78,14 +116,14 @@ class NoerdInstallCommand extends Command
             'overwritten_files' => 0,
         ];
 
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($sourceDir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
         );
 
         foreach ($iterator as $item) {
             $sourcePath = $item->getPathname();
-            $relativePath = substr($sourcePath, strlen($sourceDir) + 1);
+            $relativePath = mb_substr($sourcePath, mb_strlen($sourceDir) + 1);
             $targetPath = $targetDir . DIRECTORY_SEPARATOR . $relativePath;
 
             if ($item->isDir()) {
@@ -93,7 +131,7 @@ class NoerdInstallCommand extends Command
                 if (!is_dir($targetPath)) {
                     if (!$this->option('dry-run')) {
                         if (!mkdir($targetPath, 0755, true)) {
-                            throw new \Exception("Failed to create directory: {$targetPath}");
+                            throw new Exception("Failed to create directory: {$targetPath}");
                         }
                     }
                     $this->line("<info>Created directory:</info> {$relativePath}");
@@ -112,14 +150,15 @@ class NoerdInstallCommand extends Command
                         $choice = $this->choice(
                             "File already exists: {$relativePath}. What do you want to do?",
                             ['skip', 'overwrite', 'overwrite-all'],
-                            'skip'
+                            'skip',
                         );
 
                         if ($choice === 'skip') {
                             $this->line("<comment>Skipped:</comment> {$relativePath}");
                             $results['skipped_files']++;
                             continue;
-                        } elseif ($choice === 'overwrite-all') {
+                        }
+                        if ($choice === 'overwrite-all') {
                             // Set force option for remaining files
                             $this->input->setOption('force', true);
                         }
@@ -135,7 +174,7 @@ class NoerdInstallCommand extends Command
                 // Copy the file (unless dry-run)
                 if (!$this->option('dry-run')) {
                     if (!copy($sourcePath, $targetPath)) {
-                        throw new \Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
+                        throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
                     }
                 }
             }
@@ -158,7 +197,7 @@ class NoerdInstallCommand extends Command
                 ['Files copied', $results['copied_files']],
                 ['Files overwritten', $results['overwritten_files']],
                 ['Files skipped', $results['skipped_files']],
-            ]
+            ],
         );
     }
 }

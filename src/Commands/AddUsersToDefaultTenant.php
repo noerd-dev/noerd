@@ -31,7 +31,7 @@ class AddUsersToDefaultTenant extends Command
     {
         // Find the default tenant
         $defaultTenant = Tenant::where('name', 'Standard Mandant')->first();
-        
+
         if (!$defaultTenant) {
             $this->error('Standard Mandant tenant not found. Please run the migration first.');
             return self::FAILURE;
@@ -43,7 +43,7 @@ class AddUsersToDefaultTenant extends Command
         $userProfile = Profile::where('tenant_id', $defaultTenant->id)
             ->where('key', 'USER')
             ->first();
-            
+
         $adminProfile = Profile::where('tenant_id', $defaultTenant->id)
             ->where('key', 'ADMIN')
             ->first();
@@ -82,7 +82,7 @@ class AddUsersToDefaultTenant extends Command
                 ->where('users_tenants.user_id', $user->id)
                 ->where('profiles.key', 'ADMIN')
                 ->exists();
-            
+
             $profileId = $hasAdminProfile ? $adminProfile->id : $userProfile->id;
             $profileType = $hasAdminProfile ? 'ADMIN' : 'USER';
 
@@ -97,7 +97,7 @@ class AddUsersToDefaultTenant extends Command
 
             $this->info("  ✓ Added {$user->name} ({$user->email}) with {$profileType} profile");
             $usersAdded++;
-            
+
             if ($hasAdminProfile) {
                 $adminsAdded++;
             }
@@ -107,7 +107,7 @@ class AddUsersToDefaultTenant extends Command
         $usersWithoutTenant = User::whereNull('selected_tenant_id')->count();
         if ($usersWithoutTenant > 0) {
             User::whereNull('selected_tenant_id')->update([
-                'selected_tenant_id' => $defaultTenant->id
+                'selected_tenant_id' => $defaultTenant->id,
             ]);
             $this->info("Updated {$usersWithoutTenant} users to use default tenant as selected tenant");
         }
@@ -125,4 +125,4 @@ class AddUsersToDefaultTenant extends Command
 
         return self::SUCCESS;
     }
-} 
+}

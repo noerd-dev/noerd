@@ -7,7 +7,7 @@ use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\User;
 
-return new class extends Migration {
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

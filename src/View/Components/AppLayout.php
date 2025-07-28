@@ -14,4 +14,4 @@ class AppLayout extends Component
     {
         return view('noerd::components.app-layout');
     }
-} 
+}
