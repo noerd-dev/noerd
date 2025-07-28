@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
 use Noerd\Noerd\Commands\AddUsersToDefaultTenant;
-
-use Noerd\Noerd\Commands\InstallCommand;
 use Noerd\Noerd\Commands\MakeUserAdmin;
 use Noerd\Noerd\Commands\NoerdInstallCommand;
 use Noerd\Noerd\Middleware\SetupMiddleware;
@@ -34,12 +32,13 @@ class NoerdServiceProvider extends ServiceProvider
             $view->with('showSidebar', ! session('hide_sidebar'));
         });
 
+        config(['livewire.layout' => 'noerd::components.layouts.app']);
+
         // Register commands
         if ($this->app->runningInConsole()) {
             $this->commands([
                 MakeUserAdmin::class,
                 AddUsersToDefaultTenant::class,
-                InstallCommand::class,
                 NoerdInstallCommand::class,
             ]);
         }

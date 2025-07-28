@@ -2,6 +2,7 @@
 
 namespace Noerd\Noerd\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
 
@@ -45,7 +46,7 @@ class CopyComponentsToModulesCommand extends Command
                 $this->info('Components successfully copied to app-modules!');
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Error copying components: ' . $e->getMessage());
             return 1;
         }
@@ -102,7 +103,7 @@ class CopyComponentsToModulesCommand extends Command
                     'success' => $moduleExists,
                     'target' => $targetFile,
                     'exists' => file_exists($targetFile),
-                    'moduleExists' => $moduleExists
+                    'moduleExists' => $moduleExists,
                 ];
             } else {
                 $results[] = [
@@ -110,7 +111,7 @@ class CopyComponentsToModulesCommand extends Command
                     'module' => 'unknown',
                     'userGroup' => $userGroup,
                     'success' => false,
-                    'reason' => 'No module mapping found'
+                    'reason' => 'No module mapping found',
                 ];
             }
         }
@@ -157,21 +158,21 @@ class CopyComponentsToModulesCommand extends Command
                         $result['component'],
                         $result['module'],
                         $status,
-                        ($result['target'] ?? '') . $note
+                        ($result['target'] ?? '') . $note,
                     ];
                 } else {
                     $tableData[] = [
                         $result['component'],
                         $result['module'],
                         $status,
-                        $result['reason'] ?? ''
+                        $result['reason'] ?? '',
                     ];
                 }
             }
 
             $this->table(
                 ['Component', 'Module', 'Status', $this->option('dry-run') ? 'Target/Note' : 'Note'],
-                $tableData
+                $tableData,
             );
 
             $this->line("Successful: {$successCount}/{$totalCount}");

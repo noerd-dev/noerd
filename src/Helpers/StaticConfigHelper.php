@@ -5,7 +5,6 @@ namespace Noerd\Noerd\Helpers;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Noerd\Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper
@@ -106,7 +105,7 @@ class StaticConfigHelper
                     'component' => $componentName,
                     'module' => $module,
                     'userGroup' => $userGroup,
-                    'success' => $success
+                    'success' => $success,
                 ];
             } else {
                 $results[] = [
@@ -114,7 +113,7 @@ class StaticConfigHelper
                     'module' => 'unknown',
                     'userGroup' => $userGroup,
                     'success' => false,
-                    'reason' => 'No module mapping found'
+                    'reason' => 'No module mapping found',
                 ];
             }
         }
