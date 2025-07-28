@@ -112,7 +112,7 @@ class User extends Authenticatable
     {
         $adminProfilesCount = $this->profiles->where('key', 'ADMIN')->count();
 
-        return (bool)$adminProfilesCount > 0;
+        return (bool) $adminProfilesCount > 0;
     }
 
     // Belongs to many Sites

@@ -3,9 +3,9 @@
 namespace Noerd\Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\User;
 
 class MakeUserAdmin extends Command
 {
@@ -102,7 +102,7 @@ class MakeUserAdmin extends Command
 
             // Update user's profile to admin for this tenant
             $user->tenants()->updateExistingPivot($tenant->id, [
-                'profile_id' => $adminProfile->id
+                'profile_id' => $adminProfile->id,
             ]);
             $adminAccessGranted++;
             $this->info("  ✓ Granted ADMIN access for tenant: {$tenant->name}");
