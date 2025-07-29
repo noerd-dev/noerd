@@ -1,4 +1,4 @@
-<td class="py-1 first:border-l border-r border-b"
+<td class="py-1 first:border-l border-gray-300 border-r border-b"
     @click="activeColumn = {{$column}}, selectedRow = {{$row}}"
     x-data="{showDropdown: false}"
     {{--

@@ -5,7 +5,6 @@
     "version": "v1.0.1",
     "license": "proprietary",
     "require": {
-        "laravel/breeze": "^2.0",
         "laravel/framework": "^11.0|^12.0",
         "livewire/livewire": "^3.4",
         "livewire/volt": "^v1.6.7",

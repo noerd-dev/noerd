@@ -23,7 +23,7 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="flex flex-col gap-6">
-    <x-noerd::auth-header title="Passwort vergessen" description="Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten." />
+    <x-noerd::auth-header :title="__('Forgot password')" :description="__('Enter your email to receive a password reset link')" />
 
     <!-- Session Status -->
     <x-noerd::auth-session-status class="text-center" :status="session('status')" />
@@ -32,19 +32,18 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
         <!-- Email Address -->
         <flux:input
             wire:model="email"
-            label="{{ __('Email address') }}"
+            :label="__('Email Address')"
             type="email"
-            name="email"
             required
             autofocus
             placeholder="email@example.com"
         />
 
-        <flux:button variant="primary" type="submit" class="w-full !bg-black">{{ __('Email password reset link') }}</flux:button>
+        <flux:button variant="primary" type="submit" class="w-full">{{ __('Email password reset link') }}</flux:button>
     </form>
 
-    <div class="space-x-noerd::1 text-center text-sm text-zinc-400">
-        Oder, zurück zum
-        <x-noerd::text-link href="{{ route('login') }}">Login</x-noerd::text-link>
+    <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-400">
+        <span>{{ __('Or, return to') }}</span>
+        <flux:link :href="route('login')" wire:navigate>{{ __('log in') }}</flux:link>
     </div>
 </div>
