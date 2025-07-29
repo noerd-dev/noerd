@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@import '../../../../vendor/livewire/flux/dist/flux.css';
 /* Noerd Module Custom Styles */
 
 /* Font Family */
@@ -135,4 +135,4 @@ body {
 /* Additional hover states for group interactions */
 .group:hover .noerd-dropdown {
     opacity: 1;
-} 
+}
