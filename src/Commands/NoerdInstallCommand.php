@@ -48,8 +48,6 @@ class NoerdInstallCommand extends Command
         try {
             File::copy($sourceFile, $targetFile);
 
-            $version = $useClean ? 'clean version (without Tailwind header)' : 'standard version';
-            $this->info("✅ Successfully installed Noerd UI CSS ({$version})");
             $this->line("   Source: {$sourceFile}");
             $this->line("   Target: {$targetFile}");
 
