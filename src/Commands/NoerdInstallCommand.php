@@ -77,12 +77,6 @@ class NoerdInstallCommand extends Command
 
         // Create target directory if it doesn't exist
         if (!is_dir($targetDir)) {
-            if (!$this->option('dry-run')) {
-                if (!mkdir($targetDir, 0755, true)) {
-                    $this->error("Failed to create target directory: {$targetDir}");
-                    return 1;
-                }
-            }
             $this->info("Created target directory: {$targetDir}");
         }
 
@@ -90,10 +84,6 @@ class NoerdInstallCommand extends Command
             $results = $this->copyDirectoryContents($sourceDir, $targetDir);
 
             $this->displaySummary($results);
-
-            if (!$this->option('dry-run')) {
-                $this->info('Noerd content successfully installed!');
-            }
 
             return 0;
         } catch (Exception $e) {
@@ -127,11 +117,6 @@ class NoerdInstallCommand extends Command
             if ($item->isDir()) {
                 // Create directory if it doesn't exist
                 if (!is_dir($targetPath)) {
-                    if (!$this->option('dry-run')) {
-                        if (!mkdir($targetPath, 0755, true)) {
-                            throw new Exception("Failed to create directory: {$targetPath}");
-                        }
-                    }
                     $this->line("<info>Created directory:</info> {$relativePath}");
                     $results['created_dirs']++;
                 }
@@ -139,11 +124,6 @@ class NoerdInstallCommand extends Command
                 // Check if file already exists
                 if (file_exists($targetPath)) {
                     if (!$this->option('force')) {
-                        if ($this->option('dry-run')) {
-                            $this->line("<comment>Would ask about:</comment> {$relativePath} (already exists)");
-                            $results['skipped_files']++;
-                            continue;
-                        }
 
                         $choice = $this->choice(
                             "File already exists: {$relativePath}. What do you want to do?",
@@ -169,12 +149,6 @@ class NoerdInstallCommand extends Command
                     $results['copied_files']++;
                 }
 
-                // Copy the file (unless dry-run)
-                if (!$this->option('dry-run')) {
-                    if (!copy($sourcePath, $targetPath)) {
-                        throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
-                    }
-                }
             }
         }
 
