@@ -1,48 +1,51 @@
 <div class="flex w-full">
     <div class="my-auto shrink-0">
         @if($disableModal)
-            <div :class="isModal ? 'hidden' : ''">
-                <x-noerd::title>
-                    {{ $title }}
-                </x-noerd::title>
-            </div>
+        <div :class="isModal ? 'hidden' : ''">
+            <x-noerd::title>
+                {{ $title }}
+            </x-noerd::title>
+        </div>
         @endif
     </div>
 
     @isset($states)
-        <flux:select wire:model.live="filter" class="ml-4">
-            @foreach($states as $state)
-                <flux:select.option value="{{$state['state']}}">{{$state['title']}}</flux:select.option>
-            @endforeach
-        </flux:select>
+    <flux:select wire:model.live="filter" class="ml-4">
+        @foreach($states as $state)
+        <flux:select.option value="{{$state['state']}}">{{$state['title']}}</flux:select.option>
+        @endforeach
+    </flux:select>
     @endisset
 
     <div class="flex ml-auto shrink-0">
+
         @isset($filters)
-            <div :class="isModal ? '' : 'ml-6'" class="flex my-auto">
-                @foreach($filters as $availableFilter)
-                    <div class="-mt-6 mr-1">
-                        <label class="break-keep text-xs">{{$availableFilter['title']}}</label>
-                        <input wire:change="$refresh()" wire:model="filter2" type="{{$availableFilter['type']}}"
-                               class="disabled:opacity-50 border px-3 mr-1 block w-full py-1 rounded-md border-gray-300 shadow-xs focus:border-black focus:ring-black sm:text-sm">
-                    </div>
-                @endforeach
+        <div :class="isModal ? '' : 'ml-6'" class="flex my-auto">
+            @foreach($filters as $key => $availableFilter)
+            <div class="-mt-6 mr-1">
+                <label class="break-keep text-xs">{{$availableFilter['title']}}</label>
+                <input wire:change="$refresh()" wire:model.live="currentTableFilter.{{ $key }}"
+                       type="{{$availableFilter['type']}}"
+                       class=" disabled:opacity-50 border px-3 mr-1 block w-full py-1 rounded-md border-gray-300 shadow-xs focus:border-black focus:ring-black sm:text-sm {{ !empty($currentTableFilter[$key]) ? '!border-brand-highlight border !border-solid' : '' }}">
             </div>
+            @endforeach
+        </div>
         @endisset
         @if(isset($disableSearch) && !$disableSearch)
-            <div class="ml-auto my-auto">
-                <x-noerd::text-input id="start-field" autofocus="autofocus"
-                              placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
-                              class="min-w-[200px] mx-3 block w-full mt-0!"/>
-            </div>
+        <div class="ml-auto my-auto">
+            <x-noerd::text-input id="start-field" autofocus="autofocus"
+                                 placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
+                                 class="min-w-[200px] mx-3 block w-full mt-0!"/>
+        </div>
         @endif
         @if($newLabel)
-            <div class="ml-4 my-auto">
-                <x-noerd::primary-button class="!bg-green-600"
-                                  wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">
-                    <x-noerd::icons.plus class="text-white"/> {{ $newLabel }}
-                </x-noerd::primary-button>
-            </div>
+        <div class="ml-4 my-auto">
+            <x-noerd::primary-button class="!bg-green-600"
+                                     wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">
+                <x-noerd::icons.plus class="text-white"/>
+                {{ $newLabel }}
+            </x-noerd::primary-button>
+        </div>
         @endif
     </div>
 </div>
