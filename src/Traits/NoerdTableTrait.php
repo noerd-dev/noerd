@@ -28,7 +28,7 @@ trait NoerdTableTrait
     #[Url]
     public ?string $filter = null;
     #[Url]
-    public ?string $filter2 = null;
+    public array $currentTableFilter = [];
 
     public array $activeTableFilters = [];
 
