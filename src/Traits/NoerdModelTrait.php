@@ -11,7 +11,7 @@ trait NoerdModelTrait
     use WithPagination;
 
     /* a modelId is required to load a model thorugh a event or as a parameter */
-    public ?int $modelId = null;
+    public ?string $modelId = null;
 
     public bool $showSuccessIndicator = false;
     public int $currentTab = 1;
