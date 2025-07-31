@@ -57,14 +57,7 @@ export default {
         'col-span-12',
         'min-h-36',
         'lg:ml-72',
-        'bg-green-60',
-        // Brand colors
-        'border-brand-highlight',
-        'bg-brand-highlight',
-        'text-brand-highlight',
-        'border-brand-bg',
-        'bg-brand-bg',
-        'text-brand-bg'
+        'bg-green-60'
     ],
 
     theme: {
