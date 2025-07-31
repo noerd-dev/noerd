@@ -1,10 +1,31 @@
-import { defineConfig } from 'tailwindcss/config';
-import forms from '@tailwindcss/forms';
+import defaultTheme from 'tailwindcss/defaultTheme'
+import forms from '@tailwindcss/forms'
 
-export default defineConfig({
+require('dotenv').config();
+
+/** @type {import('tailwindcss').Config} */
+export default {
     content: [
+        // Main project views
+        '../../resources/views/**/*.blade.php',
+        '../../resources/views/**/*.php',
+        
+        // All app-modules views
+        '../../app-modules/**/resources/views/**/*.blade.php',
+        '../../app-modules/**/src/**/*.php',
+        
+        // Content directories in app-modules
+        '../../content/**/*.yml',
+        '../../app-modules/**/content/**/*.yml',
+        
+        // JavaScript files that might contain Tailwind classes
+        '../../resources/js/**/*.js',
+        '../../app-modules/**/resources/js/**/*.js',
+        
+        // This module's own files
         './resources/views/**/*.blade.php',
         './src/**/*.php',
+        './resources/js/**/*.js',
     ],
 
     safelist: [
@@ -13,6 +34,8 @@ export default defineConfig({
         'grid-cols-4',
         'grid-cols-5',
         'grid-cols-6',
+        'bg-yellow-100',
+        'bg-yellow-200',
         'grid-cols-7',
         'grid-cols-8',
         'grid-cols-9',
@@ -39,48 +62,16 @@ export default defineConfig({
 
     theme: {
         extend: {
-            colors: {
-                'brand': {
-                    'bg': '#f8fafc',
-                    'highlight': '#000000',
-                },
-                'gray': {
-                    50: '#f9fafb',
-                    100: '#f3f4f6',
-                    200: '#e5e7eb',
-                    300: '#d1d5db',
-                    400: '#9ca3af',
-                    500: '#6b7280',
-                    600: '#4b5563',
-                    700: '#374151',
-                    800: '#1f2937',
-                    900: '#111827',
-                },
-                'zinc': {
-                    200: '#e4e4e7',
-                    300: '#d4d4d8',
-                    400: '#a1a1aa',
-                    500: '#71717a',
-                    700: '#3f3f46',
-                },
-            },
             fontFamily: {
-                'sans': ['Nunito Sans', 'sans-serif'],
+                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
-            spacing: {
-                'xs': '1px',
-            },
-            borderRadius: {
-                'xs': '0.25rem',
-            },
-            boxShadow: {
-                'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+            display: ['group-hover'],
+            colors: {
+                'brand-highlight': process.env.VITE_PRIMARY_COLOR || '#000',
+                'brand-bg': process.env.VITE_BG_COLOR || '#f9f9f9',
             },
         },
     },
-    plugins: [
-        forms({
-            strategy: 'class',
-        }),
-    ],
-});
+
+    plugins: [forms, require('tailwind-scrollbar')],
+}
