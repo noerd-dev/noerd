@@ -6,11 +6,12 @@
 @source '../../../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../../../vendor/livewire/flux/stubs/**/*.blade.php';
 
-@source "../views";
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
-@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+@source '../../../../app-modules/**/resources/views/**/*.blade.php';
+@source '../../../../app-modules/**/src/**/*.php';
+@source '../../../../content/**/*.yml';
+@source '../../../../app-modules/**/content/**/*.yml';
 
+@config '../../../../tailwind.config.js';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -28,10 +29,6 @@
     --color-zinc-800: #262626;
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
-
-    /* Brand colors */
-    --color-brand-highlight: #000;
-    --color-brand-bg: #f9f9f9;
 
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
