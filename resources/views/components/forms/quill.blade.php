@@ -22,7 +22,7 @@
      wire:ignore>
 
     <div>
-        <div x-noerd::ref="editor" style="min-height: 200px;"></div>
+        <div x-ref="editor" style="min-height: 200px;"></div>
     </div>
 
 </div>
