@@ -16,55 +16,6 @@ class NoerdInstallCommand extends Command
 
     public function handle()
     {
-        $sourceFileName = 'noerd.css';
-
-        // Define paths
-        $sourceFile = __DIR__ . '/../../dist/' . $sourceFileName;
-        $targetDir = public_path('css');
-        $targetFile = $targetDir . '/noerd.css';
-
-        // Check if source file exists
-        if (!File::exists($sourceFile)) {
-            $this->error("Source file not found: {$sourceFile}");
-            $this->info('Please run "npm run build-css" in the noerd module directory first.');
-            return self::FAILURE;
-        }
-
-        // Create target directory if it doesn't exist
-        if (!File::exists($targetDir)) {
-            File::makeDirectory($targetDir, 0755, true);
-            $this->info("Created directory: {$targetDir}");
-        }
-
-        // Check if target file exists and handle accordingly
-        if (File::exists($targetFile) && !$this->option('force')) {
-            if (!$this->confirm("File {$targetFile} already exists. Overwrite?")) {
-                $this->info('Installation cancelled.');
-                return self::SUCCESS;
-            }
-        }
-
-        // Copy the file
-        try {
-            File::copy($sourceFile, $targetFile);
-
-            $this->line("   Source: {$sourceFile}");
-            $this->line("   Target: {$targetFile}");
-
-            // Show usage instructions
-            $this->newLine();
-            $this->info('📝 Usage in your Blade templates:');
-            $this->line('<link rel="stylesheet" href="{{ asset(\'css/noerd.css\') }}">');
-
-            $this->newLine();
-            $this->info('🎨 Available CSS classes: noerd-input, noerd-button-primary, noerd-nav-link, etc.');
-            $this->info('📖 Documentation: app-modules/noerd/README.md');
-
-        } catch (Exception $e) {
-            $this->error("Failed to copy file: {$e->getMessage()}");
-            return self::FAILURE;
-        }
-
         $this->info('Installing noerd content...');
 
         $sourceDir = base_path('vendor/noerd/noerd/content');
