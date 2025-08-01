@@ -1,0 +1,21 @@
+{
+    "name": "@noerd/noerd-styles",
+    "version": "1.0.1",
+    "style": "dist/styles.css",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/noerd-dev/noerd.git"
+    },
+    "keywords": [
+        "livewire"
+    ],
+    "devDependencies": {
+        "tailwindcss": "^3.3.6"
+    },
+    "scripts": {
+        "dev": "npx tailwindcss -i ./src/styles.scss -o ./dist/styles.css --watch",
+        "build": "npx tailwindcss -o ./dist/styles.css --minify"
+    },
+    "author": "Johannes Brock <info@johannes-brock.de>",
+    "license": "MIT"
+}
