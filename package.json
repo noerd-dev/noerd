@@ -1,21 +1,33 @@
 {
-    "name": "@noerd/noerd-styles",
-    "version": "1.0.1",
-    "style": "dist/styles.css",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/noerd-dev/noerd.git"
-    },
-    "keywords": [
-        "livewire"
-    ],
-    "devDependencies": {
-        "tailwindcss": "^3.3.6"
-    },
+    "private": true,
+    "type": "module",
     "scripts": {
-        "dev": "npx tailwindcss -i ./src/styles.scss -o ./dist/styles.css --watch",
-        "build": "npx tailwindcss -o ./dist/styles.css --minify"
+        "dev": "vite",
+        "build": "vite build"
     },
-    "author": "Johannes Brock <info@johannes-brock.de>",
-    "license": "MIT"
+    "dependencies": {
+        "@alpinejs/sort": "^3.14.1",
+        "@dasundev/livewire-dropzone-styles": "^1.0.8",
+        "@tailwindcss/vite": "^4.1.3",
+        "autoprefixer": "^10.4.20",
+        "axios": "^1.7.4",
+        "concurrently": "^9.0.1",
+        "dotenv": "^16.4.7",
+        "puppeteer": "^22.0.0",
+        "quill": "^2.0.3",
+        "tailwind-scrollbar": "^4.0.2",
+        "tailwindcss": "^4.1.3",
+        "vite": "6.3.4"
+    },
+    "devDependencies": {
+        "@tailwindcss/forms": "^0.5.2",
+        "@tailwindcss/postcss": "^4.1.3",
+        "laravel-echo": "^1.17.0",
+        "pusher-js": "^8.4.0-rc2"
+    },
+    "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
+        "lightningcss-linux-x64-gnu": "^1.29.1"
+    }
 }

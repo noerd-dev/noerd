@@ -1,17 +1,117 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @import '../../../../vendor/livewire/flux/dist/flux.css';
 
-@source '../../../views';
+@source "../views";
 @source '../../../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../../../vendor/livewire/flux/stubs/**/*.blade.php';
 
-@source '../../../../app-modules/**/resources/views/**/*.blade.php';
-@source '../../../../app-modules/**/src/**/*.php';
-@source '../../../../content/**/*.yml';
-@source '../../../../app-modules/**/content/**/*.yml';
+@config '../../tailwind.config.js';
 
-@config '../../../../tailwind.config.js';
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentcolor);
+    }
+}
+
+:root {
+    --primary-color: {{ env('VITE_PRIMARY_COLOR', '#000') }};
+}
+
+.wep-modal-content,
+.wep-slide-over-container-inner-wrap {
+    @apply transition-none;
+}
+
+.wep-modal-backdrop, .wep-slide-over-backdrop {
+    backdrop-filter: none !important;
+    --tw-bg-opacity: 0.75;
+}
+
+.modal-fullscreen {
+    position: absolute;
+    top: 65px;
+    min-height: 100%;
+    margin-left: 95px;
+    width: calc(100% - 95px);
+}
+
+@media screen and (min-width: 1024px) {
+    .modal-full-sidebar {
+        width: calc(100% - 340px);
+    }
+    .modal-full-sidebar-2 {
+        width: calc(100% - 324px);
+    }
+    .modal-full-sidebar-3 {
+        width: calc(100% - 344px);
+    }
+}
+
+@media screen and (min-width: 1024px) {
+    .noerd-navigation-top {
+        width: calc(100% - 360px) !important;
+    }
+}
+
+.noerd-navigation-top-small {
+    width: calc(100% - 126px) !important;
+}
+
+.inactive-method {
+    line-height: 18px;
+    padding: 6px;
+    background: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 0.5em;
+    border: 2px solid #ccc
+}
+
+.active-method {
+    line-height: 18px;
+    padding: 6px;
+    background: #ebf7f4 !important;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 0.5em;
+    border: 2px solid #3c66ee !important;
+}
+
+.y-label {
+    background: rgba(255, 235, 97, .7);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    border-radius: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.gitter-bg {
+    background-color: #ffffff;
+    background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px), /* Vertical lines */ linear-gradient(0deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px); /* Horizontal lines */
+    background-size: 20px 20px;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    position: absolute;
+    padding-right: 6px;
+}
+
+::-webkit-scrollbar-track {
+    display: none;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 5px;
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -44,7 +144,6 @@
 }
 
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -54,7 +153,7 @@
     }
 }
 
-[data-flux-field]:not(ui-radio, ui-checkbox) {
+[data-flux-field] {
     @apply grid gap-2;
 }
 
@@ -66,144 +165,4 @@ input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
-}
-
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
-
-
-/* Font Family */
-body {
-    font-family: "Nunito Sans", sans-serif;
-    font-optical-sizing: auto;
-}
-
-/* Noerd Table Styles */
-.noerd-table td {
-    padding-top: 6px;
-    padding-bottom: 6px;
-    padding-left: 8px;
-    padding-right: 8px;
-    font-size: 0.875rem;
-}
-
-.noerd-table tr:hover {
-    background: #f9fafb;
-}
-
-/* Modal and Dialog Utilities */
-.modal-full-sidebar {
-    /* Custom modal styles for sidebar integration */
-}
-
-/* Custom Component Styles */
-@layer components {
-    .noerd-input {
-        @apply w-full border rounded-lg block disabled:shadow-none appearance-none text-base sm:text-sm py-2 h-10 bg-white text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 border-zinc-200 disabled:border-zinc-200;
-    }
-
-    .noerd-button-primary {
-        @apply inline-flex uppercase items-center rounded-sm border border-black bg-black px-6 py-1.5 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
-    }
-
-    .noerd-button-delete {
-        @apply inline-flex gap-2 items-center px-4 py-2 bg-red-200 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150;
-    }
-
-    .noerd-dashboard-card {
-        @apply border border-gray-300 hover:bg-gray-50 w-36 h-36 mr-6 mt-6 flex p-2 py-4 text-sm text-center rounded-lg items-center justify-center;
-    }
-
-    .noerd-nav-link {
-        @apply bg-gray-700 flex-wrap items-center justify-center w-full text-gray-400 hover:text-white hover:bg-gray-800 flex gap-x-3 py-3 text-sm leading-6 font-semibold transition duration-150 ease-in-out;
-    }
-
-    .noerd-nav-link-active {
-        @apply bg-gray-800 flex-wrap items-center justify-center w-full text-white flex gap-x-3 py-3 text-sm leading-6 font-semibold;
-    }
-
-    .noerd-tab {
-        @apply -mb-px border-b-2 border-transparent text-gray-600 mr-6 hover:border-gray-500;
-    }
-
-    .noerd-tab-active {
-        @apply border-black text-black;
-    }
-
-    .noerd-box {
-        @apply p-4 sm:p-8 bg-gray-50 rounded-md mb-8;
-    }
-
-    /* Form Components */
-    .noerd-form-grid {
-        @apply grid py-8 pt-4 gap-6;
-    }
-
-    .noerd-form-grid-12 {
-        @apply grid-cols-12;
-    }
-
-    /* Toggle Component */
-    .noerd-toggle {
-        @apply relative inline-flex h-6 w-11 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2;
-    }
-
-    .noerd-toggle-enabled {
-        @apply bg-black;
-    }
-
-    .noerd-toggle-disabled {
-        @apply bg-gray-200;
-    }
-
-    .noerd-toggle-slider {
-        @apply pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out;
-    }
-
-    .noerd-toggle-slider-enabled {
-        @apply translate-x-5;
-    }
-
-    .noerd-toggle-slider-disabled {
-        @apply translate-x-0;
-    }
-
-    /* Utility classes for specific noerd components */
-    .noerd-text-input {
-        @apply mt-1 disabled:opacity-50 block w-full py-1.5 px-3 rounded border border-gray-300 focus:border-black focus:ring-black sm:text-sm;
-    }
-
-    .noerd-dropdown {
-        @apply relative inline-block text-left ml-auto opacity-0;
-    }
-
-    .noerd-dropdown-button {
-        @apply inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50;
-    }
-
-    /* Success indicator */
-    .noerd-success-indicator {
-        @apply flex mt-2 mr-2;
-    }
-
-    .noerd-success-icon {
-        @apply h-5 w-5 text-green-400;
-    }
-
-    .noerd-success-text {
-        @apply text-sm font-medium text-green-800;
-    }
-}
-
-/* Dark mode support for components */
-@media (prefers-color-scheme: dark) {
-    .noerd-input {
-        @apply bg-slate-800 text-zinc-300 border-slate-600;
-    }
-}
-
-/* Additional hover states for group interactions */
-.group:hover .noerd-dropdown {
-    opacity: 1;
 }
