@@ -20,7 +20,7 @@ Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
 
 Route::group(['middleware' => ['web']], function (): void {
 
-    Route::middleware('guest')->group(function () {
+    Route::middleware('guest')->group(function (): void {
         Volt::route('login', 'auth.login')
             ->name('login');
 
@@ -36,7 +36,7 @@ Route::group(['middleware' => ['web']], function (): void {
 });
 
 Route::group(['middleware' => ['web']], function (): void {
-    Route::middleware('auth')->group(function () {
+    Route::middleware('auth')->group(function (): void {
         Volt::route('verify-email', 'auth.verify-email')
             ->name('verification.notice');
 
@@ -51,7 +51,7 @@ Route::group(['middleware' => ['web']], function (): void {
     Route::post('logout', Noerd\Noerd\Livewire\Actions\Logout::class)
         ->name('logout');
 
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth'])->group(function (): void {
         Route::redirect('settings', 'settings/profile');
 
         Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
