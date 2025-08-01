@@ -2,9 +2,9 @@
 
 namespace Noerd\Noerd\Models;
 
-use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Noerd\Noerd\Database\Factories\ProfileFactory;
 
 class Profile extends Model
 {

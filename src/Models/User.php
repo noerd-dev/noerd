@@ -2,11 +2,11 @@
 
 namespace Noerd\Noerd\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Noerd\Noerd\Database\Factories\UserFactory;
 use Nywerk\LegalRegister\Models\Standort;
 
 class User extends Authenticatable

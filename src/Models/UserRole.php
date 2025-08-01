@@ -2,9 +2,9 @@
 
 namespace Noerd\Noerd\Models;
 
-use Database\Factories\UserRoleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Noerd\Noerd\Database\Factories\UserRoleFactory;
 
 class UserRole extends Model
 {
