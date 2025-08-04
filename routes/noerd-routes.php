@@ -13,6 +13,10 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Volt::route('noerd-home', 'noerd-home')->name('noerd-home');
 });
 
+Route::group(['middleware' => ['auth', 'web']], function (): void {
+    Volt::route('no-tenant', 'no-tenant')->name('no-tenant');
+});
+
 Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::view('profile', 'noerd::profile')->name('profile');
