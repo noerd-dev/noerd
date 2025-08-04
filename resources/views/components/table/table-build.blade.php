@@ -6,7 +6,6 @@
                     if (entry.isIntersecting) {
                         // console.log('{{$tableId}} sichtbar');
 
-                        // Beispielaktion – z.B. Row selektieren oder Daten nachladen
                         this.selectedRow{{$tableId}}++;
                         $store.app.setId('{{$tableId}}')
                     }
@@ -25,14 +24,6 @@
      @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$tableId}}') && selectedRow{{$tableId}}--"
      @keydown.window.enter.prevent="($store.app.currentId == '{{$tableId}}') && $wire.findTableAction(selectedRow{{$tableId}})"
 >
-    {{--
-    TableId: {{$tableId}}
-    <div x-data>
-        Current ID: <span x-noerd::text="$store.app.currentId"></span> <br/>
-        Selected Row: <span x-noerd::text="selectedRow{{$tableId}}"></span> <br/>
-    </div>
-    --}}
-
     <script>
         function sichtbarkeitsBeobachter(callback) {
             return {
@@ -41,10 +32,10 @@
                         entries.forEach(entry => {
                             if (entry.isIntersecting) {
                                 callback();
-                                obs.unobserve(entry.target); // nur einmal ausführen
+                                obs.unobserve(entry.target);
                             }
                         });
-                    }, {threshold: 0.5}); // 50% sichtbar
+                    }, {threshold: 0.5});
 
                     observer.observe(el);
                 }
@@ -57,16 +48,16 @@
         <x-slot:table>
             <div class="bg-white p-8 pt-8">
                 @include('noerd::components.table.title-search',
-                [
-                    'title' => $title,
-                    'description' => $description ?? '',
-                    'newLabel' => $newLabel ?? null,
-                    'disableSearch' => $disableSearch ?? false,
-                    'relationId' => $relationId ?? null,
-                    'action' => $action ?? 'tableAction',
-                    'states' => $this->states(),
-                    'tableFilters' => $this->tableFilters(),
-                ])
+                    [
+                        'title' => $title,
+                        'description' => $description ?? '',
+                        'newLabel' => $newLabel ?? null,
+                        'disableSearch' => $disableSearch ?? false,
+                        'relationId' => $relationId ?? null,
+                        'action' => $action ?? 'tableAction',
+                        'states' => $this->states(),
+                        'tableFilters' => $this->tableFilters(),
+                    ])
             </div>
         </x-slot:table>
     @endif
