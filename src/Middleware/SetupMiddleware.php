@@ -18,8 +18,12 @@ class SetupMiddleware
     {
         $user = auth()->user();
         if (! $user->selected_tenant_id) {
-            $user->selected_tenant_id = $user->tenants->first()->id;
+            $user->selected_tenant_id = $user->tenants->first()?->id;
             $user->save();
+
+            if(! $user->tenants->first()) {
+               return redirect('no-tenant');
+            }
         }
 
         session(['currentApp' => 'SETUP']);
