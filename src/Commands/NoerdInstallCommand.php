@@ -4,7 +4,6 @@ namespace Noerd\Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -28,6 +27,12 @@ class NoerdInstallCommand extends Command
 
         // Create target directory if it doesn't exist
         if (!is_dir($targetDir)) {
+
+            if (!mkdir($targetDir, 0755, true)) {
+                $this->error("Failed to create target directory: {$targetDir}");
+                return 1;
+            }
+
             $this->info("Created target directory: {$targetDir}");
         }
 
@@ -35,6 +40,10 @@ class NoerdInstallCommand extends Command
             $results = $this->copyDirectoryContents($sourceDir, $targetDir);
 
             $this->displaySummary($results);
+
+
+            $this->info('Noerd CMS content successfully installed!');
+
 
             return 0;
         } catch (Exception $e) {
@@ -68,6 +77,11 @@ class NoerdInstallCommand extends Command
             if ($item->isDir()) {
                 // Create directory if it doesn't exist
                 if (!is_dir($targetPath)) {
+
+                    if (!mkdir($targetPath, 0755, true)) {
+                        throw new Exception("Failed to create directory: {$targetPath}");
+                    }
+
                     $this->line("<info>Created directory:</info> {$relativePath}");
                     $results['created_dirs']++;
                 }
@@ -75,6 +89,7 @@ class NoerdInstallCommand extends Command
                 // Check if file already exists
                 if (file_exists($targetPath)) {
                     if (!$this->option('force')) {
+
 
                         $choice = $this->choice(
                             "File already exists: {$relativePath}. What do you want to do?",
@@ -98,6 +113,10 @@ class NoerdInstallCommand extends Command
                 } else {
                     $this->line("<info>Copying:</info> {$relativePath}");
                     $results['copied_files']++;
+                }
+
+                if (!copy($sourcePath, $targetPath)) {
+                    throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
                 }
 
             }
