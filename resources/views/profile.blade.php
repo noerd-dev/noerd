@@ -13,6 +13,12 @@
             </div>
         </x-noerd::box>
 
+        <x-noerd::box>
+            <div class="max-w-xl">
+                <livewire:profile.tenant-access-display-form/>
+            </div>
+        </x-noerd::box>
+
         {{--
         <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">
             <div class="max-w-xl">
