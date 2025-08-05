@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
@@ -349,4 +351,122 @@ it('sets success indicator after storing', function () use ($testSettings): void
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
         ->assertSet('showSuccessIndicator', true);
+});
+
+it('sends password reset link when creating new user', function () use ($testSettings): void {
+    // Fake notifications to capture what is sent
+    Notification::fake();
+    
+    $admin = User::factory()->adminUser()->create();
+    $tenant = $admin->tenants->first();
+
+    // Create a profile for the tenant
+    $profile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'USER',
+        'name' => 'Standard User',
+    ]);
+
+    $this->actingAs($admin);
+
+    $userName = fake()->name;
+    $userEmail = fake()->email;
+
+    // Create new user via component
+    Volt::test($testSettings['componentName'])
+        ->set('user.name', $userName)
+        ->set('user.email', $userEmail)
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    // Verify user was created
+    $createdUser = User::where('email', $userEmail)->first();
+    expect($createdUser)->not->toBeNull();
+    expect($createdUser->name)->toBe($userName);
+    expect($createdUser->email)->toBe($userEmail);
+
+    // Verify that a password reset notification was sent to the new user
+    Notification::assertSentTo(
+        $createdUser,
+        ResetPassword::class
+    );
+
+    // Verify that only one notification was sent
+    Notification::assertCount(1);
+});
+
+it('does not send password reset link when updating existing user', function () use ($testSettings): void {
+    // Fake notifications to capture what is sent
+    Notification::fake();
+    
+    $admin = User::factory()->adminUser()->create();
+    $tenant = $admin->tenants->first();
+
+    $profile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'USER',
+        'name' => 'Standard User',
+    ]);
+
+    // Create an existing user
+    $existingUser = User::factory()->create([
+        'name' => 'Old Name',
+        'email' => 'old@example.com',
+    ]);
+    $existingUser->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
+
+    $this->actingAs($admin);
+
+    // Update existing user via component
+    Volt::test($testSettings['componentName'], [$existingUser])
+        ->set('modelId', $existingUser->id)
+        ->set('user.name', 'Updated Name')
+        ->set('user.email', 'updated@example.com')
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    // Verify that NO password reset notification was sent (since this is an update, not creation)
+    Notification::assertNothingSent();
+});
+
+it('creates user with hashed password that user cannot login with before reset', function () use ($testSettings): void {
+    $admin = User::factory()->adminUser()->create();
+    $tenant = $admin->tenants->first();
+
+    // Create a profile for the tenant
+    $profile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'USER',
+        'name' => 'Standard User',
+    ]);
+
+    $this->actingAs($admin);
+
+    $userName = fake()->name;
+    $userEmail = fake()->email;
+
+    // Create new user via component
+    Volt::test($testSettings['componentName'])
+        ->set('user.name', $userName)
+        ->set('user.email', $userEmail)
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    // Verify user was created with a hashed password
+    $createdUser = User::where('email', $userEmail)->first();
+    expect($createdUser)->not->toBeNull();
+    expect($createdUser->password)->not->toBeNull();
+    expect($createdUser->password)->not->toBe('');
+    
+    // Verify password is hashed (starts with $2y$ for bcrypt)
+    expect($createdUser->password)->toStartWith('$2y$');
+    
+    // Verify password is long (hashed passwords are longer than plain text)
+    expect(strlen($createdUser->password))->toBeGreaterThan(50);
 });
