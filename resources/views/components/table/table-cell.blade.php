@@ -7,7 +7,7 @@
     x-noerd::on:keydown.arrow-left.prevent="left()"
     x-noerd::on:keydown.arrow-right.prevent="right()"
     --}}
-    wire:keydown.enter.prevent="{{$action}}('{{$redirectAction}}')">
+>
 
     @if($columnValue === 'action')
         <div class="flex ml-auto mr-1" disabled wire:navigate>
@@ -89,7 +89,7 @@
         @if($type === 'bool')
             @if($value == true)
                 <div
-                     wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{0}})"
+                    wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{0}})"
                     class="px-3 tw-shrink-0 text-right">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6 text-green-400">
@@ -99,7 +99,7 @@
                 </div>
             @else
                 <div
-                     wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{1}})"
+                    wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{1}})"
                     class="px-3 tw-shrink-0 text-right">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6 text-red-400">
@@ -111,7 +111,7 @@
         @elseif($type === 'inversebool')
             @if($value == true)
                 <div
-                     wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{0}})"
+                    wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{0}})"
                     class="px-3 tw-shrink-0 text-right">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6 text-green-400">
@@ -134,8 +134,7 @@
             @elseif($type == 'date')
                 @if($value)
                     <input type="{{$type}}"
-
-                           wire:click.preventk="{{$action}}('{{$redirectAction}}')"
+                           wire:click.prevent="{{$action}}('{{$redirectAction}}')"
                            @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                            class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
                            value="{{$value}}">
@@ -149,14 +148,12 @@
                        value="{{round($value,2)}}">
             @elseif($type == 'currency')
                 <input type="{{$type}}"
-
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
                        value="{{number_format($value,2, ',', '.')}} €">
             @else
                 <input type="{{$type}}"
-
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
                        wire:change="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}', $event.target.value)"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"

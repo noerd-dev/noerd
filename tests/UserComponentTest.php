@@ -356,7 +356,7 @@ it('sets success indicator after storing', function () use ($testSettings): void
 it('sends password reset link when creating new user', function () use ($testSettings): void {
     // Fake notifications to capture what is sent
     Notification::fake();
-    
+
     $admin = User::factory()->adminUser()->create();
     $tenant = $admin->tenants->first();
 
@@ -390,7 +390,7 @@ it('sends password reset link when creating new user', function () use ($testSet
     // Verify that a password reset notification was sent to the new user
     Notification::assertSentTo(
         $createdUser,
-        ResetPassword::class
+        ResetPassword::class,
     );
 
     // Verify that only one notification was sent
@@ -400,7 +400,7 @@ it('sends password reset link when creating new user', function () use ($testSet
 it('does not send password reset link when updating existing user', function () use ($testSettings): void {
     // Fake notifications to capture what is sent
     Notification::fake();
-    
+
     $admin = User::factory()->adminUser()->create();
     $tenant = $admin->tenants->first();
 
@@ -463,10 +463,10 @@ it('creates user with hashed password that user cannot login with before reset',
     expect($createdUser)->not->toBeNull();
     expect($createdUser->password)->not->toBeNull();
     expect($createdUser->password)->not->toBe('');
-    
+
     // Verify password is hashed (starts with $2y$ for bcrypt)
     expect($createdUser->password)->toStartWith('$2y$');
-    
+
     // Verify password is long (hashed passwords are longer than plain text)
-    expect(strlen($createdUser->password))->toBeGreaterThan(50);
+    expect(mb_strlen($createdUser->password))->toBeGreaterThan(50);
 });
