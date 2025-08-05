@@ -21,8 +21,8 @@ class SetupMiddleware
             $user->selected_tenant_id = $user->tenants->first()?->id;
             $user->save();
 
-            if(! $user->tenants->first()) {
-               return redirect('no-tenant');
+            if (! $user->tenants->first()) {
+                return redirect('no-tenant');
             }
         }
 
