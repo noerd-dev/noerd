@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Nywerk\Liefertool\Jobs\SendNewUserMail;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\User;
@@ -112,8 +112,9 @@ new class extends Component {
 
                 return;
             }
-            $password = Str::random(10);
-            $this->user['password'] = $password;
+            // No password needed - user will set it via password reset link
+            // Set a temporary password that will be overwritten when user resets
+            $this->user['password'] = bcrypt(Str::random(32));
         }
 
         $user = User::updateOrCreate(['id' => $this->userId], $this->user);
@@ -137,11 +138,11 @@ new class extends Component {
 
         if ($user->wasRecentlyCreated) {
             $this->userId = $user['id'];
-            $user->password = bcrypt($password);
-            //TODO
-            //$user->selected_tenant_id = $this->possibleTenants[array_key_first($this->possibleTenants)];
+            
+            // Send password reset link instead of generated password
+            Password::sendResetLink(['email' => $user->email]);
+            
             $user->save();
-            SendNewUserMail::dispatch($user->email, $password);
         }
     }
 
@@ -164,7 +165,7 @@ new class extends Component {
 
         @if(!isset($userId))
             <div>
-                Der Benutzer erhält per E-Mail ein zufällig generiertes Passwort.
+                Der Benutzer erhält per E-Mail einen Link zum Setzen seines Passworts.
             </div>
         @endif
 
