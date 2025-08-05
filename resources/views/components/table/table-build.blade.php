@@ -4,7 +4,6 @@
             let observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        // console.log('{{$tableId}} sichtbar');
 
                         this.selectedRow{{$tableId}}++;
                         $store.app.setId('{{$tableId}}')
@@ -144,11 +143,3 @@
 
 </div>
 
-@script
-<script>
-    document.addEventListener('set-app-id', (event) => {
-        console.log('Setting app ID:', event.detail.id);
-        Alpine.store('app').setId(event.detail.id);
-    });
-</script>
-@endscript
