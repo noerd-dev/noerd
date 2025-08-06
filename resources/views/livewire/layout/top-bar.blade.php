@@ -49,8 +49,8 @@ new class extends Component {
     }
 } ?>
 
-<div @class([
-    'fixed top-0 right-0 bg-white w-full z-40',
+<div :class="showSidebar ? 'lg:left-[360px] w-[calc(100%-360px)]' : 'lg:pl-[0px] w-[calc(100%-0px)]'" @class([
+    'fixed top-0 right-0 bg-white z-40',
 ])>
     <div>
         <!-- Button to open mobile sidebar -->

@@ -51,7 +51,8 @@ new class extends Component {
                     <div x-show="show || !showSidebar" class="pt-2 pb-2">
                         <ul role="list" class="space-y-1">
                             @foreach($block['navigations'] as $navi)
-                                <livewire:layout.sidebar-navigation-element wire:key="{{$navi['title']}}" :navi="$navi"/>
+                                <livewire:layout.sidebar-navigation-element wire:key="{{$navi['title']}}"
+                                                                            :navi="$navi"/>
                             @endforeach
                         </ul>
                     </div>
