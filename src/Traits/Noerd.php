@@ -6,12 +6,23 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 
-trait NoerdTableTrait
+trait Noerd
 {
     use WithPagination;
 
     protected const PAGINATION = 50;
+
+    /* a modelId is required to load a model thorugh a event or as a parameter */
+    public ?string $modelId = null;
+
+    public bool $showSuccessIndicator = false;
+    public int $currentTab = 1;
+    public array $pageLayout;
+    public $lastChangeTime;
+
+    public bool $disableModal = false;
 
     public string $search = '';
 
@@ -20,8 +31,6 @@ trait NoerdTableTrait
     public bool $sortAsc = false;
 
     public string $modalTitle = '';
-
-    public bool $disableModal = false;
 
     public string $tableId = '';
 
@@ -64,19 +73,6 @@ trait NoerdTableTrait
         $this->activeTableFilters = session('activeTableFilters', []);
     }
 
-    //  #[On('enableComponent-' . self::COMPONENT)]
-    //  public function enableComponent(): void
-    //  {
-    //      $this->disableComponent = false;
-    //      $this->dispatch('$refresh');
-    //  }
-
-    //  #[On('disableComponent-' . self::COMPONENT)]
-    //  public function disableComponent(): void
-    //  {
-    //      //
-    //  }
-
     public function findTableAction(int|string $id): void
     {
         $tableData = $this->with()['rows'];
@@ -92,6 +88,45 @@ trait NoerdTableTrait
             return;
         }
         $this->tableAction($item->id);
+    }
+
+    public function changeEditMode(): void
+    {
+        $this->editMode = !$this->editMode;
+    }
+
+    public function callAMethod(callable $callback)
+    {
+        return call_user_func($callback);
+    }
+
+    public function mountModalProcess(string $component, $model): void
+    {
+        $this->pageLayout = StaticConfigHelper::getComponentFields($component);
+        $this->model = $model->toArray();
+        $this->modelId = $model->id;
+        $this->{self::ID} = $model['id'];
+    }
+
+    #[On('close-modal-' . self::COMPONENT)]
+    public function closeModalProcess(?string $source = null): void
+    {
+        if (defined('self::ID')) {
+            $this->{self::ID} = '';
+        }
+
+        if ($source) {
+            $this->dispatch('reloadTable-' . $source);
+        }
+    }
+
+    public function storeProcess($model): void
+    {
+        $this->showSuccessIndicator = true;
+        if ($model->wasRecentlyCreated) {
+            $this->modelId = $model['id'];
+        }
+        $this->{self::ID} = $model['id'];
     }
 
     public function updateRow(): void {}

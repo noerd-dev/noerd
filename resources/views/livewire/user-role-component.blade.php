@@ -4,11 +4,11 @@ use Noerd\Noerd\Models\UserRole;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Traits\NoerdModelTrait;
+use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
 
-    use NoerdModelTrait;
+    use Noerd;
 
     public const COMPONENT = 'user-role-component';
     public const LIST_COMPONENT = 'user-roles-table';
