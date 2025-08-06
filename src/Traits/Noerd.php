@@ -5,12 +5,13 @@ namespace Noerd\Noerd\Traits;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
+use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
 
 trait Noerd
 {
-    use WithPagination;
+    use WithPagination, WithoutUrlPagination;
 
     protected const PAGINATION = 50;
 
@@ -129,11 +130,19 @@ trait Noerd
         $this->{self::ID} = $model['id'];
     }
 
-    public function updateRow(): void {}
+    public function updateRow(): void
+    {
+    }
 
-    public function tableFilters(): void {}
+    public function tableFilters(): void
+    {
+    }
 
-    public function states(): void {}
+    public function states(): void
+    {
+    }
 
-    public function filters(): void {}
+    public function filters(): void
+    {
+    }
 }
