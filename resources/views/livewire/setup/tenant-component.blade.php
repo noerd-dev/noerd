@@ -5,11 +5,11 @@ use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Traits\NoerdModelTrait;
+use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
 
-    use NoerdModelTrait;
+    use Noerd;
     use WithFileUploads;
 
     public const COMPONENT = 'tenant-component';

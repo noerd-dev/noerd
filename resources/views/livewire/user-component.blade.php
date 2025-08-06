@@ -10,11 +10,11 @@ use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
-use Noerd\Noerd\Traits\NoerdModelTrait;
+use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
 
-    use NoerdModelTrait;
+    use Noerd;
 
     public const COMPONENT = 'setup.user';
     public const LIST_COMPONENT = 'users-table';
@@ -138,10 +138,10 @@ new class extends Component {
 
         if ($user->wasRecentlyCreated) {
             $this->userId = $user['id'];
-            
+
             // Send password reset link instead of generated password
             Password::sendResetLink(['email' => $user->email]);
-            
+
             $user->save();
         }
     }

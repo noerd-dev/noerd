@@ -3,11 +3,11 @@
 use Noerd\Noerd\Models\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Traits\NoerdTableTrait;
+use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
 
-    use NoerdTableTrait;
+    use Noerd;
 
     public const COMPONENT = 'user-roles-table';
 
