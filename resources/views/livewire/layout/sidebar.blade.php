@@ -28,19 +28,27 @@
 
         <!-- First column sidebar / Apps -->
         <div x-show="showSidebar" :class="showSidebar ? 'lg:w-[80px]' : 'lg:w-[50px]'" @class([
-                'hidden bg-white border-r pt-[57px] border-gray-300 my-0 transition-[width] lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:flex-col flex'
+                'hidden bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:flex-col flex'
             ])>
             <div class="text-xs text-center">
+                {{--
+                <a wire:navigate href="{{ route('noerd-home') }}">
+                    <div class="px-6 pt-4 pb-3">
+                        <x-noerd::app-logo-icon></x-noerd::app-logo-icon>
+                    </div>
+                </a>
+                --}}
+
                 @foreach(auth()->user()->selectedTenant()?->tenantApps as $tenantApp)
                     <a wire:navigate @if($tenantApp->is_active) href="{{route($tenantApp->route)}}"
                        @else class="opacity-50" @endif ">
                     <div
                         @class(['!bg-brand-highlight/5  border-brand-highlight!' => session('currentApp') === $tenantApp->name,
-                                    'hover:bg-brand-bg flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
+                                    'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
                         <x-dynamic-component
                             class="{{ session('currentApp') === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
-                                border-l-2"
+                                    border-l-2"
                             :component="'noerd::'.$tenantApp->icon"/>
                     </div>
                     <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
@@ -52,7 +60,7 @@
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
             <!-- Second column sidebar -->
             <div x-show="showSidebar" :class="showSidebar ? 'lg:w-[279px] ml-[80px]' : 'ml-[50px]'" @class([
-            'hidden lg:fixed lg:inset-y-0 pt-[49px] lg:z-40 bg-white lg:flex lg:flex-col flex ',
+            'hidden lg:fixed lg:inset-y-0 lg:z-40 bg-brand-navi lg:flex lg:flex-col flex ',
         ])>
                 <livewire:layout.sidebar-navigation :navigation="$navigation->subMenu()"
                                                     :navigations="$navigation->blockMenus()"/>

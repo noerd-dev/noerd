@@ -40,7 +40,7 @@
         @endif
         @if($newLabel)
         <div class="ml-4 my-auto">
-            <x-noerd::primary-button class="!bg-green-600"
+            <x-noerd::primary-button class="!bg-brand-primary"
                                      wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">
                 <x-noerd::icons.plus class="text-white"/>
                 {{ $newLabel }}
