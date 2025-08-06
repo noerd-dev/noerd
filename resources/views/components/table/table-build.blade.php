@@ -1,11 +1,15 @@
 <div x-data="{
         selectedRow{{$tableId}}: 0,
+        isInsideModal: false,
     }"
-     x-init="$store.app.setId('{{$tableId}}')"
+     x-init="
+        $store.app.setId('{{$tableId}}');
+        isInsideModal = !!$el.closest('#modal') || !!$el.closest('[modal]');
+     "
      @mouseenter="$store.app.setId('{{$tableId}}')"
-     @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$tableId}}') && selectedRow{{$tableId}}++"
-     @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$tableId}}') && selectedRow{{$tableId}}--"
-     @keydown.window.enter.prevent="($store.app.currentId == '{{$tableId}}') && $wire.findTableAction(selectedRow{{$tableId}})"
+     @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$tableId}}++"
+     @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$tableId}}--"
+     @keydown.window.enter.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && $wire.findTableAction(selectedRow{{$tableId}})"
 >
 
     @if(isset($hideHead) && $hideHead === true)

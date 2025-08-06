@@ -24,7 +24,7 @@ new class extends Component {
 
     public function tableAction(mixed $modelId = null, mixed $relationId = null): void
     {
-        $this->dispatch('set-app-id', ['id' => null]);
+
 
         $this->dispatch(
             event: 'noerdModal',

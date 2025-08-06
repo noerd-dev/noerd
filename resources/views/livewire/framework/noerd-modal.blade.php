@@ -37,7 +37,8 @@ new class extends Component {
         string  $component,
         ?string $source = null,
         array   $arguments = [],
-    ): void {
+    ): void
+    {
         // Nur fortfahhren, wenn noch kein Modal mit dem componentName geöffnet ist
         //if (isset($this->modals[$component]) && $this->modals[$component]['show'] === true) {
         //    return;
@@ -85,6 +86,18 @@ new class extends Component {
         //  $this->dispatch('enableComponent-' . $source); // Enable the component that opened the modal again
         $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
         $this->markTopModal();
+
+        // Check if no modals are open and reset modalOpen flag
+        $hasOpenModal = false;
+        foreach ($this->modals as $modal) {
+            if ($modal['show'] === true) {
+                $hasOpenModal = true;
+                break;
+            }
+        }
+        if (!$hasOpenModal) {
+            $this->dispatch('modal-closed-global');
+        }
     }
 
     private function markTopModal(): void
@@ -118,16 +131,17 @@ new class extends Component {
 
             <div x-data="{ show: true }" wire:key="{{$modal['key']}}"
                  @if($modal['show'] && $modal['topModal'])
-                     @close-modal-{{$modal['componentName']}}.window="show = false"
-                 wire:keydown.escape.window="downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
+                     x-init="$store.app.modalOpen = true"
+                 @close-modal-{{$modal['componentName']}}.window="show = false; $store.app.modalOpen = false"
+                 @keydown.escape.window.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
                 @endif
             >
                 <div x-show="show">
                     <x-noerd::modal>
                         <x-noerd::modal.panel :size="$modal['size']" :ml="$modal['arguments']['ml'] ?? ''"
-                                       :iteration="$modal['iteration']"
-                                       :source="$modal['source']"
-                                       :modal="$modal['componentName']">
+                                              :iteration="$modal['iteration']"
+                                              :source="$modal['source']"
+                                              :modal="$modal['componentName']">
                             <div>
                                 @livewire($modal['componentName'], $modal['arguments'], key($key))
                             </div>
