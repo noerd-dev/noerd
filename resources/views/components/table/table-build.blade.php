@@ -1,46 +1,12 @@
 <div x-data="{
-        selectedRow{{$tableId}}: -1,
-        beobachte(el) {
-            let observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-
-                        this.selectedRow{{$tableId}}++;
-                        $store.app.setId('{{$tableId}}')
-                    }
-                });
-            }, {
-                threshold: 0, // so früh wie möglich triggern
-                rootMargin: '0px' // ggf. '100px' für Vorlauf
-            });
-
-            observer.observe(el);
-        }
+        selectedRow{{$tableId}}: 0,
     }"
-     x-init="beobachte($el)"
+     x-init="$store.app.setId('{{$tableId}}')"
      @mouseenter="$store.app.setId('{{$tableId}}')"
      @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$tableId}}') && selectedRow{{$tableId}}++"
      @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$tableId}}') && selectedRow{{$tableId}}--"
      @keydown.window.enter.prevent="($store.app.currentId == '{{$tableId}}') && $wire.findTableAction(selectedRow{{$tableId}})"
 >
-    <script>
-        function sichtbarkeitsBeobachter(callback) {
-            return {
-                beobachte(el) {
-                    let observer = new IntersectionObserver((entries, obs) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                callback();
-                                obs.unobserve(entry.target);
-                            }
-                        });
-                    }, {threshold: 0.5});
-
-                    observer.observe(el);
-                }
-            }
-        }
-    </script>
 
     @if(isset($hideHead) && $hideHead === true)
     @else
