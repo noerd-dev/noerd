@@ -17,7 +17,7 @@ use Nywerk\Liefertool\Models\Coredata;
 use Nywerk\Liefertool\Models\Deliveryarea;
 use Nywerk\Liefertool\Models\Deliverytime;
 use Nywerk\Liefertool\Models\Gastrofix;
-use Nywerk\Liefertool\Models\LiefertoolInvoice;
+use Noerd\Noerd\Models\TenantInvoice;
 use Nywerk\Liefertool\Models\Mollie;
 use Nywerk\Liefertool\Models\Setting;
 use Nywerk\Liefertool\Models\Snippet;
@@ -149,7 +149,7 @@ class Tenant extends Authenticatable
 
     public function dueInvoices(): HasMany
     {
-        return $this->hasMany(LiefertoolInvoice::class, 'tenant_id', 'id')
+        return $this->hasMany(TenantInvoice::class, 'tenant_id', 'id')
             ->where('paid', 0)
             ->whereDate('due_date', '<', today());
     }
