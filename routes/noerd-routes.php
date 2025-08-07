@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use Noerd\Noerd\Controllers\Auth\VerifyEmailController;
 use Noerd\Noerd\Controllers\DashboardController;
+use Noerd\Noerd\Http\Controllers\TenantInvoiceController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
     Volt::route('setup', 'setup.users-table')->name('setup');
@@ -11,6 +12,9 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Volt::route('user-roles', 'setup.user-roles-table')->name('user-roles');
     Volt::route('tenant', 'setup.tenant-component')->name('tenant');
     Volt::route('noerd-home', 'noerd-home')->name('noerd-home');
+    Volt::route('models', 'models-table')->name('models');
+    Volt::route('tenant-invoices', 'tenant-invoices-table')->name('tenant-invoices');
+    Route::get('tenant-invoice/{hash}', [TenantInvoiceController::class, 'show'])->name('tenant-invoice');
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {
