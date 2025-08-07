@@ -1,10 +1,10 @@
 @props(['tabNumber' => null, 'route' => null, 'component' => null, 'arguments' => null])
 
 @isset($tabNumber)
-    <div class="inline-flex">
-        <a href="#/" @click.prevent="currentTab= {{$tabNumber}}"
 
-           class="-mb-[1px] border-b-2 border-transparent text-gray-600 mr-6 hover:border-gray-500"
+    <div class="inline-flex">
+        <a  @click.prevent="currentTab= {{$tabNumber}}"
+           class="-mb-[1px] cursor-pointer border-b-2 border-transparent text-gray-600 mr-6 hover:border-gray-500"
            :class="{'border-brand-highlight! text-black!': currentTab == {{$tabNumber}} }">
         <span class="border-transparent p-0 py-3 rounded-sm group inline-flex items-center border-b-2 text-sm">
             {{ $slot }}
