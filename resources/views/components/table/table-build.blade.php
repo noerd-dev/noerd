@@ -14,8 +14,7 @@
 
     @if(isset($hideHead) && $hideHead === true)
     @else
-
-            <div class="bg-white p-8 pt-8">
+            <div class="bg-white pb-8 pt-8">
                 @include('noerd::components.table.title-search',
                     [
                         'title' => $title,
