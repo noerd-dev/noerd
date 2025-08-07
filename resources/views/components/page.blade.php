@@ -11,7 +11,7 @@
     {{$header ?? ''}}
     {{$table ?? ''}}
 
-    <div class="flex-1 p-8 pt-0 overflow-y-auto" @if($disableModal ?? false) class="!p-0" @else class="p-8"
+    <div class="flex-1 p-8 overflow-y-auto" @if($disableModal ?? false) class="!p-0" @else class="p-8"
          @endif :class="isModal ? 'flex-1 p-8 pt-0! overflow-y-auto' : 'h-full'">
         {{ $slot }}
     </div>
