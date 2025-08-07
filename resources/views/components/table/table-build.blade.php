@@ -1,3 +1,14 @@
+@php
+    // Auto-extract values from tableConfig if provided
+    if (isset($tableConfig) && is_array($tableConfig)) {
+        $title = $title ?? __($tableConfig['title'] ?? '');
+        $newLabel = $newLabel ?? __($tableConfig['newLabel'] ?? '');
+        $redirectAction = $redirectAction ?? ($tableConfig['redirectAction'] ?? '');
+        $disableSearch = $disableSearch ?? ($tableConfig['disableSearch'] ?? false);
+        $table = $table ?? ($tableConfig['columns'] ?? []);
+    }
+@endphp
+
 <div x-data="{
         selectedRow{{$tableId}}: 0,
         isInsideModal: false,

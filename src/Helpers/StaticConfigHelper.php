@@ -28,6 +28,18 @@ class StaticConfigHelper
         throw new Exception('Component not found: ' . $component);
     }
 
+    public static function getTableConfig(string $tableName): array
+    {
+        $yamlPath = base_path("content/lists/{$tableName}.yml");
+        
+        if (!file_exists($yamlPath)) {
+            return [];
+        }
+
+        $content = file_get_contents($yamlPath);
+        return Yaml::parse($content ?: '');
+    }
+
     public static function getNavigationStructure(): ?array
     {
         $currentApp = session('currentApp');
