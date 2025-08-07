@@ -14,7 +14,7 @@
 
     @if(isset($hideHead) && $hideHead === true)
     @else
-        <x-slot:table>
+
             <div class="bg-white p-8 pt-8">
                 @include('noerd::components.table.title-search',
                     [
@@ -28,7 +28,7 @@
                         'tableFilters' => $this->tableFilters(),
                     ])
             </div>
-        </x-slot:table>
+
     @endif
 
     @isset($table)
