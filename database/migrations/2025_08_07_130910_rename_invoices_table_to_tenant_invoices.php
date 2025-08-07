@@ -11,7 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::rename('invoices', 'tenant_invoices');
+        try {
+            Schema::rename('invoices', 'tenant_invoices');
+        } catch (Exception $e) {}
+
     }
 
     /**
