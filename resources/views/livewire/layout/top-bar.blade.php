@@ -49,7 +49,15 @@ new class extends Component {
     }
 } ?>
 
-<div :class="showSidebar ? 'lg:left-[360px] w-[calc(100%-360px)]' : 'lg:pl-[0px] w-[calc(100%-0px)]'" @class([
+@inject('navigation', 'Noerd\\Noerd\\Services\\NavigationService')
+
+<div
+    @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
+        :class="showSidebar ? 'lg:left-[360px] w-[calc(100%-360px)]' : 'lg:pl-[0px] w-[calc(100%-0px)]'"
+    @else
+        :class="showSidebar ? 'lg:left-[80px] w-[calc(100%-80px)]' : 'lg:pl-[0px] w-[calc(100%-0px)]'"
+    @endif
+    @class([
     'fixed top-0 right-0 bg-white z-40',
 ])>
     <div>

@@ -29,5 +29,12 @@
         @endif
     >
 
+    <div class="mt-2">
+        <x-noerd::buttons.secondary type="button"
+                                    wire:click="openSelectMediaModal('{{$field['name'] ?? $name}}')">
+            {{ __('Bild aus Medien wählen') }}
+        </x-noerd::buttons.secondary>
+    </div>
+
     <x-noerd::input-error :messages="$errors->get($field['name'] ?? $name)" class="mt-2"/>
 </div>
