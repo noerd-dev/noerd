@@ -1,5 +1,6 @@
 <?php
 
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
@@ -9,7 +10,6 @@ new class extends Component {
 
     use Noerd;
 
-use Noerd\Noerd\Helpers\StaticConfigHelper;
     public const COMPONENT = 'user-roles-table';
 
     public function mount()
@@ -55,5 +55,4 @@ use Noerd\Noerd\Helpers\StaticConfigHelper;
 
 <x-noerd::page :disableModal="$disableModal">
     @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
-
 </x-noerd::page>

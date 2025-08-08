@@ -1,9 +1,9 @@
 <?php
 
-use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
@@ -69,6 +69,7 @@ new class extends Component {
                         ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
+            ->with('roles')
             ->paginate(self::PAGINATION);
 
         $tableConfig = StaticConfigHelper::getTableConfig('users-table');

@@ -5,6 +5,7 @@
         $newLabel = $newLabel ?? __($tableConfig['newLabel'] ?? '');
         $redirectAction = $redirectAction ?? ($tableConfig['redirectAction'] ?? '');
         $disableSearch = $disableSearch ?? ($tableConfig['disableSearch'] ?? false);
+        $description = $description ?? ($tableConfig['description'] ?? false);
         $table = $table ?? ($tableConfig['columns'] ?? []);
     }
 @endphp
