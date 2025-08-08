@@ -3,10 +3,13 @@
 use Livewire\Volt\Component;
 use Noerd\Noerd\Models\TenantInvoice;
 use Noerd\Noerd\Traits\Noerd;
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
 
     use Noerd;
+
+
 
     public const COMPONENT = 'tenant-invoices-table';
 
@@ -46,7 +49,10 @@ new class extends Component {
 
         $overduePayment = count($client->dueInvoices) > 0;
 
+        $tableConfig = StaticConfigHelper::getTableConfig('tenant-invoices-table');
+
         return [
+            'tableConfig' => $tableConfig,
             'rows' => $rows,
             'overduePayment' => $overduePayment,
         ];
@@ -63,42 +69,7 @@ new class extends Component {
     @endif
 
     <div>
-        @include('noerd::components.table.table-build',
-        [
-            'title' => __('Rechnungen'),
-            'description' => '',
-            'newLabel' => false,
-            'redirectAction' => '',
-            'disableSearch' => false,
-            'table' => [
-                [
-                    'width' => 30,
-                    'field' => 'number',
-                    'label' => __('Rechnungsnummer'),
-                ],
-                [
-                    'width' => 20,
-                    'field' => 'formatted_date',
-                    'label' => __('Rechnungsdatum'),
-                ],
-                [
-                    'width' => 20,
-                    'field' => 'formatted_due_date',
-                    'label' => __('Fälligkeitsdatum'),
-                ],
-                [
-                    'width' => 15,
-                    'field' => 'formatted_amount',
-                    'align' => 'right',
-                    'label' => __('Betrag'),
-                ],
-                [
-                    'width' => 15,
-                    'field' => 'status_text',
-                    'label' => __('Status'),
-                ],
-            ],
-        ])
+        @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
     </div>
 
 </x-noerd::page>

@@ -9,6 +9,7 @@ new class extends Component {
 
     use Noerd;
 
+use Noerd\Noerd\Helpers\StaticConfigHelper;
     public const COMPONENT = 'user-roles-table';
 
     public function mount()
@@ -42,34 +43,17 @@ new class extends Component {
         $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)->orderBy('name')
             ->paginate(self::PAGINATION);
 
+        $tableConfig = StaticConfigHelper::getTableConfig('user-roles-table');
+
         return [
             'rows' => $rows,
+            'tableConfig' => $tableConfig,
         ];
     }
 
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">
-    @include('noerd::components.table.table-build',
-      [
-          'title' => __('Benutzerrollen'),
-          'description' => '',
-          'newLabel' => __('Neue Benutzerrolle'),
-          'redirectAction' => '',
-          'table' => [
-              [
-                  'width' => 10,
-                  'field' => 'name',
-                  'label' => __('Name'),
-                  'readOnly' => false,
-              ],
-                 [
-                  'width' => 10,
-                  'field' => 'description',
-                  'label' => __('Description'),
-                  'readOnly' => false,
-              ],
-          ],
-      ])
+    @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
 
 </x-noerd::page>

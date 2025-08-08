@@ -145,13 +145,13 @@
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                       value="{{round($value,2)}}">
+                       value="{{round((float)$value,2)}}">
             @elseif($type == 'currency')
                 <input type="{{$type}}"
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                       value="{{number_format($value,2, ',', '.')}} €">
+                       value="{{number_format((float)$value,2, ',', '.')}} €">
             @else
                 <input type="{{$type}}"
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
