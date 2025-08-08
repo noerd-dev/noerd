@@ -18,7 +18,7 @@ new class extends Component {
             @endisset
 
             <div x-show="showSidebar">
-                {{ $navi['title'] }}
+                {{ __($navi['title']) }}
             </div>
         </a>
     @endif
@@ -33,7 +33,7 @@ new class extends Component {
             @endisset
 
             <div x-show="showSidebar">
-                {{ $navi['title'] }}
+                {{ __($navi['title']) }}
 
                 @isset($navi['external'])
                     <x-noerd::icons.external/>
@@ -51,7 +51,7 @@ new class extends Component {
             @endisset
 
             <div x-show="showSidebar">
-                {{ $navi['title'] }}
+                {{ __($navi['title']) }}
 
                 @isset($navi['external'])
                     <x-noerd::icons.external/>

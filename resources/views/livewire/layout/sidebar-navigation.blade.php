@@ -29,7 +29,7 @@ new class extends Component {
                             class="hover:text-black w-full py-2">
                         <div class="font-bold text-xs flex">
                             <div class="font-semibold text-gray-600" x-show="showSidebar">
-                                {{$block['title']}}
+                                {{ __($block['title']) }}
                             </div>
                             <div x-show="show && showSidebar" class="ml-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
