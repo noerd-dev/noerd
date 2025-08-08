@@ -43,7 +43,7 @@
                                     @isset($action['heroicon'])
                                         <x-icon name="{{$action['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
                                     @endisset
-                                    {{$action['label']}}
+                                    {{ __($action['label']) }}
                                 </a>
                             @endforeach
                         </div>
@@ -66,7 +66,7 @@
            wire:click.prevent="{{$action}}('{{$redirectAction}}')"
         >
             <x-noerd::buttons.primary icon="noerd::icons.plus-circle" class="ml-auto">
-                {{$label}}
+                {{ __($label) }}
             </x-noerd::buttons.primary>
         </a>
     @elseif($columnValue === 'deleteAction')
@@ -74,7 +74,7 @@
 
            wire:click.prevent="{{$action}}('{{$id}}')">
             <x-noerd::buttons.small.delete class="ml-auto">
-                {{$label}}
+                {{ __($label) }}
             </x-noerd::buttons.small.delete>
         </a>
     @elseif($columnValue === 'secondAction')
@@ -82,7 +82,7 @@
 
            wire:click.prevent="{{$action}}('{{$id}}')">
             <x-noerd::buttons.secondary class="ml-auto">
-                {{$label}}
+                {{ __($label) }}
             </x-noerd::buttons.secondary>
         </a>
     @else

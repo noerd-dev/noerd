@@ -3,7 +3,7 @@
         @if($disableModal)
         <div :class="isModal ? 'hidden' : ''">
             <x-noerd::title>
-                {{ $title }}
+                {{ __($title) }}
             </x-noerd::title>
         </div>
         @endif
@@ -43,7 +43,7 @@
             <x-noerd::primary-button class="!bg-brand-primary"
                                      wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">
                 <x-noerd::icons.plus class="text-white"/>
-                {{ $newLabel }}
+                {{ __($newLabel) }}
             </x-noerd::primary-button>
         </div>
         @endif
@@ -66,5 +66,5 @@
 </div>
 
 <div class="text-sm w-full text-gray-700 pr-36">
-    {{ $description }}
+    {{ __($description) }}
 </div>
