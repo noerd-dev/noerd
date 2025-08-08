@@ -117,7 +117,6 @@
         </div>
 
         @if(isset($models) && count($models) > 0)
-
             <div class="py-8">
                 {{isset($models) ? is_array($models) ? '' : $models->links() : ''}}
                 {{isset($rows) ? is_array($rows) ? '' : $rows->links() : ''}}
