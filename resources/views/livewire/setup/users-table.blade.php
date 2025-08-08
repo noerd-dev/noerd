@@ -1,5 +1,6 @@
 <?php
 
+use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
@@ -24,8 +25,6 @@ new class extends Component {
 
     public function tableAction(mixed $modelId = null, mixed $relationId = null): void
     {
-
-
         $this->dispatch(
             event: 'noerdModal',
             component: 'user-component',
@@ -72,55 +71,17 @@ new class extends Component {
             })
             ->paginate(self::PAGINATION);
 
+        $tableConfig = StaticConfigHelper::getTableConfig('users-table');
+
         return [
             'rows' => $rows,
+            'tableConfig' => $tableConfig,
         ];
     }
 
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">
-    @include('noerd::components.table.table-build',
-      [
-          'title' => __('Users'),
-          'description' => '',
-          'newLabel' => __('New User'),
-          'redirectAction' => '',
-          'table' => [
-              [
-                  'width' => 10,
-                  'field' => 'email',
-                  'label' => __('E-Mail'),
-                  'readOnly' => false,
-              ],
-              [
-                  'width' => 10,
-                  'field' => 'name',
-                  'label' => __('Name'),
-                  'readOnly' => false,
-              ],
-              [
-                  'width' => 3,
-                  'field' => 'action',
-                  'actions' => [
-                      [
-                          'label' => __('Als Benutzer anmelden'),
-                          'heroicon' => 'user',
-                          'action' => 'loginAsUser',
-                          'confirm' => 'Möchtest Du Dich wirklich als dieser Benutzer anmelden?',
-                      ],
-                      /*
-                      [
-                          'label' => __('Benutzer entfernen'),
-                          'heroicon' => 'minus',
-                          'action' => 'removeFromTenant',
-                           'confirm' => 'Möchtest Du diesen Benutzer wirklich aus dem Mandanten entfernen?',
-                      ],
-                      */
-                  ],
-                  'readOnly' => false,
-              ],
-          ],
-      ])
+    @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
 
 </x-noerd::page>

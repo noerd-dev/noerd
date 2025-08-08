@@ -25,19 +25,19 @@
 
     @if(isset($hideHead) && $hideHead === true)
     @else
-            <div class="bg-white pb-8 pt-8">
-                @include('noerd::components.table.title-search',
-                    [
-                        'title' => $title,
-                        'description' => $description ?? '',
-                        'newLabel' => $newLabel ?? null,
-                        'disableSearch' => $disableSearch ?? false,
-                        'relationId' => $relationId ?? null,
-                        'action' => $action ?? 'tableAction',
-                        'states' => $this->states(),
-                        'tableFilters' => $this->tableFilters(),
-                    ])
-            </div>
+        <div class="bg-white pb-8 pt-8">
+            @include('noerd::components.table.title-search',
+                [
+                    'title' => $title,
+                    'description' => $description ?? '',
+                    'newLabel' => $newLabel ?? null,
+                    'disableSearch' => $disableSearch ?? false,
+                    'relationId' => $relationId ?? null,
+                    'action' => $action ?? 'tableAction',
+                    'states' => $this->states(),
+                    'tableFilters' => $this->tableFilters(),
+                ])
+        </div>
 
     @endif
 
@@ -115,10 +115,13 @@
             </div>
         </div>
 
-        <div class="py-8">
-            {{isset($models) ? is_array($models) ? '' : $models->links() : ''}}
-            {{isset($rows) ? is_array($rows) ? '' : $rows->links() : ''}}
-        </div>
+        @if(isset($models) && count($models) > 0)
+
+            <div class="py-8">
+                {{isset($models) ? is_array($models) ? '' : $models->links() : ''}}
+                {{isset($rows) ? is_array($rows) ? '' : $rows->links() : ''}}
+            </div>
+        @endif
     @endisset
 
 </div>
