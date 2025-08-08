@@ -12,9 +12,7 @@ class TenantInvoiceController extends Controller
 {
     public function __construct(
         private QrCodeService $qrCodeService,
-    )
-    {
-    }
+    ) {}
 
     public function show(string $hash)
     {
@@ -34,8 +32,8 @@ class TenantInvoiceController extends Controller
             Storage::disk('invoices')->path($pathWithName),
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $invoice['number'] . '.pdf"'
-            ]
+                'Content-Disposition' => 'inline; filename="' . $invoice['number'] . '.pdf"',
+            ],
         );
     }
 
@@ -55,8 +53,8 @@ class TenantInvoiceController extends Controller
             Storage::disk('invoices')->path($pathWithName),
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $invoice['number'] . '.pdf"'
-            ]
+                'Content-Disposition' => 'inline; filename="' . $invoice['number'] . '.pdf"',
+            ],
         );
     }
 }

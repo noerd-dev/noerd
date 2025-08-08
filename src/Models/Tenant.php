@@ -17,7 +17,6 @@ use Nywerk\Liefertool\Models\Coredata;
 use Nywerk\Liefertool\Models\Deliveryarea;
 use Nywerk\Liefertool\Models\Deliverytime;
 use Nywerk\Liefertool\Models\Gastrofix;
-use Noerd\Noerd\Models\TenantInvoice;
 use Nywerk\Liefertool\Models\Mollie;
 use Nywerk\Liefertool\Models\Setting;
 use Nywerk\Liefertool\Models\Snippet;

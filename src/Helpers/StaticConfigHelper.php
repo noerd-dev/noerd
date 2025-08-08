@@ -31,7 +31,7 @@ class StaticConfigHelper
     public static function getTableConfig(string $tableName): array
     {
         $yamlPath = base_path("content/lists/{$tableName}.yml");
-        
+
         if (!file_exists($yamlPath)) {
             return [];
         }
