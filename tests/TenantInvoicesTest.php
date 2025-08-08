@@ -1,6 +1,5 @@
 <?php
 
-use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantInvoice;
 
@@ -28,7 +27,7 @@ it('tenant invoice belongs to tenant', function (): void {
 
 it('can identify overdue invoices', function (): void {
     $tenant = Tenant::factory()->create();
-    
+
     // Create overdue invoice
     TenantInvoice::factory()->create([
         'tenant_id' => $tenant->id,
