@@ -3,7 +3,7 @@
     <div class="flex top-5 whitespace-nowrap">
         @if($field !== 'action')
             <button type="button" class="text-black @if($align === 'right') ml-auto pr-2 @endif" wire:click="sortBy('{{$field}}')">
-                {{$label}}
+                {{ __($label) }}
             </button>
             @if($sortField === $field)
                 <button type="button"
