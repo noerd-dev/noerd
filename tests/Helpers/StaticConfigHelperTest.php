@@ -18,5 +18,3 @@ it('loads component fields or throws if missing', function (): void {
         expect($e->getMessage())->toContain('Component not found');
     }
 });
-
-
