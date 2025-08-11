@@ -8,7 +8,7 @@
         $previewUrl = null;
         if (is_numeric($rawValue)) {
             try {
-                $media = \Nywerk\Media\Models\Media::find((int) $rawValue);
+                $media = \Noerd\Media\Models\Media::find((int) $rawValue);
                 if ($media) {
                     $previewUrl = \Illuminate\Support\Facades\Storage::disk($media->disk)->url($media->thumbnail ?? $media->path);
                 }

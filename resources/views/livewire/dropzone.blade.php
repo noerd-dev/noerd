@@ -22,7 +22,7 @@
                 </div>
             </div>
         @endif
-        <div @click="$refs.input.click()" class="border border-dashed w-full rounded border-gray-500 w-full cursor-pointer">
+        <div @click="$refs.input.click()" class="border border-dashed w-full rounded border-gray-500 cursor-pointer">
             <div>
                 <div x-show="!isDragging" class="flex items-center bg-gray-50 justify-center gap-2 py-8 h-full dark:bg-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 text-gray-500 dark:text-gray-400">
