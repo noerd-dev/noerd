@@ -1,0 +1,11 @@
+title: 'Tenant Invoices'
+newLabel: 'New Tenant Invoice'
+component: 'tenant-invoice-component'
+disableSearch: false
+redirectAction: ''
+columns:
+  - { field: invoice_number, label: 'Invoice Number', width: 15 }
+  - { field: tenant_name, label: Tenant, width: 20 }
+  - { field: total_gross_amount, label: 'Total Amount', width: 15, type: currency }
+  - { field: paid, label: Paid, width: 10, type: bool }
+  - { field: created_at, label: Date, width: 15, type: date }

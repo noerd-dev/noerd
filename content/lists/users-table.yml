@@ -1,0 +1,20 @@
+title: Users
+newLabel: 'New User'
+component: user-component
+disableSearch: false
+redirectAction: ''
+description: ''
+columns:
+  -
+    field: email
+    label: Email
+    width: 10
+  -
+    field: name
+    label: Name
+    width: 10
+  -
+    field: action
+    width: 3
+    actions:
+      - { label: 'Als Benutzer anmelden', heroicon: user, action: loginAsUser, confirm: 'Möchtest Du Dich wirklich als dieser Benutzer anmelden?' }
