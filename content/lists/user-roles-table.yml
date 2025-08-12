@@ -1,0 +1,8 @@
+title: 'User Roles'
+newLabel: 'New User Role'
+component: 'user-role-component'
+disableSearch: false
+redirectAction: ''
+columns:
+  - { field: name, label: 'Name', width: 30 }
+  - { field: description, label: 'Description', width: 40 }
