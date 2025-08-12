@@ -108,6 +108,16 @@ class MakeUserAdmin extends Command
             $this->info("  ✓ Granted ADMIN access for tenant: {$tenant->name}");
         }
 
+        // Ensure selected_tenant_id is set to the first available tenant
+        $firstTenantId = Tenant::query()->orderBy('id')->value('id');
+        if ($firstTenantId) {
+            $user->selected_tenant_id = $firstTenantId;
+            $user->save();
+            $this->info("Set user's selected_tenant_id to tenant ID: {$firstTenantId}");
+        } else {
+            $this->warn('No tenants found to assign as selected_tenant_id.');
+        }
+
         // Summary
         $this->newLine();
         $this->info('Summary:');
