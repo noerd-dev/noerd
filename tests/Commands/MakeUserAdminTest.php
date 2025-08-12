@@ -185,6 +185,7 @@ it('provides detailed summary output', function (): void {
         ->expectsOutput('Summary:')
         ->expectsOutput('- ADMIN profiles created: 1')
         ->expectsOutput('- ADMIN access granted: 1')
+        ->expectsOutputToContain("Set user's selected_tenant_id to tenant ID:")
         ->assertExitCode(0);
 });
 
@@ -201,4 +202,5 @@ it('verifies admin status after completion', function (): void {
     $user->refresh();
     expect($user->isAdmin())->toBeTrue();
     expect($user->profiles->where('key', 'ADMIN')->count())->toBeGreaterThan(0);
+    expect($user->selected_tenant_id)->not->toBeNull();
 });
