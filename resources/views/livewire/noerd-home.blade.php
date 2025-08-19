@@ -5,7 +5,7 @@
 
     <div class="mb-12">
         <div class="flex flex-wrap">
-            @foreach(auth()->user()->selectedTenant()?->tenantApps as $tenantApp)
+            @foreach(auth()->user()->selectedTenant()?->tenantApps ?? [] as $tenantApp)
                 <a @if($tenantApp->is_active)
                        href="{{ route($tenantApp->route) }}"
                    wire:navigate
