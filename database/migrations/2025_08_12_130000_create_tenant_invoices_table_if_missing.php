@@ -64,5 +64,3 @@ return new class () extends Migration {
         // non-destructive: don't drop if exists
     }
 };
-
-

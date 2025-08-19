@@ -24,6 +24,16 @@ new class extends Component {
         }
     }
 
+    public function payInvoice($invoiceId): void
+    {
+        $invoice = TenantInvoice::find($invoiceId);
+        if (!$invoice) {
+            return;
+        }
+        $url = url('/paypal/' . $invoice->hash);
+        $this->js("window.open('{$url}', '_blank')");
+    }
+
     public function with()
     {
         $client = auth()->user()->selectedTenant();
