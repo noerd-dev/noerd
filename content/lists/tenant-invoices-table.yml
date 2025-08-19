@@ -9,3 +9,8 @@ columns:
   - { field: total_gross_amount, label: 'Total Amount', width: 15, type: currency }
   - { field: paid, label: Paid, width: 10, type: bool }
   - { field: created_at, label: Date, width: 15, type: date }
+  -
+    field: action
+    width: 3
+    actions:
+      - { label: 'PayPal', heroicon: currency-euro, action: payInvoice }
