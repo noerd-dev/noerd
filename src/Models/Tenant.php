@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Noerd\Database\Factories\TenantFactory;
@@ -61,6 +62,15 @@ class Tenant extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Tenant $tenant): void {
+            if (empty($tenant->api_token)) {
+                $tenant->api_token = Str::uuid()->toString();
+            }
+        });
+    }
 
     public function coredata(): HasOne
     {
