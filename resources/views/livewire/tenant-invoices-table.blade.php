@@ -68,6 +68,17 @@ new class extends Component {
         ];
     }
 
+    public function rendering()
+    {
+        if ((int)request()->tenantInvoiceId) {
+            $this->tableAction(request()->tenantInvoiceId);
+        }
+
+        if (request()->create) {
+            $this->tableAction();
+        }
+    }
+
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">
