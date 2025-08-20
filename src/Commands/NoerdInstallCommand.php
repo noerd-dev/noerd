@@ -49,9 +49,7 @@ class NoerdInstallCommand extends Command
 
             $this->displaySummary($results);
 
-
             $this->info('Noerd CMS content successfully installed!');
-
 
             return 0;
         } catch (Exception $e) {

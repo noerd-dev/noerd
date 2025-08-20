@@ -10,6 +10,7 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Volt::route('setup', 'setup.users-table')->name('setup');
     Volt::route('users', 'setup.users-table')->name('users');
     Volt::route('user-roles', 'setup.user-roles-table')->name('user-roles');
+    Volt::route('languages', 'setup.languages-table')->name('languages');
     Volt::route('tenant', 'setup.tenant-component')->name('tenant');
     Volt::route('models', 'models-table')->name('models');
     Volt::route('tenant-invoices', 'tenant-invoices-table')->name('tenant-invoices');
