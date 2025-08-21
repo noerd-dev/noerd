@@ -1,6 +1,4 @@
-# Noerd UI Module
-
-A modular UI framework for Laravel applications with pre-compiled Tailwind CSS 4 styles.
+# Noerd Framework
 
 ## 📦 Installation
 
