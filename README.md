@@ -2,21 +2,6 @@
 
 ## 📦 Installation
 
-### Quick Installation (Recommended)
-
-```bash
-# Install CSS to public/css/noerd.css
-php artisan noerd:install
-
-# Or install the clean version (without Tailwind header comment)
-php artisan noerd:install --clean
-
-# Force overwrite existing file
-php artisan noerd:install --force
-```
-
-### Manual Installation
-
 ```bash
 # Copy the dist/noerd.css to your project
 cp app-modules/noerd/dist/noerd.css public/css/
