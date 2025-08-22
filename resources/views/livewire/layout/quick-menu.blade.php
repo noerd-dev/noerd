@@ -63,6 +63,20 @@ new class extends Component {
         </div>
     @endcan
 
+    @can('cms', Tenant::class)
+        <div class="hidden lg:flex">
+            <a class="flex" target="_blank" href="{{ url('/cms-frontend?hash=' . auth()->user()->selectedTenant()->hash) }}">
+                <button
+                    @class([
+                        'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
+                    ])
+                >
+                    {{__('To Website')}}
+                </button>
+            </a>
+        </div>
+    @endcan
+
     @can('times', Tenant::class)
         <livewire:next-slot
             :tenant="Tenant::find(auth()->user()->selected_tenant_id)"></livewire:next-slot>
