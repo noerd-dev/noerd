@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Noerd\Noerd\Database\Factories\TenantFactory;
 use Nywerk\Liefertool\Models\AdditionalField;
 use Nywerk\Liefertool\Models\ClientPaypal;
@@ -62,15 +62,6 @@ class Tenant extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    protected static function booted(): void
-    {
-        static::creating(function (Tenant $tenant): void {
-            if (empty($tenant->api_token)) {
-                $tenant->api_token = Str::uuid()->toString();
-            }
-        });
-    }
 
     public function coredata(): HasOne
     {
@@ -224,6 +215,15 @@ class Tenant extends Authenticatable
     public function profiles(): HasMany
     {
         return $this->hasMany(Profile::class, 'tenant_id', 'id');
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Tenant $tenant): void {
+            if (empty($tenant->api_token)) {
+                $tenant->api_token = Str::uuid()->toString();
+            }
+        });
     }
 
     protected static function newFactory(): TenantFactory
