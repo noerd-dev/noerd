@@ -13,7 +13,7 @@ return new class () extends Migration {
         // Iterate tenants with missing or empty api_token and assign a unique token
         DB::table('tenants')
             ->whereNull('api_token')
-            ->orWhere('api_token', '=','')
+            ->orWhere('api_token', '=', '')
             ->orderBy('id')
             ->select('id')
             ->chunkById(500, function ($tenants): void {
@@ -36,5 +36,3 @@ return new class () extends Migration {
         // Intentionally left blank to avoid removing assigned API tokens
     }
 };
-
-
