@@ -9,6 +9,7 @@ new class extends Component {
     public $selectedClientId;
     public $openOrders;
     public $domain;
+    public $websiteUrl;
 
     #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
@@ -18,6 +19,11 @@ new class extends Component {
             $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
         }
         $this->domain = auth()->user()->selectedTenant()?->domain;
+        
+        // Generate CMS frontend URL
+        if (auth()->user()->can('website', Tenant::class)) {
+            $this->websiteUrl = url('/cms-frontend');
+        }
     }
 
     #[On('refreshOrderCount')]
@@ -61,6 +67,22 @@ new class extends Component {
                 </button>
             </a>
         </div>
+    @endcan
+
+    @can('website', Tenant::class)
+        @if($websiteUrl)
+            <div class="hidden lg:flex">
+                <a class="flex" target="_blank" href="{{$websiteUrl}}">
+                    <button
+                        @class([
+                            'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
+                        ])
+                    >
+                        {{__('Zur Webseite')}}
+                    </button>
+                </a>
+            </div>
+        @endif
     @endcan
 
     @can('times', Tenant::class)

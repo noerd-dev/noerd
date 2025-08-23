@@ -12,8 +12,8 @@ class ProfileFactory extends Factory
     public function definition(): array
     {
         return [
-            'key' => mb_strtoupper($this->faker->unique()->word),
-            'name' => $this->faker->jobTitle,
+            'key' => 'TEST_' . $this->faker->unique()->numberBetween(1, 9999),
+            'name' => 'Test Profile ' . $this->faker->unique()->numberBetween(1, 9999),
             'tenant_id' => null, // Will be set by the test
         ];
     }
