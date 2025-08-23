@@ -16,10 +16,6 @@ return new class () extends Migration {
                 $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
                 $table->index('selected_tenant_id');
             });
-
-            echo "Added selected_tenant_id column to users table.\n";
-        } else {
-            echo "Column selected_tenant_id already exists in users table.\n";
         }
     }
 
@@ -34,10 +30,6 @@ return new class () extends Migration {
                 $table->dropIndex(['selected_tenant_id']);
                 $table->dropColumn('selected_tenant_id');
             });
-
-            echo "Removed selected_tenant_id column from users table.\n";
-        } else {
-            echo "Column selected_tenant_id does not exist in users table.\n";
         }
     }
 };
