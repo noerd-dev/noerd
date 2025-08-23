@@ -29,10 +29,10 @@ it('prevents policy disappearance regression - admin users always have orders/ti
     $adminUser->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
     $adminUser->selected_tenant_id = $tenant->id;
 
-    // These MUST be true to prevent button disappearance  
+    // These MUST be true to prevent button disappearance
     expect($adminUser->can('orders', Tenant::class))->toBeTrue('Admin should ALWAYS have orders access');
     expect($adminUser->can('times', Tenant::class))->toBeTrue('Admin should ALWAYS have times access');
-    
+
     // But website access requires CMS app even for admins
     expect($adminUser->can('website', Tenant::class))->toBeFalse('Admin needs CMS app for website access');
 });
@@ -41,10 +41,10 @@ it('allows admin users website access when tenant has CMS app', function () {
     $tenant = Tenant::factory()->create();
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
-        'name' => 'Administrator', 
+        'name' => 'Administrator',
         'tenant_id' => $tenant->id
     ]);
-    
+
     $cmsApp = TenantApp::create([
         'name' => 'CMS',
         'title' => 'CMS',
@@ -52,7 +52,7 @@ it('allows admin users website access when tenant has CMS app', function () {
         'icon' => 'cms',
         'route' => 'cms.index'
     ]);
-    
+
     $tenant->tenantApps()->attach($cmsApp->id);
 
     $adminUser = User::factory()->create();
@@ -145,7 +145,7 @@ it('handles edge cases gracefully', function () {
 
 it('quick menu component shows CMS button only when tenant has CMS app', function () {
     $tenant = Tenant::factory()->create();
-    
+
     // Create required settings for tenant
     LiefertoolSettings::create([
         'tenant_id' => $tenant->id,
@@ -156,21 +156,21 @@ it('quick menu component shows CMS button only when tenant has CMS app', functio
         'only_pickup' => false,
         'closed' => false,
     ]);
-    
+
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
         'tenant_id' => $tenant->id
     ]);
-    
+
     $cmsApp = TenantApp::create([
         'name' => 'CMS',
-        'title' => 'CMS', 
+        'title' => 'CMS',
         'is_active' => true,
         'icon' => 'cms',
         'route' => 'cms.index'
     ]);
-    
+
     $tenant->tenantApps()->attach($cmsApp->id);
 
     $adminUser = User::factory()->create();
@@ -208,7 +208,7 @@ it('generates correct CMS frontend URL when CMS app is available', function () {
     $tenant = Tenant::factory()->create([
         'hash' => 'test-tenant-hash'
     ]);
-    
+
     // Create required settings for tenant
     LiefertoolSettings::create([
         'tenant_id' => $tenant->id,
@@ -219,21 +219,21 @@ it('generates correct CMS frontend URL when CMS app is available', function () {
         'only_pickup' => false,
         'closed' => false,
     ]);
-    
+
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
         'tenant_id' => $tenant->id
     ]);
-    
+
     $cmsApp = TenantApp::create([
         'name' => 'CMS',
         'title' => 'CMS',
         'is_active' => true,
-        'icon' => 'cms', 
+        'icon' => 'cms',
         'route' => 'cms.index'
     ]);
-    
+
     $tenant->tenantApps()->attach($cmsApp->id);
 
     $adminUser = User::factory()->create();
@@ -251,7 +251,7 @@ it('does not generate website URL when tenant has empty hash', function () {
     $tenant = Tenant::factory()->create([
         'hash' => '' // Empty hash
     ]);
-    
+
     // Create required settings for tenant
     LiefertoolSettings::create([
         'tenant_id' => $tenant->id,
@@ -262,21 +262,21 @@ it('does not generate website URL when tenant has empty hash', function () {
         'only_pickup' => false,
         'closed' => false,
     ]);
-    
+
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
         'tenant_id' => $tenant->id
     ]);
-    
+
     $cmsApp = TenantApp::create([
         'name' => 'CMS',
         'title' => 'CMS',
         'is_active' => true,
-        'icon' => 'cms', 
+        'icon' => 'cms',
         'route' => 'cms.index'
     ]);
-    
+
     $tenant->tenantApps()->attach($cmsApp->id);
 
     $adminUser = User::factory()->create();
