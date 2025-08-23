@@ -19,13 +19,14 @@ new class extends Component {
             $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
         }
         $this->domain = auth()->user()->selectedTenant()?->domain;
-        
+
         // Generate CMS frontend URL with tenant hash
         if (auth()->user()->can('website', Tenant::class)) {
             $tenant = auth()->user()->selectedTenant();
             if ($tenant && !empty($tenant->hash)) {
                 $this->websiteUrl = url('/cms-frontend?hash=' . $tenant->hash);
             }
+
         }
     }
 
