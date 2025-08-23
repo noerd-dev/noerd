@@ -2,7 +2,6 @@
 
 namespace Noerd\Noerd\Policies;
 
-use Illuminate\Support\Facades\Auth;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\User;
 
@@ -20,7 +19,7 @@ class TenantPolicy
 
         // Check if current tenant has order-related apps
         $tenant = Tenant::find($user->selected_tenant_id);
-        
+
         if (!$tenant) {
             return false;
         }
@@ -45,7 +44,7 @@ class TenantPolicy
 
         // Check if current tenant has time-related apps
         $tenant = Tenant::find($user->selected_tenant_id);
-        
+
         if (!$tenant) {
             return false;
         }
@@ -64,7 +63,7 @@ class TenantPolicy
     public function justMenuModule(User $user): bool
     {
         $tenant = Tenant::find($user->selected_tenant_id);
-        
+
         if (!$tenant) {
             return false;
         }
@@ -82,7 +81,7 @@ class TenantPolicy
     {
         // Check if current tenant has CMS app (even for admins)
         $tenant = Tenant::find($user->selected_tenant_id);
-        
+
         if (!$tenant) {
             return false;
         }
