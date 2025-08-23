@@ -36,4 +36,3 @@ return new class () extends Migration {
         // Intentionally left blank to avoid removing assigned API tokens
     }
 };
-
