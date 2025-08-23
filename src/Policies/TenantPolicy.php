@@ -12,11 +12,6 @@ class TenantPolicy
      */
     public function orders(User $user): bool
     {
-        // Admin users have access to all orders
-        if ($user->isAdmin()) {
-            return true;
-        }
-
         // Check if current tenant has order-related apps
         $tenant = Tenant::find($user->selected_tenant_id);
 
@@ -37,11 +32,6 @@ class TenantPolicy
      */
     public function times(User $user): bool
     {
-        // Admin users have access to all times functionality
-        if ($user->isAdmin()) {
-            return true;
-        }
-
         // Check if current tenant has time-related apps
         $tenant = Tenant::find($user->selected_tenant_id);
 
@@ -97,11 +87,6 @@ class TenantPolicy
      */
     public function access(User $user): bool
     {
-        // Admin users always have access
-        if ($user->isAdmin()) {
-            return true;
-        }
-
         // Check if user has access to the selected tenant
         return $user->tenants->contains('id', $user->selected_tenant_id);
     }

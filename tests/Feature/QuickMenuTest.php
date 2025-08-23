@@ -17,26 +17,6 @@ it('ensures TenantPolicy is registered', function (): void {
     expect(Gate::policies())->toHaveKey(Tenant::class);
 });
 
-it('prevents policy disappearance regression - admin users always have orders/times access', function (): void {
-    $tenant = Tenant::factory()->create();
-    $adminProfile = Profile::create([
-        'key' => 'ADMIN',
-        'name' => 'Administrator',
-        'tenant_id' => $tenant->id,
-    ]);
-
-    $adminUser = User::factory()->create();
-    $adminUser->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
-    $adminUser->selected_tenant_id = $tenant->id;
-
-    // These MUST be true to prevent button disappearance
-    expect($adminUser->can('orders', Tenant::class))->toBeTrue('Admin should ALWAYS have orders access');
-    expect($adminUser->can('times', Tenant::class))->toBeTrue('Admin should ALWAYS have times access');
-
-    // But website access requires CMS app even for admins
-    expect($adminUser->can('website', Tenant::class))->toBeFalse('Admin needs CMS app for website access');
-});
-
 it('allows admin users website access when tenant has CMS app', function (): void {
     $tenant = Tenant::factory()->create();
     $adminProfile = Profile::create([
