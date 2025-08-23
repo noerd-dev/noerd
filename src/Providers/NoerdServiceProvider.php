@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
 use Noerd\Noerd\Commands\AddUsersToDefaultTenant;
+use Noerd\Noerd\Commands\AssignAppsToTenant;
+use Noerd\Noerd\Commands\CreateTenantApp;
 use Noerd\Noerd\Commands\MakeUserAdmin;
 use Noerd\Noerd\Commands\NoerdInstallCommand;
 use Noerd\Noerd\Middleware\SetupMiddleware;
@@ -41,6 +43,8 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeUserAdmin::class,
                 AddUsersToDefaultTenant::class,
                 NoerdInstallCommand::class,
+                CreateTenantApp::class,
+                AssignAppsToTenant::class,
             ]);
         }
     }
