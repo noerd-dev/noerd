@@ -13,16 +13,16 @@ uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 uses()->group('quick-menu', 'policies');
 
-it('ensures TenantPolicy is registered', function () {
+it('ensures TenantPolicy is registered', function (): void {
     expect(Gate::policies())->toHaveKey(Tenant::class);
 });
 
-it('prevents policy disappearance regression - admin users always have orders/times access', function () {
+it('prevents policy disappearance regression - admin users always have orders/times access', function (): void {
     $tenant = Tenant::factory()->create();
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $adminUser = User::factory()->create();
@@ -37,12 +37,12 @@ it('prevents policy disappearance regression - admin users always have orders/ti
     expect($adminUser->can('website', Tenant::class))->toBeFalse('Admin needs CMS app for website access');
 });
 
-it('allows admin users website access when tenant has CMS app', function () {
+it('allows admin users website access when tenant has CMS app', function (): void {
     $tenant = Tenant::factory()->create();
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $cmsApp = TenantApp::create([
@@ -50,7 +50,7 @@ it('allows admin users website access when tenant has CMS app', function () {
         'title' => 'CMS',
         'is_active' => true,
         'icon' => 'cms',
-        'route' => 'cms.index'
+        'route' => 'cms.index',
     ]);
 
     $tenant->tenantApps()->attach($cmsApp->id);
@@ -63,12 +63,12 @@ it('allows admin users website access when tenant has CMS app', function () {
     expect($adminUser->can('website', Tenant::class))->toBeTrue('Admin with CMS app should have website access');
 });
 
-it('ensures users with CMS app can access website functionality', function () {
+it('ensures users with CMS app can access website functionality', function (): void {
     $tenant = Tenant::factory()->create();
     $userProfile = Profile::create([
         'key' => 'USER',
         'name' => 'User',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $cmsApp = TenantApp::create([
@@ -76,7 +76,7 @@ it('ensures users with CMS app can access website functionality', function () {
         'title' => 'CMS',
         'is_active' => true,
         'icon' => 'cms',
-        'route' => 'cms.index'
+        'route' => 'cms.index',
     ]);
 
     $tenant->tenantApps()->attach($cmsApp->id);
@@ -88,12 +88,12 @@ it('ensures users with CMS app can access website functionality', function () {
     expect($user->can('website', Tenant::class))->toBeTrue('User with CMS app should have website access');
 });
 
-it('ensures users with order apps can access orders functionality', function () {
+it('ensures users with order apps can access orders functionality', function (): void {
     $tenant = Tenant::factory()->create();
     $userProfile = Profile::create([
         'key' => 'USER',
         'name' => 'User',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $deliveryApp = TenantApp::create([
@@ -101,7 +101,7 @@ it('ensures users with order apps can access orders functionality', function () 
         'title' => 'Delivery',
         'is_active' => true,
         'icon' => 'delivery',
-        'route' => 'delivery.index'
+        'route' => 'delivery.index',
     ]);
 
     $tenant->tenantApps()->attach($deliveryApp->id);
@@ -113,12 +113,12 @@ it('ensures users with order apps can access orders functionality', function () 
     expect($user->can('orders', Tenant::class))->toBeTrue('User with delivery app should have orders access');
 });
 
-it('denies access to users without appropriate tenant apps', function () {
+it('denies access to users without appropriate tenant apps', function (): void {
     $tenant = Tenant::factory()->create(); // No apps attached
     $userProfile = Profile::create([
         'key' => 'USER',
         'name' => 'User',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $user = User::factory()->create();
@@ -129,7 +129,7 @@ it('denies access to users without appropriate tenant apps', function () {
     expect($user->can('website', Tenant::class))->toBeFalse('User without CMS app should NOT have website access');
 });
 
-it('handles edge cases gracefully', function () {
+it('handles edge cases gracefully', function (): void {
     $user = User::factory()->create();
 
     // Null tenant
@@ -143,7 +143,7 @@ it('handles edge cases gracefully', function () {
     expect($user->can('website', Tenant::class))->toBeFalse();
 });
 
-it('quick menu component shows CMS button only when tenant has CMS app', function () {
+it('quick menu component shows CMS button only when tenant has CMS app', function (): void {
     $tenant = Tenant::factory()->create();
 
     // Create required settings for tenant
@@ -160,7 +160,7 @@ it('quick menu component shows CMS button only when tenant has CMS app', functio
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $cmsApp = TenantApp::create([
@@ -168,7 +168,7 @@ it('quick menu component shows CMS button only when tenant has CMS app', functio
         'title' => 'CMS',
         'is_active' => true,
         'icon' => 'cms',
-        'route' => 'cms.index'
+        'route' => 'cms.index',
     ]);
 
     $tenant->tenantApps()->attach($cmsApp->id);
@@ -184,12 +184,12 @@ it('quick menu component shows CMS button only when tenant has CMS app', functio
     $component->assertSee('Zur Webseite');
 });
 
-it('quick menu component hides buttons when user lacks permissions', function () {
+it('quick menu component hides buttons when user lacks permissions', function (): void {
     $tenant = Tenant::factory()->create(); // No apps
     $userProfile = Profile::create([
         'key' => 'USER',
         'name' => 'User',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $user = User::factory()->create();
@@ -204,9 +204,9 @@ it('quick menu component hides buttons when user lacks permissions', function ()
         ->assertDontSee('Zur Webseite');
 });
 
-it('generates correct CMS frontend URL when CMS app is available', function () {
+it('generates correct CMS frontend URL when CMS app is available', function (): void {
     $tenant = Tenant::factory()->create([
-        'hash' => 'test-tenant-hash'
+        'hash' => 'test-tenant-hash',
     ]);
 
     // Create required settings for tenant
@@ -223,7 +223,7 @@ it('generates correct CMS frontend URL when CMS app is available', function () {
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $cmsApp = TenantApp::create([
@@ -231,7 +231,7 @@ it('generates correct CMS frontend URL when CMS app is available', function () {
         'title' => 'CMS',
         'is_active' => true,
         'icon' => 'cms',
-        'route' => 'cms.index'
+        'route' => 'cms.index',
     ]);
 
     $tenant->tenantApps()->attach($cmsApp->id);
@@ -247,9 +247,9 @@ it('generates correct CMS frontend URL when CMS app is available', function () {
     $component->assertSet('websiteUrl', $expectedUrl);
 });
 
-it('does not generate website URL when tenant has empty hash', function () {
+it('does not generate website URL when tenant has empty hash', function (): void {
     $tenant = Tenant::factory()->create([
-        'hash' => '' // Empty hash
+        'hash' => '', // Empty hash
     ]);
 
     // Create required settings for tenant
@@ -266,7 +266,7 @@ it('does not generate website URL when tenant has empty hash', function () {
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
-        'tenant_id' => $tenant->id
+        'tenant_id' => $tenant->id,
     ]);
 
     $cmsApp = TenantApp::create([
@@ -274,7 +274,7 @@ it('does not generate website URL when tenant has empty hash', function () {
         'title' => 'CMS',
         'is_active' => true,
         'icon' => 'cms',
-        'route' => 'cms.index'
+        'route' => 'cms.index',
     ]);
 
     $tenant->tenantApps()->attach($cmsApp->id);
@@ -289,7 +289,7 @@ it('does not generate website URL when tenant has empty hash', function () {
     $component->assertSet('websiteUrl', null);
 });
 
-it('validates all order app types provide correct access', function () {
+it('validates all order app types provide correct access', function (): void {
     $orderAppNames = ['DELIVERY', 'RESTAURANT', 'STORE', 'CANTEEN'];
 
     foreach ($orderAppNames as $appName) {
@@ -297,15 +297,15 @@ it('validates all order app types provide correct access', function () {
         $userProfile = Profile::create([
             'key' => 'USER',
             'name' => 'User',
-            'tenant_id' => $tenant->id
+            'tenant_id' => $tenant->id,
         ]);
 
         $app = TenantApp::create([
             'name' => $appName,
             'title' => $appName,
             'is_active' => true,
-            'icon' => strtolower($appName),
-            'route' => strtolower($appName) . '.index'
+            'icon' => mb_strtolower($appName),
+            'route' => mb_strtolower($appName) . '.index',
         ]);
 
         $tenant->tenantApps()->attach($app->id);
