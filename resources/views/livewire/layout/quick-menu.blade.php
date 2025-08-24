@@ -65,7 +65,7 @@ new class extends Component {
 
     @can('cms', Tenant::class)
         <div class="hidden lg:flex">
-            <a class="flex" target="_blank" href="{{ url('/cms-frontend?hash=' . auth()->user()->selectedTenant()->hash) }}">
+            <a class="flex" target="_blank" href="{{ url('/index?hash=' . auth()->user()->selectedTenant()->hash) }}">
                 <button
                     @class([
                         'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
