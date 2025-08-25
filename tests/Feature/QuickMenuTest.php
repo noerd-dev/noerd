@@ -223,7 +223,7 @@ it('generates correct CMS frontend URL when CMS app is available', function (): 
     $component = Livewire::actingAs($adminUser)
         ->test('layout.quick-menu');
 
-    $expectedUrl = url('/cms-frontend?hash=test-tenant-hash');
+    $expectedUrl = url('/index?hash=test-tenant-hash');
     $component->assertSet('websiteUrl', $expectedUrl);
 });
 
