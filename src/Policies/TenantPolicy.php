@@ -14,9 +14,9 @@ class TenantPolicy
         return (bool) (array_intersect($activeApps, ['DELIVERY', 'RESTAURANT', 'STORE', 'CANTEEN']));
     }
 
-    public function stores(): bool
+    public function stores($user): bool
     {
-        $tenant = Tenant::select('id')->where('id', Auth::user()?->selected_tenant_id)->first();
+        $tenant = $user->selectedTenant();
 
         if (! $tenant) {
             return false;
@@ -27,9 +27,9 @@ class TenantPolicy
         return (bool) (array_intersect($activeApps, ['STORE']));
     }
 
-    public function times(): bool
+    public function times($user): bool
     {
-        $tenant = Tenant::select('id')->where('id', Auth::user()?->selected_tenant_id)->first();
+        $tenant = $user->selectedTenant();
 
         if (! $tenant) {
             return false;
@@ -40,12 +40,9 @@ class TenantPolicy
         return (bool) (array_intersect($activeApps, ['STORE', 'DELIVERY']));
     }
 
-    public function gastrofix(): bool
+    public function gastrofix($user): bool
     {
-        $tenant = Tenant::select('id', 'module_gastrofix')->where(
-            'id',
-            Auth::user()?->selected_tenant_id,
-        )->first();
+        $tenant = $user->selectedTenant();
 
         if (! $tenant) {
             return false;
@@ -54,9 +51,9 @@ class TenantPolicy
         return (bool) $tenant->module_gastrofix;
     }
 
-    public function justMenuModule(): bool
+    public function justMenuModule($user): bool
     {
-        $tenant = Tenant::select('id')->where('id', Auth::user()?->selected_tenant_id)->first();
+        $tenant = $user->selectedTenant();
 
         if (! $tenant) {
             return false;
@@ -67,9 +64,9 @@ class TenantPolicy
         return (bool) (array_intersect($activeApps, ['MENU']));
     }
 
-    public function pos(): bool
+    public function pos($user): bool
     {
-        $tenant = Tenant::select('id')->where('id', Auth::user()?->selected_tenant_id)->first();
+        $tenant = $user->selectedTenant();
 
         if (! $tenant) {
             return false;
@@ -78,9 +75,9 @@ class TenantPolicy
         return (bool) (array_intersect($tenant->id, [1]));
     }
 
-    public function cms(): bool
+    public function cms($user): bool
     {
-        $tenant = Tenant::select('id')->where('id', Auth::user()?->selected_tenant_id)->first();
+        $tenant = $user->selectedTenant();
 
         if (! $tenant) {
             return false;
@@ -89,5 +86,11 @@ class TenantPolicy
         $activeApps = $tenant->tenantApps->pluck('name')->toArray();
 
         return (bool) (array_intersect($activeApps, ['CMS']));
+    }
+
+    public function website($user): bool
+    {
+        // Backwards-compatible alias for the CMS ability
+        return $this->cms($user);
     }
 }

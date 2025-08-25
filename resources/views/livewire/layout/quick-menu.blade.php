@@ -9,6 +9,7 @@ new class extends Component {
     public $selectedClientId;
     public $openOrders;
     public $domain;
+    public $websiteUrl;
 
     #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
@@ -18,6 +19,14 @@ new class extends Component {
             $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
         }
         $this->domain = auth()->user()->selectedTenant()?->domain;
+
+        // Compute website URL for CMS access if available
+        $hash = auth()->user()->selectedTenant()?->hash;
+        if (auth()->user()->can('cms', Tenant::class) && !empty($hash)) {
+            $this->websiteUrl = url('/index?hash=' . $hash);
+        } else {
+            $this->websiteUrl = null;
+        }
     }
 
     #[On('refreshOrderCount')]
@@ -65,13 +74,13 @@ new class extends Component {
 
     @can('cms', Tenant::class)
         <div class="hidden lg:flex">
-            <a class="flex" target="_blank" href="{{ url('/index?hash=' . auth()->user()->selectedTenant()->hash) }}">
+            <a class="flex" target="_blank" href="{{ $websiteUrl }}">
                 <button
                     @class([
                         'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
                     ])
                 >
-                    {{__('To Website')}}
+                    {{__('Zur Webseite')}}
                 </button>
             </a>
         </div>
