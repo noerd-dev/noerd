@@ -2,9 +2,6 @@
 
 namespace Noerd\Noerd\Policies;
 
-use Illuminate\Support\Facades\Auth;
-use Noerd\Noerd\Models\Tenant;
-
 class TenantPolicy
 {
     public function orders($user): bool
