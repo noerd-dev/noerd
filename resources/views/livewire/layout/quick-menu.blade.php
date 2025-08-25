@@ -9,7 +9,6 @@ new class extends Component {
     public $selectedClientId;
     public $openOrders;
     public $domain;
-    public $websiteUrl;
 
     #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
@@ -19,15 +18,6 @@ new class extends Component {
             $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
         }
         $this->domain = auth()->user()->selectedTenant()?->domain;
-
-        // Generate CMS frontend URL with tenant hash
-        if (auth()->user()->can('website', Tenant::class)) {
-            $tenant = auth()->user()->selectedTenant();
-            if ($tenant && !empty($tenant->hash)) {
-                $this->websiteUrl = url('/cms-frontend?hash=' . $tenant->hash);
-            }
-
-        }
     }
 
     #[On('refreshOrderCount')]
@@ -73,20 +63,18 @@ new class extends Component {
         </div>
     @endcan
 
-    @can('website', Tenant::class)
-        @if($websiteUrl)
-            <div class="hidden lg:flex">
-                <a class="flex" target="_blank" href="{{$websiteUrl}}">
-                    <button
-                        @class([
-                            'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
-                        ])
-                    >
-                        {{__('Zur Webseite')}}
-                    </button>
-                </a>
-            </div>
-        @endif
+    @can('cms', Tenant::class)
+        <div class="hidden lg:flex">
+            <a class="flex" target="_blank" href="{{ url('/index?hash=' . auth()->user()->selectedTenant()->hash) }}">
+                <button
+                    @class([
+                        'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
+                    ])
+                >
+                    {{__('To Website')}}
+                </button>
+            </a>
+        </div>
     @endcan
 
     @can('times', Tenant::class)
