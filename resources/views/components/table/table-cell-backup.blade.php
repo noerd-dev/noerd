@@ -73,7 +73,7 @@
             </x-noerd::buttons.primary>
         </a>
     @elseif($columnValue === 'deleteAction')
-        <a class="m-0.5 flex" wire:confirm="Position wirklich löschen?" wire:navigate
+        <a class="m-0.5 flex" wire:confirm="{{ __('Really delete position?') }}" wire:navigate
            wire:click.prevent="{{$action}}('{{$id}}')">
             <x-noerd::buttons.small.delete class="ml-auto">
                 {{$label}}

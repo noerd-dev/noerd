@@ -23,7 +23,7 @@
     @if($previewUrl)
         <div class="relative mr-4 mb-4">
             <div style="height: 150px; width: 150px; background: url('{{$previewUrl}}') 0% 0% / cover;">
-                <button wire:confirm="Bild wirklich löschen?"
+                <button wire:confirm="{{ __('Really delete image?') }}"
                         wire:click="deleteImage('{{$field['name']}}')"
                         type="button"
                         class=" top-5 right-0 inline-flex uppercase items-center rounded !bg-red-400 p-1.5 m-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
