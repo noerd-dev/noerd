@@ -43,7 +43,7 @@
                                     @isset($action['heroicon'])
                                         <x-icon name="{{$action['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
                                     @endisset
-                                    {{ __($action['label']) }}
+                                    {{ $action['label'] }}
                                 </a>
                             @endforeach
                         </div>
@@ -70,7 +70,7 @@
             </x-noerd::buttons.primary>
         </a>
     @elseif($columnValue === 'deleteAction')
-        <a class="m-0.5 flex" wire:confirm="Position wirklich löschen?" wire:navigate
+        <a class="m-0.5 flex" wire:confirm="{{ __('Are you sure you want to delete your account?') }}" wire:navigate
 
            wire:click.prevent="{{$action}}('{{$id}}')">
             <x-noerd::buttons.small.delete class="ml-auto">
