@@ -4,16 +4,13 @@ namespace Noerd\Noerd\Helpers;
 
 use Exception;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper
 {
     public static function getComponentFields(string $component): array
     {
-
         $userGroup = 'admin'; // Auth::user()->user_group;
-
 
         if (file_exists(base_path('content/components/' . $userGroup . '/' . $component . '.yml'))) {
             $content = file_get_contents(base_path('content/components/' . $userGroup . '/' . $component . '.yml'));
@@ -44,36 +41,80 @@ class StaticConfigHelper
     {
         $currentApp = session('currentApp');
         // TODO CHANGE
-        if (! $currentApp) {
+        if (!$currentApp) {
             $currentApp = 'delivery';
         }
         $currentApp = mb_strtolower($currentApp);
 
-        return Cache::remember(
-            'getNavigationStructure-' . Auth::user()->selected_tenant_id . $currentApp . Auth::user()->id,
-            3600,
-            function () use ($currentApp) {
-                // first check if app specific navigation exists
-                if (file_exists(base_path('content/apps/' . $currentApp . '/navigation.yml'))) {
-                    $content = file_get_contents(base_path('content/apps/' . $currentApp . '/navigation.yml'));
-                    return Yaml::parse($content ?: '');
-                }
+        $navigationStructure = null;
 
-                // allow to ger a specific navigation for a user group in the future
-                $profile = mb_strtolower(Auth::user()?->currentProfile() ?? 'default');
-                if (file_exists(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
-                    $content = file_get_contents(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
-                    return Yaml::parse($content ?: '');
-                }
+        // first check if app specific navigation exists
+        if (file_exists(base_path('content/apps/' . $currentApp . '/navigation.yml'))) {
+            $content = file_get_contents(base_path('content/apps/' . $currentApp . '/navigation.yml'));
+            $navigationStructure = Yaml::parse($content ?: '');
+        }
 
-                try {
-                    $content = file_get_contents(base_path('content/apps/' . $currentApp . '/default/navigation.yml'));
-                    return Yaml::parse($content ?: '');
-                } catch (Exception $e) {
-                    return null;
+        // allow to ger a specific navigation for a user group in the future
+        if (!$navigationStructure) {
+            $profile = mb_strtolower(Auth::user()?->currentProfile() ?? 'default');
+            if (file_exists(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
+                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
+                $navigationStructure = Yaml::parse($content ?: '');
+            }
+        }
+
+        if (!$navigationStructure) {
+            try {
+                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/default/navigation.yml'));
+                $navigationStructure = Yaml::parse($content ?: '');
+            } catch (Exception $e) {
+                return null;
+            }
+        }
+
+        // Process dynamic navigation blocks
+        if ($navigationStructure) {
+            $navigationStructure = self::processDynamicNavigation($navigationStructure);
+        }
+
+        return $navigationStructure;
+    }
+
+    /**
+     * Build dynamic Collections navigation based on .yml files in /content/collections/
+     */
+    public static function collections(): array
+    {
+        $collectionsPath = base_path('content/collections');
+
+        if (!is_dir($collectionsPath)) {
+            return [];
+        }
+
+        $collectionFiles = glob($collectionsPath . '/*.yml');
+        $dynamicNavigations = [];
+
+        foreach ($collectionFiles as $file) {
+            $collectionKey = basename($file, '.yml');
+
+            try {
+                $content = file_get_contents($file);
+                $collectionData = Yaml::parse($content ?: '');
+
+                if ($collectionData && isset($collectionData['titleList'])) {
+                    $dynamicNavigations[] = [
+                        'title' => $collectionData['titleList'],
+                        'link' => "/cms/collections?key={$collectionKey}",
+                        'icon' => 'icons.list-bullet',
+                    ];
                 }
-            },
-        );
+            } catch (Exception $e) {
+                // Skip invalid YAML files
+                continue;
+            }
+        }
+
+        return $dynamicNavigations;
     }
 
     /**
@@ -97,6 +138,32 @@ class StaticConfigHelper
         }
 
         return $results;
+    }
+
+    /**
+     * Process dynamic navigation blocks based on YAML configuration
+     */
+    private static function processDynamicNavigation(array $navigationStructure): array
+    {
+        foreach ($navigationStructure as &$app) {
+            if (isset($app['block_menus'])) {
+                foreach ($app['block_menus'] as &$blockMenu) {
+                    if (isset($blockMenu['dynamic'])) {
+                        $methodName = $blockMenu['dynamic'];
+
+                        // Check if method exists in this class
+                        if (method_exists(self::class, $methodName)) {
+                            $blockMenu['navigations'] = self::{$methodName}();
+                        }
+
+                        // Remove the dynamic key as it's no longer needed
+                        unset($blockMenu['dynamic']);
+                    }
+                }
+            }
+        }
+
+        return $navigationStructure;
     }
 
     /**
