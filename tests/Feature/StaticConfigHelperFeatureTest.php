@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
+
+uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create test collections directory and files
