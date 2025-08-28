@@ -64,7 +64,7 @@ fields:
     public function store(): void
     {
         $this->validate([
-            'fileName' => ['required', 'string', 'regex:/^[a-zA-Z0-9\-_]+$/'],
+            'fileName' => ['required', 'string'],
             'yamlContent' => ['required', 'string'],
         ], [
             'fileName.required' => 'Dateiname ist erforderlich.',
@@ -87,11 +87,9 @@ fields:
             }
         }
 
-        // Validate YAML syntax
-        try {
-            yaml_parse($this->yamlContent);
-        } catch (Exception $e) {
-            $this->addError('yamlContent', 'Ungültige YAML-Syntax: ' . $e->getMessage());
+        // Basic YAML syntax validation
+        if (!$this->validateYamlSyntax($this->yamlContent)) {
+            $this->addError('yamlContent', 'Ungültige YAML-Syntax. Bitte überprüfen Sie die Einrückung und Struktur.');
             return;
         }
 
@@ -112,6 +110,7 @@ fields:
             'message' => $this->isNewFile ? 'Collection-Datei wurde erfolgreich erstellt.' : 'Collection-Datei wurde erfolgreich gespeichert.'
         ]);
 
+        $this->showSuccessIndicator = true;
         $this->closeModalProcess(self::LIST_COMPONENT);
     }
 
@@ -130,6 +129,46 @@ fields:
         }
 
         $this->closeModalProcess(self::LIST_COMPONENT);
+    }
+
+    private function validateYamlSyntax(string $yamlContent): bool
+    {
+        // Basic YAML validation without yaml_parse extension
+        $lines = explode("\n", $yamlContent);
+        $indentStack = [0];
+
+        foreach ($lines as $lineNumber => $line) {
+            $trimmed = trim($line);
+
+            // Skip empty lines and comments
+            if (empty($trimmed) || str_starts_with($trimmed, '#')) {
+                continue;
+            }
+
+            // Calculate indentation
+            $indent = strlen($line) - strlen(ltrim($line));
+
+            // Check for valid indentation (must be multiple of 2)
+            if ($indent % 2 !== 0) {
+                return false;
+            }
+
+            // Basic structure checks
+            if (str_contains($line, ':')) {
+                // Key-value pair
+                $parts = explode(':', $line, 2);
+                if (count($parts) !== 2) {
+                    return false;
+                }
+            }
+
+            // Check for tabs (YAML doesn't allow tabs for indentation)
+            if (str_contains($line, "\t")) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 } ?>
