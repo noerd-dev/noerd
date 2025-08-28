@@ -12,13 +12,13 @@ class StaticConfigHelper
     {
         $userGroup = 'admin'; // Auth::user()->user_group;
 
-        if (file_exists(base_path('content/components/' . $userGroup . '/' . $component . '.yml'))) {
-            $content = file_get_contents(base_path('content/components/' . $userGroup . '/' . $component . '.yml'));
+        if (file_exists(storage_path('environment/components/' . $userGroup . '/' . $component . '.yml'))) {
+            $content = file_get_contents(storage_path('environment/components/' . $userGroup . '/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
 
-        if (file_exists(base_path('content/components/default/' . $component . '.yml'))) {
-            $content = file_get_contents(base_path('content/components/default/' . $component . '.yml'));
+        if (file_exists(storage_path('environment/components/default/' . $component . '.yml'))) {
+            $content = file_get_contents(storage_path('environment/components/default/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
 
@@ -27,7 +27,7 @@ class StaticConfigHelper
 
     public static function getTableConfig(string $tableName): array
     {
-        $yamlPath = base_path("content/lists/{$tableName}.yml");
+        $yamlPath = storage_path("environment/lists/{$tableName}.yml");
 
         if (!file_exists($yamlPath)) {
             return [];
@@ -49,23 +49,23 @@ class StaticConfigHelper
         $navigationStructure = null;
 
         // first check if app specific navigation exists
-        if (file_exists(base_path('content/apps/' . $currentApp . '/navigation.yml'))) {
-            $content = file_get_contents(base_path('content/apps/' . $currentApp . '/navigation.yml'));
+        if (file_exists(storage_path('environment/apps/' . $currentApp . '/navigation.yml'))) {
+            $content = file_get_contents(storage_path('environment/apps/' . $currentApp . '/navigation.yml'));
             $navigationStructure = Yaml::parse($content ?: '');
         }
 
         // allow to ger a specific navigation for a user group in the future
         if (!$navigationStructure) {
             $profile = mb_strtolower(Auth::user()?->currentProfile() ?? 'default');
-            if (file_exists(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
-                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
+            if (file_exists(storage_path('environment/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
+                $content = file_get_contents(storage_path('environment/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
                 $navigationStructure = Yaml::parse($content ?: '');
             }
         }
 
         if (!$navigationStructure) {
             try {
-                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/default/navigation.yml'));
+                $content = file_get_contents(storage_path('environment/apps/' . $currentApp . '/default/navigation.yml'));
                 $navigationStructure = Yaml::parse($content ?: '');
             } catch (Exception $e) {
                 return null;
@@ -85,7 +85,7 @@ class StaticConfigHelper
      */
     public static function collections(): array
     {
-        $collectionsPath = base_path('content/collections');
+        $collectionsPath = storage_path('environment/collections');
 
         if (!is_dir($collectionsPath)) {
             return [];
@@ -126,13 +126,13 @@ class StaticConfigHelper
         $componentMapping = self::getComponentToModuleMapping();
 
         // Process default components
-        $defaultComponentsPath = base_path('content/components/default');
+        $defaultComponentsPath = storage_path('environment/components/default');
         if (is_dir($defaultComponentsPath)) {
             $results['default'] = self::copyComponentsFromDirectory($defaultComponentsPath, $componentMapping, 'default');
         }
 
         // Process admin components
-        $adminComponentsPath = base_path('content/components/admin');
+        $adminComponentsPath = storage_path('environment/components/admin');
         if (is_dir($adminComponentsPath)) {
             $results['admin'] = self::copyComponentsFromDirectory($adminComponentsPath, $componentMapping, 'admin');
         }
