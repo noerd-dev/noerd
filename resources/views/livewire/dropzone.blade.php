@@ -9,7 +9,7 @@ new class extends Component {
     use WithFileUploads;
 
     #[Modelable]
-    public array $files = [];
+    public ?array $files = [];
 
     #[Reactive]
     public array $rules = [];
@@ -25,6 +25,9 @@ new class extends Component {
     public function updatedTemporaryFiles(): void
     {
         $this->uploadErrors = [];
+        if (!is_array($this->files)) {
+            $this->files = [];
+        }
         $this->validate([
             'temporaryFiles' => $this->multiple ? 'array' : 'required',
             'temporaryFiles.*' => $this->rules,
@@ -53,7 +56,7 @@ new class extends Component {
     public function removeFile($index): void
     {
         // Lösche temporäre Datei wenn vorhanden
-        if (isset($this->files[$index]['_original'])) {
+        if (is_array($this->files) && isset($this->files[$index]['_original'])) {
             try {
                 $this->files[$index]['_original']->delete();
             } catch (\Exception $e) {
@@ -61,20 +64,26 @@ new class extends Component {
             }
         }
 
-        unset($this->files[$index]);
-        $this->files = array_values($this->files);
+        if (is_array($this->files)) {
+            unset($this->files[$index]);
+            $this->files = array_values($this->files);
+        } else {
+            $this->files = [];
+        }
         $this->dispatch('files-updated', files: $this->files);
     }
 
     public function clearFiles(): void
     {
         // Lösche alle temporären Dateien
-        foreach ($this->files as $file) {
-            if (isset($file['_original'])) {
-                try {
-                    $file['_original']->delete();
-                } catch (\Exception $e) {
-                    // Fehler beim Löschen ignorieren
+        if (is_array($this->files)) {
+            foreach ($this->files as $file) {
+                if (isset($file['_original'])) {
+                    try {
+                        $file['_original']->delete();
+                    } catch (\Exception $e) {
+                        // Fehler beim Löschen ignorieren
+                    }
                 }
             }
         }
@@ -218,11 +227,12 @@ new class extends Component {
     @enderror
 
     <!-- File List -->
-    @if(count($files) > 0)
+    @php($fileCount = is_array($files) ? count($files) : 0)
+    @if($fileCount > 0)
         <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-medium text-gray-700">Hochgeladene Dateien ({{ count($files) }})</h4>
-                @if(count($files) > 1)
+                <h4 class="text-sm font-medium text-gray-700">Hochgeladene Dateien ({{ $fileCount }})</h4>
+                @if($fileCount > 1)
                     <button
                         wire:click="clearFiles"
                         type="button"
@@ -233,7 +243,7 @@ new class extends Component {
                 @endif
             </div>
             <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg">
-                @foreach($files as $index => $file)
+                @foreach(is_array($files) ? $files : [] as $index => $file)
                     <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50">
                         <div class="flex items-center min-w-0 flex-1">
                             <!-- File Icon -->
