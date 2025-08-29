@@ -41,8 +41,9 @@ new class extends Component {
             </div>
         </a>
     @else
-        <a wire:navigate href="{{ route($navi['route']) }}" @isset($navi['external']) target="_blank" @endisset
-        class="{{ request()->routeIs($navi['route'])  ? '!border-brand-highlight !text-brand-highlight ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
+        @php($routeName = ($navi['route'] ?? null) === 'collections' ? 'cms.collections' : ($navi['route'] ?? ''))
+        <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
+        class="{{ request()->routeIs($routeName)  ? '!border-brand-highlight !text-brand-highlight ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset
