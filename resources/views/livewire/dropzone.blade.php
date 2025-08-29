@@ -1,162 +1,270 @@
-<div
-    x-cloak
-    x-data="dropzone({
-        _this: @this,
-        uuid: @js($uuid),
-        multiple: @js($multiple),
-    })"
-    @dragenter.prevent.document="onDragenter($event)"
-    @dragleave.prevent="onDragleave($event)"
-    @dragover.prevent="onDragover($event)"
-    @drop.prevent="onDrop"
-    class="w-full antialiased"
->
-    <div class="flex flex-col items-start h-full w-full justify-center bg-white dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500">
-        @if(! is_null($error))
-            <div class="bg-red-50 p-4 w-full mb-4 rounded dark:bg-red-600">
-                <div class="flex gap-3 items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-red-400 dark:text-red-200">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
-                    </svg>
-                    <h3 class="text-sm text-red-800 font-medium dark:text-red-100">{{ $error }}</h3>
-                </div>
-            </div>
-        @endif
-        <div @click="$refs.input.click()" class="border border-dashed w-full rounded border-gray-500 cursor-pointer">
-            <div>
-                <div x-show="!isDragging" class="flex items-center bg-gray-50 justify-center gap-2 py-8 h-full dark:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 text-gray-500 dark:text-gray-400">
-                        <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
-                        <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
-                    </svg>
-                    <p class="text-md text-gray-600 dark:text-gray-400">Datei hier ablegen oder <span class="font-semibold text-black dark:text-white">Datei suchen</span></p>
-                </div>
-                <div x-show="isDragging" class="flex items-center bg-gray-100 justify-center gap-2 py-8 h-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 text-gray-500 dark:text-gray-400">
-                        <path d="M10 2a.75.75 0 01.75.75v5.59l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0L6.2 7.26a.75.75 0 111.1-1.02l1.95 2.1V2.75A.75.75 0 0110 2z" />
-                        <path d="M5.273 4.5a1.25 1.25 0 00-1.205.918l-1.523 5.52c-.006.02-.01.041-.015.062H6a1 1 0 01.894.553l.448.894a1 1 0 00.894.553h3.438a1 1 0 00.86-.49l.606-1.02A1 1 0 0114 11h3.47a1.318 1.318 0 00-.015-.062l-1.523-5.52a1.25 1.25 0 00-1.205-.918h-.977a.75.75 0 010-1.5h.977a2.75 2.75 0 012.651 2.019l1.523 5.52c.066.239.099.485.099.732V15a2 2 0 01-2 2H3a2 2 0 01-2-2v-3.73c0-.246.033-.492.099-.73l1.523-5.521A2.75 2.75 0 015.273 3h.977a.75.75 0 010 1.5h-.977z" />
-                    </svg>
-                    <p class="text-md text-gray-600 dark:text-gray-400">Datei hier ablegen</p>
-                </div>
-            </div>
-            <input
-                    x-ref="input"
-                    wire:model="upload"
-                    type="file"
-                    class="hidden"
-                    x-on:livewire-upload-start="isLoading = true"
-                    x-on:livewire-upload-finish="isLoading = false"
-                    x-on:livewire-upload-error="console.log('livewire-dropzone upload error', error)"
-                    @if(! is_null($this->accept)) accept="{{ $this->accept }}" @endif
-                    @if($multiple === true) multiple @endif
-            >
+<?php
+
+use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
+use Livewire\Attributes\Modelable;
+use Livewire\Attributes\Reactive;
+
+new class extends Component {
+    use WithFileUploads;
+
+    #[Modelable]
+    public array $files = [];
+
+    #[Reactive]
+    public array $rules = [];
+
+    #[Reactive]
+    public bool $multiple = false;
+
+    public array $temporaryFiles = [];
+    public array $uploadErrors = [];
+    public bool $isUploading = false;
+    public int $uploadProgress = 0;
+
+    public function updatedTemporaryFiles(): void
+    {
+        $this->uploadErrors = [];
+        $this->validate([
+            'temporaryFiles' => $this->multiple ? 'array' : 'required',
+            'temporaryFiles.*' => $this->rules,
+        ], [
+            'temporaryFiles.*.mimes' => 'Die Datei muss eines der folgenden Formate haben: :values',
+            'temporaryFiles.*.max' => 'Die Datei darf maximal :max KB groß sein',
+        ]);
+
+        foreach ($this->temporaryFiles as $file) {
+            // Konvertiere TemporaryUploadedFile zu Array-Format für MediaUploadService
+            $this->files[] = [
+                'name' => $file->getClientOriginalName(),
+                'extension' => $file->getClientOriginalExtension(),
+                'size' => $file->getSize(),
+                'path' => $file->getRealPath(),
+                'mime_type' => $file->getMimeType(),
+                // Behalte auch das Original-Objekt für die Anzeige
+                '_original' => $file
+            ];
+        }
+
+        $this->temporaryFiles = [];
+        $this->dispatch('files-updated', files: $this->files);
+    }
+
+    public function removeFile($index): void
+    {
+        // Lösche temporäre Datei wenn vorhanden
+        if (isset($this->files[$index]['_original'])) {
+            try {
+                $this->files[$index]['_original']->delete();
+            } catch (\Exception $e) {
+                // Fehler beim Löschen ignorieren
+            }
+        }
+
+        unset($this->files[$index]);
+        $this->files = array_values($this->files);
+        $this->dispatch('files-updated', files: $this->files);
+    }
+
+    public function clearFiles(): void
+    {
+        // Lösche alle temporären Dateien
+        foreach ($this->files as $file) {
+            if (isset($file['_original'])) {
+                try {
+                    $file['_original']->delete();
+                } catch (\Exception $e) {
+                    // Fehler beim Löschen ignorieren
+                }
+            }
+        }
+
+        $this->files = [];
+        $this->dispatch('files-cleared');
+    }
+
+    public function getAcceptAttribute(): string
+    {
+        $mimes = [];
+        foreach ($this->rules as $rule) {
+            if (str_starts_with($rule, 'mimes:')) {
+                $extensions = explode(',', str_replace('mimes:', '', $rule));
+                foreach ($extensions as $ext) {
+                    $mimes[] = '.' . $ext;
+                }
+            }
+        }
+        return implode(',', $mimes);
+    }
+
+    public function getMaxSizeAttribute(): string
+    {
+        foreach ($this->rules as $rule) {
+            if (str_starts_with($rule, 'max:')) {
+                $kb = str_replace('max:', '', $rule);
+                return $this->formatBytes($kb * 1024);
+            }
+        }
+        return 'unbegrenzt';
+    }
+
+    private function formatBytes($bytes): string
+    {
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        } else {
+            return $bytes . ' Bytes';
+        }
+    }
+
+    public function getFileDisplayName($file): string
+    {
+        if (isset($file['_original'])) {
+            return $file['_original']->getClientOriginalName();
+        }
+        return $file['name'] ?? 'Unbekannte Datei';
+    }
+
+    public function getFileSize($file): int
+    {
+        if (isset($file['_original'])) {
+            return $file['_original']->getSize();
+        }
+        return $file['size'] ?? 0;
+    }
+}; ?>
+
+<div class="w-full">
+    <!-- Dropzone Area -->
+    <div
+        x-data="{
+            isDragging: false,
+            handleDrop(e) {
+                this.isDragging = false;
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    @this.uploadMultiple('temporaryFiles', files);
+                }
+            }
+        }"
+        @dragover.prevent="isDragging = true"
+        @dragleave.prevent="isDragging = false"
+        @drop.prevent="handleDrop($event)"
+        :class="{ 'border-blue-500 bg-blue-50': isDragging }"
+        class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all duration-200 hover:border-gray-400"
+    >
+        <div class="text-center">
+            <!-- Upload Icon -->
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
+            <!-- Upload Text -->
+            <p class="mt-2 text-sm text-gray-600">
+                <label for="file-upload-{{ $this->getId() }}" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
+                    <span>Datei auswählen</span>
+                    <input
+                        id="file-upload-{{ $this->getId() }}"
+                        wire:model.live="temporaryFiles"
+                        type="file"
+                        class="sr-only"
+                        accept="{{ $this->getAcceptAttribute() }}"
+                        @if($multiple) multiple @endif
+                    >
+                </label>
+                <span class="text-gray-500"> oder per Drag & Drop</span>
+            </p>
+
+            <!-- File Info -->
+            <p class="mt-1 text-xs text-gray-500">
+                @if($this->getAcceptAttribute())
+                    Erlaubte Dateitypen: {{ str_replace('.', '', $this->getAcceptAttribute()) }}
+                @endif
+                @if($this->getMaxSizeAttribute() !== 'unbegrenzt')
+                    <br>Max. Dateigröße: {{ $this->getMaxSizeAttribute() }}
+                @endif
+            </p>
         </div>
 
-        <div class="flex justify-between w-full mt-2">
-            <div class="flex items-center gap-2 text-gray-500 text-sm">
-                @php
-                    $hasMaxFileSize = ! is_null($this->maxFileSize);
-                    $hasMimes = ! empty($this->mimes);
-                @endphp
-
-                @if($hasMaxFileSize)
-                    <p>{{ __('Bis zu :size', ['size' => \Illuminate\Support\Number::fileSize($this->maxFileSize * 1024)]) }}</p>
-                @endif
-
-                @if($hasMaxFileSize && $hasMimes)
-                    <span class="w-1 h-1 text-gray-400">·</span>
-                @endif
-
-                @if($hasMimes)
-                    <p>{{ Str::upper($this->mimes) }}</p>
-                @endif
-            </div>
-            <div x-show="isLoading" role="status">
-                <svg aria-hidden="true" class="w-5 h-5 text-gray-200 animate-spin dark:text-gray-700 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
-                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+        <!-- Upload Progress -->
+        <div wire:loading wire:target="temporaryFiles" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+            <div class="text-center">
+                <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span class="sr-only">Loading...</span>
+                <p class="mt-2 text-sm text-gray-600">Wird hochgeladen...</p>
             </div>
         </div>
-
-        @if(isset($files) && count($files) > 0)
-        <div class="flex flex-wrap gap-x-10 gap-y-2 justify-start w-full mt-5">
-            @foreach($files as $file)
-                <div class="flex items-center justify-between gap-2 border rounded border-gray-300 w-full h-auto overflow-hidden dark:border-gray-700">
-                    <div class="flex items-center gap-3">
-                        @if($this->isImageMime($file['extension']))
-                            <div class="flex-none w-14 h-14">
-                                <img src="{{ $file['temporaryUrl'] }}" class="object-fill w-full h-full" alt="{{ $file['name'] }}">
-                            </div>
-                        @else
-                            <div class="flex justify-center items-center w-14 h-14 bg-gray-100 dark:bg-gray-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-8 h-8 text-gray-500">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                </svg>
-                            </div>
-                        @endif
-                        <div class="flex flex-col items-start gap-1">
-                            <div class="text-center text-slate-900 text-sm font-medium dark:text-slate-100">{{ $file['name'] }}</div>
-                            <div class="text-center text-gray-500 text-sm font-medium">{{ \Illuminate\Support\Number::fileSize($file['size']) }}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center mr-3">
-                        <button type="button" @click="removeUpload('{{ $file['tmpFilename'] }}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-black dark:text-white">
-                                <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-        @endif
     </div>
 
-    @script
-    <script>
-        Alpine.data('dropzone', ({ _this, uuid, multiple }) => {
-            return ({
-                isDragging: false,
-                isDropped: false,
-                isLoading: false,
+    <!-- Error Messages -->
+    @if($uploadErrors)
+        <div class="mt-2 text-sm text-red-600">
+            @foreach($uploadErrors as $error)
+                <p>{{ $error }}</p>
+            @endforeach
+        </div>
+    @endif
 
-                onDrop(e) {
-                    this.isDropped = true
-                    this.isDragging = false
+    @error('temporaryFiles.*')
+    <div class="mt-2 text-sm text-red-600">
+        {{ $message }}
+    </div>
+    @enderror
 
-                    const file = multiple ? e.dataTransfer.files : e.dataTransfer.files[0]
+    <!-- File List -->
+    @if(count($files) > 0)
+        <div class="mt-4 space-y-2">
+            <div class="flex items-center justify-between">
+                <h4 class="text-sm font-medium text-gray-700">Hochgeladene Dateien ({{ count($files) }})</h4>
+                @if(count($files) > 1)
+                    <button
+                        wire:click="clearFiles"
+                        type="button"
+                        class="text-xs text-red-600 hover:text-red-500"
+                    >
+                        Alle entfernen
+                    </button>
+                @endif
+            </div>
+            <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                @foreach($files as $index => $file)
+                    <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50">
+                        <div class="flex items-center min-w-0 flex-1">
+                            <!-- File Icon -->
+                            <svg class="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" />
+                            </svg>
 
-                    const args = ['upload', file, () => {
-                        // Upload completed
-                        this.isLoading = false
-                    }, (error) => {
-                        // An error occurred while uploading
-                        console.log('livewire-dropzone upload error', error);
-                    }, () => {
-                        // Uploading is in progress
-                        this.isLoading = true
-                    }];
+                            <!-- File Info -->
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    {{ $this->getFileDisplayName($file) }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $this->formatBytes($this->getFileSize($file)) }}
+                                </p>
+                            </div>
+                        </div>
 
-                    // Upload file(s)
-                    multiple ? _this.uploadMultiple(...args) : _this.upload(...args)
-                },
-                onDragenter() {
-                    this.isDragging = true
-                },
-                onDragleave() {
-                    this.isDragging = false
-                },
-                onDragover() {
-                    this.isDragging = true
-                },
-                removeUpload(tmpFilename) {
-                    // Dispatch an event to remove the temporarily uploaded file
-                    _this.dispatch(uuid + ':fileRemoved', { tmpFilename })
-                },
-            });
-        })
-    </script>
-    @endscript
+                        <!-- Remove Button -->
+                        <button
+                            wire:click="removeFile({{ $index }})"
+                            type="button"
+                            class="ml-4 flex-shrink-0 text-red-600 hover:text-red-500"
+                        >
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 </div>
