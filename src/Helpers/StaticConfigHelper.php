@@ -12,8 +12,18 @@ class StaticConfigHelper
     {
         $userGroup = 'admin'; // Auth::user()->user_group;
 
+        if (file_exists(base_path('content/components/' . $userGroup . '/' . $component . '.yml'))) {
+            $content = file_get_contents(base_path('content/components/' . $userGroup . '/' . $component . '.yml'));
+            return Yaml::parse($content ?: '');
+        }
+
         if (file_exists(storage_path('environment/components/' . $userGroup . '/' . $component . '.yml'))) {
             $content = file_get_contents(storage_path('environment/components/' . $userGroup . '/' . $component . '.yml'));
+            return Yaml::parse($content ?: '');
+        }
+
+        if (file_exists(base_path('content/components/default/' . $component . '.yml'))) {
+            $content = file_get_contents(base_path('content/components/default/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
 
@@ -27,7 +37,10 @@ class StaticConfigHelper
 
     public static function getTableConfig(string $tableName): array
     {
-        $yamlPath = storage_path("environment/lists/{$tableName}.yml");
+        $yamlPath = base_path("content/lists/{$tableName}.yml");
+        if (!file_exists($yamlPath)) {
+            $yamlPath = storage_path("environment/lists/{$tableName}.yml");
+        }
 
         if (!file_exists($yamlPath)) {
             return [];
@@ -49,23 +62,23 @@ class StaticConfigHelper
         $navigationStructure = null;
 
         // first check if app specific navigation exists
-        if (file_exists(storage_path('environment/apps/' . $currentApp . '/navigation.yml'))) {
-            $content = file_get_contents(storage_path('environment/apps/' . $currentApp . '/navigation.yml'));
+        if (file_exists(base_path('content/apps/' . $currentApp . '/navigation.yml'))) {
+            $content = file_get_contents(base_path('content/apps/' . $currentApp . '/navigation.yml'));
             $navigationStructure = Yaml::parse($content ?: '');
         }
 
         // allow to ger a specific navigation for a user group in the future
         if (!$navigationStructure) {
             $profile = mb_strtolower(Auth::user()?->currentProfile() ?? 'default');
-            if (file_exists(storage_path('environment/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
-                $content = file_get_contents(storage_path('environment/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
+            if (file_exists(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
+                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
                 $navigationStructure = Yaml::parse($content ?: '');
             }
         }
 
         if (!$navigationStructure) {
             try {
-                $content = file_get_contents(storage_path('environment/apps/' . $currentApp . '/default/navigation.yml'));
+                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/default/navigation.yml'));
                 $navigationStructure = Yaml::parse($content ?: '');
             } catch (Exception $e) {
                 return null;
@@ -85,10 +98,14 @@ class StaticConfigHelper
      */
     public static function collections(): array
     {
-        $collectionsPath = storage_path('environment/collections');
+        $collectionsPath = base_path('content/collections');
 
         if (!is_dir($collectionsPath)) {
-            return [];
+            // fallback to storage/environment for backward compatibility
+            $collectionsPath = storage_path('environment/collections');
+            if (!is_dir($collectionsPath)) {
+                return [];
+            }
         }
 
         $collectionFiles = glob($collectionsPath . '/*.yml');
@@ -126,13 +143,13 @@ class StaticConfigHelper
         $componentMapping = self::getComponentToModuleMapping();
 
         // Process default components
-        $defaultComponentsPath = storage_path('environment/components/default');
+        $defaultComponentsPath = base_path('content/components/default');
         if (is_dir($defaultComponentsPath)) {
             $results['default'] = self::copyComponentsFromDirectory($defaultComponentsPath, $componentMapping, 'default');
         }
 
         // Process admin components
-        $adminComponentsPath = storage_path('environment/components/admin');
+        $adminComponentsPath = base_path('content/components/admin');
         if (is_dir($adminComponentsPath)) {
             $results['admin'] = self::copyComponentsFromDirectory($adminComponentsPath, $componentMapping, 'admin');
         }
@@ -145,20 +162,29 @@ class StaticConfigHelper
      */
     private static function processDynamicNavigation(array $navigationStructure): array
     {
-        foreach ($navigationStructure as &$app) {
-            if (isset($app['block_menus'])) {
-                foreach ($app['block_menus'] as &$blockMenu) {
-                    if (isset($blockMenu['dynamic'])) {
-                        $methodName = $blockMenu['dynamic'];
-
-                        // Check if method exists in this class
-                        if (method_exists(self::class, $methodName)) {
-                            $blockMenu['navigations'] = self::{$methodName}();
-                        }
-
-                        // Remove the dynamic key as it's no longer needed
-                        unset($blockMenu['dynamic']);
+        // Support legacy navigation structure with block_menus at top level
+        if (isset($navigationStructure[0]['block_menus'])) {
+            foreach ($navigationStructure as $i => $appBlock) {
+                $blockMenus = $appBlock['block_menus'] ?? [];
+                foreach ($blockMenus as $j => $menu) {
+                    if (($menu['dynamic'] ?? null) === 'collections') {
+                        $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::collections();
+                        unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
                     }
+                }
+            }
+            return $navigationStructure;
+        }
+
+        $items = $navigationStructure['items'] ?? [];
+        if (is_array($items)) {
+            foreach ($items as $index => $item) {
+                if (($item['type'] ?? null) === 'dynamic' && isset($item['collection'])) {
+                    $children = $item['children'] ?? [];
+                    if (!is_array($children)) {
+                        $children = [];
+                    }
+                    $navigationStructure['items'][$index]['children'] = array_merge($children, self::collections());
                 }
             }
         }
