@@ -57,11 +57,11 @@ class NavigationService
 
     private function roleFeatureEnabled(): bool
     {
-        return (bool) env('ROLE_FEATURE_ENABLED', true);
+        return (bool) env('ROLE_FEATURE_ENABLED', false);
     }
 
     private function newTenantFeature(): bool
     {
-        return (bool) env('NEW_TENANT_FEATURE_ENABLED', true);
+        return (bool) env('NEW_TENANT_FEATURE_ENABLED', false);
     }
 }

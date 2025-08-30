@@ -46,7 +46,7 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
     <!-- Session Status -->
     <x-noerd::auth-session-status class="text-center" :status="session('status')"/>
 
-    @if(env('REGISTER_FEATURE_ENABLED', false))
+    @if(env('REGISTER_FEATURE_ENABLED', true))
         <form wire:submit="register" class="flex flex-col gap-6">
             <!-- Name -->
             <flux:input

@@ -119,7 +119,7 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
         </div>
     </form>
 
-    @if (Route::has('register') && env('REGISTER_FEATURE_ENABLED', false))
+    @if (Route::has('register') && env('REGISTER_FEATURE_ENABLED', true))
         <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
             <span>{{ __('Don\'t have an account?') }}</span>
             <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
