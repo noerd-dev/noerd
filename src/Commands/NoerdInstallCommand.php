@@ -169,6 +169,9 @@ class NoerdInstallCommand extends Command
             // Update auth configuration
             $this->updateAuthConfig();
 
+            // Update composer.json repositories
+            $this->updateComposerRepositories();
+
             $this->line('<info>Frontend assets setup completed successfully.</info>');
         } catch (Exception $e) {
             $this->warn('Frontend assets setup failed: ' . $e->getMessage());
@@ -181,14 +184,14 @@ class NoerdInstallCommand extends Command
     private function updateAppCss(): void
     {
         $cssPath = base_path('resources/css/app.css');
-        
+
         if (!file_exists($cssPath)) {
             $this->warn('app.css not found, skipping CSS updates.');
             return;
         }
 
         $cssContent = file_get_contents($cssPath);
-        
+
         $noerdStyles = "
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
@@ -253,7 +256,7 @@ select:focus[data-flux-control] {
 ";
 
         // Check if noerd styles are already present
-        if (strpos($cssContent, '@source \'../../vendor/noerd/noerd/resources/views/**/*.blade.php\';') === false) {
+        if (!str_contains($cssContent, '@source \'../../vendor/noerd/noerd/resources/views/**/*.blade.php\';')) {
             file_put_contents($cssPath, $cssContent . $noerdStyles);
             $this->line('<info>Updated app.css with noerd styles.</info>');
         } else {
@@ -267,14 +270,14 @@ select:focus[data-flux-control] {
     private function updateAppJs(): void
     {
         $jsPath = base_path('resources/js/app.js');
-        
+
         if (!file_exists($jsPath)) {
             $this->warn('app.js not found, skipping JS updates.');
             return;
         }
 
         $jsContent = file_get_contents($jsPath);
-        
+
         $alpineConfig = "
 import sort from '@alpinejs/sort'
 
@@ -293,7 +296,7 @@ Alpine.store('app', {
 ";
 
         // Check if Alpine sort plugin is already imported
-        if (strpos($jsContent, "import sort from '@alpinejs/sort'") === false) {
+        if (!str_contains($jsContent, "import sort from '@alpinejs/sort'")) {
             file_put_contents($jsPath, $jsContent . $alpineConfig);
             $this->line('<info>Updated app.js with Alpine.js configuration.</info>');
         } else {
@@ -307,12 +310,12 @@ Alpine.store('app', {
     private function installNpmPackages(): void
     {
         $this->line('<comment>Installing npm packages...</comment>');
-        
+
         $packages = [
             '@tailwindcss/forms@^0.5.2',
             'tailwind-scrollbar@^4.0.2',
             'dotenv@^16.4.7',
-            '@alpinejs/sort'
+            '@alpinejs/sort',
         ];
 
         $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
@@ -332,7 +335,7 @@ Alpine.store('app', {
     private function createTailwindConfig(): void
     {
         $configPath = base_path('tailwind.config.js');
-        
+
         if (file_exists($configPath) && !$this->option('force')) {
             if (!$this->confirm('tailwind.config.js already exists. Do you want to overwrite it?')) {
                 $this->line('<comment>Skipped tailwind.config.js creation.</comment>');
@@ -385,16 +388,16 @@ export default {
     private function updateFilesystemsConfig(): void
     {
         $filesystemsPath = base_path('config/filesystems.php');
-        
+
         if (!file_exists($filesystemsPath)) {
             $this->warn('filesystems.php not found, skipping filesystem configuration.');
             return;
         }
 
         $filesystemsContent = file_get_contents($filesystemsPath);
-        
+
         // Check if media disk is already configured
-        if (strpos($filesystemsContent, "'media' =>") !== false) {
+        if (str_contains($filesystemsContent, "'media' =>")) {
             $this->line('<comment>Media disk already configured in filesystems.php.</comment>');
             return;
         }
@@ -402,7 +405,7 @@ export default {
         // Find the position to insert the media disk configuration
         // Look for the closing of the 'disks' array
         $pattern = '/(\s+)(],\s*\/\*[\s\S]*?Symbolic Links[\s\S]*?\*\/)/';
-        
+
         $mediaDiskConfig = "
         'media' => [
             'driver' => 'local',
@@ -430,16 +433,16 @@ export default {
     private function updateAuthConfig(): void
     {
         $authPath = base_path('config/auth.php');
-        
+
         if (!file_exists($authPath)) {
             $this->warn('auth.php not found, skipping auth configuration.');
             return;
         }
 
         $authContent = file_get_contents($authPath);
-        
+
         // Check if Noerd User model is already configured
-        if (strpos($authContent, 'Noerd\\Noerd\\Models\\User::class') !== false) {
+        if (str_contains($authContent, 'Noerd\\Noerd\\Models\\User::class')) {
             $this->line('<comment>Noerd User model already configured in auth.php.</comment>');
             return;
         }
@@ -489,5 +492,58 @@ export default {
                 ['Files skipped', $results['skipped_files']],
             ],
         );
+    }
+
+    /**
+     * Update composer.json to add repositories configuration
+     */
+    private function updateComposerRepositories(): void
+    {
+        $composerPath = base_path('composer.json');
+
+        if (!file_exists($composerPath)) {
+            $this->warn('composer.json not found, skipping repositories update');
+            return;
+        }
+
+        $composerContent = file_get_contents($composerPath);
+        $composerData = json_decode($composerContent, true);
+
+        if (!$composerData) {
+            $this->warn('Failed to parse composer.json, skipping repositories update');
+            return;
+        }
+
+        // Check if repositories already exists
+        if (isset($composerData['repositories'])) {
+            // Check if our path repository already exists
+            foreach ($composerData['repositories'] as $repo) {
+                if (isset($repo['type']) && $repo['type'] === 'path' &&
+                    isset($repo['url']) && $repo['url'] === 'app-modules/*') {
+                    $this->line('Repositories configuration already exists in composer.json');
+                    return;
+                }
+            }
+        } else {
+            $composerData['repositories'] = [];
+        }
+
+        // Add the path repository
+        $composerData['repositories'][] = [
+            'type' => 'path',
+            'url' => 'app-modules/*',
+            'options' => [
+                'symlink' => true,
+            ],
+        ];
+
+        // Write back to composer.json with pretty formatting
+        $newContent = json_encode($composerData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        if (file_put_contents($composerPath, $newContent) !== false) {
+            $this->line('Added repositories configuration to composer.json');
+        } else {
+            $this->warn('Failed to update composer.json');
+        }
     }
 }
