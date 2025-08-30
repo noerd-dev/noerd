@@ -196,6 +196,7 @@ class NoerdInstallCommand extends Command
         $cssContent = file_get_contents($cssPath);
 
         $noerdStyles = "
+@import 'quill/dist/quill.snow.css';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 @source '../../vendor/noerd/noerd/resources/views/**/*.blade.php';
