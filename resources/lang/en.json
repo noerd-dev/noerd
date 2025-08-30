@@ -1,7 +1,15 @@
 {
   "Choose image from media": "Choose image from media",
   "Really delete image?": "Really delete image?",
-  "Really delete position?": "Really delete position?"
+  "Really delete position?": "Really delete position?",
+  "Mandanten-Zugriff": "Tenant Access",
+  "Übersicht über Ihre aktuellen Zugriffsrechte auf Mandanten und zugewiesene Rollen.": "Overview of your current access rights to tenants and assigned roles.",
+  "Zugriff auf folgende Mandanten:": "Access to the following tenants:",
+  "Sie haben derzeit keinen Zugriff auf Mandanten.": "You currently have no access to tenants.",
+  "Unbekanntes Profil": "Unknown Profile",
+  "Fehler: Mandanten-Information fehlt. Bitte laden Sie die Seite neu.": "Error: Tenant information is missing. Please reload the page.",
+  "Aktuell bist du keinem Mandanten zugeordnet. Bitte kontaktiere deinen Administrator, um Zugriff auf die Anwendung zu erhalten.": "You are currently not assigned to any tenant. Please contact your administrator to get access to the application.",
+  "Benutzer hat Zugriff": "User has access"
 }
 
 
