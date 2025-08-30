@@ -49,6 +49,9 @@ class NoerdInstallCommand extends Command
 
             $this->displaySummary($results);
 
+            // Ensure app-modules directory exists
+            $this->ensureAppModulesDirectory();
+
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
 
@@ -544,6 +547,36 @@ export default {
             $this->line('Added repositories configuration to composer.json');
         } else {
             $this->warn('Failed to update composer.json');
+        }
+    }
+
+    /**
+     * Ensure app-modules directory exists with .gitkeep file
+     */
+    private function ensureAppModulesDirectory(): void
+    {
+        $appModulesPath = base_path('app-modules');
+
+        if (!is_dir($appModulesPath)) {
+            if (!mkdir($appModulesPath, 0755, true)) {
+                $this->warn('Failed to create app-modules directory');
+                return;
+            }
+            $this->line('Created app-modules directory');
+        } else {
+            $this->line('<comment>app-modules directory already exists</comment>');
+        }
+
+        $gitkeepPath = $appModulesPath . DIRECTORY_SEPARATOR . '.gitkeep';
+
+        if (!file_exists($gitkeepPath)) {
+            if (file_put_contents($gitkeepPath, '') !== false) {
+                $this->line('Created .gitkeep file in app-modules directory');
+            } else {
+                $this->warn('Failed to create .gitkeep file');
+            }
+        } else {
+            $this->line('<comment>.gitkeep already exists in app-modules directory</comment>');
         }
     }
 }
