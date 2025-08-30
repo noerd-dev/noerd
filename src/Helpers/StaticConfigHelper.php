@@ -17,20 +17,14 @@ class StaticConfigHelper
             return Yaml::parse($content ?: '');
         }
 
-        if (file_exists(storage_path('environment/components/' . $userGroup . '/' . $component . '.yml'))) {
-            $content = file_get_contents(storage_path('environment/components/' . $userGroup . '/' . $component . '.yml'));
-            return Yaml::parse($content ?: '');
-        }
+        
 
         if (file_exists(base_path('content/components/default/' . $component . '.yml'))) {
             $content = file_get_contents(base_path('content/components/default/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
 
-        if (file_exists(storage_path('environment/components/default/' . $component . '.yml'))) {
-            $content = file_get_contents(storage_path('environment/components/default/' . $component . '.yml'));
-            return Yaml::parse($content ?: '');
-        }
+        
 
         throw new Exception('Component not found: ' . $component);
     }
@@ -38,9 +32,6 @@ class StaticConfigHelper
     public static function getTableConfig(string $tableName): array
     {
         $yamlPath = base_path("content/lists/{$tableName}.yml");
-        if (!file_exists($yamlPath)) {
-            $yamlPath = storage_path("environment/lists/{$tableName}.yml");
-        }
 
         if (!file_exists($yamlPath)) {
             return [];
@@ -101,11 +92,7 @@ class StaticConfigHelper
         $collectionsPath = base_path('content/collections');
 
         if (!is_dir($collectionsPath)) {
-            // fallback to storage/environment for backward compatibility
-            $collectionsPath = storage_path('environment/collections');
-            if (!is_dir($collectionsPath)) {
-                return [];
-            }
+            return [];
         }
 
         $collectionFiles = glob($collectionsPath . '/*.yml');
