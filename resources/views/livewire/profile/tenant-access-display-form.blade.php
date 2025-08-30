@@ -20,7 +20,7 @@ new class extends Component {
             $tenantAccess[] = [
                 'id' => $tenant->id,
                 'name' => $tenant->name,
-                'profile_name' => $profile ? $profile->name : 'Unbekanntes Profil',
+                'profile_name' => $profile ? $profile->name : __('Unbekanntes Profil'),
                 'profile_id' => $profileId,
             ];
         }
@@ -44,7 +44,7 @@ new class extends Component {
     <div class="mt-6 space-y-6">
         <div>
             <div class="pb-4 font-medium text-gray-700">
-                Zugriff auf folgende Mandanten:
+                {{ __('Zugriff auf folgende Mandanten:') }}
             </div>
             
             @if(count($this->userTenantAccess) > 0)
@@ -77,7 +77,7 @@ new class extends Component {
             @else
                 <div class="pl-2">
                     <div class="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg">
-                        Sie haben derzeit keinen Zugriff auf Mandanten.
+                        {{ __('Sie haben derzeit keinen Zugriff auf Mandanten.') }}
                     </div>
                 </div>
             @endif

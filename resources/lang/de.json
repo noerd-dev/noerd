@@ -107,7 +107,15 @@
     "Zur Webseite": "Zur Webseite",
     "Bild aus Medien wählen": "Bild aus Medien wählen",
     "Really delete image?": "Bild wirklich löschen?",
-    "Really delete position?": "Position wirklich löschen?"
+    "Really delete position?": "Position wirklich löschen?",
+    "Mandanten-Zugriff": "Mandanten-Zugriff",
+    "Übersicht über Ihre aktuellen Zugriffsrechte auf Mandanten und zugewiesene Rollen.": "Übersicht über Ihre aktuellen Zugriffsrechte auf Mandanten und zugewiesene Rollen.",
+    "Zugriff auf folgende Mandanten:": "Zugriff auf folgende Mandanten:",
+    "Sie haben derzeit keinen Zugriff auf Mandanten.": "Sie haben derzeit keinen Zugriff auf Mandanten.",
+    "Unbekanntes Profil": "Unbekanntes Profil",
+    "Fehler: Mandanten-Information fehlt. Bitte laden Sie die Seite neu.": "Fehler: Mandanten-Information fehlt. Bitte laden Sie die Seite neu.",
+    "Aktuell bist du keinem Mandanten zugeordnet. Bitte kontaktiere deinen Administrator, um Zugriff auf die Anwendung zu erhalten.": "Aktuell bist du keinem Mandanten zugeordnet. Bitte kontaktiere deinen Administrator, um Zugriff auf die Anwendung zu erhalten.",
+    "Benutzer hat Zugriff": "Benutzer hat Zugriff"
 }
 
 
