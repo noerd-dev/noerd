@@ -154,6 +154,9 @@ class NoerdInstallCommand extends Command
             // Update app.css
             $this->updateAppCss();
 
+            // Update app.js
+            $this->updateAppJs();
+
             // Install npm packages
             $this->installNpmPackages();
 
@@ -162,6 +165,9 @@ class NoerdInstallCommand extends Command
 
             // Update filesystems configuration
             $this->updateFilesystemsConfig();
+
+            // Update auth configuration
+            $this->updateAuthConfig();
 
             $this->line('<info>Frontend assets setup completed successfully.</info>');
         } catch (Exception $e) {
@@ -252,6 +258,46 @@ select:focus[data-flux-control] {
             $this->line('<info>Updated app.css with noerd styles.</info>');
         } else {
             $this->line('<comment>Noerd styles already present in app.css.</comment>');
+        }
+    }
+
+    /**
+     * Update app.js with Alpine.js configuration
+     */
+    private function updateAppJs(): void
+    {
+        $jsPath = base_path('resources/js/app.js');
+        
+        if (!file_exists($jsPath)) {
+            $this->warn('app.js not found, skipping JS updates.');
+            return;
+        }
+
+        $jsContent = file_get_contents($jsPath);
+        
+        $alpineConfig = "
+import sort from '@alpinejs/sort'
+
+Alpine.plugin(sort)
+
+Alpine.store('globalState', {
+    open: true,
+});
+
+Alpine.store('app', {
+    currentId: 200,
+    setId(id) {
+        this.currentId = id;
+    }
+});
+";
+
+        // Check if Alpine sort plugin is already imported
+        if (strpos($jsContent, "import sort from '@alpinejs/sort'") === false) {
+            file_put_contents($jsPath, $jsContent . $alpineConfig);
+            $this->line('<info>Updated app.js with Alpine.js configuration.</info>');
+        } else {
+            $this->line('<comment>Alpine.js configuration already present in app.js.</comment>');
         }
     }
 
@@ -375,6 +421,55 @@ export default {
             $this->line('<info>Added media disk configuration to filesystems.php.</info>');
         } else {
             $this->warn('Could not automatically add media disk configuration. Please add it manually.');
+        }
+    }
+
+    /**
+     * Update auth.php configuration to use Noerd User model
+     */
+    private function updateAuthConfig(): void
+    {
+        $authPath = base_path('config/auth.php');
+        
+        if (!file_exists($authPath)) {
+            $this->warn('auth.php not found, skipping auth configuration.');
+            return;
+        }
+
+        $authContent = file_get_contents($authPath);
+        
+        // Check if Noerd User model is already configured
+        if (strpos($authContent, 'Noerd\\Noerd\\Models\\User::class') !== false) {
+            $this->line('<comment>Noerd User model already configured in auth.php.</comment>');
+            return;
+        }
+
+        // Replace App\Models\User::class with Noerd\Noerd\Models\User::class
+        $patterns = [
+            // Pattern for direct class reference
+            '/App\\\\Models\\\\User::class/' => '\\Noerd\\Noerd\\Models\\User::class',
+            // Pattern for env() with App\Models\User::class as default
+            '/env\([\'"]AUTH_MODEL[\'"],\s*App\\\\Models\\\\User::class\)/' => 'env(\'AUTH_MODEL\', \\Noerd\\Noerd\\Models\\User::class)',
+            // Pattern for just App\Models\User without ::class
+            '/[\'"]?App\\\\Models\\\\User[\'"]?/' => '\\Noerd\\Noerd\\Models\\User::class',
+        ];
+
+        $updatedContent = $authContent;
+        $hasChanges = false;
+
+        foreach ($patterns as $pattern => $replacement) {
+            $newContent = preg_replace($pattern, $replacement, $updatedContent);
+            if ($newContent && $newContent !== $updatedContent) {
+                $updatedContent = $newContent;
+                $hasChanges = true;
+            }
+        }
+
+        if ($hasChanges) {
+            file_put_contents($authPath, $updatedContent);
+            $this->line('<info>Updated auth.php to use Noerd User model.</info>');
+        } else {
+            $this->line('<comment>No changes needed in auth.php configuration.</comment>');
         }
     }
 
