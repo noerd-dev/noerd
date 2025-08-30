@@ -63,13 +63,13 @@ class CopyComponentsToModulesCommand extends Command
         $componentMapping = $this->getComponentToModuleMapping();
 
         // Simulate default components
-        $defaultComponentsPath = storage_path('environment/components/default');
+        $defaultComponentsPath = base_path('content/components/default');
         if (is_dir($defaultComponentsPath)) {
             $results['default'] = $this->simulateComponentsFromDirectory($defaultComponentsPath, $componentMapping, 'default');
         }
 
         // Simulate admin components
-        $adminComponentsPath = storage_path('environment/components/admin');
+        $adminComponentsPath = base_path('content/components/admin');
         if (is_dir($adminComponentsPath)) {
             $results['admin'] = $this->simulateComponentsFromDirectory($adminComponentsPath, $componentMapping, 'admin');
         }
