@@ -19,15 +19,15 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
      */
     public function register(): void
     {
-        if (!env('REGISTER_FEATURE_ENABLED')) {
-            return;
-        }
-
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        if (env('REGISTER_FEATURE_ENABLED', true) !== true) {
+            return;
+        }
 
         $validated['password'] = Hash::make($validated['password']);
 
