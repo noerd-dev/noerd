@@ -283,6 +283,10 @@ select:focus[data-flux-control] {
 
         $alpineConfig = "
 import sort from '@alpinejs/sort'
+import Quill from 'quill';
+
+// Quill global verfügbar machen (falls nötig für andere Komponenten)
+window.Quill = Quill;
 
 Alpine.plugin(sort)
 
@@ -319,6 +323,7 @@ Alpine.store('app', {
             'tailwind-scrollbar@^4.0.2',
             'dotenv@^16.4.7',
             '@alpinejs/sort',
+            'quill',
         ];
 
         $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
