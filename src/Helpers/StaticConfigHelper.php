@@ -17,14 +17,14 @@ class StaticConfigHelper
             return Yaml::parse($content ?: '');
         }
 
-        
+
 
         if (file_exists(base_path('content/components/default/' . $component . '.yml'))) {
             $content = file_get_contents(base_path('content/components/default/' . $component . '.yml'));
             return Yaml::parse($content ?: '');
         }
 
-        
+
 
         throw new Exception('Component not found: ' . $component);
     }
