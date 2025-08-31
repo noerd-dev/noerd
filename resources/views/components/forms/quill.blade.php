@@ -1,28 +1,8 @@
-<div wire:ignore x-data
-     x-init="
-        let quill = new Quill($refs.editor, {
-            theme: 'snow',
-             modules: {
-              toolbar: [
-                ['bold', 'italic', 'underline'],       // inline styles
-                [ { 'list': 'bullet' }],
-                ['link']                      // no header here
-              ]
-            }
-        });
-
-        // Set initial content from Livewire
-        quill.root.innerHTML = @js($content);
-
-        // Update Livewire on change
-        quill.on('text-change', function () {
-            @this.set('{{$field}}', quill.root.innerHTML);
-        });
-    "
-     wire:ignore>
-
-    <div>
-        <div x-ref="editor" style="min-height: 200px;"></div>
-    </div>
-
+<div>
+    <textarea 
+        wire:model="{{$field}}" 
+        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+        style="min-height: 200px;" 
+        rows="8"
+    >{!! $content !!}</textarea>
 </div>
