@@ -165,7 +165,7 @@ new class extends Component {
 
         @if(!isset($userId))
             <div>
-                Der Benutzer erhält per E-Mail einen Link zum Setzen seines Passworts.
+                {{ __('The user will receive a link via email to set their password.') }}
             </div>
         @endif
 
