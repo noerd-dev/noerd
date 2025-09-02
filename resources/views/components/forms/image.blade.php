@@ -36,7 +36,7 @@
     <div class="mt-2 flex gap-2">
         <x-noerd::buttons.secondary type="button"
                                     wire:click="openSelectMediaModal('{{$field['name'] ?? $name}}')">
-            {{ __('Bild aus Medien wählen') }}
+            {{ __('Choose image from media') }}
         </x-noerd::buttons.secondary>
     </div>
 

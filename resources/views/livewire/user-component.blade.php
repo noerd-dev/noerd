@@ -171,7 +171,7 @@ new class extends Component {
 
         <div class="py-8 pt-4">
             <div class="pb-4">
-                {{ __('Zugriff auf folgende Mandanten:') }}
+                {{ __('Access to the following tenants:') }}
             </div>
             <fieldset class="pl-2">
                 @foreach($possibleTenants as $tenant)

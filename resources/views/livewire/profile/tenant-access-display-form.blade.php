@@ -37,14 +37,14 @@ new class extends Component {
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __('Übersicht über Ihre aktuellen Zugriffsrechte auf Mandanten und zugewiesene Rollen.') }}
+            {{ __('Overview of your current access rights to tenants and assigned roles.') }}
         </p>
     </header>
 
     <div class="mt-6 space-y-6">
         <div>
             <div class="pb-4 font-medium text-gray-700">
-                {{ __('Zugriff auf folgende Mandanten:') }}
+                {{ __('Access to the following tenants:') }}
             </div>
             
             @if(count($this->userTenantAccess) > 0)
@@ -77,7 +77,7 @@ new class extends Component {
             @else
                 <div class="pl-2">
                     <div class="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg">
-                        {{ __('Sie haben derzeit keinen Zugriff auf Mandanten.') }}
+                        {{ __('You currently have no access to tenants.') }}
                     </div>
                 </div>
             @endif
