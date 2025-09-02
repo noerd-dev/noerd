@@ -1,3 +1,3 @@
 # Noerd Framework
 
-## Test3
+Noerd is a Laravel Livewire framework that offers a simple admin panel with lists and detailed views as well as tenant management.
