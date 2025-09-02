@@ -23,7 +23,7 @@ To create a new app
 php artisan noerd:create-tenant-app 
 ```
 
-Assign aps to tenants
+Assign apps to tenants
 ```
 php artisan noerd:assign-apps-to-tenant  
 ```
