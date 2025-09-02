@@ -30,11 +30,11 @@ new class extends Component {
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Passwort setzen') }}
+            {{ __('Set Password') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __("Überschreibt das Passwort des Benutzers. Kann nur von Administratoren gesetzt werden.") }}
+            {{ __("Overwrites the user's password. Can only be set by administrators.") }}
         </p>
     </header>
 
