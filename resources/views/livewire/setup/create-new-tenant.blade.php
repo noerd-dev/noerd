@@ -63,17 +63,17 @@ new class extends Component {
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Neuen Mandanten erstellen') }}
+            {{ __('Create New Tenant') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __("Ein neuer Mandant enthält seine eigenen Stamm- und Bewegungsdaten, kann jedoch mit den gleichen Benutzern verwaltet werden.") }}
+            {{ __("A new tenant contains its own master and transactional data, but can be managed with the same users.") }}
         </p>
     </header>
 
     <form wire:submit="createTenant" class="mt-6 space-y-6">
         <div>
-            <x-noerd::input-label for="name" :value="__('Name neuer Mandant')"/>
+            <x-noerd::input-label for="name" :value="__('New Tenant Name')"/>
             <x-noerd::text-input wire:model="name" id="name" name="name" type="text" class="mt-1 block w-full" required
                           autofocus autocomplete="name"/>
             <x-noerd::input-error class="mt-2" :messages="$errors->get('name')"/>
