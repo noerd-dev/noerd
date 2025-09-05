@@ -87,13 +87,15 @@ class Tenant extends Authenticatable
     public function menu(): HasMany
     {
         return $this->hasMany(Menu::class, 'tenant_id', 'id')
-            ->where('active', true);
+            ->where('active', true)
+            ->orderBy('sort');
     }
 
     public function menus(): HasMany
     {
         return $this->hasMany(Menu::class, 'tenant_id', 'id')
-            ->where('active', true);
+            ->where('active', true)
+            ->orderBy('sort');
     }
 
     public function deliverytimes(): HasMany
