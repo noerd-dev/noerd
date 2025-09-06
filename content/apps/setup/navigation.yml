@@ -4,6 +4,7 @@
   route: "setup"
   block_menus: [
     { title: 'Benutzer', route: 'users', icon: 'icons.users' },
+    { title: 'Sprachen', route: 'languages', heroicon: 'language' },
     { title: 'Benutzerrollen', route: 'user-roles', icon: 'icons.users', if: 'roleFeatureEnabled' },
     { title: 'Rechnungen', route: 'tenant-invoices', icon: 'icons.document', if: 'invoiceFeatureEnabled' }
     { title: 'Mandant', route: 'tenant', heroicon: 'home-modern', if: 'newTenantFeature' }
