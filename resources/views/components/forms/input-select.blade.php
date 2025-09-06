@@ -1,5 +1,5 @@
 <div>
-    <x-noerd::input-label for="{{$field['name']}}" :value="$field['label']"/>
+    <x-noerd::input-label for="{{$field['name']}}" :value="__($field['label'])"/>
     <select
         @if(isset($field['live']) && $field['live'])
             wire:model.live.debounce="{{$field['name']}}"

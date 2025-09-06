@@ -1,7 +1,7 @@
 @props(['disabled' => false, 'startField' => false])
 
 <div>
-    <x-noerd::input-label for="{{$field['name']}}" :value="$field['label']"/>
+    <x-noerd::input-label for="{{$field['name']}}" :value="__($field['label'])"/>
 
     <textarea placeholder="{{$field['value'] ?? ''}}" wire:model="{{$field['name']}}" name="{{$field['name']}}" rows="8"
               data-flux-control

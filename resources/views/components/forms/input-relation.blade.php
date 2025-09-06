@@ -1,5 +1,5 @@
 <div>
-    <x-noerd::input-label for="{{$field['name']}}" :value="$field['label']"/>
+    <x-noerd::input-label for="{{$field['name']}}" :value="__($field['label'])"/>
     <div class="flex">
         <input
             {{ ($field['disabled'] ?? false) ? 'disabled' : '' }} {{ ($field['startField'] ?? false) ? "id=component-start-field" : '' }}

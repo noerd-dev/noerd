@@ -11,7 +11,7 @@ new class extends Component {
     public $domain;
     public $websiteUrl;
 
-    #[On('echo-private:orders.{selectedClientId},OrderCreated')]
+    // #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
     {
         $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;

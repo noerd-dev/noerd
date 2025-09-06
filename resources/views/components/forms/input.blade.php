@@ -1,5 +1,5 @@
 <div {{ isset($attributes) ?$attributes->merge(['class' => '']) : '' }}>
-    <x-noerd::input-label for="{{$field['name'] ?? $name ?? ''}}" :value="$field['label'] ?? $label ?? ''"/>
+    <x-noerd::input-label for="{{$field['name'] ?? $name ?? ''}}" :value="__($field['label'] ?? $label ?? '')"/>
 
     <input
         {{ ($field['disabled'] ?? false) ? 'disabled' : '' }} {{ ($field['startField'] ?? false) ? "id=component-start-field" : '' }}
