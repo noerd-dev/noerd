@@ -8,7 +8,7 @@ new class extends Component {
 
     public $selectedClientId;
 
-    #[On('echo-private:orders.{selectedClientId},OrderCreated')]
+    // #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
     {
         $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;
@@ -131,7 +131,7 @@ new class extends Component {
                         @if(auth()->user()->isAdmin() || auth()->user()->tenants->count() > 1)
                             <!-- Tenants -->
                             <x-noerd::select-input class="w-48! mt-0!" wire:model="selectedClientId"
-                                            wire:change="changeClient">
+                                                   wire:change="changeClient">
                                 @foreach(auth()->user()->tenants as $client)
                                     <option value="{{$client->id}}">{{$client->name}}</option>
                                 @endforeach

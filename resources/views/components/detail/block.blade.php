@@ -1,7 +1,7 @@
 <!-- Framework File -->
 <div>
     @if(isset($title) || isset($description))
-        @include('noerd::components.detail.block-head', ['title' => $title ?? '', 'description' => $description ?? ''])
+        @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
     @endif
     <div class="grid py-8 pt-4 grid-cols-{{$cols ?? '12'}} gap-6">
         @foreach($fields as $field)
