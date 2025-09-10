@@ -15,6 +15,7 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Volt::route('models', 'models-table')->name('models');
     Volt::route('tenant-invoices', 'tenant-invoices-table')->name('tenant-invoices');
     Route::get('tenant-invoice/{hash}', [TenantInvoiceController::class, 'show'])->name('tenant-invoice');
+    Volt::route('/detail/{component}/{id}', 'standalone-component')->name('detail');
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {
