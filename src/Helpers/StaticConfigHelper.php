@@ -41,9 +41,8 @@ class StaticConfigHelper
     public static function getNavigationStructure(): ?array
     {
         $currentApp = session('currentApp');
-        // TODO CHANGE
         if (!$currentApp) {
-            $currentApp = 'delivery';
+            return [];
         }
         $currentApp = mb_strtolower($currentApp);
 
