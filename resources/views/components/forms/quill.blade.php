@@ -1,8 +1,53 @@
-<div>
-    <textarea 
-        wire:model="{{$field}}" 
-        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-        style="min-height: 200px;" 
-        rows="8"
-    >{!! $content !!}</textarea>
+<div
+    x-data="{
+        editor: null,
+        content: '',
+
+        init() {
+            // Initialize with existing content
+            this.content = '{!! addslashes($content ?? '') !!}';
+
+            // Wait for Alpine to be ready
+            this.$nextTick(() => {
+                this.initEditor();
+            });
+        },
+
+        initEditor() {
+            if (typeof window.Quill === 'undefined') {
+                console.error('Quill ist nicht geladen');
+                return;
+            }
+
+            // Initialize Quill
+            this.editor = new window.Quill(this.$refs.editor, {
+                theme: 'snow',
+                placeholder: 'Text eingeben...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Set initial content
+            if (this.content) {
+                this.editor.root.innerHTML = this.content;
+            }
+
+            // Listen for content changes and update Livewire
+            this.editor.on('text-change', () => {
+                this.content = this.editor.root.innerHTML;
+                // Trigger Livewire update
+                this.$wire.set('{{$field}}', this.content);
+            });
+        }
+    }"
+    wire:ignore
+>
+    <div x-ref="editor" class="quill-container border-0"></div>
+
+    <!-- Hidden input for Livewire -->
+    <input type="hidden" wire:model="{{$field}}" x-model="content">
 </div>
