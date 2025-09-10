@@ -7,50 +7,77 @@ new class extends Component {
     public string $component;
     public string $id;
     public array $queryParams = [];
-    
+
     public function mount(string $component, string $id): void
     {
         $this->component = $component;
         $this->id = $id;
         $this->queryParams = request()->query();
-        
+
+        // Find the module containing this component
+        $moduleName = $this->findComponentModule($component);
+
         // Validate that the component exists
-        if (!$this->componentExists($component)) {
+        if (!$moduleName) {
             abort(404, "Component '{$component}' not found");
         }
+
+        session(['currentApp' => null, 'hideNavigation' => true]);
     }
-    
+
+    private function findComponentModule(string $component): ?string
+    {
+        // Check if the livewire component view file exists in main resources
+        $viewPath = resource_path("views/livewire/{$component}.blade.php");
+        if (file_exists($viewPath)) {
+            return 'main'; // Main Laravel resources directory
+        }
+
+        // Check all modules dynamically
+        $modulesPath = base_path('app-modules');
+        if (is_dir($modulesPath)) {
+            $moduleDirectories = glob($modulesPath . '/*', GLOB_ONLYDIR);
+
+            foreach ($moduleDirectories as $moduleDir) {
+                $moduleName = basename($moduleDir);
+                $moduleViewPath = base_path("app-modules/{$moduleName}/resources/views/livewire/{$component}.blade.php");
+
+                if (file_exists($moduleViewPath)) {
+                    return $moduleName;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private function componentExists(string $component): bool
     {
-        // Check if the livewire component view file exists
-        $viewPath = resource_path("views/livewire/{$component}.blade.php");
-        $moduleViewPath = base_path("app-modules/cms/resources/views/livewire/{$component}.blade.php");
-        
-        return file_exists($viewPath) || file_exists($moduleViewPath);
+        return $this->findComponentModule($component) !== null;
     }
-    
+
     private function getComponentTitle(): string
     {
         // Convert component name to readable title
         $title = str_replace('-component', '', $this->component);
         return Str::title(str_replace('-', ' ', $title));
     }
-    
+
     private function getBackUrl(): string
     {
         // Map component to its table view
         $componentToTable = [
             'page-component' => 'cms.pages',
-            'navigation-component' => 'cms.navigation', 
+            'navigation-component' => 'cms.navigation',
             'collection-component' => 'cms.collection-files',
             'form-request-component' => 'cms.form-requests',
             'global-parameter-component' => 'cms.global-parameters',
         ];
-        
+
         $route = $componentToTable[$this->component] ?? 'cms.pages';
         return route($route);
     }
-    
+
     private function getComponentParameters(): array
     {
         // Start with common parameters
@@ -58,7 +85,7 @@ new class extends Component {
             'disableModal' => true,
             'wire:key' => "standalone-{$this->component}-{$this->id}",
         ];
-        
+
         // Handle special cases for different component types
         switch ($this->component) {
             case 'collection-component':
@@ -69,7 +96,7 @@ new class extends Component {
                     $params['fileName'] = $this->id . '.yml';
                 }
                 break;
-                
+
             default:
                 // For most components, use modelId
                 if (is_numeric($this->id)) {
@@ -77,10 +104,10 @@ new class extends Component {
                 }
                 break;
         }
-        
+
         return $params;
     }
-    
+
     private function getEntityName(): string
     {
         // Try to get the entity name from the model for better breadcrumbs
@@ -90,14 +117,14 @@ new class extends Component {
                     if (is_numeric($this->id)) {
                         $page = \Noerd\Cms\Models\Page::find($this->id);
                         if ($page && $page->name) {
-                            $name = is_array($page->name) 
+                            $name = is_array($page->name)
                                 ? ($page->name[session('selectedLanguage', 'de')] ?? array_values($page->name)[0] ?? '')
                                 : $page->name;
                             return $name ?: 'Page';
                         }
                     }
                     break;
-                    
+
                 case 'navigation-component':
                     if (is_numeric($this->id)) {
                         $nav = \Noerd\Cms\Models\Navigation::find($this->id);
@@ -109,30 +136,30 @@ new class extends Component {
                         }
                     }
                     break;
-                    
+
                 case 'collection-component':
                     $fileName = $this->queryParams['fileName'] ?? ($this->id . '.yml');
                     return str_replace('.yml', '', $fileName);
-                    
+
                 default:
                     return $this->getComponentTitle() . ' #' . $this->id;
             }
         } catch (\Exception $e) {
             // Fallback if model loading fails
         }
-        
+
         return $this->getComponentTitle() . ' #' . $this->id;
     }
 } ?>
 
-<div>
+<div class="p-8">
     <!-- Breadcrumbs -->
     <div class="mb-6">
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-4">
                 <li>
                     <div>
-                        <a href="{{ $this->getBackUrl() }}" class="text-gray-400 hover:text-gray-500">
+                        <a href="{{ $this->getBackUrl() }}" class="text-sm font-medium text-gray-500">
                             <span class="sr-only">{{ $this->getComponentTitle() }}</span>
                             {{ Str::plural($this->getComponentTitle()) }}
                         </a>
@@ -158,6 +185,6 @@ new class extends Component {
         $wireKey = $componentParams['wire:key'];
         unset($componentParams['wire:key']); // Remove wire:key from params array
     @endphp
-    
+
     @livewire($component, $componentParams, key($wireKey))
 </div>

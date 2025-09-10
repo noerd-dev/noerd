@@ -41,7 +41,7 @@
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
               :class="showSidebar ? 'lg:pl-[360px]' : 'lg:pl-[0px]'"
           @else
-              :class="showSidebar ? 'lg:pl-[80px]' : 'lg:pl-[0px]'"
+              :class="showSidebar ? 'lg:pl-[79px]' : 'lg:pl-[0px]'"
         @endif
     >
         <div class="bg-white border border-gray-300 pt-[47px] h-full">
