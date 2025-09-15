@@ -4,7 +4,7 @@ Noerd is a Laravel Livewire framework that offers a simple admin panel with list
 
 Install the package
 ```
-composer require noerd/cms
+composer require noerd/noerd
 ```
 
 Install the dependencies and copy files
