@@ -5,7 +5,7 @@
 
         init() {
             // Initialize with existing content
-            this.content = '{!! addslashes($content ?? '') !!}';
+            this.content = '{{ addslashes($content ?? '') }}';
 
             // Wait for Alpine to be ready
             this.$nextTick(() => {
