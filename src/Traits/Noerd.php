@@ -116,6 +116,7 @@ trait Noerd
         if (defined('self::ID')) {
             $this->{self::ID} = '';
         }
+        $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source);
 
         if ($source) {
             $this->dispatch('reloadTable-' . $source);
