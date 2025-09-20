@@ -73,7 +73,7 @@ new class extends Component {
 
     public function downModal(string $componentName, ?string $source): void // by ESC f.e.
     {
-        $this->dispatch('close-modal-'. $componentName);
+        $this->dispatch('close-modal-' . $componentName);
         return;
         $modals = $this->modals;
         foreach ($modals as $modal) {
@@ -123,7 +123,8 @@ new class extends Component {
         }
 
         if (!$hasOpenModal) {
-            //       $this->dispatch('modal-closed-global');
+            // This re-enables keyboard control in tables.
+            $this->dispatch('modal-closed-global');
         }
     }
 
@@ -158,7 +159,7 @@ new class extends Component {
                      x-init="$store.app.modalOpen = true"
                  @close-modal-{{$modal['componentName']}}.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
                  @keydown.escape.window.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
-                 @endif
+                @endif
             >
                 <div x-show="show">
                     <x-noerd::modal>
