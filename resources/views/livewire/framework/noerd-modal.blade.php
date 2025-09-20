@@ -74,6 +74,7 @@ new class extends Component {
     public function downModal(string $componentName, ?string $source): void // by ESC f.e.
     {
         $this->dispatch('close-modal-' . $componentName);
+        $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
         return;
 
         // TOOD: the downModal2 is currently needed to remove the URL Parameter again
