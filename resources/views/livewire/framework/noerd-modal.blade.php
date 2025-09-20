@@ -43,7 +43,6 @@ new class extends Component {
         //if (isset($this->modals[$component]) && $this->modals[$component]['show'] === true) {
         //    return;
         //}
-
         $modal = [];
         $modal['componentName'] = $component;
         $modal['arguments'] = $arguments;
@@ -77,13 +76,10 @@ new class extends Component {
         $modals = $this->modals;
         foreach ($modals as $modal) {
             if ($modal['componentName'] === $componentName && $modal['show'] === true) {
-                $this->modals[$modal['key']]['show'] = false;
+                unset($this->modals[$modal['key']]);
             }
         }
 
-        // $this->dispatch('disableComponent-' . $componentName); // disable the component, so that it is not listening for commands f.e.
-        $this->dispatch('close-modal-' . $componentName);
-        //  $this->dispatch('enableComponent-' . $source); // Enable the component that opened the modal again
         $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
         $this->markTopModal();
 
@@ -118,7 +114,6 @@ new class extends Component {
                 $this->modals[$lastKey]['topModal'] = true;
             }
         }
-
     }
 
 } ?>
@@ -128,11 +123,10 @@ new class extends Component {
         @foreach($modals as $key => $modal)
 
             @teleport('noerdmodal')
-
             <div x-data="{ show: true }" wire:key="{{$modal['key']}}"
                  @if($modal['show'] && $modal['topModal'])
                      x-init="$store.app.modalOpen = true"
-                 @close-modal-{{$modal['componentName']}}.window="show = false; $store.app.modalOpen = false"
+                 @close-modal-{{$modal['componentName']}}.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
                  @keydown.escape.window.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
                 @endif
             >
