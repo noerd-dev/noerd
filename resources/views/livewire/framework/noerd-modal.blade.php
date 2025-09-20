@@ -75,6 +75,8 @@ new class extends Component {
     {
         $this->dispatch('close-modal-' . $componentName);
         return;
+
+        // TOOD: the downModal2 is currently needed to remove the URL Parameter again
         $modals = $this->modals;
         foreach ($modals as $modal) {
             if ($modal['componentName'] === $componentName && $modal['show'] === true) {
