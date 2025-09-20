@@ -179,14 +179,3 @@ new class extends Component {
         </div>
     </div>
 </div>
-
-@script
-
-<script>
-    setInterval(function () {
-        $wire.dispatch('refreshOrderCount')
-    }, 15000)
-</script>
-
-@endscript
-

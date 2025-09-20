@@ -11,7 +11,6 @@ new class extends Component {
     public $domain;
     public $websiteUrl;
 
-    // #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
     {
         $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;
@@ -29,11 +28,9 @@ new class extends Component {
         }
     }
 
-    #[On('refreshOrderCount')]
     public function refreshOrderCount()
     {
         if (auth()->user()->can('orders', Tenant::class)) {
-
             $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
         }
     }
@@ -41,7 +38,7 @@ new class extends Component {
 
 <div class="flex gap-x-2">
     @can('orders', Tenant::class)
-        <div class="hidden lg:flex">
+        <div class="hidden lg:flex" wire:poll.15s="refreshOrderCount">
             <button
                 wire:click="$dispatch('noerdModal', {component: 'orders-table', arguments: {{json_encode(['statusFilter' => 0] ?? [])}}})"
                 @class([
