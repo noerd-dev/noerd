@@ -56,7 +56,7 @@ new class extends Component {
                 $key .= '-' . $argument;
             }
         }
-        $modal['key'] = Str::uuid()->toString(); // md5($key);
+        $modal['key'] = Str::uuid()->toString();
 
         $iteration = 1;
         foreach ($this->modals as $checkModal) {
@@ -73,6 +73,10 @@ new class extends Component {
 
     public function downModal(string $componentName, ?string $source): void // by ESC f.e.
     {
+        $this->dispatch('close-modal-' . $componentName);
+        return;
+
+        // TODO: downModal2 is currently the process which is needed to remove the url parameter again
         $modals = $this->modals;
         foreach ($modals as $modal) {
             if ($modal['componentName'] === $componentName && $modal['show'] === true) {
@@ -91,7 +95,37 @@ new class extends Component {
                 break;
             }
         }
+
         if (!$hasOpenModal) {
+            //       $this->dispatch('modal-closed-global');
+        }
+    }
+
+    #[On('downModal2')]
+    public function downModal2(string $componentName, ?string $source): void // by ESC f.e.
+    {
+        $modals = $this->modals;
+        foreach ($modals as $modal) {
+            if ($modal['componentName'] === $componentName && $modal['show'] === true) {
+                unset($this->modals[$modal['key']]);
+                $this->sadsad = null;
+            }
+        }
+
+        $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
+        $this->markTopModal();
+
+        // Check if no modals are open and reset modalOpen flag
+        $hasOpenModal = false;
+        foreach ($this->modals as $modal) {
+            if ($modal['show'] === true) {
+                $hasOpenModal = true;
+                break;
+            }
+        }
+
+        if (!$hasOpenModal) {
+            // This re-enables keyboard control in tables.
             $this->dispatch('modal-closed-global');
         }
     }
@@ -103,7 +137,6 @@ new class extends Component {
         }
         $lastKey = null;
         if (count($this->modals) > 0) {
-
             foreach ($this->modals as $key => $modal) {
                 if ($modal['show'] === true) {
                     $lastKey = $key;
