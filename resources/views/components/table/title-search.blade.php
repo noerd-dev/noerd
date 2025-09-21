@@ -1,3 +1,4 @@
+{{--
 <div class="flex w-full">
     <div class="my-auto shrink-0">
         @if($disableModal)
@@ -49,6 +50,7 @@
         @endif
     </div>
 </div>
+--}}
 
 <div class="flex">
     @isset($tableFilters)

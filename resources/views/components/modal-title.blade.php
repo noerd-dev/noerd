@@ -1,4 +1,4 @@
-<div class="px-8 border-b border-gray-300 py-6 mb-8">
+<div class="px-6 border-b flex border-gray-300 py-6">
     <x-noerd::title>
         {{$slot}}
     </x-noerd::title>

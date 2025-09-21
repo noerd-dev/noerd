@@ -39,12 +39,12 @@
 
             <!-- Close Button -->
             <button @click="show = !show" wire:click.prevent="downModal('{{$modal}}', '{{$source}}')" type="button" @class([
-                'absolute right-0 top-2 mt-1 pt-2 pr-4 mx-auto my-auto',
+                'absolute right-0 top-4 pt-2 pr-6 mx-auto my-auto',
             //    'right-1 top-2!' => $size === 'lg',
             //    'ml-[710px]' => $size === 'sm',
         ])>
                 <div
-                    class="hover:bg-gray-100 z-50 hover:text-black border rounded-sm p-1.5 mt-0.5 text-gray-600 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                    class="hover:bg-gray-100 z-50 hover:text-black border rounded-sm p-1.5 text-gray-600 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                     <span class="sr-only">Close modal</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
