@@ -76,7 +76,7 @@ new class extends Component {
         $this->dispatch('close-modal-' . $componentName);
         $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
         return;
-
+        
         // TOOD: the downModal2 is currently needed to remove the URL Parameter again
         $modals = $this->modals;
         foreach ($modals as $modal) {
