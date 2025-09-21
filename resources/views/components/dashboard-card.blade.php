@@ -6,7 +6,10 @@
     <div class="m-auto">
         <div class="inline-block">
             @isset($icon)
-                <img alt="" src="/assets/svg/{{$icon}}.svg" width="30" height="30">
+                <img alt="" src="/assets/svg/{{$icon}}.svg" class="w-6 h-6 mb-2">
+            @endisset
+            @isset($heroicon)
+                <x-icon name="{{$heroicon}}" class="w-6 h-6 mb-2 text-gray-800"/>
             @endisset
         </div>
 
