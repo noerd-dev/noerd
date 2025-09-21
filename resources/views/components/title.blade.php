@@ -1,4 +1,4 @@
-<h1 class="font-semibold leading-6 text-slate-900">
+<h1 class="flex items-center font-semibold h-[30px] mx-auto my-auto text-slate-900 w-full">
     {{$slot}}
 </h1>
 

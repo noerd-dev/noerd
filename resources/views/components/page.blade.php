@@ -6,13 +6,12 @@
          :style="isModal ? 'max-height: calc(100vh - 112px)' : ''"
      :class="isModal ? 'flex flex-col' : 'h-full'"
     @endif
-
 >
     {{$header ?? ''}}
     {{$table ?? ''}}
 
-    <div class="flex-1 p-8 overflow-y-auto" @if($disableModal ?? false) class="!p-0" @else class="p-8"
-         @endif :class="isModal ? 'flex-1 p-8 pt-0! overflow-y-auto' : 'h-full'">
+    <div class="flex-1 p-6 overflow-y-auto" @if($disableModal ?? false) class="!p-0" @else class="p-6"
+         @endif :class="isModal ? 'flex-1 p-6 pt-0! overflow-y-auto' : 'h-full pt-0!'">
         {{ $slot }}
     </div>
 
@@ -21,5 +20,4 @@
             {{$footer}}
         </div>
     @endif
-
 </div>
