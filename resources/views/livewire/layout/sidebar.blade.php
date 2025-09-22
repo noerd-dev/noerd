@@ -23,7 +23,6 @@
     </div>
 
     <!-- Static sidebar for desktop -->
-
     <div class="flex">
 
         <!-- First column sidebar / Apps -->
@@ -57,8 +56,9 @@
             </div>
         </div>
 
+        <!-- Second column sidebar / Navigation -->
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-            <!-- Second column sidebar -->
+
             <div x-show="showSidebar" :class="showSidebar ? 'lg:w-[279px] ml-[80px]' : 'ml-[50px]'" @class([
             'hidden lg:fixed lg:inset-y-0 lg:z-40 bg-brand-navi lg:flex lg:flex-col flex ',
         ])>
