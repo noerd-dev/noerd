@@ -1,6 +1,6 @@
 
 <div {{ $attributes->whereDoesntStartWith('class') }} {{ $attributes->merge(['class' => 'my-auto flex-1']) }}>
-<svg class="nc-icon mx-auto" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 48 48"><title>food-course</title>
+<svg class="nc-icon mx-auto" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48"><title>food-course</title>
     <g fill="#333" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10">
         <path fill="none" stroke="#333" stroke-width="2"
               d="M4.025,41 C4.546,30.419,13.29,22,24,22s19.454,8.419,19.975,19"></path>
