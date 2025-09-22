@@ -16,7 +16,7 @@ use Nywerk\Liefertool\Models\ClientPaypal;
 use Nywerk\Liefertool\Models\Color;
 use Nywerk\Liefertool\Models\Coredata;
 use Nywerk\Liefertool\Models\Deliveryarea;
-use Nywerk\Liefertool\Models\Deliverytime;
+use Noerd\BusinessHours\Models\BusinessHour;
 use Nywerk\Liefertool\Models\Gastrofix;
 use Nywerk\Liefertool\Models\Mollie;
 use Nywerk\Liefertool\Models\Setting;
@@ -100,7 +100,7 @@ class Tenant extends Authenticatable
 
     public function deliverytimes(): HasMany
     {
-        return $this->hasMany(Deliverytime::class, 'tenant_id', 'id')->orderBy('weekday');
+        return $this->hasMany(BusinessHour::class, 'tenant_id', 'id')->orderBy('weekday');
     }
 
     public function deliveryareas(): HasMany
