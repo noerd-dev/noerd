@@ -31,11 +31,11 @@
             @endisset
 
             @if(isset($disableSearch) && !$disableSearch)
-               <div  @if(!$newLabel)  :class="isModal ? 'mr-10' : ''" @endif class="ml-auto mr-2">
+                <div @if(!$newLabel)  :class="isModal ? 'mr-10' : ''" @endif class="ml-auto mr-2">
                     <x-noerd::text-input
-                                         placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
-                                         class="min-w-[200px] !mt-0 h-[30px]"/>
-               </div>
+                        placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
+                        class="min-w-[200px] !mt-0 h-[30px]"/>
+                </div>
             @else
                 <div class="ml-auto"></div>
             @endif
