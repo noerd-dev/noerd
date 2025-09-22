@@ -7,8 +7,8 @@ use Noerd\Noerd\Models\User;
 uses(Tests\TestCase::class);
 
 $testSettings = [
-    'listName' => 'setup.languages-table',
-    'componentName' => 'setup.language-component',
+    'listName' => 'setup.languages-list',
+    'componentName' => 'setup.language-detail',
 ];
 
 it('resolves setup languages route and renders table', function () use ($testSettings): void {
@@ -20,7 +20,7 @@ it('resolves setup languages route and renders table', function () use ($testSet
     $response->assertStatus(200);
 
     Volt::test($testSettings['listName'])
-        ->assertViewIs('volt-livewire::setup.languages-table');
+        ->assertViewIs('volt-livewire::setup.languages-list');
 });
 
 it('lists languages for tenant in table with sorting and search', function () use ($testSettings): void {
@@ -43,5 +43,5 @@ it('opens language-component modal from table', function () use ($testSettings):
 
     Volt::test($testSettings['listName'])
         ->call('tableAction', 5)
-        ->assertDispatched('noerdModal', component: 'language-component');
+        ->assertDispatched('noerdModal', component: 'language-detail');
 });

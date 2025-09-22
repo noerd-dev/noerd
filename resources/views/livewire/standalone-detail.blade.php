@@ -59,7 +59,7 @@ new class extends Component {
     private function getComponentTitle(): string
     {
         // Convert component name to readable title
-        $title = str_replace('-component', '', $this->component);
+        $title = str_replace('-detail', '', $this->component);
         return Str::title(str_replace('-', ' ', $title));
     }
 
@@ -67,11 +67,11 @@ new class extends Component {
     {
         // Map component to its table view
         $componentToTable = [
-            'page-component' => 'cms.pages',
-            'navigation-component' => 'cms.navigation',
-            'collection-component' => 'cms.collection-files',
-            'form-request-component' => 'cms.form-requests',
-            'global-parameter-component' => 'cms.global-parameters',
+            'page-detail' => 'cms.pages',
+            'navigation-detail' => 'cms.navigation',
+            'collection-detail' => 'cms.collection-files',
+            'form-request-detail' => 'cms.form-requests',
+            'global-parameter-detail' => 'cms.global-parameters',
         ];
 
         $route = $componentToTable[$this->component] ?? 'cms.pages';
@@ -88,7 +88,7 @@ new class extends Component {
 
         // Handle special cases for different component types
         switch ($this->component) {
-            case 'collection-component':
+            case 'collection-detail':
                 if (isset($this->queryParams['fileName'])) {
                     $params['fileName'] = $this->queryParams['fileName'];
                 } else {
@@ -113,7 +113,7 @@ new class extends Component {
         // Try to get the entity name from the model for better breadcrumbs
         try {
             switch ($this->component) {
-                case 'page-component':
+                case 'page-detail':
                     if (is_numeric($this->id)) {
                         $page = \Noerd\Cms\Models\Page::find($this->id);
                         if ($page && $page->name) {
@@ -125,7 +125,7 @@ new class extends Component {
                     }
                     break;
 
-                case 'navigation-component':
+                case 'navigation-detail':
                     if (is_numeric($this->id)) {
                         $nav = \Noerd\Cms\Models\Navigation::find($this->id);
                         if ($nav && $nav->name) {
@@ -137,7 +137,7 @@ new class extends Component {
                     }
                     break;
 
-                case 'collection-component':
+                case 'collection-detail':
                     $fileName = $this->queryParams['fileName'] ?? ($this->id . '.yml');
                     return str_replace('.yml', '', $fileName);
 

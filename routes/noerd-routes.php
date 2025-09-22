@@ -7,15 +7,15 @@ use Noerd\Noerd\Controllers\DashboardController;
 use Noerd\Noerd\Http\Controllers\TenantInvoiceController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
-    Volt::route('setup', 'setup.users-table')->name('setup');
-    Volt::route('users', 'setup.users-table')->name('users');
-    Volt::route('user-roles', 'setup.user-roles-table')->name('user-roles');
-    Volt::route('languages', 'setup.languages-table')->name('languages');
-    Volt::route('tenant', 'setup.tenant-component')->name('tenant');
-    Volt::route('models', 'models-table')->name('models');
-    Volt::route('tenant-invoices', 'tenant-invoices-table')->name('tenant-invoices');
+    Volt::route('setup', 'setup.users-list')->name('setup');
+    Volt::route('users', 'setup.users-list')->name('users');
+    Volt::route('user-roles', 'setup.user-roles-list')->name('user-roles');
+    Volt::route('languages', 'setup.languages-list')->name('languages');
+    Volt::route('tenant', 'setup.tenant-detail')->name('tenant');
+    Volt::route('models', 'models-list')->name('models');
+    Volt::route('tenant-invoices', 'tenant-invoices-list')->name('tenant-invoices');
     Route::get('tenant-invoice/{hash}', [TenantInvoiceController::class, 'show'])->name('tenant-invoice');
-    Volt::route('/detail/{component}/{id}', 'standalone-component')->name('detail');
+    Volt::route('/detail/{component}/{id}', 'standalone-detail')->name('detail');
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {

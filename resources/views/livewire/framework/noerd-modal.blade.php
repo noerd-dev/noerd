@@ -8,10 +8,10 @@ new class extends Component {
     // Sizes
     private const SIZES = [
         // 'product-group-select-modal' => ProductGroupSelectModal::SIZE,
-        // 'menu::livewire.deliverytime-component' => DeliverytimeComponent::SIZE,
-        // 'menu::livewire.deliverarea-component' => 'sm',
-        // 'additional-field-component' => 'sm',
-        // 'new-client-component' => 'sm',
+        // 'menu::livewire.deliverytime-detail' => DeliverytimeComponent::SIZE,
+        // 'menu::livewire.deliverarea-detail' => 'sm',
+        // 'additional-field-detail' => 'sm',
+        // 'new-client-detail' => 'sm',
         'module' => 'sm',
     ];
 

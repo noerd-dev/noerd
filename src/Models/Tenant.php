@@ -10,13 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Noerd\BusinessHours\Models\BusinessHour;
 use Noerd\Noerd\Database\Factories\TenantFactory;
 use Nywerk\Liefertool\Models\AdditionalField;
 use Nywerk\Liefertool\Models\ClientPaypal;
 use Nywerk\Liefertool\Models\Color;
 use Nywerk\Liefertool\Models\Coredata;
 use Nywerk\Liefertool\Models\Deliveryarea;
-use Noerd\BusinessHours\Models\BusinessHour;
 use Nywerk\Liefertool\Models\Gastrofix;
 use Nywerk\Liefertool\Models\Mollie;
 use Nywerk\Liefertool\Models\Setting;
@@ -158,9 +158,9 @@ class Tenant extends Authenticatable
 
     public function getDomainAttribute(?string $value): string
     {
-        return env('APP_ENV') !== 'production' ?
-            env('APP_MENU_URL') . '?hash=' . $this->getAttribute('hash') :
-            $value ?? env('APP_MENU_URL') . '?hash=' . $this->getAttribute('hash');
+        return env('APP_ENV') !== 'production'
+            ? env('APP_MENU_URL') . '?hash=' . $this->getAttribute('hash')
+            : $value ?? env('APP_MENU_URL') . '?hash=' . $this->getAttribute('hash');
     }
 
     public function getInvoiceInformation(): array

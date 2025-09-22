@@ -14,8 +14,8 @@ uses(Tests\TestCase::class);
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 $testSettings = [
-    'componentName' => 'user-component',
-    'listName' => 'users-table',
+    'componentName' => 'user-detail',
+    'listName' => 'users-list',
     'id' => 'userId',
 ];
 
@@ -25,7 +25,7 @@ it('renders the user component', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     Volt::test($testSettings['componentName'])
-        ->assertViewIs('volt-livewire::user-component')
+        ->assertViewIs('volt-livewire::user-detail')
         ->assertSeeText('Benutzer');
 });
 
@@ -255,7 +255,7 @@ it('deletes user tenant access', function () use ($testSettings): void {
     Volt::test($testSettings['componentName'], [$user])
         ->set('modelId', $user->id)
         ->call('delete')
-        ->assertDispatched('reloadTable-users-table');
+        ->assertDispatched('reloadTable-users-list');
 
     // Check if user access to tenant was removed
     $user->refresh();

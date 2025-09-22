@@ -10,7 +10,7 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'languages-table';
+    public const COMPONENT = 'languages-list';
 
     public function mount()
     {
@@ -27,7 +27,7 @@ new class extends Component {
     {
         $this->dispatch(
             event: 'noerdModal',
-            component: 'language-component',
+            component: 'language-detail',
             source: self::COMPONENT,
             arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
@@ -45,7 +45,7 @@ new class extends Component {
             })
             ->paginate(self::PAGINATION);
 
-        $tableConfig = StaticConfigHelper::getTableConfig('languages-table');
+        $tableConfig = StaticConfigHelper::getTableConfig('languages-list');
 
         return [
             'rows' => $rows,

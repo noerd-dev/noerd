@@ -17,7 +17,7 @@ new class extends Component {
     use Noerd;
 
     public const COMPONENT = 'setup.user';
-    public const LIST_COMPONENT = 'users-table';
+    public const LIST_COMPONENT = 'users-list';
     public const ID = 'userId';
     #[Url(keep: false, except: '')]
     public $userId = null;

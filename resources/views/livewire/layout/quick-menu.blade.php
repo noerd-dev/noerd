@@ -40,7 +40,7 @@ new class extends Component {
     @can('orders', Tenant::class)
         <div class="hidden lg:flex" wire:poll.15s="refreshOrderCount">
             <button
-                wire:click="$dispatch('noerdModal', {component: 'orders-table', arguments: {{json_encode(['statusFilter' => 0] ?? [])}}})"
+                wire:click="$dispatch('noerdModal', {component: 'orders-list', arguments: {{json_encode(['statusFilter' => 0] ?? [])}}})"
                 @class([
                     'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
                     'bg-red-300' => $openOrders > 0,
