@@ -71,7 +71,7 @@ new class extends Component {
             </svg>
         </button>
 
-        <div class="flex gap-x-4 border-b px-6 w-full border-l border-gray-300">
+        <div class="flex gap-x-4 px-6 w-full border-l border-gray-300">
             <div class=" flex border-gray-300 w-full py-1">
 
                 <button @click="showSidebar = !showSidebar" wire:click="openSidebar" type="button"

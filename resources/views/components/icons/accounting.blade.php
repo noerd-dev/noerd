@@ -1,5 +1,5 @@
 <div {{ $attributes->whereDoesntStartWith('class') }} {{ $attributes->merge(['class' => 'my-auto flex-1']) }}>
-    <svg class="nc-icon mx-auto" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 48 48"><title>
+    <svg class="nc-icon mx-auto" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48"><title>
             cash-register</title>
         <g fill="#333" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10">
             <rect x="24" y="2" fill="none" stroke="#333" stroke-width="2" width="12" height="6"></rect>
