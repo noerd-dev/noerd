@@ -12,7 +12,7 @@ it('returns empty array for non-existing table config', function (): void {
 
 it('loads component fields or throws if missing', function (): void {
     try {
-        $fields = StaticConfigHelper::getComponentFields('pages-table');
+        $fields = StaticConfigHelper::getComponentFields('pages-list');
         expect($fields)->toBeArray();
     } catch (Exception $e) {
         expect($e->getMessage())->toContain('Component not found');

@@ -135,9 +135,9 @@ class CopyComponentsToModulesCommand extends Command
             foreach ($groupResults as $result) {
                 $totalCount++;
 
-                $status = $result['success'] ?
-                    '<info>✓</info>' :
-                    '<error>✗</error>';
+                $status = $result['success']
+                    ? '<info>✓</info>'
+                    : '<error>✗</error>';
 
                 if ($result['success']) {
                     $successCount++;
@@ -197,10 +197,10 @@ class CopyComponentsToModulesCommand extends Command
             'deliveryBlock' => 'liefertool',
             'deliverytime' => 'liefertool',
             'deliveryarea' => 'liefertool',
-            'vehicle-component' => 'liefertool',
-            'vehicle-configuration-component' => 'liefertool',
+            'vehicle-detail' => 'liefertool',
+            'vehicle-configuration-detail' => 'liefertool',
             'vehicleAssembly' => 'liefertool',
-            'area-component' => 'liefertool',
+            'area-detail' => 'liefertool',
 
             // Order related
             'orderConfirmation' => 'order',
@@ -218,7 +218,7 @@ class CopyComponentsToModulesCommand extends Command
             // Content/CMS related
             'page' => 'content',
             'site' => 'content',
-            'text-content-component' => 'content',
+            'text-content-detail' => 'content',
             'textDocument' => 'content',
 
             // Legal register related
@@ -228,8 +228,8 @@ class CopyComponentsToModulesCommand extends Command
             'dutyReadOnly' => 'legal-register',
 
             // Production planning related
-            'assembly-component' => 'production-planning',
-            'part-component' => 'production-planning',
+            'assembly-detail' => 'production-planning',
+            'part-detail' => 'production-planning',
             'selectPart' => 'production-planning',
 
             // Harvester/PDM related
@@ -250,7 +250,7 @@ class CopyComponentsToModulesCommand extends Command
             'userRole' => 'settings',
 
             // Document analyzer related
-            'ocr-scanner-component' => 'document-analyzer',
+            'ocr-scanner-detail' => 'document-analyzer',
 
             // Media related
             'prompt' => 'media',

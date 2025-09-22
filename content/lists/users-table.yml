@@ -1,6 +1,6 @@
 title: Users
 newLabel: 'New User'
-component: user-component
+component: user-detail
 disableSearch: false
 redirectAction: ''
 description: ''

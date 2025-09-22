@@ -1,6 +1,6 @@
 title: 'Sprachen'
 newLabel: 'Neue Sprache'
-component: 'language-component'
+component: language-detail
 disableSearch: false
 columns:
   - { field: code, label: 'Code', width: 15 }

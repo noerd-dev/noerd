@@ -10,8 +10,8 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'user-role-component';
-    public const LIST_COMPONENT = 'user-roles-table';
+    public const COMPONENT = 'user-role-detail';
+    public const LIST_COMPONENT = 'user-roles-list';
     public const ID = 'userRoleId';
 
     #[Url(keep: false, except: '')]

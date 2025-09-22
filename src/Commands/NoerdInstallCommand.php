@@ -530,8 +530,8 @@ export default {
         if (isset($composerData['repositories'])) {
             // Check if our path repository already exists
             foreach ($composerData['repositories'] as $repo) {
-                if (isset($repo['type']) && $repo['type'] === 'path' &&
-                    isset($repo['url']) && $repo['url'] === 'app-modules/*') {
+                if (isset($repo['type']) && $repo['type'] === 'path'
+                    && isset($repo['url']) && $repo['url'] === 'app-modules/*') {
                     $this->line('Repositories configuration already exists in composer.json');
                     return;
                 }

@@ -10,7 +10,7 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'user-roles-table';
+    public const COMPONENT = 'user-roles-list';
 
     public function mount()
     {
@@ -31,7 +31,7 @@ new class extends Component {
     {
         $this->dispatch(
             event: 'noerdModal',
-            component: 'user-role-component',
+            component: 'user-role-detail',
             source: self::COMPONENT,
             arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
@@ -43,7 +43,7 @@ new class extends Component {
         $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)->orderBy('name')
             ->paginate(self::PAGINATION);
 
-        $tableConfig = StaticConfigHelper::getTableConfig('user-roles-table');
+        $tableConfig = StaticConfigHelper::getTableConfig('user-roles-list');
 
         return [
             'rows' => $rows,

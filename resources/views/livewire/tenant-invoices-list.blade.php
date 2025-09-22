@@ -11,7 +11,7 @@ new class extends Component {
 
 
 
-    public const COMPONENT = 'tenant-invoices-table';
+    public const COMPONENT = 'tenant-invoices-list';
 
     public function tableAction(mixed $modelId = null, mixed $relationId = null): void
     {
@@ -59,7 +59,7 @@ new class extends Component {
 
         $overduePayment = count($client->dueInvoices) > 0;
 
-        $tableConfig = StaticConfigHelper::getTableConfig('tenant-invoices-table');
+        $tableConfig = StaticConfigHelper::getTableConfig('tenant-invoices-list');
 
         return [
             'tableConfig' => $tableConfig,

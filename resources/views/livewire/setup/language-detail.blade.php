@@ -9,8 +9,8 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'language-component';
-    public const LIST_COMPONENT = 'languages-table';
+    public const COMPONENT = 'language-detail';
+    public const LIST_COMPONENT = 'languages-list';
     public const ID = 'languageId';
     #[\Livewire\Attributes\Url(keep: false, except: '')]
     public ?string $languageId = null;
@@ -67,7 +67,7 @@ new class extends Component {
         <x-noerd::modal-title>Sprache</x-noerd::modal-title>
     </x-slot:header>
 
-    @php($pageLayout = StaticConfigHelper::getComponentFields('language-component'))
+    @php($pageLayout = StaticConfigHelper::getComponentFields('language-detail'))
     @include('noerd::components.detail.block', $pageLayout)
 
     <x-slot:footer>
