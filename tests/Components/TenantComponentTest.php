@@ -13,8 +13,8 @@ beforeEach(function (): void {
 });
 
 $testSettings = [
-    'componentName' => 'tenant-component',
-    'listName' => 'tenants-table',
+    'componentName' => 'tenant-detail',
+    'listName' => 'tenants-list',
     'id' => 'tenantId',
 ];
 

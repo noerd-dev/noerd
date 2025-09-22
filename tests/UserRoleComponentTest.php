@@ -9,8 +9,8 @@ uses(FakeOrderTrait::class);
 uses(Tests\TestCase::class);
 
 $testSettings = [
-    'componentName' => 'user-role-component',
-    'listName' => 'user-roles-table',
+    'componentName' => 'user-role-detail',
+    'listName' => 'user-roles-list',
     'id' => 'userRoleId',
 ];
 
@@ -20,7 +20,7 @@ it('renders the user role component', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'])
-        ->assertViewIs('volt-livewire::user-role-component')
+        ->assertViewIs('volt-livewire::user-role-detail')
         ->assertSeeText('Benutzerrolle');
 });
 
@@ -124,7 +124,7 @@ it('deletes a user role', function () use ($testSettings): void {
     Volt::test($testSettings['componentName'], [$userRole])
         ->set('modelId', $userRole->id)
         ->call('delete')
-        ->assertDispatched('reloadTable-user-roles-table');
+        ->assertDispatched('reloadTable-user-roles-list');
 
     $this->assertDatabaseMissing('user_roles', [
         'id' => $userRole->id,
@@ -248,7 +248,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
     Volt::test($testSettings['componentName'], [$userRole])
         ->set('modelId', $userRole->id)
         ->call('delete')
-        ->assertDispatched('reloadTable-user-roles-table');
+        ->assertDispatched('reloadTable-user-roles-list');
 });
 
 it('uses correct component constants', function () use ($testSettings): void {
@@ -259,7 +259,7 @@ it('uses correct component constants', function () use ($testSettings): void {
     $component = Volt::test($testSettings['componentName']);
 
     // Check if constants are correctly defined (via reflection since they're used in the class)
-    expect($testSettings['componentName'])->toBe('user-role-component');
-    expect($testSettings['listName'])->toBe('user-roles-table');
+    expect($testSettings['componentName'])->toBe('user-role-detail');
+    expect($testSettings['listName'])->toBe('user-roles-list');
     expect($testSettings['id'])->toBe('userRoleId');
 });

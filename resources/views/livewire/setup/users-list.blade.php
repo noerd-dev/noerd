@@ -10,7 +10,7 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'users-table';
+    public const COMPONENT = 'users-list';
 
     public function mount()
     {
@@ -27,7 +27,7 @@ new class extends Component {
     {
         $this->dispatch(
             event: 'noerdModal',
-            component: 'user-component',
+            component: 'user-detail',
             source: self::COMPONENT,
             arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
@@ -72,7 +72,7 @@ new class extends Component {
             ->with('roles')
             ->paginate(self::PAGINATION);
 
-        $tableConfig = StaticConfigHelper::getTableConfig('users-table');
+        $tableConfig = StaticConfigHelper::getTableConfig('users-list');
 
         return [
             'rows' => $rows,

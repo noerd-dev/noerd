@@ -12,8 +12,8 @@ new class extends Component {
     use Noerd;
     use WithFileUploads;
 
-    public const COMPONENT = 'tenant-component';
-    public const LIST_COMPONENT = 'tenants-table';
+    public const COMPONENT = 'tenant-detail';
+    public const LIST_COMPONENT = 'tenants-list';
     public const ID = 'tenantId';
 
     #[Url(keep: false, except: '')]
