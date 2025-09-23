@@ -129,8 +129,8 @@ it('quick menu component shows CMS button only when tenant has CMS app', functio
     // Create required settings for tenant
     LiefertoolSettings::create([
         'tenant_id' => $tenant->id,
-        'preorder_days' => 7,
-        'min_deliverytime' => 30,
+        'lead_days' => 7,
+        'lead_minutes' => 30,
         'timeslot_length' => 15,
         'only_delivery' => false,
         'only_pickup' => false,
@@ -192,8 +192,8 @@ it('generates correct CMS frontend URL when CMS app is available', function (): 
     // Create required settings for tenant
     LiefertoolSettings::create([
         'tenant_id' => $tenant->id,
-        'preorder_days' => 7,
-        'min_deliverytime' => 30,
+        'lead_days' => 7,
+        'lead_minutes' => 30,
         'timeslot_length' => 15,
         'only_delivery' => false,
         'only_pickup' => false,
@@ -235,8 +235,8 @@ it('does not generate website URL when tenant has empty hash', function (): void
     // Create required settings for tenant
     LiefertoolSettings::create([
         'tenant_id' => $tenant->id,
-        'preorder_days' => 7,
-        'min_deliverytime' => 30,
+        'lead_days' => 7,
+        'lead_minutes' => 30,
         'timeslot_length' => 15,
         'only_delivery' => false,
         'only_pickup' => false,
