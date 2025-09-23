@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Noerd\BusinessHours\Models\BusinessHour;
+use Noerd\BusinessHours\Models\BusinessHours;
 use Noerd\Noerd\Database\Factories\TenantFactory;
 use Nywerk\Liefertool\Models\AdditionalField;
 use Nywerk\Liefertool\Models\ClientPaypal;
@@ -100,7 +100,7 @@ class Tenant extends Authenticatable
 
     public function deliverytimes(): HasMany
     {
-        return $this->hasMany(BusinessHour::class, 'tenant_id', 'id')->orderBy('weekday');
+        return $this->hasMany(BusinessHours::class, 'tenant_id', 'id')->orderBy('weekday');
     }
 
     public function deliveryareas(): HasMany
