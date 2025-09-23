@@ -19,7 +19,6 @@ use Nywerk\Liefertool\Models\Coredata;
 use Nywerk\Liefertool\Models\Deliveryarea;
 use Nywerk\Liefertool\Models\Gastrofix;
 use Nywerk\Liefertool\Models\Mollie;
-use Nywerk\Liefertool\Models\Setting;
 use Nywerk\Liefertool\Models\Snippet;
 use Nywerk\Liefertool\Models\Store;
 use Nywerk\Liefertool\Models\Text;
