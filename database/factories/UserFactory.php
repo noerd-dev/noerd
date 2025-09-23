@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Setting;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantApp;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
 use Nywerk\Liefertool\Models\Gastrofix;
-use Nywerk\Liefertool\Models\Setting;
 use Nywerk\Liefertool\Models\Text;
 use Nywerk\Product\Models\Menu;
 
