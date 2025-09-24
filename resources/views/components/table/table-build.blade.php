@@ -30,6 +30,21 @@
                 </div>
             @endisset
 
+            @if($this->tableFilters())
+                <div class="flex ml-4">
+                    @foreach($this->tableFilters() as $tableFilter)
+                        <flux:select size="sm" wire:change="storeActiveTableFilters"
+                                     wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
+                                     class="mr-4 border-dashed max-w-48 {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-highlight border !border-solid' : '' }}"
+                                     placeholder="{{$tableFilter['label']}}">
+                            @foreach($tableFilter['options'] ?? [] as $key => $option)
+                                <flux:select.option value="{{$key}}">{{$option}}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endforeach
+                </div>
+            @endif
+
             @if(isset($disableSearch) && !$disableSearch)
                 <div @if(!$newLabel)  :class="isModal ? 'mr-10' : ''" @endif class="ml-auto mr-2">
                     <x-noerd::text-input
