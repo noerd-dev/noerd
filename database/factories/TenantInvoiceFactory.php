@@ -3,6 +3,7 @@
 namespace Noerd\Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantInvoice;
 
 class TenantInvoiceFactory extends Factory
@@ -20,7 +21,7 @@ class TenantInvoiceFactory extends Factory
             'due_date' => now()->addDays(14),
             'paid' => 0,
             'total_gross_amount' => $this->faker->randomFloat(2, 10, 1000),
-            'tenant_id' => 1,
+            'tenant_id' => Tenant::factory(),
         ];
     }
 }

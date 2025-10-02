@@ -16,7 +16,7 @@
 @isset($route)
     <div class="inline-flex">
         {{-- Removed   :class="{'border-brand-highlight! text-black!': currentTab == {{$tabNumber}} }" because it occures a java script error --}}
-        <a target="_blank" href="{{route($route, $routeParameters ?? null)}}" class="-mb-[1px] border-b-2 border-transparent text-gray-600 mr-6 hover:border-gray-500">
+        <a wire:navigate href="{{route($route, $routeParameters ?? null)}}" class="-mb-[1px] border-b-2 border-transparent text-gray-600 mr-6 hover:border-gray-500">
         <span class="border-transparent p-0 py-3 rounded-sm group inline-flex items-center border-b-2 text-sm">
             {{ $slot }}
         </span>

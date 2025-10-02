@@ -8,7 +8,6 @@ uses(Tests\TestCase::class);
 it('can create tenant invoice', function (): void {
     $tenantInvoice = TenantInvoice::factory()->create([
         'number' => 'TEST-001',
-        'tenant_id' => 1,
         'paid' => 0,
     ]);
 

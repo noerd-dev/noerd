@@ -73,8 +73,7 @@
     }"
          x-init="
         $store.app.setId('{{$tableId}}');
-        isInsideModal = !!$el.closest('#modal') || !!$el.closest('[modal]');
-     "
+        isInsideModal = !!$el.closest('#modal') || !!$el.closest('[modal]');"
          @mouseenter="$store.app.setId('{{$tableId}}')"
          @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$tableId}}++"
          @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$tableId}}--"
