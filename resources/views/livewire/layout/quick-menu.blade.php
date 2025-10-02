@@ -1,6 +1,7 @@
 <?php
 
 use Noerd\Noerd\Models\Tenant;
+use Nywerk\Liefertool\Models\LiefertoolTenant;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -15,9 +16,11 @@ new class extends Component {
     {
         $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;
         if (auth()->user()->can('orders', Tenant::class)) {
-            $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
+            $selectedTenant = LiefertoolTenant::find(auth()->user()->selected_tenant_id);
+            $this->openOrders = $selectedTenant?->openOrders()->count();
         }
-        $this->domain = auth()->user()->selectedTenant()?->domain;
+        $selectedTenant = LiefertoolTenant::find(auth()->user()->selected_tenant_id);
+        $this->domain = $selectedTenant?->domain;
 
         // Compute website URL for CMS access if available
         $hash = auth()->user()->selectedTenant()?->hash;
@@ -31,7 +34,8 @@ new class extends Component {
     public function refreshOrderCount()
     {
         if (auth()->user()->can('orders', Tenant::class)) {
-            $this->openOrders = auth()->user()->selectedTenant()?->openOrders()->count();
+            $selectedTenant = LiefertoolTenant::find(auth()->user()->selected_tenant_id);
+            $this->openOrders = $selectedTenant?->openOrders()->count();
         }
     }
 } ?>
