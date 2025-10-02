@@ -7,9 +7,8 @@ use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantApp;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
-use Nywerk\Liefertool\Tests\Traits\FakeOrderTrait;
 
-uses(FakeOrderTrait::class);
+
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 

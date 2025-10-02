@@ -241,7 +241,6 @@ class StaticConfigHelper
             // Customer related
             'customer' => 'customer',
 
-            // Delivery/Liefertool related
             'deliverySlot' => 'liefertool',
             'deliveryBlock' => 'liefertool',
             'deliverytime' => 'liefertool',

@@ -7,7 +7,6 @@ use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantApp;
 use Noerd\Noerd\Models\User;
-use Nywerk\Liefertool\Models\LiefertoolSettings;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
@@ -126,17 +125,6 @@ it('handles edge cases gracefully', function (): void {
 it('quick menu component shows CMS button only when tenant has CMS app', function (): void {
     $tenant = Tenant::factory()->create();
 
-    // Create required settings for tenant
-    LiefertoolSettings::create([
-        'tenant_id' => $tenant->id,
-        'lead_days' => 7,
-        'lead_minutes' => 30,
-        'timeslot_length' => 15,
-        'only_delivery' => false,
-        'only_pickup' => false,
-        'closed' => false,
-    ]);
-
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
@@ -189,17 +177,6 @@ it('generates correct CMS frontend URL when CMS app is available', function (): 
         'hash' => 'test-tenant-hash',
     ]);
 
-    // Create required settings for tenant
-    LiefertoolSettings::create([
-        'tenant_id' => $tenant->id,
-        'lead_days' => 7,
-        'lead_minutes' => 30,
-        'timeslot_length' => 15,
-        'only_delivery' => false,
-        'only_pickup' => false,
-        'closed' => false,
-    ]);
-
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
         'name' => 'Administrator',
@@ -232,16 +209,6 @@ it('does not generate website URL when tenant has empty hash', function (): void
         'hash' => '', // Empty hash
     ]);
 
-    // Create required settings for tenant
-    LiefertoolSettings::create([
-        'tenant_id' => $tenant->id,
-        'lead_days' => 7,
-        'lead_minutes' => 30,
-        'timeslot_length' => 15,
-        'only_delivery' => false,
-        'only_pickup' => false,
-        'closed' => false,
-    ]);
 
     $adminProfile = Profile::create([
         'key' => 'ADMIN',

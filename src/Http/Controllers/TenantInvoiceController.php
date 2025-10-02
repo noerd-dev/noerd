@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Noerd\Noerd\Models\TenantInvoice;
-use Nywerk\Liefertool\Services\QrCodeService;
+use Noerd\Noerd\Services\QrCodeService;
 
 class TenantInvoiceController extends Controller
 {
