@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 
 it('successfully makes a user admin', function (): void {
     // Create a user with tenant access but no admin privileges
-    $user = User::factory()->withDeliveryAndMenu()->create();
+    $user = User::factory()->withExampleTenant()->create();
     $tenant = $user->tenants->first();
 
     // Ensure user is not admin initially
@@ -179,7 +179,7 @@ it('handles user with partial admin access correctly', function (): void {
 });
 
 it('provides detailed summary output', function (): void {
-    $user = User::factory()->withDeliveryAndMenu()->create();
+    $user = User::factory()->withExampleTenant()->create();
 
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput('Summary:')
@@ -190,7 +190,7 @@ it('provides detailed summary output', function (): void {
 });
 
 it('verifies admin status after completion', function (): void {
-    $user = User::factory()->withDeliveryAndMenu()->create();
+    $user = User::factory()->withExampleTenant()->create();
 
     expect($user->isAdmin())->toBeFalse();
 
