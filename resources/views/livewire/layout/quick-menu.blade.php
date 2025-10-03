@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Gate;
 use Noerd\Noerd\Models\Tenant;
-use Nywerk\Liefertool\Models\LiefertoolTenant;
+
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 use Symfony\Component\Yaml\Yaml;
@@ -20,7 +20,7 @@ new class extends Component {
         $user = auth()->user();
         $this->selectedClientId = $user?->selected_tenant_id ?? 0;
 
-        $selectedTenant = $user ? LiefertoolTenant::find($user->selected_tenant_id) : null;
+        $selectedTenant = $user ? Tenant::find($user->selected_tenant_id) : null;
         $this->domain = $selectedTenant?->domain;
 
         // Compute website URL for CMS access if available
