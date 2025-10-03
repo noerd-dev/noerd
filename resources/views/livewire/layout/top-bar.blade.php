@@ -8,7 +8,6 @@ new class extends Component {
 
     public $selectedClientId;
 
-    // #[On('echo-private:orders.{selectedClientId},OrderCreated')]
     public function mount()
     {
         $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;
@@ -21,7 +20,7 @@ new class extends Component {
         Session::invalidate();
         Session::regenerateToken();
 
-        $this->redirect('/login', navigate: false);
+        $this->redirect('/login');
     }
 
     public function changeClient()
@@ -94,10 +93,6 @@ new class extends Component {
                     <!-- Separator -->
                     <div class="hidden lg:block shrink-0 lg:w-px lg:bg-gray-200" aria-hidden="true"></div>
 
-                    {{--
-                    <livewire:search></livewire:search>
-                    --}}
-
                     <div class="hidden lg:flex items-center gap-x-4 shrink-0">
                         {{--
                         <!-- Notifications -->
@@ -140,7 +135,6 @@ new class extends Component {
                                         <option value="{{$client->id}}">{{$client->name}}</option>
                                     @endforeach
                                 @endif
-
                             </x-noerd::select-input>
                         @endif
 
