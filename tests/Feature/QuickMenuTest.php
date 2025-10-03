@@ -12,11 +12,11 @@ uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 uses()->group('quick-menu', 'policies');
 
-it('ensures TenantPolicy is registered', function (): void {
-    expect(Gate::policies())->toHaveKey(Tenant::class);
+it('ensures canCms gate is registered', function (): void {
+    expect(Gate::has('canCms'))->toBeTrue();
 });
 
-it('allows admin users website access when tenant has CMS app', function (): void {
+it('allows admin users CMS access when tenant has CMS app', function (): void {
     $tenant = Tenant::factory()->create();
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
@@ -38,11 +38,11 @@ it('allows admin users website access when tenant has CMS app', function (): voi
     $adminUser->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
     $adminUser->selected_tenant_id = $tenant->id;
 
-    // Now admin should have website access
-    expect($adminUser->can('website', Tenant::class))->toBeTrue('Admin with CMS app should have website access');
+    // Now admin should have CMS access
+    expect($adminUser->can('canCms'))->toBeTrue('Admin with CMS app should have CMS access');
 });
 
-it('ensures users with CMS app can access website functionality', function (): void {
+it('ensures users with CMS app can access CMS functionality', function (): void {
     $tenant = Tenant::factory()->create();
     $userProfile = Profile::create([
         'key' => 'USER',
@@ -64,7 +64,7 @@ it('ensures users with CMS app can access website functionality', function (): v
     $user->tenants()->attach($tenant->id, ['profile_id' => $userProfile->id]);
     $user->selected_tenant_id = $tenant->id;
 
-    expect($user->can('website', Tenant::class))->toBeTrue('User with CMS app should have website access');
+    expect($user->can('canCms'))->toBeTrue('User with CMS app should have CMS access');
 });
 
 it('ensures users with order apps can access orders functionality', function (): void {
@@ -89,7 +89,7 @@ it('ensures users with order apps can access orders functionality', function ():
     $user->tenants()->attach($tenant->id, ['profile_id' => $userProfile->id]);
     $user->selected_tenant_id = $tenant->id;
 
-    expect($user->can('orders', Tenant::class))->toBeTrue('User with delivery app should have orders access');
+    expect($user->can('canOrders'))->toBeTrue('User with delivery app should have orders access');
 });
 
 it('denies access to users without appropriate tenant apps', function (): void {
@@ -104,8 +104,8 @@ it('denies access to users without appropriate tenant apps', function (): void {
     $user->tenants()->attach($tenant->id, ['profile_id' => $userProfile->id]);
     $user->selected_tenant_id = $tenant->id;
 
-    expect($user->can('orders', Tenant::class))->toBeFalse('User without order apps should NOT have orders access');
-    expect($user->can('website', Tenant::class))->toBeFalse('User without CMS app should NOT have website access');
+    expect($user->can('canOrders'))->toBeFalse('User without order apps should NOT have orders access');
+    expect($user->can('canCms'))->toBeFalse('User without CMS app should NOT have CMS access');
 });
 
 it('handles edge cases gracefully', function (): void {
@@ -113,13 +113,13 @@ it('handles edge cases gracefully', function (): void {
 
     // Null tenant
     $user->selected_tenant_id = null;
-    expect($user->can('orders', Tenant::class))->toBeFalse();
-    expect($user->can('website', Tenant::class))->toBeFalse();
+    expect($user->can('canOrders'))->toBeFalse();
+    expect($user->can('canCms'))->toBeFalse();
 
     // Non-existent tenant
     $user->selected_tenant_id = 999999;
-    expect($user->can('orders', Tenant::class))->toBeFalse();
-    expect($user->can('website', Tenant::class))->toBeFalse();
+    expect($user->can('canOrders'))->toBeFalse();
+    expect($user->can('canCms'))->toBeFalse();
 });
 
 it('quick menu component shows CMS button only when tenant has CMS app', function (): void {
@@ -261,7 +261,7 @@ it('validates all order app types provide correct access', function (): void {
         $user->tenants()->attach($tenant->id, ['profile_id' => $userProfile->id]);
         $user->selected_tenant_id = $tenant->id;
 
-        expect($user->can('orders', Tenant::class))
+        expect($user->can('canOrders'))
             ->toBeTrue("User with {$appName} app should have orders access");
     }
 });

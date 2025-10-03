@@ -3,7 +3,6 @@
 namespace Noerd\Noerd\Providers;
 
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
@@ -13,8 +12,6 @@ use Noerd\Noerd\Commands\CreateTenantApp;
 use Noerd\Noerd\Commands\MakeUserAdmin;
 use Noerd\Noerd\Commands\NoerdInstallCommand;
 use Noerd\Noerd\Middleware\SetupMiddleware;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Policies\TenantPolicy;
 use Noerd\Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
@@ -39,9 +36,6 @@ class NoerdServiceProvider extends ServiceProvider
         });
 
         config(['livewire.layout' => 'noerd::components.layouts.app']);
-
-        // Register policies
-        Gate::policy(Tenant::class, TenantPolicy::class);
 
         // Register commands
         if ($this->app->runningInConsole()) {

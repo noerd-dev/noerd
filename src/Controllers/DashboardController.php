@@ -9,7 +9,7 @@ class DashboardController extends Controller
 {
     public function __invoke(): RedirectResponse
     {
-        $route = auth()->user()->selectedTenant()?->tenantApps->first()->route;
+        $route = auth()->user()->selectedTenant()?->tenantApps->first()?->route;
 
         if (!$route) {
             $route = 'noerd-home';
