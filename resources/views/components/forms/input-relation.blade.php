@@ -17,7 +17,7 @@
         >
 
         <x-noerd::buttons.primary
-            wire:click="$dispatch('noerdModal', {component: '{{$field['modalComponent'] ?? null}}', arguments: {id: {{$modelId ?? 0}}}})"
+            wire:click="$dispatch('noerdModal', {component: '{{$field['modalComponent'] ?? null}}', arguments: {id: {{$modelId ?? 0}}, context: '{{$field['name'] ?? null}}'}})"
             class="!h-[40px] rounded !mt-0 !ml-1"
             type="button">
             <x-noerd::icons.magnifying-glass></x-noerd::icons.magnifying-glass>
