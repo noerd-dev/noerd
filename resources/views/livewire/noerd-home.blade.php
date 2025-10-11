@@ -10,7 +10,7 @@ new class extends Component {
     {
         if (!auth()->user()->selected_tenant_id) {
             $user = auth()->user();
-            $user->selected_tenant_id = auth()->user()->tenants->first()?->id;
+            $user->selected_tenant_id = $user->tenants->first()?->id;
             $user->save();
         }
 
