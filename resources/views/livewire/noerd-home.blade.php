@@ -1,3 +1,24 @@
+<?php
+
+use Livewire\Volt\Component;
+use Illuminate\Support\Str;
+
+new class extends Component {
+
+    // TODO this should be implemented in a middleware
+    public function mount(): void
+    {
+        if (!auth()->user()->selected_tenant_id) {
+            $user = auth()->user();
+            $user->selected_tenant_id = auth()->user()->tenants->first()?->id;
+            $user->save();
+        }
+
+        // TOOD also check if user is not anymore assigned to the tenant
+    }
+
+} ?>
+
 <x-noerd::page>
     <x-slot:header>
         <x-noerd::modal-title>Home</x-noerd::modal-title>
