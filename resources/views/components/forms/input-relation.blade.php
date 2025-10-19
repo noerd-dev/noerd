@@ -10,9 +10,17 @@
             id="{{$field['name'] ?? $name ?? ''}}"
             name="{{$field['name'] ?? $name ?? ''}}"
             @if((isset($field['live']) || isset($live)) && $field['live'] ?? $live)
-                wire:model.live.debounce="{{$field['relationField']}}"
+                @isset($field['relationField'])
+                    wire:model.live.debounce="{{$field['relationField']}}"
             @else
-                wire:model="{{$field['relationField']}}"
+                wire:model.live.debounce="relationTitles.{{str_replace('model.', '',$field['name'] )}}"
+            @endisset
+            @else
+                @isset($field['relationField'])
+                    wire:model="{{$field['relationField']}}"
+            @else
+                wire:model.live.debounce="relationTitles.{{str_replace('model.', '',$field['name'] )}}"
+            @endisset
             @endif
         >
 
