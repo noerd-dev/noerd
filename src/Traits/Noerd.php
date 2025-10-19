@@ -43,6 +43,8 @@ trait Noerd
 
     public array $activeTableFilters = [];
 
+    public array $relationTitles = [];
+
     #[On('reloadTable-' . self::COMPONENT)]
     public function reloadTable(): void
     {
