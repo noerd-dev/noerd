@@ -50,13 +50,13 @@ new class extends Component {
         $modal['topModal'] = false;
         $modal['source'] = $source;
         $modal['size'] = self::SIZES[$component] ?? 'lg';
-        $key = $component;
-        foreach ($arguments as $argument) {
-            if (is_string($argument) || is_numeric($argument)) {
-                $key .= '-' . $argument;
-            }
-        }
-        $modal['key'] = Str::uuid()->toString();
+        //$key = $component;
+        //foreach ($arguments as $argument) {
+        //    if (is_string($argument) || is_numeric($argument)) {
+        //        $key .= '-' . $argument;
+        //    }
+        //}
+        $modal['key'] = md5(serialize($arguments));
 
         $iteration = 1;
         foreach ($this->modals as $checkModal) {
@@ -71,12 +71,13 @@ new class extends Component {
         $this->markTopModal();
     }
 
-    public function downModal(string $componentName, ?string $source): void // by ESC f.e.
+    public function downModal(string $componentName, ?string $source, ?string $modalKey): void // by ESC f.e.
     {
-        $this->dispatch('close-modal-' . $componentName);
+        $this->dispatch('close-modal-' . $componentName, $source, $modalKey);
         $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
-        return;
-        
+
+        /*
+         return;
         // TOOD: the downModal2 is currently needed to remove the URL Parameter again
         $modals = $this->modals;
         foreach ($modals as $modal) {
@@ -100,16 +101,16 @@ new class extends Component {
         if (!$hasOpenModal) {
             //       $this->dispatch('modal-closed-global');
         }
+        */
     }
 
     #[On('downModal2')]
-    public function downModal2(string $componentName, ?string $source): void // by ESC f.e.
+    public function downModal2(string $componentName, ?string $source, ?string $modalKey): void // by ESC f.e.
     {
         $modals = $this->modals;
         foreach ($modals as $modal) {
-            if ($modal['componentName'] === $componentName && $modal['show'] === true) {
+            if ($modal['componentName'] === $componentName && $modal['key'] === $modalKey) {
                 unset($this->modals[$modal['key']]);
-                $this->sadsad = null;
             }
         }
 
@@ -160,8 +161,8 @@ new class extends Component {
             <div x-data="{ show: true }" wire:key="{{$modal['key']}}"
                  @if($modal['show'] && $modal['topModal'])
                      x-init="$store.app.modalOpen = true"
-                 @close-modal-{{$modal['componentName']}}.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
-                 @keydown.escape.window.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}')"
+                 @close-modal-{{$modal['componentName']}}.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}', '{{$modal['key']}}')"
+                 @keydown.escape.window.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}', '{{$modal['key']}}')"
                 @endif
             >
                 <div x-show="show">
@@ -169,6 +170,7 @@ new class extends Component {
                         <x-noerd::modal.panel :size="$modal['size']" :ml="$modal['arguments']['ml'] ?? ''"
                                               :iteration="$modal['iteration']"
                                               :source="$modal['source']"
+                                              :modalKey="$modal['key']"
                                               :modal="$modal['componentName']">
                             <div>
                                 @livewire($modal['componentName'], $modal['arguments'], key($key))
