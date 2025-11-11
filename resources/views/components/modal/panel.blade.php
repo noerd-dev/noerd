@@ -38,7 +38,7 @@
         <div class="bg-white max-w-7xl mx-auto h-full rounded shadow-sm relative">
 
             <!-- Close Button -->
-            <button @click="show = !show" wire:click.prevent="downModal('{{$modal}}', '{{$source}}')" type="button" @class([
+            <button @click="show = !show" wire:click.prevent="downModal('{{$modal}}', '{{$source}}', '{{$modalKey}}')" type="button" @class([
                 'absolute right-0 top-4 pt-2 pr-6 mx-auto my-auto',
             //    'right-1 top-2!' => $size === 'lg',
             //    'ml-[710px]' => $size === 'sm',

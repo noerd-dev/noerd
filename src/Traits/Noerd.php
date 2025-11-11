@@ -113,12 +113,12 @@ trait Noerd
     }
 
     #[On('close-modal-' . self::COMPONENT)]
-    public function closeModalProcess(?string $source = null): void
+    public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
     {
         if (defined('self::ID')) {
             $this->{self::ID} = '';
         }
-        $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source);
+        $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
 
         if ($source) {
             $this->dispatch('reloadTable-' . $source);
