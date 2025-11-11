@@ -21,8 +21,6 @@
             @endforeach
         </select>
 
-        <input wire:model.live="{{$field['name']}}">
-
         <x-noerd::buttons.primary
             x-data="{ collectionKey: $wire.entangle('{{$field['name']}}') }"
             @click="$dispatch('noerdModal', {component: 'collection-entries-list', arguments: {collectionKey: collectionKey, context: '{{$field['name'] ?? null}}'}})"
