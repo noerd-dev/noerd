@@ -15,6 +15,9 @@
         <x-noerd::modal-title class="flex items-center">
             <div>
                 {{$title}}
+                <span class="font-light">
+                    ({{ $rows->total() }})
+                </span>
             </div>
 
             @isset($filters)
@@ -44,6 +47,7 @@
                     @endforeach
                 </div>
             @endif
+
 
             @if(isset($disableSearch) && !$disableSearch)
                 <div @if(!$newLabel)  :class="isModal ? 'mr-10' : ''" @endif class="ml-auto mr-2">
