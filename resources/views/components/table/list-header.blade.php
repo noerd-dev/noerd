@@ -2,9 +2,11 @@
     <x-noerd::modal-title class="flex items-center">
         <div>
             {{$title}}
-            <span class="font-light">
+            @isset($rows)
+                <span class="font-light">
                     ({{ $rows->total() }})
                 </span>
+            @endisset
         </div>
 
         @isset($filters)
