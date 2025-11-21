@@ -6,7 +6,7 @@ new class extends Component {
     public $navi = [];
 } ?>
 
-<li class="{{ request()->routeIs($navi['link'] ?? $navi['route'])  ? 'bg-brand-highlight/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
+<li class="{{ request()->routeIs($navi['link'] ?? $navi['route'] ?? null)  ? 'bg-brand-highlight/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
     @isset($navi['component'])
         <a wire:click="$dispatch('noerdModal', {component: '{{$navi['component']}}', arguments: {{json_encode($arguments ?? [])}}})"
            class="border-l-2 cursor-pointer  border-transparent pl-3 group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
@@ -40,6 +40,8 @@ new class extends Component {
                 @endisset
             </div>
         </a>
+    @elseif(isset($navi['component']))
+
     @else
         @php($routeName = ($navi['route'] ?? null) === 'collections' ? 'cms.collections' : ($navi['route'] ?? ''))
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
