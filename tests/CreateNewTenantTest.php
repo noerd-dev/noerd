@@ -8,7 +8,6 @@ use Noerd\Noerd\Models\TenantApp;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
 
-
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
