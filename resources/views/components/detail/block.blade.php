@@ -6,6 +6,16 @@
     <div class="grid py-8 pt-4 grid-cols-{{$cols ?? '12'}} gap-6">
         @foreach($fields as $field)
             @if(isset($field['show']) && !$field['show'])
+            @elseif($field['type'] === 'block')
+                {{-- Nested block with its own title and fields --}}
+                <div class="col-span-{{$field['colspan'] ?? '12'}}">
+                    @include('noerd::components.detail.block', [
+                        'title' => $field['title'] ?? null,
+                        'description' => $field['description'] ?? null,
+                        'fields' => $field['fields'] ?? [],
+                        'cols' => $field['cols'] ?? $cols ?? '12',
+                    ])
+                </div>
             @else
                 <div class="col-span-{{$field['colspan'] ?? '3'}}">
                     @if($field['type'] === 'relation')

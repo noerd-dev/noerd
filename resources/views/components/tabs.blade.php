@@ -1,7 +1,23 @@
-<div class="py-6 w-full">
-    <div class="border-b border-gray-300 flex w-full">
-        <nav class="inline-block" aria-label="Tabs">
-            {{$slot}}
-        </nav>
+@props(['layout' => null])
+
+@if($layout && isset($layout['tabs']) && count($layout['tabs']) > 0)
+    <div class="py-6 w-full">
+        <div class="border-b border-gray-300 flex w-full">
+            <nav class="inline-block" aria-label="Tabs">
+                @foreach($layout['tabs'] as $tab)
+                    <x-noerd::tab :tabNumber="$tab['number']">
+                        {{ __($tab['label']) }}
+                    </x-noerd::tab>
+                @endforeach
+            </nav>
+        </div>
     </div>
-</div>
+@elseif(!$slot->isEmpty())
+    <div class="py-6 w-full">
+        <div class="border-b border-gray-300 flex w-full">
+            <nav class="inline-block" aria-label="Tabs">
+                {{ $slot }}
+            </nav>
+        </div>
+    </div>
+@endif
