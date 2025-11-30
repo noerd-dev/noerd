@@ -3,7 +3,6 @@
 use Noerd\Noerd\Models\UserRole;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
@@ -19,16 +18,14 @@ new class extends Component {
 
     public array $userRole;
 
-    public function mount(UserRole $userRole): void
+    public function mount(UserRole $model): void
     {
         if ($this->modelId) {
-            $userRole = UserRole::find($this->modelId);
+            $model = UserRole::find($this->modelId);
         }
 
-        $this->pageLayout = StaticConfigHelper::getComponentFields('userRole');
-
-        $this->userRole = $userRole->toArray();
-        $this->userRoleId = $userRole->id;
+        $this->mountModalProcess(self::COMPONENT, $model);
+        $this->userRole = $model->toArray();
     }
 
     public function store(): void

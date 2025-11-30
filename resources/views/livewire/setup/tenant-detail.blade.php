@@ -4,7 +4,6 @@ use Noerd\Noerd\Models\Tenant;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
@@ -26,10 +25,7 @@ new class extends Component {
     {
         $model = Tenant::find(auth()->user()->selected_tenant_id);
 
-        $this->pageLayout = StaticConfigHelper::getComponentFields('tenant');
-
-        $this->model = $model->toArray();
-        $this->tenantId = $model->id;
+        $this->mountModalProcess(self::COMPONENT, $model);
     }
 
     public function store(): void
