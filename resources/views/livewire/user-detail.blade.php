@@ -6,7 +6,6 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
@@ -16,7 +15,7 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'setup.user';
+    public const COMPONENT = 'user-detail';
     public const LIST_COMPONENT = 'users-list';
     public const ID = 'userId';
     #[Url(keep: false, except: '')]
@@ -52,24 +51,23 @@ new class extends Component {
         return $array;
     }
 
-    public function mount(User $user): void
+    public function mount(User $model): void
     {
-        $this->pageLayout = StaticConfigHelper::getComponentFields('user');
         $this->selectedTenant = auth()->user()->selectedTenant();
 
         if ($this->modelId) {
-            $user = User::find($this->modelId);
-            foreach ($user->roles as $role) {
+            $model = User::find($this->modelId);
+            foreach ($model->roles as $role) {
                 $this->userRoles[$role->id] = true;
             }
         }
 
-        $this->user = $user->toArray();
-        $this->userId = $user->id;
+        $this->mountModalProcess(self::COMPONENT, $model);
+        $this->user = $model->toArray();
 
         foreach (auth()->user()->adminTenants as $tenant) {
             $this->possibleTenants[$tenant->id] = $tenant->toArray();
-            $userProfile = $tenant->users()->where('user_id', $user->id)->first();
+            $userProfile = $tenant->users()->where('user_id', $model->id)->first();
             $profileId = $userProfile?->pivot->profile_id;
 
             $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileId;
