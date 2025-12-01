@@ -3,6 +3,7 @@
 namespace Noerd\Noerd\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
@@ -37,6 +38,14 @@ class NoerdServiceProvider extends ServiceProvider
 
         config(['livewire.layout' => 'noerd::components.layouts.app']);
 
+        // Publish public assets (fonts)
+        $this->publishes([
+            __DIR__ . '/../../public' => public_path('vendor/noerd'),
+        ], 'noerd-assets');
+
+        // Auto-publish fonts if not exists (for development convenience)
+        $this->publishFontsIfNotExists();
+
         // Register commands
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -46,6 +55,20 @@ class NoerdServiceProvider extends ServiceProvider
                 CreateTenantApp::class,
                 AssignAppsToTenant::class,
             ]);
+        }
+    }
+
+    /**
+     * Automatically copy fonts to public directory if they don't exist.
+     */
+    private function publishFontsIfNotExists(): void
+    {
+        $targetPath = public_path('vendor/noerd/fonts');
+        $sourcePath = __DIR__ . '/../../public/fonts';
+
+        if (! File::exists($targetPath) && File::exists($sourcePath)) {
+            File::ensureDirectoryExists(dirname($targetPath));
+            File::copyDirectory($sourcePath, $targetPath);
         }
     }
 }
