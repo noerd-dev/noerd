@@ -4,8 +4,8 @@
         content: '',
 
         init() {
-            // Initialize with existing content
-            this.content = '{{ addslashes($content ?? '') }}';
+            // Initialize with existing content from data attribute
+            this.content = this.$el.dataset.initialContent || '';
 
             // Wait for Alpine to be ready
             this.$nextTick(() => {
@@ -40,14 +40,15 @@
             this.editor.on('text-change', () => {
                 this.content = this.editor.root.innerHTML;
                 // Trigger Livewire update
-                this.$wire.set('{{$field}}', this.content);
+                this.$wire.set('{{ $field }}', this.content);
             });
         }
     }"
+    data-initial-content="{{ $content ?? '' }}"
     wire:ignore
 >
     <div x-ref="editor" class="quill-container border-0"></div>
 
     <!-- Hidden input for Livewire -->
-    <input type="hidden" wire:model="{{$field}}" x-model="content">
+    <input type="hidden" wire:model="{{ $field }}" x-model="content">
 </div>
