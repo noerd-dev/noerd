@@ -4,8 +4,15 @@ namespace Noerd\Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Hash;
+use Noerd\Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\password;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
 
 class NoerdInstallCommand extends Command
 {
@@ -54,6 +61,12 @@ class NoerdInstallCommand extends Command
 
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
+
+            // Setup admin user
+            $this->setupAdminUser();
+
+            // Ask to run npm build
+            $this->runNpmBuild();
 
             $this->info('Noerd content successfully installed!');
 
@@ -452,39 +465,60 @@ export default {
         }
 
         $authContent = file_get_contents($authPath);
+        $originalContent = $authContent;
 
         // Check if Noerd User model is already configured
-        if (str_contains($authContent, 'Noerd\\Noerd\\Models\\User::class')) {
+        if (str_contains($authContent, 'Noerd\\Noerd\\Models\\User::class')
+            || str_contains($authContent, '\\Noerd\\Noerd\\Models\\User::class')) {
             $this->line('<comment>Noerd User model already configured in auth.php.</comment>');
             return;
         }
 
-        // Replace App\Models\User::class with Noerd\Noerd\Models\User::class
-        $patterns = [
-            // Pattern for direct class reference
-            '/App\\\\Models\\\\User::class/' => '\\Noerd\\Noerd\\Models\\User::class',
-            // Pattern for env() with App\Models\User::class as default
-            '/env\([\'"]AUTH_MODEL[\'"],\s*App\\\\Models\\\\User::class\)/' => 'env(\'AUTH_MODEL\', \\Noerd\\Noerd\\Models\\User::class)',
-            // Pattern for just App\Models\User without ::class
-            '/[\'"]?App\\\\Models\\\\User[\'"]?/' => '\\Noerd\\Noerd\\Models\\User::class',
+        // Strategy 1: Use str_replace for exact string matches (most reliable)
+        // Order matters: more specific patterns (with leading backslash) must come first
+        $stringReplacements = [
+            // With leading backslash variants first (more specific)
+            "env('AUTH_MODEL', \\App\\Models\\User::class)" => "\\Noerd\\Noerd\\Models\\User::class",
+            'env("AUTH_MODEL", \\App\\Models\\User::class)' => "\\Noerd\\Noerd\\Models\\User::class",
+            '\\App\\Models\\User::class' => '\\Noerd\\Noerd\\Models\\User::class',
+            // Without leading backslash (less specific, must come after)
+            "env('AUTH_MODEL', App\\Models\\User::class)" => "\\Noerd\\Noerd\\Models\\User::class",
+            'env("AUTH_MODEL", App\\Models\\User::class)' => "\\Noerd\\Noerd\\Models\\User::class",
+            'App\\Models\\User::class' => '\\Noerd\\Noerd\\Models\\User::class',
         ];
 
-        $updatedContent = $authContent;
-        $hasChanges = false;
-
-        foreach ($patterns as $pattern => $replacement) {
-            $newContent = preg_replace($pattern, $replacement, $updatedContent);
-            if ($newContent && $newContent !== $updatedContent) {
-                $updatedContent = $newContent;
-                $hasChanges = true;
+        foreach ($stringReplacements as $search => $replace) {
+            if (str_contains($authContent, $search)) {
+                $authContent = str_replace($search, $replace, $authContent);
+                $this->line("<info>Replaced:</info> {$search}");
+                break; // Stop after first successful replacement to avoid double replacements
             }
         }
 
-        if ($hasChanges) {
-            file_put_contents($authPath, $updatedContent);
-            $this->line('<info>Updated auth.php to use Noerd User model.</info>');
+        // Strategy 2: Use regex as fallback for edge cases
+        if ($authContent === $originalContent) {
+            $regexPatterns = [
+                // Match 'model' => App\Models\User::class (with optional backslash prefix)
+                "/('model'\s*=>\s*)\\\\?App\\\\Models\\\\User::class/" => '$1\\Noerd\\Noerd\\Models\\User::class',
+                // Match 'model' => env('AUTH_MODEL', App\Models\User::class)
+                "/('model'\s*=>\s*)env\s*\(\s*['\"]AUTH_MODEL['\"]\s*,\s*\\\\?App\\\\Models\\\\User::class\s*\)/" => '$1\\Noerd\\Noerd\\Models\\User::class',
+            ];
+
+            foreach ($regexPatterns as $pattern => $replacement) {
+                $newContent = preg_replace($pattern, $replacement, $authContent);
+                if ($newContent !== null && $newContent !== $authContent) {
+                    $authContent = $newContent;
+                    $this->line('<info>Applied regex replacement for User model.</info>');
+                }
+            }
+        }
+
+        // Check if changes were made
+        if ($authContent !== $originalContent) {
+            file_put_contents($authPath, $authContent);
+            $this->line('<info>Updated auth.php to use Noerd User model (\\Noerd\\Noerd\\Models\\User::class).</info>');
         } else {
-            $this->line('<comment>No changes needed in auth.php configuration.</comment>');
+            $this->warn('Could not automatically update auth.php. Please manually change the User model to \\Noerd\\Noerd\\Models\\User::class in the providers.users configuration.');
         }
     }
 
@@ -712,6 +746,196 @@ return [
             }
         } else {
             $this->line('<comment>.gitkeep already exists in app-modules directory</comment>');
+        }
+    }
+
+    /**
+     * Setup an admin user - either create a new one or promote an existing user
+     */
+    private function setupAdminUser(): void
+    {
+        $this->newLine();
+        $this->info('Admin User Setup');
+        $this->line('================');
+
+        try {
+            $userCount = User::count();
+
+            if ($userCount === 0) {
+                $this->setupNewAdminUser();
+            } else {
+                $this->setupExistingAdminUser();
+            }
+        } catch (Exception $e) {
+            $this->warn('Could not setup admin user: ' . $e->getMessage());
+            $this->line('You can manually create an admin user later using: php artisan noerd:make-admin {user_id}');
+        }
+    }
+
+    /**
+     * Create a new admin user when no users exist
+     */
+    private function setupNewAdminUser(): void
+    {
+        $this->line('<comment>No users found in the database.</comment>');
+
+        if (!confirm('Would you like to create an admin user now?', default: true)) {
+            $this->line('Skipping admin user creation. You can create one later.');
+            return;
+        }
+
+        $name = text(
+            label: 'What is the admin user\'s name?',
+            placeholder: 'John Doe',
+            required: true,
+            hint: 'The full name of the admin user.'
+        );
+
+        $email = text(
+            label: 'What is the admin user\'s email?',
+            placeholder: 'admin@example.com',
+            required: true,
+            validate: function (string $value) {
+                if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    return 'Please enter a valid email address.';
+                }
+                if (User::where('email', $value)->exists()) {
+                    return 'A user with this email already exists.';
+                }
+                return null;
+            },
+            hint: 'This will be used for login.'
+        );
+
+        $passwordValue = password(
+            label: 'Enter a password for the admin user',
+            placeholder: 'minimum 8 characters',
+            required: true,
+            validate: fn (string $value) => mb_strlen($value) < 8
+                ? 'Password must be at least 8 characters.'
+                : null,
+            hint: 'Choose a secure password.'
+        );
+
+        // Create the user
+        $user = User::create([
+            'name' => $name,
+            'email' => $email,
+            'password' => Hash::make($passwordValue),
+        ]);
+
+        $this->newLine();
+        $this->info("User '{$user->name}' created successfully.");
+
+        // Make the user admin
+        $this->makeUserAdmin($user);
+    }
+
+    /**
+     * Promote an existing user to admin
+     */
+    private function setupExistingAdminUser(): void
+    {
+        $users = User::all();
+        $adminUsers = $users->filter(fn (User $user) => $user->isAdmin());
+
+        if ($adminUsers->isNotEmpty()) {
+            $this->line('<comment>Admin user(s) already exist:</comment>');
+            foreach ($adminUsers as $admin) {
+                $this->line("  - {$admin->name} ({$admin->email})");
+            }
+
+            if (!confirm('Would you like to make another user an admin?', default: false)) {
+                return;
+            }
+        } else {
+            $this->line("<comment>Found {$users->count()} user(s) in the database, but none are admins.</comment>");
+
+            if (!confirm('Would you like to select a user to make admin?', default: true)) {
+                $this->line('Skipping admin setup. You can do this later using: php artisan noerd:make-admin {user_id}');
+                return;
+            }
+        }
+
+        // Build options for select prompt
+        $options = $users->mapWithKeys(function (User $user) {
+            $adminTag = $user->isAdmin() ? ' [ADMIN]' : '';
+            return [$user->id => "{$user->name} ({$user->email}){$adminTag}"];
+        })->toArray();
+
+        $selectedUserId = select(
+            label: 'Select a user to make admin:',
+            options: $options,
+            scroll: 10,
+            hint: 'Use arrow keys to navigate, Enter to select.'
+        );
+
+        $selectedUser = User::find($selectedUserId);
+
+        if ($selectedUser->isAdmin()) {
+            $this->line("<comment>User '{$selectedUser->name}' is already an admin.</comment>");
+            return;
+        }
+
+        $this->makeUserAdmin($selectedUser);
+    }
+
+    /**
+     * Make a user admin by calling the noerd:make-admin command
+     */
+    private function makeUserAdmin(User $user): void
+    {
+        $this->line("Making user '{$user->name}' an admin...");
+
+        $exitCode = $this->call('noerd:make-admin', [
+            'user_id' => $user->id,
+        ]);
+
+        if ($exitCode === 0) {
+            $this->newLine();
+            $this->info("User '{$user->name}' is now an admin!");
+        } else {
+            $this->error("Failed to make user '{$user->name}' an admin.");
+        }
+    }
+
+    /**
+     * Ask to run npm build for frontend assets
+     */
+    private function runNpmBuild(): void
+    {
+        $this->newLine();
+
+        if (!confirm('Would you like to run "npm run build" to compile frontend assets?', default: true)) {
+            $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
+            return;
+        }
+
+        $this->line('Running npm run build...');
+        $this->newLine();
+
+        $process = proc_open(
+            'npm run build',
+            [
+                0 => STDIN,
+                1 => STDOUT,
+                2 => STDERR,
+            ],
+            $pipes,
+            base_path()
+        );
+
+        if (is_resource($process)) {
+            $exitCode = proc_close($process);
+
+            $this->newLine();
+            if ($exitCode === 0) {
+                $this->info('Frontend assets compiled successfully!');
+            } else {
+                $this->warn('npm run build finished with errors. You may need to run it manually.');
+            }
+        } else {
+            $this->warn('Could not execute npm run build. Please run it manually.');
         }
     }
 }
