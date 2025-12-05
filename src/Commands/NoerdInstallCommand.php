@@ -44,14 +44,6 @@ class NoerdInstallCommand extends Command
         try {
             $results = $this->copyDirectoryContents($sourceDir, $targetDir);
 
-            // Ensure lists are copied explicitly to content/lists
-            $listsSource = $sourceDir . DIRECTORY_SEPARATOR . 'lists';
-            $listsTarget = $targetDir . DIRECTORY_SEPARATOR . 'lists';
-            if (is_dir($listsSource)) {
-                $listResults = $this->copyDirectoryContents($listsSource, $listsTarget);
-                $results = $this->mergeResults($results, $listResults);
-            }
-
             $this->displaySummary($results);
 
             // Ensure app-modules directory exists
