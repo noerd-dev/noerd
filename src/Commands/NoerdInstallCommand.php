@@ -5,13 +5,12 @@ namespace Noerd\Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+
+use function Laravel\Prompts\confirm;
+
 use Noerd\Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\password;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
 
 class NoerdInstallCommand extends Command
 {
@@ -773,43 +772,46 @@ return [
     {
         $this->line('<comment>No users found in the database.</comment>');
 
-        if (!confirm('Would you like to create an admin user now?', default: true)) {
+        if (!$this->confirm('Would you like to create an admin user now?', true)) {
             $this->line('Skipping admin user creation. You can create one later.');
             return;
         }
 
-        $name = text(
-            label: 'What is the admin user\'s name?',
-            placeholder: 'John Doe',
-            required: true,
-            hint: 'The full name of the admin user.'
-        );
+        // Get name
+        $name = null;
+        while (empty($name)) {
+            $name = $this->ask('What is the admin user\'s name?');
+            if (empty($name)) {
+                $this->error('Name is required.');
+            }
+        }
 
-        $email = text(
-            label: 'What is the admin user\'s email?',
-            placeholder: 'admin@example.com',
-            required: true,
-            validate: function (string $value) {
-                if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    return 'Please enter a valid email address.';
-                }
-                if (User::where('email', $value)->exists()) {
-                    return 'A user with this email already exists.';
-                }
-                return null;
-            },
-            hint: 'This will be used for login.'
-        );
+        // Get email
+        $email = null;
+        while (empty($email)) {
+            $email = $this->ask('What is the admin user\'s email?');
+            if (empty($email)) {
+                $this->error('Email is required.');
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->error('Please enter a valid email address.');
+                $email = null;
+            } elseif (User::where('email', $email)->exists()) {
+                $this->error('A user with this email already exists.');
+                $email = null;
+            }
+        }
 
-        $passwordValue = password(
-            label: 'Enter a password for the admin user',
-            placeholder: 'minimum 8 characters',
-            required: true,
-            validate: fn(string $value) => mb_strlen($value) < 8
-                ? 'Password must be at least 8 characters.'
-                : null,
-            hint: 'Choose a secure password.'
-        );
+        // Get password
+        $passwordValue = null;
+        while (empty($passwordValue)) {
+            $passwordValue = $this->secret('Enter a password for the admin user (minimum 8 characters)');
+            if (empty($passwordValue)) {
+                $this->error('Password is required.');
+            } elseif (mb_strlen($passwordValue) < 8) {
+                $this->error('Password must be at least 8 characters.');
+                $passwordValue = null;
+            }
+        }
 
         // Create the user
         $user = User::create([
@@ -839,31 +841,32 @@ return [
                 $this->line("  - {$admin->name} ({$admin->email})");
             }
 
-            if (!confirm('Would you like to make another user an admin?', default: false)) {
+            if (!$this->confirm('Would you like to make another user an admin?', false)) {
                 return;
             }
         } else {
             $this->line("<comment>Found {$users->count()} user(s) in the database, but none are admins.</comment>");
 
-            if (!confirm('Would you like to select a user to make admin?', default: true)) {
+            if (!$this->confirm('Would you like to select a user to make admin?', true)) {
                 $this->line('Skipping admin setup. You can do this later using: php artisan noerd:make-admin {user_id}');
                 return;
             }
         }
 
-        // Build options for select prompt
+        // Build options for choice prompt
         $options = $users->mapWithKeys(function (User $user) {
             $adminTag = $user->isAdmin() ? ' [ADMIN]' : '';
             return [$user->id => "{$user->name} ({$user->email}){$adminTag}"];
         })->toArray();
 
-        $selectedUserId = select(
-            label: 'Select a user to make admin:',
-            options: $options,
-            scroll: 10,
-            hint: 'Use arrow keys to navigate, Enter to select.'
+        $selectedUserId = $this->choice(
+            'Select a user to make admin:',
+            $options,
+            null,
         );
 
+        // Find the actual user ID from the selected option
+        $selectedUserId = array_search($selectedUserId, $options);
         $selectedUser = User::find($selectedUserId);
 
         if ($selectedUser->isAdmin()) {
@@ -947,7 +950,7 @@ return [
                 2 => STDERR,
             ],
             $pipes,
-            base_path()
+            base_path(),
         );
 
         if (is_resource($process)) {
