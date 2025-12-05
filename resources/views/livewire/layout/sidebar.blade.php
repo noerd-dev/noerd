@@ -1,3 +1,15 @@
+<?php
+
+use Livewire\Volt\Component;
+
+new class extends Component {
+    public function openApp(string $appName, string $route): void
+    {
+        session(['currentApp' => $appName]);
+        $this->redirect(route($route), navigate: true);
+    }
+}; ?>
+
 @inject('navigation', 'Noerd\Noerd\Services\NavigationService')
 
 <div>
@@ -39,8 +51,10 @@
                 --}}
 
                 @foreach(auth()->user()->selectedTenant()?->tenantApps as $tenantApp)
-                    <a wire:navigate @if($tenantApp->is_active) href="{{route($tenantApp->route)}}"
-                       @else class="opacity-50" @endif ">
+                    <a @if($tenantApp->is_active)
+                            wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
+                            class="cursor-pointer"
+                       @else class="opacity-50" @endif>
                     <div
                         @class(['!bg-brand-highlight/5  border-brand-highlight!' => session('currentApp') === $tenantApp->name,
                                     'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
