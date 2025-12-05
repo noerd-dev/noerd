@@ -5,8 +5,6 @@ disableSearch: false
 columns:
   - { field: code, label: 'Code', width: 15 }
   - { field: name, label: 'Name', width: 30 }
-  - { field: is_active, label: 'Aktiv', width: 10, type: 'boolean' }
   - { field: is_default, label: 'Standard', width: 10, type: 'boolean' }
-  - { field: sort_order, label: 'Sortierung', width: 10 }
 
 
