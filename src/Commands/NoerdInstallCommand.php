@@ -62,8 +62,8 @@ class NoerdInstallCommand extends Command
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
 
-            // Setup admin user
-            $this->setupAdminUser();
+            // Run migrations and setup admin user
+            $this->runMigrationsAndSetupAdmin();
 
             // Ask to run npm build
             $this->runNpmBuild();
@@ -897,6 +897,42 @@ return [
         } else {
             $this->error("Failed to make user '{$user->name}' an admin.");
         }
+    }
+
+    /**
+     * Run migrations and setup admin user
+     * Migrations must be run before creating an admin user
+     */
+    private function runMigrationsAndSetupAdmin(): void
+    {
+        $this->newLine();
+        $this->info('Database Migration');
+        $this->line('==================');
+        $this->line('Running migrations is required before you can create an admin user.');
+        $this->newLine();
+
+        if (!confirm('Would you like to run "php artisan migrate" now?', default: true)) {
+            $this->line('<comment>Skipping migrations. You can run them manually later with: php artisan migrate</comment>');
+            $this->line('<comment>Note: You will need to run migrations before creating an admin user.</comment>');
+            return;
+        }
+
+        $this->line('Running migrations...');
+        $this->newLine();
+
+        $exitCode = $this->call('migrate', ['--no-interaction' => true]);
+
+        if ($exitCode !== 0) {
+            $this->warn('Migrations failed. Please run them manually: php artisan migrate');
+            $this->line('<comment>Skipping admin user setup since migrations were not successful.</comment>');
+            return;
+        }
+
+        $this->newLine();
+        $this->info('Migrations completed successfully!');
+
+        // Now setup admin user since migrations ran successfully
+        $this->setupAdminUser();
     }
 
     /**
