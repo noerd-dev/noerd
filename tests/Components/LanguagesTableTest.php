@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Volt\Volt;
-use Noerd\Cms\Models\Language;
+use Noerd\Noerd\Models\Language;
 use Noerd\Noerd\Models\User;
 
 uses(Tests\TestCase::class);
