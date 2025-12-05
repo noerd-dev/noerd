@@ -1,8 +1,8 @@
 <?php
 
 use Livewire\Volt\Component;
-use Noerd\Cms\Models\Language;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Models\Language;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
