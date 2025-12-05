@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Hash;
 use Noerd\Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
@@ -811,7 +810,7 @@ return [
             label: 'Enter a password for the admin user',
             placeholder: 'minimum 8 characters',
             required: true,
-            validate: fn (string $value) => mb_strlen($value) < 8
+            validate: fn(string $value) => mb_strlen($value) < 8
                 ? 'Password must be at least 8 characters.'
                 : null,
             hint: 'Choose a secure password.'
@@ -837,7 +836,7 @@ return [
     private function setupExistingAdminUser(): void
     {
         $users = User::all();
-        $adminUsers = $users->filter(fn (User $user) => $user->isAdmin());
+        $adminUsers = $users->filter(fn(User $user) => $user->isAdmin());
 
         if ($adminUsers->isNotEmpty()) {
             $this->line('<comment>Admin user(s) already exist:</comment>');
@@ -920,27 +919,14 @@ return [
         $this->line('Running migrations...');
         $this->newLine();
 
-        try {
-            $exitCode = $this->call('migrate', ['--no-interaction' => true]);
 
-            $this->newLine();
+        $exitCode = $this->call('migrate', ['--no-interaction' => true]);
 
-            if ($exitCode !== 0) {
-                $this->warn('Migrations may have encountered issues (exit code: ' . $exitCode . ').');
-                if (!confirm('Would you like to continue with admin user setup anyway?', default: true)) {
-                    $this->line('<comment>Skipping admin user setup.</comment>');
-                    return;
-                }
-            } else {
-                $this->info('Migrations completed successfully!');
-            }
+        $this->newLine();
 
-            // Setup admin user
-            $this->setupAdminUser();
-        } catch (Exception $e) {
-            $this->warn('Migrations failed: ' . $e->getMessage());
-            $this->line('<comment>Skipping admin user setup since migrations were not successful.</comment>');
-        }
+        // Setup admin user
+        $this->setupAdminUser();
+
     }
 
     /**
