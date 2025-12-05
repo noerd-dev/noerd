@@ -1,0 +1,25 @@
+{
+    "name": "noerd/{{module-name}}",
+    "description": "",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "require": {
+        "noerd/noerd": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Noerd\\{{ModuleName}}\\": "src/",
+            "Noerd\\{{ModuleName}}\\Database\\Factories\\": "database/factories/",
+            "Noerd\\{{ModuleName}}\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Noerd\\{{ModuleName}}\\Providers\\{{ModuleName}}ServiceProvider"
+            ]
+        }
+    }
+}
