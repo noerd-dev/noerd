@@ -11,7 +11,7 @@ class Language extends Model
         'is_default' => 'boolean',
     ];
 
-    protected $table = 'cms_languages';
+    protected $table = 'languages';
 
     protected $guarded = [];
 }
