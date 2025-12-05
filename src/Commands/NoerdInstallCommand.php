@@ -757,17 +757,12 @@ return [
         $this->info('Admin User Setup');
         $this->line('================');
 
-        try {
-            $userCount = User::count();
+        $userCount = User::count();
 
-            if ($userCount === 0) {
-                $this->setupNewAdminUser();
-            } else {
-                $this->setupExistingAdminUser();
-            }
-        } catch (Exception $e) {
-            $this->warn('Could not setup admin user: ' . $e->getMessage());
-            $this->line('You can manually create an admin user later using: php artisan noerd:make-admin {user_id}');
+        if ($userCount === 0) {
+            $this->setupNewAdminUser();
+        } else {
+            $this->setupExistingAdminUser();
         }
     }
 
