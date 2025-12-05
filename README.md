@@ -10,7 +10,6 @@ composer require noerd/noerd
 Install the dependencies and copy files
 ```
 php artisan noerd:install
-npm run build
 ```
 
 Add a admin user (user must be registered first)
