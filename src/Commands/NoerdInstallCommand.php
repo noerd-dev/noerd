@@ -920,19 +920,27 @@ return [
         $this->line('Running migrations...');
         $this->newLine();
 
-        $exitCode = $this->call('migrate', ['--no-interaction' => true]);
+        try {
+            $exitCode = $this->call('migrate', ['--no-interaction' => true]);
 
-        if ($exitCode !== 0) {
-            $this->warn('Migrations failed. Please run them manually: php artisan migrate');
+            $this->newLine();
+
+            if ($exitCode !== 0) {
+                $this->warn('Migrations may have encountered issues (exit code: ' . $exitCode . ').');
+                if (!confirm('Would you like to continue with admin user setup anyway?', default: true)) {
+                    $this->line('<comment>Skipping admin user setup.</comment>');
+                    return;
+                }
+            } else {
+                $this->info('Migrations completed successfully!');
+            }
+
+            // Setup admin user
+            $this->setupAdminUser();
+        } catch (Exception $e) {
+            $this->warn('Migrations failed: ' . $e->getMessage());
             $this->line('<comment>Skipping admin user setup since migrations were not successful.</comment>');
-            return;
         }
-
-        $this->newLine();
-        $this->info('Migrations completed successfully!');
-
-        // Now setup admin user since migrations ran successfully
-        $this->setupAdminUser();
     }
 
     /**
