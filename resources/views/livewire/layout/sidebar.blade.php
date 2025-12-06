@@ -52,19 +52,21 @@ new class extends Component {
 
                 @foreach(auth()->user()->selectedTenant()?->tenantApps as $tenantApp)
                     <a @if($tenantApp->is_active)
-                            wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
-                            class="cursor-pointer"
+                           wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
+                       class="cursor-pointer"
                        @else class="opacity-50" @endif>
-                    <div
-                        @class(['!bg-brand-highlight/5  border-brand-highlight!' => session('currentApp') === $tenantApp->name,
-                                    'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
-                        <x-dynamic-component
-                            class="{{ session('currentApp') === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
+                        <div
+                            @class(['!bg-brand-highlight/5  border-brand-highlight!' => session('currentApp') === $tenantApp->name,
+                                        'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
+                            @if($tenantApp->icon)
+                                <x-dynamic-component
+                                    class="{{ session('currentApp') === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
                                     border-l-2"
-                            :component="$tenantApp->icon"/>
-                    </div>
-                    <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
+                                    :component="$tenantApp->icon"/>
+                            @endif
+                        </div>
+                        <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
                     </a>
                 @endforeach
             </div>
