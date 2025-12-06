@@ -49,6 +49,9 @@ class NoerdInstallCommand extends Command
             // Ensure app-modules directory exists
             $this->ensureAppModulesDirectory();
 
+            // Publish noerd config file
+            $this->publishNoerdConfig();
+
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
 
@@ -577,6 +580,38 @@ export default {
             $this->line('Added repositories configuration to composer.json');
         } else {
             $this->warn('Failed to update composer.json');
+        }
+    }
+
+    /**
+     * Publish the noerd config file to the application's config directory
+     */
+    private function publishNoerdConfig(): void
+    {
+        $sourcePath = dirname(__DIR__, 2) . '/config/noerd.php';
+        $targetPath = base_path('config/noerd.php');
+
+        if (file_exists($targetPath)) {
+            if (!$this->option('force')) {
+                if (!$this->confirm('config/noerd.php already exists. Do you want to overwrite it?', false)) {
+                    $this->line('<comment>Skipped config/noerd.php publishing.</comment>');
+
+                    return;
+                }
+            }
+            $this->line('<comment>Overwriting config/noerd.php...</comment>');
+        }
+
+        if (!file_exists($sourcePath)) {
+            $this->warn('Source config file not found: ' . $sourcePath);
+
+            return;
+        }
+
+        if (copy($sourcePath, $targetPath)) {
+            $this->line('<info>Published config/noerd.php successfully.</info>');
+        } else {
+            $this->warn('Failed to publish config/noerd.php');
         }
     }
 
