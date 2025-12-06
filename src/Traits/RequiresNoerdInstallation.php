@@ -29,8 +29,7 @@ trait RequiresNoerdInstallation
         $this->line('');
 
         try {
-            $options = $this->option('force') ? ['--force' => true] : [];
-            $exitCode = Artisan::call('noerd:install', $options, $this->output);
+            $exitCode = Artisan::call('noerd:install');
 
             if ($exitCode === 0) {
                 $this->line('');
