@@ -1,0 +1,18 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Feature Flags
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable specific features of the Noerd package.
+    |
+    */
+    'features' => [
+        'invoice' => env('NOERD_INVOICE_FEATURE_ENABLED', true),
+        'roles' => env('NOERD_ROLE_FEATURE_ENABLED', true),
+        'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),
+        'register' => env('NOERD_REGISTER_FEATURE_ENABLED', false),
+    ],
+];
