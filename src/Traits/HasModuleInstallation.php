@@ -56,18 +56,6 @@ trait HasModuleInstallation
     abstract protected function getSourceDir(): string;
 
     /**
-     * Get the middleware namespace.
-     * Example: "Noerd\\BusinessHours\\Middleware"
-     */
-    abstract protected function getMiddlewareNamespace(): string;
-
-    /**
-     * Get the middleware class name.
-     * Example: "BusinessHoursMiddleware"
-     */
-    abstract protected function getMiddlewareClass(): string;
-
-    /**
      * Get the navigation source folder name.
      * Example: "business-hours"
      */
@@ -75,7 +63,7 @@ trait HasModuleInstallation
 
     /**
      * Get the snippet title for duplicate checking.
-     * Example: "Öffnungszeiten"
+     * Example: "Business Hours"
      */
     abstract protected function getSnippetTitle(): string;
 
@@ -207,9 +195,6 @@ trait HasModuleInstallation
             $this->installedAppKey = $appKey;
         }
 
-        // Generate Middleware
-        $this->generateMiddleware($appKey);
-
         // Copy navigation
         $appKeyLower = mb_strtolower(str_replace('_', '-', $appKey));
         $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $this->getNavigationSourceFolder();
@@ -307,58 +292,6 @@ trait HasModuleInstallation
     }
 
     /**
-     * Generate middleware from stub.
-     */
-    protected function generateMiddleware(string $appKey): void
-    {
-        $stubFile = $this->getMiddlewareStubPath();
-
-        if (! file_exists($stubFile)) {
-            $this->warn('Middleware stub not found, skipping middleware generation.');
-
-            return;
-        }
-
-        $middlewareDir = $this->getMiddlewareDir();
-        if (! is_dir($middlewareDir)) {
-            mkdir($middlewareDir, 0755, true);
-        }
-
-        $middlewareFile = $middlewareDir . '/' . $this->getMiddlewareClass() . '.php';
-
-        if (file_exists($middlewareFile) && ! $this->option('force')) {
-            if (! $this->confirm('Middleware already exists. Overwrite?', false)) {
-                $this->line('<comment>Middleware skipped</comment>');
-
-                return;
-            }
-        }
-
-        $stubContent = file_get_contents($stubFile);
-        $middlewareContent = str_replace('{{APP_KEY}}', $appKey, $stubContent);
-
-        file_put_contents($middlewareFile, $middlewareContent);
-        $relativePath = str_replace(base_path() . '/', '', $middlewareFile);
-        $this->line("<info>✓ Middleware created:</info> {$relativePath}");
-    }
-
-    /**
-     * Get the path to the middleware stub file.
-     */
-    protected function getMiddlewareStubPath(): string
-    {
-        return __DIR__ . '/stubs/middleware.stub';
-    }
-
-    /**
-     * Get the directory where middleware should be generated.
-     */
-    protected function getMiddlewareDir(): string
-    {
-        return base_path('app-modules/' . $this->getModuleKey() . '/src/Middleware');
-    }
-
-    /**
      * Copy directory contents recursively.
      */
     protected function copyDirectoryContents(string $sourceDir, string $targetDir): void
@@ -451,9 +384,9 @@ trait HasModuleInstallation
     protected function askForMigration(): void
     {
         $this->line('');
-        $this->info('Es wird empfohlen, die Migrationen auszuführen, um alle Datenbanktabellen zu aktualisieren.');
+        $this->info('It is recommended to run migrations to ensure all database tables are up to date.');
 
-        if ($this->confirm('Möchten Sie jetzt php artisan migrate ausführen?', true)) {
+        if ($this->confirm('Would you like to run php artisan migrate now?', true)) {
             $this->call('migrate');
         }
     }
