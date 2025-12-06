@@ -68,7 +68,7 @@ trait RequiresNoerdInstallation
         $app = TenantApp::where('name', $appName)->first();
 
         if (! $app) {
-            $this->warn("App '{$appName}' nicht in der Datenbank gefunden.");
+            $this->warn("App '{$appName}' not found in database.");
 
             return;
         }
@@ -76,7 +76,7 @@ trait RequiresNoerdInstallation
         $tenants = Tenant::orderBy('name')->get();
 
         if ($tenants->isEmpty()) {
-            $this->warn('Keine Tenants gefunden.');
+            $this->warn('No tenants found.');
 
             return;
         }
@@ -85,7 +85,7 @@ trait RequiresNoerdInstallation
         $tenantChoices = [];
         foreach ($tenants as $tenant) {
             $hasApp = $tenant->tenantApps()->where('tenant_apps.id', $app->id)->exists();
-            $status = $hasApp ? ' [bereits zugewiesen]' : '';
+            $status = $hasApp ? ' [already assigned]' : '';
             $tenantChoices[$tenant->id] = "{$tenant->name}{$status}";
         }
 
@@ -93,12 +93,12 @@ trait RequiresNoerdInstallation
         $currentTenantIds = $app->tenants()->pluck('tenants.id')->toArray();
 
         $this->line('');
-        $this->info("App '{$app->title}' Tenants zuweisen:");
-        $this->comment('Nutze ↑/↓ zum Navigieren, Leertaste zum Auswählen, Enter zum Bestätigen');
+        $this->info("Assign '{$app->title}' to tenants:");
+        $this->comment('Use ↑/↓ to navigate, Space to select, Enter to confirm');
         $this->line('');
 
         $selectedTenantIds = multiselect(
-            label: "Welchen Tenants soll '{$app->title}' zugewiesen werden?",
+            label: "Which tenants should '{$app->title}' be assigned to?",
             options: $tenantChoices,
             default: $currentTenantIds,
             required: false,
@@ -111,15 +111,15 @@ trait RequiresNoerdInstallation
 
             if ($isSelected && ! $wasAssigned) {
                 $tenant->tenantApps()->attach($app->id);
-                $this->line("<info>✓ '{$app->title}' wurde '{$tenant->name}' zugewiesen</info>");
+                $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
             } elseif (! $isSelected && $wasAssigned) {
                 $tenant->tenantApps()->detach($app->id);
-                $this->line("<comment>✗ '{$app->title}' wurde von '{$tenant->name}' entfernt</comment>");
+                $this->line("<comment>✗ '{$app->title}' removed from '{$tenant->name}'</comment>");
             }
         }
 
         $finalCount = $app->fresh()->tenants()->count();
         $this->line('');
-        $this->info("'{$app->title}' ist jetzt {$finalCount} Tenant(s) zugewiesen.");
+        $this->info("'{$app->title}' is now assigned to {$finalCount} tenant(s).");
     }
 }

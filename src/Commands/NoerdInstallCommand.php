@@ -292,7 +292,7 @@ select:focus[data-flux-control] {
 import sort from '@alpinejs/sort'
 import Quill from 'quill';
 
-// Quill global verfügbar machen (falls nötig für andere Komponenten)
+// Make Quill globally available (if needed for other components)
 window.Quill = Quill;
 
 Alpine.plugin(sort)
