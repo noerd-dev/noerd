@@ -2,9 +2,6 @@
 
 namespace Noerd\Noerd\Traits;
 
-use Exception;
-use Illuminate\Support\Facades\Artisan;
-
 use function Laravel\Prompts\multiselect;
 
 use Noerd\Noerd\Models\Tenant;
@@ -13,40 +10,22 @@ use Noerd\Noerd\Models\TenantApp;
 trait RequiresNoerdInstallation
 {
     /**
-     * Check if noerd:install has been run, and run it if not
+     * Check if noerd:install has been run
      */
     protected function ensureNoerdInstalled(): bool
     {
         if ($this->isNoerdInstalled()) {
-            $this->line('<comment>Noerd base package already installed.</comment>');
-
             return true;
         }
 
         $this->line('');
-        $this->warn('Noerd base package has not been installed yet.');
-        $this->info('Running noerd:install first...');
+        $this->error('Noerd base package has not been installed yet.');
+        $this->line('');
+        $this->info('Please run the following command first:');
+        $this->line('  php artisan noerd:install');
         $this->line('');
 
-        try {
-            $exitCode = Artisan::call('noerd:install');
-
-            if ($exitCode === 0) {
-                $this->line('');
-                $this->info('Noerd base package installed successfully.');
-                $this->line('');
-
-                return true;
-            }
-
-            $this->error('Failed to install noerd base package.');
-
-            return false;
-        } catch (Exception $e) {
-            $this->error('Failed to run noerd:install: ' . $e->getMessage());
-
-            return false;
-        }
+        return false;
     }
 
     /**
