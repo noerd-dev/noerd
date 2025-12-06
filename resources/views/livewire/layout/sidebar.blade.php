@@ -62,7 +62,7 @@ new class extends Component {
                             class="{{ session('currentApp') === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
                                     border-l-2"
-                            :component="'noerd::'.$tenantApp->icon"/>
+                            :component="$tenantApp->icon"/>
                     </div>
                     <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
                     </a>
