@@ -588,8 +588,30 @@ export default {
      */
     private function publishNoerdConfig(): void
     {
-        $sourcePath = dirname(__DIR__, 2) . '/config/noerd.php';
         $targetPath = base_path('config/noerd.php');
+
+        // Try multiple possible source locations for the stub
+        $possibleSources = [
+            dirname(__DIR__, 2) . '/stubs/noerd.php.stub', // app-modules/noerd/stubs
+            base_path('vendor/noerd/noerd/stubs/noerd.php.stub'), // vendor installation
+        ];
+
+        $sourcePath = null;
+        foreach ($possibleSources as $path) {
+            if (file_exists($path)) {
+                $sourcePath = $path;
+                break;
+            }
+        }
+
+        if ($sourcePath === null) {
+            $this->warn('Source config stub not found. Tried:');
+            foreach ($possibleSources as $path) {
+                $this->warn('  - ' . $path);
+            }
+
+            return;
+        }
 
         if (file_exists($targetPath)) {
             if (!$this->option('force')) {
@@ -600,12 +622,6 @@ export default {
                 }
             }
             $this->line('<comment>Overwriting config/noerd.php...</comment>');
-        }
-
-        if (!file_exists($sourcePath)) {
-            $this->warn('Source config file not found: ' . $sourcePath);
-
-            return;
         }
 
         if (copy($sourcePath, $targetPath)) {
