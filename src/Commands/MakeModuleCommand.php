@@ -7,11 +7,12 @@ use Composer\Json\JsonFile;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
+use Noerd\Noerd\Traits\RequiresNoerdInstallation;
 
 class MakeModuleCommand extends Command
 {
+    use RequiresNoerdInstallation;
     protected $signature = 'noerd:module {name : The name of the module}';
 
     protected $description = 'Initialize an existing module directory with composer.json';
@@ -70,43 +71,6 @@ class MakeModuleCommand extends Command
         }
     }
 
-    private function ensureNoerdInstalled(): bool
-    {
-        $configPath = base_path('config/app-modules.php');
-
-        $isInstalled = file_exists($configPath)
-            && str_contains(file_get_contents($configPath), "'modules_namespace' => 'Noerd'");
-
-        if ($isInstalled) {
-            return true;
-        }
-
-        $this->line('');
-        $this->warn('Noerd base package has not been installed yet.');
-        $this->info('Running noerd:install first...');
-        $this->line('');
-
-        try {
-            $exitCode = Artisan::call('noerd:install', [], $this->output);
-
-            if ($exitCode === 0) {
-                $this->line('');
-                $this->info('Noerd base package installed successfully.');
-                $this->line('');
-
-                return true;
-            }
-
-            $this->error('Failed to install noerd base package.');
-
-            return false;
-        } catch (Exception $e) {
-            $this->error('Failed to run noerd:install: ' . $e->getMessage());
-
-            return false;
-        }
-    }
-
     private function createComposerJson(): void
     {
         $composerPath = "{$this->basePath}/composer.json";
@@ -127,7 +91,7 @@ class MakeModuleCommand extends Command
         $content = str_replace(
             ['{{module-name}}', '{{ModuleName}}'],
             [$this->moduleName, $this->moduleNameStudly],
-            $content
+            $content,
         );
 
         $this->filesystem->put($composerPath, $content);
@@ -163,31 +127,27 @@ class MakeModuleCommand extends Command
 
     private function sortComposerPackages(array $packages): array
     {
-        $prefix = function ($requirement) {
-            return preg_replace(
-                [
-                    '/^php$/',
-                    '/^hhvm-/',
-                    '/^ext-/',
-                    '/^lib-/',
-                    '/^\D/',
-                    '/^(?!php$|hhvm-|ext-|lib-)/',
-                ],
-                [
-                    '0-$0',
-                    '1-$0',
-                    '2-$0',
-                    '3-$0',
-                    '4-$0',
-                    '5-$0',
-                ],
-                $requirement
-            );
-        };
+        $prefix = fn($requirement) => preg_replace(
+            [
+                '/^php$/',
+                '/^hhvm-/',
+                '/^ext-/',
+                '/^lib-/',
+                '/^\D/',
+                '/^(?!php$|hhvm-|ext-|lib-)/',
+            ],
+            [
+                '0-$0',
+                '1-$0',
+                '2-$0',
+                '3-$0',
+                '4-$0',
+                '5-$0',
+            ],
+            $requirement,
+        );
 
-        uksort($packages, function ($a, $b) use ($prefix) {
-            return strnatcmp($prefix($a), $prefix($b));
-        });
+        uksort($packages, fn($a, $b) => strnatcmp($prefix($a), $prefix($b)));
 
         return $packages;
     }
