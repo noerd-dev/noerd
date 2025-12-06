@@ -28,8 +28,8 @@ it('lists languages for tenant in table with sorting and search', function () us
     $this->actingAs($admin);
 
     // seed a few
-    Language::create(['tenant_id' => $admin->selected_tenant_id, 'code' => 'de', 'name' => 'Deutsch', 'is_active' => true, 'is_default' => true, 'sort_order' => 1]);
-    Language::create(['tenant_id' => $admin->selected_tenant_id, 'code' => 'en', 'name' => 'English', 'is_active' => true, 'is_default' => false, 'sort_order' => 2]);
+    Language::create(['tenant_id' => $admin->selected_tenant_id, 'code' => 'de', 'name' => 'Deutsch', 'is_default' => true]);
+    Language::create(['tenant_id' => $admin->selected_tenant_id, 'code' => 'en', 'name' => 'English', 'is_default' => false]);
 
     Volt::test($testSettings['listName'])
         ->set('search', 'Eng')
