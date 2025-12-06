@@ -5,12 +5,10 @@ namespace Noerd\Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
-
-use function Laravel\Prompts\confirm;
-
 use Noerd\Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use function Laravel\Prompts\confirm;
 
 class NoerdInstallCommand extends Command
 {
@@ -832,13 +830,12 @@ export default {
         $this->newLine();
 
 
-        $exitCode = $this->call('migrate', ['--no-interaction' => true]);
+        $this->call('migrate', ['--no-interaction' => true]);
 
         $this->newLine();
 
         // Setup admin user
         $this->setupAdminUser();
-
     }
 
     /**
