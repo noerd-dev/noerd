@@ -146,6 +146,9 @@ trait HasModuleInstallation
             // Ask to run migrations
             $this->askForMigration();
 
+            // Ask to run npm build
+            $this->askForNpmBuild();
+
             return 0;
         } catch (Exception $e) {
             $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
@@ -388,6 +391,45 @@ trait HasModuleInstallation
 
         if ($this->confirm('Would you like to run php artisan migrate now?', true)) {
             $this->call('migrate');
+        }
+    }
+
+    /**
+     * Ask the user if they want to run npm build.
+     */
+    protected function askForNpmBuild(): void
+    {
+        $this->line('');
+
+        if ($this->confirm('Would you like to run "npm run build" to compile frontend assets?', true)) {
+            $this->line('Running npm run build...');
+            $this->line('');
+
+            $process = proc_open(
+                'npm run build',
+                [
+                    0 => STDIN,
+                    1 => STDOUT,
+                    2 => STDERR,
+                ],
+                $pipes,
+                base_path(),
+            );
+
+            if (is_resource($process)) {
+                $exitCode = proc_close($process);
+
+                $this->line('');
+                if ($exitCode === 0) {
+                    $this->info('Frontend assets compiled successfully!');
+                } else {
+                    $this->warn('npm run build finished with errors. You may need to run it manually.');
+                }
+            } else {
+                $this->warn('Could not execute npm run build. Please run it manually.');
+            }
+        } else {
+            $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
         }
     }
 
