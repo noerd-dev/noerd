@@ -1,4 +1,4 @@
-@props(['tabNumber' => null, 'route' => null, 'component' => null, 'arguments' => null, 'external' => null])
+@props(['tabNumber' => null, 'route' => null, 'component' => null, 'arguments' => null, 'external' => null, 'active' => false])
 
 @isset($tabNumber)
     <div class="inline-flex">
@@ -14,8 +14,12 @@
 
 @isset($route)
     <div class="inline-flex">
-        {{-- Removed   :class="{'border-brand-highlight! text-black!': currentTab == {{$tabNumber}} }" because it occures a java script error --}}
-        <a @if($external) target="_blank" @else wire:navigate @endif href="{{route($route, $routeParameters ?? null)}}" class="-mb-[1px] border-b-2 border-transparent text-gray-600 mr-6 hover:border-gray-500">
+        <a @if($external) target="_blank" @else wire:navigate @endif href="{{route($route, $routeParameters ?? null)}}"
+           @class([
+               '-mb-[1px] border-b-2 text-gray-600 mr-6 hover:border-gray-500',
+               'border-brand-highlight! text-black!' => $active,
+               'border-transparent' => !$active,
+           ])>
         <span class="border-transparent p-0 py-3 rounded-sm group inline-flex items-center border-b-2 text-sm">
             {{ $slot }}
         </span>
