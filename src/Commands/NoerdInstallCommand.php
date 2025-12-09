@@ -47,6 +47,9 @@ class NoerdInstallCommand extends Command
             // Ensure app-modules directory exists
             $this->ensureAppModulesDirectory();
 
+            // Update phpunit.xml with modules testsuite
+            $this->updatePhpunitXml();
+
             // Publish noerd config file
             $this->publishNoerdConfig();
 
@@ -656,6 +659,50 @@ export default {
             }
         } else {
             $this->line('<comment>.gitkeep already exists in app-modules directory</comment>');
+        }
+    }
+
+    /**
+     * Update phpunit.xml with the app-modules testsuite configuration
+     */
+    private function updatePhpunitXml(): void
+    {
+        $phpunitPath = base_path('phpunit.xml');
+
+        if (!file_exists($phpunitPath)) {
+            $this->warn('phpunit.xml not found, skipping phpunit configuration.');
+
+            return;
+        }
+
+        $phpunitContent = file_get_contents($phpunitPath);
+
+        // Check if the app-modules testsuite already exists
+        if (str_contains($phpunitContent, './app-modules/*/tests')) {
+            $this->line('<comment>app-modules testsuite already configured in phpunit.xml.</comment>');
+
+            return;
+        }
+
+        // The testsuite entry to add
+        $newTestsuite = '        <testsuite name="Modules"><directory suffix="Test.php">./app-modules/*/tests</directory></testsuite>';
+
+        // Try to find the closing </testsuites> tag and insert before it
+        if (str_contains($phpunitContent, '</testsuites>')) {
+            $phpunitContent = str_replace(
+                '</testsuites>',
+                $newTestsuite . "\n    </testsuites>",
+                $phpunitContent,
+            );
+
+            if (file_put_contents($phpunitPath, $phpunitContent) !== false) {
+                $this->line('<info>Added app-modules testsuite to phpunit.xml.</info>');
+            } else {
+                $this->warn('Failed to update phpunit.xml');
+            }
+        } else {
+            $this->warn('Could not find </testsuites> tag in phpunit.xml. Please add the following testsuite manually:');
+            $this->line($newTestsuite);
         }
     }
 
