@@ -70,6 +70,9 @@ trait RequiresNoerdInstallation
         // Get currently assigned tenant IDs for this app
         $currentTenantIds = $app->tenants()->pluck('tenants.id')->toArray();
 
+        // Default to all tenants selected
+        $allTenantIds = $tenants->pluck('id')->toArray();
+
         $this->line('');
         $this->info("Assign '{$app->title}' to tenants:");
         $this->comment('Use ↑/↓ to navigate, Space to select, Enter to confirm');
@@ -78,7 +81,7 @@ trait RequiresNoerdInstallation
         $selectedTenantIds = multiselect(
             label: "Which tenants should '{$app->title}' be assigned to?",
             options: $tenantChoices,
-            default: $currentTenantIds,
+            default: $allTenantIds,
             required: false,
         );
 
