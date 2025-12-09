@@ -2,10 +2,9 @@
 
 namespace Noerd\Noerd\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 
-class DashboardController extends Controller
+class DashboardController
 {
     public function __invoke(): RedirectResponse
     {
