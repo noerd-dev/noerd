@@ -2,13 +2,12 @@
 
 namespace Noerd\Noerd\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Noerd\Noerd\Models\TenantInvoice;
 use Noerd\Noerd\Services\QrCodeService;
 
-class TenantInvoiceController extends Controller
+class TenantInvoiceController
 {
     public function __construct(
         private QrCodeService $qrCodeService,
