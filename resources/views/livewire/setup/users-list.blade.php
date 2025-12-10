@@ -72,7 +72,7 @@ new class extends Component {
                         ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
-            ->with('roles')
+            ->with(['roles', 'tenants'])
             ->paginate(self::PAGINATION);
 
         $tableConfig = StaticConfigHelper::getTableConfig('users-list');

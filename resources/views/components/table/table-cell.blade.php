@@ -151,6 +151,19 @@
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
                        value="{{number_format((float)$value,2, ',', '.')}} €">
+            @elseif($type == 'badge_with_text')
+                <div wire:click.prevent="{{$action}}('{{$redirectAction}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
+                    @if(is_array($value) && isset($value['badge']) && $value['badge'])
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ $value['badge'] }}
+                        </span>
+                    @endif
+                    @if(is_array($value) && isset($value['text']))
+                        <span class="text-sm text-gray-600">{{ $value['text'] }}</span>
+                    @elseif(!is_array($value))
+                        <span class="text-sm">{{ $value }}</span>
+                    @endif
+                </div>
             @else
                 <input type="{{$type}}"
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
