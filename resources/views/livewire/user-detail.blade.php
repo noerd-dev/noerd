@@ -147,10 +147,21 @@ new class extends Component {
     public function delete(): void
     {
         $user = User::find($this->userId);
+
+        // Is the user assigned to the current tenant?
+        if (!$user->tenants->contains(auth()->user()->selected_tenant_id)) {
+            // Message to the frontend that deletion is not possible
+            // TODO
+        }
+        
         $user->tenants()->detach(auth()->user()->selected_tenant_id);
         $this->closeModalProcess(self::LIST_COMPONENT);
-    }
 
+        // If user has no more tenants, delete the user
+        if ($user->tenants()->count() === 0) {
+            $user->delete();
+        }
+    }
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">
