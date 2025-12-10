@@ -153,7 +153,7 @@ new class extends Component {
             // Message to the frontend that deletion is not possible
             // TODO
         }
-        
+
         $user->tenants()->detach(auth()->user()->selected_tenant_id);
         $this->closeModalProcess(self::LIST_COMPONENT);
 
