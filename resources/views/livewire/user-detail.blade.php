@@ -51,6 +51,20 @@ new class extends Component {
         return $array;
     }
 
+    #[Computed]
+    public function assignedToCurrentTenant(): bool
+    {
+        if (!isset($this->userId)) {
+            return false;
+        }
+
+        $user = User::find($this->userId);
+        if(!$user) {
+            return false;
+        }
+        return $user->tenants->contains(auth()->user()->selected_tenant_id);
+    }
+
     public function mount(User $model): void
     {
         $this->selectedTenant = auth()->user()->selectedTenant();
@@ -148,12 +162,6 @@ new class extends Component {
     {
         $user = User::find($this->userId);
 
-        // Is the user assigned to the current tenant?
-        if (!$user->tenants->contains(auth()->user()->selected_tenant_id)) {
-            // Message to the frontend that deletion is not possible
-            // TODO
-        }
-
         $user->tenants()->detach(auth()->user()->selected_tenant_id);
         $this->closeModalProcess(self::LIST_COMPONENT);
 
@@ -248,6 +256,6 @@ new class extends Component {
     </div>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($userId) && !$isOwner"/>
+        <x-noerd::delete-save-bar :showDelete="isset($userId) && !$isOwner && $this->assignedToCurrentTenant"/>
     </x-slot:footer>
 </x-noerd::page>
