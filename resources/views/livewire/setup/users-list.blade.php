@@ -14,6 +14,9 @@ new class extends Component {
 
     public function mount()
     {
+        $this->sortField = 'name';
+        $this->sortAsc = true;
+
         if ((int)request()->customerId) {
             $this->tableAction(request()->customerId);
         }
@@ -54,7 +57,7 @@ new class extends Component {
 
     public function removeFromTenant($id)
     {
-        dd('TODO');
+        // TODO
     }
 
     public function with(): array
