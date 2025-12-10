@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Noerd\Noerd\Database\Factories\UserFactory;
 use Nywerk\LegalRegister\Models\Standort;
 
@@ -95,6 +96,29 @@ class User extends Authenticatable
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(UserRole::class, 'user_role');
+    }
+
+    public function getRolesForTenantAttribute(): array
+    {
+        $selectedTenantId = Auth::user()?->selected_tenant_id;
+
+        if (!$selectedTenantId) {
+            return ['badge' => '', 'text' => ''];
+        }
+
+        $profileName = '';
+        $tenant = $this->tenants->where('id', $selectedTenantId)->first();
+        if ($tenant && $tenant->pivot->profile_id) {
+            $profile = Profile::find($tenant->pivot->profile_id);
+            $profileName = $profile?->name ?? '';
+        }
+
+        $rolesText = $this->roles
+            ->where('tenant_id', $selectedTenantId)
+            ->pluck('name')
+            ->implode(', ');
+
+        return ['badge' => $profileName, 'text' => $rolesText];
     }
 
     public function profiles(): BelongsToMany
