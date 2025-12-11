@@ -38,6 +38,7 @@ new class extends Component {
     {
         $client = auth()->user()->selectedTenant();
         $rows = TenantInvoice::where('tenant_id', auth()->user()->selected_tenant_id)
+            ->with('tenant')
             ->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')
             ->when($this->search, function ($query): void {
                 $query->where(function ($query): void {
