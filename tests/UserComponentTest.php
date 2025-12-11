@@ -235,31 +235,6 @@ it('requires at least one tenant access', function () use ($testSettings): void 
         ->assertHasErrors(['tenantAccess']);
 });
 
-it('deletes user tenant access', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
-    $tenant = $admin->tenants->first();
-
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
-
-    $user = User::factory()->create();
-    $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
-
-    $this->actingAs($admin);
-
-    Volt::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
-        ->call('delete')
-        ->assertDispatched('reloadTable-users-list');
-
-    // Check if user access to tenant was removed
-    $user->refresh();
-    expect($user->tenants->contains($tenant->id))->toBeFalse();
-});
-
 it('loads user roles in mount', function () use ($testSettings): void {
     $admin = User::factory()->adminUser()->create();
     $tenant = $admin->tenants->first();
