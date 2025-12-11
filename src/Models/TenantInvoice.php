@@ -18,6 +18,16 @@ class TenantInvoice extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function getInvoiceNumberAttribute(): string
+    {
+        return $this->number ?? '';
+    }
+
+    public function getTenantNameAttribute(): string
+    {
+        return $this->tenant?->name ?? '';
+    }
+
     protected static function newFactory(): TenantInvoiceFactory
     {
         return TenantInvoiceFactory::new();
