@@ -8,9 +8,9 @@ use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper
 {
-    public static function getComponentFields(string $component): array
+    public static function getComponentFields(string $component, ?string $app = null): array
     {
-        $currentApp = self::getCurrentApp();
+        $currentApp = $app ?? self::getCurrentApp();
 
         $yamlPath = base_path("app-configs/{$currentApp}/models/{$component}.yml");
 
@@ -23,9 +23,9 @@ class StaticConfigHelper
         return Yaml::parse($content ?: '');
     }
 
-    public static function getTableConfig(string $tableName): array
+    public static function getTableConfig(string $tableName, ?string $app = null): array
     {
-        $currentApp = self::getCurrentApp();
+        $currentApp = $app ?? self::getCurrentApp();
 
         $yamlPath = base_path("app-configs/{$currentApp}/lists/{$tableName}.yml");
 
