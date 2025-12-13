@@ -197,8 +197,9 @@ it('generates correct CMS frontend URL when CMS app is available', function (): 
     $adminUser->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
     $adminUser->selected_tenant_id = $tenant->id;
 
+    // Test the website-link component directly since URL is now handled there
     $component = Livewire::actingAs($adminUser)
-        ->test('layout.quick-menu');
+        ->test('quick-menu.website-link');
 
     $expectedUrl = url('/index?hash=test-tenant-hash');
     $component->assertSet('websiteUrl', $expectedUrl);
@@ -208,7 +209,6 @@ it('does not generate website URL when tenant has empty hash', function (): void
     $tenant = Tenant::factory()->create([
         'hash' => '', // Empty hash
     ]);
-
 
     $adminProfile = Profile::create([
         'key' => 'ADMIN',
@@ -230,8 +230,9 @@ it('does not generate website URL when tenant has empty hash', function (): void
     $adminUser->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
     $adminUser->selected_tenant_id = $tenant->id;
 
+    // Test the website-link component directly since URL is now handled there
     $component = Livewire::actingAs($adminUser)
-        ->test('layout.quick-menu');
+        ->test('quick-menu.website-link');
 
     $component->assertSet('websiteUrl', null);
 });
