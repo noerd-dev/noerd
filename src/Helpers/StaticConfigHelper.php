@@ -10,67 +10,50 @@ class StaticConfigHelper
 {
     public static function getComponentFields(string $component): array
     {
-        $userGroup = 'admin'; // Auth::user()->user_group;
+        $currentApp = self::getCurrentApp();
 
-        if (file_exists(base_path('content/components/' . $userGroup . '/' . $component . '.yml'))) {
-            $content = file_get_contents(base_path('content/components/' . $userGroup . '/' . $component . '.yml'));
-            return Yaml::parse($content ?: '');
+        $yamlPath = base_path("app-config/{$currentApp}/models/{$component}.yml");
+
+        if (!file_exists($yamlPath)) {
+            throw new Exception("Model config not found: {$component} for app: {$currentApp}");
         }
 
+        $content = file_get_contents($yamlPath);
 
-        if (file_exists(base_path('content/components/default/' . $component . '.yml'))) {
-            $content = file_get_contents(base_path('content/components/default/' . $component . '.yml'));
-            return Yaml::parse($content ?: '');
-        }
-
-        throw new Exception('Yml Component not found: ' . $component);
+        return Yaml::parse($content ?: '');
     }
 
     public static function getTableConfig(string $tableName): array
     {
-        $yamlPath = base_path("content/lists/{$tableName}.yml");
+        $currentApp = self::getCurrentApp();
+
+        $yamlPath = base_path("app-config/{$currentApp}/lists/{$tableName}.yml");
 
         if (!file_exists($yamlPath)) {
-            return [];
+            throw new Exception("List config not found: {$tableName} for app: {$currentApp}");
         }
 
         $content = file_get_contents($yamlPath);
+
         return Yaml::parse($content ?: '');
     }
 
     public static function getNavigationStructure(): ?array
     {
-        $currentApp = session('currentApp');
+        $currentApp = self::getCurrentApp();
+
         if (!$currentApp) {
             return [];
         }
-        $currentApp = mb_strtolower($currentApp);
 
-        $navigationStructure = null;
+        $yamlPath = base_path("app-config/{$currentApp}/navigation.yml");
 
-        // first check if app specific navigation exists
-        if (file_exists(base_path('content/apps/' . $currentApp . '/navigation.yml'))) {
-            $content = file_get_contents(base_path('content/apps/' . $currentApp . '/navigation.yml'));
-            $navigationStructure = Yaml::parse($content ?: '');
+        if (!file_exists($yamlPath)) {
+            throw new Exception("Navigation config not found for app: {$currentApp}");
         }
 
-        // allow to ger a specific navigation for a user group in the future
-        if (!$navigationStructure) {
-            $profile = mb_strtolower(Auth::user()?->currentProfile() ?? 'default');
-            if (file_exists(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'))) {
-                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/' . $profile . '/navigation.yml'));
-                $navigationStructure = Yaml::parse($content ?: '');
-            }
-        }
-
-        if (!$navigationStructure) {
-            try {
-                $content = file_get_contents(base_path('content/apps/' . $currentApp . '/default/navigation.yml'));
-                $navigationStructure = Yaml::parse($content ?: '');
-            } catch (Exception $e) {
-                return null;
-            }
-        }
+        $content = file_get_contents($yamlPath);
+        $navigationStructure = Yaml::parse($content ?: '');
 
         // Process dynamic navigation blocks
         if ($navigationStructure) {
@@ -78,6 +61,17 @@ class StaticConfigHelper
         }
 
         return $navigationStructure;
+    }
+
+    private static function getCurrentApp(): string
+    {
+        $currentApp = session('currentApp');
+
+        if (!$currentApp) {
+            return 'setup';
+        }
+
+        return mb_strtolower($currentApp);
     }
 
     /**
