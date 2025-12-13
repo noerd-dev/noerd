@@ -22,7 +22,8 @@ new class extends Component {
             abort(404, "Component '{$component}' not found");
         }
 
-        session(['currentApp' => null, 'hideNavigation' => true]);
+        auth()->user()?->update(['selected_app' => null]);
+        session(['hideNavigation' => true]);
     }
 
     private function findComponentModule(string $component): ?string
