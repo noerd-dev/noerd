@@ -14,7 +14,7 @@ class StaticConfigHelper
 
         $yamlPath = base_path("app-config/{$currentApp}/models/{$component}.yml");
 
-        if (!file_exists($yamlPath)) {
+        if (! file_exists($yamlPath)) {
             throw new Exception("Model config not found: {$component} for app: {$currentApp}");
         }
 
@@ -29,7 +29,7 @@ class StaticConfigHelper
 
         $yamlPath = base_path("app-config/{$currentApp}/lists/{$tableName}.yml");
 
-        if (!file_exists($yamlPath)) {
+        if (! file_exists($yamlPath)) {
             throw new Exception("List config not found: {$tableName} for app: {$currentApp}");
         }
 
@@ -42,14 +42,14 @@ class StaticConfigHelper
     {
         $currentApp = self::getCurrentApp();
 
-        if (!$currentApp) {
-            return [];
+        if (! $currentApp) {
+            return null;
         }
 
         $yamlPath = base_path("app-config/{$currentApp}/navigation.yml");
 
-        if (!file_exists($yamlPath)) {
-            throw new Exception("Navigation config not found for app: {$currentApp}");
+        if (! file_exists($yamlPath)) {
+            return null;
         }
 
         $content = file_get_contents($yamlPath);
@@ -63,15 +63,11 @@ class StaticConfigHelper
         return $navigationStructure;
     }
 
-    private static function getCurrentApp(): string
+    public static function getCurrentApp(): ?string
     {
-        $currentApp = session('currentApp');
+        $selectedApp = Auth::user()?->selected_app;
 
-        if (!$currentApp) {
-            return 'setup';
-        }
-
-        return mb_strtolower($currentApp);
+        return $selectedApp ? mb_strtolower($selectedApp) : null;
     }
 
     /**

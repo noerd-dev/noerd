@@ -40,7 +40,7 @@ new class extends Component {
                     <div class="m-auto">
                         <div class="inline-block mb-2">
                             <x-dynamic-component
-                                class="{{ session('currentApp') === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
+                                class="{{ auth()->user()?->selected_app === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
                                 border-l-2"
                                 :component="$tenantApp->icon"/>
