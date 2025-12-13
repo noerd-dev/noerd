@@ -12,7 +12,7 @@ class StaticConfigHelper
     {
         $currentApp = self::getCurrentApp();
 
-        $yamlPath = base_path("app-config/{$currentApp}/models/{$component}.yml");
+        $yamlPath = base_path("app-configs/{$currentApp}/models/{$component}.yml");
 
         if (! file_exists($yamlPath)) {
             throw new Exception("Model config not found: {$component} for app: {$currentApp}");
@@ -27,7 +27,7 @@ class StaticConfigHelper
     {
         $currentApp = self::getCurrentApp();
 
-        $yamlPath = base_path("app-config/{$currentApp}/lists/{$tableName}.yml");
+        $yamlPath = base_path("app-configs/{$currentApp}/lists/{$tableName}.yml");
 
         if (! file_exists($yamlPath)) {
             throw new Exception("List config not found: {$tableName} for app: {$currentApp}");
@@ -46,7 +46,7 @@ class StaticConfigHelper
             return null;
         }
 
-        $yamlPath = base_path("app-config/{$currentApp}/navigation.yml");
+        $yamlPath = base_path("app-configs/{$currentApp}/navigation.yml");
 
         if (! file_exists($yamlPath)) {
             return null;
@@ -75,7 +75,7 @@ class StaticConfigHelper
      */
     public static function collections(): array
     {
-        $collectionsPath = base_path('content/collections');
+        $collectionsPath = base_path('app-configs/cms/collections');
 
         if (!is_dir($collectionsPath)) {
             return [];
