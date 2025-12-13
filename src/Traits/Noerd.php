@@ -45,8 +45,6 @@ trait Noerd
 
     public array $relationTitles = [];
 
-    public ?string $configApp = null;
-
     #[On('reloadTable-' . self::COMPONENT)]
     public function reloadTable(): void
     {
@@ -108,20 +106,10 @@ trait Noerd
 
     public function mountModalProcess(string $component, $model): void
     {
-        $this->pageLayout = $this->loadComponentFields($component);
+        $this->pageLayout = StaticConfigHelper::getComponentFields($component);
         $this->model = $model->toArray();
         $this->modelId = $model->id;
         $this->{self::ID} = $model['id'];
-    }
-
-    protected function loadTableConfig(string $tableName): array
-    {
-        return StaticConfigHelper::getTableConfig($tableName, $this->configApp);
-    }
-
-    protected function loadComponentFields(string $component): array
-    {
-        return StaticConfigHelper::getComponentFields($component, $this->configApp);
     }
 
     #[On('close-modal-' . self::COMPONENT)]
