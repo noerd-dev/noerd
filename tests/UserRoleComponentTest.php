@@ -13,7 +13,7 @@ $testSettings = [
 ];
 
 it('renders the user role component', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -23,7 +23,7 @@ it('renders the user role component', function () use ($testSettings): void {
 });
 
 it('validates required fields when storing', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -34,7 +34,7 @@ it('validates required fields when storing', function () use ($testSettings): vo
 });
 
 it('successfully creates a new user role', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -58,7 +58,7 @@ it('successfully creates a new user role', function () use ($testSettings): void
 });
 
 it('updates an existing user role', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $existingRole = UserRole::factory()->create([
         'tenant_id' => $user->selected_tenant_id,
@@ -91,7 +91,7 @@ it('updates an existing user role', function () use ($testSettings): void {
 });
 
 it('sets tenant_id when storing', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -109,7 +109,7 @@ it('sets tenant_id when storing', function () use ($testSettings): void {
 });
 
 it('deletes a user role', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $userRole = UserRole::factory()->create([
         'tenant_id' => $user->selected_tenant_id,
@@ -130,7 +130,7 @@ it('deletes a user role', function () use ($testSettings): void {
 });
 
 it('mounts with existing user role data', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $userRole = UserRole::factory()->create([
         'tenant_id' => $user->selected_tenant_id,
@@ -152,7 +152,7 @@ it('mounts with existing user role data', function () use ($testSettings): void 
 });
 
 it('mounts with new user role', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -164,7 +164,7 @@ it('mounts with new user role', function () use ($testSettings): void {
 });
 
 it('sets success indicator after storing', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -176,7 +176,7 @@ it('sets success indicator after storing', function () use ($testSettings): void
 });
 
 it('sets userRoleId after creating new role', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -190,7 +190,7 @@ it('sets userRoleId after creating new role', function () use ($testSettings): v
 });
 
 it('validates key field format', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -202,7 +202,7 @@ it('validates key field format', function () use ($testSettings): void {
 });
 
 it('validates name field format', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -214,7 +214,7 @@ it('validates name field format', function () use ($testSettings): void {
 });
 
 it('handles optional description field', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 
@@ -233,7 +233,7 @@ it('handles optional description field', function () use ($testSettings): void {
 });
 
 it('closes modal process after delete', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $userRole = UserRole::factory()->create([
         'tenant_id' => $user->selected_tenant_id,
@@ -250,7 +250,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
 });
 
 it('uses correct component constants', function () use ($testSettings): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
     $this->actingAs($user);
 

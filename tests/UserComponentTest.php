@@ -18,7 +18,7 @@ $testSettings = [
 ];
 
 it('renders the user component', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
 
     $this->actingAs($admin);
 
@@ -28,7 +28,7 @@ it('renders the user component', function () use ($testSettings): void {
 });
 
 it('validates required fields when storing', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
 
     $this->actingAs($admin);
 
@@ -40,7 +40,7 @@ it('validates required fields when storing', function () use ($testSettings): vo
 });
 
 it('successfully creates a new user', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
@@ -74,7 +74,7 @@ it('successfully creates a new user', function () use ($testSettings): void {
 });
 
 it('updates an existing user', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -112,7 +112,7 @@ it('updates an existing user', function () use ($testSettings): void {
 });
 
 it('handles existing user with same email', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -142,7 +142,7 @@ it('handles existing user with same email', function () use ($testSettings): voi
 });
 
 it('manages user roles correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -177,7 +177,7 @@ it('manages user roles correctly', function () use ($testSettings): void {
 });
 
 it('manages tenant access correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant1 = $admin->tenants->first();
     $tenant2 = Tenant::factory()->create();
 
@@ -222,7 +222,7 @@ it('manages tenant access correctly', function () use ($testSettings): void {
 });
 
 it('requires at least one tenant access', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $this->actingAs($admin);
@@ -236,7 +236,7 @@ it('requires at least one tenant access', function () use ($testSettings): void 
 });
 
 it('loads user roles in mount', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -269,7 +269,7 @@ it('loads user roles in mount', function () use ($testSettings): void {
 });
 
 it('computes roles correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     UserRole::factory()->create([
@@ -288,7 +288,7 @@ it('computes roles correctly', function () use ($testSettings): void {
 });
 
 it('computes tenant profiles correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -306,7 +306,7 @@ it('computes tenant profiles correctly', function () use ($testSettings): void {
 });
 
 it('sets success indicator after storing', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -330,7 +330,7 @@ it('sends password reset link when creating new user', function () use ($testSet
     // Fake notifications to capture what is sent
     Notification::fake();
 
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
@@ -374,7 +374,7 @@ it('does not send password reset link when updating existing user', function () 
     // Fake notifications to capture what is sent
     Notification::fake();
 
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -407,7 +407,7 @@ it('does not send password reset link when updating existing user', function () 
 });
 
 it('creates user with hashed password that user cannot login with before reset', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant

@@ -12,7 +12,7 @@ $testSettings = [
 ];
 
 it('resolves setup languages route and renders table', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($admin);
 
     // Route comes from noerd routes group
@@ -24,7 +24,7 @@ it('resolves setup languages route and renders table', function () use ($testSet
 });
 
 it('lists languages for tenant in table with sorting and search', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($admin);
 
     // seed a few
@@ -38,7 +38,7 @@ it('lists languages for tenant in table with sorting and search', function () us
 });
 
 it('opens language-component modal from table', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($admin);
 
     Volt::test($testSettings['listName'])
