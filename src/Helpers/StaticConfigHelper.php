@@ -4,17 +4,17 @@ namespace Noerd\Noerd\Helpers;
 
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Noerd\Noerd\Models\TenantApp;
 use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper
 {
     public static function getComponentFields(string $component): array
     {
-        $currentApp = self::getCurrentApp();
+        $yamlPath = self::findConfigPath("models/{$component}.yml");
 
-        $yamlPath = base_path("app-configs/{$currentApp}/models/{$component}.yml");
-
-        if (! file_exists($yamlPath)) {
+        if (! $yamlPath) {
+            $currentApp = self::getCurrentApp();
             throw new Exception("Model config not found: {$component} for app: {$currentApp}");
         }
 
@@ -25,11 +25,10 @@ class StaticConfigHelper
 
     public static function getTableConfig(string $tableName): array
     {
-        $currentApp = self::getCurrentApp();
+        $yamlPath = self::findConfigPath("lists/{$tableName}.yml");
 
-        $yamlPath = base_path("app-configs/{$currentApp}/lists/{$tableName}.yml");
-
-        if (! file_exists($yamlPath)) {
+        if (! $yamlPath) {
+            $currentApp = self::getCurrentApp();
             throw new Exception("List config not found: {$tableName} for app: {$currentApp}");
         }
 
@@ -128,6 +127,68 @@ class StaticConfigHelper
         }
 
         return $results;
+    }
+
+    /**
+     * Get allowed app folders for the current tenant.
+     * Convention: folder name = strtolower(TenantApp.name)
+     */
+    private static function getAllowedAppFolders(): array
+    {
+        $tenant = Auth::user()?->selectedTenant();
+        if (! $tenant) {
+            return ['setup'];
+        }
+
+        $tenantAppNames = $tenant->tenantApps()->pluck('name')->toArray();
+
+        $allowedFolders = ['setup'];
+        foreach ($tenantAppNames as $appName) {
+            $allowedFolders[] = mb_strtolower($appName);
+        }
+
+        return $allowedFolders;
+    }
+
+    /**
+     * Find config path with fallback to other allowed apps.
+     */
+    private static function findConfigPath(string $subPath): ?string
+    {
+        $currentApp = self::getCurrentApp();
+
+        // 1. First check current app
+        if ($currentApp) {
+            $primaryPath = base_path("app-configs/{$currentApp}/{$subPath}");
+            if (file_exists($primaryPath)) {
+                return $primaryPath;
+            }
+        }
+
+        // 2. Fallback: Search all allowed app folders
+        $allowedFolders = self::getAllowedAppFolders();
+
+        $allAppFolders = TenantApp::where('is_active', true)
+            ->pluck('name')
+            ->map(fn($name) => mb_strtolower($name))
+            ->toArray();
+
+        foreach ($allAppFolders as $folder) {
+            if (! in_array($folder, $allowedFolders)) {
+                continue;
+            }
+
+            if ($folder === $currentApp) {
+                continue;
+            }
+
+            $fallbackPath = base_path("app-configs/{$folder}/{$subPath}");
+            if (file_exists($fallbackPath)) {
+                return $fallbackPath;
+            }
+        }
+
+        return null;
     }
 
     /**
