@@ -9,6 +9,7 @@
         "livewire/livewire": "^3.4",
         "livewire/volt": "^v1.6.7",
         "livewire/flux": "^2.1",
+        "composer/composer": "^2.9",
         "wireui/heroicons": "^2.9"
     },
     "require-dev": {
