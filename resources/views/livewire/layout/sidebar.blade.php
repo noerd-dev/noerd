@@ -5,7 +5,7 @@ use Livewire\Volt\Component;
 new class extends Component {
     public function openApp(string $appName, string $route): void
     {
-        session(['currentApp' => $appName]);
+        auth()->user()->update(['selected_app' => $appName]);
         $this->redirect(route($route), navigate: true);
     }
 }; ?>
@@ -56,11 +56,11 @@ new class extends Component {
                        class="cursor-pointer"
                        @else class="opacity-50" @endif>
                         <div
-                            @class(['!bg-brand-highlight/5  border-brand-highlight!' => session('currentApp') === $tenantApp->name,
+                            @class(['!bg-brand-highlight/5  border-brand-highlight!' => auth()->user()?->selected_app === $tenantApp->name,
                                         'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
                             @if($tenantApp->icon)
                                 <x-dynamic-component
-                                    class="{{ session('currentApp') === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
+                                    class="{{ auth()->user()?->selected_app === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
                                     border-l-2"
                                     :component="$tenantApp->icon"/>

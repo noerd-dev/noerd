@@ -11,9 +11,13 @@ class NavigationService
 
     public function __construct()
     {
-        $collection = collect(StaticConfigHelper::getNavigationStructure());
-        // TODO: dont use from session?
-        //$result = $collection->first(fn($item) => $item['name'] === session('currentApp'));
+        $navigationStructure = StaticConfigHelper::getNavigationStructure();
+
+        if (! $navigationStructure) {
+            return;
+        }
+
+        $collection = collect($navigationStructure);
         $result = $collection[0] ?? null;
 
         $blockMenu = [];
