@@ -14,6 +14,7 @@ use Noerd\Noerd\Commands\MakeModuleCommand;
 use Noerd\Noerd\Commands\MakeUserAdmin;
 use Noerd\Noerd\Commands\NoerdInstallCommand;
 use Noerd\Noerd\Middleware\SetupMiddleware;
+use Noerd\Noerd\Middleware\SetUserLocale;
 use Noerd\Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
@@ -28,6 +29,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         $router = $this->app['router'];
         $router->aliasMiddleware('setup', SetupMiddleware::class);
+        $router->pushMiddlewareToGroup('web', SetUserLocale::class);
 
         Volt::mount(__DIR__ . '/../../resources/views/livewire');
 

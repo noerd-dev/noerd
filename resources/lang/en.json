@@ -57,7 +57,10 @@
   "noerd_email_preview_desc": "This is how the email will be displayed with sample data",
   "noerd_subject": "Subject",
   "noerd_content": "Content",
-  "noerd_close": "Close"
+  "noerd_close": "Close",
+  "noerd_language": "Language",
+  "noerd_label_language": "Language",
+  "noerd_language_description": "Select your preferred language for the user interface."
 }
 
 

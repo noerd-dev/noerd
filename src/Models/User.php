@@ -23,6 +23,7 @@ class User extends Authenticatable
         'password',
         'selected_app',
         'super_admin',
+        'locale',
     ];
 
     protected $hidden = [
