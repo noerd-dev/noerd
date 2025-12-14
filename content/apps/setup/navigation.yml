@@ -1,11 +1,13 @@
 - title: Setup
   name: setup
   hidden: true
-  route: "setup"
-  block_menus: [
-    { title: 'Benutzer', route: 'users', icon: 'icons.users' },
-    { title: 'Sprachen', route: 'languages', heroicon: 'language' },
-    { title: 'Benutzerrollen', route: 'user-roles', icon: 'icons.users', if: 'roleFeatureEnabled' },
-    { title: 'Rechnungen', route: 'tenant-invoices', icon: 'icons.document', if: 'invoiceFeatureEnabled' }
-    { title: 'Mandant', route: 'tenant', heroicon: 'home-modern', if: 'newTenantFeature' }
-  ]
+  route: setup
+  block_menus:
+    - title: noerd_nav_administration
+      navigations:
+        - { title: noerd_nav_users, route: users, heroicon: users }
+        - { title: noerd_nav_user_roles, route: user-roles, heroicon: shield-check }
+        - { title: noerd_nav_languages, route: languages, heroicon: language }
+    - title: noerd_nav_billing
+      navigations:
+        - { title: noerd_nav_tenant_invoices, route: tenant-invoices, heroicon: document-text }
