@@ -185,7 +185,7 @@ new class extends Component {
                         @if($multiple) multiple @endif
                     >
                 </label>
-                <span class="text-gray-500"> oder per Drag & Drop</span>
+                <span class="text-gray-500"> {{ __('noerd_drag_drop') }}</span>
             </p>
 
             <!-- File Info -->
