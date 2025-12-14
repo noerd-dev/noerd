@@ -15,6 +15,12 @@
 
         <x-noerd::box>
             <div class="max-w-xl">
+                <livewire:profile.update-language-form/>
+            </div>
+        </x-noerd::box>
+
+        <x-noerd::box>
+            <div class="max-w-xl">
                 <livewire:profile.tenant-access-display-form/>
             </div>
         </x-noerd::box>

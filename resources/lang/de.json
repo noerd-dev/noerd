@@ -163,7 +163,10 @@
     "noerd_email_preview_desc": "So wird die E-Mail mit Beispieldaten angezeigt",
     "noerd_subject": "Betreff",
     "noerd_content": "Inhalt",
-    "noerd_close": "Schließen"
+    "noerd_close": "Schließen",
+    "noerd_language": "Sprache",
+    "noerd_label_language": "Sprache",
+    "noerd_language_description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche."
 }
 
 
