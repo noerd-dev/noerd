@@ -60,7 +60,22 @@
   "noerd_close": "Close",
   "noerd_language": "Language",
   "noerd_label_language": "Language",
-  "noerd_language_description": "Select your preferred language for the user interface."
+  "noerd_language_description": "Select your preferred language for the user interface.",
+
+  "noerd_file_format_error": "The file must be one of the following formats: :values",
+  "noerd_file_max_error": "The file may not be larger than :max KB",
+  "noerd_unknown_file": "Unknown file",
+  "noerd_select_file": "Select file",
+  "noerd_drag_drop": "or drag & drop",
+  "noerd_allowed_types": "Allowed file types:",
+  "noerd_max_file_size": "Max. file size:",
+  "noerd_unlimited": "unlimited",
+  "noerd_uploading": "Uploading...",
+  "noerd_uploaded_files": "Uploaded files",
+  "noerd_remove_all": "Remove all",
+  "noerd_please_select": "Please select...",
+  "noerd_headline": "Headline",
+  "noerd_parent_page": "Parent Page"
 }
 
 
