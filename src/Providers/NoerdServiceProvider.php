@@ -23,6 +23,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
+        $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/noerd-routes.php');
 
         $router = $this->app['router'];
