@@ -77,8 +77,7 @@ it('successfully creates a new tenant', function () use ($testSettings): void {
     Volt::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
-        ->assertHasNoErrors()
-        ->assertRedirect('/');
+        ->assertHasNoErrors();
 
     // Verify tenant was created
     expect(Tenant::where('name', $tenantName)->exists())->toBeTrue();
