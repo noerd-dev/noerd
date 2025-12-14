@@ -29,7 +29,7 @@ new class extends Component {
         $user = Auth::user();
         $accessToClients = $user->tenants;
         $accessToClientsIds = $accessToClients->pluck('id')->toArray();
-        if (in_array($this->selectedClientId, $accessToClientsIds) || auth()->user()->id === 1) {
+        if (in_array($this->selectedClientId, $accessToClientsIds)) {
             $user = Auth::user();
             $user->selected_tenant_id = $this->selectedClientId;
             $user->save();
@@ -130,11 +130,6 @@ new class extends Component {
                                 @foreach(auth()->user()->tenants as $client)
                                     <option value="{{$client->id}}">{{$client->name}}</option>
                                 @endforeach
-                                @if(auth()->user()->id === 1)
-                                    @foreach(\Noerd\Noerd\Models\Tenant::get() as $client)
-                                        <option value="{{$client->id}}">{{$client->name}}</option>
-                                    @endforeach
-                                @endif
                             </x-noerd::select-input>
                         @endif
 
