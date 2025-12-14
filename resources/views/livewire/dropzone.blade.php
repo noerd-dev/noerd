@@ -191,10 +191,10 @@ new class extends Component {
             <!-- File Info -->
             <p class="mt-1 text-xs text-gray-500">
                 @if($this->getAcceptAttribute())
-                    Erlaubte Dateitypen: {{ str_replace('.', '', $this->getAcceptAttribute()) }}
+                    {{ __('noerd_allowed_types') }} {{ str_replace('.', '', $this->getAcceptAttribute()) }}
                 @endif
-                @if($this->getMaxSizeAttribute() !== 'unbegrenzt')
-                    <br>Max. Dateigröße: {{ $this->getMaxSizeAttribute() }}
+                @if($this->getMaxSizeAttribute() !== __('noerd_unlimited'))
+                    <br>{{ __('noerd_max_file_size') }} {{ $this->getMaxSizeAttribute() }}
                 @endif
             </p>
         </div>
@@ -206,7 +206,7 @@ new class extends Component {
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="mt-2 text-sm text-gray-600">Wird hochgeladen...</p>
+                <p class="mt-2 text-sm text-gray-600">{{ __('noerd_uploading') }}</p>
             </div>
         </div>
     </div>
