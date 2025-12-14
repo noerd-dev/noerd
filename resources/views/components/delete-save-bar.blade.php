@@ -36,14 +36,14 @@
                               x-show="showButtons"
                               wire:confirm="{{$deleteMessage}}"
                               @click="show= false">
-                Löschen
+                {{ __('Delete') }}
             </x-noerd::buttons.delete>
         @else
             <x-noerd::buttons.delete wire:key="{{\Illuminate\Support\Str::uuid()}}"
                               wire:click="delete"
                               x-show="showButtons"
                               @click="show= false">
-                Löschen
+                {{ __('Delete') }}
             </x-noerd::buttons.delete>
         @endif
 
@@ -54,7 +54,7 @@
         @if($showDelete)
             <x-noerd::buttons.delete wire:key="{{\Illuminate\Support\Str::uuid()}}" x-show="!showButtons"
                               @click="showButtons = true">
-                Löschen
+                {{ __('Delete') }}
             </x-noerd::buttons.delete>
         @endif
 

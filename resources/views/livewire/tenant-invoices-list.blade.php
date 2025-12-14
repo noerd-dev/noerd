@@ -55,7 +55,7 @@ new class extends Component {
             $row->formatted_date = \Carbon\Carbon::parse($row->date)->format('d.m.Y');
             $row->formatted_due_date = \Carbon\Carbon::parse($row->due_date)->format('d.m.Y');
             $row->formatted_amount = number_format($row->total_gross_amount, 2, ',', '.') . ' €';
-            $row->status_text = $row->paid == 0 ? 'Offen' : 'Bezahlt';
+            $row->status_text = $row->paid == 0 ? __('noerd_status_open') : __('noerd_status_paid');
         }
 
         $overduePayment = count($client->dueInvoices) > 0;
@@ -86,7 +86,7 @@ new class extends Component {
 
     @if($overduePayment)
         <div class="mb-6 bg-red-100 rounded p-4">
-            <div>Überfällige Rechnung</div>
+            <div>{{ __('noerd_overdue_invoice') }}</div>
         </div>
     @endif
 

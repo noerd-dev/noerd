@@ -47,7 +47,17 @@
   "legal_nav_tasks_reports": "Tasks & Reports",
   "legal_nav_sites": "Sites",
   "legal_nav_laws": "Laws",
-  "legal_nav_site_assignments": "Site Assignments"
+  "legal_nav_site_assignments": "Site Assignments",
+
+  "noerd_overdue_invoice": "Overdue Invoice",
+  "noerd_status_open": "Open",
+  "noerd_status_paid": "Paid",
+  "noerd_close_modal": "Close modal",
+  "noerd_email_preview": "Email Preview",
+  "noerd_email_preview_desc": "This is how the email will be displayed with sample data",
+  "noerd_subject": "Subject",
+  "noerd_content": "Content",
+  "noerd_close": "Close"
 }
 
 
