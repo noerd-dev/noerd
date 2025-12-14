@@ -153,7 +153,17 @@
     "legal_nav_tasks_reports": "Aufgaben & Berichte",
     "legal_nav_sites": "Standorte",
     "legal_nav_laws": "Gesetze",
-    "legal_nav_site_assignments": "Standortzuweisung"
+    "legal_nav_site_assignments": "Standortzuweisung",
+
+    "noerd_overdue_invoice": "Überfällige Rechnung",
+    "noerd_status_open": "Offen",
+    "noerd_status_paid": "Bezahlt",
+    "noerd_close_modal": "Modal schließen",
+    "noerd_email_preview": "E-Mail-Vorschau",
+    "noerd_email_preview_desc": "So wird die E-Mail mit Beispieldaten angezeigt",
+    "noerd_subject": "Betreff",
+    "noerd_content": "Inhalt",
+    "noerd_close": "Schließen"
 }
 
 

@@ -38,7 +38,7 @@
                 type="button"
                 class="absolute right-0 top-4 pt-2 pr-6 z-10">
             <div class="hover:bg-gray-100 hover:text-black border rounded-sm p-1.5 text-gray-600 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-                <span class="sr-only">{{ __('Modal schließen') }}</span>
+                <span class="sr-only">{{ __('noerd_close_modal') }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                           d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -50,9 +50,9 @@
         <div class="flex flex-col max-h-[90vh]">
             <!-- Modal Header -->
             <div class="p-6 pb-0">
-                <h3 class="text-xl font-semibold text-gray-900">{{ __('E-Mail-Vorschau') }}</h3>
+                <h3 class="text-xl font-semibold text-gray-900">{{ __('noerd_email_preview') }}</h3>
                 <p class="text-sm text-gray-600 mt-1">
-                    {{ __('So wird die E-Mail mit Beispieldaten angezeigt') }}
+                    {{ __('noerd_email_preview_desc') }}
                 </p>
             </div>
 
@@ -60,7 +60,7 @@
             @if(!empty($emailSubject))
                 <div class="px-6 py-3 mt-4 mx-6 bg-gray-50 border border-gray-200 rounded">
                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                        {{ __('Betreff') }}
+                        {{ __('noerd_subject') }}
                     </div>
                     <div class="text-base font-medium text-gray-900">
                         {{ str_replace(
@@ -75,7 +75,7 @@
             <!-- Email Body Preview -->
             <div class="p-6 flex-1 overflow-y-auto">
                 <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                    {{ __('Inhalt') }}
+                    {{ __('noerd_content') }}
                 </div>
                 <div class="border border-gray-200 rounded overflow-hidden">
                     <iframe
@@ -91,7 +91,7 @@
             <div class="flex w-full border-t border-gray-300 py-4 px-6">
                 <div class="ml-auto">
                     <x-noerd::buttons.secondary @click="$wire.closePreview()">
-                        {{ __('Schließen') }}
+                        {{ __('noerd_close') }}
                     </x-noerd::buttons.secondary>
                 </div>
             </div>
