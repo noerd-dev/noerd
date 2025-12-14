@@ -231,14 +231,14 @@ new class extends Component {
     @if($fileCount > 0)
         <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-medium text-gray-700">Hochgeladene Dateien ({{ $fileCount }})</h4>
+                <h4 class="text-sm font-medium text-gray-700">{{ __('noerd_uploaded_files') }} ({{ $fileCount }})</h4>
                 @if($fileCount > 1)
                     <button
                         wire:click="clearFiles"
                         type="button"
                         class="text-xs text-red-600 hover:text-red-500"
                     >
-                        Alle entfernen
+                        {{ __('noerd_remove_all') }}
                     </button>
                 @endif
             </div>
