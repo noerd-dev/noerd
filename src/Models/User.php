@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'selected_app',
+        'super_admin',
     ];
 
     protected $hidden = [
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_owner' => 'boolean',
+        'super_admin' => 'boolean',
     ];
 
     public function selectedTenant(): ?Tenant
@@ -138,6 +140,11 @@ class User extends Authenticatable
         $adminProfilesCount = $this->profiles->where('key', 'ADMIN')->count();
 
         return (bool) $adminProfilesCount > 0;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->super_admin;
     }
 
     // Belongs to many Sites

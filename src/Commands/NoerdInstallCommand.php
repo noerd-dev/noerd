@@ -779,8 +779,12 @@ export default {
             'password' => Hash::make($passwordValue),
         ]);
 
+        // First user becomes Super Admin
+        $user->super_admin = true;
+        $user->save();
+
         $this->newLine();
-        $this->info("User '{$user->name}' created successfully.");
+        $this->info("User '{$user->name}' created successfully as Super Admin.");
 
         // Make the user admin
         $this->makeUserAdmin($user);
