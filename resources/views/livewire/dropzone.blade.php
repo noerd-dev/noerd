@@ -32,8 +32,8 @@ new class extends Component {
             'temporaryFiles' => $this->multiple ? 'array' : 'required',
             'temporaryFiles.*' => $this->rules,
         ], [
-            'temporaryFiles.*.mimes' => 'Die Datei muss eines der folgenden Formate haben: :values',
-            'temporaryFiles.*.max' => 'Die Datei darf maximal :max KB groß sein',
+            'temporaryFiles.*.mimes' => __('noerd_file_format_error'),
+            'temporaryFiles.*.max' => __('noerd_file_max_error'),
         ]);
 
         foreach ($this->temporaryFiles as $file) {
@@ -114,7 +114,7 @@ new class extends Component {
                 return $this->formatBytes($kb * 1024);
             }
         }
-        return 'unbegrenzt';
+        return __('noerd_unlimited');
     }
 
     private function formatBytes($bytes): string
@@ -135,7 +135,7 @@ new class extends Component {
         if (isset($file['_original'])) {
             return $file['_original']->getClientOriginalName();
         }
-        return $file['name'] ?? 'Unbekannte Datei';
+        return $file['name'] ?? __('noerd_unknown_file');
     }
 
     public function getFileSize($file): int
@@ -175,7 +175,7 @@ new class extends Component {
             <!-- Upload Text -->
             <p class="mt-2 text-sm text-gray-600">
                 <label for="file-upload-{{ $this->getId() }}" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
-                    <span>Datei auswählen</span>
+                    <span>{{ __('noerd_select_file') }}</span>
                     <input
                         id="file-upload-{{ $this->getId() }}"
                         wire:model.live="temporaryFiles"

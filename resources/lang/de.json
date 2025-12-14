@@ -166,7 +166,22 @@
     "noerd_close": "Schließen",
     "noerd_language": "Sprache",
     "noerd_label_language": "Sprache",
-    "noerd_language_description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche."
+    "noerd_language_description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
+
+    "noerd_file_format_error": "Die Datei muss eines der folgenden Formate haben: :values",
+    "noerd_file_max_error": "Die Datei darf maximal :max KB groß sein",
+    "noerd_unknown_file": "Unbekannte Datei",
+    "noerd_select_file": "Datei auswählen",
+    "noerd_drag_drop": "oder per Drag & Drop",
+    "noerd_allowed_types": "Erlaubte Dateitypen:",
+    "noerd_max_file_size": "Max. Dateigröße:",
+    "noerd_unlimited": "unbegrenzt",
+    "noerd_uploading": "Wird hochgeladen...",
+    "noerd_uploaded_files": "Hochgeladene Dateien",
+    "noerd_remove_all": "Alle entfernen",
+    "noerd_please_select": "Bitte wählen...",
+    "noerd_headline": "Überschrift",
+    "noerd_parent_page": "Übergeordnete Seite"
 }
 
 
