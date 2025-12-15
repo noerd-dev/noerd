@@ -259,7 +259,46 @@
     "cms_projects": "Projekte",
     "cms_new_project": "Neues Projekt",
     "cms_sliders": "Startseiten Slider",
-    "cms_new_slider": "Neuer Slider"
+    "cms_new_slider": "Neuer Slider",
+    "cms_pages": "Seiten",
+    "cms_new_page": "Neue Seite",
+
+    "cms_service": "Leistung",
+    "cms_services": "Leistungen",
+    "cms_new_service": "Neue Leistung",
+
+    "uki_text_document": "Textdokument",
+    "uki_question": "Frage",
+    "uki_used_model": "Verwendetes Model",
+    "uki_author": "Autor",
+    "uki_source": "Quelle",
+    "uki_publication_date": "Erscheinungsdatum",
+    "uki_summary": "Zusammenfassung",
+
+    "noerd_header_image": "Titelbild",
+    "noerd_logo": "Logo",
+    "noerd_order_options": "Bestelloptionen",
+    "noerd_exceptions": "Ausnahmen",
+    "noerd_type": "Typ",
+
+    "noerd_shop_notification": "Shop Benachrichtigung",
+    "noerd_display_from": "Anzeige von",
+    "noerd_display_until": "Anzeige bis",
+    "noerd_weekday": "Wochentag",
+    "noerd_start_time": "Startzeit",
+    "noerd_end_time": "Endzeit",
+    "noerd_language": "Sprache",
+    "noerd_code_example": "Code (z. B. de, en)",
+    "noerd_default": "Standard",
+    "noerd_global_parameter": "Globaler Parameter",
+    "noerd_global_parameters": "Globale Parameter",
+    "noerd_new_parameter": "Neuer Parameter",
+    "noerd_new_storage_location": "Neue Lagerstelle",
+    "cms_form_type": "Formulartyp",
+    "cms_form_type_description": "E-Mail-Konfiguration für Formulartypen",
+    "cms_send_email_notification": "E-Mail-Benachrichtigung senden",
+    "cms_email_subject": "E-Mail-Betreff",
+    "cms_notification_email": "Benachrichtigungs-E-Mail (optional)"
 }
 
 
