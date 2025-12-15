@@ -141,7 +141,46 @@
     "cms_projects": "Projects",
     "cms_new_project": "New Project",
     "cms_sliders": "Homepage Sliders",
-    "cms_new_slider": "New Slider"
+    "cms_new_slider": "New Slider",
+    "cms_pages": "Pages",
+    "cms_new_page": "New Page",
+
+    "cms_service": "Service",
+    "cms_services": "Services",
+    "cms_new_service": "New Service",
+
+    "uki_text_document": "Text Document",
+    "uki_question": "Question",
+    "uki_used_model": "Used Model",
+    "uki_author": "Author",
+    "uki_source": "Source",
+    "uki_publication_date": "Publication Date",
+    "uki_summary": "Summary",
+
+    "noerd_header_image": "Header Image",
+    "noerd_logo": "Logo",
+    "noerd_order_options": "Order Options",
+    "noerd_exceptions": "Exceptions",
+    "noerd_type": "Type",
+
+    "noerd_shop_notification": "Shop Notification",
+    "noerd_display_from": "Display From",
+    "noerd_display_until": "Display Until",
+    "noerd_weekday": "Weekday",
+    "noerd_start_time": "Start Time",
+    "noerd_end_time": "End Time",
+    "noerd_language": "Language",
+    "noerd_code_example": "Code (e.g. de, en)",
+    "noerd_default": "Default",
+    "noerd_global_parameter": "Global Parameter",
+    "noerd_global_parameters": "Global Parameters",
+    "noerd_new_parameter": "New Parameter",
+    "noerd_new_storage_location": "New Storage Location",
+    "cms_form_type": "Form Type",
+    "cms_form_type_description": "Email configuration for form types",
+    "cms_send_email_notification": "Send email notification",
+    "cms_email_subject": "Email subject",
+    "cms_notification_email": "Notification email (optional)"
 }
 
 
