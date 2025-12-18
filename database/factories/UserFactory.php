@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Setting;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\User;
 
@@ -42,10 +41,6 @@ class UserFactory extends Factory
             $user->tenants()->attach($restaurant->id);
             $user->selected_tenant_id = $restaurant->id;
             $user->save();
-
-            Setting::factory()->create([
-                'tenant_id' => $restaurant->id,
-            ]);
         });
     }
 
@@ -64,10 +59,6 @@ class UserFactory extends Factory
             $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
             $user->selected_tenant_id = $tenant->id;
             $user->save();
-
-            Setting::factory()->create([
-                'tenant_id' => $tenant->id,
-            ]);
         });
     }
 
