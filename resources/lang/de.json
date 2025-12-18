@@ -298,7 +298,41 @@
     "cms_form_type_description": "E-Mail-Konfiguration für Formulartypen",
     "cms_send_email_notification": "E-Mail-Benachrichtigung senden",
     "cms_email_subject": "E-Mail-Betreff",
-    "cms_notification_email": "Benachrichtigungs-E-Mail (optional)"
+    "cms_notification_email": "Benachrichtigungs-E-Mail (optional)",
+
+    "noerd_label_tenant": "Mandant",
+    "noerd_label_description": "Beschreibung",
+    "noerd_label_login_as_user": "Als Benutzer anmelden",
+    "noerd_label_confirm_login_as_user": "Möchtest Du Dich wirklich als dieser Benutzer anmelden?",
+    "noerd_label_projects": "Projekte",
+    "noerd_label_services": "Leistungen",
+    "noerd_label_contact": "Kontakt",
+    "noerd_label_image": "Bild",
+    "noerd_label_image_left": "Bild links",
+    "noerd_label_image_middle": "Bild mitte",
+    "noerd_label_image_right": "Bild rechts",
+    "noerd_label_text_left": "Text links",
+    "noerd_label_text_middle": "Text mitte",
+    "noerd_label_text_right": "Text rechts",
+    "noerd_label_coordinates": "Koordinaten Punkt",
+
+    "noerd_label_setup": "Einrichtung",
+    "noerd_label_user": "Benutzer",
+    "noerd_label_users": "Benutzer",
+    "noerd_label_new_user": "Neuer Benutzer",
+    "noerd_label_email": "E-Mail",
+    "noerd_label_name": "Name",
+    "noerd_label_logo": "Logo",
+    "noerd_label_user_roles": "Benutzerrollen",
+    "noerd_label_new_user_role": "Neue Benutzerrolle",
+    "noerd_label_tenant_invoices": "Mandanten-Rechnungen",
+    "noerd_label_new_tenant_invoice": "Neue Mandanten-Rechnung",
+    "noerd_label_invoice_number": "Rechnungsnummer",
+    "noerd_label_total_amount": "Gesamtbetrag",
+    "noerd_label_paid": "Bezahlt",
+    "noerd_label_date": "Datum",
+    "noerd_label_paypal": "PayPal",
+    "noerd_label_profile_roles": "Profil / Rollen"
 }
 
 

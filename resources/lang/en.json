@@ -180,7 +180,41 @@
     "cms_form_type_description": "Email configuration for form types",
     "cms_send_email_notification": "Send email notification",
     "cms_email_subject": "Email subject",
-    "cms_notification_email": "Notification email (optional)"
+    "cms_notification_email": "Notification email (optional)",
+
+    "noerd_label_tenant": "Tenant",
+    "noerd_label_description": "Description",
+    "noerd_label_login_as_user": "Login as user",
+    "noerd_label_confirm_login_as_user": "Do you really want to log in as this user?",
+    "noerd_label_projects": "Projects",
+    "noerd_label_services": "Services",
+    "noerd_label_contact": "Contact",
+    "noerd_label_image": "Image",
+    "noerd_label_image_left": "Image left",
+    "noerd_label_image_middle": "Image middle",
+    "noerd_label_image_right": "Image right",
+    "noerd_label_text_left": "Text left",
+    "noerd_label_text_middle": "Text middle",
+    "noerd_label_text_right": "Text right",
+    "noerd_label_coordinates": "Coordinates",
+
+    "noerd_label_setup": "Setup",
+    "noerd_label_user": "User",
+    "noerd_label_users": "Users",
+    "noerd_label_new_user": "New User",
+    "noerd_label_email": "Email",
+    "noerd_label_name": "Name",
+    "noerd_label_logo": "Logo",
+    "noerd_label_user_roles": "User Roles",
+    "noerd_label_new_user_role": "New User Role",
+    "noerd_label_tenant_invoices": "Tenant Invoices",
+    "noerd_label_new_tenant_invoice": "New Tenant Invoice",
+    "noerd_label_invoice_number": "Invoice Number",
+    "noerd_label_total_amount": "Total Amount",
+    "noerd_label_paid": "Paid",
+    "noerd_label_date": "Date",
+    "noerd_label_paypal": "PayPal",
+    "noerd_label_profile_roles": "Profile / Roles"
 }
 
 

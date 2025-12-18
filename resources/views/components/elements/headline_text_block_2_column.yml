@@ -1,6 +1,6 @@
 title: ''
 description: ''
 fields:
-  - { name: model.headline, label: Überschrift, type: translatableText, colspan: 12 }
+  - { name: model.headline, label: noerd_headline, type: translatableText, colspan: 12 }
   - { name: model.text1, label: Text 1, type: translatableRichText, colspan: 6 }
   - { name: model.text2, label: Text 2, type: translatableRichText, colspan: 6 }
