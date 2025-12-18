@@ -72,7 +72,7 @@ trait HasModuleInstallation
     }
 
     /**
-     * Get additional subdirectories to copy (beyond lists and models).
+     * Get additional subdirectories to copy (beyond lists and details).
      * Example: ['collections', 'forms'] for CMS
      *
      * @return array<string>
@@ -131,11 +131,11 @@ trait HasModuleInstallation
                 $this->copyDirectoryContents($listsSource, $listsTarget);
             }
 
-            // Copy models (formerly components)
-            $modelsSource = $sourceDir . DIRECTORY_SEPARATOR . 'models';
-            $modelsTarget = $targetDir . DIRECTORY_SEPARATOR . 'models';
-            if (is_dir($modelsSource)) {
-                $this->copyDirectoryContents($modelsSource, $modelsTarget);
+            // Copy details (formerly models/components)
+            $detailsSource = $sourceDir . DIRECTORY_SEPARATOR . 'details';
+            $detailsTarget = $targetDir . DIRECTORY_SEPARATOR . 'details';
+            if (is_dir($detailsSource)) {
+                $this->copyDirectoryContents($detailsSource, $detailsTarget);
             }
 
             // Copy additional subdirectories (e.g., collections, forms for CMS)

@@ -13,7 +13,7 @@ class StaticConfigHelper
 
     public static function getComponentFields(string $component): array
     {
-        $yamlPath = self::findConfigPath("models/{$component}.yml");
+        $yamlPath = self::findConfigPath("details/{$component}.yml");
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
