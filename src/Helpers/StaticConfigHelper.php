@@ -9,6 +9,8 @@ use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper
 {
+    private static ?array $moduleSourceMappingCache = null;
+
     public static function getComponentFields(string $component): array
     {
         $yamlPath = self::findConfigPath("models/{$component}.yml");
@@ -151,7 +153,7 @@ class StaticConfigHelper
     }
 
     /**
-     * Find config path with fallback to other allowed apps.
+     * Find config path with fallback to other allowed apps and module sources.
      */
     private static function findConfigPath(string $subPath): ?string
     {
@@ -185,6 +187,32 @@ class StaticConfigHelper
             $fallbackPath = base_path("app-configs/{$folder}/{$subPath}");
             if (file_exists($fallbackPath)) {
                 return $fallbackPath;
+            }
+        }
+
+        // 3. Fallback: Search module source files (app-contents)
+        if ($currentApp) {
+            $moduleSourcePath = self::getModuleSourcePath($currentApp);
+            if ($moduleSourcePath) {
+                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
+                if (file_exists($sourceFallbackPath)) {
+                    return $sourceFallbackPath;
+                }
+            }
+        }
+
+        // 4. Fallback: Search other allowed apps' module sources
+        foreach ($allowedFolders as $folder) {
+            if ($folder === $currentApp) {
+                continue;
+            }
+
+            $moduleSourcePath = self::getModuleSourcePath($folder);
+            if ($moduleSourcePath) {
+                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
+                if (file_exists($sourceFallbackPath)) {
+                    return $sourceFallbackPath;
+                }
             }
         }
 
@@ -361,5 +389,82 @@ class StaticConfigHelper
             // Accounting related
             'accounting' => 'accounting',
         ];
+    }
+
+    /**
+     * Get module source path for a given app-config key.
+     * Maps app-configs/{app-key} -> app-modules/{module}/app-contents/{app-key}
+     */
+    private static function getModuleSourcePath(string $appKey): ?string
+    {
+        $mapping = self::getModuleSourceMapping();
+
+        if (! isset($mapping[$appKey])) {
+            return null;
+        }
+
+        $module = $mapping[$appKey];
+        $sourcePath = base_path("app-modules/{$module}/app-contents/{$appKey}");
+
+        return is_dir($sourcePath) ? $sourcePath : null;
+    }
+
+    /**
+     * Dynamically discover module-to-app-config mappings.
+     * Scans app-modules/{module}/app-contents/{app-key} directories.
+     *
+     * @return array<string, string> Map of app-key => module-name
+     */
+    private static function getModuleSourceMapping(): array
+    {
+        if (self::$moduleSourceMappingCache !== null) {
+            return self::$moduleSourceMappingCache;
+        }
+
+        $mappings = [];
+        $appModulesPath = base_path('app-modules');
+
+        if (! is_dir($appModulesPath)) {
+            self::$moduleSourceMappingCache = $mappings;
+
+            return $mappings;
+        }
+
+        $modules = scandir($appModulesPath);
+        foreach ($modules as $module) {
+            if ($module === '.' || $module === '..') {
+                continue;
+            }
+
+            $appContentsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-contents';
+            if (! is_dir($appContentsPath)) {
+                continue;
+            }
+
+            $appKeys = scandir($appContentsPath);
+            foreach ($appKeys as $appKey) {
+                if ($appKey === '.' || $appKey === '..') {
+                    continue;
+                }
+
+                $fullPath = $appContentsPath . DIRECTORY_SEPARATOR . $appKey;
+                if (is_dir($fullPath)) {
+                    $mappings[$appKey] = $module;
+                }
+            }
+        }
+
+        self::$moduleSourceMappingCache = $mappings;
+
+        return $mappings;
+    }
+
+    /**
+     * Clear the module source mapping cache.
+     * Call this after installing new modules.
+     */
+    public static function clearModuleSourceCache(): void
+    {
+        self::$moduleSourceMappingCache = null;
     }
 }
