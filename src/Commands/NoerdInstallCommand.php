@@ -5,10 +5,12 @@ namespace Noerd\Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+
+use function Laravel\Prompts\confirm;
+
 use Noerd\Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use function Laravel\Prompts\confirm;
 
 class NoerdInstallCommand extends Command
 {
@@ -20,8 +22,8 @@ class NoerdInstallCommand extends Command
     {
         $this->info('Installing noerd content...');
 
-        $sourceDir = base_path('vendor/noerd/noerd/content');
-        $targetDir = base_path('content');
+        $sourceDir = base_path('app-modules/noerd/app-contents/setup');
+        $targetDir = base_path('app-configs/setup');
 
         if (!is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
