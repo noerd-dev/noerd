@@ -56,16 +56,31 @@ trait HasModuleInstallation
     abstract protected function getSourceDir(): string;
 
     /**
-     * Get the navigation source folder name.
-     * Example: "business-hours"
-     */
-    abstract protected function getNavigationSourceFolder(): string;
-
-    /**
      * Get the snippet title for duplicate checking.
      * Example: "Business Hours"
      */
     abstract protected function getSnippetTitle(): string;
+
+    /**
+     * Get the navigation source folder name.
+     *
+     * @deprecated No longer needed with new app-configs structure
+     */
+    protected function getNavigationSourceFolder(): string
+    {
+        return $this->getModuleKey();
+    }
+
+    /**
+     * Get additional subdirectories to copy (beyond lists and models).
+     * Example: ['collections', 'forms'] for CMS
+     *
+     * @return array<string>
+     */
+    protected function getAdditionalSubdirectories(): array
+    {
+        return [];
+    }
 
     /**
      * Run the module installation process.
@@ -90,7 +105,7 @@ trait HasModuleInstallation
         );
 
         $sourceDir = $this->getSourceDir();
-        $targetDir = base_path('content');
+        $targetDir = base_path('app-configs/' . $this->getModuleKey());
 
         if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
@@ -116,11 +131,20 @@ trait HasModuleInstallation
                 $this->copyDirectoryContents($listsSource, $listsTarget);
             }
 
-            // Copy components
-            $componentsSource = $sourceDir . DIRECTORY_SEPARATOR . 'components';
-            $componentsTarget = $targetDir . DIRECTORY_SEPARATOR . 'components';
-            if (is_dir($componentsSource)) {
-                $this->copyDirectoryContents($componentsSource, $componentsTarget);
+            // Copy models (formerly components)
+            $modelsSource = $sourceDir . DIRECTORY_SEPARATOR . 'models';
+            $modelsTarget = $targetDir . DIRECTORY_SEPARATOR . 'models';
+            if (is_dir($modelsSource)) {
+                $this->copyDirectoryContents($modelsSource, $modelsTarget);
+            }
+
+            // Copy additional subdirectories (e.g., collections, forms for CMS)
+            foreach ($this->getAdditionalSubdirectories() as $subdir) {
+                $additionalSource = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
+                $additionalTarget = $targetDir . DIRECTORY_SEPARATOR . $subdir;
+                if (is_dir($additionalSource)) {
+                    $this->copyDirectoryContents($additionalSource, $additionalTarget);
+                }
             }
 
             // Install navigation based on choice
@@ -198,24 +222,20 @@ trait HasModuleInstallation
             $this->installedAppKey = $appKey;
         }
 
-        // Copy navigation
+        // Copy navigation.yml to module's app-configs root
         $appKeyLower = mb_strtolower(str_replace('_', '-', $appKey));
-        $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $this->getNavigationSourceFolder();
-        $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appKeyLower;
+        $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+        $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
 
-        if (is_dir($navSource)) {
-            $this->copyDirectoryContents($navSource, $navTarget);
-
-            // Update navigation.yml with correct app key
-            $navFile = $navTarget . DIRECTORY_SEPARATOR . 'navigation.yml';
-            if (file_exists($navFile)) {
-                $navContent = file_get_contents($navFile);
-                $nav = Yaml::parse($navContent);
-                $nav[0]['name'] = $appKeyLower;
-                $nav[0]['title'] = $appTitle;
-                $nav[0]['route'] = $appKeyLower;
-                file_put_contents($navFile, Yaml::dump($nav, 10, 2));
-            }
+        if (file_exists($navSource)) {
+            $navContent = file_get_contents($navSource);
+            $nav = Yaml::parse($navContent);
+            $nav[0]['name'] = $appKeyLower;
+            $nav[0]['title'] = $appTitle;
+            $nav[0]['route'] = $appKeyLower;
+            file_put_contents($navTarget, Yaml::dump($nav, 10, 2));
+            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->getModuleKey()}/navigation.yml");
+            $this->installResults['copied_files']++;
         }
     }
 
@@ -247,11 +267,11 @@ trait HasModuleInstallation
         $selectedApp = $apps->firstWhere('name', $selectedAppKey);
         $appKeyLower = mb_strtolower(str_replace('_', '-', $selectedAppKey));
 
-        // Find navigation file
-        $navFile = $targetDir . DIRECTORY_SEPARATOR . 'apps' . DIRECTORY_SEPARATOR . $appKeyLower . DIRECTORY_SEPARATOR . 'navigation.yml';
+        // Find navigation file in app-configs/{target-app}/navigation.yml
+        $navFile = base_path('app-configs') . DIRECTORY_SEPARATOR . $appKeyLower . DIRECTORY_SEPARATOR . 'navigation.yml';
 
         if (! file_exists($navFile)) {
-            $this->error("Navigation file not found: content/apps/{$appKeyLower}/navigation.yml");
+            $this->error("Navigation file not found: app-configs/{$appKeyLower}/navigation.yml");
             $this->line('Please make sure the app is installed correctly.');
 
             return;
@@ -290,7 +310,7 @@ trait HasModuleInstallation
         $newContent = Yaml::dump($nav, 10, 2);
         file_put_contents($navFile, $newContent);
 
-        $this->line("<info>✓ Navigation added to apps/{$appKeyLower}/navigation.yml</info>");
+        $this->line("<info>✓ Navigation added to app-configs/{$appKeyLower}/navigation.yml</info>");
         $this->installResults['overwritten_files']++;
     }
 
@@ -303,7 +323,7 @@ trait HasModuleInstallation
             if (! mkdir($targetDir, 0755, true)) {
                 throw new Exception("Failed to create directory: {$targetDir}");
             }
-            $relativePath = str_replace(base_path('content') . DIRECTORY_SEPARATOR, '', $targetDir);
+            $relativePath = str_replace(base_path('app-configs') . DIRECTORY_SEPARATOR, '', $targetDir);
             $this->line("<info>Created directory:</info> {$relativePath}");
             $this->installResults['created_dirs']++;
         }
@@ -323,12 +343,12 @@ trait HasModuleInstallation
                     if (! mkdir($targetPath, 0755, true)) {
                         throw new Exception("Failed to create directory: {$targetPath}");
                     }
-                    $displayPath = str_replace(base_path('content') . DIRECTORY_SEPARATOR, '', $targetPath);
+                    $displayPath = str_replace(base_path('app-configs') . DIRECTORY_SEPARATOR, '', $targetPath);
                     $this->line("<info>Created directory:</info> {$displayPath}");
                     $this->installResults['created_dirs']++;
                 }
             } else {
-                $displayPath = str_replace(base_path('content') . DIRECTORY_SEPARATOR, '', $targetPath);
+                $displayPath = str_replace(base_path('app-configs') . DIRECTORY_SEPARATOR, '', $targetPath);
 
                 if (file_exists($targetPath)) {
                     if (! $this->option('force')) {
