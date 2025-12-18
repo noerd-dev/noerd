@@ -1,20 +1,14 @@
-title: Users
-newLabel: 'New User'
+title: noerd_label_users
+newLabel: noerd_label_new_user
 component: user-detail
 disableSearch: false
 redirectAction: ''
 description: ''
 columns:
-  -
-    field: email
-    label: Email
-    width: 10
-  -
-    field: name
-    label: Name
-    width: 10
+  - { field: email, label: noerd_label_email, width: 10 }
+  - { field: name, label: noerd_label_name, width: 10 }
   -
     field: action
     width: 3
     actions:
-      - { label: 'Als Benutzer anmelden', heroicon: user, action: loginAsUser, confirm: 'Möchtest Du Dich wirklich als dieser Benutzer anmelden?' }
+      - { label: noerd_label_login_as_user, heroicon: user, action: loginAsUser, confirm: noerd_label_confirm_login_as_user }

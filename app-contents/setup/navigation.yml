@@ -1,4 +1,4 @@
-- title: Setup
+- title: noerd_label_setup
   name: setup
   hidden: true
   route: setup

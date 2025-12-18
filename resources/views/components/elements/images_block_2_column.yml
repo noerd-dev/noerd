@@ -1,7 +1,7 @@
 title: ''
 description: ''
 fields:
-  - { name: image, label: Bild links, type: image, colspan: 6 }
-  - { name: image2, label: Bild rechts, type: image, colspan: 6 }
+  - { name: image, label: noerd_label_image_left, type: image, colspan: 6 }
+  - { name: image2, label: noerd_label_image_right, type: image, colspan: 6 }
   - { name: model.videoUrl, label: YouTube URL links (optional), type: translatableText, colspan: 6 }
   - { name: model.videoUrl2, label: YouTube URL rechts (optional), type: translatableText, colspan: 6 }

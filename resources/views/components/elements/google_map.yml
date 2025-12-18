@@ -1,4 +1,4 @@
 title: ''
 description: ''
 fields:
-  - { name: latLng, label: Koordinaten Punkt, type: text, colspan: 12 }
+  - { name: latLng, label: noerd_label_coordinates, type: text, colspan: 12 }

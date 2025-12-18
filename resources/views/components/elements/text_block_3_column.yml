@@ -1,6 +1,6 @@
 title: ''
 description: ''
 fields:
-  - { name: model.text1, label: Text links, type: translatableRichText, colspan: 4 }
-  - { name: model.text1, label: Text mitte, type: translatableRichText, colspan: 4 }
-  - { name: model.text3, label: Text rechts, type: translatableRichText, colspan: 4 }
+  - { name: model.text1, label: noerd_label_text_left, type: translatableRichText, colspan: 4 }
+  - { name: model.text1, label: noerd_label_text_middle, type: translatableRichText, colspan: 4 }
+  - { name: model.text3, label: noerd_label_text_right, type: translatableRichText, colspan: 4 }

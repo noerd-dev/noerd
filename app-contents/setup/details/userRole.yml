@@ -1,6 +1,6 @@
 title: ''
 description: ''
 fields:
-  - { name: userRole.key, label: Schlüssel, type: text, colspan: 6 }
-  - { name: userRole.name, label: Name, type: text, colspan: 6 }
-  - { name: userRole.description, label: Beschreibung, type: text, colspan: 6 }
+  - { name: userRole.key, label: noerd_key, type: text, colspan: 6 }
+  - { name: userRole.name, label: noerd_label_name, type: text, colspan: 6 }
+  - { name: userRole.description, label: noerd_label_description, type: text, colspan: 6 }
