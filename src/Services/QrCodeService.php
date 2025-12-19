@@ -28,7 +28,7 @@ class QrCodeService
 
         $path = '/qrcodes/users';
         Storage::disk('public')->makeDirectory($path);
-        $path = $path . '/qrcode' . $user->hash . '.png';
+        $path = $path . '/qrcode' . $user->uuid . '.png';
 
         $storage_path = Storage::disk('public')->path('/') . $path;
         $writer = new PngWriter();

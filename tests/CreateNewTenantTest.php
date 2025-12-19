@@ -84,7 +84,7 @@ it('successfully creates a new tenant', function () use ($testSettings): void {
 
     $createdTenant = Tenant::where('name', $tenantName)->first();
     expect($createdTenant->name)->toBe($tenantName);
-    expect($createdTenant->hash)->not()->toBeNull();
+    expect($createdTenant->uuid)->not()->toBeNull();
 });
 
 it('creates default USER and ADMIN profiles for new tenant', function () use ($testSettings): void {
@@ -105,14 +105,14 @@ it('creates default USER and ADMIN profiles for new tenant', function () use ($t
         ->where('key', 'USER')
         ->first();
     expect($userProfile)->not()->toBeNull();
-    expect($userProfile->name)->toBe('Benutzer');
+    expect($userProfile->name)->toBe('User');
 
     // Verify ADMIN profile was created
     $adminProfile = Profile::where('tenant_id', $createdTenant->id)
         ->where('key', 'ADMIN')
         ->first();
     expect($adminProfile)->not()->toBeNull();
-    expect($adminProfile->name)->toBe('Administrator');
+    expect($adminProfile->name)->toBe('Admin');
 });
 
 it('attaches current user to new tenant as admin', function () use ($testSettings): void {

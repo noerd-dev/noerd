@@ -14,10 +14,10 @@ class TenantFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name,
+            'name' => $this->faker->company,
+            // Use 'hash' for backward compatibility with existing databases
+            // New projects will have 'uuid' column, but the Tenant model provides accessors
             'hash' => Str::uuid()->toString(),
-            'from_email' => $this->faker->email,
-            'reply_email' => $this->faker->email,
         ];
     }
 
