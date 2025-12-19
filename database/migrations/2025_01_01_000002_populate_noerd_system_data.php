@@ -13,9 +13,6 @@ return new class () extends Migration {
      */
     public function up(): void
     {
-        // Generate missing API tokens for existing tenants
-        $this->generateMissingApiTokens();
-
         // Create default tenant if it doesn't exist
         $this->createDefaultTenant();
     }
@@ -52,29 +49,6 @@ return new class () extends Migration {
     }
 
     /**
-     * Generate missing API tokens for tenants
-     */
-    private function generateMissingApiTokens(): void
-    {
-        // Iterate tenants with missing or empty api_token and assign a unique token
-        DB::table('tenants')
-            ->whereNull('api_token')
-            ->orWhere('api_token', '=', '')
-            ->orderBy('id')
-            ->select('id')
-            ->chunkById(500, function ($tenants): void {
-                foreach ($tenants as $tenant) {
-                    DB::table('tenants')
-                        ->where('id', $tenant->id)
-                        ->update([
-                            'api_token' => Str::uuid()->toString(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            });
-    }
-
-    /**
      * Create default tenant and setup user associations
      */
     private function createDefaultTenant(): void
@@ -87,9 +61,6 @@ return new class () extends Migration {
             $tenantId = DB::table('tenants')->insertGetId([
                 'name' => 'Standard Mandant',
                 'hash' => Str::uuid()->toString(),
-                'domain' => null,
-                'logo' => null,
-                'api_token' => Str::uuid()->toString(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -98,7 +69,7 @@ return new class () extends Migration {
             $userProfileId = DB::table('profiles')->insertGetId([
                 'tenant_id' => $tenantId,
                 'key' => 'USER',
-                'name' => 'Benutzer',
+                'name' => 'User',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -106,7 +77,7 @@ return new class () extends Migration {
             $adminProfileId = DB::table('profiles')->insertGetId([
                 'tenant_id' => $tenantId,
                 'key' => 'ADMIN',
-                'name' => 'Administrator',
+                'name' => 'Admin',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

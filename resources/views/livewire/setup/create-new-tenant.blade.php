@@ -17,18 +17,18 @@ new class extends Component {
 
         $tenant = new Tenant();
         $tenant->name = $this->name;
-        $tenant->hash = Str::uuid();
+        $tenant->uuid = Str::uuid();
         $tenant->save();
 
         $profile = new Profile();
         $profile->key = 'USER';
-        $profile->name = 'Benutzer';
+        $profile->name = 'User';
         $profile->tenant_id = $tenant->id;
         $profile->save();
 
         $profile = new Profile();
         $profile->key = 'ADMIN';
-        $profile->name = 'Administrator';
+        $profile->name = 'Admin';
         $profile->tenant_id = $tenant->id;
         $profile->save();
 

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Str;
 use Noerd\Noerd\Database\Factories\TenantFactory;
 
 class Tenant extends Authenticatable
@@ -26,22 +25,8 @@ class Tenant extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'from_email',
         'created_at',
         'updated_at',
-        'demo_until',
-        'last_invoice',
-        'lost',
-        'reply_email',
-        'module_gastrofix',
-        'order_counter',
-        'mollie_customer_id',
-        'mollie_mandate_id',
-        'tax_percentage',
-        'trial_ends_at',
-        'extra_billing_information',
-        'period',
-        'supplat_tenant_id',
     ];
 
     protected $casts = [
@@ -65,11 +50,30 @@ class Tenant extends Authenticatable
             ->whereDate('due_date', '<', today());
     }
 
+    /**
+     * Get the UUID attribute with fallback to hash for backward compatibility.
+     */
+    public function getUuidAttribute(): ?string
+    {
+        // New projects use 'uuid' column, old projects use 'hash' column
+        return $this->attributes['uuid'] ?? $this->attributes['hash'] ?? null;
+    }
+
+    /**
+     * Set the UUID attribute with fallback to hash for backward compatibility.
+     */
+    public function setUuidAttribute(string $value): void
+    {
+        // For backward compatibility, always use 'hash' column for existing databases
+        // The accessor will still return it as 'uuid'
+        $this->attributes['hash'] = $value;
+    }
+
     public function getDomainAttribute(?string $value): string
     {
         return env('APP_ENV') !== 'production'
-            ? env('APP_MENU_URL') . '?hash=' . $this->getAttribute('hash')
-            : $value ?? env('APP_MENU_URL') . '?hash=' . $this->getAttribute('hash');
+            ? env('APP_MENU_URL') . '?uuid=' . $this->uuid
+            : $value ?? env('APP_MENU_URL') . '?uuid=' . $this->uuid;
     }
 
     public function getInvoiceInformation(): array
@@ -105,15 +109,6 @@ class Tenant extends Authenticatable
     public function profiles(): HasMany
     {
         return $this->hasMany(Profile::class, 'tenant_id', 'id');
-    }
-
-    protected static function booted(): void
-    {
-        static::creating(function (Tenant $tenant): void {
-            if (empty($tenant->api_token)) {
-                $tenant->api_token = Str::uuid()->toString();
-            }
-        });
     }
 
     protected static function newFactory(): TenantFactory

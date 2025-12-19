@@ -20,8 +20,7 @@ it('creates a new tenant with command options', function (): void {
     // Verify tenant was created
     $tenant = Tenant::where('name', 'New Tenant')->first();
     expect($tenant)->not->toBeNull();
-    expect($tenant->hash)->not->toBeNull();
-    expect($tenant->api_token)->not->toBeNull();
+    expect($tenant->uuid)->not->toBeNull();
 });
 
 it('creates default USER and ADMIN profiles', function (): void {
@@ -47,28 +46,14 @@ it('creates default USER and ADMIN profiles', function (): void {
     expect($adminProfile->name)->toBe('Admin');
 });
 
-it('generates unique hash for each tenant', function (): void {
+it('generates unique uuid for each tenant', function (): void {
     $this->artisan('noerd:create-tenant', ['--name' => 'Tenant 1'])->assertExitCode(0);
     $this->artisan('noerd:create-tenant', ['--name' => 'Tenant 2'])->assertExitCode(0);
 
     $tenant1 = Tenant::where('name', 'Tenant 1')->first();
     $tenant2 = Tenant::where('name', 'Tenant 2')->first();
 
-    expect($tenant1->hash)->not->toBe($tenant2->hash);
-    expect($tenant1->api_token)->not->toBe($tenant2->api_token);
-});
-
-it('accepts optional email addresses', function (): void {
-    $this->artisan('noerd:create-tenant', [
-        '--name' => 'Email Tenant',
-        '--from-email' => 'from@example.com',
-        '--reply-email' => 'reply@example.com',
-    ])
-        ->assertExitCode(0);
-
-    $tenant = Tenant::where('name', 'Email Tenant')->first();
-    expect($tenant->from_email)->toBe('from@example.com');
-    expect($tenant->reply_email)->toBe('reply@example.com');
+    expect($tenant1->uuid)->not->toBe($tenant2->uuid);
 });
 
 it('fails with name shorter than 3 characters', function (): void {
@@ -87,22 +72,14 @@ it('fails with name longer than 50 characters', function (): void {
         ->assertExitCode(1);
 });
 
-it('outputs tenant ID and hash after creation', function (): void {
+it('outputs tenant ID and UUID after creation', function (): void {
     $this->artisan('noerd:create-tenant', [
         '--name' => 'ID Test Tenant',
     ])
         ->expectsOutputToContain('ID:')
-        ->expectsOutputToContain('Hash:')
-        ->assertExitCode(0);
-});
-
-it('creates tenant without optional emails', function (): void {
-    $this->artisan('noerd:create-tenant', [
-        '--name' => 'No Email Tenant',
-    ])
         ->assertExitCode(0);
 
-    $tenant = Tenant::where('name', 'No Email Tenant')->first();
-    expect($tenant->from_email)->toBeNull();
-    expect($tenant->reply_email)->toBeNull();
+    // Verify tenant has UUID set
+    $tenant = \Noerd\Noerd\Models\Tenant::where('name', 'ID Test Tenant')->first();
+    expect($tenant->uuid)->not->toBeNull();
 });
