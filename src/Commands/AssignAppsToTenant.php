@@ -5,7 +5,9 @@ namespace Noerd\Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 
+use function Laravel\Prompts\multisearch;
 use function Laravel\Prompts\multiselect;
+use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 
 use Noerd\Noerd\Models\Tenant;
@@ -80,10 +82,21 @@ class AssignAppsToTenant extends Command
             $tenantChoices[$tenant->id] = "{$tenant->name} (ID: {$tenant->id}, Apps: {$appCount})";
         }
 
-        $selectedTenantId = select(
-            label: 'Select a tenant:',
-            options: $tenantChoices,
-        );
+        // Use search for > 10 tenants, otherwise use select
+        if ($tenants->count() > 10) {
+            $selectedTenantId = search(
+                label: 'Search for a tenant:',
+                options: fn(string $query) => collect($tenantChoices)
+                    ->filter(fn($label) => empty($query) || str_contains(mb_strtolower($label), mb_strtolower($query)))
+                    ->all(),
+                placeholder: 'Type to search tenants...',
+            );
+        } else {
+            $selectedTenantId = select(
+                label: 'Select a tenant:',
+                options: $tenantChoices,
+            );
+        }
 
         return Tenant::find($selectedTenantId);
     }
@@ -125,13 +138,26 @@ class AssignAppsToTenant extends Command
             $this->newLine();
         }
 
-        // Multi-select interface with Laravel Prompts
-        $selectedAppIds = multiselect(
-            label: 'Select apps to assign to this tenant:',
-            options: $appChoices,
-            default: $currentAppIds,
-            required: false,
-        );
+        // Use multisearch for > 10 apps, otherwise use multiselect
+        if ($allApps->count() > 10) {
+            $this->comment('Note: Currently assigned apps must be re-selected when using search.');
+            $this->newLine();
+
+            $selectedAppIds = multisearch(
+                label: 'Search and select apps to assign to this tenant:',
+                options: fn(string $query) => collect($appChoices)
+                    ->filter(fn($label) => empty($query) || str_contains(mb_strtolower($label), mb_strtolower($query)))
+                    ->all(),
+                placeholder: 'Type to search apps...',
+            );
+        } else {
+            $selectedAppIds = multiselect(
+                label: 'Select apps to assign to this tenant:',
+                options: $appChoices,
+                default: $currentAppIds,
+                required: false,
+            );
+        }
 
         // Save changes
         return $this->saveAppAssignments($tenant, $selectedAppIds, $currentAppIds);

@@ -4,6 +4,9 @@ namespace Noerd\Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+
+use function Laravel\Prompts\search;
+
 use Noerd\Noerd\Models\TenantApp;
 
 class CreateTenantApp extends Command
@@ -44,9 +47,14 @@ class CreateTenantApp extends Command
             $this->newLine();
 
             $title = $title ?: $this->ask('App Title (display name)');
-            $name = $name ?: $this->ask('App Name (unique identifier, e.g., CMS, MEDIA)');
-            $icon = $icon ?: $this->ask('App Icon (e.g., icons.planning, icons.media)');
+            $name = $this->normalizeAppName($name ?: $this->ask('App Name (unique identifier, e.g., CMS, MEDIA)'));
+            $icon = $icon ?: $this->askForIcon();
             $route = $route ?: $this->ask('App Route (main route name, e.g., cms.pages, media.dashboard)');
+        }
+
+        // Normalize name if provided via option
+        if ($name) {
+            $name = $this->normalizeAppName($name);
         }
 
         // Validate required fields
@@ -55,7 +63,7 @@ class CreateTenantApp extends Command
             return self::FAILURE;
         }
 
-        // Validate name format (uppercase, no spaces)
+        // Validate name format (uppercase, no spaces) after normalization
         if (!preg_match('/^[A-Z_]+$/', $name)) {
             $this->error('App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).');
             return self::FAILURE;
@@ -91,12 +99,39 @@ class CreateTenantApp extends Command
             ]);
 
             $this->newLine();
-            $this->comment('The app can now be assigned to tenants through the tenant management system.');
+            $this->comment('Run "php artisan noerd:assign-apps-to-tenant" to assign this app to a tenant.');
 
             return self::SUCCESS;
         } catch (Exception $e) {
             $this->error("Failed to create tenant app: {$e->getMessage()}");
             return self::FAILURE;
         }
+    }
+
+    protected function askForIcon(): string
+    {
+        $iconsPath = base_path('vendor/wireui/heroicons/src/views/components/outline');
+        $icons = collect(scandir($iconsPath))
+            ->filter(fn($file) => str_ends_with($file, '.blade.php'))
+            ->map(fn($file) => str_replace('.blade.php', '', $file))
+            ->values()
+            ->all();
+
+        return search(
+            label: 'Search for a Heroicon',
+            options: fn(string $search) => collect($icons)
+                ->filter(fn($icon) => empty($search) || str_contains($icon, $search))
+                ->mapWithKeys(fn($icon) => [
+                    "heroicons::components.outline.{$icon}" => $icon,
+                ])
+                ->all(),
+            placeholder: 'Type to search icons (e.g., "arrow", "cog", "user")...',
+        );
+    }
+
+    protected function normalizeAppName(string $name): string
+    {
+        // Replace spaces and hyphens with underscores and convert to uppercase
+        return mb_strtoupper(preg_replace('/[\s-]+/', '_', mb_trim($name)));
     }
 }
