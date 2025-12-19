@@ -20,7 +20,7 @@ it('successfully creates a tenant app with all parameters', function (): void {
         ->expectsOutputToContain('icons.test')
         ->expectsOutputToContain('test.dashboard')
         ->expectsOutputToContain('Yes')
-        ->expectsOutput('The app can now be assigned to tenants through the tenant management system.')
+        ->expectsOutput('Run "php artisan noerd:assign-apps-to-tenant" to assign this app to a tenant.')
         ->assertExitCode(0);
 
     // Verify the app was created in the database
@@ -87,26 +87,43 @@ it('fails when only some fields are provided', function (): void {
         ->assertExitCode(1);
 });
 
-it('fails when name has invalid format with lowercase', function (): void {
+it('normalizes lowercase name to uppercase', function (): void {
     $this->artisan('noerd:create-tenant-app', [
-        '--title' => 'Invalid Name App',
-        '--name' => 'invalid-name',
+        '--title' => 'Lowercase App',
+        '--name' => 'lowercase app',
         '--icon' => 'icons.test',
         '--route' => 'test.route',
     ])
-        ->expectsOutput('App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).')
-        ->assertExitCode(1);
+        ->expectsOutput('✅ Tenant app created successfully!')
+        ->assertExitCode(0);
+
+    expect(TenantApp::where('name', 'LOWERCASE_APP')->exists())->toBeTrue();
 });
 
-it('fails when name contains spaces', function (): void {
+it('normalizes name with hyphens to underscores', function (): void {
+    $this->artisan('noerd:create-tenant-app', [
+        '--title' => 'Hyphen Name App',
+        '--name' => 'hyphen-name',
+        '--icon' => 'icons.test',
+        '--route' => 'test.route',
+    ])
+        ->expectsOutput('✅ Tenant app created successfully!')
+        ->assertExitCode(0);
+
+    expect(TenantApp::where('name', 'HYPHEN_NAME')->exists())->toBeTrue();
+});
+
+it('normalizes name with spaces to underscores', function (): void {
     $this->artisan('noerd:create-tenant-app', [
         '--title' => 'Spaced Name App',
         '--name' => 'SPACED NAME',
         '--icon' => 'icons.test',
         '--route' => 'test.route',
     ])
-        ->expectsOutput('App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).')
-        ->assertExitCode(1);
+        ->expectsOutput('✅ Tenant app created successfully!')
+        ->assertExitCode(0);
+
+    expect(TenantApp::where('name', 'SPACED_NAME')->exists())->toBeTrue();
 });
 
 it('fails when name contains special characters', function (): void {

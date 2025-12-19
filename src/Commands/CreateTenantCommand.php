@@ -91,7 +91,7 @@ class CreateTenantCommand extends Command
         Profile::create([
             'tenant_id' => $tenant->id,
             'key' => 'USER',
-            'name' => 'Benutzer',
+            'name' => 'User',
         ]);
         $this->info('  ✓ Created USER profile');
 
@@ -99,7 +99,7 @@ class CreateTenantCommand extends Command
         Profile::create([
             'tenant_id' => $tenant->id,
             'key' => 'ADMIN',
-            'name' => 'Administrator',
+            'name' => 'Admin',
         ]);
         $this->info('  ✓ Created ADMIN profile');
 

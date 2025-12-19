@@ -37,14 +37,14 @@ it('creates default USER and ADMIN profiles', function (): void {
         ->where('key', 'USER')
         ->first();
     expect($userProfile)->not->toBeNull();
-    expect($userProfile->name)->toBe('Benutzer');
+    expect($userProfile->name)->toBe('User');
 
     // Verify ADMIN profile was created
     $adminProfile = Profile::where('tenant_id', $tenant->id)
         ->where('key', 'ADMIN')
         ->first();
     expect($adminProfile)->not->toBeNull();
-    expect($adminProfile->name)->toBe('Administrator');
+    expect($adminProfile->name)->toBe('Admin');
 });
 
 it('generates unique hash for each tenant', function (): void {
