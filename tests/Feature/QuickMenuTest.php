@@ -174,7 +174,7 @@ it('quick menu component hides buttons when user lacks permissions', function ()
 
 it('generates correct CMS frontend URL when CMS app is available', function (): void {
     $tenant = Tenant::factory()->create([
-        'hash' => 'test-tenant-hash',
+        'hash' => 'test-tenant-uuid',
     ]);
 
     $adminProfile = Profile::create([
@@ -201,13 +201,13 @@ it('generates correct CMS frontend URL when CMS app is available', function (): 
     $component = Livewire::actingAs($adminUser)
         ->test('quick-menu.website-link');
 
-    $expectedUrl = url('/index?hash=test-tenant-hash');
+    $expectedUrl = url('/index?uuid=test-tenant-uuid');
     $component->assertSet('websiteUrl', $expectedUrl);
 });
 
-it('does not generate website URL when tenant has empty hash', function (): void {
+it('does not generate website URL when tenant has empty uuid', function (): void {
     $tenant = Tenant::factory()->create([
-        'hash' => '', // Empty hash
+        'hash' => '', // Empty hash (accessed as uuid)
     ]);
 
     $adminProfile = Profile::create([

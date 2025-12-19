@@ -29,23 +29,6 @@ return new class () extends Migration {
                 $table->id();
                 $table->string('name');
                 $table->string('hash')->unique();
-                $table->string('domain')->nullable();
-                $table->string('logo')->nullable();
-                $table->string('api_token')->nullable();
-                $table->timestamp('last_change_at')->nullable();
-                $table->string('from_email')->nullable();
-                $table->string('reply_email')->nullable();
-                $table->string('module')->nullable();
-                $table->boolean('module_gastrofix')->default(false);
-                $table->timestamp('demo_until')->nullable();
-                $table->boolean('demo_user')->default(false);
-                $table->string('package')->nullable();
-                $table->boolean('lost')->default(false);
-                $table->boolean('free')->default(false);
-                $table->string('period')->nullable();
-                $table->date('last_invoice')->nullable();
-                $table->integer('invoice_number')->default(1);
-                $table->integer('order_counter')->default(1);
                 $table->timestamps();
             });
         }

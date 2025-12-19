@@ -122,7 +122,7 @@ class CreateTenantApp extends Command
             options: fn(string $search) => collect($icons)
                 ->filter(fn($icon) => empty($search) || str_contains($icon, $search))
                 ->mapWithKeys(fn($icon) => [
-                    "heroicons::components.outline.{$icon}" => $icon,
+                    "heroicon:outline:{$icon}" => $icon,
                 ])
                 ->all(),
             placeholder: 'Type to search icons (e.g., "arrow", "cog", "user")...',

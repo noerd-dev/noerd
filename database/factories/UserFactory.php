@@ -53,7 +53,7 @@ class UserFactory extends Factory
             $adminProfile = Profile::factory()->create([
                 'tenant_id' => $tenant->id,
                 'key' => 'ADMIN',
-                'name' => 'Administrator',
+                'name' => 'Admin',
             ]);
 
             $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);

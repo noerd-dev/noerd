@@ -17,9 +17,7 @@ class CreateTenantCommand extends Command
      * @var string
      */
     protected $signature = 'noerd:create-tenant
-                            {--name= : The name of the tenant}
-                            {--from-email= : The from email address for the tenant}
-                            {--reply-email= : The reply email address for the tenant}';
+                            {--name= : The name of the tenant}';
 
     /**
      * The console command description.
@@ -64,28 +62,15 @@ class CreateTenantCommand extends Command
             }
         }
 
-        // Get optional email addresses
-        $fromEmail = $this->option('from-email');
-        $replyEmail = $this->option('reply-email');
-
         // Create the tenant
         $tenant = new Tenant;
         $tenant->name = $name;
-        $tenant->hash = Str::uuid()->toString();
-        $tenant->api_token = Str::uuid()->toString();
-
-        if ($fromEmail) {
-            $tenant->from_email = $fromEmail;
-        }
-        if ($replyEmail) {
-            $tenant->reply_email = $replyEmail;
-        }
-
+        $tenant->uuid = Str::uuid()->toString();
         $tenant->save();
 
         $this->info("Tenant '{$tenant->name}' created successfully.");
         $this->line("  ID: {$tenant->id}");
-        $this->line("  Hash: {$tenant->hash}");
+        $this->line("  UUID: {$tenant->uuid}");
 
         // Create default USER profile
         Profile::create([
