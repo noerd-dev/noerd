@@ -24,11 +24,13 @@ class User extends Authenticatable
         'selected_app',
         'super_admin',
         'locale',
+        'api_token',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'api_token',
     ];
 
     protected $casts = [
