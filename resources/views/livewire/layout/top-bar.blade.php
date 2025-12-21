@@ -6,11 +6,11 @@ use Livewire\Volt\Component;
 
 new class extends Component {
 
-    public $selectedClientId;
+    public $selectedTenantId;
 
     public function mount()
     {
-        $this->selectedClientId = auth()->user()->selected_tenant_id ?? 0;
+        $this->selectedTenantId = auth()->user()->selected_tenant_id ?? 0;
     }
 
     public function logout()
@@ -29,9 +29,9 @@ new class extends Component {
         $user = Auth::user();
         $accessToClients = $user->tenants;
         $accessToClientsIds = $accessToClients->pluck('id')->toArray();
-        if (in_array($this->selectedClientId, $accessToClientsIds)) {
+        if (in_array($this->selectedTenantId, $accessToClientsIds)) {
             $user = Auth::user();
-            $user->selected_tenant_id = $this->selectedClientId;
+            $user->selected_tenant_id = $this->selectedTenantId;
             $user->save();
 
             return $this->redirect('/');
@@ -125,7 +125,7 @@ new class extends Component {
 
                         @if(auth()->user()->tenants->count() > 1)
                             <!-- Tenants -->
-                            <x-noerd::select-input class="w-48! mt-0!" wire:model="selectedClientId"
+                            <x-noerd::select-input class="w-48! mt-0!" wire:model="selectedTenantId"
                                                    wire:change="changeClient">
                                 @foreach(auth()->user()->tenants as $client)
                                     <option value="{{$client->id}}">{{$client->name}}</option>
