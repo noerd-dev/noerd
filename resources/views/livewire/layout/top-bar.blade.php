@@ -123,7 +123,7 @@ new class extends Component {
                             </a>
                         @endif
 
-                        @if(auth()->user()->isAdmin() || auth()->user()->tenants->count() > 1)
+                        @if(auth()->user()->tenants->count() > 1)
                             <!-- Tenants -->
                             <x-noerd::select-input class="w-48! mt-0!" wire:model="selectedClientId"
                                                    wire:change="changeClient">
