@@ -175,9 +175,6 @@ class NoerdInstallCommand extends Command
             // Create tailwind.config.js
             $this->createTailwindConfig();
 
-            // Update filesystems configuration
-            $this->updateFilesystemsConfig();
-
             // Update auth configuration
             $this->updateAuthConfig();
 
@@ -295,7 +292,6 @@ select:focus[data-flux-control] {
 import sort from '@alpinejs/sort'
 import Quill from 'quill';
 
-// Make Quill globally available (if needed for other components)
 window.Quill = Quill;
 
 Alpine.plugin(sort)
@@ -305,7 +301,7 @@ Alpine.store('globalState', {
 });
 
 Alpine.store('app', {
-    currentId: 200,
+    currentId: null,
     setId(id) {
         this.currentId = id;
     }
@@ -398,51 +394,6 @@ export default {
 
         file_put_contents($configPath, $configContent);
         $this->line('<info>Created tailwind.config.js.</info>');
-    }
-
-    /**
-     * Update filesystems.php configuration
-     */
-    private function updateFilesystemsConfig(): void
-    {
-        $filesystemsPath = base_path('config/filesystems.php');
-
-        if (!file_exists($filesystemsPath)) {
-            $this->warn('filesystems.php not found, skipping filesystem configuration.');
-            return;
-        }
-
-        $filesystemsContent = file_get_contents($filesystemsPath);
-
-        // Check if media disk is already configured
-        if (str_contains($filesystemsContent, "'media' =>")) {
-            $this->line('<comment>Media disk already configured in filesystems.php.</comment>');
-            return;
-        }
-
-        // Find the position to insert the media disk configuration
-        // Look for the closing of the 'disks' array
-        $pattern = '/(\s+)(],\s*\/\*[\s\S]*?Symbolic Links[\s\S]*?\*\/)/';
-
-        $mediaDiskConfig = "
-        'media' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public/media'),
-            'url' => env('APP_URL') . '/storage/media',
-            'visibility' => 'public',
-            'throw' => false,
-        ],
-";
-
-        $replacement = $mediaDiskConfig . '$1$2';
-        $updatedContent = preg_replace($pattern, $replacement, $filesystemsContent);
-
-        if ($updatedContent && $updatedContent !== $filesystemsContent) {
-            file_put_contents($filesystemsPath, $updatedContent);
-            $this->line('<info>Added media disk configuration to filesystems.php.</info>');
-        } else {
-            $this->warn('Could not automatically add media disk configuration. Please add it manually.');
-        }
     }
 
     /**
