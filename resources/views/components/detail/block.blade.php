@@ -14,12 +14,13 @@
                         'description' => $field['description'] ?? null,
                         'fields' => $field['fields'] ?? [],
                         'cols' => $field['cols'] ?? $cols ?? '12',
+                        'modelId' => $modelId ?? null,
                     ])
                 </div>
             @else
                 <div class="col-span-{{$field['colspan'] ?? '3'}}">
                     @if($field['type'] === 'relation')
-                        @include('noerd::components.forms.input-relation', ['field' => $field, 'modelId' => $modelId])
+                        @include('noerd::components.forms.input-relation', ['field' => $field, 'modelId' => $modelId ?? null])
                     @elseif($field['type'] === 'collection-select')
                         @include('noerd::components.forms.input-collection-select', ['field' => $field])
                     @elseif($field['type'] === 'select')

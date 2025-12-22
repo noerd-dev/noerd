@@ -15,7 +15,7 @@
     $live = $field['live'] ?? $live;
 @endphp
 
-<div {{ $attributes->merge(['class' => '']) }}>
+<div>
     <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
 
     <input
