@@ -64,7 +64,7 @@ class UserFactory extends Factory
 
     public function withSelectedApp(string $app): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'selected_app' => $app,
         ]);
     }

@@ -132,6 +132,15 @@ class StaticConfigHelper
     }
 
     /**
+     * Clear the module source mapping cache.
+     * Call this after installing new modules.
+     */
+    public static function clearModuleSourceCache(): void
+    {
+        self::$moduleSourceMappingCache = null;
+    }
+
+    /**
      * Get allowed app folders for the current tenant.
      * Convention: folder name = strtolower(TenantApp.name)
      */
@@ -457,14 +466,5 @@ class StaticConfigHelper
         self::$moduleSourceMappingCache = $mappings;
 
         return $mappings;
-    }
-
-    /**
-     * Clear the module source mapping cache.
-     * Call this after installing new modules.
-     */
-    public static function clearModuleSourceCache(): void
-    {
-        self::$moduleSourceMappingCache = null;
     }
 }

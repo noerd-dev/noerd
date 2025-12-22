@@ -72,7 +72,7 @@ trait HasEmailPreview
         $subject = str_replace(
             array_keys($sampleData),
             array_values($sampleData),
-            $emailData['email_subject'] ?? __('Test-E-Mail')
+            $emailData['email_subject'] ?? __('Test-E-Mail'),
         );
 
         $subject = '[TEST] ' . $subject;
@@ -80,14 +80,14 @@ trait HasEmailPreview
         $emailBody = str_replace(
             array_keys($sampleData),
             array_values($sampleData),
-            $emailData['email_body'] ?? ''
+            $emailData['email_body'] ?? '',
         );
 
         $htmlContent = view($this->getEmailViewName(), [
             'emailBody' => $emailBody,
         ])->render();
 
-        Mail::html($htmlContent, function ($message) use ($user, $subject) {
+        Mail::html($htmlContent, function ($message) use ($user, $subject): void {
             $message->to($user->email)
                 ->subject($subject);
         });

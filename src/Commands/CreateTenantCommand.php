@@ -4,10 +4,11 @@ namespace Noerd\Noerd\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
 
 use function Laravel\Prompts\text;
+
+use Noerd\Noerd\Models\Profile;
+use Noerd\Noerd\Models\Tenant;
 
 class CreateTenantCommand extends Command
 {
@@ -63,7 +64,7 @@ class CreateTenantCommand extends Command
         }
 
         // Create the tenant
-        $tenant = new Tenant;
+        $tenant = new Tenant();
         $tenant->name = $name;
         $tenant->uuid = Str::uuid()->toString();
         $tenant->save();

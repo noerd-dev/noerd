@@ -73,37 +73,56 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="flex flex-col gap-6">
-    <x-noerd::auth-header :title="__('Log in to your account')"
-                          :description="__('Enter your email and password below to log in')"/>
-
-    <!-- Session Status -->
-    <x-noerd::auth-session-status class="text-center" :status="session('status')"/>
-
-    <form wire:submit="login" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
-
-        <!-- Password -->
-        <div>
-            <div class="flex items-center justify-between">
-                <x-noerd::input-label for="password" :value="__('Password')" />
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" wire:navigate class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
+<div class="flex min-h-screen items-stretch">
+    <div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div class="mx-auto w-full max-w-sm lg:w-96">
+            <div>
+                <x-noerd::application-logo class="h-10 w-auto" />
+                <h2 class="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900">
+                    {{ __('Log in to your account') }}
+                </h2>
+                <p class="mt-2 text-sm/6 text-gray-500">
+                    {{ __('Enter your email and password below to log in') }}
+                </p>
             </div>
-            <x-noerd::forms.input name="password" type="password" />
-        </div>
 
-        <!-- Remember Me -->
-        <x-noerd::forms.checkbox name="remember" label="{{ __('Remember me') }}" />
+            <!-- Session Status -->
+            <x-noerd::auth-session-status class="mt-6" :status="session('status')" />
 
-        <div>
-            <x-noerd::primary-button type="submit" class="w-full justify-center">
-                {{ __('Log in') }}
-            </x-noerd::primary-button>
+            <div class="mt-10">
+                <form wire:submit="login" class="space-y-6">
+                    <!-- Email Address -->
+                    <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
+
+                    <!-- Password -->
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <x-noerd::input-label for="password" :value="__('Password')" />
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
+                                    {{ __('Forgot password?') }}
+                                </a>
+                            @endif
+                        </div>
+                        <x-noerd::forms.input name="password" type="password" />
+                    </div>
+
+                    <!-- Remember Me -->
+                    <x-noerd::forms.checkbox name="remember" label="{{ __('Remember me') }}" />
+
+                    <!-- Submit Button -->
+                    <div>
+                        <x-noerd::primary-button type="submit" class="w-full justify-center">
+                            {{ __('Log in') }}
+                        </x-noerd::primary-button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </form>
+    </div>
+    @if(config('noerd.auth.background_image'))
+        <div class="relative hidden w-0 flex-1 lg:block">
+            <img src="{{ config('noerd.auth.background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
+        </div>
+    @endif
 </div>
