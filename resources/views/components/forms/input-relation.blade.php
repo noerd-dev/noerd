@@ -46,7 +46,7 @@
 
         <x-noerd::buttons.primary
             wire:click="$dispatch('noerdModal', {component: '{{ $modalComponent }}', arguments: {id: {{ $modelId }}, context: '{{ $name }}'}})"
-            class="!h-[40px] rounded !mt-0 !ml-1"
+            class="h-9rounded !mt-0 !ml-1"
             type="button"
         >
             <x-noerd::icons.magnifying-glass></x-noerd::icons.magnifying-glass>
