@@ -1,4 +1,4 @@
-<x-noerd::primary-button type="button" {{ $attributes->whereDoesntStartWith('class') }}>
+<x-noerd::buttons.primary type="button" {{ $attributes->whereDoesntStartWith('class') }}>
     <svg  wire:loading wire:target="store" class="animate-spin h-5 w-5 text-white"
          xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -10,4 +10,4 @@
     <x-noerd::icons.check-circle class="w-5 h-5" wire:target="store" wire:loading.remove></x-noerd::icons.check-circle>
 
     {{ $slot }}
-</x-noerd::primary-button>
+</x-noerd::buttons.primary>
