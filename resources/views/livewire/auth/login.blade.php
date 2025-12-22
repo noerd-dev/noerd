@@ -99,7 +99,7 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
                         <div class="flex items-center justify-between">
                             <x-noerd::input-label for="password" :value="__('Password')" />
                             @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
+                                <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold">
                                     {{ __('Forgot password?') }}
                                 </a>
                             @endif
@@ -112,17 +112,17 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
 
                     <!-- Submit Button -->
                     <div>
-                        <x-noerd::primary-button type="submit" class="w-full justify-center">
+                        <x-noerd::buttons.primary type="submit" class="w-full justify-center">
                             {{ __('Log in') }}
-                        </x-noerd::primary-button>
+                        </x-noerd::buttons.primary>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    @if(config('noerd.auth.background_image'))
-        <div class="relative hidden w-0 flex-1 lg:block">
-            <img src="{{ config('noerd.auth.background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
-        </div>
-    @endif
+    <div class="relative hidden w-0 flex-1 bg-black lg:block">
+        @if(config('noerd.branding.auth_background_image'))
+            <img src="{{ config('noerd.branding.auth_background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
+        @endif
+    </div>
 </div>

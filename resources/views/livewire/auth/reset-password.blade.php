@@ -86,17 +86,17 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
 
                     <!-- Submit Button -->
                     <div>
-                        <x-noerd::primary-button type="submit" class="w-full justify-center">
+                        <x-noerd::buttons.primary type="submit" class="w-full justify-center">
                             {{ __('Reset password') }}
-                        </x-noerd::primary-button>
+                        </x-noerd::buttons.primary>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    @if(config('noerd.auth.background_image'))
-        <div class="relative hidden w-0 flex-1 lg:block">
-            <img src="{{ config('noerd.auth.background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
-        </div>
-    @endif
+    <div class="relative hidden w-0 flex-1 bg-black lg:block">
+        @if(config('noerd.branding.auth_background_image'))
+            <img src="{{ config('noerd.branding.auth_background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
+        @endif
+    </div>
 </div>

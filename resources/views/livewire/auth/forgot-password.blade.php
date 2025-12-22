@@ -45,23 +45,23 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
 
                     <!-- Submit Button -->
                     <div>
-                        <x-noerd::primary-button type="submit" class="w-full justify-center">
+                        <x-noerd::buttons.primary type="submit" class="w-full justify-center">
                             {{ __('Email password reset link') }}
-                        </x-noerd::primary-button>
+                        </x-noerd::buttons.primary>
                     </div>
                 </form>
 
                 <p class="mt-10 text-center text-sm/6 text-gray-500">
-                    <a href="{{ route('login') }}" wire:navigate class="font-semibold text-indigo-600 hover:text-indigo-500">
+                    <a href="{{ route('login') }}" wire:navigate class="font-semibold">
                         {{ __('Back to login') }}
                     </a>
                 </p>
             </div>
         </div>
     </div>
-    @if(config('noerd.auth.background_image'))
-        <div class="relative hidden w-0 flex-1 lg:block">
-            <img src="{{ config('noerd.auth.background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
-        </div>
-    @endif
+    <div class="relative hidden w-0 flex-1 bg-black lg:block">
+        @if(config('noerd.branding.auth_background_image'))
+            <img src="{{ config('noerd.branding.auth_background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
+        @endif
+    </div>
 </div>
