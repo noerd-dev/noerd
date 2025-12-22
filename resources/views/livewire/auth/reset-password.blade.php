@@ -60,24 +60,43 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="flex flex-col gap-6">
-    <x-noerd::auth-header :title="__('Reset password')"
-                          :description="__('Enter your new password below')"/>
+<div class="flex min-h-screen items-stretch">
+    <div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div class="mx-auto w-full max-w-sm lg:w-96">
+            <div>
+                <x-noerd::application-logo class="h-10 w-auto" />
+                <h2 class="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900">
+                    {{ __('Reset password') }}
+                </h2>
+                <p class="mt-2 text-sm/6 text-gray-500">
+                    {{ __('Enter your new password below') }}
+                </p>
+            </div>
 
-    <form wire:submit="resetPassword" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
+            <div class="mt-10">
+                <form wire:submit="resetPassword" class="space-y-6">
+                    <!-- Email Address -->
+                    <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
 
-        <!-- Password -->
-        <x-noerd::forms.input name="password" type="password" label="{{ __('Password') }}" />
+                    <!-- Password -->
+                    <x-noerd::forms.input name="password" type="password" label="{{ __('Password') }}" />
 
-        <!-- Confirm Password -->
-        <x-noerd::forms.input name="password_confirmation" type="password" label="{{ __('Confirm password') }}" />
+                    <!-- Confirm Password -->
+                    <x-noerd::forms.input name="password_confirmation" type="password" label="{{ __('Confirm password') }}" />
 
-        <div>
-            <x-noerd::primary-button type="submit" class="w-full justify-center">
-                {{ __('Reset password') }}
-            </x-noerd::primary-button>
+                    <!-- Submit Button -->
+                    <div>
+                        <x-noerd::primary-button type="submit" class="w-full justify-center">
+                            {{ __('Reset password') }}
+                        </x-noerd::primary-button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </form>
+    </div>
+    @if(config('noerd.auth.background_image'))
+        <div class="relative hidden w-0 flex-1 lg:block">
+            <img src="{{ config('noerd.auth.background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
+        </div>
+    @endif
 </div>
