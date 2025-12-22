@@ -35,15 +35,14 @@ new class extends Component {
     </header>
 
     <form wire:submit="updateLanguage" class="mt-6 space-y-6">
-        <div>
-            <x-noerd::input-label for="locale" :value="__('noerd_label_language')"/>
-            <select wire:model="locale" id="locale" name="locale"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-black focus:ring-black">
-                <option value="en">English</option>
-                <option value="de">Deutsch</option>
-            </select>
-            <x-noerd::input-error class="mt-2" :messages="$errors->get('locale')"/>
-        </div>
+        <x-noerd::forms.input-select
+            name="locale"
+            label="{{ __('noerd_label_language') }}"
+            :options="[
+                ['value' => 'en', 'label' => 'English'],
+                ['value' => 'de', 'label' => 'Deutsch'],
+            ]"
+        />
 
         <div class="flex items-center gap-4">
             <x-noerd::primary-button>{{ __('Save') }}</x-noerd::primary-button>
