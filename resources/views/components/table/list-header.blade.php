@@ -48,12 +48,12 @@
         @endif
         @if($newLabel)
             <div :class="isModal ? 'mr-10' : ''">
-                <x-noerd::primary-button class="!bg-brand-primary"
+                <x-noerd::buttons.primary class="!bg-brand-primary"
                                          style="height: 30px !important"
                                          wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">
                     <x-noerd::icons.plus class="text-white"/>
                     {{$newLabel}}
-                </x-noerd::primary-button>
+                </x-noerd::buttons.primary>
             </div>
         @endif
     </x-noerd::modal-title>

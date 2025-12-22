@@ -1,3 +1,3 @@
-<x-noerd::primary-button class="bg-gray-500! hover:bg-gray-400!" type="button" {{ $attributes->whereDoesntStartWith('class') }}>
+<x-noerd::buttons.primary class="bg-gray-500! hover:bg-gray-400!" type="button" {{ $attributes->whereDoesntStartWith('class') }}>
     {{ $slot }}
-</x-noerd::primary-button>
+</x-noerd::buttons.primary>
