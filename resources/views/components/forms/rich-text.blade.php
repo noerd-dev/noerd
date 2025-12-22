@@ -1,7 +1,21 @@
-<div  {{ isset($attributes) ?$attributes->merge(['class' => '']) : '' }}>
-    <x-noerd::input-label for="{{$field['name'] ?? $name}}" :value="__($field['label'] ?? $label)"/>
+@props([
+    'field' => null,
+    'name' => '',
+    'label' => '',
+])
 
-    <x-noerd::forms.quill :field="$field['name']" :content="$model[str_replace('model.', '',$field['name'] )] ?? ''"/>
+@php
+    $name = $field['name'] ?? $name;
+    $label = $field['label'] ?? $label;
+@endphp
 
-    <x-noerd::input-error :messages="$errors->get($field['name'] ?? $name)" class="mt-2"/>
+<div {{ $attributes->merge(['class' => '']) }}>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+
+    <x-noerd::forms.quill
+        :field="$name"
+        :content="$model[str_replace('model.', '', $name)] ?? ''"
+    />
+
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
 </div>

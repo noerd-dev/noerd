@@ -1,10 +1,19 @@
-<div {{ isset($attributes) ?$attributes->merge(['class' => '']) : '' }}>
+@props([
+    'field' => null,
+    'name' => '',
+    'label' => '',
+])
 
-    <x-noerd::input-label for="{{$field['name'] ?? $name}}" :value="__($field['label'] ?? $label)"/>
+@php
+    $name = $field['name'] ?? $name;
+    $label = $field['label'] ?? $label;
+@endphp
+
+<div {{ $attributes->merge(['class' => '']) }}>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
 
     @php
-        $valueKey = $field['name'] ?? $name ?? '';
-        $rawValue = isset($model) && isset($model[$valueKey]) ? $model[$valueKey] : null;
+        $rawValue = isset($model) && isset($model[$name]) ? $model[$name] : null;
         $previewUrl = null;
         if (is_numeric($rawValue)) {
             try {
@@ -22,11 +31,13 @@
 
     @if($previewUrl)
         <div class="relative mr-4 mb-4">
-            <div style="height: 150px; width: 150px; background: url('{{$previewUrl}}') 0% 0% / cover;">
-                <button wire:confirm="{{ __('Really delete image?') }}"
-                        wire:click="deleteImage('{{$field['name']}}')"
-                        type="button"
-                        class=" top-5 right-0 inline-flex uppercase items-center rounded !bg-red-400 p-1.5 m-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <div style="height: 150px; width: 150px; background: url('{{ $previewUrl }}') 0% 0% / cover;">
+                <button
+                    wire:confirm="{{ __('Really delete image?') }}"
+                    wire:click="deleteImage('{{ $name }}')"
+                    type="button"
+                    class="top-5 right-0 inline-flex uppercase items-center rounded !bg-red-400 p-1.5 m-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
                     X
                 </button>
             </div>
@@ -34,11 +45,13 @@
     @endif
 
     <div class="mt-2 flex gap-2">
-        <x-noerd::buttons.secondary type="button"
-                                    wire:click="openSelectMediaModal('{{$field['name'] ?? $name}}')">
+        <x-noerd::buttons.secondary
+            type="button"
+            wire:click="openSelectMediaModal('{{ $name }}')"
+        >
             {{ __('Choose image from media') }}
         </x-noerd::buttons.secondary>
     </div>
 
-    <x-noerd::input-error :messages="$errors->get($field['name'] ?? $name)" class="mt-2"/>
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
 </div>

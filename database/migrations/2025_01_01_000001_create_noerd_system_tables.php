@@ -39,7 +39,7 @@ return new class () extends Migration {
                 $table->id();
                 $table->string('key');
                 $table->string('name');
-                $table->foreignId('tenant_id')->constrained('tenants');
+                $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
                 $table->timestamps();
             });
         }
@@ -124,12 +124,32 @@ return new class () extends Migration {
             });
         }
 
-        // Add selected_tenant_id to users table if it doesn't exist
-        if (!Schema::hasColumn('users', 'selected_tenant_id')) {
-            Schema::table('users', function (Blueprint $table): void {
-                $table->unsignedBigInteger('selected_tenant_id')->nullable()->after('email_verified_at');
-                $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-                $table->index('selected_tenant_id');
+        // Add noerd columns to users table if they don't exist
+        $hasSelectedTenantId = Schema::hasColumn('users', 'selected_tenant_id');
+        $hasSelectedApp = Schema::hasColumn('users', 'selected_app');
+        $hasSuperAdmin = Schema::hasColumn('users', 'super_admin');
+        $hasLocale = Schema::hasColumn('users', 'locale');
+        $hasApiToken = Schema::hasColumn('users', 'api_token');
+
+        if (!$hasSelectedTenantId || !$hasSelectedApp || !$hasSuperAdmin || !$hasLocale || !$hasApiToken) {
+            Schema::table('users', function (Blueprint $table) use ($hasSelectedTenantId, $hasSelectedApp, $hasSuperAdmin, $hasLocale, $hasApiToken): void {
+                if (!$hasSelectedTenantId) {
+                    $table->unsignedBigInteger('selected_tenant_id')->nullable()->after('email_verified_at');
+                    $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
+                    $table->index('selected_tenant_id');
+                }
+                if (!$hasSelectedApp) {
+                    $table->string('selected_app')->nullable()->after('selected_tenant_id');
+                }
+                if (!$hasSuperAdmin) {
+                    $table->boolean('super_admin')->default(false)->after('selected_app');
+                }
+                if (!$hasLocale) {
+                    $table->string('locale', 5)->default('en')->after('super_admin');
+                }
+                if (!$hasApiToken) {
+                    $table->string('api_token', 80)->unique()->nullable()->after('remember_token');
+                }
             });
         }
 
@@ -153,7 +173,13 @@ return new class () extends Migration {
             Schema::table('users', function (Blueprint $table): void {
                 $table->dropForeign(['selected_tenant_id']);
                 $table->dropIndex(['selected_tenant_id']);
-                $table->dropColumn('selected_tenant_id');
+                $table->dropColumn([
+                    'selected_tenant_id',
+                    'selected_app',
+                    'super_admin',
+                    'locale',
+                    'api_token',
+                ]);
             });
         }
 

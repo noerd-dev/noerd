@@ -1,17 +1,34 @@
-<div wire:key="{{($field['name'] ?? $name) . (session('selectedLanguage') ?? 'de')}}" {{ isset($attributes) ?$attributes->merge(['class' => '']) : '' }}>
-    <x-noerd::input-label for="{{$field['name'] ?? $name}}" :value="__($field['label'] ?? $label)"/>
+@props([
+    'field' => null,
+    'name' => '',
+    'label' => '',
+    'type' => 'text',
+    'disabled' => false,
+    'live' => false,
+])
+
+@php
+    $name = $field['name'] ?? $name;
+    $label = $field['label'] ?? $label;
+    $type = $field['type'] ?? $type;
+    $disabled = $field['disabled'] ?? $disabled;
+    $live = $field['live'] ?? $live;
+@endphp
+
+<div wire:key="{{ $name . (session('selectedLanguage') ?? 'de') }}" {{ $attributes->merge(['class' => '']) }}>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
 
     <input
-        {{ ($field['disabled'] ?? false) ? 'disabled' : '' }}
+        {{ $disabled ? 'disabled' : '' }}
         class="w-full border rounded-lg block disabled:shadow-none dark:shadow-none appearance-none text-base sm:text-sm py-2 h-10 leading-[1.375rem] ps-3 pe-3 bg-white dark:bg-white/10 dark:disabled:bg-white/[7%] text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 dark:text-zinc-300 dark:disabled:text-zinc-400 dark:placeholder-zinc-400 dark:disabled:placeholder-zinc-500 shadow-xs border-zinc-200 border-b-zinc-300/80 disabled:border-b-zinc-200 dark:border-white/10 dark:disabled:border-white/5 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-        type="{{$field['type'] ?? $type ?? 'text'}}"
-        id="{{$field['name'] ?? $name}}"
-        name="{{$field['name'] ?? $name}}"
-        @if((isset($field['live']) || isset($live)) && $field['live'] ?? $live)
-            wire:model.live.debounce="{{($field['name'] ?? $name). '.'.session('selectedLanguage') ?? 'de'}}"
+        type="{{ $type }}"
+        id="{{ $name }}"
+        name="{{ $name }}"
+        @if($live)
+            wire:model.live.debounce="{{ $name . '.' . (session('selectedLanguage') ?? 'de') }}"
         @else
-            wire:model="{{($field['name'] ?? $name). '.'.session('selectedLanguage') ?? 'de'}}"
+            wire:model="{{ $name . '.' . (session('selectedLanguage') ?? 'de') }}"
         @endif
     >
-    <x-noerd::input-error :messages="$errors->get($field['name'] ?? $name)" class="mt-2"/>
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
 </div>

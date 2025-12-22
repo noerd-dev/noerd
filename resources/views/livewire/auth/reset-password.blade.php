@@ -66,60 +66,18 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
 
     <form wire:submit="resetPassword" class="flex flex-col gap-6">
         <!-- Email Address -->
-        <div>
-            <label for="email" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Email address') }}</label>
-            <input
-                wire:model="email"
-                id="email"
-                type="email"
-                required
-                autocomplete="email"
-                placeholder="email@example.com"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-            />
-            @error('email')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
 
         <!-- Password -->
-        <div>
-            <label for="password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Password') }}</label>
-            <input
-                wire:model="password"
-                id="password"
-                type="password"
-                required
-                autocomplete="new-password"
-                placeholder="{{ __('Password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-            />
-            @error('password')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-noerd::forms.input name="password" type="password" label="{{ __('Password') }}" />
 
         <!-- Confirm Password -->
-        <div>
-            <label for="password_confirmation" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Confirm password') }}</label>
-            <input
-                wire:model="password_confirmation"
-                id="password_confirmation"
-                type="password"
-                required
-                autocomplete="new-password"
-                placeholder="{{ __('Confirm password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-            />
-            @error('password_confirmation')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-noerd::forms.input name="password_confirmation" type="password" label="{{ __('Confirm password') }}" />
 
         <div>
-            <button type="submit" class="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <x-noerd::primary-button type="submit" class="w-full justify-center">
                 {{ __('Reset password') }}
-            </button>
+            </x-noerd::primary-button>
         </div>
     </form>
 </div>
