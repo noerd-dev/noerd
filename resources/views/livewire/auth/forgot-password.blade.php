@@ -22,27 +22,46 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="flex flex-col gap-6">
-    <x-noerd::auth-header :title="__('Forgot password')"
-                          :description="__('Enter your email to receive a password reset link')"/>
+<div class="flex min-h-screen items-stretch">
+    <div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div class="mx-auto w-full max-w-sm lg:w-96">
+            <div>
+                <x-noerd::application-logo class="h-10 w-auto" />
+                <h2 class="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900">
+                    {{ __('Forgot password') }}
+                </h2>
+                <p class="mt-2 text-sm/6 text-gray-500">
+                    {{ __('Enter your email to receive a password reset link') }}
+                </p>
+            </div>
 
-    <!-- Session Status -->
-    <x-noerd::auth-session-status class="text-center" :status="session('status')"/>
+            <!-- Session Status -->
+            <x-noerd::auth-session-status class="mt-6" :status="session('status')" />
 
-    <form wire:submit="sendPasswordResetLink" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
+            <div class="mt-10">
+                <form wire:submit="sendPasswordResetLink" class="space-y-6">
+                    <!-- Email Address -->
+                    <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
 
-        <div>
-            <x-noerd::primary-button type="submit" class="w-full justify-center">
-                {{ __('Email password reset link') }}
-            </x-noerd::primary-button>
+                    <!-- Submit Button -->
+                    <div>
+                        <x-noerd::primary-button type="submit" class="w-full justify-center">
+                            {{ __('Email password reset link') }}
+                        </x-noerd::primary-button>
+                    </div>
+                </form>
+
+                <p class="mt-10 text-center text-sm/6 text-gray-500">
+                    <a href="{{ route('login') }}" wire:navigate class="font-semibold text-indigo-600 hover:text-indigo-500">
+                        {{ __('Back to login') }}
+                    </a>
+                </p>
+            </div>
         </div>
-    </form>
-
-    <div class="text-center text-sm text-zinc-600 dark:text-zinc-400">
-        <a href="{{ route('login') }}" wire:navigate class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-            {{ __('Back to login') }}
-        </a>
     </div>
+    @if(config('noerd.auth.background_image'))
+        <div class="relative hidden w-0 flex-1 lg:block">
+            <img src="{{ config('noerd.auth.background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
+        </div>
+    @endif
 </div>
