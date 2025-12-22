@@ -37,7 +37,7 @@
         <x-noerd::buttons.primary
             x-data="{ collectionKey: $wire.entangle('{{ $name }}') }"
             @click="$dispatch('noerdModal', {component: 'collection-entries-list', arguments: {collectionKey: collectionKey, context: '{{ $name }}'}})"
-            class="!h-[40px] rounded !mt-0 !ml-1"
+            class="h-9rounded !mt-0 !ml-1"
             type="button"
         >
             <x-noerd::icons.magnifying-glass></x-noerd::icons.magnifying-glass>
