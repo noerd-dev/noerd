@@ -58,6 +58,9 @@ class NoerdInstallCommand extends Command
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
 
+            // Install Laravel Livewire Starter Kit for authentication
+            $this->installStarterKit();
+
             // Run migrations and setup admin user
             $this->runMigrationsAndSetupAdmin();
 
@@ -423,6 +426,35 @@ export default {
             $this->line('<info>Added AUTH_MODEL to .env file.</info>');
         } else {
             $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Noerd\\Models\\User');
+        }
+    }
+
+    /**
+     * Install Laravel Livewire Starter Kit for authentication
+     */
+    private function installStarterKit(): void
+    {
+        $this->newLine();
+        $this->info('Installing Laravel Livewire Starter Kit...');
+
+        // Check if already installed
+        $composerPath = base_path('composer.json');
+        $composerContent = file_get_contents($composerPath);
+
+        if (str_contains($composerContent, 'laravel/livewire-starter-kit')) {
+            $this->line('<comment>Laravel Livewire Starter Kit already installed.</comment>');
+            return;
+        }
+
+        // Run composer require
+        $command = 'cd ' . base_path() . ' && composer require laravel/livewire-starter-kit --no-interaction';
+        exec($command, $output, $returnCode);
+
+        if ($returnCode !== 0) {
+            $this->warn('Failed to install Laravel Livewire Starter Kit.');
+            $this->warn('Please run manually: composer require laravel/livewire-starter-kit');
+        } else {
+            $this->line('<info>Laravel Livewire Starter Kit installed successfully.</info>');
         }
     }
 
