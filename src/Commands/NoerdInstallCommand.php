@@ -397,72 +397,32 @@ export default {
     }
 
     /**
-     * Update auth.php configuration to use Noerd User model
+     * Update .env file to set AUTH_MODEL to Noerd User model
      */
     private function updateAuthConfig(): void
     {
-        $authPath = base_path('config/auth.php');
+        $envPath = base_path('.env');
 
-        if (!file_exists($authPath)) {
-            $this->warn('auth.php not found, skipping auth configuration.');
+        if (!file_exists($envPath)) {
+            $this->warn('.env file not found, skipping AUTH_MODEL configuration.');
             return;
         }
 
-        $authContent = file_get_contents($authPath);
-        $originalContent = $authContent;
+        $envContent = file_get_contents($envPath);
 
-        // Check if Noerd User model is already configured
-        if (str_contains($authContent, 'Noerd\\Noerd\\Models\\User::class')
-            || str_contains($authContent, '\\Noerd\\Noerd\\Models\\User::class')) {
-            $this->line('<comment>Noerd User model already configured in auth.php.</comment>');
+        // Check if AUTH_MODEL is already set
+        if (preg_match('/^AUTH_MODEL=/m', $envContent)) {
+            $this->line('<comment>AUTH_MODEL already configured in .env file.</comment>');
             return;
         }
 
-        // Strategy 1: Use str_replace for exact string matches (most reliable)
-        // Order matters: more specific patterns (with leading backslash) must come first
-        $stringReplacements = [
-            // With leading backslash variants first (more specific)
-            "env('AUTH_MODEL', \\App\\Models\\User::class)" => "\\Noerd\\Noerd\\Models\\User::class",
-            'env("AUTH_MODEL", \\App\\Models\\User::class)' => "\\Noerd\\Noerd\\Models\\User::class",
-            '\\App\\Models\\User::class' => '\\Noerd\\Noerd\\Models\\User::class',
-            // Without leading backslash (less specific, must come after)
-            "env('AUTH_MODEL', App\\Models\\User::class)" => "\\Noerd\\Noerd\\Models\\User::class",
-            'env("AUTH_MODEL", App\\Models\\User::class)' => "\\Noerd\\Noerd\\Models\\User::class",
-            'App\\Models\\User::class' => '\\Noerd\\Noerd\\Models\\User::class',
-        ];
+        // Append AUTH_MODEL to .env file
+        $authModelLine = "\nAUTH_MODEL=Noerd\\Noerd\\Models\\User\n";
 
-        foreach ($stringReplacements as $search => $replace) {
-            if (str_contains($authContent, $search)) {
-                $authContent = str_replace($search, $replace, $authContent);
-                $this->line("<info>Replaced:</info> {$search}");
-                break; // Stop after first successful replacement to avoid double replacements
-            }
-        }
-
-        // Strategy 2: Use regex as fallback for edge cases
-        if ($authContent === $originalContent) {
-            $regexPatterns = [
-                // Match 'model' => App\Models\User::class (with optional backslash prefix)
-                "/('model'\s*=>\s*)\\\\?App\\\\Models\\\\User::class/" => '$1\\Noerd\\Noerd\\Models\\User::class',
-                // Match 'model' => env('AUTH_MODEL', App\Models\User::class)
-                "/('model'\s*=>\s*)env\s*\(\s*['\"]AUTH_MODEL['\"]\s*,\s*\\\\?App\\\\Models\\\\User::class\s*\)/" => '$1\\Noerd\\Noerd\\Models\\User::class',
-            ];
-
-            foreach ($regexPatterns as $pattern => $replacement) {
-                $newContent = preg_replace($pattern, $replacement, $authContent);
-                if ($newContent !== null && $newContent !== $authContent) {
-                    $authContent = $newContent;
-                    $this->line('<info>Applied regex replacement for User model.</info>');
-                }
-            }
-        }
-
-        // Check if changes were made
-        if ($authContent !== $originalContent) {
-            file_put_contents($authPath, $authContent);
-            $this->line('<info>Updated auth.php to use Noerd User model (\\Noerd\\Noerd\\Models\\User::class).</info>');
+        if (file_put_contents($envPath, $envContent . $authModelLine) !== false) {
+            $this->line('<info>Added AUTH_MODEL to .env file.</info>');
         } else {
-            $this->warn('Could not automatically update auth.php. Please manually change the User model to \\Noerd\\Noerd\\Models\\User::class in the providers.users configuration.');
+            $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Noerd\\Models\\User');
         }
     }
 
