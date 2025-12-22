@@ -82,62 +82,28 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
 
     <form wire:submit="login" class="flex flex-col gap-6">
         <!-- Email Address -->
-        <div>
-            <label for="email" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Email address') }}</label>
-            <input
-                wire:model="email"
-                id="email"
-                type="email"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="email@example.com"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-            />
-            @error('email')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
 
         <!-- Password -->
         <div>
             <div class="flex items-center justify-between">
-                <label for="password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Password') }}</label>
+                <x-noerd::input-label for="password" :value="__('Password')" />
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" wire:navigate class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
                         {{ __('Forgot your password?') }}
                     </a>
                 @endif
             </div>
-            <input
-                wire:model="password"
-                id="password"
-                type="password"
-                required
-                autocomplete="current-password"
-                placeholder="{{ __('Password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-            />
-            @error('password')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-            @enderror
+            <x-noerd::forms.input name="password" type="password" />
         </div>
 
         <!-- Remember Me -->
-        <div class="flex items-center gap-2">
-            <input
-                wire:model="remember"
-                id="remember"
-                type="checkbox"
-                class="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800"
-            />
-            <label for="remember" class="text-sm text-zinc-700 dark:text-zinc-300">{{ __('Remember me') }}</label>
-        </div>
+        <x-noerd::forms.checkbox name="remember" label="{{ __('Remember me') }}" />
 
         <div>
-            <button type="submit" class="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <x-noerd::primary-button type="submit" class="w-full justify-center">
                 {{ __('Log in') }}
-            </button>
+            </x-noerd::primary-button>
         </div>
     </form>
 </div>
