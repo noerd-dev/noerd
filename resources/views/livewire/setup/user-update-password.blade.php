@@ -40,28 +40,40 @@ new class extends Component {
 
     <form wire:submit="updatePassword" class="mt-6 space-y-6">
         <!-- Password -->
-        <flux:input
-            wire:model="password"
-            id="password"
-            label="{{ __('Password') }}"
-            type="password"
-            name="password"
-            required
-            autocomplete="new-password"
-            placeholder="{{ __('Password') }}"
-        />
+        <div>
+            <label for="password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Password') }}</label>
+            <input
+                wire:model="password"
+                id="password"
+                type="password"
+                name="password"
+                required
+                autocomplete="new-password"
+                placeholder="{{ __('Password') }}"
+                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+            />
+            @error('password')
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
 
         <!-- Confirm Password -->
-        <flux:input
-            wire:model="password_confirmation"
-            id="password_confirmation"
-            label="{{ __('Confirm password') }}"
-            type="password"
-            name="password_confirmation"
-            required
-            autocomplete="new-password"
-            placeholder="{{ __('Confirm password') }}"
-        />
+        <div>
+            <label for="password_confirmation" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Confirm password') }}</label>
+            <input
+                wire:model="password_confirmation"
+                id="password_confirmation"
+                type="password"
+                name="password_confirmation"
+                required
+                autocomplete="new-password"
+                placeholder="{{ __('Confirm password') }}"
+                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+            />
+            @error('password_confirmation')
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
 
         <div class="flex items-center gap-4">
             <x-noerd::primary-button>{{ __('Passwort speichern') }}</x-noerd::primary-button>

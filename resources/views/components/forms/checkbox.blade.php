@@ -8,7 +8,6 @@
                        wire:model="{{$field['name']}}"
                    @endif
                    id="{{$field['name']}}"
-                   data-flux-control
                    type="checkbox"
                    class="h-4 w-4 rounded-sm border border-gray-300 text-black focus:ring-black">
         </div>

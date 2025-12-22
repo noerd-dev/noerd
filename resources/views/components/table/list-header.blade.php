@@ -25,14 +25,14 @@
         @if($this->tableFilters())
             <div class="flex ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
-                    <flux:select size="sm" wire:change="storeActiveTableFilters"
-                                 wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
-                                 class="mr-4 border-dashed max-w-48 {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-highlight border !border-solid' : '' }}"
-                                 placeholder="{{$tableFilter['label']}}">
+                    <select wire:change="storeActiveTableFilters"
+                            wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
+                            class="mr-4 max-w-48 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent dark:bg-zinc-800 dark:border-zinc-600 dark:text-white {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-highlight !border-solid' : '' }}">
+                        <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
-                            <flux:select.option value="{{$key}}">{{$option}}</flux:select.option>
+                            <option value="{{$key}}">{{$option}}</option>
                         @endforeach
-                    </flux:select>
+                    </select>
                 @endforeach
             </div>
         @endif

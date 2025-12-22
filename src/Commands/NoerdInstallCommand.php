@@ -58,9 +58,6 @@ class NoerdInstallCommand extends Command
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
 
-            // Install Laravel Livewire Starter Kit for authentication
-            $this->installStarterKit();
-
             // Run migrations and setup admin user
             $this->runMigrationsAndSetupAdmin();
 
@@ -206,8 +203,6 @@ class NoerdInstallCommand extends Command
 
         $noerdStyles = "
 @import 'quill/dist/quill.snow.css';
-@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
-@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 @source '../../vendor/noerd/noerd/resources/views/**/*.blade.php';
 @source '../../vendor/noerd/cms/resources/views/**/*.blade.php';
 @config '../../tailwind.config.js';
@@ -251,20 +246,6 @@ class NoerdInstallCommand extends Command
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
-}
-
-[data-flux-field] {
-    @apply grid gap-2;
-}
-
-[data-flux-label] {
-    @apply  !mb-0 !leading-tight;
-}
-
-input:focus[data-flux-control],
-textarea:focus[data-flux-control],
-select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 ";
 
@@ -400,9 +381,18 @@ export default {
     }
 
     /**
-     * Update .env file to set AUTH_MODEL to Noerd User model
+     * Update .env file to set AUTH_MODEL to Noerd User model and install Breeze
      */
     private function updateAuthConfig(): void
+    {
+        // Set AUTH_MODEL in .env
+        $this->setAuthModelEnv();
+    }
+
+    /**
+     * Set AUTH_MODEL in .env file
+     */
+    private function setAuthModelEnv(): void
     {
         $envPath = base_path('.env');
 
@@ -413,48 +403,17 @@ export default {
 
         $envContent = file_get_contents($envPath);
 
-        // Check if AUTH_MODEL is already set
         if (preg_match('/^AUTH_MODEL=/m', $envContent)) {
             $this->line('<comment>AUTH_MODEL already configured in .env file.</comment>');
             return;
         }
 
-        // Append AUTH_MODEL to .env file
         $authModelLine = "\nAUTH_MODEL=Noerd\\Noerd\\Models\\User\n";
 
         if (file_put_contents($envPath, $envContent . $authModelLine) !== false) {
             $this->line('<info>Added AUTH_MODEL to .env file.</info>');
         } else {
             $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Noerd\\Models\\User');
-        }
-    }
-
-    /**
-     * Install Laravel Livewire Starter Kit for authentication
-     */
-    private function installStarterKit(): void
-    {
-        $this->newLine();
-        $this->info('Installing Laravel Livewire Starter Kit...');
-
-        // Check if already installed
-        $composerPath = base_path('composer.json');
-        $composerContent = file_get_contents($composerPath);
-
-        if (str_contains($composerContent, 'laravel/livewire-starter-kit')) {
-            $this->line('<comment>Laravel Livewire Starter Kit already installed.</comment>');
-            return;
-        }
-
-        // Run composer require
-        $command = 'cd ' . base_path() . ' && composer require laravel/livewire-starter-kit --no-interaction';
-        exec($command, $output, $returnCode);
-
-        if ($returnCode !== 0) {
-            $this->warn('Failed to install Laravel Livewire Starter Kit.');
-            $this->warn('Please run manually: composer require laravel/livewire-starter-kit');
-        } else {
-            $this->line('<info>Laravel Livewire Starter Kit installed successfully.</info>');
         }
     }
 
