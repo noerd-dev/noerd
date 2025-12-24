@@ -41,8 +41,8 @@ new class extends Component {
     <form wire:submit="updatePassword" class="mt-6 space-y-6">
         <!-- Password -->
         <div>
-            <label for="password" class="block text-sm font-medium text-zinc-700">{{ __('Password') }}</label>
-            <input
+            <x-noerd::input-label for="password" :value="__('Password')" />
+            <x-noerd::text-input
                 wire:model="password"
                 id="password"
                 type="password"
@@ -50,17 +50,15 @@ new class extends Component {
                 required
                 autocomplete="new-password"
                 placeholder="{{ __('Password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
+                class="mt-1 block w-full"
             />
-            @error('password')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
+            <x-noerd::input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <!-- Confirm Password -->
         <div>
-            <label for="password_confirmation" class="block text-sm font-medium text-zinc-700">{{ __('Confirm password') }}</label>
-            <input
+            <x-noerd::input-label for="password_confirmation" :value="__('Confirm password')" />
+            <x-noerd::text-input
                 wire:model="password_confirmation"
                 id="password_confirmation"
                 type="password"
@@ -68,11 +66,9 @@ new class extends Component {
                 required
                 autocomplete="new-password"
                 placeholder="{{ __('Confirm password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
+                class="mt-1 block w-full"
             />
-            @error('password_confirmation')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
+            <x-noerd::input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
         <div class="flex items-center gap-4">
