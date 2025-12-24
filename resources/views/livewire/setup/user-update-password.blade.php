@@ -41,7 +41,7 @@ new class extends Component {
     <form wire:submit="updatePassword" class="mt-6 space-y-6">
         <!-- Password -->
         <div>
-            <label for="password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Password') }}</label>
+            <label for="password" class="block text-sm font-medium text-zinc-700">{{ __('Password') }}</label>
             <input
                 wire:model="password"
                 id="password"
@@ -50,16 +50,16 @@ new class extends Component {
                 required
                 autocomplete="new-password"
                 placeholder="{{ __('Password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
             />
             @error('password')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
 
         <!-- Confirm Password -->
         <div>
-            <label for="password_confirmation" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('Confirm password') }}</label>
+            <label for="password_confirmation" class="block text-sm font-medium text-zinc-700">{{ __('Confirm password') }}</label>
             <input
                 wire:model="password_confirmation"
                 id="password_confirmation"
@@ -68,10 +68,10 @@ new class extends Component {
                 required
                 autocomplete="new-password"
                 placeholder="{{ __('Confirm password') }}"
-                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
             />
             @error('password_confirmation')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
 

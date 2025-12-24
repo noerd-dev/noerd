@@ -319,11 +319,11 @@ export default {
         extend: {
             display: ['group-hover'],
             colors: {
-                'brand-highlight': process.env.VITE_PRIMARY_COLOR || '#000',
                 'brand-bg': process.env.VITE_BG_COLOR || '#f9f9f9',
                 'brand-navi': process.env.VITE_BRAND_NAVI || '#fafafa',
                 'brand-navi-hover': process.env.VITE_BRAND_NAVI_HOVER || '#f5f5f5',
                 'brand-primary': process.env.VITE_BRAND_PRIMARY || '#000',
+                'brand-border': process.env.VITE_BRAND_BORDER || '#000',
             },
         },
     },
@@ -740,8 +740,12 @@ export default {
         $this->line('Running migrations...');
         $this->newLine();
 
-
         $this->call('migrate', ['--no-interaction' => true]);
+
+        $this->newLine();
+
+        // Create default tenant
+        $this->call('noerd:create-tenant');
 
         $this->newLine();
 
