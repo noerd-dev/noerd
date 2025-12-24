@@ -15,7 +15,7 @@ php artisan noerd:make-admin {userId}
 
 To create a new app
 ```
-php artisan noerd:create-tenant-app 
+php artisan noerd:create-app 
 ```
 
 Assign apps to tenants

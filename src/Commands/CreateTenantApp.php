@@ -16,7 +16,7 @@ class CreateTenantApp extends Command
      *
      * @var string
      */
-    protected $signature = 'noerd:create-tenant-app 
+    protected $signature = 'noerd:create-app
                             {--title= : The display title of the app}
                             {--name= : The unique name identifier of the app}
                             {--icon= : The icon identifier for the app}
@@ -28,7 +28,7 @@ class CreateTenantApp extends Command
      *
      * @var string
      */
-    protected $description = 'Create a new tenant app that can be assigned to tenants';
+    protected $description = 'Create a new app that can be assigned to tenants';
 
     /**
      * Execute the console command.

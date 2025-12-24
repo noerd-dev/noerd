@@ -6,8 +6,8 @@ use Noerd\Noerd\Models\TenantApp;
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
-it('successfully creates a tenant app with all parameters', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+it('successfully creates a app with all parameters', function (): void {
+    $this->artisan('noerd:create-app', [
         '--title' => 'Test Application',
         '--name' => 'TEST_APP',
         '--icon' => 'icons.test',
@@ -34,7 +34,7 @@ it('successfully creates a tenant app with all parameters', function (): void {
 });
 
 it('creates an inactive tenant app when active is set to 0', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Inactive App',
         '--name' => 'INACTIVE_APP',
         '--icon' => 'icons.inactive',
@@ -49,7 +49,7 @@ it('creates an inactive tenant app when active is set to 0', function (): void {
 });
 
 it('defaults to active when active parameter is not provided', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Default Active App',
         '--name' => 'DEFAULT_ACTIVE',
         '--icon' => 'icons.default',
