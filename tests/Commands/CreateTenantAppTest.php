@@ -73,7 +73,7 @@ it('fails when required fields are missing', function (): void {
         ->assertExitCode(1);
 
     // Verify no new app was created (only seeded ones exist)
-    expect(TenantApp::count())->toBe(13);
+    expect(TenantApp::count())->toBe(12);
 });
 
 it('fails when only some fields are provided', function (): void {
