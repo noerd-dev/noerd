@@ -154,7 +154,7 @@
             @elseif($type == 'badge_with_text')
                 <div wire:click.prevent="{{$action}}('{{$redirectAction}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['badge']) && $value['badge'])
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary">
                             {{ $value['badge'] }}
                         </span>
                     @endif

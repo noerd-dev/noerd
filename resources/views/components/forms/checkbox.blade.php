@@ -25,7 +25,7 @@
                 @endif
                 id="{{ $name }}"
                 type="checkbox"
-                class="h-4 w-4 rounded-sm border border-gray-300 text-black focus:ring-black"
+                class="h-4 w-4 rounded-sm border border-gray-300 text-brand-primary focus:ring-brand-border"
             >
         </div>
         <div class="ml-3 text-sm leading-6">

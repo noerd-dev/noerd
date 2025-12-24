@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Commands\AddUsersToDefaultTenant;
 use Noerd\Noerd\Commands\AssignAppsToTenant;
 use Noerd\Noerd\Commands\CreateAdminCommand;
 use Noerd\Noerd\Commands\CreateTenantApp;
@@ -56,7 +55,6 @@ class NoerdServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 MakeUserAdmin::class,
-                AddUsersToDefaultTenant::class,
                 NoerdInstallCommand::class,
                 CreateTenantApp::class,
                 AssignAppsToTenant::class,

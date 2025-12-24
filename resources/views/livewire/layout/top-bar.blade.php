@@ -137,7 +137,7 @@ new class extends Component {
                         <div x-data="{ open: false }" class="relative shrink-0">
                             <div>
                                 <button x-on:click="open = ! open" x-on:click.outside="open = false" type="button"
-                                        class="relative flex rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-black focus:ring-offset-2"
+                                        class="relative flex rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
                                         id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                                     <span class="absolute -inset-1.5"></span>
                                     <span class="sr-only">Open user menu</span>

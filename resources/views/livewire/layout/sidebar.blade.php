@@ -56,12 +56,12 @@ new class extends Component {
                        class="cursor-pointer"
                        @else class="opacity-50" @endif>
                         <div
-                            @class(['!bg-brand-highlight/5  border-brand-highlight!' => auth()->user()?->selected_app === $tenantApp->name,
+                            @class(['!bg-brand-primary/5  border-brand-primary!' => auth()->user()?->selected_app === $tenantApp->name,
                                         'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
                             @if($tenantApp->icon)
                                 <x-noerd::app-icon
                                     :icon="$tenantApp->icon"
-                                    class="{{ auth()->user()?->selected_app === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
+                                    class="{{ auth()->user()?->selected_app === $tenantApp->name  ? 'stroke-brand-primary border-brand-primary' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
                                     border-l-2" />
                             @endif
