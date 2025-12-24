@@ -109,29 +109,6 @@ class StaticConfigHelper
     }
 
     /**
-     * Copy global components to their respective app modules
-     */
-    public static function copyComponentsToModules(): array
-    {
-        $results = [];
-        $componentMapping = self::getComponentToModuleMapping();
-
-        // Process default components
-        $defaultComponentsPath = base_path('content/components/default');
-        if (is_dir($defaultComponentsPath)) {
-            $results['default'] = self::copyComponentsFromDirectory($defaultComponentsPath, $componentMapping, 'default');
-        }
-
-        // Process admin components
-        $adminComponentsPath = base_path('content/components/admin');
-        if (is_dir($adminComponentsPath)) {
-            $results['admin'] = self::copyComponentsFromDirectory($adminComponentsPath, $componentMapping, 'admin');
-        }
-
-        return $results;
-    }
-
-    /**
      * Clear the module source mapping cache.
      * Call this after installing new modules.
      */
@@ -314,90 +291,6 @@ class StaticConfigHelper
 
         // Copy the file
         return copy($sourceFile, $targetFile);
-    }
-
-    /**
-     * Define mapping between component names and modules
-     */
-    private static function getComponentToModuleMapping(): array
-    {
-        return [
-            // Product related
-            'product' => 'product',
-            'product-group' => 'product',
-
-            // Customer related
-            'customer' => 'customer',
-
-            'deliverySlot' => 'liefertool',
-            'deliveryBlock' => 'liefertool',
-            'deliverytime' => 'liefertool',
-            'deliveryarea' => 'liefertool',
-            'vehicle-detail' => 'liefertool',
-            'vehicle-configuration-detail' => 'liefertool',
-            'vehicleAssembly' => 'liefertool',
-            'area-detail' => 'liefertool',
-
-            // Order related
-            'orderConfirmation' => 'order',
-
-            // Voucher related
-            'voucher' => 'voucher',
-
-            // Shop related
-            'shop-notification' => 'shop',
-            'store' => 'shop',
-
-            // Menu/Canteen related
-            'menu' => 'canteen',
-
-            // Content/CMS related
-            'page' => 'content',
-            'site' => 'content',
-            'text-content-detail' => 'content',
-            'textDocument' => 'content',
-
-            // Legal register related
-            'law' => 'legal-register',
-            'lawReadOnly' => 'legal-register',
-            'duty' => 'legal-register',
-            'dutyReadOnly' => 'legal-register',
-
-            // Production planning related
-            'assembly-detail' => 'production-planning',
-            'part-detail' => 'production-planning',
-            'selectPart' => 'production-planning',
-
-            // Harvester/PDM related
-            'project' => 'harvester-project',
-            'project-booking' => 'harvester-project',
-            'sawmill' => 'pdm',
-
-            // UKI related
-            'mode' => 'uki',
-            'mode-exception' => 'uki',
-            'times' => 'uki',
-
-            // Settings related
-            'setting' => 'settings',
-            'globalParameter' => 'settings',
-            'tenant' => 'settings',
-            'user' => 'settings',
-            'userRole' => 'settings',
-
-            // Document analyzer related
-            'ocr-scanner-detail' => 'document-analyzer',
-
-            // Media related
-            'prompt' => 'media',
-            'promptCreate' => 'media',
-
-            // Additional fields - could be used by multiple modules, default to content
-            'additionalField' => 'content',
-
-            // Accounting related
-            'accounting' => 'accounting',
-        ];
     }
 
     /**
