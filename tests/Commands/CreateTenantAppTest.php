@@ -63,7 +63,7 @@ it('defaults to active when active parameter is not provided', function (): void
 });
 
 it('fails when required fields are missing', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => '',
         '--name' => '',
         '--icon' => '',
@@ -77,7 +77,7 @@ it('fails when required fields are missing', function (): void {
 });
 
 it('fails when only some fields are provided', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Test Title',
         '--name' => 'MISSING_FIELDS',
         '--icon' => 'icons.test',
@@ -88,7 +88,7 @@ it('fails when only some fields are provided', function (): void {
 });
 
 it('normalizes lowercase name to uppercase', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Lowercase App',
         '--name' => 'lowercase app',
         '--icon' => 'icons.test',
@@ -101,7 +101,7 @@ it('normalizes lowercase name to uppercase', function (): void {
 });
 
 it('normalizes name with hyphens to underscores', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Hyphen Name App',
         '--name' => 'hyphen-name',
         '--icon' => 'icons.test',
@@ -114,7 +114,7 @@ it('normalizes name with hyphens to underscores', function (): void {
 });
 
 it('normalizes name with spaces to underscores', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Spaced Name App',
         '--name' => 'SPACED NAME',
         '--icon' => 'icons.test',
@@ -127,7 +127,7 @@ it('normalizes name with spaces to underscores', function (): void {
 });
 
 it('fails when name contains special characters', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Special Chars App',
         '--name' => 'SPECIAL-CHARS!',
         '--icon' => 'icons.test',
@@ -138,7 +138,7 @@ it('fails when name contains special characters', function (): void {
 });
 
 it('accepts name with underscores', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Underscore Name App',
         '--name' => 'UNDERSCORE_NAME_APP',
         '--icon' => 'icons.test',
@@ -151,7 +151,7 @@ it('accepts name with underscores', function (): void {
 });
 
 it('accepts single word uppercase names', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Single Word App',
         '--name' => 'SINGLE',
         '--icon' => 'icons.single',
@@ -173,7 +173,7 @@ it('fails when app name already exists', function (): void {
     ]);
 
     // Try to create another app with the same name
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Duplicate App',
         '--name' => 'EXISTING_APP',
         '--icon' => 'icons.duplicate',
@@ -185,7 +185,7 @@ it('fails when app name already exists', function (): void {
 
 it('fails when app name conflicts with seeded data', function (): void {
     // Try to create an app with name that exists in test data (from TestCase setUp)
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'CMS Duplicate',
         '--name' => 'CMS',
         '--icon' => 'icons.cms',
@@ -196,7 +196,7 @@ it('fails when app name conflicts with seeded data', function (): void {
 });
 
 it('displays comprehensive app details in output table', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Complete Details App',
         '--name' => 'DETAILS_APP',
         '--icon' => 'icons.details',
@@ -214,7 +214,7 @@ it('displays comprehensive app details in output table', function (): void {
 });
 
 it('handles titles with special characters correctly', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Special Chars App (Test & Demo)',
         '--name' => 'SPECIAL_CHARS',
         '--icon' => 'icons.special',
@@ -229,7 +229,7 @@ it('handles titles with special characters correctly', function (): void {
 it('handles long titles correctly', function (): void {
     $longTitle = 'This is a very long title that should still be handled correctly by the command';
 
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => $longTitle,
         '--name' => 'LONG_TITLE',
         '--icon' => 'icons.long',
@@ -242,7 +242,7 @@ it('handles long titles correctly', function (): void {
 });
 
 it('handles complex route names correctly', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Complex Route App',
         '--name' => 'COMPLEX_ROUTE',
         '--icon' => 'icons.complex',
@@ -255,7 +255,7 @@ it('handles complex route names correctly', function (): void {
 });
 
 it('handles complex icon names correctly', function (): void {
-    $this->artisan('noerd:create-tenant-app', [
+    $this->artisan('noerd:create-app', [
         '--title' => 'Complex Icon App',
         '--name' => 'COMPLEX_ICON',
         '--icon' => 'heroicon-o-cog-6-tooth',
@@ -268,8 +268,8 @@ it('handles complex icon names correctly', function (): void {
 });
 
 it('provides correct help information', function (): void {
-    $this->artisan('noerd:create-tenant-app', ['--help'])
-        ->expectsOutputToContain('Create a new tenant app that can be assigned to tenants')
+    $this->artisan('noerd:create-app', ['--help'])
+        ->expectsOutputToContain('Create a new app that can be assigned to tenants')
         ->expectsOutputToContain('--title')
         ->expectsOutputToContain('--name')
         ->expectsOutputToContain('--icon')
