@@ -21,14 +21,6 @@ class TenantFactory extends Factory
         ];
     }
 
-    public function canteenModule()
-    {
-        $tenantApp = TenantApp::where('name', 'CANTEEN')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
-        });
-    }
-
     public function deliveryModule()
     {
         $tenantApp = TenantApp::where('name', 'DELIVERY')->first();
@@ -64,6 +56,14 @@ class TenantFactory extends Factory
     public function restaurantModule()
     {
         $tenantApp = TenantApp::where('name', 'RESTAURANT')->first();
+        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
+            $tenant->tenantApps()->attach($tenantApp->id);
+        });
+    }
+
+    public function accountingModule()
+    {
+        $tenantApp = TenantApp::where('name', 'ACCOUNTING')->first();
         return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
             $tenant->tenantApps()->attach($tenantApp->id);
         });

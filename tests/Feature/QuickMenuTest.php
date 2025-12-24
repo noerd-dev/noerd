@@ -238,7 +238,7 @@ it('does not generate website URL when tenant has empty uuid', function (): void
 });
 
 it('validates all order app types provide correct access', function (): void {
-    $orderAppNames = ['DELIVERY', 'RESTAURANT', 'STORE', 'CANTEEN'];
+    $orderAppNames = ['DELIVERY', 'RESTAURANT', 'STORE'];
 
     foreach ($orderAppNames as $appName) {
         $tenant = Tenant::factory()->create();
