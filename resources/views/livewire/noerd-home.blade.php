@@ -41,7 +41,7 @@ new class extends Component {
                         <div class="inline-block mb-2">
                             <x-noerd::app-icon
                                 :icon="$tenantApp->icon"
-                                class="{{ auth()->user()?->selected_app === $tenantApp->name  ? 'stroke-brand-highlight border-brand-highlight' :
+                                class="{{ auth()->user()?->selected_app === $tenantApp->name  ? 'stroke-brand-primary border-brand-primary' :
                                 'stroke-black border-transparent hover:!border-gray-500' }}
                                 border-l-2" />
                         </div>

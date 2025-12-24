@@ -16,7 +16,7 @@
                         <label class="break-keep text-xs">{{$availableFilter['title']}}</label>
                         <input wire:change="$refresh()" wire:model.live="currentTableFilter.{{ $key }}"
                                type="{{$availableFilter['type']}}"
-                               class="disabled:opacity-50 border px-3 mr-1 block w-full py-1 rounded-md border-gray-300 shadow-xs focus:border-black focus:ring-black sm:text-sm {{ !empty($currentTableFilter[$key]) ? '!border-brand-highlight border !border-solid' : '' }}">
+                               class="disabled:opacity-50 border px-3 mr-1 block w-full py-1 rounded-md border-gray-300 shadow-xs focus:border-brand-border focus:ring-brand-border sm:text-sm {{ !empty($currentTableFilter[$key]) ? '!border-brand-primary border !border-solid' : '' }}">
                     </div>
                 @endforeach
             </div>
@@ -27,7 +27,7 @@
                 @foreach($this->tableFilters() as $tableFilter)
                     <select wire:change="storeActiveTableFilters"
                             wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
-                            class="mr-4 max-w-48 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent dark:bg-zinc-800 dark:border-zinc-600 dark:text-white {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-highlight !border-solid' : '' }}">
+                            class="mr-4 max-w-48 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
                         <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
                             <option value="{{$key}}">{{$option}}</option>

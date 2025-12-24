@@ -18,7 +18,8 @@ class CreateTenantCommand extends Command
      * @var string
      */
     protected $signature = 'noerd:create-tenant
-                            {--name= : The name of the tenant}';
+                            {--name= : The name of the tenant}
+                            {--default : Use "Default" as the tenant name}';
 
     /**
      * The console command description.
@@ -34,9 +35,18 @@ class CreateTenantCommand extends Command
     {
         // Get name
         $name = $this->option('name');
+
+        // Use default name if --default flag is set
+        if ($this->option('default') && empty($name)) {
+            $name = 'Default';
+        }
+
         if (empty($name)) {
             $name = text(
                 label: 'What is the tenant name?',
+                placeholder: 'Default',
+                default: 'Default',
+                hint: 'A unique name to identify environment (Dev, Production) or organizational unit (Site A, Site B)',
                 required: true,
                 validate: function (string $value) {
                     if (mb_strlen($value) < 3) {

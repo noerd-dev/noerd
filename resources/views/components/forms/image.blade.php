@@ -36,7 +36,7 @@
                     wire:confirm="{{ __('Really delete image?') }}"
                     wire:click="deleteImage('{{ $name }}')"
                     type="button"
-                    class="top-5 right-0 inline-flex uppercase items-center rounded !bg-red-400 p-1.5 m-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    class="top-5 right-0 inline-flex uppercase items-center rounded !bg-red-400 p-1.5 m-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
                 >
                     X
                 </button>
