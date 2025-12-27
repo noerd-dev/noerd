@@ -43,13 +43,6 @@ class Tenant extends Authenticatable
         return $this->hasOne(Setting::class, 'tenant_id', 'id');
     }
 
-    public function dueInvoices(): HasMany
-    {
-        return $this->hasMany(TenantInvoice::class, 'tenant_id', 'id')
-            ->where('paid', 0)
-            ->whereDate('due_date', '<', today());
-    }
-
     /**
      * Get the UUID attribute with fallback to hash for backward compatibility.
      */
