@@ -7,6 +7,3 @@
       navigations:
         - { title: noerd_nav_users, route: users, heroicon: users }
         - { title: noerd_nav_user_roles, route: user-roles, heroicon: shield-check }
-    - title: noerd_nav_billing
-      navigations:
-        - { title: noerd_nav_tenant_invoices, route: tenant-invoices, heroicon: document-text }
