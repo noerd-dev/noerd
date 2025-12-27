@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 use Noerd\Noerd\Models\Profile;
@@ -9,7 +10,7 @@ use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class);
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 $testSettings = [
     'componentName' => 'user-detail',

@@ -21,51 +21,13 @@ class TenantFactory extends Factory
         ];
     }
 
-    public function deliveryModule()
+    public function withApp(string $appName): static
     {
-        $tenantApp = TenantApp::where('name', 'DELIVERY')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
-        });
-    }
-
-    public function contentModule()
-    {
-        $tenantApp = TenantApp::where('name', 'CMS')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
-        });
-    }
-
-    public function pdmModule()
-    {
-        $tenantApp = TenantApp::where('name', 'PDM')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
-        });
-    }
-
-    public function storeModule()
-    {
-        $tenantApp = TenantApp::where('name', 'STORE')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
-        });
-    }
-
-    public function restaurantModule()
-    {
-        $tenantApp = TenantApp::where('name', 'RESTAURANT')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
-        });
-    }
-
-    public function accountingModule()
-    {
-        $tenantApp = TenantApp::where('name', 'ACCOUNTING')->first();
-        return $this->afterCreating(function (Tenant $tenant) use ($tenantApp): void {
-            $tenant->tenantApps()->attach($tenantApp->id);
+        return $this->afterCreating(function (Tenant $tenant) use ($appName): void {
+            $tenantApp = TenantApp::where('name', $appName)->first();
+            if ($tenantApp) {
+                $tenant->tenantApps()->attach($tenantApp->id);
+            }
         });
     }
 }

@@ -63,6 +63,8 @@ it('defaults to active when active parameter is not provided', function (): void
 });
 
 it('fails when required fields are missing', function (): void {
+
+    $appCountBefore = TenantApp::count();
     $this->artisan('noerd:create-app', [
         '--title' => '',
         '--name' => '',
@@ -72,8 +74,8 @@ it('fails when required fields are missing', function (): void {
         ->expectsOutput('All fields (title, name, icon, route) are required.')
         ->assertExitCode(1);
 
-    // Verify no new app was created (only seeded ones exist)
-    expect(TenantApp::count())->toBe(12);
+    // Verify no new app was created
+    expect(TenantApp::count())->toBe($appCountBefore);
 });
 
 it('fails when only some fields are provided', function (): void {
@@ -184,14 +186,23 @@ it('fails when app name already exists', function (): void {
 });
 
 it('fails when app name conflicts with seeded data', function (): void {
+    // Create an app that conflicts with existing seeded app name
+    TenantApp::create([
+        'title' => 'Noerd App A Duplicate',
+        'name' => 'NOERD_APP_A',
+        'icon' => 'icons.noerd-app-a',
+        'route' => 'noerd-app-a.duplicate',
+        'is_active' => true,
+    ]);
+
     // Try to create an app with name that exists in test data (from TestCase setUp)
     $this->artisan('noerd:create-app', [
-        '--title' => 'CMS Duplicate',
-        '--name' => 'CMS',
-        '--icon' => 'icons.cms',
-        '--route' => 'cms.duplicate',
+        '--title' => 'Noerd App A Duplicate',
+        '--name' => 'NOERD_APP_A',
+        '--icon' => 'icons.noerd-app-a',
+        '--route' => 'noerd-app-a.duplicate',
     ])
-        ->expectsOutput("App with name 'CMS' already exists.")
+        ->expectsOutput("App with name 'NOERD_APP_A' already exists.")
         ->assertExitCode(1);
 });
 

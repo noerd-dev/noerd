@@ -1,10 +1,12 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class);
+uses(RefreshDatabase::class);
 
 $testSettings = [
     'componentName' => 'user-role-detail',
