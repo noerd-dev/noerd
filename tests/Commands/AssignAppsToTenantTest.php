@@ -13,11 +13,35 @@ beforeEach(function (): void {
         'name' => 'Test Restaurant',
     ]);
 
-    // Get some test apps (from seeded data in TestCase)
-    $this->cmsApp = TenantApp::where('name', 'CMS')->first();
-    $this->mediaApp = TenantApp::where('name', 'MEDIA')->first();
-    $this->ukiApp = TenantApp::where('name', 'UKI')->first();
-    $this->deliveryApp = TenantApp::where('name', 'DELIVERY')->first();
+    // Create test apps (independent from other modules)
+    $this->noerdAppA = TenantApp::create([
+        'name' => 'NOERD_APP_A',
+        'title' => 'Noerd App A',
+        'icon' => 'noerd-app-a',
+        'route' => 'noerd-app-a.index',
+        'is_active' => true,
+    ]);
+    $this->noerdAppB = TenantApp::create([
+        'name' => 'NOERD_APP_B',
+        'title' => 'Noerd App B',
+        'icon' => 'noerd-app-b',
+        'route' => 'noerd-app-b.index',
+        'is_active' => true,
+    ]);
+    $this->noerdAppC = TenantApp::create([
+        'name' => 'NOERD_APP_C',
+        'title' => 'Noerd App C',
+        'icon' => 'noerd-app-c',
+        'route' => 'noerd-app-c.index',
+        'is_active' => true,
+    ]);
+    $this->noerdAppD = TenantApp::create([
+        'name' => 'NOERD_APP_D',
+        'title' => 'Noerd App D',
+        'icon' => 'noerd-app-d',
+        'route' => 'noerd-app-d.index',
+        'is_active' => true,
+    ]);
 });
 
 it('fails with non-existent tenant id', function (): void {
@@ -38,8 +62,8 @@ it('fails gracefully when no active apps exist', function (): void {
 it('displays tenant information correctly', function (): void {
     // Assign some apps for display
     $this->tenant->tenantApps()->attach([
-        $this->cmsApp->id,
-        $this->mediaApp->id,
+        $this->noerdAppA->id,
+        $this->noerdAppB->id,
     ]);
 
     // Since we can't easily mock Laravel Prompts in tests, we'll test the output
@@ -50,8 +74,8 @@ it('displays tenant information correctly', function (): void {
     $output = $command->expectsOutput("App Assignment for: {$this->tenant->name}")
         ->expectsOutput('Use ↑/↓ to navigate, Space to select/deselect, Enter to confirm')
         ->expectsOutput('Currently assigned apps:')
-        ->expectsOutput("  ✓ {$this->cmsApp->title} ({$this->cmsApp->name})")
-        ->expectsOutput("  ✓ {$this->mediaApp->title} ({$this->mediaApp->name})")
+        ->expectsOutput("  ✓ {$this->noerdAppA->title} ({$this->noerdAppA->name})")
+        ->expectsOutput("  ✓ {$this->noerdAppB->title} ({$this->noerdAppB->name})")
         ->run();
 });
 
@@ -65,16 +89,16 @@ it('displays message when no apps are currently assigned', function (): void {
 });
 
 it('only considers active apps for assignment', function (): void {
-    // Make CMS app inactive
-    $this->cmsApp->update(['is_active' => false]);
+    // Make first app inactive
+    $this->noerdAppA->update(['is_active' => false]);
 
     // The command should still work with remaining active apps
     $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id])
         ->run();
 
     // Verify inactive apps are not available for assignment
-    expect($this->cmsApp->fresh()->is_active)->toBeFalse();
-    expect($this->mediaApp->fresh()->is_active)->toBeTrue();
+    expect($this->noerdAppA->fresh()->is_active)->toBeFalse();
+    expect($this->noerdAppB->fresh()->is_active)->toBeTrue();
 });
 
 // Test the core database operations by testing the model relationships directly
@@ -84,61 +108,61 @@ it('can assign apps to tenant through relationship', function (): void {
 
     // Assign apps
     $this->tenant->tenantApps()->attach([
-        $this->cmsApp->id,
-        $this->mediaApp->id,
+        $this->noerdAppA->id,
+        $this->noerdAppB->id,
     ]);
 
     expect($this->tenant->fresh()->tenantApps()->count())->toBe(2);
-    expect($this->tenant->tenantApps->pluck('name')->toArray())->toContain('CMS');
-    expect($this->tenant->tenantApps->pluck('name')->toArray())->toContain('MEDIA');
+    expect($this->tenant->tenantApps->pluck('name')->toArray())->toContain('NOERD_APP_A');
+    expect($this->tenant->tenantApps->pluck('name')->toArray())->toContain('NOERD_APP_B');
 });
 
 it('can remove apps from tenant through relationship', function (): void {
     // Start with apps assigned
     $this->tenant->tenantApps()->attach([
-        $this->cmsApp->id,
-        $this->mediaApp->id,
-        $this->ukiApp->id,
+        $this->noerdAppA->id,
+        $this->noerdAppB->id,
+        $this->noerdAppC->id,
     ]);
 
     expect($this->tenant->tenantApps()->count())->toBe(3);
 
     // Remove one app using detach (single)
-    $this->tenant->tenantApps()->detach($this->mediaApp->id);
+    $this->tenant->tenantApps()->detach($this->noerdAppB->id);
 
     expect($this->tenant->fresh()->tenantApps()->count())->toBe(2);
-    expect($this->tenant->tenantApps->pluck('name')->toArray())->not->toContain('MEDIA');
+    expect($this->tenant->tenantApps->pluck('name')->toArray())->not->toContain('NOERD_APP_B');
 });
 
 it('can sync apps to tenant (add and remove in one operation)', function (): void {
     // Start with some apps
     $this->tenant->tenantApps()->attach([
-        $this->cmsApp->id,
-        $this->mediaApp->id,
+        $this->noerdAppA->id,
+        $this->noerdAppB->id,
     ]);
 
     expect($this->tenant->tenantApps()->count())->toBe(2);
 
     // Sync to different set of apps (this is what the command uses)
     $this->tenant->tenantApps()->sync([
-        $this->ukiApp->id,
-        $this->deliveryApp->id,
+        $this->noerdAppC->id,
+        $this->noerdAppD->id,
     ]);
 
     $assignedNames = $this->tenant->fresh()->tenantApps->pluck('name')->toArray();
 
     expect($this->tenant->tenantApps()->count())->toBe(2);
-    expect($assignedNames)->toContain('UKI');
-    expect($assignedNames)->toContain('DELIVERY');
-    expect($assignedNames)->not->toContain('CMS');
-    expect($assignedNames)->not->toContain('MEDIA');
+    expect($assignedNames)->toContain('NOERD_APP_C');
+    expect($assignedNames)->toContain('NOERD_APP_D');
+    expect($assignedNames)->not->toContain('NOERD_APP_A');
+    expect($assignedNames)->not->toContain('NOERD_APP_B');
 });
 
 it('can remove all apps from tenant', function (): void {
     // Start with apps assigned
     $this->tenant->tenantApps()->attach([
-        $this->cmsApp->id,
-        $this->mediaApp->id,
+        $this->noerdAppA->id,
+        $this->noerdAppB->id,
     ]);
 
     expect($this->tenant->tenantApps()->count())->toBe(2);
@@ -151,16 +175,16 @@ it('can remove all apps from tenant', function (): void {
 
 it('maintains pivot table integrity', function (): void {
     // Test that pivot table records are created correctly
-    $this->tenant->tenantApps()->attach($this->cmsApp->id);
+    $this->tenant->tenantApps()->attach($this->noerdAppA->id);
 
     // Check that pivot record exists
     $pivotRecord = $this->tenant->tenantApps()
-        ->where('tenant_apps.id', $this->cmsApp->id)
+        ->where('tenant_apps.id', $this->noerdAppA->id)
         ->first();
 
     expect($pivotRecord)->not->toBeNull();
     expect($pivotRecord->pivot->tenant_id)->toBe($this->tenant->id);
-    expect($pivotRecord->pivot->tenant_app_id)->toBe($this->cmsApp->id);
+    expect($pivotRecord->pivot->tenant_app_id)->toBe($this->noerdAppA->id);
 });
 
 it('handles multiple tenants with same apps correctly', function (): void {
@@ -168,15 +192,15 @@ it('handles multiple tenants with same apps correctly', function (): void {
     $tenant2 = Tenant::factory()->create(['name' => 'Second Tenant']);
 
     // Assign same app to both tenants
-    $this->tenant->tenantApps()->attach($this->cmsApp->id);
-    $tenant2->tenantApps()->attach($this->cmsApp->id);
+    $this->tenant->tenantApps()->attach($this->noerdAppA->id);
+    $tenant2->tenantApps()->attach($this->noerdAppA->id);
 
     // Both should have the app
     expect($this->tenant->tenantApps()->count())->toBe(1);
     expect($tenant2->tenantApps()->count())->toBe(1);
 
     // Removing from one shouldn't affect the other
-    $this->tenant->tenantApps()->detach($this->cmsApp->id);
+    $this->tenant->tenantApps()->detach($this->noerdAppA->id);
 
     expect($this->tenant->fresh()->tenantApps()->count())->toBe(0);
     expect($tenant2->fresh()->tenantApps()->count())->toBe(1);
@@ -193,7 +217,7 @@ it('respects the is_active flag when querying apps', function (): void {
     expect($activeAppsCount)->toBe($totalAppsCount); // All test apps should be active now
 
     // Make one app inactive
-    $this->cmsApp->update(['is_active' => false]);
+    $this->noerdAppA->update(['is_active' => false]);
 
     $newActiveCount = TenantApp::where('is_active', true)->count();
     expect($newActiveCount)->toBe($activeAppsCount - 1);
@@ -269,6 +293,6 @@ it('correctly builds app choices array format', function (): void {
     expect(count($expectedFormat))->toBeGreaterThan(0);
 
     // Check a specific app format
-    $cmsFormatted = "{$this->cmsApp->title} ({$this->cmsApp->name})";
-    expect($expectedFormat[$this->cmsApp->id])->toBe($cmsFormatted);
+    $cmsFormatted = "{$this->noerdAppA->title} ({$this->noerdAppA->name})";
+    expect($expectedFormat[$this->noerdAppA->id])->toBe($cmsFormatted);
 });
