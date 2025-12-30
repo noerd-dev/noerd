@@ -1,9 +1,10 @@
 @php $isFullscreen = session('modal_fullscreen', false); @endphp
 <div x-data="{currentTab: 1}"
-     class="flex flex-col h-full"
+     class="flex flex-col"
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
      @else
+         :style="isModal ? 'max-height: {{ $isFullscreen ? 'calc(100dvh - 3.5rem)' : 'calc(100vh - 112px)' }}' : ''"
      :class="isModal ? 'flex flex-col' : 'h-full'"
     @endif
 >
