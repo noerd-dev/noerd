@@ -3,12 +3,12 @@
     @if(isset($title) || isset($description))
         @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
     @endif
-    <div class="grid py-8 pt-4 grid-cols-{{$cols ?? '12'}} gap-6">
+    <div class="grid py-8 pt-4 grid-cols-1 sm:grid-cols-{{$cols ?? '12'}} gap-6">
         @foreach($fields as $field)
             @if(isset($field['show']) && !$field['show'])
             @elseif($field['type'] === 'block')
                 {{-- Nested block with its own title and fields --}}
-                <div class="col-span-{{$field['colspan'] ?? '12'}}">
+                <div class="col-span-1 sm:col-span-{{$field['colspan'] ?? '12'}}">
                     @include('noerd::components.detail.block', [
                         'title' => $field['title'] ?? null,
                         'description' => $field['description'] ?? null,
@@ -18,7 +18,7 @@
                     ])
                 </div>
             @else
-                <div class="col-span-{{$field['colspan'] ?? '3'}}">
+                <div class="col-span-1 sm:col-span-{{$field['colspan'] ?? '3'}}">
                     @if($field['type'] === 'relation')
                         @include('noerd::components.forms.input-relation', ['field' => $field, 'modelId' => $modelId ?? null])
                     @elseif($field['type'] === 'collection-select')
