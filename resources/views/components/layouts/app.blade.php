@@ -39,7 +39,7 @@
               :class="showSidebar ? 'xl:pl-19.75' : 'xl:pl-0'"
         @endif
     >
-        <div class="bg-white border border-gray-300 pt-11.75 h-full">
+        <div class="bg-white border-l border-gray-300 pt-11.75 h-full">
             {{ $slot }}
         </div>
     </main>
