@@ -17,7 +17,7 @@
     </div>
 
     @isset($footer)
-        <div class="flex w-full border-t border-gray-300 py-4 px-8 z-50">
+        <div class="flex w-full border-t border-gray-300 py-4 px-8 z-50 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {{$footer}}
         </div>
     @endif

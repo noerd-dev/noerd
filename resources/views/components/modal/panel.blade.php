@@ -42,7 +42,7 @@
          x-transition:leave-end="translate-y-full"
     >
         <div @class([
-            'bg-white mx-auto shadow-sm relative pb-[env(safe-area-inset-bottom)]',
+            'bg-white mx-auto shadow-sm relative',
             'max-w-full h-[100dvh] rounded-none',
             'sm:max-w-full sm:h-[calc(100dvh-3.5rem)] sm:mt-14 sm:rounded-none' => $isFullscreen,
             'sm:max-w-7xl sm:h-full sm:max-h-[calc(100dvh-3.5rem)] sm:rounded' => !$isFullscreen,
