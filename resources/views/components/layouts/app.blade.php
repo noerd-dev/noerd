@@ -22,7 +22,6 @@
 <livewire:framework.noerd-modal/> <!-- must be loaded before livewire components -->
 
 <div class="h-dvh" x-data="{
-           open: false,
            openProfile: false,
            isModal: false,
            selectedRow: 0,
@@ -35,12 +34,12 @@
     <!-- Content -->
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-              :class="showSidebar ? 'lg:pl-[360px]' : 'lg:pl-[0px]'"
+              :class="showSidebar ? 'xl:pl-90' : 'xl:pl-0'"
           @else
-              :class="showSidebar ? 'lg:pl-[79px]' : 'lg:pl-[0px]'"
+              :class="showSidebar ? 'xl:pl-19.75' : 'xl:pl-0'"
         @endif
     >
-        <div class="bg-white border border-gray-300 pt-[47px] h-full">
+        <div class="bg-white border border-gray-300 pt-11.75 h-full">
             {{ $slot }}
         </div>
     </main>
