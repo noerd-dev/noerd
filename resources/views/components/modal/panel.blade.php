@@ -27,7 +27,7 @@
 
     <!-- Panel min-h-screen h-full -->
     <div x-show="open" id="modal" modal="{{$modal}}"
-         class="relative my-auto w-full h-full py-14  items-center justify-center"
+         class="relative my-auto w-full max-h-[100dvh] py-14 items-center justify-center"
          x-transition:enter="transition transform ease-out duration-100"
          x-transition:enter-start="translate-y-1/2"
          x-transition:enter-end="translate-y-0"
@@ -35,7 +35,7 @@
          x-transition:leave-start="translate-y-0"
          x-transition:leave-end="translate-y-full"
     >
-        <div class="bg-white max-w-7xl mx-auto h-full rounded shadow-sm relative">
+        <div class="bg-white max-w-7xl mx-auto h-full max-h-[calc(100dvh-3.5rem)] rounded shadow-sm relative pb-[env(safe-area-inset-bottom)]">
 
             <!-- Close Button -->
             <button @click="show = !show" wire:click.prevent="downModal('{{$modal}}', '{{$source}}', '{{$modalKey}}')" type="button" @class([
