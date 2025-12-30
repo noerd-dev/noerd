@@ -1,6 +1,6 @@
 <x-slot:header>
-    <x-noerd::modal-title class="flex items-center">
-        <div>
+    <x-noerd::modal-title>
+        <div class="pb-3 lg:pb-0">
             {{$title}}
             @isset($rows)
                 <span class="font-light">
@@ -41,7 +41,7 @@
             <div @if(!$newLabel)  :class="isModal ? 'mr-10' : ''" @endif class="ml-auto mr-2">
                 <x-noerd::text-input
                     placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
-                    class="min-w-[200px] !mt-0 h-[30px]"/>
+                    class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-[30px]"/>
             </div>
         @else
             <div class="ml-auto"></div>
