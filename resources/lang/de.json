@@ -253,5 +253,8 @@
     "noerd_label_paid": "Bezahlt",
     "noerd_label_date": "Datum",
     "noerd_label_paypal": "PayPal",
-    "noerd_label_profile_roles": "Profil / Rollen"
+    "noerd_label_profile_roles": "Profil / Rollen",
+
+    "noerd_nav_users": "Benutzer",
+    "noerd_nav_user_roles": "Benutzerrollen"
 }
