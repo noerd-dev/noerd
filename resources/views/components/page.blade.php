@@ -4,8 +4,7 @@
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
      @else
-         :style="isModal ? 'max-height: {{ $isFullscreen ? 'calc(100dvh - 3.5rem)' : 'calc(100vh - 112px)' }}' : ''"
-     :class="isModal ? 'flex flex-col' : 'h-full'"
+     :class="isModal ? 'flex flex-col max-h-[calc(100dvh-64px)] {{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}' : 'h-full'"
     @endif
 >
     {{$header ?? ''}}
