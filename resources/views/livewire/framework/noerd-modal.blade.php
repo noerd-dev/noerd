@@ -151,6 +151,15 @@ new class extends Component {
         }
     }
 
+    public function toggleFullscreen(): void
+    {
+        if (session('modal_fullscreen')) {
+            session()->forget('modal_fullscreen');
+        } else {
+            session(['modal_fullscreen' => true]);
+        }
+    }
+
 } ?>
 
 <div x-data="{selectedRow: 0, isDragging: false, isLoading: false}">
