@@ -44,7 +44,7 @@ new class extends Component {
         <div x-show="showSidebar" :class="showSidebar ? 'xl:w-20' : 'xl:w-12.5'" @class([
                 'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed inset-y-0 z-50 xl:z-40 flex flex-col w-20'
             ])>
-            <div class="text-xs text-center">
+            <div class="text-xs text-center overflow-y-auto flex-1">
                 {{--
                 <a wire:navigate href="{{ route('noerd-home') }}">
                     <div class="px-6 pt-4 pb-3">

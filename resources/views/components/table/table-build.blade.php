@@ -50,7 +50,7 @@
                     <div class="overflow-visible">
 
                         <div class="flow-root">
-                            <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-6">
+                            <div class="-my-2 -mx-6">
                                 <div class="inline-block min-w-full py-2 align-middle">
                                     <table class="min-w-full border-separate border-spacing-0">
                                         <thead>
