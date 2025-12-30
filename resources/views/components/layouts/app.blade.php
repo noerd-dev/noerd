@@ -11,6 +11,11 @@
     <link rel="stylesheet" href="/vendor/noerd/fonts/fonts.css">
 
     <style>
+        :root {
+            --sidebar-apps-width: {{ config('noerd.sidebar.apps_width', '80px') }};
+            --sidebar-nav-width: {{ config('noerd.sidebar.navigation_width', '280px') }};
+            --sidebar-total-width: calc(var(--sidebar-apps-width) + var(--sidebar-nav-width));
+        }
         body {
             font-family: "Nunito Sans", sans-serif;
             font-optical-sizing: auto;
@@ -34,9 +39,9 @@
     <!-- Content -->
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-              :class="showSidebar ? 'xl:pl-90' : 'xl:pl-0'"
+              :style="showSidebar && window.innerWidth >= 1280 ? 'padding-left: var(--sidebar-total-width)' : ''"
           @else
-              :class="showSidebar ? 'xl:pl-19.75' : 'xl:pl-0'"
+              :style="showSidebar && window.innerWidth >= 1280 ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
         <div class="bg-white border-l border-gray-300 pt-11.75 h-full">

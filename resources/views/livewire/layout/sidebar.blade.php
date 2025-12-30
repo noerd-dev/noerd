@@ -27,7 +27,7 @@ new class extends Component {
          @click="showSidebar = false; $wire.openSidebar()"></div>
 
     <!-- Mobile Close Button (nur <xl) -->
-    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-6 left-[376px] z-50">
+    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-6 z-50" style="left: calc(var(--sidebar-total-width) + 16px)">
         <button @click="showSidebar = false; $wire.openSidebar()" type="button" class="-m-2.5 p-2.5">
             <span class="sr-only">Close sidebar</span>
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -41,9 +41,11 @@ new class extends Component {
     <div class="flex">
 
         <!-- First column sidebar / Apps -->
-        <div x-show="showSidebar" :class="showSidebar ? 'xl:w-20' : 'xl:w-12.5'" @class([
-                'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed inset-y-0 z-50 xl:z-40 flex flex-col w-20'
-            ])>
+        <div x-show="showSidebar" @class([
+                'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed inset-y-0 z-50 xl:z-40 flex flex-col'
+            ])
+            :style="'width: var(--sidebar-apps-width)'"
+        >
             <div class="text-xs text-center overflow-y-auto flex-1">
                 {{--
                 <a wire:navigate href="{{ route('noerd-home') }}">
@@ -78,9 +80,11 @@ new class extends Component {
         <!-- Second column sidebar / Navigation -->
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
 
-            <div x-show="showSidebar" :class="showSidebar ? 'xl:w-69.75 ml-20' : 'ml-12.5'" @class([
-            'fixed inset-y-0 z-50 xl:z-40 bg-brand-navi flex flex-col w-69.75',
-        ])>
+            <div x-show="showSidebar" @class([
+            'fixed inset-y-0 z-50 xl:z-40 bg-brand-navi flex flex-col',
+        ])
+            :style="'width: var(--sidebar-nav-width); margin-left: var(--sidebar-apps-width)'"
+        >
                 <livewire:layout.sidebar-navigation :navigation="$navigation->subMenu()"
                                                     :navigations="$navigation->blockMenus()"/>
             </div>

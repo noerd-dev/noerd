@@ -52,9 +52,9 @@ new class extends Component {
 
 <div
     @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-        :class="showSidebar ? 'xl:left-90 xl:w-[calc(100%-360px)]' : 'xl:left-0 xl:w-full'"
+        :style="showSidebar && window.innerWidth >= 1280 ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : ''"
     @else
-        :class="showSidebar ? 'xl:left-19.75 xl:w-[calc(100%-79px)]' : 'xl:left-0 xl:w-full'"
+        :style="showSidebar && window.innerWidth >= 1280 ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
     @endif
     @class([
     'fixed top-0 left-0 w-full bg-white z-40',
