@@ -2,14 +2,14 @@
     'field' => null,
     'name' => '',
     'label' => '',
-    'disabled' => false,
+    'readonly' => false,
     'live' => false,
 ])
 
 @php
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
-    $disabled = $field['disabled'] ?? $disabled;
+    $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
 @endphp
 
@@ -17,7 +17,7 @@
     <div class="relative flex items-start my-auto">
         <div class="flex h-6 items-center">
             <input
-                @if($disabled) disabled @endif
+                @if($readonly) disabled @endif
                 @if($live)
                     wire:model.live.debounce="{{ $name }}"
                 @else
