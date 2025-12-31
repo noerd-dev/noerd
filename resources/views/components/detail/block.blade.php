@@ -30,6 +30,11 @@
                         {{-- options are defined in a computed method --}}
                         @include('noerd::components.forms.picklist', ['field' => $field])
                     @elseif($field['type'] === 'enum')
+                        @php
+                            if (isset($field['enumClass']) && !isset($field['options'])) {
+                                $field['options'] = $field['enumClass']::cases();
+                            }
+                        @endphp
                         @include('noerd::components.forms.input-enum', ['field' => $field])
                     @elseif($field['type'] === 'checkbox')
                         @include('noerd::components.forms.checkbox', ['field' => $field])
