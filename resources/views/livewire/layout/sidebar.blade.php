@@ -17,6 +17,20 @@ new class extends Component {
             session(['hide_sidebar' => true]);
         }
     }
+
+    public function saveSidebarWidth(string $width): void
+    {
+        session(['sidebar_nav_width' => $width]);
+    }
+
+    public function toggleAppbar(): void
+    {
+        if (session('hide_appbar')) {
+            session()->forget('hide_appbar');
+        } else {
+            session(['hide_appbar' => true]);
+        }
+    }
 }; ?>
 
 @inject('navigation', 'Noerd\Noerd\Services\NavigationService')
@@ -40,21 +54,16 @@ new class extends Component {
     <!-- Sidebar -->
     <div class="flex">
 
+
         <!-- First column sidebar / Apps -->
-        <div x-show="showSidebar" @class([
+        <div x-show="showSidebar && showAppbar"
+             x-transition
+             @class([
                 'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed inset-y-0 z-50 xl:z-40 flex flex-col'
             ])
             :style="'width: var(--sidebar-apps-width)'"
         >
             <div class="text-xs text-center overflow-y-auto flex-1">
-                {{--
-                <a wire:navigate href="{{ route('noerd-home') }}">
-                    <div class="px-6 pt-4 pb-3">
-                        <x-noerd::app-logo-icon></x-noerd::app-logo-icon>
-                    </div>
-                </a>
-                --}}
-
                 @foreach(auth()->user()->selectedTenant()?->tenantApps as $tenantApp)
                     <a @if($tenantApp->is_active)
                            wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
@@ -80,13 +89,43 @@ new class extends Component {
         <!-- Second column sidebar / Navigation -->
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
 
-            <div x-show="showSidebar" @class([
-            'fixed inset-y-0 z-50 xl:z-40 bg-brand-navi flex flex-col',
-        ])
-            :style="'width: var(--sidebar-nav-width); margin-left: var(--sidebar-apps-width)'"
-        >
+            <div x-show="showSidebar"
+                 x-data="{
+                    isResizing: false,
+                    startX: 0,
+                    startWidth: 0
+                 }"
+                 @mousemove.window="if (isResizing) {
+                    const diff = $event.clientX - startX;
+                    const newWidth = Math.max(200, Math.min(500, startWidth + diff));
+                    document.documentElement.style.setProperty('--sidebar-nav-width', newWidth + 'px');
+                 }"
+                 @mouseup.window="if (isResizing) {
+                    isResizing = false;
+                    const width = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-nav-width').trim();
+                    $wire.saveSidebarWidth(width);
+                 }"
+                 @class([
+                    'fixed inset-y-0 z-50 xl:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
+                 ])
+                 :style="'width: var(--sidebar-nav-width); margin-left: ' + (showAppbar ? 'var(--sidebar-apps-width)' : '0')"
+            >
                 <livewire:layout.sidebar-navigation :navigation="$navigation->subMenu()"
                                                     :navigations="$navigation->blockMenus()"/>
+
+                <!-- Toggle Appbar Button -->
+                <button @click="showAppbar = !showAppbar; $wire.toggleAppbar()"
+                        class="mt-auto p-3 text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                         class="w-5 h-5 transition-transform duration-200"
+                         :class="showAppbar ? '' : 'rotate-180'">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+
+                <!-- Resize Handle -->
+                <div class="absolute right-0 top-0 h-full w-0.5 cursor-col-resize hover:bg-brand-primary/40 transition-all"
+                     @mousedown="isResizing = true; startX = $event.clientX; startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-nav-width'))"></div>
             </div>
         @endif
     </div>
