@@ -41,8 +41,8 @@ new class extends Component {
          @click="showSidebar = false; $wire.openSidebar()"></div>
 
     <!-- Mobile Close Button (nur <xl) -->
-    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-6 z-50" style="left: calc(var(--sidebar-total-width) + 16px)">
-        <button @click="showSidebar = false; $wire.openSidebar()" type="button" class="-m-2.5 p-2.5">
+    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-4 right-4 z-50">
+        <button @click="showSidebar = false; $wire.openSidebar()" type="button" class="p-2 bg-black/50 rounded-full">
             <span class="sr-only">Close sidebar</span>
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                  stroke="currentColor" aria-hidden="true">
