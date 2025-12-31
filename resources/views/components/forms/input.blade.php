@@ -5,6 +5,7 @@
     'type' => 'text',
     'readonly' => false,
     'live' => false,
+    'required' => false,
 ])
 
 @php
@@ -13,10 +14,11 @@
     $type = $field['type'] ?? $type;
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
+    $required = $field['required'] ?? $required;
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
 
     <input
         {{ $readonly ? 'readonly' : '' }}

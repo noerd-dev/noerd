@@ -141,4 +141,45 @@ trait Noerd
     public function states(): void {}
 
     public function filters(): void {}
+
+    /**
+     * Validate using rules from pageLayout YAML configuration.
+     * Fields with 'required: true' will be validated as required.
+     */
+    public function validateFromLayout(): void
+    {
+        $rules = [];
+        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
+
+        if (!empty($rules)) {
+            $this->validate($rules);
+        }
+    }
+
+    /**
+     * Recursively extract validation rules from fields array.
+     */
+    protected function extractRulesFromFields(array $fields, array &$rules): void
+    {
+        foreach ($fields as $field) {
+            if (($field['type'] ?? '') === 'block') {
+                $this->extractRulesFromFields($field['fields'] ?? [], $rules);
+                continue;
+            }
+
+            if (!isset($field['name'])) {
+                continue;
+            }
+
+            $fieldRules = [];
+
+            if ($field['required'] ?? false) {
+                $fieldRules[] = 'required';
+            }
+
+            if (!empty($fieldRules)) {
+                $rules[$field['name']] = $fieldRules;
+            }
+        }
+    }
 }
