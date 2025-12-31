@@ -52,15 +52,15 @@ new class extends Component {
 
 <div
     @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-        :style="showSidebar && window.innerWidth >= 1280 ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : ''"
+        :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : ''"
     @else
-        :style="showSidebar && window.innerWidth >= 1280 ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
+        :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
     @endif
     @class([
     'fixed top-0 left-0 w-full bg-white z-40',
 ])>
     <div>
-        <div class="flex gap-x-4 px-6 w-full border-l border-gray-300">
+        <div class="flex gap-x-4 px-6 w-full">
             <div class=" flex border-gray-300 w-full py-1">
 
                 <button @click="showSidebar = !showSidebar" wire:click="openSidebar" type="button"

@@ -13,7 +13,7 @@
     <style>
         :root {
             --sidebar-apps-width: {{ config('noerd.sidebar.apps_width', '80px') }};
-            --sidebar-nav-width: {{ config('noerd.sidebar.navigation_width', '280px') }};
+            --sidebar-nav-width: {{ session('sidebar_nav_width', config('noerd.sidebar.navigation_width', '280px')) }};
             --sidebar-total-width: calc(var(--sidebar-apps-width) + var(--sidebar-nav-width));
         }
         body {
@@ -32,6 +32,7 @@
            selectedRow: 0,
            activeList: '',
            showSidebar: '{{$showSidebar}}',
+           showAppbar: {{ session('hide_appbar') ? 'false' : 'true' }},
            }">
 
     @inject('navigation', 'Noerd\Noerd\Services\NavigationService')
@@ -39,12 +40,12 @@
     <!-- Content -->
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-              :style="showSidebar && window.innerWidth >= 1280 ? 'padding-left: var(--sidebar-total-width)' : ''"
+              :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'padding-left: var(--sidebar-total-width)' : 'padding-left: var(--sidebar-nav-width)') : ''"
           @else
-              :style="showSidebar && window.innerWidth >= 1280 ? 'padding-left: var(--sidebar-apps-width)' : ''"
+              :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
-        <div class="bg-white border-l border-gray-300 pt-11.75 h-full">
+        <div class="bg-white pt-11.75 h-full">
             {{ $slot }}
         </div>
     </main>
