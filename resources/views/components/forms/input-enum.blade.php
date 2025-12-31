@@ -4,6 +4,7 @@
     'label' => '',
     'options' => [],
     'live' => false,
+    'required' => false,
 ])
 
 @php
@@ -11,10 +12,11 @@
     $label = $field['label'] ?? $label;
     $options = $field['options'] ?? $options;
     $live = $field['live'] ?? $live;
+    $required = $field['required'] ?? $required;
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
     <select
         @if($live)
             wire:model.live.debounce="{{ $name }}"

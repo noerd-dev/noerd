@@ -4,6 +4,7 @@
     'label' => '',
     'readonly' => false,
     'live' => false,
+    'required' => false,
 ])
 
 @php
@@ -11,12 +12,13 @@
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
+    $required = $field['required'] ?? $required;
 
     $collections = \Noerd\Cms\Models\Collection::where('tenant_id', auth()->user()->selected_tenant_id)->orderBy('name')->get();
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
     <div class="flex">
         <select
             @if($live)

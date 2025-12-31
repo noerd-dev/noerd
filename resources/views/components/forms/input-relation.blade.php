@@ -7,6 +7,7 @@
     'modelId' => 0,
     'readonly' => false,
     'live' => false,
+    'required' => false,
 ])
 
 @php
@@ -17,10 +18,11 @@
     $modelId = $field['modelId'] ?? $modelId;
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
+    $required = $field['required'] ?? $required;
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
     <div class="flex">
         <input
             {{ $readonly ? 'readonly' : '' }}

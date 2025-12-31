@@ -4,6 +4,7 @@
     'label' => '',
     'value' => '',
     'readonly' => false,
+    'required' => false,
 ])
 
 @php
@@ -11,10 +12,11 @@
     $label = $field['label'] ?? $label;
     $value = $field['value'] ?? $value;
     $readonly = $field['readonly'] ?? $readonly;
+    $required = $field['required'] ?? $required;
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
 
     <textarea
         placeholder="{{ $value }}"
