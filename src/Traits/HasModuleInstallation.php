@@ -19,6 +19,10 @@ trait HasModuleInstallation
 
     private ?string $installedAppKey = null;
 
+    private ?string $targetAppKey = null;
+
+    private ?string $appTitle = null;
+
     /**
      * Get the module name for display purposes.
      * Example: "Business Hours"
@@ -105,13 +109,31 @@ trait HasModuleInstallation
         );
 
         $sourceDir = $this->getSourceDir();
-        $targetDir = base_path('app-configs/' . $this->getModuleKey());
 
         if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
 
             return 1;
         }
+
+        // Determine target directory based on installation type
+        if ($installationType === 'new') {
+            $this->line('');
+            $this->info('New app configuration:');
+            $this->appTitle = $this->ask('App name', $this->getDefaultAppTitle());
+            $this->targetAppKey = $this->deriveAppKeyLower($this->appTitle);
+            $this->line("<comment>App folder:</comment> app-configs/{$this->targetAppKey}/");
+        } else {
+            // Get target from existing app selection
+            $selectedApp = $this->selectExistingApp();
+            if (! $selectedApp) {
+                return 1;
+            }
+            $this->targetAppKey = mb_strtolower(str_replace('_', '-', $selectedApp->name));
+            $this->appTitle = $selectedApp->title;
+        }
+
+        $targetDir = base_path('app-configs/' . $this->targetAppKey);
 
         // Create target directory if it doesn't exist
         if (! is_dir($targetDir)) {
@@ -120,7 +142,7 @@ trait HasModuleInstallation
 
                 return 1;
             }
-            $this->info("Created target directory: {$targetDir}");
+            $this->info("Created target directory: app-configs/{$this->targetAppKey}/");
         }
 
         try {
@@ -182,17 +204,38 @@ trait HasModuleInstallation
     }
 
     /**
+     * Select an existing app from the database.
+     */
+    protected function selectExistingApp(): ?TenantApp
+    {
+        $apps = TenantApp::where('is_active', true)->get();
+
+        if ($apps->isEmpty()) {
+            $this->error('No active apps found in the database.');
+
+            return null;
+        }
+
+        $choices = [];
+        foreach ($apps as $app) {
+            $choices[$app->name] = $app->title . ' (' . $app->name . ')';
+        }
+
+        $selectedAppKey = $this->choice(
+            "Select the app to add {$this->getModuleName()} to:",
+            $choices,
+        );
+
+        return $apps->firstWhere('name', $selectedAppKey);
+    }
+
+    /**
      * Install as a new standalone app.
      */
     protected function installAsNewApp(string $sourceDir, string $targetDir): void
     {
-        $this->line('');
-        $this->info('New app configuration:');
-
-        $appTitle = $this->ask('App name', $this->getDefaultAppTitle());
-
-        // Automatically derive key from name (replace umlauts, uppercase)
-        $appKey = $this->deriveAppKey($appTitle);
+        // App title and key were already set in runModuleInstallation()
+        $appKey = $this->deriveAppKey($this->appTitle);
 
         // Fixed values
         $appIcon = $this->getAppIcon();
@@ -212,7 +255,7 @@ trait HasModuleInstallation
         } else {
             // Create TenantApp entry
             TenantApp::create([
-                'title' => $appTitle,
+                'title' => $this->appTitle,
                 'name' => $appKey,
                 'icon' => $appIcon,
                 'route' => $appRoute,
@@ -222,19 +265,18 @@ trait HasModuleInstallation
             $this->installedAppKey = $appKey;
         }
 
-        // Copy navigation.yml to module's app-configs root
-        $appKeyLower = mb_strtolower(str_replace('_', '-', $appKey));
+        // Copy navigation.yml to the target app-configs folder
         $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
         $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
 
         if (file_exists($navSource)) {
             $navContent = file_get_contents($navSource);
             $nav = Yaml::parse($navContent);
-            $nav[0]['name'] = $appKeyLower;
-            $nav[0]['title'] = $appTitle;
-            $nav[0]['route'] = $appKeyLower;
+            $nav[0]['name'] = $this->targetAppKey;
+            $nav[0]['title'] = $this->appTitle;
+            $nav[0]['route'] = $this->targetAppKey;
             file_put_contents($navTarget, Yaml::dump($nav, 10, 2));
-            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->getModuleKey()}/navigation.yml");
+            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->targetAppKey}/navigation.yml");
             $this->installResults['copied_files']++;
         }
     }
@@ -244,34 +286,12 @@ trait HasModuleInstallation
      */
     protected function installToExistingApp(string $sourceDir, string $targetDir): void
     {
-        // Get all active apps from database
-        $apps = TenantApp::where('is_active', true)->get();
-
-        if ($apps->isEmpty()) {
-            $this->error('No active apps found in the database.');
-
-            return;
-        }
-
-        // Build choice array
-        $choices = [];
-        foreach ($apps as $app) {
-            $choices[$app->name] = $app->title . ' (' . $app->name . ')';
-        }
-
-        $selectedAppKey = $this->choice(
-            "Select the app to add {$this->getModuleName()} to:",
-            $choices,
-        );
-
-        $selectedApp = $apps->firstWhere('name', $selectedAppKey);
-        $appKeyLower = mb_strtolower(str_replace('_', '-', $selectedAppKey));
-
-        // Find navigation file in app-configs/{target-app}/navigation.yml
-        $navFile = base_path('app-configs') . DIRECTORY_SEPARATOR . $appKeyLower . DIRECTORY_SEPARATOR . 'navigation.yml';
+        // Target app was already selected in runModuleInstallation()
+        // Find navigation file in the target app folder
+        $navFile = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
 
         if (! file_exists($navFile)) {
-            $this->error("Navigation file not found: app-configs/{$appKeyLower}/navigation.yml");
+            $this->error("Navigation file not found: app-configs/{$this->targetAppKey}/navigation.yml");
             $this->line('Please make sure the app is installed correctly.');
 
             return;
@@ -293,7 +313,7 @@ trait HasModuleInstallation
         $snippetTitle = $this->getSnippetTitle();
         foreach ($nav[0]['block_menus'] ?? [] as $menu) {
             if (($menu['title'] ?? '') === $snippetTitle) {
-                $this->warn("{$this->getModuleName()} navigation already exists in {$selectedApp->title} navigation.");
+                $this->warn("{$this->getModuleName()} navigation already exists in {$this->appTitle} navigation.");
 
                 return;
             }
@@ -310,7 +330,7 @@ trait HasModuleInstallation
         $newContent = Yaml::dump($nav, 10, 2);
         file_put_contents($navFile, $newContent);
 
-        $this->line("<info>✓ Navigation added to app-configs/{$appKeyLower}/navigation.yml</info>");
+        $this->line("<info>✓ Navigation added to app-configs/{$this->targetAppKey}/navigation.yml</info>");
         $this->installResults['overwritten_files']++;
     }
 
@@ -461,6 +481,19 @@ trait HasModuleInstallation
         return mb_strtoupper(str_replace(
             ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü', ' '],
             ['AE', 'OE', 'UE', 'SS', 'AE', 'OE', 'UE', '-'],
+            $title,
+        ));
+    }
+
+    /**
+     * Derive app key from title (replace umlauts, lowercase, kebab-case).
+     * Used for folder names in app-configs.
+     */
+    protected function deriveAppKeyLower(string $title): string
+    {
+        return mb_strtolower(str_replace(
+            ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü', ' '],
+            ['ae', 'oe', 'ue', 'ss', 'ae', 'oe', 'ue', '-'],
             $title,
         ));
     }
