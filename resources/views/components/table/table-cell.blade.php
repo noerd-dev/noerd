@@ -36,14 +36,14 @@
                             @foreach($actions as $action)
                                 <a wire:click.prevent="{{$action['action']}}('{{$id}}')"
                                    @isset($action['confirm'])
-                                       wire:confirm="{{$action['confirm']}}"
+                                       wire:confirm="{{ __($action['confirm']) }}"
                                    @endisset
                                    class="cursor-pointer group flex items-center px-4 py-2 text-sm text-gray-700"
                                    role="menuitem" tabindex="-1" id="menu-item-0">
                                     @isset($action['heroicon'])
                                         <x-icon name="{{$action['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
                                     @endisset
-                                    {{ $action['label'] }}
+                                    {{ __($action['label']) }}
                                 </a>
                             @endforeach
                         </div>
