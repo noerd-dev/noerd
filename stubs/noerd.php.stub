@@ -10,7 +10,6 @@ return [
     |
     */
     'features' => [
-        'invoice' => env('NOERD_INVOICE_FEATURE_ENABLED', true),
         'roles' => env('NOERD_ROLE_FEATURE_ENABLED', true),
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),
     ],
