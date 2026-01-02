@@ -12,7 +12,7 @@
 <div wire:key="{{ $name . (session('selectedLanguage') ?? 'de') }}" {{ $attributes->merge(['class' => '']) }}>
     <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
 
-    <x-noerd::forms.quill
+    <x-noerd::forms.tiptap
         :field="$name . '.' . (session('selectedLanguage') ?? 'de')"
         :content="$model[str_replace('model.', '', $name)][session('selectedLanguage')] ?? ''"
     />

@@ -38,8 +38,6 @@
                         @include('noerd::components.forms.input-enum', ['field' => $field])
                     @elseif($field['type'] === 'checkbox')
                         @include('noerd::components.forms.checkbox', ['field' => $field])
-                    @elseif($field['type'] === 'editor')
-                        {{-- TODO Quill Editor --}}
                     @elseif($field['type'] === 'image')
                         @include('noerd::components.forms.image', ['field' => $field])
                     @elseif($field['type'] === 'richText')
