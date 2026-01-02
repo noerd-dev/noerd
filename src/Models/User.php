@@ -25,6 +25,7 @@ class User extends Authenticatable
         'super_admin',
         'locale',
         'api_token',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -38,6 +39,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_owner' => 'boolean',
         'super_admin' => 'boolean',
+        'last_login_at' => 'datetime',
     ];
 
     public function selectedTenant(): ?Tenant

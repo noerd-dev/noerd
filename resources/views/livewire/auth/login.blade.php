@@ -40,6 +40,8 @@ new #[Layout('noerd::components.layouts.auth')] class extends Component {
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
+        Auth::user()->update(['last_login_at' => now()]);
+
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
 
