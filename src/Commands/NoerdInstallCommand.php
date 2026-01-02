@@ -202,7 +202,6 @@ class NoerdInstallCommand extends Command
         $cssContent = file_get_contents($cssPath);
 
         $noerdStyles = "
-@import 'quill/dist/quill.snow.css';
 @source '../../vendor/noerd/noerd/resources/views/**/*.blade.php';
 @source '../../vendor/noerd/cms/resources/views/**/*.blade.php';
 @config '../../tailwind.config.js';
@@ -233,9 +232,16 @@ class NoerdInstallCommand extends Command
 
         $alpineConfig = "
 import sort from '@alpinejs/sort'
-import Quill from 'quill';
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
 
-window.Quill = Quill;
+// Make TipTap globally available
+window.TipTap = {
+    Editor,
+    StarterKit,
+    Underline
+};
 
 Alpine.plugin(sort)
 
@@ -272,7 +278,9 @@ Alpine.store('app', {
             'tailwind-scrollbar@^4.0.2',
             'dotenv@^16.4.7',
             '@alpinejs/sort',
-            'quill',
+            '@tiptap/core',
+            '@tiptap/starter-kit',
+            '@tiptap/extension-underline',
         ];
 
         $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
