@@ -169,5 +169,6 @@
     "noerd_label_paid": "Paid",
     "noerd_label_date": "Date",
     "noerd_label_paypal": "PayPal",
-    "noerd_label_profile_roles": "Profile / Roles"
+    "noerd_label_profile_roles": "Profile / Roles",
+    "noerd_label_last_login_at": "Last Login"
 }
