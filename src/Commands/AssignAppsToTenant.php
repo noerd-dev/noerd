@@ -5,7 +5,6 @@ namespace Noerd\Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 
-use function Laravel\Prompts\multisearch;
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
@@ -138,26 +137,13 @@ class AssignAppsToTenant extends Command
             $this->newLine();
         }
 
-        // Use multisearch for > 10 apps, otherwise use multiselect
-        if ($allApps->count() > 10) {
-            $this->comment('Note: Currently assigned apps must be re-selected when using search.');
-            $this->newLine();
-
-            $selectedAppIds = multisearch(
-                label: 'Search and select apps to assign to this tenant:',
-                options: fn(string $query) => collect($appChoices)
-                    ->filter(fn($label) => empty($query) || str_contains(mb_strtolower($label), mb_strtolower($query)))
-                    ->all(),
-                placeholder: 'Type to search apps...',
-            );
-        } else {
-            $selectedAppIds = multiselect(
-                label: 'Select apps to assign to this tenant:',
-                options: $appChoices,
-                default: $currentAppIds,
-                required: false,
-            );
-        }
+        $selectedAppIds = multiselect(
+            label: 'Select apps to assign to this tenant:',
+            options: $appChoices,
+            default: $currentAppIds,
+            scroll: 10,
+            required: false,
+        );
 
         // Save changes
         return $this->saveAppAssignments($tenant, $selectedAppIds, $currentAppIds);
