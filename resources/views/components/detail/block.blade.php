@@ -29,6 +29,9 @@
                     @elseif($field['type'] === 'picklist')
                         {{-- options are defined in a computed method --}}
                         @include('noerd::components.forms.picklist', ['field' => $field])
+                    @elseif($field['type'] === 'belongsToMany')
+                        {{-- many-to-many relationship with tag selection UI --}}
+                        @include('noerd::components.forms.belongs-to-many', ['field' => $field])
                     @elseif($field['type'] === 'enum')
                         @php
                             if (isset($field['enumClass']) && !isset($field['options'])) {
