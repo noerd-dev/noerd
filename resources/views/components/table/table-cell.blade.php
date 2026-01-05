@@ -86,7 +86,7 @@
             </x-noerd::buttons.secondary>
         </a>
     @else
-        @if($type === 'bool')
+        @if($type === 'bool' || $type === 'boolean')
             @if($value == true)
                 <div
                     wire:click.prevent="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}',{{0}})"
