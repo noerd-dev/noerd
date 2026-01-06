@@ -82,7 +82,7 @@ class StaticConfigHelper
             return [];
         }
 
-        $collectionFiles = glob($collectionsPath.'/*.yml');
+        $collectionFiles = glob($collectionsPath . '/*.yml');
         $dynamicNavigations = [];
 
         foreach ($collectionFiles as $file) {
@@ -119,7 +119,7 @@ class StaticConfigHelper
             return [];
         }
 
-        $collectionFiles = glob($collectionsPath.'/*.yml');
+        $collectionFiles = glob($collectionsPath . '/*.yml');
         $dynamicNavigations = [];
 
         foreach ($collectionFiles as $file) {
