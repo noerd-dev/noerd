@@ -27,7 +27,7 @@
                 @foreach($this->tableFilters() as $tableFilter)
                     <select wire:change="storeActiveTableFilters"
                             wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
-                            class="mr-4 max-w-48 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
+                            class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
                         <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
                             <option value="{{$key}}">{{$option}}</option>
@@ -38,7 +38,7 @@
         @endif
 
         @if(isset($disableSearch) && !$disableSearch)
-            <div @if(!$newLabel)  :class="isModal ? 'mr-10' : ''" @endif class="ml-auto mr-2">
+            <div @if(!$newLabel)  :class="isModal ? 'mr-22' : ''" @endif class="ml-auto mr-2">
                 <x-noerd::text-input
                     placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
                     class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-[30px]"/>
@@ -47,7 +47,7 @@
             <div class="ml-auto"></div>
         @endif
         @if($newLabel)
-            <div :class="isModal ? 'mr-10' : ''">
+            <div :class="isModal ? 'mr-22' : ''">
                 <x-noerd::buttons.primary class="!bg-brand-primary"
                                          style="height: 30px !important"
                                          wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">

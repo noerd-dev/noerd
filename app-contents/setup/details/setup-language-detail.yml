@@ -1,0 +1,7 @@
+title: noerd_label_language
+fields:
+  - { name: language.code, label: noerd_label_code, type: text, colspan: 3, required: true }
+  - { name: language.name, label: noerd_label_name, type: text, colspan: 6, required: true }
+  - { name: language.sort_order, label: noerd_label_sort, type: text, colspan: 3 }
+  - { name: language.is_active, label: noerd_label_active, type: checkbox, colspan: 6 }
+  - { name: language.is_default, label: noerd_label_default, type: checkbox, colspan: 6 }

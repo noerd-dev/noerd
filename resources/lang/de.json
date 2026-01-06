@@ -257,6 +257,27 @@
 
     "noerd_nav_users": "Benutzer",
     "noerd_nav_user_roles": "Benutzerrollen",
+    "noerd_nav_data_management": "Datenverwaltung",
+    "noerd_nav_collections": "Sammlungen",
 
-    "noerd_label_last_login_at": "Letzter Login"
+    "noerd_label_last_login_at": "Letzter Login",
+    "noerd_label_new_entry": "Neuer Eintrag",
+    "noerd_label_sort": "Sortierung",
+    "noerd_label_last_modified": "Zuletzt geändert",
+    "noerd_label_image_present": "Bild vorhanden",
+    "noerd_label_title": "Titel",
+    "noerd_label_active": "Aktiv",
+    "noerd_collection_entry": "Eintrag",
+    "noerd_collection_not_found": "Collection nicht gefunden",
+    "noerd_please_select_collection": "Bitte wählen Sie eine Sammlung aus",
+
+    "noerd_nav_languages": "Sprachen",
+    "noerd_label_languages": "Sprachen",
+    "noerd_label_new_language": "Neue Sprache",
+    "noerd_label_code": "Code",
+    "noerd_label_default": "Standard",
+    "noerd_label_edit": "Bearbeiten",
+    "noerd_default_language_info": "Diese Sprache ist als Standardsprache festgelegt und kann nicht gelöscht werden.",
+    "noerd_cannot_delete_last_language": "Die letzte Sprache kann nicht gelöscht werden.",
+    "noerd_cannot_delete_default_language": "Die Standardsprache kann nicht gelöscht werden, solange sie die einzige aktive Sprache ist."
 }
