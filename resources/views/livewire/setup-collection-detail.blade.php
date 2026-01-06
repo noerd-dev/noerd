@@ -1,0 +1,202 @@
+<?php
+
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
+use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
+use Noerd\Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Noerd\Models\SetupCollection;
+use Noerd\Noerd\Models\SetupCollectionEntry;
+use Noerd\Noerd\Models\SetupLanguage;
+use Noerd\Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Noerd\Traits\Noerd;
+use Noerd\Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Media\Models\Media;
+use Noerd\Media\Services\MediaUploadService;
+use Illuminate\Support\Facades\Storage;
+
+new class extends Component
+{
+    use Noerd;
+    use SetupLanguageFilterTrait;
+    use WithFileUploads;
+
+    public const COMPONENT = 'setup-collection-detail';
+    public const LIST_COMPONENT = 'setup-collections-list';
+    public const ID = 'entryId';
+
+    #[Url(keep: false, except: '')]
+    public $entryId = null;
+
+    public array $model = [];
+    public ?SetupCollectionEntry $entry = null;
+    public ?array $collectionLayout = null;
+    public ?string $collectionKey = null;
+    public array $images = [];
+
+    public function mount(SetupCollectionEntry $model, ?string $collectionKey = null): void
+    {
+        // Ensure default languages exist
+        SetupLanguage::ensureDefaultLanguages();
+
+        if ($this->modelId) {
+            $model = SetupCollectionEntry::find($this->modelId) ?? new SetupCollectionEntry;
+        }
+
+        $this->entry = $model->exists ? $model : new SetupCollectionEntry;
+        $this->collectionKey = $collectionKey;
+
+        // Load collection layout if collectionKey is provided
+        if ($this->collectionKey) {
+            $this->collectionLayout = SetupCollectionHelper::getCollectionFields($this->collectionKey);
+        }
+
+        // Custom mount process - don't use mountModalProcess as it requires a YAML config
+        // Instead, use the collection layout directly
+        $this->pageLayout = $this->collectionLayout ?? ['fields' => []];
+        $this->modelId = $model->id;
+        $this->entryId = $model->id;
+
+        // Load data from the JSON data field
+        if ($this->entry->exists && $this->entry->data) {
+            $rawData = is_array($this->entry->data) ? $this->entry->data : [];
+            $this->model = SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey);
+        } else {
+            $this->model = [];
+        }
+
+        // Ensure sort field is available
+        $this->model['sort'] ??= $this->entry->sort ?? 0;
+    }
+
+    public function store(): void
+    {
+        // Find or create the parent Collection
+        $parentCollection = SetupCollection::firstOrCreate([
+            'tenant_id' => auth()->user()->selected_tenant_id,
+            'collection_key' => mb_strtoupper($this->collectionKey),
+        ], [
+            'name' => ucfirst($this->collectionKey),
+        ]);
+
+        // Apply field type conversion before saving
+        $convertedModel = SetupFieldTypeConverter::convertCollectionData($this->model, $this->collectionKey);
+
+        $entryData = [
+            'tenant_id' => auth()->user()->selected_tenant_id,
+            'setup_collection_id' => $parentCollection->id,
+            'data' => $convertedModel,
+            'sort' => (int) ($this->model['sort'] ?? 0),
+        ];
+
+        $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->modelId], $entryData);
+
+        $this->showSuccessIndicator = true;
+
+        if ($entry->wasRecentlyCreated) {
+            $this->modelId = $entry->id;
+            $this->entry = $entry;
+            $this->entryId = $entry->id;
+        }
+    }
+
+    public function delete(): void
+    {
+        $entry = SetupCollectionEntry::find($this->modelId);
+        $entry?->delete();
+        $this->closeModalProcess(self::LIST_COMPONENT);
+    }
+
+    public function updatedImages(): void
+    {
+        $mediaUploadService = app()->make(MediaUploadService::class);
+        foreach ($this->images as $key => $image) {
+            $media = $mediaUploadService->storeFromUploadedFile($image);
+            $this->model[$key] = $this->urlWithoutDomain($media);
+        }
+    }
+
+    public function deleteImage(string $fieldName): void
+    {
+        $this->model[$fieldName] = null;
+    }
+
+    public function openSelectMediaModal(string $fieldName): void
+    {
+        $token = uniqid('media_', true);
+        $this->model['__mediaToken'] = $token;
+        $this->dispatch(
+            event: 'noerdModal',
+            component: 'media-select-modal',
+            arguments: ['context' => $fieldName, 'token' => $token],
+        );
+    }
+
+    #[On('mediaSelected')]
+    public function mediaSelected(int $mediaId, ?string $fieldName = 'image', ?string $token = null): void
+    {
+        if (($this->model['__mediaToken'] ?? null) !== $token) {
+            return;
+        }
+        $media = Media::find($mediaId);
+        if (! $media) {
+            return;
+        }
+        $this->model[$fieldName ?? 'image'] = $this->urlWithoutDomain($media);
+        unset($this->model['__mediaToken']);
+    }
+
+    #[On('setupLanguageChanged')]
+    public function refresh(): void
+    {
+        $this->dispatch('$refresh');
+    }
+
+    private function urlWithoutDomain(Media $media): string
+    {
+        $url = Storage::disk($media->disk)->url($media->path);
+
+        return mb_strstr($url, '/storage');
+    }
+} ?>
+
+<x-noerd::page :disableModal="$disableModal">
+    <x-slot:header>
+        <x-noerd::modal-title class="flex items-center">
+            {{ $collectionLayout['title'] ?? __('noerd_collection_entry') }}
+
+            <div class="ml-auto" :class="isModal ? 'mr-22' : ''">
+                <livewire:setup-language-switcher/>
+            </div>
+        </x-noerd::modal-title>
+    </x-slot:header>
+
+    @if($collectionLayout)
+        <!-- Sort Field -->
+        <div class="flex">
+            <div class="flex ml-auto items-center my-6 space-x-4">
+                <div class="flex ml-auto items-center space-x-2">
+                    <label for="sort" class="text-sm text-gray-600 font-medium">{{ __('noerd_label_sort') }}:</label>
+                    <input
+                        wire:model="model.sort"
+                        id="sort"
+                        type="number"
+                        min="0"
+                        step="1"
+                        class="w-16 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent dark:bg-zinc-800 dark:border-zinc-600 dark:text-white"
+                    />
+                </div>
+            </div>
+        </div>
+
+        @include('noerd::components.detail.block', $collectionLayout)
+    @else
+        <div class="text-center py-8">
+            <p class="text-gray-500">{{ __('noerd_collection_not_found') }}</p>
+        </div>
+    @endif
+
+    <x-slot:footer>
+        <x-noerd::delete-save-bar :showDelete="isset($entry) && $entry->exists"/>
+    </x-slot:footer>
+</x-noerd::page>

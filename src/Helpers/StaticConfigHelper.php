@@ -78,11 +78,11 @@ class StaticConfigHelper
     {
         $collectionsPath = base_path('app-configs/cms/collections');
 
-        if (!is_dir($collectionsPath)) {
+        if (! is_dir($collectionsPath)) {
             return [];
         }
 
-        $collectionFiles = glob($collectionsPath . '/*.yml');
+        $collectionFiles = glob($collectionsPath.'/*.yml');
         $dynamicNavigations = [];
 
         foreach ($collectionFiles as $file) {
@@ -99,7 +99,44 @@ class StaticConfigHelper
                         'icon' => 'icons.list-bullet',
                     ];
                 }
-            } catch (Exception $e) {
+            } catch (Exception) {
+                // Skip invalid YAML files
+                continue;
+            }
+        }
+
+        return $dynamicNavigations;
+    }
+
+    /**
+     * Build dynamic Setup Collections navigation based on .yml files in /app-configs/setup/collections/
+     */
+    public static function setupCollections(): array
+    {
+        $collectionsPath = base_path('app-configs/setup/collections');
+
+        if (! is_dir($collectionsPath)) {
+            return [];
+        }
+
+        $collectionFiles = glob($collectionsPath.'/*.yml');
+        $dynamicNavigations = [];
+
+        foreach ($collectionFiles as $file) {
+            $collectionKey = basename($file, '.yml');
+
+            try {
+                $content = file_get_contents($file);
+                $collectionData = Yaml::parse($content ?: '');
+
+                if ($collectionData && isset($collectionData['titleList'])) {
+                    $dynamicNavigations[] = [
+                        'title' => $collectionData['titleList'],
+                        'link' => "/setup-collections?key={$collectionKey}",
+                        'heroicon' => 'archive-box',
+                    ];
+                }
+            } catch (Exception) {
                 // Skip invalid YAML files
                 continue;
             }
@@ -215,12 +252,17 @@ class StaticConfigHelper
             foreach ($navigationStructure as $i => $appBlock) {
                 $blockMenus = $appBlock['block_menus'] ?? [];
                 foreach ($blockMenus as $j => $menu) {
-                    if (($menu['dynamic'] ?? null) === 'collections') {
+                    $dynamicType = $menu['dynamic'] ?? null;
+                    if ($dynamicType === 'collections') {
                         $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::collections();
+                        unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
+                    } elseif ($dynamicType === 'setup-collections') {
+                        $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::setupCollections();
                         unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
                     }
                 }
             }
+
             return $navigationStructure;
         }
 
@@ -229,7 +271,7 @@ class StaticConfigHelper
             foreach ($items as $index => $item) {
                 if (($item['type'] ?? null) === 'dynamic' && isset($item['collection'])) {
                     $children = $item['children'] ?? [];
-                    if (!is_array($children)) {
+                    if (! is_array($children)) {
                         $children = [];
                     }
                     $navigationStructure['items'][$index]['children'] = array_merge($children, self::collections());

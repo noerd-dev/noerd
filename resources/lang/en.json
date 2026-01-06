@@ -170,5 +170,25 @@
     "noerd_label_date": "Date",
     "noerd_label_paypal": "PayPal",
     "noerd_label_profile_roles": "Profile / Roles",
-    "noerd_label_last_login_at": "Last Login"
+    "noerd_label_last_login_at": "Last Login",
+    "noerd_nav_data_management": "Data Management",
+    "noerd_nav_collections": "Collections",
+    "noerd_label_new_entry": "New Entry",
+    "noerd_label_sort": "Sort Order",
+    "noerd_label_last_modified": "Last Modified",
+    "noerd_label_image_present": "Image present",
+    "noerd_label_title": "Title",
+    "noerd_label_active": "Active",
+    "noerd_collection_entry": "Entry",
+    "noerd_collection_not_found": "Collection not found",
+    "noerd_please_select_collection": "Please select a collection",
+
+    "noerd_label_languages": "Languages",
+    "noerd_label_new_language": "New Language",
+    "noerd_label_code": "Code",
+    "noerd_label_default": "Default",
+    "noerd_label_edit": "Edit",
+    "noerd_default_language_info": "This language is set as the default language and cannot be deleted.",
+    "noerd_cannot_delete_last_language": "The last language cannot be deleted.",
+    "noerd_cannot_delete_default_language": "The default language cannot be deleted while it is the only active language."
 }

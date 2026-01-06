@@ -78,6 +78,8 @@
                         @include('noerd::components.forms.translatable-rich-text', ['field' => $field])
                     @elseif($field['type'] === 'translatableText')
                         @include('noerd::components.forms.translatable-text', ['field' => $field])
+                    @elseif($field['type'] === 'translatableTextarea')
+                        @include('noerd::components.forms.translatable-textarea', ['field' => $field])
                     @elseif($field['type'] === 'button')
                         @include('noerd::components.forms.button', ['field' => $field])
                     @else
