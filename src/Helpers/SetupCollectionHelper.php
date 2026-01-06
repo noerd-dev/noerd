@@ -19,7 +19,7 @@ class SetupCollectionHelper
         }
 
         try {
-            $path = base_path(self::COLLECTIONS_PATH.'/'.$collection.'.yml');
+            $path = base_path(self::COLLECTIONS_PATH . '/' . $collection . '.yml');
             $content = file_get_contents($path);
         } catch (Exception) {
             return null;
@@ -78,7 +78,7 @@ class SetupCollectionHelper
             return [];
         }
 
-        $collectionFiles = glob($collectionsPath.'/*.yml');
+        $collectionFiles = glob($collectionsPath . '/*.yml');
         $collections = [];
 
         foreach ($collectionFiles as $file) {

@@ -236,7 +236,7 @@ describe('Setup Collection Detail Component', function (): void {
         Volt::test('setup-collection-detail', ['collectionKey' => 'example'])
             ->assertStatus(200)
             ->assertSet('collectionKey', 'example')
-            ->assertSet('collectionLayout', fn ($layout) => $layout !== null);
+            ->assertSet('collectionLayout', fn($layout) => $layout !== null);
     });
 
     it('can save a new entry', function (): void {
