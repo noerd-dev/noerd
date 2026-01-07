@@ -48,43 +48,8 @@ return new class () extends Migration {
                 ]);
             });
 
-            // Remove old columns from users table
-            $driver = Schema::getConnection()->getDriverName();
-
-            if ($driver === 'mysql' || $driver === 'mariadb') {
-                // MySQL/MariaDB: Check and drop foreign key and index
-                Schema::table('users', function (Blueprint $table): void {
-                    $foreignKeys = DB::select("SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'users' AND CONSTRAINT_TYPE = 'FOREIGN KEY' AND CONSTRAINT_NAME LIKE '%selected_tenant_id%'");
-                    if (count($foreignKeys) > 0) {
-                        $table->dropForeign(['selected_tenant_id']);
-                    }
-
-                    $indexes = DB::select("SHOW INDEX FROM users WHERE Key_name LIKE '%selected_tenant_id%'");
-                    if (count($indexes) > 0) {
-                        $table->dropIndex(['selected_tenant_id']);
-                    }
-                });
-            } elseif ($driver === 'sqlite') {
-                // SQLite: Foreign keys and indexes are dropped automatically with the column
-                // No explicit drop needed - SQLite recreates the table internally
-            }
-
-            // Drop columns if they exist
-            if (Schema::hasColumn('users', 'selected_tenant_id')) {
-                Schema::table('users', function (Blueprint $table): void {
-                    $table->dropColumn('selected_tenant_id');
-                });
-            }
-            if (Schema::hasColumn('users', 'selected_app')) {
-                Schema::table('users', function (Blueprint $table): void {
-                    $table->dropColumn('selected_app');
-                });
-            }
-            if (Schema::hasColumn('users', 'locale')) {
-                Schema::table('users', function (Blueprint $table): void {
-                    $table->dropColumn('locale');
-                });
-            }
+            // Note: Old columns (selected_tenant_id, selected_app, locale) are kept in users table
+            // for backwards compatibility. They are no longer used by the application.
         }
     }
 
@@ -93,17 +58,8 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        // Re-add columns to users table
-        if (! Schema::hasColumn('users', 'selected_tenant_id')) {
-            Schema::table('users', function (Blueprint $table): void {
-                $table->unsignedBigInteger('selected_tenant_id')->nullable()->after('email_verified_at');
-                $table->string('selected_app')->nullable()->after('selected_tenant_id');
-                $table->string('locale', 5)->default('en')->after('super_admin');
-                $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-                $table->index('selected_tenant_id');
-            });
-
-            // Migrate data back
+        // Migrate data back to users table if columns exist
+        if (Schema::hasColumn('users', 'selected_tenant_id')) {
             DB::table('user_settings')->orderBy('id')->each(function ($setting): void {
                 DB::table('users')->where('id', $setting->user_id)->update([
                     'selected_tenant_id' => $setting->selected_tenant_id,

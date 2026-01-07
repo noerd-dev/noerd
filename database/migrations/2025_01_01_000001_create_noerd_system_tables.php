@@ -170,17 +170,26 @@ return new class () extends Migration {
     {
         // Drop in reverse order of creation
         if (Schema::hasColumn('users', 'selected_tenant_id')) {
-            Schema::table('users', function (Blueprint $table): void {
-                $table->dropForeign(['selected_tenant_id']);
-                $table->dropIndex(['selected_tenant_id']);
-                $table->dropColumn([
-                    'selected_tenant_id',
-                    'selected_app',
-                    'super_admin',
-                    'locale',
-                    'api_token',
-                ]);
-            });
+            $driver = Schema::getConnection()->getDriverName();
+
+            if ($driver === 'mysql' || $driver === 'mariadb') {
+                // MySQL/MariaDB: Need to explicitly drop foreign key and index
+                Schema::table('users', function (Blueprint $table): void {
+                    $table->dropForeign(['selected_tenant_id']);
+                    $table->dropIndex(['selected_tenant_id']);
+                });
+            }
+            // SQLite: Foreign keys and indexes are dropped automatically with columns
+
+            // Drop columns one by one for SQLite compatibility
+            $columnsToDrop = ['selected_tenant_id', 'selected_app', 'super_admin', 'locale', 'api_token'];
+            foreach ($columnsToDrop as $column) {
+                if (Schema::hasColumn('users', $column)) {
+                    Schema::table('users', function (Blueprint $table) use ($column): void {
+                        $table->dropColumn($column);
+                    });
+                }
+            }
         }
 
         Schema::dropIfExists('tenant_invoices');
