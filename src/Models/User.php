@@ -4,6 +4,7 @@ namespace Noerd\Noerd\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'selected_app',
         'super_admin',
-        'locale',
         'api_token',
         'last_login_at',
     ];
@@ -156,6 +155,59 @@ class User extends Authenticatable
     public function sites(): BelongsToMany
     {
         return $this->belongsToMany(Standort::class, 'standort_user');
+    }
+
+    public function userSetting(): HasOne
+    {
+        return $this->hasOne(UserSetting::class, 'user_id', 'id');
+    }
+
+    /**
+     * Get or create the user's settings.
+     */
+    public function getSettingAttribute(): UserSetting
+    {
+        if (! $this->relationLoaded('userSetting') || $this->userSetting === null) {
+            $setting = $this->userSetting()->firstOrCreate(
+                ['user_id' => $this->id],
+                ['locale' => 'en']
+            );
+            $this->setRelation('userSetting', $setting);
+        }
+
+        return $this->userSetting;
+    }
+
+    // Backward compatibility accessors/mutators for UserSetting fields
+
+    public function getSelectedTenantIdAttribute(): ?int
+    {
+        return $this->setting->selected_tenant_id;
+    }
+
+    public function setSelectedTenantIdAttribute(?int $value): void
+    {
+        $this->setting->update(['selected_tenant_id' => $value]);
+    }
+
+    public function getSelectedAppAttribute(): ?string
+    {
+        return $this->setting->selected_app;
+    }
+
+    public function setSelectedAppAttribute(?string $value): void
+    {
+        $this->setting->update(['selected_app' => $value]);
+    }
+
+    public function getLocaleAttribute(): string
+    {
+        return $this->setting->locale ?? 'en';
+    }
+
+    public function setLocaleAttribute(string $value): void
+    {
+        $this->setting->update(['locale' => $value]);
     }
 
     public function toArray()

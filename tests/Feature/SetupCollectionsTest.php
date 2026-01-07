@@ -30,13 +30,16 @@ beforeEach(function (): void {
         'name' => 'Admin',
     ]);
 
-    $this->user = User::factory()->create([
-        'selected_tenant_id' => $this->tenant->id,
-        'selected_app' => 'setup',
-    ]);
+    $this->user = User::factory()->create();
 
     // Attach user to tenant with admin profile
     $this->user->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
+
+    // Set user settings
+    $this->user->setting->update([
+        'selected_tenant_id' => $this->tenant->id,
+        'selected_app' => 'setup',
+    ]);
 
     $this->actingAs($this->user);
 });

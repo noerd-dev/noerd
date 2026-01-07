@@ -22,7 +22,7 @@ new class extends Component {
             abort(404, "Component '{$component}' not found");
         }
 
-        auth()->user()?->update(['selected_app' => null]);
+        auth()->user()?->setting->update(['selected_app' => null]);
         session(['hideNavigation' => true]);
     }
 

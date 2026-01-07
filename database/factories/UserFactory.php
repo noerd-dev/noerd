@@ -39,8 +39,7 @@ class UserFactory extends Factory
             $restaurant = Tenant::factory()->create();
 
             $user->tenants()->attach($restaurant->id);
-            $user->selected_tenant_id = $restaurant->id;
-            $user->save();
+            $user->setting->update(['selected_tenant_id' => $restaurant->id]);
         });
     }
 
@@ -57,15 +56,14 @@ class UserFactory extends Factory
             ]);
 
             $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
-            $user->selected_tenant_id = $tenant->id;
-            $user->save();
+            $user->setting->update(['selected_tenant_id' => $tenant->id]);
         });
     }
 
     public function withSelectedApp(string $app): static
     {
-        return $this->state(fn(array $attributes) => [
-            'selected_app' => $app,
-        ]);
+        return $this->afterCreating(function ($user) use ($app): void {
+            $user->setting->update(['selected_app' => $app]);
+        });
     }
 }

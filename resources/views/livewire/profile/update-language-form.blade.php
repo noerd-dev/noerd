@@ -17,7 +17,7 @@ new class extends Component {
             'locale' => ['required', 'string', 'in:de,en'],
         ]);
 
-        Auth::user()->update($validated);
+        Auth::user()->setting->update($validated);
 
         $this->dispatch('language-updated');
     }
