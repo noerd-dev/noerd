@@ -5,7 +5,7 @@ use Livewire\Volt\Component;
 new class extends Component {
     public function openApp(string $appName, string $route): void
     {
-        auth()->user()->update(['selected_app' => $appName]);
+        auth()->user()->setting->update(['selected_app' => $appName]);
         $this->redirect(route($route), navigate: true);
     }
 

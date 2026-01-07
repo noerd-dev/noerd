@@ -26,7 +26,7 @@ class SetupMiddleware
             }
         }
 
-        $user->update(['selected_app' => 'SETUP']);
+        $user->setting->update(['selected_app' => 'SETUP']);
 
         if (!Auth::user()->isAdmin()) {
             abort(401);
