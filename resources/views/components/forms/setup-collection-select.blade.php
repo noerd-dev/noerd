@@ -35,7 +35,8 @@
     $options = [['value' => '', 'label' => 'Bitte wählen']];
     foreach ($entries as $entry) {
         $value = $entry->data[$displayField] ?? '';
-        if ($isTranslatable && is_array($value)) {
+        // Always handle array values (translatable fields) - get locale, fallback to 'de', then any available
+        if (is_array($value)) {
             $value = $value[$locale] ?? $value['de'] ?? reset($value) ?? '';
         }
         $options[] = ['value' => $entry->id, 'label' => $value];
