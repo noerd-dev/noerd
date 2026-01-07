@@ -58,6 +58,9 @@
                     @elseif($field['type'] === 'picklist')
                         {{-- options are defined in a computed method --}}
                         @include('noerd::components.forms.picklist', ['field' => $field])
+                    @elseif($field['type'] === 'setupCollectionSelect')
+                        {{-- options from a setup collection --}}
+                        @include('noerd::components.forms.setup-collection-select', ['field' => $field])
                     @elseif($field['type'] === 'belongsToMany')
                         {{-- many-to-many relationship with tag selection UI --}}
                         @include('noerd::components.forms.belongs-to-many', ['field' => $field])
