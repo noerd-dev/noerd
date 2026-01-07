@@ -49,19 +49,25 @@ return new class () extends Migration {
             });
 
             // Remove old columns from users table
-            Schema::table('users', function (Blueprint $table): void {
-                // Check if foreign key exists before dropping
-                $foreignKeys = DB::select("SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'users' AND CONSTRAINT_TYPE = 'FOREIGN KEY' AND CONSTRAINT_NAME LIKE '%selected_tenant_id%'");
-                if (count($foreignKeys) > 0) {
-                    $table->dropForeign(['selected_tenant_id']);
-                }
+            $driver = Schema::getConnection()->getDriverName();
 
-                // Check if index exists before dropping
-                $indexes = DB::select("SHOW INDEX FROM users WHERE Key_name LIKE '%selected_tenant_id%'");
-                if (count($indexes) > 0) {
-                    $table->dropIndex(['selected_tenant_id']);
-                }
-            });
+            if ($driver === 'mysql' || $driver === 'mariadb') {
+                // MySQL/MariaDB: Check and drop foreign key and index
+                Schema::table('users', function (Blueprint $table): void {
+                    $foreignKeys = DB::select("SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'users' AND CONSTRAINT_TYPE = 'FOREIGN KEY' AND CONSTRAINT_NAME LIKE '%selected_tenant_id%'");
+                    if (count($foreignKeys) > 0) {
+                        $table->dropForeign(['selected_tenant_id']);
+                    }
+
+                    $indexes = DB::select("SHOW INDEX FROM users WHERE Key_name LIKE '%selected_tenant_id%'");
+                    if (count($indexes) > 0) {
+                        $table->dropIndex(['selected_tenant_id']);
+                    }
+                });
+            } elseif ($driver === 'sqlite') {
+                // SQLite: Foreign keys and indexes are dropped automatically with the column
+                // No explicit drop needed - SQLite recreates the table internally
+            }
 
             // Drop columns if they exist
             if (Schema::hasColumn('users', 'selected_tenant_id')) {
