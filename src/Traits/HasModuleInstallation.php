@@ -120,8 +120,8 @@ trait HasModuleInstallation
         if ($installationType === 'new') {
             $this->line('');
             $this->info('New app configuration:');
-            $this->appTitle = $this->ask('App name', $this->getDefaultAppTitle());
-            $this->targetAppKey = $this->deriveAppKeyLower($this->appTitle);
+            $this->appTitle = $this->ask('App title', $this->getDefaultAppTitle());
+            $this->targetAppKey = $this->getModuleKey();
             $this->line("<comment>App folder:</comment> app-configs/{$this->targetAppKey}/");
         } else {
             // Get target from existing app selection
@@ -234,8 +234,8 @@ trait HasModuleInstallation
      */
     protected function installAsNewApp(string $sourceDir, string $targetDir): void
     {
-        // App title and key were already set in runModuleInstallation()
-        $appKey = $this->deriveAppKey($this->appTitle);
+        // App title was set in runModuleInstallation(), key is derived from module key
+        $appKey = $this->deriveAppKey($this->getModuleKey());
 
         // Fixed values
         $appIcon = $this->getAppIcon();
