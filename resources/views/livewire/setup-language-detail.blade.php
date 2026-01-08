@@ -81,18 +81,18 @@ new class extends Component
         <x-noerd::modal-title>{{ __('noerd_label_language') }}</x-noerd::modal-title>
     </x-slot:header>
 
-    <div>
-        @include('noerd::components.detail.block', $pageLayout)
-
-        @if($languageId && $language['is_default'] ?? false)
-            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-sm text-blue-800">
-                    <x-icon name="information-circle" class="w-5 h-5 inline-block mr-1"/>
-                    {{ __('noerd_default_language_info') }}
-                </p>
-            </div>
-        @endif
-    </div>
+    <x-noerd::tab-content :layout="$pageLayout">
+        <x-slot:tab1>
+            @if($languageId && $language['is_default'] ?? false)
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <x-icon name="information-circle" class="w-5 h-5 inline-block mr-1"/>
+                        {{ __('noerd_default_language_info') }}
+                    </p>
+                </div>
+            @endif
+        </x-slot:tab1>
+    </x-noerd::tab-content>
 
     <x-slot:footer>
         <x-noerd::delete-save-bar :showDelete="isset($languageId) && !($language['is_default'] ?? false)"/>

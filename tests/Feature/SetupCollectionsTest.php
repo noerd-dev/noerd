@@ -42,6 +42,39 @@ beforeEach(function (): void {
     ]);
 
     $this->actingAs($this->user);
+
+    // Create temporary example.yml for testing
+    $this->exampleYamlPath = base_path('app-configs/setup/collections/example.yml');
+    $exampleYamlContent = <<<'YAML'
+title: 'Beispiel'
+titleList: 'Beispiele'
+key: 'EXAMPLE'
+buttonList: 'Neuer Eintrag'
+description: 'Eine Beispiel-Collection für Setup'
+hasPage: false
+fields:
+  - { name: model.title, label: noerd_label_title, type: translatableText, colspan: 6 }
+  - { name: model.description, label: noerd_label_description, type: translatableTextarea, colspan: 6 }
+  - { name: model.is_active, label: noerd_label_active, type: checkbox, colspan: 3 }
+YAML;
+
+    // Ensure directory exists
+    if (! is_dir(dirname($this->exampleYamlPath))) {
+        mkdir(dirname($this->exampleYamlPath), 0755, true);
+    }
+    file_put_contents($this->exampleYamlPath, $exampleYamlContent);
+});
+
+afterEach(function (): void {
+    // Clean up temporary example.yml
+    if (isset($this->exampleYamlPath) && file_exists($this->exampleYamlPath)) {
+        unlink($this->exampleYamlPath);
+        // Remove directory if empty
+        $dir = dirname($this->exampleYamlPath);
+        if (is_dir($dir) && count(scandir($dir)) === 2) {
+            rmdir($dir);
+        }
+    }
 });
 
 describe('SetupLanguage Model', function (): void {
