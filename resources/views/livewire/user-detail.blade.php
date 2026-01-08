@@ -177,83 +177,83 @@ new class extends Component {
         <x-noerd::modal-title>Benutzer</x-noerd::modal-title>
     </x-slot:header>
 
-    <div>
-        @include('noerd::components.detail.block', $pageLayout)
-
-        @if(!isset($userId))
-            <div>
-                {{ __('The user will receive a link via email to set their password.') }}
-            </div>
-        @endif
-
-        <div class="py-8 pt-4">
-            <div class="pb-4">
-                {{ __('Access to the following tenants:') }}
-            </div>
-            <fieldset class="pl-2">
-                @foreach($possibleTenants as $tenant)
-                    <div class="space-y-5 max-w-2xl">
-                        <div class="relative flex items-start py-1">
-                            <div class="flex my-auto h-6 items-center">
-                                <x-noerd::checkbox
-                                    wire:model.live="possibleTenants.{{$tenant['id']}}.hasAccess"
-                                    :name="$tenant['id']">
-                                    {{$tenant['name']}}
-                                </x-noerd::checkbox>
-                            </div>
-
-                            <div class="ml-auto">
-                                <x-noerd::select-input
-                                    wire:model.live="possibleTenants.{{$tenant['id']}}.selectedProfile"
-                                    @class([
-                                        "w-48! mt-0!",
-                                        "opacity-50" => !$tenant['hasAccess']
-                                    ])
-                                >
-                                    @foreach($tenant['profiles'] as $profile)
-                                        <option value="{{$profile['id']}}">{{$profile['name']}}</option>
-                                    @endforeach
-                                </x-noerd::select-input>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-
-            </fieldset>
-            <x-noerd::input-error :messages="$errors->get('tenantAccess')" class="mt-2"/>
-        </div>
-
-        @if(count($this->roles()) > 0)
-            @foreach($this->roles() as $tenantName => $roles)
-                @if(count($roles) > 0)
-                    <div class="py-8 pt-4">
-                        <div class="pb-4">
-                            Benutzerrollen {{$tenantName}}
-                        </div>
-                        <fieldset class="pl-2">
-                            @foreach($roles as $role)
-                                <x-noerd::checkbox
-                                    wire:model.live="userRoles.{{$role->id}}" id="r{{$role->id}}"
-                                    :name="$tenant['id']">
-                                    {{ $role->name }} <br/>
-                                    {{$role->description}}
-                                </x-noerd::checkbox>
-                            @endforeach
-                        </fieldset>
-                        <x-noerd::input-error :messages="$errors->get('userRoles')" class="mt-2"/>
-                    </div>
-                @endif
-            @endforeach
-        @endif
-
-        @isset($userId)
-            <x-noerd::box>
-                <div class="max-w-xl">
-                    <livewire:setup.user-update-password :userId="$userId"/>
+    <x-noerd::tab-content :layout="$pageLayout">
+        <x-slot:tab1>
+            @if(!isset($userId))
+                <div>
+                    {{ __('The user will receive a link via email to set their password.') }}
                 </div>
-            </x-noerd::box>
-        @endisset
-    </div>
+            @endif
+
+            <div class="py-8 pt-4">
+                <div class="pb-4">
+                    {{ __('Access to the following tenants:') }}
+                </div>
+                <fieldset class="pl-2">
+                    @foreach($possibleTenants as $tenant)
+                        <div class="space-y-5 max-w-2xl">
+                            <div class="relative flex items-start py-1">
+                                <div class="flex my-auto h-6 items-center">
+                                    <x-noerd::checkbox
+                                        wire:model.live="possibleTenants.{{$tenant['id']}}.hasAccess"
+                                        :name="$tenant['id']">
+                                        {{$tenant['name']}}
+                                    </x-noerd::checkbox>
+                                </div>
+
+                                <div class="ml-auto">
+                                    <x-noerd::select-input
+                                        wire:model.live="possibleTenants.{{$tenant['id']}}.selectedProfile"
+                                        @class([
+                                            "w-48! mt-0!",
+                                            "opacity-50" => !$tenant['hasAccess']
+                                        ])
+                                    >
+                                        @foreach($tenant['profiles'] as $profile)
+                                            <option value="{{$profile['id']}}">{{$profile['name']}}</option>
+                                        @endforeach
+                                    </x-noerd::select-input>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+
+                </fieldset>
+                <x-noerd::input-error :messages="$errors->get('tenantAccess')" class="mt-2"/>
+            </div>
+
+            @if(count($this->roles()) > 0)
+                @foreach($this->roles() as $tenantName => $roles)
+                    @if(count($roles) > 0)
+                        <div class="py-8 pt-4">
+                            <div class="pb-4">
+                                Benutzerrollen {{$tenantName}}
+                            </div>
+                            <fieldset class="pl-2">
+                                @foreach($roles as $role)
+                                    <x-noerd::checkbox
+                                        wire:model.live="userRoles.{{$role->id}}" id="r{{$role->id}}"
+                                        :name="$tenant['id']">
+                                        {{ $role->name }} <br/>
+                                        {{$role->description}}
+                                    </x-noerd::checkbox>
+                                @endforeach
+                            </fieldset>
+                            <x-noerd::input-error :messages="$errors->get('userRoles')" class="mt-2"/>
+                        </div>
+                    @endif
+                @endforeach
+            @endif
+
+            @isset($userId)
+                <x-noerd::box>
+                    <div class="max-w-xl">
+                        <livewire:setup.user-update-password :userId="$userId"/>
+                    </div>
+                </x-noerd::box>
+            @endisset
+        </x-slot:tab1>
+    </x-noerd::tab-content>
 
     <x-slot:footer>
         <x-noerd::delete-save-bar :showDelete="isset($userId) && !$isOwner && $this->assignedToCurrentTenant"/>

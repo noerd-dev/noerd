@@ -71,13 +71,15 @@ new class extends Component {
         </x-noerd::modal-title>
     </x-slot:header>
 
-    @include('noerd::components.detail.block', $pageLayout)
-
-    <x-noerd::box>
-        <div class="max-w-xl">
-            <livewire:setup.create-new-tenant/>
-        </div>
-    </x-noerd::box>
+    <x-noerd::tab-content :layout="$pageLayout">
+        <x-slot:tab1>
+            <x-noerd::box>
+                <div class="max-w-xl">
+                    <livewire:setup.create-new-tenant/>
+                </div>
+            </x-noerd::box>
+        </x-slot:tab1>
+    </x-noerd::tab-content>
 
     <x-slot:footer>
         <x-noerd::delete-save-bar/>

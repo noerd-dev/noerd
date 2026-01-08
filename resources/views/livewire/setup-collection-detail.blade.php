@@ -189,7 +189,7 @@ new class extends Component
             </div>
         </div>
 
-        @include('noerd::components.detail.block', $collectionLayout)
+        <x-noerd::tab-content :layout="$collectionLayout" />
     @else
         <div class="text-center py-8">
             <p class="text-gray-500">{{ __('noerd_collection_not_found') }}</p>
