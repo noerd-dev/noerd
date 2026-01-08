@@ -31,6 +31,17 @@
         @else
             wire:model="{{ $name }}"
         @endif
+        @if($type === 'date')
+            x-init="
+                let v = $wire.get('{{ $name }}');
+                if (v && v.length > 10) $wire.set('{{ $name }}', v.substring(0, 10), false);
+            "
+        @elseif($type === 'time')
+            x-init="
+                let v = $wire.get('{{ $name }}');
+                if (v && v.length > 5) $wire.set('{{ $name }}', v.substring(0, 5), false);
+            "
+        @endif
     >
     <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
 </div>
