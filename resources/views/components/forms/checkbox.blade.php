@@ -11,6 +11,10 @@
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
+
+    // Get current value and convert to boolean (handles "1"/"0" strings without model cast)
+    $currentValue = data_get($this, $name);
+    $isChecked = filter_var($currentValue, FILTER_VALIDATE_BOOLEAN);
 @endphp
 
 <div class="mt-auto h-full flex">
@@ -23,6 +27,7 @@
                 @else
                     wire:model="{{ $name }}"
                 @endif
+                :checked="{{ $isChecked ? 'true' : 'false' }}"
                 id="{{ $name }}"
                 type="checkbox"
                 class="h-4 w-4 rounded-sm border border-gray-300 text-brand-primary focus:ring-brand-border"
