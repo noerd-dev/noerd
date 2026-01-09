@@ -1,5 +1,5 @@
 @php $isFullscreen = session('modal_fullscreen', false); @endphp
-<div x-data="{currentTab: 1}"
+<div x-data="{currentTab: @entangle('currentTab')}"
      class="flex flex-col"
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
