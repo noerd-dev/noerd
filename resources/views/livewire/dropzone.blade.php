@@ -56,7 +56,7 @@ new class extends Component {
     public function removeFile($index): void
     {
         // Lösche temporäre Datei wenn vorhanden
-        if (is_array($this->files) && isset($this->files[$index]['_original'])) {
+        if (is_array($this->files) && isset($this->files[$index]['_original']) && method_exists($this->files[$index]['_original'], 'delete')) {
             try {
                 $this->files[$index]['_original']->delete();
             } catch (\Exception $e) {
@@ -132,7 +132,7 @@ new class extends Component {
 
     public function getFileDisplayName($file): string
     {
-        if (isset($file['_original'])) {
+        if (isset($file['_original']) && method_exists($file['_original'], 'getClientOriginalName')) {
             return $file['_original']->getClientOriginalName();
         }
         return $file['name'] ?? __('noerd_unknown_file');
@@ -140,7 +140,7 @@ new class extends Component {
 
     public function getFileSize($file): int
     {
-        if (isset($file['_original'])) {
+        if (isset($file['_original']) && method_exists($file['_original'], 'getSize')) {
             return $file['_original']->getSize();
         }
         return $file['size'] ?? 0;

@@ -20,6 +20,7 @@ trait Noerd
     public ?string $modelId = null;
 
     public bool $showSuccessIndicator = false;
+    #[Url(as: 'tab', keep: false, except: 1)]
     public int $currentTab = 1;
     public array $pageLayout;
     public $lastChangeTime;
@@ -118,6 +119,7 @@ trait Noerd
         if (defined('self::ID')) {
             $this->{self::ID} = '';
         }
+        $this->currentTab = 1;
         $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
 
         if ($source) {
