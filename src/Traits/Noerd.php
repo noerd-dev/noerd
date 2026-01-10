@@ -124,7 +124,7 @@ trait Noerd
      */
     protected function getTableConfig(?string $customName = null): array
     {
-        if ($customName === null && $this->actionMode === 'select' && $this->selectTableConfig) {
+        if ($customName === null && $this->actionMode === 'selectRelation' && $this->selectTableConfig) {
             return StaticConfigHelper::getTableConfig($this->selectTableConfig);
         }
 
