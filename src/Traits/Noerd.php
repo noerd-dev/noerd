@@ -33,7 +33,7 @@ trait Noerd
 
     public bool $sortAsc = false;
 
-    public string $actionMode = 'list';
+    public string $tableActionMethod = 'tableAction';
 
     public ?string $selectTableConfig = null;
 
@@ -85,18 +85,20 @@ trait Noerd
     public function findTableAction(int|string $id): void
     {
         $tableData = $this->with()['rows'];
+        $method = $this->tableActionMethod;
 
         if (is_array($tableData)) {
             $item = $tableData[$id];
-            $this->tableAction($item['id']);
+            $this->$method($item['id']);
+
             return;
         }
 
         $item = $tableData->getCollection()->get($id);
-        if (!$item) {
+        if (! $item) {
             return;
         }
-        $this->tableAction($item->id);
+        $this->$method($item->id);
     }
 
     public function changeEditMode(): void
@@ -124,7 +126,7 @@ trait Noerd
      */
     protected function getTableConfig(?string $customName = null): array
     {
-        if ($customName === null && $this->actionMode === 'selectRelation' && $this->selectTableConfig) {
+        if ($customName === null && $this->tableActionMethod === 'selectAction' && $this->selectTableConfig) {
             return StaticConfigHelper::getTableConfig($this->selectTableConfig);
         }
 
@@ -143,9 +145,9 @@ trait Noerd
     }
 
     /**
-     * Handle select mode action - dispatch selection event and close modal.
+     * Handle select action - dispatch selection event and close modal.
      */
-    protected function selectRelation(mixed $modelId): void
+    public function selectAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch($this->getSelectEvent(), $modelId);
         $this->dispatch('close-modal-' . self::COMPONENT);
