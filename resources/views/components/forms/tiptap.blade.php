@@ -17,16 +17,21 @@
                         codeBlock: false,
                         horizontalRule: false,
                     }),
-                    window.TipTap.Underline,
+                    window.TipTap.Markdown.configure({
+                        html: false,
+                        transformPastedText: true,
+                        transformCopiedText: true,
+                    }),
                 ],
                 content: this.content,
+                contentType: 'markdown',
                 editorProps: {
                     attributes: {
                         class: 'prose prose-sm max-w-none focus:outline-none min-h-[100px] p-3',
                     },
                 },
                 onUpdate: ({ editor }) => {
-                    this.content = editor.getHTML();
+                    this.content = editor.getMarkdown();
                     this.updatedAt = Date.now();
                     this.$wire.set('{{ $field }}', this.content);
                 },
@@ -69,17 +74,6 @@
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4h4m-2 0v16m-4 0h8"></path>
-                </svg>
-            </button>
-            <button
-                type="button"
-                @click.prevent="Alpine.raw(editor).chain().focus().toggleUnderline().run()"
-                :class="{ 'bg-gray-200': isActive('underline') }"
-                class="p-1.5 rounded hover:bg-gray-200 transition-colors"
-                title="Underline"
-            >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v7a5 5 0 0010 0V4M5 20h14"></path>
                 </svg>
             </button>
             <div class="w-px bg-gray-300 mx-1"></div>
