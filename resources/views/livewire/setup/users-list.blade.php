@@ -75,7 +75,7 @@ new class extends Component {
             ->with(['roles', 'tenants'])
             ->paginate(self::PAGINATION);
 
-        $tableConfig = StaticConfigHelper::getTableConfig('users-list');
+        $tableConfig = $this->getTableConfig();
 
         return [
             'rows' => $rows,

@@ -45,7 +45,7 @@ new class extends Component
             })
             ->paginate(self::PAGINATION);
 
-        $tableConfig = StaticConfigHelper::getTableConfig('setup-languages-list');
+        $tableConfig = $this->getTableConfig();
 
         return [
             'rows' => $rows,

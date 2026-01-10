@@ -43,7 +43,7 @@ new class extends Component {
         $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)->orderBy('name')
             ->paginate(self::PAGINATION);
 
-        $tableConfig = StaticConfigHelper::getTableConfig('user-roles-list');
+        $tableConfig = $this->getTableConfig();
 
         return [
             'rows' => $rows,
