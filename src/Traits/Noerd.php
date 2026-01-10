@@ -33,6 +33,10 @@ trait Noerd
 
     public bool $sortAsc = false;
 
+    public string $actionMode = 'list';
+
+    public ?string $selectTableConfig = null;
+
     public string $modalTitle = '';
 
     public string $tableId = '';
@@ -111,6 +115,40 @@ trait Noerd
         $this->model = $model->toArray();
         $this->modelId = $model->id;
         $this->{self::ID} = $model['id'];
+    }
+
+    /**
+     * Get table configuration from YAML.
+     * Uses self::COMPONENT by default, or a custom name if provided.
+     * In select mode, uses selectTableConfig if set.
+     */
+    protected function getTableConfig(?string $customName = null): array
+    {
+        if ($customName === null && $this->actionMode === 'select' && $this->selectTableConfig) {
+            return StaticConfigHelper::getTableConfig($this->selectTableConfig);
+        }
+
+        return StaticConfigHelper::getTableConfig($customName ?? self::COMPONENT);
+    }
+
+    /**
+     * Get the event name for select mode.
+     * Derives from COMPONENT: 'customers-list' → 'customerSelected'
+     */
+    protected function getSelectEvent(): string
+    {
+        $entity = Str::singular(Str::before(self::COMPONENT, '-list'));
+
+        return Str::camel($entity) . 'Selected';
+    }
+
+    /**
+     * Handle select mode action - dispatch selection event and close modal.
+     */
+    protected function selectRelation(mixed $modelId): void
+    {
+        $this->dispatch($this->getSelectEvent(), $modelId);
+        $this->dispatch('close-modal-' . self::COMPONENT);
     }
 
     #[On('close-modal-' . self::COMPONENT)]

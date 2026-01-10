@@ -47,7 +47,7 @@
         >
 
         <x-noerd::buttons.primary
-            wire:click="$dispatch('noerdModal', {component: '{{ $modalComponent }}', arguments: {id: {{ $modelId }}, context: '{{ $name }}'}})"
+            wire:click="$dispatch('noerdModal', {component: '{{ $modalComponent }}', arguments: {id: {{ $modelId }}, context: '{{ $name }}', actionMode: 'selectRelation'}})"
             class="h-9 rounded !mt-0 !ml-1"
             type="button"
         >
