@@ -8,6 +8,9 @@
         $description = $description ?? ($tableConfig['description'] ?? false);
         $table = $table ?? ($tableConfig['columns'] ?? []);
     }
+
+    // Get tableActionMethod from Livewire component property
+    $componentAction = $this->tableActionMethod ?? 'tableAction';
 @endphp
 
 <div>
@@ -36,7 +39,7 @@
                         'newLabel' => $newLabel ?? null,
                         'disableSearch' => $disableSearch ?? false,
                         'relationId' => $relationId ?? null,
-                        'action' => $action ?? 'tableAction',
+                        'action' => $action ?? $componentAction,
                         'states' => $this->states(),
                         'tableFilters' => $this->tableFilters(),
                     ])
@@ -83,7 +86,7 @@
                                                             'id' => $row['id'],
                                                             'columnValue' => $column['field'],
                                                             'type' => $column['type'] ?? 'text',
-                                                            'action' => $column['action'] ?? $action ?? 'tableAction',
+                                                            'action' => $column['action'] ?? $action ?? $componentAction,
                                                             'actions' => $column['actions'] ?? null,
                                                        ])
                                                 @endforeach
@@ -151,7 +154,7 @@
                                                 'id' => $row['id'],
                                                 'columnValue' => $column['field'],
                                                 'type' => $column['type'] ?? 'text',
-                                                'action' => $column['action'] ?? $action ?? 'tableAction',
+                                                'action' => $column['action'] ?? $action ?? $componentAction,
                                                 'actions' => $column['actions'] ?? null,
                                            ])
                                     @endforeach
