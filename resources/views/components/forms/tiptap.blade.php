@@ -7,21 +7,7 @@
         linkUrl: '',
         showLinkInput: false,
         updatedAt: Date.now(),
-        preprocessMarkdown(md) {
-            if (!md) return md;
-            // Convert multiple consecutive empty lines to lines with zero-width space
-            // This preserves the exact number of empty lines
-            return md.replace(/\n\n\n+/g, (match) => {
-                const extraLines = match.length - 2; // -2 for the standard paragraph break
-                let result = '\n\n';
-                for (let i = 0; i < extraLines; i++) {
-                    result += '\u200B\n\n';
-                }
-                return result;
-            });
-        },
         init() {
-            const processedContent = this.preprocessMarkdown(this.content);
             this.editor = new window.TipTap.Editor({
                 element: this.$refs.editor,
                 extensions: [
@@ -29,9 +15,7 @@
                         heading: {
                             levels: [1, 2, 3],
                         },
-                        paragraph: false,
                     }),
-                    window.TipTap.CustomParagraph,
                     window.TipTap.Link.configure({
                         openOnClick: false,
                     }),
@@ -39,7 +23,7 @@
                         html: false,
                     }),
                 ],
-                content: processedContent,
+                content: this.content,
                 contentType: 'markdown',
                 editorProps: {
                     attributes: {
