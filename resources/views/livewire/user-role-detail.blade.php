@@ -30,10 +30,7 @@ new class extends Component {
 
     public function store(): void
     {
-        $this->validate([
-            'userRole.key' => ['required', 'string', 'max:255'],
-            'userRole.name' => ['required', 'string', 'max:255'],
-        ]);
+        $this->validateFromLayout();
 
         $this->userRole['tenant_id'] = auth()->user()->selected_tenant_id;
         $userRole = UserRole::updateOrCreate(['id' => $this->userRoleId], $this->userRole);
