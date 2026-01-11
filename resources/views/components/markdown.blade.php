@@ -7,6 +7,6 @@
     ]);
 @endphp
 
-<div {{ $attributes->merge(['class' => 'prose prose-sm max-w-none']) }}>
+<div {{ $attributes->merge(['class' => 'rich-text']) }}>
     {!! $html !!}
 </div>
