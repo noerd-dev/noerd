@@ -12,7 +12,7 @@ The Noerd Framework provides several Artisan commands.
 | `noerd:create-tenant` | Create new tenant |
 | `noerd:create-app` | Create new TenantApp |
 | `noerd:assign-apps-to-tenant` | Assign apps to tenant |
-| `noerd:make-module` | Generate new module |
+| `noerd:module` | Create new module with complete structure |
 | `noerd:make-collection` | Create setup collection |
 
 ## noerd:install
@@ -179,38 +179,54 @@ $ php artisan noerd:assign-apps-to-tenant
 Apps assigned successfully!
 ```
 
-## noerd:make-module
+## noerd:module
 
-Generates the basic structure for a new module.
+Creates a new module with complete directory structure, including model, migration, Livewire components, YAML configurations, and translations.
 
 ```bash
-php artisan noerd:make-module
+php artisan noerd:module
+# or with module name
+php artisan noerd:module inventory
 ```
 
 ### Interactive Prompts
 
-1. Module name
-2. Namespace (Noerd/Nywerk)
-3. Description
+1. Module name (e.g., `inventory`)
+2. Main model name (e.g., `item`)
 
 ### Generated Structure
 
 ```
 app-modules/{module-name}/
-├── src/
-│   └── Providers/{ModuleName}ServiceProvider.php
+├── app-contents/{module-name}/
+│   ├── lists/{models}-list.yml
+│   ├── details/{model}-detail.yml
+│   └── navigation.yml
+├── database/migrations/
 ├── resources/
 │   ├── views/livewire/
+│   │   ├── {models}-list.blade.php
+│   │   └── {model}-detail.blade.php
 │   └── lang/
+│       ├── de.json
+│       └── en.json
 ├── routes/{module-name}-routes.php
-├── database/
-│   ├── migrations/
-│   ├── factories/
-│   └── seeders/
+├── src/
+│   ├── Models/{Model}.php
+│   └── Providers/{ModuleName}ServiceProvider.php
 ├── tests/
-├── composer.json
-└── README.md
+└── composer.json
 ```
+
+### Next Steps After Creation
+
+```bash
+composer update noerd/{module-name}
+php artisan migrate
+php artisan noerd:create-app
+```
+
+See [Creating Modules](creating-modules.md) for more details.
 
 ## noerd:make-collection
 
@@ -229,94 +245,3 @@ php artisan noerd:make-collection
 
 - YAML configuration for collection
 - List and detail views
-
-## General Options
-
-All commands support the following Laravel standard options:
-
-| Option | Description |
-|--------|-------------|
-| `--help` | Show help |
-| `--quiet` | No output |
-| `--verbose` | Verbose output |
-| `--no-interaction` | No interactive prompts |
-
-### Example with Options
-
-```bash
-php artisan noerd:install --no-interaction
-```
-
-## Commands from Other Modules
-
-Modules can include their own commands:
-
-### CMS Module
-
-```bash
-php artisan noerd:cms-install       # Install CMS
-php artisan cms:sync-form-types     # Sync form types
-```
-
-### Accounting Module
-
-```bash
-php artisan accounting:install      # Install accounting
-```
-
-## Best Practices
-
-### Automated Installation
-
-For automated deployments:
-
-```bash
-php artisan migrate --no-interaction
-php artisan noerd:install --no-interaction
-```
-
-### Development Environment
-
-After cloning the repository:
-
-```bash
-composer install
-php artisan migrate
-php artisan noerd:install
-php artisan noerd:create-admin
-php artisan noerd:create-tenant
-php artisan noerd:create-app
-php artisan noerd:assign-apps-to-tenant
-```
-
-## Troubleshooting
-
-### "Command not found"
-
-Make sure the Noerd package is installed:
-
-```bash
-composer require noerd/noerd
-```
-
-### Permission Issues
-
-Clear cache:
-
-```bash
-php artisan cache:clear
-php artisan config:clear
-```
-
-### Missing Migrations
-
-Run migrations manually:
-
-```bash
-php artisan migrate
-```
-
-## Next Steps
-
-- [Installation](installation.md) - Complete installation guide
-- [Creating Modules](creating-modules.md) - Develop your own modules

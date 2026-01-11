@@ -35,21 +35,7 @@ php artisan migrate
 
 # 3. Install framework
 php artisan noerd:install
-
-# 4. Create admin user
-php artisan noerd:create-admin
-
-# 5. Create tenant
-php artisan noerd:create-tenant
 ```
-
-## System Requirements
-
-- PHP >= 8.4
-- Laravel >= 11.0 or >= 12.0
-- Livewire >= 3.4
-- Livewire Volt >= 1.6.7
-- MySQL/MariaDB
 
 ## Directory Structure
 
