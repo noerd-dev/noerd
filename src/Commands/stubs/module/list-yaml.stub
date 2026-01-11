@@ -1,0 +1,6 @@
+title: {{module-name}}_label_{{models}}
+newLabel: {{module-name}}_label_new_{{model}}
+component: {{model}}-detail
+columns:
+  - { field: name, label: {{module-name}}_label_name, width: 15 }
+  - { field: is_active, label: {{module-name}}_label_active, width: 5, type: boolean }

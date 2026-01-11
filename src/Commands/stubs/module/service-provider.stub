@@ -1,0 +1,34 @@
+<?php
+
+namespace Noerd\{{ModuleName}}\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Livewire\Volt\Volt;
+
+class {{ModuleName}}ServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        // Load migrations
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+
+        // Load views with namespace
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', '{{module-name}}');
+
+        // Load JSON translations
+        $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
+
+        // Load routes
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/{{module-name}}-routes.php');
+
+        // Mount Volt components
+        Volt::mount(__DIR__ . '/../../resources/views/livewire');
+
+        // Register commands (optional)
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                // Add commands here
+            ]);
+        }
+    }
+}

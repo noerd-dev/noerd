@@ -1,0 +1,4 @@
+title: {{module-name}}_label_{{model}}
+fields:
+  - { name: {{model}}.name, label: {{module-name}}_label_name, type: text, required: true, colspan: 6 }
+  - { name: {{model}}.is_active, label: {{module-name}}_label_active, type: checkbox, colspan: 6 }

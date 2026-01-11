@@ -1,0 +1,10 @@
+{
+    "{{module-name}}_label_{{models}}": "{{ModelsTitle}}",
+    "{{module-name}}_label_{{model}}": "{{ModelTitle}}",
+    "{{module-name}}_label_new_{{model}}": "New",
+    "{{module-name}}_label_name": "Name",
+    "{{module-name}}_label_active": "Active",
+    "{{module-name}}_nav_{{module-name}}": "{{ModuleName}}",
+    "{{module-name}}_nav_overview": "Overview",
+    "{{module-name}}_nav_{{models}}": "{{ModelsTitle}}"
+}

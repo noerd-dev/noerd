@@ -1,0 +1,62 @@
+<?php
+
+use Livewire\Attributes\Url;
+use Livewire\Volt\Component;
+use Noerd\{{ModuleName}}\Models\{{Model}};
+use Noerd\Noerd\Traits\Noerd;
+
+new class extends Component {
+    use Noerd;
+
+    public const COMPONENT = '{{model}}-detail';
+    public const LIST_COMPONENT = '{{models}}-list';
+    public const ID = '{{model}}Id';
+
+    #[Url(keep: false, except: '')]
+    public ${{model}}Id = null;
+
+    public array ${{model}};
+
+    public function mount({{Model}} $model): void
+    {
+        if ($this->modelId) {
+            $model = {{Model}}::find($this->modelId);
+        }
+
+        $this->mountModalProcess(self::COMPONENT, $model);
+        $this->{{model}} = $model->toArray();
+    }
+
+    public function store(): void
+    {
+        $this->validateFromLayout();
+
+        $this->{{model}}['tenant_id'] = auth()->user()->selected_tenant_id;
+        ${{model}} = {{Model}}::updateOrCreate(['id' => $this->{{model}}Id], $this->{{model}});
+
+        $this->showSuccessIndicator = true;
+
+        if (${{model}}->wasRecentlyCreated) {
+            $this->{{model}}Id = ${{model}}['id'];
+        }
+    }
+
+    public function delete(): void
+    {
+        ${{model}} = {{Model}}::find($this->{{model}}Id);
+        ${{model}}->delete();
+        $this->closeModalProcess(self::LIST_COMPONENT);
+    }
+}; ?>
+
+<x-noerd::page :disableModal="$disableModal">
+    <x-slot:header>
+        <x-noerd::modal-title>{{Model}}</x-noerd::modal-title>
+    </x-slot:header>
+
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="${{model}}Id" />
+
+    <x-slot:footer>
+        <x-noerd::delete-save-bar :showDelete="isset(${{model}}Id)"/>
+    </x-slot:footer>
+</x-noerd::page>
