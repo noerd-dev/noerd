@@ -234,13 +234,15 @@ class NoerdInstallCommand extends Command
 import sort from '@alpinejs/sort'
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import { Markdown } from '@tiptap/markdown';
 
 // Make TipTap globally available
 window.TipTap = {
     Editor,
     StarterKit,
-    Underline
+    Link,
+    Markdown
 };
 
 Alpine.plugin(sort)
@@ -280,7 +282,8 @@ Alpine.store('app', {
             '@alpinejs/sort',
             '@tiptap/core',
             '@tiptap/starter-kit',
-            '@tiptap/extension-underline',
+            '@tiptap/extension-link',
+            '@tiptap/markdown',
         ];
 
         $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
