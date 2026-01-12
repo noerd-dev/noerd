@@ -9,6 +9,7 @@
 <x-noerd::tabs :layout="$layout" :modelId="$modelId" />
 
 {{-- Tab Content Panels --}}
+<div class="grid [&>*]:col-start-1 [&>*]:row-start-1">
 @foreach($tabs as $tab)
     @php
         // Skip tabs with 'component' - they open as modals, not inline content
@@ -30,7 +31,7 @@
     @endphp
 
     @if($showTab)
-        <div x-show="currentTab === {{ $tab['number'] }}">
+        <div :class="currentTab === {{ $tab['number'] }} ? 'visible' : 'invisible pointer-events-none'">
             {{-- Render prepend slot for this tab if it exists (e.g., prependTab1, prependTab2, etc.) --}}
             @php
                 $prependSlotName = 'prependTab' . $tab['number'];
@@ -61,3 +62,4 @@
         </div>
     @endif
 @endforeach
+</div>
