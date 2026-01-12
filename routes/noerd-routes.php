@@ -7,11 +7,15 @@ use Noerd\Noerd\Controllers\DashboardController;
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
     Volt::route('setup', 'setup.users-list')->name('setup');
     Volt::route('users', 'setup.users-list')->name('users');
+    Volt::route('user/{model}', 'user-detail')->name('user.detail');
     Volt::route('user-roles', 'setup.user-roles-list')->name('user-roles');
+    Volt::route('user-role/{model}', 'user-role-detail')->name('user-role.detail');
     Volt::route('tenant', 'setup.tenant-detail')->name('tenant');
     Volt::route('models', 'models-list')->name('models');
     Volt::route('setup-collections', 'setup-collections-list')->name('setup-collections');
+    Volt::route('setup-collection/{model}', 'setup-collection-detail')->name('setup-collection.detail');
     Volt::route('setup-languages', 'setup-languages-list')->name('setup-languages');
+    Volt::route('setup-language/{model}', 'setup-language-detail')->name('setup-language.detail');
     Volt::route('/detail/{component}/{id}', 'standalone-detail')->name('detail');
 });
 
