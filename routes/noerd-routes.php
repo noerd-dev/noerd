@@ -35,5 +35,9 @@ Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
 Route::middleware(['web', 'guest'])->group(function (): void {
     Volt::route('login', 'auth.login')->name('login');
     Volt::route('forgot-password', 'auth.forgot-password')->name('password.request');
+});
+
+// Password reset works for both guests and authenticated users
+Route::middleware(['web'])->group(function (): void {
     Volt::route('reset-password/{token}', 'auth.reset-password')->name('password.reset');
 });
