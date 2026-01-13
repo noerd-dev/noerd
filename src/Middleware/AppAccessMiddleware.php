@@ -39,7 +39,10 @@ class AppAccessMiddleware
             );
         }
 
-        $user->setting->update(['selected_app' => strtoupper($appName)]);
+        // Only set selected_app if none is currently selected
+        if (! $user->setting->selected_app) {
+            $user->setting->update(['selected_app' => strtoupper($appName)]);
+        }
 
         return $next($request);
     }
