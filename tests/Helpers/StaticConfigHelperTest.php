@@ -11,7 +11,7 @@ it('throws exception for non-existing table config', function (): void {
     $this->actingAs($user);
 
     StaticConfigHelper::getTableConfig('___not_existing___');
-})->throws(Exception::class, 'List config not found');
+})->throws(Exception::class, 'Config file not found');
 
 it('loads table config for existing list', function (): void {
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
@@ -26,7 +26,7 @@ it('throws exception for non-existing model config', function (): void {
     $this->actingAs($user);
 
     StaticConfigHelper::getComponentFields('___not_existing___');
-})->throws(Exception::class, 'Model config not found');
+})->throws(Exception::class, 'Config file not found');
 
 it('loads model config for existing component', function (): void {
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
