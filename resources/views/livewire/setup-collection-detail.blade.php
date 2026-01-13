@@ -127,8 +127,8 @@ new class extends Component
         $this->model['__mediaToken'] = $token;
         $this->dispatch(
             event: 'noerdModal',
-            component: 'media-select-modal',
-            arguments: ['context' => $fieldName, 'token' => $token],
+            component: 'media-list',
+            arguments: ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token],
         );
     }
 
