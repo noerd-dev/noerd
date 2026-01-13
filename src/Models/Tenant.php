@@ -33,16 +33,6 @@ class Tenant extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function setting(): HasOne
-    {
-        return $this->hasOne(Setting::class, 'tenant_id', 'id');
-    }
-
-    public function settings(): HasOne
-    {
-        return $this->hasOne(Setting::class, 'tenant_id', 'id');
-    }
-
     /**
      * Get the UUID attribute with fallback to hash for backward compatibility.
      */
