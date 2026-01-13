@@ -11,7 +11,6 @@ class TenantApp extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'is_hidden' => 'boolean',
     ];
 
     public function tenants(): BelongsToMany
