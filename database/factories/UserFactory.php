@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
+use Noerd\Noerd\Models\TenantApp;
 use Noerd\Noerd\Models\User;
 
 class UserFactory extends Factory
@@ -63,7 +64,23 @@ class UserFactory extends Factory
     public function withSelectedApp(string $app): static
     {
         return $this->afterCreating(function ($user) use ($app): void {
-            $user->setting->update(['selected_app' => $app]);
+            $appName = strtoupper($app);
+            $user->setting->update(['selected_app' => $appName]);
+
+            // Create or find the TenantApp and assign it to the user's tenant
+            $tenant = $user->selectedTenant();
+            if ($tenant) {
+                $tenantApp = TenantApp::firstOrCreate(
+                    ['name' => $appName],
+                    [
+                        'title' => ucfirst($app),
+                        'icon' => strtolower($app) . '::icons.app',
+                        'route' => strtolower($app),
+                        'is_active' => true,
+                    ]
+                );
+                $tenant->tenantApps()->syncWithoutDetaching([$tenantApp->id]);
+            }
         });
     }
 }

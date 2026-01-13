@@ -104,6 +104,6 @@ describe('UserSetting via User Factory', function (): void {
     it('sets selected_app via withSelectedApp', function (): void {
         $user = User::factory()->withSelectedApp('setup')->create();
 
-        expect($user->selected_app)->toBe('setup');
+        expect($user->selected_app)->toBe('SETUP');
     });
 });
