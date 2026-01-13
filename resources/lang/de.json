@@ -279,5 +279,12 @@
     "noerd_label_edit": "Bearbeiten",
     "noerd_default_language_info": "Diese Sprache ist als Standardsprache festgelegt und kann nicht gelöscht werden.",
     "noerd_cannot_delete_last_language": "Die letzte Sprache kann nicht gelöscht werden.",
-    "noerd_cannot_delete_default_language": "Die Standardsprache kann nicht gelöscht werden, solange sie die einzige aktive Sprache ist."
+    "noerd_cannot_delete_default_language": "Die Standardsprache kann nicht gelöscht werden, solange sie die einzige aktive Sprache ist.",
+
+    "noerd_error_title": "Fehler",
+    "noerd_error_app_not_assigned_title": "App nicht verfügbar",
+    "noerd_error_app_not_assigned_message": "Die App \":app\" ist diesem Mandanten nicht zugewiesen.",
+    "noerd_error_config_not_found_title": "Konfiguration nicht gefunden",
+    "noerd_error_config_not_found_message": "Die erforderliche Konfigurationsdatei wurde nicht gefunden:",
+    "noerd_error_back_to_home": "Zurück zur Startseite"
 }

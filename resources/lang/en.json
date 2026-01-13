@@ -190,5 +190,12 @@
     "noerd_label_edit": "Edit",
     "noerd_default_language_info": "This language is set as the default language and cannot be deleted.",
     "noerd_cannot_delete_last_language": "The last language cannot be deleted.",
-    "noerd_cannot_delete_default_language": "The default language cannot be deleted while it is the only active language."
+    "noerd_cannot_delete_default_language": "The default language cannot be deleted while it is the only active language.",
+
+    "noerd_error_title": "Error",
+    "noerd_error_app_not_assigned_title": "App not available",
+    "noerd_error_app_not_assigned_message": "The app \":app\" is not assigned to this tenant.",
+    "noerd_error_config_not_found_title": "Configuration not found",
+    "noerd_error_config_not_found_message": "The required configuration file was not found:",
+    "noerd_error_back_to_home": "Back to home"
 }
