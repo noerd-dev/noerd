@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
+use Noerd\Noerd\Models\Tenant;
 
 new class extends Component {
 
@@ -34,7 +35,34 @@ new class extends Component {
             $user->selected_tenant_id = $this->selectedTenantId;
             $user->save();
 
-            return $this->redirect('/');
+            $redirectUrl = '/';
+            $referer = request()->header('Referer');
+
+            if ($referer) {
+                $path = parse_url($referer, PHP_URL_PATH);
+                $segments = explode('/', trim($path, '/'));
+                $appPrefix = $segments[0] ?? null;
+
+                if ($appPrefix) {
+                    // System paths that are always accessible
+                    $systemPaths = ['setup', 'profile', 'dashboard', 'no-tenant'];
+
+                    if (in_array($appPrefix, $systemPaths)) {
+                        $redirectUrl = $referer;
+                    } else {
+                        $newTenant = Tenant::find($this->selectedTenantId);
+                        $hasApp = $newTenant?->tenantApps()
+                            ->whereRaw('LOWER(name) = ?', [strtolower($appPrefix)])
+                            ->exists();
+
+                        if ($hasApp) {
+                            $redirectUrl = $referer;
+                        }
+                    }
+                }
+            }
+
+            return $this->redirect($redirectUrl);
         }
     }
 
