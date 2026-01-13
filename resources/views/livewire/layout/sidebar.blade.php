@@ -65,7 +65,7 @@ new class extends Component {
         >
             <div class="text-xs text-center overflow-y-auto flex-1">
                 @foreach(auth()->user()->selectedTenant()?->tenantApps as $tenantApp)
-                    @continue($tenantApp->is_hidden)
+                    @continue($tenantApp->pivot->is_hidden)
                     <a @if($tenantApp->is_active)
                            wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
                        class="cursor-pointer"

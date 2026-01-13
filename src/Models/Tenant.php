@@ -86,7 +86,9 @@ class Tenant extends Authenticatable
 
     public function tenantApps(): BelongsToMany
     {
-        return $this->belongsToMany(TenantApp::class, 'tenant_app')->where('is_active', true);
+        return $this->belongsToMany(TenantApp::class, 'tenant_app')
+            ->withPivot('is_hidden')
+            ->where('is_active', true);
     }
 
     public function profiles(): HasMany
