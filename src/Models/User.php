@@ -141,6 +141,10 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
+        if($this->isSuperAdmin()) {
+            return true;
+        }
+
         $adminProfilesCount = $this->profiles->where('key', 'ADMIN')->count();
 
         return (bool) $adminProfilesCount > 0;
