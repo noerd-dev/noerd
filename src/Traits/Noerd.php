@@ -48,7 +48,7 @@ trait Noerd
 
     public array $relationTitles = [];
 
-    public array $context = [];
+    public mixed $context = '';
 
     #[On('reloadTable-' . self::COMPONENT)]
     public function reloadTable(): void
