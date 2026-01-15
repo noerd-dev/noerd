@@ -18,10 +18,16 @@ use Noerd\Noerd\Commands\NoerdInstallCommand;
 use Noerd\Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Noerd\Middleware\SetupMiddleware;
 use Noerd\Noerd\Middleware\SetUserLocale;
+use Noerd\Noerd\Services\ListQueryContext;
 use Noerd\Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->singleton(ListQueryContext::class);
+    }
+
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');

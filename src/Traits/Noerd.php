@@ -8,6 +8,7 @@ use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Noerd\Services\ListQueryContext;
 
 trait Noerd
 {
@@ -59,14 +60,39 @@ trait Noerd
         $this->loadActiveTableFilters();
     }
 
+    protected function syncListQueryContext(): void
+    {
+        app(ListQueryContext::class)->set(
+            $this->search,
+            $this->sortField,
+            $this->sortAsc
+        );
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->syncListQueryContext();
+    }
+
+    public function updatedSortField(): void
+    {
+        $this->syncListQueryContext();
+    }
+
+    public function updatedSortAsc(): void
+    {
+        $this->syncListQueryContext();
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
-            $this->sortAsc = !$this->sortAsc;
+            $this->sortAsc = ! $this->sortAsc;
         } else {
             $this->sortAsc = true;
         }
         $this->sortField = $field;
+        $this->syncListQueryContext();
     }
 
     public function storeActiveTableFilters(): void
