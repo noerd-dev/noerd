@@ -62,15 +62,6 @@ trait Noerd
         $this->loadActiveTableFilters();
     }
 
-    protected function syncListQueryContext(): void
-    {
-        app(ListQueryContext::class)->set(
-            $this->search,
-            $this->sortField,
-            $this->sortAsc
-        );
-    }
-
     public function updatedSearch(): void
     {
         $this->syncListQueryContext();
@@ -114,7 +105,7 @@ trait Noerd
 
         if (is_array($tableData)) {
             $item = $tableData[$id];
-            $this->$method($item['id']);
+            $this->{$method}($item['id']);
 
             return;
         }
@@ -123,7 +114,7 @@ trait Noerd
         if (! $item) {
             return;
         }
-        $this->$method($item->id);
+        $this->{$method}($item->id);
     }
 
     public function changeEditMode(): void
@@ -140,31 +131,6 @@ trait Noerd
     {
         $this->pageLayout = StaticConfigHelper::getComponentFields($component);
         $this->{self::ID} = $model['id'];
-    }
-
-    /**
-     * Get table configuration from YAML.
-     * Uses self::COMPONENT by default, or a custom name if provided.
-     * In select mode, uses selectTableConfig if set.
-     */
-    protected function getTableConfig(?string $customName = null): array
-    {
-        if ($customName === null && $this->tableActionMethod === 'selectAction' && $this->selectTableConfig) {
-            return StaticConfigHelper::getTableConfig($this->selectTableConfig);
-        }
-
-        return StaticConfigHelper::getTableConfig($customName ?? self::COMPONENT);
-    }
-
-    /**
-     * Get the event name for select mode.
-     * Derives from COMPONENT: 'customers-list' → 'customerSelected'
-     */
-    protected function getSelectEvent(): string
-    {
-        $entity = Str::singular(Str::before(self::COMPONENT, '-list'));
-
-        return Str::camel($entity) . 'Selected';
     }
 
     /**
@@ -216,6 +182,40 @@ trait Noerd
         if (!empty($rules)) {
             $this->validate($rules);
         }
+    }
+
+    protected function syncListQueryContext(): void
+    {
+        app(ListQueryContext::class)->set(
+            $this->search,
+            $this->sortField,
+            $this->sortAsc,
+        );
+    }
+
+    /**
+     * Get table configuration from YAML.
+     * Uses self::COMPONENT by default, or a custom name if provided.
+     * In select mode, uses selectTableConfig if set.
+     */
+    protected function getTableConfig(?string $customName = null): array
+    {
+        if ($customName === null && $this->tableActionMethod === 'selectAction' && $this->selectTableConfig) {
+            return StaticConfigHelper::getTableConfig($this->selectTableConfig);
+        }
+
+        return StaticConfigHelper::getTableConfig($customName ?? self::COMPONENT);
+    }
+
+    /**
+     * Get the event name for select mode.
+     * Derives from COMPONENT: 'customers-list' → 'customerSelected'
+     */
+    protected function getSelectEvent(): string
+    {
+        $entity = Str::singular(Str::before(self::COMPONENT, '-list'));
+
+        return Str::camel($entity) . 'Selected';
     }
 
     /**

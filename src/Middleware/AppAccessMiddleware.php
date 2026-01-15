@@ -29,19 +29,19 @@ class AppAccessMiddleware
         }
 
         $hasApp = $tenant->tenantApps()
-            ->whereRaw('LOWER(name) = ?', [strtolower($appName)])
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($appName)])
             ->exists();
 
         if (! $hasApp) {
             throw new NoerdException(
                 NoerdException::TYPE_APP_NOT_ASSIGNED,
-                appName: strtoupper($appName)
+                appName: mb_strtoupper($appName),
             );
         }
 
         // Only set selected_app if none is currently selected
         if (! $user->setting->selected_app) {
-            $user->setting->update(['selected_app' => strtoupper($appName)]);
+            $user->setting->update(['selected_app' => mb_strtoupper($appName)]);
         }
 
         return $next($request);

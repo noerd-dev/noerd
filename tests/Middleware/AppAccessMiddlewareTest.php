@@ -6,21 +6,20 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Noerd\Noerd\Exceptions\NoerdException;
 use Noerd\Noerd\Middleware\AppAccessMiddleware;
-use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantApp;
 use Noerd\Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    $this->middleware = new AppAccessMiddleware;
+    $this->middleware = new AppAccessMiddleware();
 });
 
 describe('AppAccessMiddleware', function (): void {
     it('redirects to login when user is not authenticated', function (): void {
         $request = Request::create('/cms/pages', 'GET');
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
         expect($response->headers->get('Location'))->toContain('/login');
@@ -31,9 +30,9 @@ describe('AppAccessMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
         expect($response->headers->get('Location'))->not->toContain('/login');
@@ -44,9 +43,9 @@ describe('AppAccessMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $this->middleware->handle($request, fn() => response('OK'), 'cms');
     })->throws(NoerdException::class, "App 'CMS' is not assigned to this tenant");
 
     it('allows access when tenant has the app assigned', function (): void {
@@ -65,9 +64,9 @@ describe('AppAccessMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getContent())->toBe('OK');
     });
@@ -88,9 +87,9 @@ describe('AppAccessMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/media/dashboard', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $this->middleware->handle($request, fn () => response('OK'), 'media');
+        $this->middleware->handle($request, fn() => response('OK'), 'media');
 
         expect($user->fresh()->selected_app)->toBe('MEDIA');
     });
@@ -111,9 +110,9 @@ describe('AppAccessMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/uki/dashboard', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'uki');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'uki');
 
         expect($response->getContent())->toBe('OK');
     });
@@ -123,7 +122,7 @@ describe('NoerdException rendering', function (): void {
     it('renders app not assigned error page', function (): void {
         $exception = new NoerdException(
             NoerdException::TYPE_APP_NOT_ASSIGNED,
-            appName: 'CMS'
+            appName: 'CMS',
         );
 
         $response = $exception->render();
@@ -134,7 +133,7 @@ describe('NoerdException rendering', function (): void {
     it('renders config not found error page', function (): void {
         $exception = new NoerdException(
             NoerdException::TYPE_CONFIG_NOT_FOUND,
-            configFile: 'details/test.yml'
+            configFile: 'details/test.yml',
         );
 
         $response = $exception->render();

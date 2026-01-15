@@ -64,7 +64,7 @@ class UserFactory extends Factory
     public function withSelectedApp(string $app): static
     {
         return $this->afterCreating(function ($user) use ($app): void {
-            $appName = strtoupper($app);
+            $appName = mb_strtoupper($app);
             $user->setting->update(['selected_app' => $appName]);
 
             // Create or find the TenantApp and assign it to the user's tenant
@@ -74,10 +74,10 @@ class UserFactory extends Factory
                     ['name' => $appName],
                     [
                         'title' => ucfirst($app),
-                        'icon' => strtolower($app) . '::icons.app',
-                        'route' => strtolower($app),
+                        'icon' => mb_strtolower($app) . '::icons.app',
+                        'route' => mb_strtolower($app),
                         'is_active' => true,
-                    ]
+                    ],
                 );
                 $tenant->tenantApps()->syncWithoutDetaching([$tenantApp->id]);
             }

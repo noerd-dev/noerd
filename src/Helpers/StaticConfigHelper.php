@@ -20,7 +20,7 @@ class StaticConfigHelper
             $currentApp = self::getCurrentApp();
             throw new NoerdException(
                 NoerdException::TYPE_CONFIG_NOT_FOUND,
-                configFile: "details/{$component}.yml (app: {$currentApp})"
+                configFile: "details/{$component}.yml (app: {$currentApp})",
             );
         }
 
@@ -37,7 +37,7 @@ class StaticConfigHelper
             $currentApp = self::getCurrentApp();
             throw new NoerdException(
                 NoerdException::TYPE_CONFIG_NOT_FOUND,
-                configFile: "lists/{$tableName}.yml (app: {$currentApp})"
+                configFile: "lists/{$tableName}.yml (app: {$currentApp})",
             );
         }
 
