@@ -97,7 +97,7 @@ it('updates an existing user', function () use ($testSettings): void {
     $newEmail = 'updated@example.com';
 
     Volt::test($testSettings['componentName'], [$existingUser])
-        ->set('modelId', $existingUser->id)
+        ->set('userId', $existingUser->id)
         ->set('userData.name', $newName)
         ->set('userData.email', $newEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -161,7 +161,7 @@ it('manages user roles correctly', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     Volt::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
+        ->set('userId', $user->id)
         ->set('userData.name', $user->name)
         ->set('userData.email', $user->email)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -207,7 +207,7 @@ it('manages tenant access correctly', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     Volt::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
+        ->set('userId', $user->id)
         ->set('userData.name', $user->name)
         ->set('userData.email', $user->email)
         ->set("possibleTenants.{$tenant1->id}.hasAccess", true)
@@ -255,7 +255,7 @@ it('loads user roles in mount', function () use ($testSettings): void {
 
     // Test that the component can successfully set and store user roles
     $component = Volt::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
+        ->set('userId', $user->id)
         ->set("userRoles.{$role->id}", true)
         ->set('userData.name', $user->name)
         ->set('userData.email', $user->email)
@@ -395,7 +395,7 @@ it('does not send password reset link when updating existing user', function () 
 
     // Update existing user via component
     Volt::test($testSettings['componentName'], [$existingUser])
-        ->set('modelId', $existingUser->id)
+        ->set('userId', $existingUser->id)
         ->set('userData.name', 'Updated Name')
         ->set('userData.email', 'updated@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)

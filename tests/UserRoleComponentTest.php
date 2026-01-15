@@ -76,7 +76,7 @@ it('updates an existing user role', function () use ($testSettings): void {
     $newDescription = 'New Description';
 
     Volt::test($testSettings['componentName'], [$existingRole])
-        ->set('modelId', $existingRole->id)
+        ->set('userRoleId', $existingRole->id)
         ->set('userRoleData.key', $newKey)
         ->set('userRoleData.name', $newName)
         ->set('userRoleData.description', $newDescription)
@@ -122,7 +122,7 @@ it('deletes a user role', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'], [$userRole])
-        ->set('modelId', $userRole->id)
+        ->set('userRoleId', $userRole->id)
         ->call('delete')
         ->assertDispatched('reloadTable-user-roles-list');
 
@@ -144,7 +144,7 @@ it('mounts with existing user role data', function () use ($testSettings): void 
     $this->actingAs($user);
 
     $component = Volt::test($testSettings['componentName'], [$userRole])
-        ->set('modelId', $userRole->id);
+        ->set('userRoleId', $userRole->id);
 
     // Check if user role data is loaded correctly
     expect($component->get('userRoleData.key'))->toBe($userRole->key);
@@ -246,7 +246,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'], [$userRole])
-        ->set('modelId', $userRole->id)
+        ->set('userRoleId', $userRole->id)
         ->call('delete')
         ->assertDispatched('reloadTable-user-roles-list');
 });
