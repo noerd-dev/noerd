@@ -42,9 +42,9 @@ new class extends Component {
     // Called when component is initialized
     public function mount(Customer $model): void
     {
-        // If opened via modal, modelId is passed from the list
-        if ($this->modelId) {
-            $model = Customer::find($this->modelId);
+        // If opened via modal, customerId is passed from the list
+        if ($this->customerId) {
+            $model = Customer::find($this->customerId);
         }
 
         // Loads YAML config into $pageLayout and sets up modal state
@@ -118,8 +118,8 @@ Initializes the component with model data:
 ```php
 public function mount(Customer $model): void
 {
-    if ($this->modelId) {
-        $model = Customer::find($this->modelId);
+    if ($this->customerId) {
+        $model = Customer::find($this->customerId);
     }
 
     $this->mountModalProcess(self::COMPONENT, $model);
@@ -285,10 +285,11 @@ public function categorySelected($categoryId): void
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `$modelId` | ?string | Current model ID |
 | `$pageLayout` | array | YAML configuration |
 | `$showSuccessIndicator` | bool | Show success feedback |
 | `$relationTitles` | array | Display values for relations |
+
+**Note:** The model ID property (e.g., `$customerId`) is defined per component via `const ID` and is not part of the Noerd trait.
 
 ## Next Steps
 

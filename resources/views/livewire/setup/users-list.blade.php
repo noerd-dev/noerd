@@ -17,8 +17,8 @@ new class extends Component {
         $this->sortField = 'name';
         $this->sortAsc = true;
 
-        if ((int)request()->customerId) {
-            $this->tableAction(request()->customerId);
+        if ((int)request()->userId) {
+            $this->tableAction(request()->userId);
         }
 
         if (request()->create) {
@@ -26,13 +26,13 @@ new class extends Component {
         }
     }
 
-    public function tableAction(mixed $modelId = null, mixed $relationId = null): void
+    public function tableAction(mixed $userId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             component: 'user-detail',
             source: self::COMPONENT,
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['userId' => $userId, 'relationId' => $relationId],
         );
     }
 

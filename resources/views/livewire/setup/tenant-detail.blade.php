@@ -18,25 +18,26 @@ new class extends Component {
     #[Url(keep: false, except: '')]
     public $tenantId = null;
 
-    public array $model;
+    public array $tenantData = [];
     public $logo;
 
-    public function mount(Tenant $model): void
+    public function mount(Tenant $tenant): void
     {
-        $model = Tenant::find(auth()->user()->selected_tenant_id);
+        $tenant = Tenant::find(auth()->user()->selected_tenant_id);
 
-        $this->mountModalProcess(self::COMPONENT, $model);
+        $this->mountModalProcess(self::COMPONENT, $tenant);
+        $this->tenantData = $tenant->toArray();
     }
 
     public function store(): void
     {
         $this->validate([
-            'model.name' => ['required', 'string', 'max:255', 'min:3'],
+            'tenantData.name' => ['required', 'string', 'max:255', 'min:3'],
         ]);
 
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
-        $tenant->name = $this->model['name'];
-        $tenant->logo = $this->model['logo'];
+        $tenant->name = $this->tenantData['name'];
+        $tenant->logo = $this->tenantData['logo'];
         $tenant->save();
 
         $this->showSuccessIndicator = true;
@@ -54,12 +55,12 @@ new class extends Component {
     public function storeFile()
     {
         $link = $this->logo->storePublicly(path: 'uploads', options: 'public');
-        $this->model['logo'] = '/storage/' . $link;
+        $this->tenantData['logo'] = '/storage/' . $link;
     }
 
     public function deleteImage()
     {
-        $this->model['logo'] = null;
+        $this->tenantData['logo'] = null;
     }
 
 } ?>

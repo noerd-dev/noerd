@@ -37,7 +37,7 @@ new class extends Component {
             event: 'noerdModal',
             component: 'customer-detail',  // The detail component to open
             source: self::COMPONENT,        // Used for reloading the list after save
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['customerId' => $modelId, 'relationId' => $relationId],
         );
     }
 
@@ -97,7 +97,7 @@ public function tableAction(mixed $modelId = null, mixed $relationId = null): vo
         event: 'noerdModal',
         component: 'customer-detail',
         source: self::COMPONENT,
-        arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+        arguments: ['customerId' => $modelId, 'relationId' => $relationId],
     );
 }
 ```

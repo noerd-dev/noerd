@@ -64,7 +64,7 @@ new class extends Component
             event: 'noerdModal',
             component: 'setup-collection-detail',
             source: self::COMPONENT,
-            arguments: ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relationId' => $relationId],
+            arguments: ['setupCollectionId' => $modelId, 'collectionKey' => $this->collectionKey, 'relationId' => $relationId],
         );
     }
 
