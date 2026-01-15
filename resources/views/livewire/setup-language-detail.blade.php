@@ -16,23 +16,23 @@ new class extends Component
     #[Url(keep: false, except: '')]
     public $languageId = null;
 
-    public array $language = [];
+    public array $languageData = [];
 
-    public function mount(SetupLanguage $model): void
+    public function mount(SetupLanguage $language): void
     {
-        if ($this->modelId) {
-            $model = SetupLanguage::find($this->modelId) ?? new SetupLanguage;
+        if ($this->languageId) {
+            $language = SetupLanguage::find($this->languageId) ?? new SetupLanguage;
         }
 
-        $this->mountModalProcess(self::COMPONENT, $model);
+        $this->mountModalProcess(self::COMPONENT, $language);
 
-        $this->language = $model->toArray();
+        $this->languageData = $language->toArray();
 
         // Set defaults for new languages
-        if (! $model->exists) {
-            $this->language['is_active'] = true;
-            $this->language['is_default'] = false;
-            $this->language['sort_order'] = SetupLanguage::max('sort_order') + 1;
+        if (! $language->exists) {
+            $this->languageData['is_active'] = true;
+            $this->languageData['is_default'] = false;
+            $this->languageData['sort_order'] = SetupLanguage::max('sort_order') + 1;
         }
     }
 
@@ -42,14 +42,14 @@ new class extends Component
 
         $language = SetupLanguage::updateOrCreate(
             ['id' => $this->languageId],
-            $this->language
+            $this->languageData
         );
 
         $this->showSuccessIndicator = true;
 
         if ($language->wasRecentlyCreated) {
             $this->languageId = $language->id;
-            $this->modelId = $language->id;
+            $this->languageId = $language->id;
         }
     }
 
@@ -83,7 +83,7 @@ new class extends Component
 
     <x-noerd::tab-content :layout="$pageLayout">
         <x-slot:tab1>
-            @if($languageId && $language['is_default'] ?? false)
+            @if($languageId && $languageData['is_default'] ?? false)
                 <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p class="text-sm text-blue-800">
                         <x-icon name="information-circle" class="w-5 h-5 inline-block mr-1"/>
@@ -95,6 +95,6 @@ new class extends Component
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($languageId) && !($language['is_default'] ?? false)"/>
+        <x-noerd::delete-save-bar :showDelete="isset($languageId) && !($languageData['is_default'] ?? false)"/>
     </x-slot:footer>
 </x-noerd::page>

@@ -27,7 +27,7 @@ new class extends Component
             event: 'noerdModal',
             component: 'setup-language-detail',
             source: self::COMPONENT,
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['setupLanguageId' => $modelId, 'relationId' => $relationId],
         );
     }
 

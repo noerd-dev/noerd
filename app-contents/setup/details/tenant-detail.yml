@@ -1,5 +1,5 @@
 title: noerd_label_tenant
 description: ''
 fields:
-  - { name: model.name, label: noerd_label_name, type: text, colspan: 6 }
+  - { name: tenantData.name, label: noerd_label_name, type: text, colspan: 6 }
   - { name: logo, label: noerd_label_logo, type: image, colspan: 6 }

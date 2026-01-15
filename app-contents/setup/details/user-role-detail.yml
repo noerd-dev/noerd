@@ -1,6 +1,6 @@
 title: ''
 description: ''
 fields:
-  - { name: userRole.key, label: noerd_key, type: text, colspan: 6, required: true }
-  - { name: userRole.name, label: noerd_label_name, type: text, colspan: 6, required: true }
-  - { name: userRole.description, label: noerd_label_description, type: text, colspan: 6 }
+  - { name: userRoleData.key, label: noerd_key, type: text, colspan: 6, required: true }
+  - { name: userRoleData.name, label: noerd_label_name, type: text, colspan: 6, required: true }
+  - { name: userRoleData.description, label: noerd_label_description, type: text, colspan: 6 }

@@ -35,8 +35,8 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     Volt::test($testSettings['componentName'])
         ->call('store')
-        ->assertHasErrors(['user.name'])
-        ->assertHasErrors(['user.email'])
+        ->assertHasErrors(['userData.name'])
+        ->assertHasErrors(['userData.email'])
         ->assertHasErrors(['tenantAccess']);
 });
 
@@ -57,8 +57,8 @@ it('successfully creates a new user', function () use ($testSettings): void {
     $userEmail = fake()->email;
 
     Volt::test($testSettings['componentName'])
-        ->set('user.name', $userName)
-        ->set('user.email', $userEmail)
+        ->set('userData.name', $userName)
+        ->set('userData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -98,8 +98,8 @@ it('updates an existing user', function () use ($testSettings): void {
 
     Volt::test($testSettings['componentName'], [$existingUser])
         ->set('modelId', $existingUser->id)
-        ->set('user.name', $newName)
-        ->set('user.email', $newEmail)
+        ->set('userData.name', $newName)
+        ->set('userData.email', $newEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -131,8 +131,8 @@ it('handles existing user with same email', function () use ($testSettings): voi
 
     // Try to create a new user with same email
     Volt::test($testSettings['componentName'])
-        ->set('user.name', 'New User')
-        ->set('user.email', 'existing@example.com')
+        ->set('userData.name', 'New User')
+        ->set('userData.email', 'existing@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -162,8 +162,8 @@ it('manages user roles correctly', function () use ($testSettings): void {
 
     Volt::test($testSettings['componentName'], [$user])
         ->set('modelId', $user->id)
-        ->set('user.name', $user->name)
-        ->set('user.email', $user->email)
+        ->set('userData.name', $user->name)
+        ->set('userData.email', $user->email)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->set("userRoles.{$role1->id}", true)
@@ -208,8 +208,8 @@ it('manages tenant access correctly', function () use ($testSettings): void {
 
     Volt::test($testSettings['componentName'], [$user])
         ->set('modelId', $user->id)
-        ->set('user.name', $user->name)
-        ->set('user.email', $user->email)
+        ->set('userData.name', $user->name)
+        ->set('userData.email', $user->email)
         ->set("possibleTenants.{$tenant1->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant1->id}.selectedProfile", $profile1->id)
         ->set("possibleTenants.{$tenant2->id}.hasAccess", false)
@@ -229,8 +229,8 @@ it('requires at least one tenant access', function () use ($testSettings): void 
     $this->actingAs($admin);
 
     Volt::test($testSettings['componentName'])
-        ->set('user.name', 'Test User')
-        ->set('user.email', 'test@example.com')
+        ->set('userData.name', 'Test User')
+        ->set('userData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", false)
         ->call('store')
         ->assertHasErrors(['tenantAccess']);
@@ -257,8 +257,8 @@ it('loads user roles in mount', function () use ($testSettings): void {
     $component = Volt::test($testSettings['componentName'], [$user])
         ->set('modelId', $user->id)
         ->set("userRoles.{$role->id}", true)
-        ->set('user.name', $user->name)
-        ->set('user.email', $user->email)
+        ->set('userData.name', $user->name)
+        ->set('userData.email', $user->email)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -319,8 +319,8 @@ it('sets success indicator after storing', function () use ($testSettings): void
     $this->actingAs($admin);
 
     Volt::test($testSettings['componentName'])
-        ->set('user.name', 'Test User')
-        ->set('user.email', 'test@example.com')
+        ->set('userData.name', 'Test User')
+        ->set('userData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -348,8 +348,8 @@ it('sends password reset link when creating new user', function () use ($testSet
 
     // Create new user via component
     Volt::test($testSettings['componentName'])
-        ->set('user.name', $userName)
-        ->set('user.email', $userEmail)
+        ->set('userData.name', $userName)
+        ->set('userData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -396,8 +396,8 @@ it('does not send password reset link when updating existing user', function () 
     // Update existing user via component
     Volt::test($testSettings['componentName'], [$existingUser])
         ->set('modelId', $existingUser->id)
-        ->set('user.name', 'Updated Name')
-        ->set('user.email', 'updated@example.com')
+        ->set('userData.name', 'Updated Name')
+        ->set('userData.email', 'updated@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -425,8 +425,8 @@ it('creates user with hashed password that user cannot login with before reset',
 
     // Create new user via component
     Volt::test($testSettings['componentName'])
-        ->set('user.name', $userName)
-        ->set('user.email', $userEmail)
+        ->set('userData.name', $userName)
+        ->set('userData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')

@@ -19,8 +19,8 @@ new class extends Component {
 
     public function mount({{Model}} $model): void
     {
-        if ($this->modelId) {
-            $model = {{Model}}::find($this->modelId);
+        if ($this->{{model}}Id) {
+            $model = {{Model}}::find($this->{{model}}Id);
         }
 
         $this->mountModalProcess(self::COMPONENT, $model);

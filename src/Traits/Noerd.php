@@ -16,9 +16,6 @@ trait Noerd
 
     protected const PAGINATION = 50;
 
-    /* a modelId is required to load a model thorugh a event or as a parameter */
-    public ?string $modelId = null;
-
     public bool $showSuccessIndicator = false;
     #[Url(as: 'tab', keep: false, except: 1)]
     public int $currentTab = 1;
@@ -114,8 +111,6 @@ trait Noerd
     public function mountModalProcess(string $component, $model): void
     {
         $this->pageLayout = StaticConfigHelper::getComponentFields($component);
-        $this->model = $model->toArray();
-        $this->modelId = $model->id;
         $this->{self::ID} = $model['id'];
     }
 
@@ -170,9 +165,6 @@ trait Noerd
     public function storeProcess($model): void
     {
         $this->showSuccessIndicator = true;
-        if ($model->wasRecentlyCreated) {
-            $this->modelId = $model['id'];
-        }
         $this->{self::ID} = $model['id'];
     }
 

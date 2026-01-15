@@ -17,7 +17,7 @@ new class extends Component {
             event: 'noerdModal',
             component: '{{model}}-detail',
             source: self::COMPONENT,
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['{{model}}Id' => $modelId, 'relationId' => $relationId],
         );
     }
 

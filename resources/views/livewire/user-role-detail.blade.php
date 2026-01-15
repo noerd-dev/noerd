@@ -16,24 +16,24 @@ new class extends Component {
     #[Url(keep: false, except: '')]
     public $userRoleId = null;
 
-    public array $userRole;
+    public array $userRoleData = [];
 
-    public function mount(UserRole $model): void
+    public function mount(UserRole $userRole): void
     {
-        if ($this->modelId) {
-            $model = UserRole::find($this->modelId);
+        if ($this->userRoleId) {
+            $userRole = UserRole::find($this->userRoleId);
         }
 
-        $this->mountModalProcess(self::COMPONENT, $model);
-        $this->userRole = $model->toArray();
+        $this->mountModalProcess(self::COMPONENT, $userRole);
+        $this->userRoleData = $userRole->toArray();
     }
 
     public function store(): void
     {
         $this->validateFromLayout();
 
-        $this->userRole['tenant_id'] = auth()->user()->selected_tenant_id;
-        $userRole = UserRole::updateOrCreate(['id' => $this->userRoleId], $this->userRole);
+        $this->userRoleData['tenant_id'] = auth()->user()->selected_tenant_id;
+        $userRole = UserRole::updateOrCreate(['id' => $this->userRoleId], $this->userRoleData);
 
         $this->showSuccessIndicator = true;
 

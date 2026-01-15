@@ -33,7 +33,7 @@ new class extends Component {
             event: 'noerdModal',
             component: 'user-role-detail',
             source: self::COMPONENT,
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['userRoleId' => $modelId, 'relationId' => $relationId],
         );
     }
 

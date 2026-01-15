@@ -31,8 +31,8 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     Volt::test($testSettings['componentName'])
         ->call('store')
-        ->assertHasErrors(['userRole.key'])
-        ->assertHasErrors(['userRole.name']);
+        ->assertHasErrors(['userRoleData.key'])
+        ->assertHasErrors(['userRoleData.name']);
 });
 
 it('successfully creates a new user role', function () use ($testSettings): void {
@@ -45,9 +45,9 @@ it('successfully creates a new user role', function () use ($testSettings): void
     $roleDescription = 'Has full administrative access';
 
     Volt::test($testSettings['componentName'])
-        ->set('userRole.key', $roleKey)
-        ->set('userRole.name', $roleName)
-        ->set('userRole.description', $roleDescription)
+        ->set('userRoleData.key', $roleKey)
+        ->set('userRoleData.name', $roleName)
+        ->set('userRoleData.description', $roleDescription)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -77,9 +77,9 @@ it('updates an existing user role', function () use ($testSettings): void {
 
     Volt::test($testSettings['componentName'], [$existingRole])
         ->set('modelId', $existingRole->id)
-        ->set('userRole.key', $newKey)
-        ->set('userRole.name', $newName)
-        ->set('userRole.description', $newDescription)
+        ->set('userRoleData.key', $newKey)
+        ->set('userRoleData.name', $newName)
+        ->set('userRoleData.description', $newDescription)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -98,8 +98,8 @@ it('sets tenant_id when storing', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'])
-        ->set('userRole.key', 'TEST_ROLE')
-        ->set('userRole.name', 'Test Role')
+        ->set('userRoleData.key', 'TEST_ROLE')
+        ->set('userRoleData.name', 'Test Role')
         ->call('store')
         ->assertHasNoErrors();
 
@@ -147,9 +147,9 @@ it('mounts with existing user role data', function () use ($testSettings): void 
         ->set('modelId', $userRole->id);
 
     // Check if user role data is loaded correctly
-    expect($component->get('userRole.key'))->toBe($userRole->key);
-    expect($component->get('userRole.name'))->toBe($userRole->name);
-    expect($component->get('userRole.description'))->toBe($userRole->description);
+    expect($component->get('userRoleData.key'))->toBe($userRole->key);
+    expect($component->get('userRoleData.name'))->toBe($userRole->name);
+    expect($component->get('userRoleData.description'))->toBe($userRole->description);
     expect($component->get('userRoleId'))->toBe($userRole->id);
 });
 
@@ -161,7 +161,7 @@ it('mounts with new user role', function () use ($testSettings): void {
     $component = Volt::test($testSettings['componentName']);
 
     // Check if default values are set for new user role
-    expect($component->get('userRole'))->toBeArray();
+    expect($component->get('userRoleData'))->toBeArray();
     expect($component->get('userRoleId'))->toBeNull();
 });
 
@@ -171,8 +171,8 @@ it('sets success indicator after storing', function () use ($testSettings): void
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'])
-        ->set('userRole.key', 'SUCCESS_ROLE')
-        ->set('userRole.name', 'Success Role')
+        ->set('userRoleData.key', 'SUCCESS_ROLE')
+        ->set('userRoleData.name', 'Success Role')
         ->call('store')
         ->assertSet('showSuccessIndicator', true);
 });
@@ -183,8 +183,8 @@ it('sets userRoleId after creating new role', function () use ($testSettings): v
     $this->actingAs($user);
 
     $component = Volt::test($testSettings['componentName'])
-        ->set('userRole.key', 'NEW_ROLE')
-        ->set('userRole.name', 'New Role')
+        ->set('userRoleData.key', 'NEW_ROLE')
+        ->set('userRoleData.name', 'New Role')
         ->call('store');
 
     // Check if userRoleId was set after creation
@@ -197,10 +197,10 @@ it('validates key field format', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'])
-        ->set('userRole.key', '') // Empty key
-        ->set('userRole.name', 'Valid Name')
+        ->set('userRoleData.key', '') // Empty key
+        ->set('userRoleData.name', 'Valid Name')
         ->call('store')
-        ->assertHasErrors(['userRole.key']);
+        ->assertHasErrors(['userRoleData.key']);
 });
 
 it('validates name field format', function () use ($testSettings): void {
@@ -209,10 +209,10 @@ it('validates name field format', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'])
-        ->set('userRole.key', 'VALID_KEY')
-        ->set('userRole.name', '') // Empty name
+        ->set('userRoleData.key', 'VALID_KEY')
+        ->set('userRoleData.name', '') // Empty name
         ->call('store')
-        ->assertHasErrors(['userRole.name']);
+        ->assertHasErrors(['userRoleData.name']);
 });
 
 it('handles optional description field', function () use ($testSettings): void {
@@ -221,8 +221,8 @@ it('handles optional description field', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Volt::test($testSettings['componentName'])
-        ->set('userRole.key', 'NO_DESC_ROLE')
-        ->set('userRole.name', 'Role Without Description')
+        ->set('userRoleData.key', 'NO_DESC_ROLE')
+        ->set('userRoleData.name', 'Role Without Description')
         // No description set
         ->call('store')
         ->assertHasNoErrors();

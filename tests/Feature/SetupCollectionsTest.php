@@ -277,9 +277,9 @@ describe('Setup Collection Detail Component', function (): void {
 
     it('can save a new entry', function (): void {
         $component = Volt::test('setup-collection-detail', ['collectionKey' => 'example'])
-            ->set('model.title.de', 'Test Titel')
-            ->set('model.title.en', 'Test Title')
-            ->set('model.is_active', true)
+            ->set('entryData.title.de', 'Test Titel')
+            ->set('entryData.title.en', 'Test Title')
+            ->set('entryData.is_active', true)
             ->call('store');
 
         $component->assertSet('showSuccessIndicator', true);
@@ -393,24 +393,24 @@ describe('Setup Language Detail Component', function (): void {
     it('loads for new language', function (): void {
         Volt::test('setup-language-detail')
             ->assertStatus(200)
-            ->assertSet('language.is_active', true);
+            ->assertSet('languageData.is_active', true);
     });
 
     it('loads existing language', function (): void {
         $german = SetupLanguage::where('code', 'de')->first();
 
-        Volt::test('setup-language-detail', ['modelId' => $german->id])
+        Volt::test('setup-language-detail', ['languageId' => $german->id])
             ->assertStatus(200)
-            ->assertSet('language.code', 'de')
-            ->assertSet('language.name', 'Deutsch');
+            ->assertSet('languageData.code', 'de')
+            ->assertSet('languageData.name', 'Deutsch');
     });
 
     it('can save a new language', function (): void {
         Volt::test('setup-language-detail')
-            ->set('language.code', 'fr')
-            ->set('language.name', 'Français')
-            ->set('language.is_active', true)
-            ->set('language.is_default', false)
+            ->set('languageData.code', 'fr')
+            ->set('languageData.name', 'Français')
+            ->set('languageData.is_active', true)
+            ->set('languageData.is_default', false)
             ->call('store')
             ->assertSet('showSuccessIndicator', true);
 

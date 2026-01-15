@@ -23,7 +23,7 @@ new class extends Component {
     public bool $isOwner = false;
     public $selectedTenant;
 
-    public array $user;
+    public array $userData = [];
     public array $tenantAccess = [];
     public array $userRoles = [];
     public array $possibleTenants = [];
@@ -65,23 +65,23 @@ new class extends Component {
         return $user->tenants->contains(auth()->user()->selected_tenant_id);
     }
 
-    public function mount(User $model): void
+    public function mount(User $user): void
     {
         $this->selectedTenant = auth()->user()->selectedTenant();
 
-        if ($this->modelId) {
-            $model = User::find($this->modelId);
-            foreach ($model->roles as $role) {
+        if ($this->userId) {
+            $user = User::find($this->userId);
+            foreach ($user->roles as $role) {
                 $this->userRoles[$role->id] = true;
             }
         }
 
-        $this->mountModalProcess(self::COMPONENT, $model);
-        $this->user = $model->toArray();
+        $this->mountModalProcess(self::COMPONENT, $user);
+        $this->userData = $user->toArray();
 
         foreach (auth()->user()->adminTenants as $tenant) {
             $this->possibleTenants[$tenant->id] = $tenant->toArray();
-            $userProfile = $tenant->users()->where('user_id', $model->id)->first();
+            $userProfile = $tenant->users()->where('user_id', $user->id)->first();
             $profileId = $userProfile?->pivot->profile_id;
 
             $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileId;
@@ -101,8 +101,8 @@ new class extends Component {
         }
 
         $this->validate([
-            'user.name' => ['required', 'string', 'max:255'],
-            'user.email' => [
+            'userData.name' => ['required', 'string', 'max:255'],
+            'userData.email' => [
                 'required',
                 'string',
                 'email',
@@ -112,7 +112,7 @@ new class extends Component {
         ]);
 
         if (!$this->userId) {
-            $userExists = User::where('email', $this->user['email'])->first();
+            $userExists = User::where('email', $this->userData['email'])->first();
             if ($userExists) {
                 $allowedTenants = Auth::user()->adminTenants()->pluck('id');
                 foreach ($this->possibleTenants as $tenantId => $value) {
@@ -126,10 +126,10 @@ new class extends Component {
             }
             // No password needed - user will set it via password reset link
             // Set a temporary password that will be overwritten when user resets
-            $this->user['password'] = bcrypt(Str::random(32));
+            $this->userData['password'] = bcrypt(Str::random(32));
         }
 
-        $user = User::updateOrCreate(['id' => $this->userId], $this->user);
+        $user = User::updateOrCreate(['id' => $this->userId], $this->userData);
         foreach ($this->userRoles as $key => $value) {
             $user->roles()->detach($key);
             if ($value) {
