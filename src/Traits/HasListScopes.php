@@ -12,8 +12,8 @@ trait HasListScopes
 {
     public static function bootHasListScopes(): void
     {
-        static::addGlobalScope(new SearchScope);
-        static::addGlobalScope(new SortScope);
+        static::addGlobalScope(new SearchScope());
+        static::addGlobalScope(new SortScope());
     }
 
     /**
