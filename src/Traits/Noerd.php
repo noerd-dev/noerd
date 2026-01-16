@@ -48,6 +48,8 @@ trait Noerd
 
     public array $relationTitles = [];
 
+    public array $context = [];
+
     #[On('reloadTable-' . self::COMPONENT)]
     public function reloadTable(): void
     {
@@ -170,7 +172,7 @@ trait Noerd
      */
     public function selectAction(mixed $modelId = null, mixed $relationId = null): void
     {
-        $this->dispatch($this->getSelectEvent(), $modelId);
+        $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
         $this->dispatch('close-modal-' . self::COMPONENT);
     }
 
