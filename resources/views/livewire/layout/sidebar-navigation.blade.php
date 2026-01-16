@@ -23,7 +23,7 @@ new class extends Component {
 
         {{-- if its an block menu --}}
         @foreach($navigations as $key => $block)
-            @isset($block['navigations'])
+            @if(!empty($block['navigations']))
                 <div x-data="{show: $wire.entangle('navigations.{{ $key }}.show')}">
                     <button type="button" wire:click="openStatus('{{$block['title']}}')" @click="show = !show"
                             class="hover:text-black w-full py-2">
@@ -57,7 +57,8 @@ new class extends Component {
                         </ul>
                     </div>
                 </div>
-            @else
+            @endif
+            @if(empty($block['navigations']) && isset($block['route']))
                 <ul role="list" class="pb-2">
                     <livewire:layout.sidebar-navigation-element wire:key="{{$block['title']}}" :navi="$block"/>
                 </ul>
