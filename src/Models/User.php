@@ -141,7 +141,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        if($this->isSuperAdmin()) {
+        if ($this->isSuperAdmin()) {
             return true;
         }
 
@@ -174,7 +174,7 @@ class User extends Authenticatable
         if (! $this->relationLoaded('userSetting') || $this->userSetting === null) {
             $setting = $this->userSetting()->firstOrCreate(
                 ['user_id' => $this->id],
-                ['locale' => 'en']
+                ['locale' => 'en'],
             );
             $this->setRelation('userSetting', $setting);
         }

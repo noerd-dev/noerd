@@ -13,7 +13,7 @@ trait BelongsToTenant
 {
     public static function bootBelongsToTenant(): void
     {
-        static::addGlobalScope(new TenantScope);
+        static::addGlobalScope(new TenantScope());
 
         static::creating(function ($model): void {
             if (Auth::check() && Auth::user()->selected_tenant_id && ! $model->tenant_id) {
