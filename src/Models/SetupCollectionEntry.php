@@ -5,10 +5,19 @@ namespace Noerd\Noerd\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Noerd\Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Noerd\Traits\BelongsToTenant;
+use Noerd\Noerd\Traits\HasListScopes;
 
 class SetupCollectionEntry extends Model
 {
+    use BelongsToTenant;
+    use HasListScopes;
+
     protected $guarded = [];
+
+    protected array $searchable = [
+        'data',
+    ];
 
     protected $casts = [
         'data' => 'array',

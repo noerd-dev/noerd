@@ -1,8 +1,8 @@
 <?php
 
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\SetupLanguage;
+use Noerd\Noerd\Scopes\SortScope;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component
@@ -33,16 +33,11 @@ new class extends Component
 
     public function with(): array
     {
-        $rows = SetupLanguage::query()
+        // Custom sort order: is_default desc, sort_order, name
+        $rows = SetupLanguage::withoutGlobalScope(SortScope::class)
             ->orderBy('is_default', 'desc')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->when($this->search, function ($query): void {
-                $query->where(function ($query): void {
-                    $query->where('name', 'like', '%'.$this->search.'%')
-                        ->orWhere('code', 'like', '%'.$this->search.'%');
-                });
-            })
             ->paginate(self::PAGINATION);
 
         $tableConfig = $this->getTableConfig();

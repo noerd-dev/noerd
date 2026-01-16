@@ -4,10 +4,18 @@ namespace Noerd\Noerd\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Noerd\Noerd\Traits\HasListScopes;
 
 class SetupLanguage extends Model
 {
+    use HasListScopes;
+
     protected $guarded = [];
+
+    protected array $searchable = [
+        'name',
+        'code',
+    ];
 
     protected $casts = [
         'is_active' => 'boolean',
