@@ -24,8 +24,9 @@ trait BelongsToTenant
 
     public function initializeBelongsToTenant(): void
     {
-        // Ensure tenant_id is fillable if not guarded
-        if (! in_array('tenant_id', $this->fillable ?? []) && ! in_array('*', $this->guarded ?? [])) {
+        // Only add tenant_id to fillable if the model explicitly defines fillable fields
+        // If the model uses $guarded instead, we don't need to modify $fillable
+        if (! empty($this->fillable) && ! in_array('tenant_id', $this->fillable)) {
             $this->fillable[] = 'tenant_id';
         }
     }
