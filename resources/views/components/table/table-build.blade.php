@@ -88,6 +88,8 @@
                                                             'type' => $column['type'] ?? 'text',
                                                             'action' => $column['action'] ?? $action ?? $componentAction,
                                                             'actions' => $column['actions'] ?? null,
+                                                            'columnConfig' => $column,
+                                                            'rowData' => $row,
                                                        ])
                                                 @endforeach
                                             </tr>

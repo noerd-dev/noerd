@@ -164,6 +164,16 @@
                         <span class="text-sm">{{ $value }}</span>
                     @endif
                 </div>
+            @elseif($type == 'relation_link')
+                @if($value && isset($columnConfig['modalComponent']))
+                    <button
+                        wire:click.stop="$dispatch('noerdModal', {component: '{{ $columnConfig['modalComponent'] }}', arguments: { {{ $columnConfig['idParam'] ?? 'id' }}: {{ $rowData[$columnConfig['idField'] ?? 'id'] ?? 'null' }} }})"
+                        class="inline-flex ml-1.5 items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer transition-colors">
+                        {{ $value }}
+                    </button>
+                @elseif($value)
+                    <span class="text-sm py-0.5 px-1.5">{{ $value }}</span>
+                @endif
             @else
                 <input type="{{$type}}"
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
