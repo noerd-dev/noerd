@@ -76,7 +76,7 @@ class NoerdInstallCommand extends Command
     /**
      * Copy directory contents recursively
      */
-    private function copyDirectoryContents(string $sourceDir, string $targetDir): array
+    protected function copyDirectoryContents(string $sourceDir, string $targetDir): array
     {
         $results = [
             'created_dirs' => 0,
@@ -146,7 +146,7 @@ class NoerdInstallCommand extends Command
         return $results;
     }
 
-    private function mergeResults(array $a, array $b): array
+    protected function mergeResults(array $a, array $b): array
     {
         foreach (['created_dirs', 'copied_files', 'skipped_files', 'overwritten_files'] as $key) {
             $a[$key] = ($a[$key] ?? 0) + ($b[$key] ?? 0);
@@ -157,7 +157,7 @@ class NoerdInstallCommand extends Command
     /**
      * Setup frontend assets and configuration
      */
-    private function setupFrontendAssets(): void
+    protected function setupFrontendAssets(): void
     {
         $this->line('');
         $this->info('Setting up frontend assets...');
@@ -190,7 +190,7 @@ class NoerdInstallCommand extends Command
     /**
      * Update app.css with noerd styles
      */
-    private function updateAppCss(): void
+    protected function updateAppCss(): void
     {
         $cssPath = base_path('resources/css/app.css');
 
@@ -219,7 +219,7 @@ class NoerdInstallCommand extends Command
     /**
      * Update app.js with Alpine.js configuration
      */
-    private function updateAppJs(): void
+    protected function updateAppJs(): void
     {
         $jsPath = base_path('resources/js/app.js');
 
@@ -271,7 +271,7 @@ Alpine.store('app', {
     /**
      * Install required npm packages
      */
-    private function installNpmPackages(): void
+    protected function installNpmPackages(): void
     {
         $this->line('<comment>Installing npm packages...</comment>');
 
@@ -300,7 +300,7 @@ Alpine.store('app', {
     /**
      * Create tailwind.config.js
      */
-    private function createTailwindConfig(): void
+    protected function createTailwindConfig(): void
     {
         $configPath = base_path('tailwind.config.js');
 
@@ -350,7 +350,7 @@ export default {
     /**
      * Update .env file to set AUTH_MODEL to Noerd User model and install Breeze
      */
-    private function updateAuthConfig(): void
+    protected function updateAuthConfig(): void
     {
         // Set AUTH_MODEL in .env
         $this->setAuthModelEnv();
@@ -359,7 +359,7 @@ export default {
     /**
      * Set AUTH_MODEL in .env file
      */
-    private function setAuthModelEnv(): void
+    protected function setAuthModelEnv(): void
     {
         $envPath = base_path('.env');
 
@@ -387,7 +387,7 @@ export default {
     /**
      * Display summary of operations
      */
-    private function displaySummary(array $results): void
+    protected function displaySummary(array $results): void
     {
         $this->line('');
         $this->info('Installation Summary:');
@@ -405,7 +405,7 @@ export default {
     /**
      * Update composer.json to add repositories configuration
      */
-    private function updateComposerRepositories(): void
+    protected function updateComposerRepositories(): void
     {
         $composerPath = base_path('composer.json');
 
@@ -458,7 +458,7 @@ export default {
     /**
      * Publish the noerd config file to the application's config directory
      */
-    private function publishNoerdConfig(): void
+    protected function publishNoerdConfig(): void
     {
         $targetPath = base_path('config/noerd.php');
 
@@ -506,7 +506,7 @@ export default {
     /**
      * Ensure app-modules directory exists with .gitkeep file
      */
-    private function ensureAppModulesDirectory(): void
+    protected function ensureAppModulesDirectory(): void
     {
         $appModulesPath = base_path('app-modules');
 
@@ -536,7 +536,7 @@ export default {
     /**
      * Update phpunit.xml with the app-modules testsuite configuration
      */
-    private function updatePhpunitXml(): void
+    protected function updatePhpunitXml(): void
     {
         $phpunitPath = base_path('phpunit.xml');
 
@@ -580,7 +580,7 @@ export default {
     /**
      * Setup an admin user - either create a new one or promote an existing user
      */
-    private function setupAdminUser(): void
+    protected function setupAdminUser(): void
     {
         $this->newLine();
         $this->info('Admin User Setup');
@@ -598,7 +598,7 @@ export default {
     /**
      * Create a new admin user when no users exist
      */
-    private function setupNewAdminUser(): void
+    protected function setupNewAdminUser(): void
     {
         $this->line('<comment>No users found in the database.</comment>');
 
@@ -664,7 +664,7 @@ export default {
     /**
      * Promote an existing user to admin
      */
-    private function setupExistingAdminUser(): void
+    protected function setupExistingAdminUser(): void
     {
         $users = User::all();
         $adminUsers = $users->filter(fn(User $user) => $user->isAdmin());
@@ -714,7 +714,7 @@ export default {
     /**
      * Make a user admin by calling the noerd:make-admin command
      */
-    private function makeUserAdmin(User $user): void
+    protected function makeUserAdmin(User $user): void
     {
         $this->line("Making user '{$user->name}' an admin...");
 
@@ -734,7 +734,7 @@ export default {
      * Run migrations and setup admin user
      * Migrations must be run before creating an admin user
      */
-    private function runMigrationsAndSetupAdmin(): void
+    protected function runMigrationsAndSetupAdmin(): void
     {
         $this->newLine();
         $this->info('Database Migration');
@@ -767,7 +767,7 @@ export default {
     /**
      * Ask to run npm build for frontend assets
      */
-    private function runNpmBuild(): void
+    protected function runNpmBuild(): void
     {
         $this->newLine();
 
