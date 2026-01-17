@@ -15,6 +15,7 @@ use Noerd\Noerd\Commands\MakeCollectionCommand;
 use Noerd\Noerd\Commands\MakeModuleCommand;
 use Noerd\Noerd\Commands\MakeUserAdmin;
 use Noerd\Noerd\Commands\NoerdInstallCommand;
+use Noerd\Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Noerd\Middleware\SetupMiddleware;
 use Noerd\Noerd\Middleware\SetUserLocale;
@@ -65,6 +66,7 @@ class NoerdServiceProvider extends ServiceProvider
             $this->commands([
                 MakeUserAdmin::class,
                 NoerdInstallCommand::class,
+                NoerdUpdateCommand::class,
                 CreateTenantApp::class,
                 AssignAppsToTenant::class,
                 MakeModuleCommand::class,
