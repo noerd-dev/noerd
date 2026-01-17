@@ -34,22 +34,22 @@ new class extends Component {
 
     #[On('noerdModal')]
     public function bootModal(
-        string  $component,
+        string  $modalComponent,
         ?string $source = null,
         array   $arguments = [],
     ): void
     {
         // Nur fortfahhren, wenn noch kein Modal mit dem componentName geöffnet ist
-        //if (isset($this->modals[$component]) && $this->modals[$component]['show'] === true) {
+        //if (isset($this->modals[$modalComponent]) && $this->modals[$modalComponent]['show'] === true) {
         //    return;
         //}
         $modal = [];
-        $modal['componentName'] = $component;
+        $modal['componentName'] = $modalComponent;
         $modal['arguments'] = $arguments;
         $modal['show'] = true;
         $modal['topModal'] = false;
         $modal['source'] = $source;
-        $modal['size'] = self::SIZES[$component] ?? 'lg';
+        $modal['size'] = self::SIZES[$modalComponent] ?? 'lg';
         //$key = $component;
         //foreach ($arguments as $argument) {
         //    if (is_string($argument) || is_numeric($argument)) {
