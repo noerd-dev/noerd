@@ -17,11 +17,10 @@ return new class () extends Migration {
 
         // 2. Copy values from tenant_apps to tenant_app pivot
         if (Schema::hasColumn('tenant_apps', 'is_hidden')) {
-            DB::statement('
-                UPDATE tenant_app
-                JOIN tenant_apps ON tenant_app.tenant_app_id = tenant_apps.id
-                SET tenant_app.is_hidden = tenant_apps.is_hidden
-            ');
+            DB::table('tenant_app')
+                ->join('tenant_apps', 'tenant_app.tenant_app_id', '=', 'tenant_apps.id')
+                ->where('tenant_apps.is_hidden', true)
+                ->update(['tenant_app.is_hidden' => true]);
 
             // 3. Remove is_hidden column from tenant_apps
             Schema::table('tenant_apps', function (Blueprint $table): void {
@@ -41,13 +40,16 @@ return new class () extends Migration {
 
         // Copy values back (takes the first value per app)
         if (Schema::hasColumn('tenant_app', 'is_hidden')) {
-            DB::statement('
-                UPDATE tenant_apps
-                SET is_hidden = COALESCE(
-                    (SELECT is_hidden FROM tenant_app WHERE tenant_app.tenant_app_id = tenant_apps.id LIMIT 1),
-                    false
-                )
-            ');
+            $hiddenAppIds = DB::table('tenant_app')
+                ->where('is_hidden', true)
+                ->distinct()
+                ->pluck('tenant_app_id');
+
+            if ($hiddenAppIds->isNotEmpty()) {
+                DB::table('tenant_apps')
+                    ->whereIn('id', $hiddenAppIds)
+                    ->update(['is_hidden' => true]);
+            }
 
             // Remove is_hidden column from tenant_app pivot
             Schema::table('tenant_app', function (Blueprint $table): void {
