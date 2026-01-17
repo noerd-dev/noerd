@@ -31,7 +31,7 @@ new class extends Component {
     {
         $this->dispatch(
             event: 'noerdModal',
-            component: 'user-role-detail',
+            modalComponent: 'user-role-detail',
             source: self::COMPONENT,
             arguments: ['userRoleId' => $modelId, 'relationId' => $relationId],
         );
