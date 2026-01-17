@@ -1,4 +1,4 @@
-@props(['layout' => null, 'modelId' => null, 'showBlock' => true])
+@props(['layout' => null, 'modelId' => null, 'showBlock' => true, 'model' => null])
 
 @php
     $tabs = $layout['tabs'] ?? [['number' => 1]];
@@ -49,7 +49,7 @@
                     }
                 @endphp
 
-                @include('noerd::components.detail.block', $tabLayout)
+                @include('noerd::components.detail.block', array_merge($tabLayout, ['model' => $model]))
             @endif
 
             {{-- Render named slot for this tab if it exists (e.g., tab1, tab2, etc.) --}}
