@@ -1,4 +1,0 @@
-title: ''
-description: ''
-fields:
-  - { name: model.text, label: Text, type: translatableRichText, colspan: 12 }
