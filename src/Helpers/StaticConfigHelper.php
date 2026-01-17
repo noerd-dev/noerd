@@ -80,8 +80,26 @@ class StaticConfigHelper
 
     /**
      * Build dynamic Collections navigation based on .yml files in /content/collections/
+     * Only includes collections with hasPage: false
      */
     public static function collections(): array
+    {
+        return self::getCollectionsByHasPage(hasPage: false);
+    }
+
+    /**
+     * Build dynamic Page Collections navigation based on .yml files in /content/collections/
+     * Only includes collections with hasPage: true
+     */
+    public static function pageCollections(): array
+    {
+        return self::getCollectionsByHasPage(hasPage: true);
+    }
+
+    /**
+     * Get collections filtered by hasPage property
+     */
+    private static function getCollectionsByHasPage(bool $hasPage): array
     {
         $collectionsPath = base_path('app-configs/cms/collections');
 
@@ -100,11 +118,15 @@ class StaticConfigHelper
                 $collectionData = Yaml::parse($content ?: '');
 
                 if ($collectionData && isset($collectionData['titleList'])) {
-                    $dynamicNavigations[] = [
-                        'title' => $collectionData['titleList'],
-                        'link' => "/cms/collections?key={$collectionKey}",
-                        'icon' => 'icons.list-bullet',
-                    ];
+                    $collectionHasPage = $collectionData['hasPage'] ?? false;
+
+                    if ($collectionHasPage === $hasPage) {
+                        $dynamicNavigations[] = [
+                            'title' => $collectionData['titleList'],
+                            'link' => "/cms/collections?key={$collectionKey}",
+                            'icon' => 'icons.list-bullet',
+                        ];
+                    }
                 }
             } catch (Exception) {
                 // Skip invalid YAML files
@@ -262,6 +284,9 @@ class StaticConfigHelper
                     $dynamicType = $menu['dynamic'] ?? null;
                     if ($dynamicType === 'collections') {
                         $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::collections();
+                        unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
+                    } elseif ($dynamicType === 'page-collections') {
+                        $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::pageCollections();
                         unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
                     } elseif ($dynamicType === 'setup-collections') {
                         $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::setupCollections();
