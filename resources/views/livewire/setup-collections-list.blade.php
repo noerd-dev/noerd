@@ -62,7 +62,7 @@ new class extends Component
     {
         $this->dispatch(
             event: 'noerdModal',
-            component: 'setup-collection-detail',
+            modalComponent: 'setup-collection-detail',
             source: self::COMPONENT,
             arguments: ['entryId' => $modelId, 'collectionKey' => $this->collectionKey, 'relationId' => $relationId],
         );

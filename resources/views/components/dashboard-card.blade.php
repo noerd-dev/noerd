@@ -1,6 +1,6 @@
 <a @isset($external) href="{{$external}}" target="_blank" @else href="#/" @endisset
 @isset($component)
-    wire:click="$dispatch('noerdModal', {component: '{{$component}}', arguments: {{json_encode($arguments ?? [])}}})"
+    wire:click="$dispatch('noerdModal', {modalComponent: '{{$component}}', arguments: {{json_encode($arguments ?? [])}}})"
    @endisset
    class="{{$background ?? 'bg-white'}} border border-gray-300  hover:bg-gray-50 w-36 h-36 mr-6 mt-6 flex p-2 py-4 text-sm text-center rounded-lg items-center justify-center">
     <div class="m-auto">
