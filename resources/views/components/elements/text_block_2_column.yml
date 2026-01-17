@@ -1,5 +1,0 @@
-title: ''
-description: ''
-fields:
-  - { name: model.text1, label: noerd_label_text_left, type: translatableRichText, colspan: 6 }
-  - { name: model.text2, label: noerd_label_text_right, type: translatableRichText, colspan: 6 }

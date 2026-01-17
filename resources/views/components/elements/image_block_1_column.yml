@@ -1,5 +1,0 @@
-title: ''
-description: ''
-fields:
-  - { name: image, label: noerd_label_image, type: image, colspan: 12 }
-  - { name: model.videoUrl, label: YouTube URL links (optional), type: translatableText, colspan: 6 }
