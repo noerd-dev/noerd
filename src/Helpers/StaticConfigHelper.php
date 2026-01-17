@@ -238,6 +238,7 @@ class StaticConfigHelper
 
             $fallbackPath = base_path("app-configs/{$folder}/{$subPath}");
             if (file_exists($fallbackPath)) {
+                
                 return $fallbackPath;
             }
         }
