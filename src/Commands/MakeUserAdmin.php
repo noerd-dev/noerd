@@ -45,10 +45,10 @@ class MakeUserAdmin extends Command
 
         $this->info("Processing user: {$user->name} ({$user->email})");
 
-        // Check if user already is admin
-        if ($user->isAdmin()) {
-            $this->warn('User is already an admin.');
-            return self::SUCCESS;
+        // Check if user already is admin (but continue to ensure tenant assignment)
+        $isAlreadyAdmin = $user->isAdmin();
+        if ($isAlreadyAdmin) {
+            $this->warn('User is already an admin. Ensuring tenant assignment is correct...');
         }
 
         // Get all tenants the user has access to
@@ -128,7 +128,11 @@ class MakeUserAdmin extends Command
         $user->refresh();
         if ($user->isAdmin()) {
             $this->newLine();
-            $this->info("✅ User {$user->name} is now an admin with access to Setup!");
+            if ($isAlreadyAdmin) {
+                $this->info("✅ User {$user->name} remains an admin. Tenant assignment verified.");
+            } else {
+                $this->info("✅ User {$user->name} is now an admin with access to Setup!");
+            }
         } else {
             $this->error("❌ Failed to make user admin. Please check the database.");
             return self::FAILURE;
