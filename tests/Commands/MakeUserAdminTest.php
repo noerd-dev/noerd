@@ -86,17 +86,22 @@ it('handles user with multiple tenants', function (): void {
     expect(Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->exists())->toBeTrue();
 });
 
-it('recognizes user who is already admin', function (): void {
+it('recognizes user who is already admin but ensures tenant assignment', function (): void {
     // Create an admin user
     $user = User::factory()->adminUser()->create();
 
     expect($user->isAdmin())->toBeTrue();
 
-    // Run the command
+    // Run the command - should warn but continue to ensure tenant assignment
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput("Processing user: {$user->name} ({$user->email})")
-        ->expectsOutput("User is already an admin.")
+        ->expectsOutput('User is already an admin. Ensuring tenant assignment is correct...')
+        ->expectsOutput("✅ User {$user->name} remains an admin. Tenant assignment verified.")
         ->assertExitCode(0);
+
+    // Verify selected_tenant_id is set
+    $user->refresh();
+    expect($user->selected_tenant_id)->not->toBeNull();
 });
 
 it('handles existing admin profile correctly', function (): void {
@@ -173,9 +178,20 @@ it('handles user with partial admin access correctly', function (): void {
     // User should already be admin due to first tenant
     expect($user->isAdmin())->toBeTrue();
 
+    // Command should continue and grant admin on the second tenant too
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput('User is already an admin.')
+        ->expectsOutput('User is already an admin. Ensuring tenant assignment is correct...')
+        ->expectsOutput("  - User already has ADMIN access for tenant: {$tenant1->name}")
+        ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant2->name}")
+        ->expectsOutput("✅ User {$user->name} remains an admin. Tenant assignment verified.")
         ->assertExitCode(0);
+
+    // Verify user now has admin on both tenants
+    $user->refresh();
+    $tenant2Profile = $user->tenants()->where('tenant_id', $tenant2->id)->first();
+    expect($tenant2Profile->pivot->profile_id)->toBe(
+        Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->first()->id
+    );
 });
 
 it('provides detailed summary output', function (): void {
