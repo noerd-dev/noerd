@@ -252,17 +252,15 @@ trait HasModuleInstallation
             if (! $this->confirm('Do you want to continue anyway?', false)) {
                 return;
             }
-        } else {
-            // Create TenantApp entry
-            TenantApp::create([
-                'title' => $this->appTitle,
-                'name' => $appKey,
-                'icon' => $appIcon,
-                'route' => $appRoute,
-                'is_active' => true,
-            ]);
-            $this->line("<info>✓ TenantApp '{$appKey}' created in database</info>");
             $this->installedAppKey = $appKey;
+        } else {
+            // Publish and run migration instead of direct insert
+            $migrationFile = $this->publishMigration();
+            if ($migrationFile) {
+                if ($this->runSpecificMigration($migrationFile)) {
+                    $this->installedAppKey = $appKey;
+                }
+            }
         }
 
         // Copy navigation.yml to the target app-configs folder
@@ -279,6 +277,82 @@ trait HasModuleInstallation
             $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->targetAppKey}/navigation.yml");
             $this->installResults['copied_files']++;
         }
+    }
+
+    /**
+     * Get the path to the migration stub file.
+     */
+    protected function getMigrationStubPath(): string
+    {
+        return dirname($this->getSourceDir()) . '/stubs/add_' . $this->getModuleKey() . '_tenant_app.php.stub';
+    }
+
+    /**
+     * Copy migration stub to main migrations directory with current timestamp.
+     * Returns the filename of the created migration.
+     */
+    protected function publishMigration(): ?string
+    {
+        $stubPath = $this->getMigrationStubPath();
+
+        if (! file_exists($stubPath)) {
+            $this->warn("Migration stub not found: {$stubPath}");
+
+            return null;
+        }
+
+        $timestamp = date('Y_m_d_His');
+        $filename = "{$timestamp}_add_{$this->getModuleKey()}_tenant_app.php";
+        $targetPath = database_path("migrations/{$filename}");
+
+        // Check if migration already exists (by name pattern)
+        $existingMigrations = glob(database_path("migrations/*_add_{$this->getModuleKey()}_tenant_app.php"));
+        if (! empty($existingMigrations)) {
+            $this->warn("Migration for {$this->getModuleName()} already exists.");
+            if (! $this->confirm('Do you want to create a new migration anyway?', false)) {
+                return basename($existingMigrations[0]);
+            }
+        }
+
+        // Read stub and replace placeholders
+        $content = file_get_contents($stubPath);
+        $content = str_replace([
+            '{{APP_TITLE}}',
+            '{{APP_NAME}}',
+            '{{APP_ICON}}',
+            '{{APP_ROUTE}}',
+        ], [
+            $this->appTitle ?? $this->getDefaultAppTitle(),
+            $this->deriveAppKey($this->getModuleKey()),
+            $this->getAppIcon(),
+            $this->getAppRoute(),
+        ], $content);
+
+        file_put_contents($targetPath, $content);
+
+        $this->line("<info>✓ Migration published:</info> database/migrations/{$filename}");
+
+        return $filename;
+    }
+
+    /**
+     * Run only the specific migration file.
+     */
+    protected function runSpecificMigration(string $filename): bool
+    {
+        $this->line('');
+        $this->info("Running migration: {$filename}");
+
+        $exitCode = $this->call('migrate', [
+            '--path' => "database/migrations/{$filename}",
+            '--force' => true,
+        ]);
+
+        if ($exitCode === 0) {
+            $this->line("<info>✓ TenantApp created via migration</info>");
+        }
+
+        return $exitCode === 0;
     }
 
     /**
