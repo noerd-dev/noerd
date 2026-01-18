@@ -22,7 +22,10 @@
     $table = $listSettings['columns'] ?? [];
 
     // Get listActionMethod from Livewire component property
-    $componentAction = $this->listActionMethod ?? 'listAction';
+    // Check tableActionMethod first (set when opened from relation modal for selection)
+    $componentAction = $this->tableActionMethod === 'selectAction'
+        ? 'selectAction'
+        : ($this->listActionMethod ?? 'listAction');
 @endphp
 
 <div>
