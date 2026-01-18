@@ -33,10 +33,14 @@ trait Noerd
 
     public string $tableActionMethod = 'tableAction';
 
+    public string $listActionMethod = 'listAction';
+
     public ?string $selectTableConfig = null;
 
     public string $modalTitle = '';
 
+    public string $listId = '';
+    /* @deprecated */
     public string $tableId = '';
 
     #[Url]
@@ -50,15 +54,23 @@ trait Noerd
 
     public mixed $context = '';
 
+    /* @deprecated */
     #[On('reloadTable-' . self::COMPONENT)]
     public function reloadTable(): void
     {
         $this->dispatch('$refresh');
     }
 
+    #[On('refreshList-' . self::COMPONENT)]
+    public function refreshList(): void
+    {
+        $this->dispatch('$refresh');
+    }
+
     public function mount(): void
     {
-        $this->tableId = Str::random();
+        $this->listId = Str::random();
+        $this->tableId = $this->listId; // depcreated
         $this->loadActiveTableFilters();
     }
 
@@ -80,7 +92,7 @@ trait Noerd
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
-            $this->sortAsc = ! $this->sortAsc;
+            $this->sortAsc = !$this->sortAsc;
         } else {
             $this->sortAsc = true;
         }
@@ -88,16 +100,31 @@ trait Noerd
         $this->syncListQueryContext();
     }
 
+    /* @deprecated */
     public function storeActiveTableFilters(): void
     {
         session(['activeTableFilters' => $this->activeTableFilters]);
     }
 
+    /* @deprecated */
     public function loadActiveTableFilters(): void
     {
         $this->activeTableFilters = session('activeTableFilters', []);
     }
 
+    /* @deprecated */
+    public function storeActiveListFilters(): void
+    {
+        session(['activeListFilters' => $this->activeListFilters]);
+    }
+
+    /* @deprecated */
+    public function getActiveListFilters(): void
+    {
+        $this->activeListFilters = session('activeListFilters', []);
+    }
+
+    /* @deprecated */
     public function findTableAction(int|string $id): void
     {
         $tableData = $this->with()['rows'];
@@ -111,17 +138,41 @@ trait Noerd
         }
 
         $item = $tableData->getCollection()->get($id);
-        if (! $item) {
+        if (!$item) {
             return;
         }
         $this->{$method}($item->id);
     }
 
+    public function findListAction(int|string $id): void
+    {
+        $withData = $this->with();
+        $listData = $withData['listConfig']['rows'] ?? [];
+        $method = $this->listActionMethod;
+
+        if (is_array($listData)) {
+            $item = $listData[$id] ?? null;
+            if ($item) {
+                $this->{$method}($item['id']);
+            }
+
+            return;
+        }
+
+        $item = $listData->getCollection()->get($id);
+        if (!$item) {
+            return;
+        }
+        $this->{$method}($item->id);
+    }
+
+    // Todo remove from Trait
     public function changeEditMode(): void
     {
         $this->editMode = !$this->editMode;
     }
 
+    // Todo remove from Trait
     public function callAMethod(callable $callback)
     {
         return call_user_func($callback);
@@ -152,7 +203,8 @@ trait Noerd
         $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
 
         if ($source) {
-            $this->dispatch('reloadTable-' . $source);
+            $this->dispatch('reloadTable-' . $source); // deprecated
+            $this->dispatch('refreshList-' . $source); // deprecated
         }
     }
 
@@ -162,13 +214,31 @@ trait Noerd
         $this->{self::ID} = $model['id'];
     }
 
-    public function updateRow(): void {}
+    public function updateRow(): void
+    {
+    }
 
-    public function tableFilters(): void {}
+    public function tableFilters(): void
+    {
+    }
 
-    public function states(): void {}
+    public function states(): void
+    {
+    }
 
-    public function filters(): void {}
+    public function listFilters(): array
+    {
+        return [];
+    }
+
+    public function listStates(): array
+    {
+        return [];
+    }
+
+    public function filters(): void
+    {
+    }
 
     /**
      * Validate using rules from pageLayout YAML configuration.
@@ -194,9 +264,28 @@ trait Noerd
     }
 
     /**
+     * Build complete list configuration including rows and table state.
+     * Returns all data needed for the list.index component.
+     *
+     * @param \Illuminate\Pagination\LengthAwarePaginator|array $rows
+     */
+    protected function buildList(mixed $rows, ?string $customName = null): array
+    {
+        return [
+            'listId' => $this->listId,
+            'sortField' => $this->sortField,
+            'sortAsc' => $this->sortAsc,
+            'rows' => $rows,
+            'listSettings' => $this->getTableConfig($customName),
+        ];
+    }
+
+    /**
      * Get table configuration from YAML.
      * Uses self::COMPONENT by default, or a custom name if provided.
      * In select mode, uses selectTableConfig if set.
+     *
+     * @deprecated Use buildList() instead
      */
     protected function getTableConfig(?string $customName = null): array
     {
