@@ -1,5 +1,13 @@
 @props(['field', 'content' => ''])
 
+<style>
+    .tiptap-wrapper .ProseMirror p:empty,
+    .tiptap-wrapper .ProseMirror p:has(> br:only-child) {
+        margin: 0;
+        min-height: 1.5em;
+    }
+</style>
+
 <div
     x-data="{
         editor: null,
@@ -7,21 +15,23 @@
         linkUrl: '',
         showLinkInput: false,
         updatedAt: Date.now(),
-        emptyLineMarker: '\u00A0',
+        emptyLineMarker: '\u200B', // Zero-width space
         preserveEmptyLines(markdown) {
-            // Convert 3+ newlines (2+ empty lines) to paragraphs with non-breaking space
-            return markdown.replace(/\n{3,}/g, (match) => {
-                const extraLines = match.length - 2;
+            // Convert 4+ newlines to paragraphs with zero-width space marker
+            // In TipTap: each paragraph break = 2 newlines
+            // So 4 newlines = 1 empty paragraph, 6 newlines = 2 empty paragraphs
+            return markdown.replace(/\n{4,}/g, (match) => {
+                const emptyParagraphs = Math.floor((match.length - 2) / 2);
                 let result = '\n\n';
-                for (let i = 0; i < extraLines; i++) {
+                for (let i = 0; i < emptyParagraphs; i++) {
                     result += this.emptyLineMarker + '\n\n';
                 }
                 return result;
             });
         },
         restoreEmptyLines(markdown) {
-            // Convert non-breaking space paragraphs back to empty lines
-            return markdown.replace(new RegExp('\\n\\n' + this.emptyLineMarker + '(?=\\n|$)', 'g'), '\n');
+            // Convert zero-width space paragraphs back to double newlines
+            return markdown.replace(new RegExp(this.emptyLineMarker + '\\n\\n', 'g'), '\n\n');
         },
         init() {
             const processedContent = this.preserveEmptyLines(this.content);
