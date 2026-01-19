@@ -262,7 +262,7 @@ describe('Setup Collections List Component', function (): void {
 
     it('can open detail modal', function (): void {
         Volt::test('setup-collections-list', ['collectionKey' => 'example'])
-            ->call('tableAction')
+            ->call('listAction')
             ->assertDispatched('noerdModal');
     });
 });
@@ -384,7 +384,7 @@ describe('Setup Languages List Component', function (): void {
 
     it('can open detail modal', function (): void {
         Volt::test('setup-languages-list')
-            ->call('tableAction')
+            ->call('listAction')
             ->assertDispatched('noerdModal');
     });
 });

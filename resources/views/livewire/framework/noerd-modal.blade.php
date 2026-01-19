@@ -74,7 +74,7 @@ new class extends Component {
     public function downModal(string $componentName, ?string $source, ?string $modalKey): void // by ESC f.e.
     {
         $this->dispatch('close-modal-' . $componentName, $source, $modalKey);
-        $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
+        $this->dispatch('refreshList-' . $source); // Reload the table, if it is a table component
 
         /*
          return;
@@ -86,7 +86,7 @@ new class extends Component {
             }
         }
 
-        $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
+        $this->dispatch('refreshList-' . $source); // Reload the table, if it is a table component
         $this->markTopModal();
 
         // Check if no modals are open and reset modalOpen flag
@@ -114,7 +114,7 @@ new class extends Component {
             }
         }
 
-        $this->dispatch('reloadTable-' . $source); // Reload the table, if it is a table component
+        $this->dispatch('refreshList-' . $source); // Reload the table, if it is a table component
         $this->markTopModal();
 
         // Check if no modals are open and reset modalOpen flag

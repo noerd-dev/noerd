@@ -10,14 +10,14 @@ it('throws exception for non-existing table config', function (): void {
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
     $this->actingAs($user);
 
-    StaticConfigHelper::getTableConfig('___not_existing___');
+    StaticConfigHelper::getListConfig('___not_existing___');
 })->throws(Exception::class, 'Config file not found');
 
 it('loads table config for existing list', function (): void {
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
     $this->actingAs($user);
 
-    $config = StaticConfigHelper::getTableConfig('user-roles-list');
+    $config = StaticConfigHelper::getListConfig('user-roles-list');
     expect($config)->toBeArray()->and($config)->not->toBeEmpty();
 });
 

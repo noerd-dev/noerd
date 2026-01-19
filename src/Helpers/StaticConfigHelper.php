@@ -29,7 +29,7 @@ class StaticConfigHelper
         return Yaml::parse($content ?: '');
     }
 
-    public static function getTableConfig(string $tableName): array
+    public static function getListConfig(string $tableName): array
     {
         $yamlPath = self::findConfigPath("lists/{$tableName}.yml");
 
@@ -238,7 +238,7 @@ class StaticConfigHelper
 
             $fallbackPath = base_path("app-configs/{$folder}/{$subPath}");
             if (file_exists($fallbackPath)) {
-                
+
                 return $fallbackPath;
             }
         }

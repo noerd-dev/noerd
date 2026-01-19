@@ -25,7 +25,7 @@
         @if($this->tableFilters())
             <div class="flex ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
-                    <select wire:change="storeActiveTableFilters"
+                    <select wire:change="storeActiveListFilters"
                             wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
                             class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
                         <option value="">{{$tableFilter['label']}}</option>
@@ -50,7 +50,7 @@
             <div :class="isModal ? 'mr-22' : ''">
                 <x-noerd::buttons.primary class="!bg-brand-primary"
                                          style="height: 30px !important"
-                                         wire:click.prevent="{{$action ?? 'tableAction'}}(null, {{$relationId ?? null}})">
+                                         wire:click.prevent="{{$action ?? 'listAction'}}(null, {{$relationId ?? null}})">
                     <x-noerd::icons.plus class="text-white"/>
                     {{$newLabel}}
                 </x-noerd::buttons.primary>

@@ -20,6 +20,7 @@ trait Noerd
     public bool $showSuccessIndicator = false;
     #[Url(as: 'tab', keep: false, except: 1)]
     public int $currentTab = 1;
+
     public array $pageLayout;
     public $lastChangeTime;
 
@@ -31,17 +32,13 @@ trait Noerd
 
     public bool $sortAsc = false;
 
-    public string $tableActionMethod = 'tableAction';
-
     public string $listActionMethod = 'listAction';
 
-    public ?string $selectTableConfig = null;
+    public ?string $selectListConfig = null;
 
     public string $modalTitle = '';
 
     public string $listId = '';
-    /* @deprecated */
-    public string $tableId = '';
 
     #[Url]
     public ?string $filter = null;
@@ -54,13 +51,6 @@ trait Noerd
 
     public mixed $context = '';
 
-    /* @deprecated */
-    #[On('reloadTable-' . self::COMPONENT)]
-    public function reloadTable(): void
-    {
-        $this->dispatch('$refresh');
-    }
-
     #[On('refreshList-' . self::COMPONENT)]
     public function refreshList(): void
     {
@@ -70,8 +60,7 @@ trait Noerd
     public function mount(): void
     {
         $this->listId = Str::random();
-        $this->tableId = $this->listId; // depcreated
-        $this->loadActiveTableFilters();
+        $this->loadActiveListFilters();
     }
 
     public function updatedSearch(): void
@@ -100,14 +89,7 @@ trait Noerd
         $this->syncListQueryContext();
     }
 
-    /* @deprecated */
-    public function storeActiveTableFilters(): void
-    {
-        session(['activeTableFilters' => $this->activeTableFilters]);
-    }
-
-    /* @deprecated */
-    public function loadActiveTableFilters(): void
+    public function loadActiveListFilters(): void
     {
         $this->activeTableFilters = session('activeTableFilters', []);
     }
@@ -122,26 +104,6 @@ trait Noerd
     public function getActiveListFilters(): void
     {
         $this->activeListFilters = session('activeListFilters', []);
-    }
-
-    /* @deprecated */
-    public function findTableAction(int|string $id): void
-    {
-        $tableData = $this->with()['rows'];
-        $method = $this->tableActionMethod;
-
-        if (is_array($tableData)) {
-            $item = $tableData[$id];
-            $this->{$method}($item['id']);
-
-            return;
-        }
-
-        $item = $tableData->getCollection()->get($id);
-        if (!$item) {
-            return;
-        }
-        $this->{$method}($item->id);
     }
 
     public function findListAction(int|string $id): void
@@ -190,6 +152,7 @@ trait Noerd
     public function selectAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
+
         $this->dispatch('close-modal-' . self::COMPONENT);
     }
 
@@ -203,7 +166,7 @@ trait Noerd
         $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
 
         if ($source) {
-            $this->dispatch('reloadTable-' . $source); // deprecated
+            $this->dispatch('refreshList-' . $source); // deprecated
             $this->dispatch('refreshList-' . $source); // deprecated
         }
     }
@@ -269,31 +232,34 @@ trait Noerd
      *
      * @param \Illuminate\Pagination\LengthAwarePaginator|array $rows
      */
-    protected function buildList(mixed $rows, ?string $customName = null): array
+    protected function buildList(mixed $rows, string|array|null $config = null): array
     {
+        $listSettings = is_array($config)
+            ? $config
+            : $this->getListConfig($config);
+
         return [
             'listId' => $this->listId,
             'sortField' => $this->sortField,
             'sortAsc' => $this->sortAsc,
             'rows' => $rows,
-            'listSettings' => $this->getTableConfig($customName),
+            'listSettings' => $listSettings,
         ];
     }
 
     /**
-     * Get table configuration from YAML.
+     * Get list configuration from YAML.
      * Uses self::COMPONENT by default, or a custom name if provided.
-     * In select mode, uses selectTableConfig if set.
+     * In select mode, uses selectListConfig if set.
      *
-     * @deprecated Use buildList() instead
      */
-    protected function getTableConfig(?string $customName = null): array
+    protected function getListConfig(?string $customName = null): array
     {
-        if ($customName === null && $this->tableActionMethod === 'selectAction' && $this->selectTableConfig) {
-            return StaticConfigHelper::getTableConfig($this->selectTableConfig);
+        if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
+            return StaticConfigHelper::getListConfig($this->selectListConfig);
         }
 
-        return StaticConfigHelper::getTableConfig($customName ?? self::COMPONENT);
+        return StaticConfigHelper::getListConfig($customName ?? self::COMPONENT);
     }
 
     /**

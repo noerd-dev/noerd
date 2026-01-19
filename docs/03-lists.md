@@ -31,7 +31,7 @@ new class extends Component {
 
     // Called when a row is clicked or "New" button is pressed
     // Opens the detail modal for editing or creating
-    public function tableAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
@@ -42,7 +42,7 @@ new class extends Component {
     }
 
     // Provides data to the Blade view
-    // Must return 'rows' (paginated data) and 'tableConfig' (YAML config)
+    // Must return 'rows' (paginated data) and 'listSettings' (YAML config)
     public function with()
     {
         // Build the query with tenant filter, sorting, and search
@@ -60,11 +60,11 @@ new class extends Component {
             ->paginate(self::PAGINATION);
 
         // Load table configuration from YAML file
-        $tableConfig = $this->getTableConfig();
+        $listConfig = $this->getListConfig();
 
         return [
             'rows' => $rows,
-            'tableConfig' => $tableConfig,
+            'listSettings' => $listConfig,
         ];
     }
 } ?>
@@ -73,7 +73,7 @@ new class extends Component {
 <x-noerd::page :disableModal="$disableModal">
     <div>
         {{-- Renders the complete table: header, search, columns, pagination --}}
-        @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
+        @include('noerd::components.table.table-build', ['listSettings' => $listConfig])
     </div>
 </x-noerd::page>
 ```
@@ -86,12 +86,12 @@ new class extends Component {
 
 ## Key Methods
 
-### tableAction()
+### listAction()
 
 Opens the detail modal when a row is clicked or the "New" button is pressed:
 
 ```php
-public function tableAction(mixed $modelId = null, mixed $relationId = null): void
+public function listAction(mixed $modelId = null, mixed $relationId = null): void
 {
     $this->dispatch(
         event: 'noerdModal',
@@ -106,7 +106,7 @@ public function tableAction(mixed $modelId = null, mixed $relationId = null): vo
 
 Returns data for the view. Must include:
 - `rows`: Paginated query results
-- `tableConfig`: YAML configuration loaded via `$this->getTableConfig()`
+- `tableConfig`: YAML configuration loaded via `$this->getListConfig()`
 
 ```php
 public function with()
@@ -118,7 +118,7 @@ public function with()
 
     return [
         'rows' => $rows,
-        'tableConfig' => $this->getTableConfig(),
+        'listSettings' => $this->getListConfig(),
     ];
 }
 ```
@@ -162,7 +162,7 @@ columns:
 ```blade
 <x-noerd::page :disableModal="$disableModal">
     <div>
-        @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
+        @include('noerd::components.table.table-build', ['listSettings' => $listConfig])
     </div>
 </x-noerd::page>
 ```

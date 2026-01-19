@@ -11,7 +11,7 @@ new class extends Component {
 
     public const COMPONENT = '{{models}}-list';
 
-    public function tableAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
@@ -30,17 +30,17 @@ new class extends Component {
             })
             ->paginate(self::PAGINATION);
 
-        $tableConfig = $this->getTableConfig();
+        $listConfig = $this->getListConfig();
 
         return [
             'rows' => $rows,
-            'tableConfig' => $tableConfig,
+            'listSettings' => $listConfig,
         ];
     }
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">
     <div>
-        @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
+        @include('noerd::components.table.table-build', ['listSettings' => $listConfig])
     </div>
 </x-noerd::page>

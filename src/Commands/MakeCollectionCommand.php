@@ -86,13 +86,7 @@ class MakeCollectionCommand extends Command
             default: '',
         );
 
-        // 7. Get hasPage
-        $hasPage = confirm(
-            label: 'Link to CMS pages?',
-            default: false,
-        );
-
-        // 8. Add fields interactively
+        // 7. Add fields interactively
         $fields = [];
         $this->newLine();
         $this->info('Now add fields to the collection:');
@@ -122,7 +116,7 @@ class MakeCollectionCommand extends Command
             'key' => $key,
             'buttonList' => $buttonList,
             'description' => $description,
-            'hasPage' => $hasPage,
+            'hasPage' => false,
             'fields' => $fields,
         ];
 

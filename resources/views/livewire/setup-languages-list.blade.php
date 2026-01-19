@@ -17,11 +17,11 @@ new class extends Component
         SetupLanguage::ensureDefaultLanguages();
 
         if (request()->create) {
-            $this->tableAction();
+            $this->listAction();
         }
     }
 
-    public function tableAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
@@ -40,17 +40,12 @@ new class extends Component
             ->orderBy('name')
             ->paginate(self::PAGINATION);
 
-        $tableConfig = $this->getTableConfig();
-
         return [
-            'rows' => $rows,
-            'tableConfig' => $tableConfig,
+            'listConfig' => $this->buildList($rows),
         ];
     }
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">
-    <div>
-        @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
-    </div>
+    <x-noerd::list />
 </x-noerd::page>

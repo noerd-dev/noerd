@@ -124,7 +124,7 @@ it('deletes a user role', function () use ($testSettings): void {
     Volt::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id)
         ->call('delete')
-        ->assertDispatched('reloadTable-user-roles-list');
+        ->assertDispatched('refreshList-user-roles-list');
 
     $this->assertDatabaseMissing('user_roles', [
         'id' => $userRole->id,
@@ -248,7 +248,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
     Volt::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id)
         ->call('delete')
-        ->assertDispatched('reloadTable-user-roles-list');
+        ->assertDispatched('refreshList-user-roles-list');
 });
 
 it('uses correct component constants', function () use ($testSettings): void {
