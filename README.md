@@ -13,7 +13,8 @@ views that can be configured entirely through YAML files, eliminating the need f
 
 ## Demo
 You can access a demo here. The demo has assigned two apps, a Content-Management-System and a Study-App.
-TODO
+
+https://demo.noerd.dev
 
 ## Installation
 
