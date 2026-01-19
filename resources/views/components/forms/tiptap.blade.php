@@ -7,7 +7,24 @@
         linkUrl: '',
         showLinkInput: false,
         updatedAt: Date.now(),
+        emptyLineMarker: '\u00A0',
+        preserveEmptyLines(markdown) {
+            // Convert 3+ newlines (2+ empty lines) to paragraphs with non-breaking space
+            return markdown.replace(/\n{3,}/g, (match) => {
+                const extraLines = match.length - 2;
+                let result = '\n\n';
+                for (let i = 0; i < extraLines; i++) {
+                    result += this.emptyLineMarker + '\n\n';
+                }
+                return result;
+            });
+        },
+        restoreEmptyLines(markdown) {
+            // Convert non-breaking space paragraphs back to empty lines
+            return markdown.replace(new RegExp('\\n\\n' + this.emptyLineMarker + '(?=\\n|$)', 'g'), '\n');
+        },
         init() {
+            const processedContent = this.preserveEmptyLines(this.content);
             this.editor = new window.TipTap.Editor({
                 element: this.$refs.editor,
                 extensions: [
@@ -23,7 +40,7 @@
                         html: false,
                     }),
                 ],
-                content: this.content,
+                content: processedContent,
                 contentType: 'markdown',
                 editorProps: {
                     attributes: {
@@ -31,7 +48,8 @@
                     },
                 },
                 onUpdate: ({ editor }) => {
-                    this.content = editor.getMarkdown();
+                    const rawMarkdown = editor.getMarkdown();
+                    this.content = this.restoreEmptyLines(rawMarkdown);
                     this.updatedAt = Date.now();
                     this.$wire.set('{{ $field }}', this.content);
                 },
