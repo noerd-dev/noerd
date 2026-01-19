@@ -2,31 +2,15 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
 use Noerd\Noerd\Models\User;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
-
     use Noerd;
 
     public const COMPONENT = 'users-list';
 
-    public function mount()
-    {
-        $this->sortField = 'name';
-        $this->sortAsc = true;
-
-        if ((int)request()->userId) {
-            $this->tableAction(request()->userId);
-        }
-
-        if (request()->create) {
-            $this->tableAction();
-        }
-    }
-
-    public function tableAction(mixed $userId = null, mixed $relationId = null): void
+    public function listAction(mixed $userId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
@@ -38,7 +22,7 @@ new class extends Component {
 
     public function loginAsUser($userId)
     {
-        if (!Auth::user()->isAdmin()) {
+        if (! Auth::user()->isAdmin()) {
             abort(401);
         }
 
@@ -65,26 +49,34 @@ new class extends Component {
         $tenants = Auth::user()->adminTenants();
         $rows = User::whereHas('tenants', function ($relationQuery) use ($tenants) {
             $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
-        })->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')
-            ->when($this->search, function ($query): void {
-                $query->where(function ($query): void {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
-            })
+        })->when($this->search, function ($query): void {
+            $query->where(function ($query): void {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%');
+            });
+        })
             ->with(['roles', 'tenants'])
             ->paginate(self::PAGINATION);
 
-        $tableConfig = $this->getTableConfig();
-
         return [
-            'rows' => $rows,
-            'tableConfig' => $tableConfig,
+            'listConfig' => $this->buildList($rows),
         ];
     }
 
-} ?>
+    public function rendering(): void
+    {
+        if ((int) request()->userId) {
+            $this->listAction(request()->userId);
+        }
+
+        if (request()->create) {
+            $this->listAction();
+        }
+    }
+}; ?>
 
 <x-noerd::page :disableModal="$disableModal">
-    @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
+
+    <x-noerd::list />
+
 </x-noerd::page>

@@ -11,4 +11,4 @@ columns:
   - field: action
     width: 5
     actions:
-      - { label: noerd_label_edit, heroicon: pencil-square, action: tableAction }
+      - { label: noerd_label_edit, heroicon: pencil-square, action: listAction }

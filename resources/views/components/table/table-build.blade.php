@@ -1,32 +1,32 @@
 @php
     // Auto-extract values from tableConfig if provided
-    if (isset($tableConfig) && is_array($tableConfig)) {
-        $title = $title ?? __($tableConfig['title'] ?? '');
-        $newLabel = $newLabel ?? __($tableConfig['newLabel'] ?? '');
-        $redirectAction = $redirectAction ?? ($tableConfig['redirectAction'] ?? '');
-        $disableSearch = $disableSearch ?? ($tableConfig['disableSearch'] ?? false);
-        $description = $description ?? ($tableConfig['description'] ?? false);
-        $table = $table ?? ($tableConfig['columns'] ?? []);
+    if (isset($listConfig) && is_array($listConfig)) {
+        $title = $title ?? __($listConfig['title'] ?? '');
+        $newLabel = $newLabel ?? __($listConfig['newLabel'] ?? '');
+        $redirectAction = $redirectAction ?? ($listConfig['redirectAction'] ?? '');
+        $disableSearch = $disableSearch ?? ($listConfig['disableSearch'] ?? false);
+        $description = $description ?? ($listConfig['description'] ?? false);
+        $table = $table ?? ($listConfig['columns'] ?? []);
     }
 
-    // Get tableActionMethod from Livewire component property
-    $componentAction = $this->tableActionMethod ?? 'tableAction';
+    // Get listActionMethod from Livewire component property
+    $componentAction = $this->listActionMethod ?? 'listAction';
 @endphp
 
 <div>
     @include('noerd::components.table.list-header')
 
     <div x-data="{
-        selectedRow{{$tableId}}: 0,
+        selectedRow{{$listId}}: 0,
         isInsideModal: false,
     }"
          x-init="
-        $store.app.setId('{{$tableId}}');
+        $store.app.setId('{{$listId}}');
         isInsideModal = !!$el.closest('#modal') || !!$el.closest('[modal]');"
-         @mouseenter="$store.app.setId('{{$tableId}}')"
-         @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$tableId}}++"
-         @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$tableId}}--"
-         @keydown.window.enter.prevent="($store.app.currentId == '{{$tableId}}') && (isInsideModal || !$store.app.modalOpen) && $wire.findTableAction(selectedRow{{$tableId}})"
+         @mouseenter="$store.app.setId('{{$listId}}')"
+         @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$listId}}++"
+         @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$listId}}--"
+         @keydown.window.enter.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && $wire.findListAction(selectedRow{{$listId}})"
     >
 
         @if(isset($hideHead) && $hideHead === true)
@@ -71,8 +71,8 @@
                                         <tbody>
                                         @foreach($models ?? $rows as $key => $row)
                                             <tr :key="{{$key}}"
-                                                :class="{'bg-gray-100!': selectedRow{{$tableId}} == {{$key}} }"
-                                                @click="selectedRow{{$tableId}} = '{{$key}}'"
+                                                :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
+                                                @click="selectedRow{{$listId}} = '{{$key}}'"
                                                 class="group hover:bg-brand-bg border border-black/10">
                                                 @foreach($table as $index => $column)
                                                     @include('noerd::components.table.table-cell',
@@ -141,8 +141,8 @@
 
                             @foreach($models ?? $rows as $key => $row)
                                 <tr :key="{{$key}}"
-                                    :class="{'bg-gray-100!': selectedRow{{$tableId}} == {{$key}} }"
-                                    @click="selectedRow{{$tableId}} = '{{$key}}'"
+                                    :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
+                                    @click="selectedRow{{$listId}} = '{{$key}}'"
                                     class="group hover:bg-brand-bg border border-black/10">
                                     @foreach($table as $index => $column)
                                         @include('noerd::components.table.table-cell',

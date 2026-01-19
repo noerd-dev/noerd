@@ -1,25 +1,42 @@
 # noerd/noerd
 
-noerd is a Laravel Livewire framework that offers a simple admin panel with lists and detailed views as well as tenant management.
+Noerd is a Laravel Livewire boilerplate for building admin panels efficiently. It provides pre-built list and detail
+views that can be configured entirely through YAML files, eliminating the need for repetitive CRUD code.
 
-Install the package
-```
+## Key Features
+
+- **List Views** – Display data in configurable tables with minimal setup
+- **Detail Views** – Render individual records with flexible field layouts
+- **YAML Configuration** – Define columns, fields, and behavior through configuration files instead of PHP code
+- **Multi-Tenant Architecture** – Support for multiple tenants with app-based access control
+- **Built on Laravel & Livewire** – Leverages the full power of Laravel's ecosystem with reactive Livewire components
+
+## Demo
+You can access a demo here. The demo has assigned two apps, a Content-Management-System and a Study-App.
+TODO
+
+## Installation
+
+```bash
 composer require noerd/noerd
 php artisan noerd:install
 ```
 
-Add an admin user (user must be registered first)
-```
-php artisan noerd:make-admin {userId}
+The installation wizard will guide you through creating an admin user and an initial tenant.
+
+## Usage
+
+Noerd is designed around the concept of apps, where each app has its own navigation defined in a YAML file.
+
+### Creating an App
+
+```bash
+php artisan noerd:create-app
 ```
 
-To create a new app
-```
-php artisan noerd:create-app 
-```
+### Assigning Apps to Tenants
 
-Assign apps to tenants
-```
-php artisan noerd:assign-apps-to-tenant  
+```bash
+php artisan noerd:assign-apps-to-tenant
 ```
 

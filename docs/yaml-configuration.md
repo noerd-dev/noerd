@@ -346,7 +346,7 @@ The `StaticConfigHelper` class loads YAML configurations.
 $fields = StaticConfigHelper::getComponentFields('user-detail');
 
 // Load list configuration
-$config = StaticConfigHelper::getTableConfig('users-list');
+$config = StaticConfigHelper::getListConfig('users-list');
 
 // Load navigation
 $nav = StaticConfigHelper::getNavigationStructure();

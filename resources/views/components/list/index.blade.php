@@ -21,11 +21,7 @@
     $description = $listSettings['description'] ?? false;
     $table = $listSettings['columns'] ?? [];
 
-    // Get listActionMethod from Livewire component property
-    // Check tableActionMethod first (set when opened from relation modal for selection)
-    $componentAction = $this->tableActionMethod === 'selectAction'
-        ? 'selectAction'
-        : ($this->listActionMethod ?? 'listAction');
+    $listAction = $this->listActionMethod ?? 'listAction';
 @endphp
 
 <div>
@@ -52,7 +48,7 @@
                     'newLabel' => $newLabel ?? null,
                     'disableSearch' => $disableSearch ?? false,
                     'relationId' => $relationId ?? null,
-                    'action' => $action ?? $componentAction,
+                    'action' => $action ?? $listAction,
                     'states' => $this->listStates(),
                     'listFilters' => $this->listFilters(),
                 ])
@@ -98,7 +94,7 @@
                                                         'id' => $row['id'],
                                                         'columnValue' => $column['field'],
                                                         'type' => $column['type'] ?? 'text',
-                                                        'action' => $column['action'] ?? $componentAction,
+                                                        'action' => $column['action'] ?? $listAction,
                                                         'actions' => $column['actions'] ?? null,
                                                         'columnConfig' => $column,
                                                         'rowData' => $row,

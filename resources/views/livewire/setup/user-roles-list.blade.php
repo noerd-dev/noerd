@@ -1,33 +1,16 @@
 <?php
 
-use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Models\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
+use Noerd\Noerd\Models\UserRole;
 use Noerd\Noerd\Traits\Noerd;
 
 new class extends Component {
-
     use Noerd;
 
     public const COMPONENT = 'user-roles-list';
 
-    public function mount()
-    {
-        if (!Auth::user()->isAdmin()) {
-            abort(401);
-        }
-
-        if ((int)request()->customerId) {
-            $this->tableAction(request()->customerId);
-        }
-
-        if (request()->create) {
-            $this->tableAction();
-        }
-    }
-
-    public function tableAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
@@ -39,20 +22,33 @@ new class extends Component {
 
     public function with(): array
     {
-        $tenants = Auth::user()->adminTenants();
-        $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)->orderBy('name')
+        $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)
+            ->orderBy('name')
             ->paginate(self::PAGINATION);
 
-        $tableConfig = $this->getTableConfig();
-
         return [
-            'rows' => $rows,
-            'tableConfig' => $tableConfig,
+            'listConfig' => $this->buildList($rows),
         ];
     }
 
-} ?>
+    public function rendering(): void
+    {
+        if (! Auth::user()->isAdmin()) {
+            abort(401);
+        }
+
+        if ((int) request()->userRoleId) {
+            $this->listAction(request()->userRoleId);
+        }
+
+        if (request()->create) {
+            $this->listAction();
+        }
+    }
+}; ?>
 
 <x-noerd::page :disableModal="$disableModal">
-    @include('noerd::components.table.table-build', ['tableConfig' => $tableConfig])
+
+    <x-noerd::list />
+
 </x-noerd::page>

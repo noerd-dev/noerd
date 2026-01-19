@@ -5,8 +5,11 @@ namespace Noerd\Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\search;
 
+use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantApp;
 
 class CreateTenantApp extends Command
@@ -98,8 +101,12 @@ class CreateTenantApp extends Command
                 ['Created', $tenantApp->created_at->format('Y-m-d H:i:s')],
             ]);
 
-            $this->newLine();
-            $this->comment('Run "php artisan noerd:assign-apps-to-tenant" to assign this app to a tenant.');
+            if (!app()->runningUnitTests()) {
+                $this->askToAssignTenants($tenantApp);
+            } else {
+                $this->newLine();
+                $this->comment('Run "php artisan noerd:assign-apps-to-tenant" to assign this app to a tenant.');
+            }
 
             return self::SUCCESS;
         } catch (Exception $e) {
@@ -133,5 +140,45 @@ class CreateTenantApp extends Command
     {
         // Replace spaces and hyphens with underscores and convert to uppercase
         return mb_strtoupper(preg_replace('/[\s-]+/', '_', mb_trim($name)));
+    }
+
+    protected function askToAssignTenants(TenantApp $tenantApp): void
+    {
+        $tenants = Tenant::orderBy('name')->get();
+
+        if ($tenants->isEmpty()) {
+            $this->newLine();
+            $this->comment('No tenants found to assign.');
+            return;
+        }
+
+        $this->newLine();
+
+        if (!confirm('Would you like to assign this app to tenants?', default: true)) {
+            $this->comment('Run "php artisan noerd:assign-apps-to-tenant" later to assign.');
+            return;
+        }
+
+        $tenantChoices = [];
+        $allTenantIds = [];
+        foreach ($tenants as $tenant) {
+            $tenantChoices[$tenant->id] = $tenant->name;
+            $allTenantIds[] = $tenant->id;
+        }
+
+        $selectedTenantIds = multiselect(
+            label: 'Select tenants to assign this app to:',
+            options: $tenantChoices,
+            default: $allTenantIds,
+            scroll: 10,
+            required: false,
+        );
+
+        if (!empty($selectedTenantIds)) {
+            $tenantApp->tenants()->sync($selectedTenantIds);
+            $this->info('✅ App assigned to ' . count($selectedTenantIds) . ' tenant(s).');
+        } else {
+            $this->comment('No tenants selected.');
+        }
     }
 }
