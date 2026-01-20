@@ -7,11 +7,17 @@
 @php
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
-    $baseKey = str_replace('model.', '', $name);
     $selectedLang = session('selectedLanguage') ?? 'de';
-    // Access model via $this (Livewire component) since $model may not be in scope
-    $modelData = $this->model ?? $model ?? [];
-    $contentValue = $modelData[$baseKey][$selectedLang] ?? '';
+
+    // Extract the field key from dot notation (e.g., 'summaryData.content' -> 'content', 'model.content' -> 'content')
+    $fieldKey = str_contains($name, '.') ? substr($name, strpos($name, '.') + 1) : $name;
+
+    // Get the data array name (e.g., 'summaryData.content' -> 'summaryData', 'model.content' -> 'model')
+    $dataArrayName = str_contains($name, '.') ? substr($name, 0, strpos($name, '.')) : 'model';
+
+    // Access the data from the Livewire component
+    $dataArray = $this->$dataArrayName ?? $model ?? [];
+    $contentValue = $dataArray[$fieldKey][$selectedLang] ?? '';
 @endphp
 
 <div wire:key="{{ $name . $selectedLang }}" {{ $attributes->merge(['class' => '']) }}>
