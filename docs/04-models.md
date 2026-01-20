@@ -208,7 +208,7 @@ fields:
 | `richText` | TipTap rich text editor |
 | `checkbox` | Checkbox |
 | `select` | Dropdown |
-| `enum` | Enum dropdown |
+| `picklist` | Dynamic dropdown |
 | `relation` | Relation select with modal |
 | `image` | Image upload |
 

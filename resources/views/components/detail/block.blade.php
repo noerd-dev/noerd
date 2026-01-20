@@ -64,13 +64,6 @@
                     @elseif($field['type'] === 'belongsToMany')
                         {{-- many-to-many relationship with tag selection UI --}}
                         @include('noerd::components.forms.belongs-to-many', ['field' => $field])
-                    @elseif($field['type'] === 'enum')
-                        @php
-                            if (isset($field['enumClass']) && !isset($field['options'])) {
-                                $field['options'] = $field['enumClass']::cases();
-                            }
-                        @endphp
-                        @include('noerd::components.forms.input-enum', ['field' => $field])
                     @elseif($field['type'] === 'checkbox')
                         @include('noerd::components.forms.checkbox', ['field' => $field])
                     @elseif($field['type'] === 'image')
