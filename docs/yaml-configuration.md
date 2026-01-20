@@ -145,8 +145,7 @@ fields:
 | `translatableTextarea` | Translatable textarea |
 | `checkbox` | Checkbox |
 | `select` | Dropdown select |
-| `enum` | Enum select |
-| `picklist` | Multi-select |
+| `picklist` | Dynamic dropdown |
 | `relation` | Relationship select |
 | `belongsToMany` | Many-to-many relationship |
 | `collection-select` | Collection select |
@@ -165,12 +164,6 @@ fields:
     required: true
     colspan: 6
     placeholder: email@example.com
-
-  - name: model.status
-    label: noerd_label_status
-    type: enum
-    enumClass: App\Enums\Status
-    colspan: 6
 
   - name: model.category_id
     label: noerd_label_category
@@ -191,15 +184,6 @@ fields:
 | `tab` | int | Tab number (default: 1) |
 | `showIf` | string | Condition to show |
 | `showIfNot` | string | Condition to hide |
-
-### Enum Fields
-
-```yaml
-- name: model.status
-  label: noerd_label_status
-  type: enum
-  enumClass: App\Enums\OrderStatus
-```
 
 ### Relation Fields
 
