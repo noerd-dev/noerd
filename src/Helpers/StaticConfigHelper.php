@@ -293,6 +293,10 @@ class StaticConfigHelper
                         $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::setupCollections();
                         unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
                     }
+
+                    // Filter navigation items by config attribute
+                    $navigations = $navigationStructure[$i]['block_menus'][$j]['navigations'] ?? [];
+                    $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::filterNavigationByConfig($navigations);
                 }
             }
 
@@ -313,6 +317,21 @@ class StaticConfigHelper
         }
 
         return $navigationStructure;
+    }
+
+    /**
+     * Filter navigation items based on the config attribute.
+     * Items with a config attribute are only included if the config value is truthy.
+     */
+    private static function filterNavigationByConfig(array $navigations): array
+    {
+        return array_values(array_filter($navigations, function ($nav) {
+            if (! isset($nav['config'])) {
+                return true;
+            }
+
+            return (bool) config($nav['config']);
+        }));
     }
 
     /**

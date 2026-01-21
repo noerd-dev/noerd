@@ -6,7 +6,7 @@
     - title: noerd_nav_administration
       navigations:
         - { title: noerd_nav_users, route: users, heroicon: users }
-        - { title: noerd_nav_user_roles, route: user-roles, heroicon: shield-check }
+        - { title: noerd_nav_user_roles, route: user-roles, heroicon: shield-check, config: noerd.features.roles }
         - { title: noerd_nav_languages, route: setup-languages, heroicon: language }
     - title: noerd_nav_data_management
       dynamic: setup-collections

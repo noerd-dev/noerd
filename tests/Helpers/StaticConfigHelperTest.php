@@ -51,3 +51,33 @@ it('returns null for navigation when no app selected', function (): void {
     $navigation = StaticConfigHelper::getNavigationStructure();
     expect($navigation)->toBeNull();
 });
+
+it('hides navigation items when config value is false', function (): void {
+    config()->set('noerd.features.roles', false);
+
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
+    $this->actingAs($user);
+
+    $navigation = StaticConfigHelper::getNavigationStructure();
+
+    // Find user-roles in navigation
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
+
+    expect($navTitles)->not->toContain('noerd_nav_user_roles');
+});
+
+it('shows navigation items when config value is true', function (): void {
+    config()->set('noerd.features.roles', true);
+
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
+    $this->actingAs($user);
+
+    $navigation = StaticConfigHelper::getNavigationStructure();
+
+    // Find user-roles in navigation
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
+
+    expect($navTitles)->toContain('noerd_nav_user_roles');
+});
