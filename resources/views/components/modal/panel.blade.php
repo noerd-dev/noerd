@@ -11,10 +11,6 @@
     x-transition:leave-end="opacity-0"
     @class([
         'fixed transition-opacity w-full ml-auto inset-0 flex z-50',
-        'mt-0!' => $size === 'lg',
-        //'lg:ml-[340px] modal-full-sidebar' => $iteration >= 1,
-       // 'lg:ml-[324px] modal-full-sidebar' => $iteration === 2,
-       // 'lg:ml-[344px] modal-full-sidebar' => $iteration === 3,
     ])
 >
     <!-- Overlay -->
@@ -69,8 +65,6 @@
             <!-- Close Button -->
             <button @click="show = !show" wire:click.prevent="downModal('{{$modal}}', '{{$source}}', '{{$modalKey}}')" type="button" @class([
                 'absolute right-0 top-4 pt-2 pr-6 mx-auto my-auto',
-            //    'right-1 top-2!' => $size === 'lg',
-            //    'ml-[710px]' => $size === 'sm',
         ])>
                 <div
                     class="hover:bg-gray-100 z-50 hover:text-black border rounded-sm p-1.5 text-gray-600 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">

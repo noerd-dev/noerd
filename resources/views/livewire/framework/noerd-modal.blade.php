@@ -5,32 +5,8 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 
 new class extends Component {
-    // Sizes
-    private const SIZES = [
-        // 'product-group-select-modal' => ProductGroupSelectModal::SIZE,
-        // 'menu::livewire.deliverytime-detail' => DeliverytimeComponent::SIZE,
-        // 'menu::livewire.deliverarea-detail' => 'sm',
-        // 'additional-field-detail' => 'sm',
-        // 'new-client-detail' => 'sm',
-        'module' => 'sm',
-    ];
-
-    //  #[Url(keep: false, except: '')]
-    //  public string $list = '';
 
     public array $modals = [];
-
-    // public function mount(): void
-    // {
-    //     $components = explode(',', $this->list);
-    //     foreach ($components as $component) {
-    //         // Get array key by value
-    //         $key = array_search($component, self::ROUTE_MAPPINGS);
-    //        if ($key) {
-    //            $this->bootModal($key);
-    //        }
-    //    }
-    // }
 
     #[On('noerdModal')]
     public function bootModal(
@@ -39,23 +15,13 @@ new class extends Component {
         array   $arguments = [],
     ): void
     {
-        // Nur fortfahhren, wenn noch kein Modal mit dem componentName geöffnet ist
-        //if (isset($this->modals[$modalComponent]) && $this->modals[$modalComponent]['show'] === true) {
-        //    return;
-        //}
+        dump($modalComponent);
         $modal = [];
         $modal['componentName'] = $modalComponent;
         $modal['arguments'] = $arguments;
         $modal['show'] = true;
         $modal['topModal'] = false;
         $modal['source'] = $source;
-        $modal['size'] = self::SIZES[$modalComponent] ?? 'lg';
-        //$key = $component;
-        //foreach ($arguments as $argument) {
-        //    if (is_string($argument) || is_numeric($argument)) {
-        //        $key .= '-' . $argument;
-        //    }
-        //}
         $modal['key'] = md5(serialize($arguments));
 
         $iteration = 1;
@@ -75,33 +41,6 @@ new class extends Component {
     {
         $this->dispatch('close-modal-' . $componentName, $source, $modalKey);
         $this->dispatch('refreshList-' . $source); // Reload the table, if it is a table component
-
-        /*
-         return;
-        // TOOD: the downModal2 is currently needed to remove the URL Parameter again
-        $modals = $this->modals;
-        foreach ($modals as $modal) {
-            if ($modal['componentName'] === $componentName && $modal['show'] === true) {
-                unset($this->modals[$modal['key']]);
-            }
-        }
-
-        $this->dispatch('refreshList-' . $source); // Reload the table, if it is a table component
-        $this->markTopModal();
-
-        // Check if no modals are open and reset modalOpen flag
-        $hasOpenModal = false;
-        foreach ($this->modals as $modal) {
-            if ($modal['show'] === true) {
-                $hasOpenModal = true;
-                break;
-            }
-        }
-
-        if (!$hasOpenModal) {
-            //       $this->dispatch('modal-closed-global');
-        }
-        */
     }
 
     #[On('downModal2')]
@@ -165,8 +104,8 @@ new class extends Component {
 <div x-data="{selectedRow: 0, isDragging: false, isLoading: false}">
     @isset($modals)
         @foreach($modals as $key => $modal)
-
             @teleport('noerdmodal')
+
             <div x-data="{ show: true }" wire:key="{{$modal['key']}}"
                  @if($modal['show'] && $modal['topModal'])
                      x-init="$store.app.modalOpen = true"
@@ -176,7 +115,7 @@ new class extends Component {
             >
                 <div x-show="show">
                     <x-noerd::modal>
-                        <x-noerd::modal.panel :size="$modal['size']" :ml="$modal['arguments']['ml'] ?? ''"
+                        <x-noerd::modal.panel :ml="$modal['arguments']['ml'] ?? ''"
                                               :iteration="$modal['iteration']"
                                               :source="$modal['source']"
                                               :modalKey="$modal['key']"
@@ -188,6 +127,7 @@ new class extends Component {
                     </x-noerd::modal>
                 </div>
             </div>
+
             @endteleport
 
         @endforeach
