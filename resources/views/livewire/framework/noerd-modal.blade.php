@@ -15,7 +15,6 @@ new class extends Component {
         array   $arguments = [],
     ): void
     {
-        dump($modalComponent);
         $modal = [];
         $modal['componentName'] = $modalComponent;
         $modal['arguments'] = $arguments;
