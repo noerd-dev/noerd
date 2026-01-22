@@ -54,8 +54,6 @@
         <livewire:layout.sidebar></livewire:layout.sidebar>
     @endif
 
-    <noerdmodal></noerdmodal> <!-- teleport element, do not remove -->
-
     <livewire:layout.top-bar></livewire:layout.top-bar>
 </div>
 

@@ -23,6 +23,15 @@ new class extends Component {
         $modal['source'] = $source;
         $modal['key'] = md5(serialize($arguments));
 
+        // DEBUG
+        \Log::debug('[noerd-modal Debug] bootModal', [
+            'component' => $modalComponent,
+            'arguments' => $arguments,
+            'serialized' => serialize($arguments),
+            'key' => $modal['key'],
+            'existing_modal_keys' => array_keys($this->modals),
+        ]);
+
         $iteration = 1;
         foreach ($this->modals as $checkModal) {
             if ($checkModal['show'] === true) {
@@ -103,9 +112,7 @@ new class extends Component {
 <div x-data="{selectedRow: 0, isDragging: false, isLoading: false}">
     @isset($modals)
         @foreach($modals as $key => $modal)
-            @teleport('noerdmodal')
-
-            <div x-data="{ show: true }" wire:key="{{$modal['key']}}"
+            <div x-data="{ show: true }" wire:key="modal-wrapper-{{$modal['key']}}"
                  @if($modal['show'] && $modal['topModal'])
                      x-init="$store.app.modalOpen = true"
                  @close-modal-{{$modal['componentName']}}.prevent.stop="$wire.downModal('{{$modal['componentName']}}', '{{$modal['source']}}', '{{$modal['key']}}')"
@@ -119,16 +126,13 @@ new class extends Component {
                                               :source="$modal['source']"
                                               :modalKey="$modal['key']"
                                               :modal="$modal['componentName']">
-                            <div>
-                                @livewire($modal['componentName'], $modal['arguments'], key($key))
+                            <div wire:key="modal-content-{{$modal['key']}}">
+                                @livewire($modal['componentName'], $modal['arguments'], key($modal['key']))
                             </div>
                         </x-noerd::modal.panel>
                     </x-noerd::modal>
                 </div>
             </div>
-
-            @endteleport
-
         @endforeach
     @endisset
 </div>
