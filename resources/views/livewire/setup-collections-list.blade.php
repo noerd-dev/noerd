@@ -34,10 +34,10 @@ new class extends Component
 
     public function storeActiveListFilters(): void
     {
-        session(['activeTableFilters' => $this->activeTableFilters]);
+        session(['activeListFilters' => $this->activeListFilters]);
 
-        if (! empty($this->activeTableFilters['language'])) {
-            session(['selectedLanguage' => $this->activeTableFilters['language']]);
+        if (! empty($this->activeListFilters['language'])) {
+            session(['selectedLanguage' => $this->activeListFilters['language']]);
         }
     }
 
@@ -119,7 +119,7 @@ new class extends Component
 
         $rows = $query->paginate(self::PAGINATION);
 
-        $selectedLanguage = $this->activeTableFilters['language']
+        $selectedLanguage = $this->activeListFilters['language']
             ?? session('selectedLanguage')
             ?? $this->getDefaultLanguageCode();
 
@@ -208,13 +208,13 @@ new class extends Component
         $this->loadActiveListFilters();
 
         $selectedLanguage = session('selectedLanguage');
-        if ($selectedLanguage && empty($this->activeTableFilters['language'])) {
-            $this->activeTableFilters['language'] = $selectedLanguage;
+        if ($selectedLanguage && empty($this->activeListFilters['language'])) {
+            $this->activeListFilters['language'] = $selectedLanguage;
         }
 
-        if (empty($this->activeTableFilters['language']) && empty(session('selectedLanguage'))) {
+        if (empty($this->activeListFilters['language']) && empty(session('selectedLanguage'))) {
             $defaultCode = $this->getDefaultLanguageCode();
-            $this->activeTableFilters['language'] = $defaultCode;
+            $this->activeListFilters['language'] = $defaultCode;
             session(['selectedLanguage' => $defaultCode]);
         }
     }

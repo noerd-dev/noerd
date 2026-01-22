@@ -26,8 +26,8 @@
             <div class="flex ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
                     <select wire:change="storeActiveListFilters"
-                            wire:model.live="activeTableFilters.{{$tableFilter['column']}}"
-                            class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeTableFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
+                            wire:model.live="activeListFilters.{{$tableFilter['column']}}"
+                            class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeListFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
                         <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
                             <option value="{{$key}}">{{$option}}</option>
