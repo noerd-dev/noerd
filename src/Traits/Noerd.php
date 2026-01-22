@@ -45,7 +45,7 @@ trait Noerd
     #[Url]
     public array $currentTableFilter = [];
 
-    public array $activeTableFilters = [];
+    public array $activeListFilters = [];
 
     public array $relationTitles = [];
 
@@ -91,7 +91,7 @@ trait Noerd
 
     public function loadActiveListFilters(): void
     {
-        $this->activeTableFilters = session('activeTableFilters', []);
+        $this->activeListFilters = session('activeListFilters', []);
     }
 
     /* @deprecated */
