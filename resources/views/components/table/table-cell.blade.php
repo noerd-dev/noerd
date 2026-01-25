@@ -167,7 +167,7 @@
             @elseif($type == 'relation_link')
                 @if($value && isset($columnConfig['modalComponent']))
                     <button
-                        wire:click.stop="$dispatch('noerdModal', {modalComponent: '{{ $columnConfig['modalComponent'] }}', arguments: { {{ $columnConfig['idParam'] ?? 'id' }}: {{ $rowData[$columnConfig['idField'] ?? 'id'] ?? 'null' }} }})"
+                        @click.stop="$modal('{{ $columnConfig['modalComponent'] }}', { {{ $columnConfig['idParam'] ?? 'id' }}: {{ $rowData[$columnConfig['idField'] ?? 'id'] ?? 'null' }} })"
                         class="inline-flex ml-1.5 items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer transition-colors">
                         {{ $value }}
                     </button>

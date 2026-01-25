@@ -8,7 +8,7 @@ new class extends Component {
 
 <li class="{{ request()->routeIs($navi['link'] ?? $navi['route'] ?? null)  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
     @isset($navi['component'])
-        <a wire:click="$dispatch('noerdModal', {modalComponent: '{{$navi['component']}}', arguments: {{json_encode($arguments ?? [])}}})"
+        <a @click="$modal('{{$navi['component']}}', {{json_encode($arguments ?? [])}})"
            class="border-l-2 cursor-pointer  border-transparent pl-3 group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
@@ -64,7 +64,7 @@ new class extends Component {
 
         @isset($navi['newComponent'])
             <button x-show="showSidebar"
-                    wire:click="$dispatch('noerdModal', {modalComponent: '{{$navi['newComponent']}}', arguments: {{json_encode($arguments ?? [])}}})"
+                    @click="$modal('{{$navi['newComponent']}}', {{json_encode($arguments ?? [])}})"
                     class="ml-auto my-auto border-gray-300 border  hover:bg-gray-200 flex h-6 px-1.5 text-sm text-center rounded-lg items-center justify-center">
                 <div class="m-auto">
                     <x-noerd::icons.plus class="w-3! h-3!"/>

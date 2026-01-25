@@ -41,11 +41,10 @@ new #[Isolate] class extends Component {
     public function downModal(string $componentName, ?string $source, ?string $modalKey): void
     {
         $this->dispatch('close-modal-' . $componentName, $source, $modalKey);
-        $this->dispatch('refreshList-' . $source);
     }
 
-    #[On('downModal2')]
-    public function downModal2(string $componentName, ?string $source, ?string $modalKey): void
+    #[On('closeModal')]
+    public function closeModal(string $componentName, ?string $source, ?string $modalKey): void
     {
         $modals = $this->modals;
         foreach ($modals as $modal) {
@@ -54,7 +53,6 @@ new #[Isolate] class extends Component {
             }
         }
 
-        $this->dispatch('refreshList-' . $source);
         $this->markTopModal();
 
         $hasOpenModal = false;
