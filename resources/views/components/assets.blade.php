@@ -1,9 +1,16 @@
 @php
-    $vite = clone app(\Illuminate\Foundation\Vite::class);
+    $manifestPath = public_path('vendor/noerd/manifest.json');
+    $hotFilePath = public_path('vendor/noerd/hot');
 @endphp
 
-{{
-    $vite->useHotFile(base_path('public/vendor/noerd/hot'))
-        ->useBuildDirectory('vendor/noerd')
-        ->withEntryPoints(['resources/js/noerd.js'])
-}}
+@if(file_exists($manifestPath) || file_exists($hotFilePath))
+    @php
+        $vite = clone app(\Illuminate\Foundation\Vite::class);
+    @endphp
+
+    {{
+        $vite->useHotFile($hotFilePath)
+            ->useBuildDirectory('vendor/noerd')
+            ->withEntryPoints(['resources/js/noerd.js'])
+    }}
+@endif
