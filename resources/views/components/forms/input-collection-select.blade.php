@@ -38,7 +38,7 @@
 
         <x-noerd::buttons.primary
             x-data="{ collectionKey: $wire.entangle('{{ $name }}') }"
-            @click="$dispatch('noerdModal', {modalComponent: 'collection-entries-list', arguments: {collectionKey: collectionKey, context: '{{ $name }}'}})"
+            @click="$modal('collection-entries-list', {collectionKey: collectionKey, context: '{{ $name }}'})"
             class="h-9rounded !mt-0 !ml-1"
             type="button"
         >

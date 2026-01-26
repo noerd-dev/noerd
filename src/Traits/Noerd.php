@@ -163,12 +163,7 @@ trait Noerd
             $this->{self::ID} = '';
         }
         $this->currentTab = 1;
-        $this->dispatch('downModal2', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
-
-        if ($source) {
-            $this->dispatch('refreshList-' . $source); // deprecated
-            $this->dispatch('refreshList-' . $source); // deprecated
-        }
+        $this->dispatch('closeModal', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
     }
 
     public function storeProcess($model): void
