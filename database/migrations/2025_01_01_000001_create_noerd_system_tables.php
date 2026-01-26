@@ -20,15 +20,7 @@ return new class () extends Migration {
                 $table->string('icon');
                 $table->string('route');
                 $table->boolean('is_active')->default(true);
-                $table->boolean('is_hidden')->default(false);
                 $table->timestamps();
-            });
-        }
-
-        // Add is_hidden column to tenant_apps if it doesn't exist
-        if (Schema::hasTable('tenant_apps') && !Schema::hasColumn('tenant_apps', 'is_hidden')) {
-            Schema::table('tenant_apps', function (Blueprint $table): void {
-                $table->boolean('is_hidden')->default(false)->after('is_active');
             });
         }
 
@@ -59,6 +51,7 @@ return new class () extends Migration {
                 $table->id();
                 $table->foreignId('tenant_app_id')->constrained('tenant_apps')->onDelete('cascade');
                 $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
+                $table->boolean('is_hidden')->default(false);
                 $table->timestamps();
             });
         }
