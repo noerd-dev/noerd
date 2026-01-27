@@ -187,6 +187,11 @@ trait HasModuleInstallation
                 if ($this->confirm('Would you like to assign the app to tenants now?', true)) {
                     $this->assignAppToTenants($this->installedAppKey);
                 }
+
+                $this->line('');
+                $this->comment('Note: On non-local systems (staging/production), tenant assignment');
+                $this->comment('must be done manually after deployment using:');
+                $this->line('  php artisan noerd:assign-apps-to-tenant');
             }
 
             // Ask to run migrations
