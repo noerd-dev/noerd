@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Noerd\Noerd\Helpers\TenantHelper;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\User;
-use Noerd\Noerd\Models\UserSetting;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\Tenant;
+use Noerd\Models\User;
+use Noerd\Models\UserSetting;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

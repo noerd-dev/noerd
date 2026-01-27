@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Helpers;
+namespace Noerd\Helpers;
 
 use Exception;
 use Symfony\Component\Yaml\Yaml;

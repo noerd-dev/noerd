@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Middleware;
+namespace Noerd\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

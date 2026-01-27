@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
+use Noerd\Helpers\StaticConfigHelper;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

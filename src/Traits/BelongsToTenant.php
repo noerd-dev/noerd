@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Scopes\TenantScope;
+use Noerd\Models\Tenant;
+use Noerd\Scopes\TenantScope;
 
 trait BelongsToTenant
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace Noerd\Noerd\Helpers;
+namespace Noerd\Helpers;
 
 use Exception;
-use Noerd\Noerd\Exceptions\NoerdException;
-use Noerd\Noerd\Models\TenantApp;
+use Noerd\Exceptions\NoerdException;
+use Noerd\Models\TenantApp;
 use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper

@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
     public function openApp(string $appName, string $route): void
@@ -34,7 +34,7 @@ new class extends Component {
     }
 }; ?>
 
-@inject('navigation', 'Noerd\Noerd\Services\NavigationService')
+@inject('navigation', 'Noerd\Services\NavigationService')
 
 <div>
     <!-- Mobile Overlay Background (nur <xl) -->
@@ -93,7 +93,7 @@ new class extends Component {
             </div>
         @else
             @php
-                $publicApps = \Noerd\Noerd\Models\TenantApp::where('is_active', true)
+                $publicApps = \Noerd\Models\TenantApp::where('is_active', true)
                     ->where('is_public', true)
                     ->get();
             @endphp

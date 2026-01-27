@@ -6,10 +6,10 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\User;
-use Noerd\Noerd\Models\UserRole;
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Models\Profile;
+use Noerd\Models\User;
+use Noerd\Models\UserRole;
+use Noerd\Traits\Noerd;
 
 new class extends Component {
 
@@ -108,7 +108,7 @@ new class extends Component {
                 'email',
                 'max:255',
             ],
-            'tenantAccess' => ['array', 'min:1', new \Noerd\Noerd\Rules\AtLeastOneTrue()],
+            'tenantAccess' => ['array', 'min:1', new \Noerd\Rules\AtLeastOneTrue()],
         ]);
 
         if (!$this->userId) {

@@ -1,8 +1,8 @@
 <?php
 
-namespace Noerd\Noerd\Services;
+namespace Noerd\Services;
 
-use Noerd\Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Helpers\SetupCollectionHelper;
 
 class SetupFieldTypeConverter
 {

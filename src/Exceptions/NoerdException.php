@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Exceptions;
+namespace Noerd\Exceptions;
 
 use Exception;
 use Illuminate\Http\Response;

@@ -1,10 +1,10 @@
 <?php
 
-namespace Noerd\Noerd\Models;
+namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Noerd\Noerd\Database\Factories\ProfileFactory;
+use Noerd\Database\Factories\ProfileFactory;
 
 class Profile extends Model
 {

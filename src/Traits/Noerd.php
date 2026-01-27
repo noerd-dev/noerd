@@ -1,14 +1,14 @@
 <?php
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Services\ListQueryContext;
+use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Services\ListQueryContext;
 
 trait Noerd
 {

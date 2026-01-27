@@ -1,11 +1,11 @@
 <?php
 
-namespace Noerd\Noerd\Middleware;
+namespace Noerd\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Noerd\Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\TenantHelper;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetupMiddleware

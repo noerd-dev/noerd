@@ -1,8 +1,8 @@
 <?php
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
-use Noerd\Noerd\Models\SetupLanguage;
+use Noerd\Models\SetupLanguage;
 
 trait SetupLanguageFilterTrait
 {

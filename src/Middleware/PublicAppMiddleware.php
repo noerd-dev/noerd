@@ -1,12 +1,12 @@
 <?php
 
-namespace Noerd\Noerd\Middleware;
+namespace Noerd\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Noerd\Noerd\Exceptions\NoerdException;
-use Noerd\Noerd\Helpers\TenantHelper;
-use Noerd\Noerd\Models\TenantApp;
+use Noerd\Exceptions\NoerdException;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\TenantApp;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicAppMiddleware

@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Models\User;
+use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

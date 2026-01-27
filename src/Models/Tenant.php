@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Models;
+namespace Noerd\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Noerd\Noerd\Database\Factories\TenantFactory;
+use Noerd\Database\Factories\TenantFactory;
 
 class Tenant extends Authenticatable
 {

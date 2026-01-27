@@ -1,10 +1,10 @@
 <?php
 
-namespace Noerd\Noerd\Models;
+namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Noerd\Noerd\Traits\HasListScopes;
+use Noerd\Traits\HasListScopes;
 
 class SetupLanguage extends Model
 {

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\Tenant;
+use Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
 
 new class extends Component {

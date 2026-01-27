@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\UserRole;
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Models\UserRole;
+use Noerd\Traits\Noerd;
 
 new class extends Component {
     use Noerd;

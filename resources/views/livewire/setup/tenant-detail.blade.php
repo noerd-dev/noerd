@@ -1,10 +1,10 @@
 <?php
 
-use Noerd\Noerd\Models\Tenant;
+use Noerd\Models\Tenant;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Traits\Noerd;
 
 new class extends Component {
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use Livewire\WithPagination;
 

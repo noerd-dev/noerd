@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
-use Noerd\Noerd\Models\User;
+use Noerd\Models\User;
 
 class CreateAdminCommand extends Command
 {

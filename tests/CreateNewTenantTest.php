@@ -2,11 +2,11 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\TenantApp;
-use Noerd\Noerd\Models\User;
-use Noerd\Noerd\Models\UserRole;
+use Noerd\Models\Profile;
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
+use Noerd\Models\User;
+use Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);

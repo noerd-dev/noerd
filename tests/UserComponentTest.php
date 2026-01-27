@@ -4,10 +4,10 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\User;
-use Noerd\Noerd\Models\UserRole;
+use Noerd\Models\Profile;
+use Noerd\Models\Tenant;
+use Noerd\Models\User;
+use Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);

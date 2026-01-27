@@ -1,9 +1,9 @@
 <?php
 
-use Noerd\Noerd\Models\UserRole;
+use Noerd\Models\UserRole;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Traits\Noerd;
 
 new class extends Component {
 

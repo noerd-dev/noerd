@@ -1,8 +1,8 @@
 <?php
 
-namespace Noerd\Noerd\Helpers;
+namespace Noerd\Helpers;
 
-use Noerd\Noerd\Models\Tenant;
+use Noerd\Models\Tenant;
 
 class TenantHelper
 {

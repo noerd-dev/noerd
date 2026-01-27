@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Controllers\DashboardController;
+use Noerd\Controllers\DashboardController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
     Volt::route('setup', 'setup.users-list')->name('setup');

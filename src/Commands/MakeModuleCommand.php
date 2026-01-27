@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Composer\Factory;
 use Composer\Json\JsonFile;
@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 use function Laravel\Prompts\text;
 
-use Noerd\Noerd\Traits\RequiresNoerdInstallation;
+use Noerd\Traits\RequiresNoerdInstallation;
 
 class MakeModuleCommand extends Command
 {

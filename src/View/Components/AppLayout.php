@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\View\Components;
+namespace Noerd\View\Components;
 
 use Illuminate\View\Component;
 use Illuminate\View\View;

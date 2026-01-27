@@ -1,15 +1,15 @@
 <?php
 
-namespace Noerd\Noerd\Database\Factories;
+namespace Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Noerd\Noerd\Helpers\TenantHelper;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\TenantApp;
-use Noerd\Noerd\Models\User;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\Profile;
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
+use Noerd\Models\User;
 
 class UserFactory extends Factory
 {

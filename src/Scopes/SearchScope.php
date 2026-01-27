@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Noerd\Scopes;
+namespace Noerd\Scopes;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
-use Noerd\Noerd\Services\ListQueryContext;
+use Noerd\Services\ListQueryContext;
 
 class SearchScope implements Scope
 {

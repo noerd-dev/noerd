@@ -2,12 +2,12 @@
 
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\SetupCollectionHelper;
-use Noerd\Noerd\Models\SetupCollection;
-use Noerd\Noerd\Models\SetupCollectionEntry;
-use Noerd\Noerd\Models\SetupLanguage;
-use Noerd\Noerd\Traits\Noerd;
-use Noerd\Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Models\SetupCollection;
+use Noerd\Models\SetupCollectionEntry;
+use Noerd\Models\SetupLanguage;
+use Noerd\Traits\Noerd;
+use Noerd\Traits\SetupLanguageFilterTrait;
 
 new class extends Component
 {

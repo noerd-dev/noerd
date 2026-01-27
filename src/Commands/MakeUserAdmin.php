@@ -1,11 +1,11 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\User;
+use Noerd\Models\Profile;
+use Noerd\Models\Tenant;
+use Noerd\Models\User;
 
 class MakeUserAdmin extends Command
 {

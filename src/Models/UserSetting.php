@@ -1,11 +1,11 @@
 <?php
 
-namespace Noerd\Noerd\Models;
+namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Noerd\Noerd\Database\Factories\UserSettingFactory;
+use Noerd\Database\Factories\UserSettingFactory;
 
 class UserSetting extends Model
 {

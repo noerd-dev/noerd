@@ -1,9 +1,9 @@
 <?php
 
-namespace Noerd\Noerd\Listeners;
+namespace Noerd\Listeners;
 
 use Illuminate\Auth\Events\Login;
-use Noerd\Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\TenantHelper;
 
 class InitializeTenantSession
 {
