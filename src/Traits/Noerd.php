@@ -36,8 +36,6 @@ trait Noerd
 
     public ?string $selectListConfig = null;
 
-    public string $modalTitle = '';
-
     public string $listId = '';
 
     #[Url]
@@ -140,10 +138,37 @@ trait Noerd
         return call_user_func($callback);
     }
 
-    public function mountModalProcess(string $component, $model): void
+    /**
+     * Process mount for modal detail components.
+     * Returns false if the model doesn't exist (null, deleted, or inaccessible).
+     * Automatically sets the model data array (e.g., customerData for customer-detail).
+     *
+     * @param string $component The component name for loading page layout
+     * @param mixed $model The model instance or array
+     * @return bool True if model exists and can be displayed, false otherwise
+     */
+    public function mountModalProcess(string $component, $model): bool
     {
         $this->pageLayout = StaticConfigHelper::getComponentFields($component);
-        $this->{self::ID} = $model['id'];
+
+        // Handle null/non-existent/deleted models gracefully
+        $modelExists = $model !== null && (is_array($model) ? !empty($model['id']) : $model->exists);
+
+        if (!$modelExists) {
+            $this->{self::ID} = null;
+            $this->dispatch('closeModal', componentName: $component, source: null, modalKey: null);
+            return false;
+        }
+
+        $this->{self::ID} = is_array($model) ? $model['id'] : $model->id;
+
+        // Automatically set modelData property (e.g., customer-detail → customerData)
+        $dataProperty = Str::camel(Str::before($component, '-detail')) . 'Data';
+        if (property_exists($this, $dataProperty)) {
+            $this->{$dataProperty} = is_array($model) ? $model : $model->toArray();
+        }
+
+        return true;
     }
 
     /**
@@ -164,6 +189,10 @@ trait Noerd
         }
         $this->currentTab = 1;
         $this->dispatch('closeModal', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
+
+        if ($source) {
+            $this->dispatch('refreshList-' . $source);
+        }
     }
 
     public function storeProcess($model): void
