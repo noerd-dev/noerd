@@ -1,5 +1,6 @@
 <?php
 
+use Noerd\Noerd\Helpers\TenantHelper;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
@@ -37,13 +38,14 @@ new class extends Component {
             'profile_id' => $profile->id,
         ]);
 
-        $apps = auth()->user()->selectedTenant()?->tenantApps;
+        $selectedTenant = TenantHelper::getSelectedTenant();
+        $apps = $selectedTenant?->tenantApps ?? collect();
         foreach ($apps as $app) {
             $tenant->tenantApps()->attach($app->id);
         }
 
         // copy all profiles (change later with app installation)
-        $userRoles = auth()->user()->selectedTenant()?->userRoles;
+        $userRoles = $selectedTenant?->userRoles ?? collect();
         foreach ($userRoles as $userRole) {
             $copyUserRole = new \Noerd\Noerd\Models\UserRole();
             $copyUserRole->key = $userRole->key;
@@ -53,9 +55,7 @@ new class extends Component {
             $copyUserRole->save();
         }
 
-        $user = Auth::user();
-        $user->selected_tenant_id = $tenant->id;
-        $user->save();
+        TenantHelper::setSelectedTenantId($tenant->id);
 
         $this->showSuccess = true;
     }
@@ -76,7 +76,7 @@ new class extends Component {
         <div>
             <x-noerd::input-label for="name" :value="__('New Tenant Name')"/>
             <x-noerd::text-input wire:model="name" id="name" name="name" type="text" class="mt-1 block w-full" required
-                          autofocus autocomplete="name"/>
+                                 autofocus autocomplete="name"/>
             <x-noerd::input-error class="mt-2" :messages="$errors->get('name')"/>
         </div>
 

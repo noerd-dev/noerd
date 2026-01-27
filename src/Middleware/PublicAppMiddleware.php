@@ -6,17 +6,36 @@ use Closure;
 use Illuminate\Http\Request;
 use Noerd\Noerd\Exceptions\NoerdException;
 use Noerd\Noerd\Helpers\TenantHelper;
+use Noerd\Noerd\Models\TenantApp;
 use Symfony\Component\HttpFoundation\Response;
 
-class AppAccessMiddleware
+class PublicAppMiddleware
 {
     /**
      * Handle an incoming request.
+     *
+     * Check if the app is public and active. If so, allow access without authentication.
+     * Otherwise, fall back to normal authentication and tenant-based access control.
      *
      * @param  Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next, string $appName): Response
     {
+        $isPublicApp = TenantApp::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($appName)])
+            ->where('is_active', true)
+            ->where('is_public', true)
+            ->exists();
+
+        if ($isPublicApp) {
+            // Set selected_app for public (guest) access if not already set
+            if (! TenantHelper::getSelectedApp()) {
+                TenantHelper::setSelectedApp(mb_strtoupper($appName));
+            }
+
+            return $next($request);
+        }
+
         $user = auth()->user();
 
         if (! $user) {
@@ -40,7 +59,6 @@ class AppAccessMiddleware
             );
         }
 
-        // Only set selected_app if none is currently selected
         if (! TenantHelper::getSelectedApp()) {
             TenantHelper::setSelectedApp(mb_strtoupper($appName));
         }

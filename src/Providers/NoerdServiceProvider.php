@@ -2,7 +2,9 @@
 
 namespace Noerd\Noerd\Providers;
 
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -16,7 +18,9 @@ use Noerd\Noerd\Commands\MakeModuleCommand;
 use Noerd\Noerd\Commands\MakeUserAdmin;
 use Noerd\Noerd\Commands\NoerdInstallCommand;
 use Noerd\Noerd\Commands\NoerdUpdateCommand;
+use Noerd\Noerd\Listeners\InitializeTenantSession;
 use Noerd\Noerd\Middleware\AppAccessMiddleware;
+use Noerd\Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Noerd\Middleware\SetupMiddleware;
 use Noerd\Noerd\Middleware\SetUserLocale;
 use Noerd\Noerd\Services\ListQueryContext;
@@ -37,9 +41,13 @@ class NoerdServiceProvider extends ServiceProvider
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/noerd-routes.php');
 
+        // Register event listeners
+        Event::listen(Login::class, InitializeTenantSession::class);
+
         $router = $this->app['router'];
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
+        $router->aliasMiddleware('public-app', PublicAppMiddleware::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
 
         Volt::mount(__DIR__ . '/../../resources/views/livewire');

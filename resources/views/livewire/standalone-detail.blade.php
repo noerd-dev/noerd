@@ -2,6 +2,7 @@
 
 use Livewire\Volt\Component;
 use Illuminate\Support\Str;
+use Noerd\Noerd\Helpers\TenantHelper;
 
 new class extends Component {
     public string $component;
@@ -22,7 +23,7 @@ new class extends Component {
             abort(404, "Component '{$component}' not found");
         }
 
-        auth()->user()?->setting->update(['selected_app' => null]);
+        TenantHelper::setSelectedApp(null);
         session(['hideNavigation' => true]);
     }
 
@@ -101,7 +102,7 @@ new class extends Component {
             default:
                 // For most components, use modelId
                 if (is_numeric($this->id)) {
-                    $params['modelId'] = (int) $this->id;
+                    $params['modelId'] = (int)$this->id;
                 }
                 break;
         }
@@ -168,7 +169,8 @@ new class extends Component {
                 </li>
                 <li>
                     <div class="flex items-center">
-                        <svg class="flex-shrink-0 h-4 w-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <svg class="flex-shrink-0 h-4 w-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"
+                             aria-hidden="true">
                             <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"/>
                         </svg>
                         <span class="ml-4 text-sm font-medium text-gray-500">

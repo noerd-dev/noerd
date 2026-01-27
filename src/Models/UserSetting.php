@@ -17,19 +17,12 @@ class UserSetting extends Model
 
     protected $fillable = [
         'user_id',
-        'selected_tenant_id',
-        'selected_app',
         'locale',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
-    }
-
-    public function selectedTenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class, 'selected_tenant_id', 'id');
     }
 
     protected static function newFactory(): UserSettingFactory

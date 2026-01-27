@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
+use Noerd\Noerd\Helpers\TenantHelper;
 use Noerd\Noerd\Models\Tenant;
 
 new class extends Component {
@@ -11,7 +12,7 @@ new class extends Component {
 
     public function mount()
     {
-        $this->selectedTenantId = auth()->user()->selected_tenant_id ?? 0;
+        $this->selectedTenantId = TenantHelper::getSelectedTenantId() ?? 0;
     }
 
     public function logout()
@@ -26,14 +27,11 @@ new class extends Component {
 
     public function changeClient()
     {
-        // TODO in a action
         $user = Auth::user();
         $accessToClients = $user->tenants;
         $accessToClientsIds = $accessToClients->pluck('id')->toArray();
         if (in_array($this->selectedTenantId, $accessToClientsIds)) {
-            $user = Auth::user();
-            $user->selected_tenant_id = $this->selectedTenantId;
-            $user->save();
+            TenantHelper::setSelectedTenantId($this->selectedTenantId);
 
             $redirectUrl = '/';
             $referer = request()->header('Referer');
@@ -79,14 +77,14 @@ new class extends Component {
 @inject('navigation', 'Noerd\\Noerd\\Services\\NavigationService')
 
 <div
-    @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-        :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : ''"
-    @else
-        :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
-    @endif
-    @class([
-    'fixed top-0 left-0 w-full bg-white z-40',
-])>
+        @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
+            :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : ''"
+        @else
+            :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
+        @endif
+        @class([
+        'fixed top-0 left-0 w-full bg-white z-40',
+    ])>
     <div>
         <div class="flex gap-x-4 px-6 w-full">
             <div class=" flex border-gray-300 w-full py-1">
