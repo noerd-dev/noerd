@@ -2,7 +2,7 @@
     "name": "noerd/{{module-name}}",
     "description": "",
     "type": "library",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "license": "proprietary",
     "require": {
         "noerd/noerd": "^0.1"
