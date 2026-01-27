@@ -56,8 +56,8 @@ return new class () extends Migration {
             });
         }
 
-        // Create users_tenants table (pivot table)
-        if (!Schema::hasTable('users_tenants')) {
+        // Create users_tenants table (pivot table) - only if users table exists
+        if (!Schema::hasTable('users_tenants') && Schema::hasTable('users')) {
             Schema::create('users_tenants', function (Blueprint $table): void {
                 $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
                 $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
@@ -167,8 +167,8 @@ return new class () extends Migration {
             });
         }
 
-        // Create user_settings table
-        if (!Schema::hasTable('user_settings')) {
+        // Create user_settings table - only if users table exists
+        if (!Schema::hasTable('user_settings') && Schema::hasTable('users')) {
             Schema::create('user_settings', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
@@ -177,45 +177,48 @@ return new class () extends Migration {
             });
         }
 
-        // Migrate existing data from users table to user_settings if columns exist and user_settings is empty
-        if (Schema::hasColumn('users', 'locale') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
-            DB::table('users')->orderBy('id')->each(function ($user): void {
-                DB::table('user_settings')->insert([
-                    'user_id' => $user->id,
-                    'locale' => $user->locale ?? 'en',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            });
-        }
+        // Add noerd columns to users table and migrate data - only if users table exists
+        if (Schema::hasTable('users')) {
+            // Migrate existing data from users table to user_settings if columns exist and user_settings is empty
+            if (Schema::hasColumn('users', 'locale') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
+                DB::table('users')->orderBy('id')->each(function ($user): void {
+                    DB::table('user_settings')->insert([
+                        'user_id' => $user->id,
+                        'locale' => $user->locale ?? 'en',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                });
+            }
 
-        // Add noerd columns to users table if they don't exist
-        $hasSelectedTenantId = Schema::hasColumn('users', 'selected_tenant_id');
-        $hasSelectedApp = Schema::hasColumn('users', 'selected_app');
-        $hasSuperAdmin = Schema::hasColumn('users', 'super_admin');
-        $hasLocale = Schema::hasColumn('users', 'locale');
-        $hasApiToken = Schema::hasColumn('users', 'api_token');
+            // Add noerd columns to users table if they don't exist
+            $hasSelectedTenantId = Schema::hasColumn('users', 'selected_tenant_id');
+            $hasSelectedApp = Schema::hasColumn('users', 'selected_app');
+            $hasSuperAdmin = Schema::hasColumn('users', 'super_admin');
+            $hasLocale = Schema::hasColumn('users', 'locale');
+            $hasApiToken = Schema::hasColumn('users', 'api_token');
 
-        if (!$hasSelectedTenantId || !$hasSelectedApp || !$hasSuperAdmin || !$hasLocale || !$hasApiToken) {
-            Schema::table('users', function (Blueprint $table) use ($hasSelectedTenantId, $hasSelectedApp, $hasSuperAdmin, $hasLocale, $hasApiToken): void {
-                if (!$hasSelectedTenantId) {
-                    $table->unsignedBigInteger('selected_tenant_id')->nullable()->after('email_verified_at');
-                    $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-                    $table->index('selected_tenant_id');
-                }
-                if (!$hasSelectedApp) {
-                    $table->string('selected_app')->nullable()->after('selected_tenant_id');
-                }
-                if (!$hasSuperAdmin) {
-                    $table->boolean('super_admin')->default(false)->after('selected_app');
-                }
-                if (!$hasLocale) {
-                    $table->string('locale', 5)->default('en')->after('super_admin');
-                }
-                if (!$hasApiToken) {
-                    $table->string('api_token', 80)->unique()->nullable()->after('remember_token');
-                }
-            });
+            if (!$hasSelectedTenantId || !$hasSelectedApp || !$hasSuperAdmin || !$hasLocale || !$hasApiToken) {
+                Schema::table('users', function (Blueprint $table) use ($hasSelectedTenantId, $hasSelectedApp, $hasSuperAdmin, $hasLocale, $hasApiToken): void {
+                    if (!$hasSelectedTenantId) {
+                        $table->unsignedBigInteger('selected_tenant_id')->nullable()->after('email_verified_at');
+                        $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
+                        $table->index('selected_tenant_id');
+                    }
+                    if (!$hasSelectedApp) {
+                        $table->string('selected_app')->nullable()->after('selected_tenant_id');
+                    }
+                    if (!$hasSuperAdmin) {
+                        $table->boolean('super_admin')->default(false)->after('selected_app');
+                    }
+                    if (!$hasLocale) {
+                        $table->string('locale', 5)->default('en')->after('super_admin');
+                    }
+                    if (!$hasApiToken) {
+                        $table->string('api_token', 80)->unique()->nullable()->after('remember_token');
+                    }
+                });
+            }
         }
 
         // Handle existing invoices table if it exists (rename to tenant_invoices)
@@ -233,8 +236,8 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        // Drop in reverse order of creation
-        if (Schema::hasColumn('users', 'selected_tenant_id')) {
+        // Drop in reverse order of creation - only if users table exists
+        if (Schema::hasTable('users') && Schema::hasColumn('users', 'selected_tenant_id')) {
             $driver = Schema::getConnection()->getDriverName();
 
             if ($driver === 'mysql' || $driver === 'mariadb') {
