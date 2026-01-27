@@ -2,7 +2,7 @@
     "name": "noerd/noerd",
     "description": "",
     "type": "library",
-    "version": "v1.0.1",
+    "version": "v0.1.0",
     "license": "proprietary",
     "require": {
         "laravel/framework": "^11.0|^12.0",
