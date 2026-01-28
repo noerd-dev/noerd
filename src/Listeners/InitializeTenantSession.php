@@ -11,11 +11,16 @@ class InitializeTenantSession
     {
         $user = $event->user;
 
-        // If no tenant is selected in session, choose the first available tenant
         if (! TenantHelper::hasTenant()) {
-            $firstTenant = $user->tenants->first();
-            if ($firstTenant) {
-                TenantHelper::setSelectedTenantId($firstTenant->id);
+            $savedTenantId = $user->setting->selected_tenant_id;
+
+            if ($savedTenantId && $user->tenants->contains('id', $savedTenantId)) {
+                TenantHelper::setSelectedTenantId($savedTenantId);
+            } else {
+                $firstTenant = $user->tenants->first();
+                if ($firstTenant) {
+                    TenantHelper::setSelectedTenantId($firstTenant->id);
+                }
             }
         }
     }
