@@ -175,6 +175,9 @@ class NoerdInstallCommand extends Command
             // Update auth configuration
             $this->updateAuthConfig();
 
+            // Update Livewire component layout
+            $this->updateLivewireConfig();
+
             // Update composer.json repositories
             $this->updateComposerRepositories();
 
@@ -315,12 +318,57 @@ export default {
             return;
         }
 
-        $authModelLine = "\nAUTH_MODEL=Noerd\\Noerd\\Models\\User\n";
+        $authModelLine = "\nAUTH_MODEL=Noerd\\Models\\User\n";
 
         if (file_put_contents($envPath, $envContent . $authModelLine) !== false) {
             $this->line('<info>Added AUTH_MODEL to .env file.</info>');
         } else {
-            $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Noerd\\Models\\User');
+            $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Models\\User');
+        }
+    }
+
+    /**
+     * Update Livewire config to use noerd layout
+     */
+    protected function updateLivewireConfig(): void
+    {
+        $configPath = base_path('config/livewire.php');
+
+        if (!file_exists($configPath)) {
+            $this->line('<comment>Publishing Livewire config file...</comment>');
+            $this->call('livewire:config', ['--no-interaction' => true]);
+        }
+
+        if (!file_exists($configPath)) {
+            $this->warn('config/livewire.php could not be published, skipping Livewire layout configuration.');
+
+            return;
+        }
+
+        $configContent = file_get_contents($configPath);
+
+        if (str_contains($configContent, "'noerd::components.layouts.app'")) {
+            $this->line('<comment>Livewire component_layout already set to noerd layout.</comment>');
+
+            return;
+        }
+
+        $updated = str_replace(
+            "'components.layouts.app'",
+            "'noerd::components.layouts.app'",
+            $configContent,
+        );
+
+        if ($updated === $configContent) {
+            $this->warn('Could not find default component_layout value in config/livewire.php. Please set it manually to: noerd::components.layouts.app');
+
+            return;
+        }
+
+        if (file_put_contents($configPath, $updated) !== false) {
+            $this->line('<info>Updated Livewire component_layout to noerd::components.layouts.app.</info>');
+        } else {
+            $this->warn('Failed to update config/livewire.php. Please manually set component_layout to: noerd::components.layouts.app');
         }
     }
 
