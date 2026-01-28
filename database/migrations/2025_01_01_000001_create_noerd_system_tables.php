@@ -172,30 +172,16 @@ return new class () extends Migration {
             Schema::create('user_settings', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
-                $table->unsignedBigInteger('selected_tenant_id')->nullable();
-                $table->string('selected_app')->nullable();
                 $table->string('locale', 5)->default('en');
                 $table->timestamps();
-
-                $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-                $table->index('selected_tenant_id');
             });
         }
 
         // Migrate existing data from users table to user_settings if columns exist and user_settings is empty
-        if (Schema::hasColumn('users', 'selected_tenant_id') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
-            $validTenantIds = DB::table('tenants')->pluck('id')->toArray();
-
-            DB::table('users')->orderBy('id')->each(function ($user) use ($validTenantIds): void {
-                $selectedTenantId = $user->selected_tenant_id;
-                if ($selectedTenantId !== null && !in_array($selectedTenantId, $validTenantIds)) {
-                    $selectedTenantId = null;
-                }
-
+        if (Schema::hasColumn('users', 'locale') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
+            DB::table('users')->orderBy('id')->each(function ($user): void {
                 DB::table('user_settings')->insert([
                     'user_id' => $user->id,
-                    'selected_tenant_id' => $selectedTenantId,
-                    'selected_app' => $user->selected_app ?? null,
                     'locale' => $user->locale ?? 'en',
                     'created_at' => now(),
                     'updated_at' => now(),
