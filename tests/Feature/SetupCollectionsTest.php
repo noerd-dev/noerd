@@ -81,29 +81,28 @@ describe('SetupLanguage Model', function (): void {
         SetupLanguage::query()->delete();
         SetupLanguage::ensureDefaultLanguages();
 
-        expect(SetupLanguage::count())->toBe(2);
-        expect(SetupLanguage::where('code', 'de')->exists())->toBeTrue();
+        expect(SetupLanguage::count())->toBe(1);
         expect(SetupLanguage::where('code', 'en')->exists())->toBeTrue();
-        expect(SetupLanguage::where('is_default', true)->first()->code)->toBe('de');
+        expect(SetupLanguage::where('is_default', true)->first()->code)->toBe('en');
     });
 
     it('returns active languages', function (): void {
         $languages = SetupLanguage::getActive();
 
-        expect($languages)->toHaveCount(2);
-        expect($languages->first()->code)->toBe('de'); // Default first
+        expect($languages)->toHaveCount(1);
+        expect($languages->first()->code)->toBe('en'); // Default first
     });
 
     it('returns active language codes', function (): void {
         $codes = SetupLanguage::getActiveCodes();
 
-        expect($codes)->toContain('de', 'en');
+        expect($codes)->toContain('en');
     });
 
     it('returns default language code', function (): void {
         $code = SetupLanguage::getDefaultCode();
 
-        expect($code)->toBe('de');
+        expect($code)->toBe('en');
     });
 });
 
@@ -289,32 +288,45 @@ describe('Setup Collection Detail Component', function (): void {
 
 describe('SetupLanguage Boot Events', function (): void {
     it('ensures only one default language exists', function (): void {
-        // German is default from ensureDefaultLanguages
-        $german = SetupLanguage::where('code', 'de')->first();
-        expect($german->is_default)->toBeTrue();
-
-        // Set English as default
+        // English is default from ensureDefaultLanguages
         $english = SetupLanguage::where('code', 'en')->first();
-        $english->is_default = true;
-        $english->save();
-
-        // Refresh German from DB
-        $german->refresh();
-
         expect($english->is_default)->toBeTrue();
-        expect($german->is_default)->toBeFalse();
+
+        // Add German and set it as default
+        $german = SetupLanguage::create([
+            'code' => 'de',
+            'name' => 'Deutsch',
+            'is_active' => true,
+            'is_default' => true,
+            'sort_order' => 1,
+        ]);
+
+        // Refresh English from DB
+        $english->refresh();
+
+        expect($german->is_default)->toBeTrue();
+        expect($english->is_default)->toBeFalse();
         expect(SetupLanguage::where('is_default', true)->count())->toBe(1);
     });
 
     it('sets new default after deleting default language', function (): void {
-        $german = SetupLanguage::where('code', 'de')->first();
-        expect($german->is_default)->toBeTrue();
+        // Add German as a non-default language
+        SetupLanguage::create([
+            'code' => 'de',
+            'name' => 'Deutsch',
+            'is_active' => true,
+            'is_default' => false,
+            'sort_order' => 1,
+        ]);
 
-        $german->delete();
-
-        // English should now be default
         $english = SetupLanguage::where('code', 'en')->first();
         expect($english->is_default)->toBeTrue();
+
+        $english->delete();
+
+        // German should now be default
+        $german = SetupLanguage::where('code', 'de')->first();
+        expect($german->is_default)->toBeTrue();
     });
 
     it('can create a new language', function (): void {
@@ -327,7 +339,7 @@ describe('SetupLanguage Boot Events', function (): void {
         ]);
 
         expect($french->exists)->toBeTrue();
-        expect(SetupLanguage::count())->toBe(3);
+        expect(SetupLanguage::count())->toBe(2);
     });
 });
 
@@ -377,7 +389,6 @@ describe('Setup Languages List Component', function (): void {
     it('shows languages list', function (): void {
         Volt::test('setup-languages-list')
             ->assertStatus(200)
-            ->assertSee('Deutsch')
             ->assertSee('English');
     });
 
@@ -396,12 +407,12 @@ describe('Setup Language Detail Component', function (): void {
     });
 
     it('loads existing language', function (): void {
-        $german = SetupLanguage::where('code', 'de')->first();
+        $english = SetupLanguage::where('code', 'en')->first();
 
-        Volt::test('setup-language-detail', ['languageId' => $german->id])
+        Volt::test('setup-language-detail', ['languageId' => $english->id])
             ->assertStatus(200)
-            ->assertSet('languageData.code', 'de')
-            ->assertSet('languageData.name', 'Deutsch');
+            ->assertSet('languageData.code', 'en')
+            ->assertSet('languageData.name', 'English');
     });
 
     it('can save a new language', function (): void {
