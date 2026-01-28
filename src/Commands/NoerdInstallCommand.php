@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 use function Laravel\Prompts\confirm;
 
+use Noerd\Models\Tenant;
 use Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -354,7 +355,7 @@ export default {
         }
 
         $updated = str_replace(
-            "'components.layouts.app'",
+            "'layouts::app'",
             "'noerd::components.layouts.app'",
             $configContent,
         );
@@ -743,8 +744,12 @@ export default {
 
         $this->newLine();
 
-        // Create default tenant
-        $this->call('noerd:create-tenant');
+        // Create default tenant if none exist
+        if (Tenant::count() === 0) {
+            $this->call('noerd:create-tenant');
+        } else {
+            $this->line('<comment>Tenant(s) already exist, skipping.</comment>');
+        }
 
         $this->newLine();
 
