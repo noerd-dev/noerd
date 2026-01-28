@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "license": "proprietary",
     "require": {
-        "noerd/noerd": "^1.0"
+        "noerd/noerd": "^0.1"
     },
     "autoload": {
         "psr-4": {
