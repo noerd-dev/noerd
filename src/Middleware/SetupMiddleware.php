@@ -5,6 +5,7 @@ namespace Noerd\Noerd\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Noerd\Noerd\Helpers\TenantHelper;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetupMiddleware
@@ -17,18 +18,19 @@ class SetupMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = auth()->user();
-        if (! $user->selected_tenant_id) {
-            $user->selected_tenant_id = $user->tenants->first()?->id;
-            $user->save();
+        if (! TenantHelper::getSelectedTenantId()) {
+            $firstTenantId = $user->tenants->first()?->id;
 
-            if (! $user->tenants->first()) {
+            if (! $firstTenantId) {
                 return redirect('no-tenant');
             }
+
+            TenantHelper::setSelectedTenantId($firstTenantId);
         }
 
-        $user->setting->update(['selected_app' => 'SETUP']);
+        TenantHelper::setSelectedApp('SETUP');
 
-        if (!Auth::user()->isAdmin()) {
+        if (! Auth::user()->isAdmin()) {
             abort(401);
         }
 

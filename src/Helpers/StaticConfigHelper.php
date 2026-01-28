@@ -3,7 +3,6 @@
 namespace Noerd\Noerd\Helpers;
 
 use Exception;
-use Illuminate\Support\Facades\Auth;
 use Noerd\Noerd\Exceptions\NoerdException;
 use Noerd\Noerd\Models\TenantApp;
 use Symfony\Component\Yaml\Yaml;
@@ -73,7 +72,7 @@ class StaticConfigHelper
 
     public static function getCurrentApp(): ?string
     {
-        $selectedApp = Auth::user()?->selected_app;
+        $selectedApp = TenantHelper::getSelectedApp();
 
         return $selectedApp ? mb_strtolower($selectedApp) : null;
     }
@@ -189,7 +188,7 @@ class StaticConfigHelper
      */
     private static function getAllowedAppFolders(): array
     {
-        $tenant = Auth::user()?->selectedTenant();
+        $tenant = TenantHelper::getSelectedTenant();
         if (! $tenant) {
             return ['setup'];
         }

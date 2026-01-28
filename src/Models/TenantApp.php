@@ -11,7 +11,13 @@ class TenantApp extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_public' => 'boolean',
     ];
+
+    public function scopePublic($query)
+    {
+        return $query->where('is_public', true);
+    }
 
     public function tenants(): BelongsToMany
     {

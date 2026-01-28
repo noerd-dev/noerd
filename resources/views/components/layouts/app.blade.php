@@ -7,7 +7,7 @@
     <title>{{ config('app.name', 'Noerd') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <x-noerd::assets />
+    <x-noerd::assets/>
 
     <link rel="stylesheet" href="/vendor/noerd/fonts/fonts.css">
 
@@ -17,6 +17,7 @@
             --sidebar-nav-width: {{ session('sidebar_nav_width', config('noerd.sidebar.navigation_width', '280px')) }};
             --sidebar-total-width: calc(var(--sidebar-apps-width) + var(--sidebar-nav-width));
         }
+
         body {
             font-family: "Nunito Sans", sans-serif;
             font-optical-sizing: auto;
@@ -38,7 +39,6 @@
 
     @inject('navigation', 'Noerd\Noerd\Services\NavigationService')
 
-    <!-- Content -->
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
               :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'padding-left: var(--sidebar-total-width)' : 'padding-left: var(--sidebar-nav-width)') : ''"
@@ -46,16 +46,16 @@
               :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
-        <div class="bg-white pt-11.75 h-full">
+        <div class="bg-white h-full @auth pt-11.75 @endauth">
             {{ $slot }}
         </div>
     </main>
 
-    @if(auth()->user()->selectedTenant()?->tenantApps)
-        <livewire:layout.sidebar></livewire:layout.sidebar>
-    @endif
+    <livewire:layout.sidebar></livewire:layout.sidebar>
 
-    <livewire:layout.top-bar></livewire:layout.top-bar>
+    @auth
+        <livewire:layout.top-bar></livewire:layout.top-bar>
+    @endauth
 </div>
 
 </body>

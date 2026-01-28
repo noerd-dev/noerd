@@ -5,6 +5,7 @@ namespace Noerd\Noerd\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Noerd\Noerd\Helpers\TenantHelper;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\Tenant;
 use Noerd\Noerd\Models\TenantApp;
@@ -40,7 +41,7 @@ class UserFactory extends Factory
             $restaurant = Tenant::factory()->create();
 
             $user->tenants()->attach($restaurant->id);
-            $user->setting->update(['selected_tenant_id' => $restaurant->id]);
+            TenantHelper::setSelectedTenantId($restaurant->id);
         });
     }
 
@@ -57,7 +58,7 @@ class UserFactory extends Factory
             ]);
 
             $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
-            $user->setting->update(['selected_tenant_id' => $tenant->id]);
+            TenantHelper::setSelectedTenantId($tenant->id);
         });
     }
 
@@ -65,10 +66,10 @@ class UserFactory extends Factory
     {
         return $this->afterCreating(function ($user) use ($app): void {
             $appName = mb_strtoupper($app);
-            $user->setting->update(['selected_app' => $appName]);
+            TenantHelper::setSelectedApp($appName);
 
             // Create or find the TenantApp and assign it to the user's tenant
-            $tenant = $user->selectedTenant();
+            $tenant = TenantHelper::getSelectedTenant();
             if ($tenant) {
                 $tenantApp = TenantApp::firstOrCreate(
                     ['name' => $appName],

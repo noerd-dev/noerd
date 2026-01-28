@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Auth;
 use Noerd\Noerd\Database\Factories\UserFactory;
+use Noerd\Noerd\Helpers\TenantHelper;
 use Nywerk\LegalRegister\Models\Standort;
 
 class User extends Authenticatable
@@ -43,15 +43,12 @@ class User extends Authenticatable
 
     public function selectedTenant(): ?Tenant
     {
-        $selectedClient = $this->selected_tenant_id;
-
-        $tenant = Tenant::find($selectedClient);
-        return $tenant;
+        return TenantHelper::getSelectedTenant();
     }
 
     public function selectedClientDemo(): ?bool
     {
-        $selectedClientId = $this->selected_tenant_id;
+        $selectedClientId = TenantHelper::getSelectedTenantId();
 
         $freeModules = ['MENU'];
 
@@ -107,9 +104,9 @@ class User extends Authenticatable
 
     public function getRolesForTenantAttribute(): array
     {
-        $selectedTenantId = Auth::user()?->selected_tenant_id;
+        $selectedTenantId = TenantHelper::getSelectedTenantId();
 
-        if (!$selectedTenantId) {
+        if (! $selectedTenantId) {
             return ['badge' => '', 'text' => ''];
         }
 
@@ -136,7 +133,9 @@ class User extends Authenticatable
 
     public function currentProfile(): ?string
     {
-        return $this->profiles->where('tenant_id', $this->selected_tenant_id)->first()->key ?? null;
+        $selectedTenantId = TenantHelper::getSelectedTenantId();
+
+        return $this->profiles->where('tenant_id', $selectedTenantId)->first()->key ?? null;
     }
 
     public function isAdmin(): bool
@@ -182,26 +181,26 @@ class User extends Authenticatable
         return $this->userSetting;
     }
 
-    // Backward compatibility accessors/mutators for UserSetting fields
+    // Backward compatibility accessors/mutators using session (via TenantSessionHelper)
 
     public function getSelectedTenantIdAttribute(): ?int
     {
-        return $this->setting->selected_tenant_id;
+        return TenantHelper::getSelectedTenantId();
     }
 
     public function setSelectedTenantIdAttribute(?int $value): void
     {
-        $this->setting->update(['selected_tenant_id' => $value]);
+        TenantHelper::setSelectedTenantId($value);
     }
 
     public function getSelectedAppAttribute(): ?string
     {
-        return $this->setting->selected_app;
+        return TenantHelper::getSelectedApp();
     }
 
     public function setSelectedAppAttribute(?string $value): void
     {
-        $this->setting->update(['selected_app' => $value]);
+        TenantHelper::setSelectedApp($value);
     }
 
     public function getLocaleAttribute(): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
+use Noerd\Noerd\Helpers\TenantHelper;
 use Noerd\Noerd\Models\Profile;
 use Noerd\Noerd\Models\SetupLanguage;
 use Noerd\Noerd\Models\Tenant;
@@ -30,11 +31,9 @@ beforeEach(function (): void {
     // Attach user to tenant with admin profile
     $this->user->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
 
-    // Set user settings
-    $this->user->setting->update([
-        'selected_tenant_id' => $this->tenant->id,
-        'selected_app' => 'setup',
-    ]);
+    // Set tenant and app via session helper
+    TenantHelper::setSelectedTenantId($this->tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
 
     $this->actingAs($this->user);
 
