@@ -37,7 +37,7 @@
            showAppbar: {{ session('hide_appbar') ? 'false' : 'true' }},
            }">
 
-    @inject('navigation', 'Noerd\Noerd\Services\NavigationService')
+    @inject('navigation', 'Noerd\Services\NavigationService')
 
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)

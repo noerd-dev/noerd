@@ -1,9 +1,9 @@
 <?php
 
-namespace Noerd\Noerd\Database\Factories;
+namespace Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Noerd\Noerd\Models\UserRole;
+use Noerd\Models\UserRole;
 
 class UserRoleFactory extends Factory
 {

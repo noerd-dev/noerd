@@ -1,9 +1,9 @@
 <?php
 
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\SetupLanguage;
-use Noerd\Noerd\Scopes\SortScope;
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Models\SetupLanguage;
+use Noerd\Scopes\SortScope;
+use Noerd\Traits\Noerd;
 
 new class extends Component
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;

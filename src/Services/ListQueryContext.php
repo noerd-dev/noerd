@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Noerd\Services;
+namespace Noerd\Services;
 
 class ListQueryContext
 {

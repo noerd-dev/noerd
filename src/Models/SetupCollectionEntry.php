@@ -1,12 +1,12 @@
 <?php
 
-namespace Noerd\Noerd\Models;
+namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Noerd\Noerd\Services\SetupFieldTypeConverter;
-use Noerd\Noerd\Traits\BelongsToTenant;
-use Noerd\Noerd\Traits\HasListScopes;
+use Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Traits\BelongsToTenant;
+use Noerd\Traits\HasListScopes;
 
 class SetupCollectionEntry extends Model
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Exception;
 

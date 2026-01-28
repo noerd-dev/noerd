@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Providers;
+namespace Noerd\Providers;
 
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
@@ -9,22 +9,22 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Commands\AssignAppsToTenant;
-use Noerd\Noerd\Commands\CreateAdminCommand;
-use Noerd\Noerd\Commands\CreateTenantApp;
-use Noerd\Noerd\Commands\CreateTenantCommand;
-use Noerd\Noerd\Commands\MakeCollectionCommand;
-use Noerd\Noerd\Commands\MakeModuleCommand;
-use Noerd\Noerd\Commands\MakeUserAdmin;
-use Noerd\Noerd\Commands\NoerdInstallCommand;
-use Noerd\Noerd\Commands\NoerdUpdateCommand;
-use Noerd\Noerd\Listeners\InitializeTenantSession;
-use Noerd\Noerd\Middleware\AppAccessMiddleware;
-use Noerd\Noerd\Middleware\PublicAppMiddleware;
-use Noerd\Noerd\Middleware\SetupMiddleware;
-use Noerd\Noerd\Middleware\SetUserLocale;
-use Noerd\Noerd\Services\ListQueryContext;
-use Noerd\Noerd\View\Components\AppLayout;
+use Noerd\Commands\AssignAppsToTenant;
+use Noerd\Commands\CreateAdminCommand;
+use Noerd\Commands\CreateTenantApp;
+use Noerd\Commands\CreateTenantCommand;
+use Noerd\Commands\MakeCollectionCommand;
+use Noerd\Commands\MakeModuleCommand;
+use Noerd\Commands\MakeUserAdmin;
+use Noerd\Commands\NoerdInstallCommand;
+use Noerd\Commands\NoerdUpdateCommand;
+use Noerd\Listeners\InitializeTenantSession;
+use Noerd\Middleware\AppAccessMiddleware;
+use Noerd\Middleware\PublicAppMiddleware;
+use Noerd\Middleware\SetupMiddleware;
+use Noerd\Middleware\SetUserLocale;
+use Noerd\Services\ListQueryContext;
+use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {

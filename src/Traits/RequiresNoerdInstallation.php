@@ -1,11 +1,11 @@
 <?php
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use function Laravel\Prompts\multiselect;
 
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\TenantApp;
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 
 trait RequiresNoerdInstallation
 {

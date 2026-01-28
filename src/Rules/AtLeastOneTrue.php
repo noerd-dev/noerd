@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Rules;
+namespace Noerd\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 

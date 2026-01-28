@@ -1,9 +1,9 @@
 <?php
 
-namespace Noerd\Noerd\Database\Factories;
+namespace Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Noerd\Noerd\Models\Profile;
+use Noerd\Models\Profile;
 
 class ProfileFactory extends Factory
 {

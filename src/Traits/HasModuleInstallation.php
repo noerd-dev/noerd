@@ -1,9 +1,9 @@
 <?php
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use Exception;
-use Noerd\Noerd\Models\TenantApp;
+use Noerd\Models\TenantApp;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\Yaml\Yaml;

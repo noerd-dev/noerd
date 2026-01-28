@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Noerd\Noerd\Exceptions\NoerdException;
-use Noerd\Noerd\Middleware\PublicAppMiddleware;
-use Noerd\Noerd\Models\TenantApp;
-use Noerd\Noerd\Models\User;
+use Noerd\Exceptions\NoerdException;
+use Noerd\Middleware\PublicAppMiddleware;
+use Noerd\Models\TenantApp;
+use Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

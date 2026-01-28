@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
+use Noerd\Models\Profile;
+use Noerd\Models\Tenant;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
@@ -80,6 +80,6 @@ it('outputs tenant ID and UUID after creation', function (): void {
         ->assertExitCode(0);
 
     // Verify tenant has UUID set
-    $tenant = \Noerd\Noerd\Models\Tenant::where('name', 'ID Test Tenant')->first();
+    $tenant = \Noerd\Models\Tenant::where('name', 'ID Test Tenant')->first();
     expect($tenant->uuid)->not->toBeNull();
 });

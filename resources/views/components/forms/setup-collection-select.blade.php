@@ -9,8 +9,8 @@
 ])
 
 @php
-    use Noerd\Noerd\Models\SetupCollection;
-    use Noerd\Noerd\Helpers\SetupCollectionHelper;
+    use Noerd\Models\SetupCollection;
+    use Noerd\Helpers\SetupCollectionHelper;
 
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;

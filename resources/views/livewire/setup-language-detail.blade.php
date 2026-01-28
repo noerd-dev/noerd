@@ -2,8 +2,8 @@
 
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\SetupLanguage;
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Models\SetupLanguage;
+use Noerd\Traits\Noerd;
 
 new class extends Component
 {

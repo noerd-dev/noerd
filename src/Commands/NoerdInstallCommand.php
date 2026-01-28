@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 use function Laravel\Prompts\confirm;
 
-use Noerd\Noerd\Models\User;
+use Noerd\Models\User;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 

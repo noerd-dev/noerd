@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\Profile;
+use Noerd\Models\Profile;
 
 new class extends Component {
 

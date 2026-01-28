@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Helpers\SetupCollectionHelper;
-use Noerd\Noerd\Helpers\StaticConfigHelper;
-use Noerd\Noerd\Helpers\TenantHelper;
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\SetupCollection;
-use Noerd\Noerd\Models\SetupCollectionEntry;
-use Noerd\Noerd\Models\SetupLanguage;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\User;
-use Noerd\Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\Profile;
+use Noerd\Models\SetupCollection;
+use Noerd\Models\SetupCollectionEntry;
+use Noerd\Models\SetupLanguage;
+use Noerd\Models\Tenant;
+use Noerd\Models\User;
+use Noerd\Services\SetupFieldTypeConverter;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

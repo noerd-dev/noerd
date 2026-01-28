@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
-use Noerd\Noerd\Models\User;
+use Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

@@ -1,14 +1,14 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
 use function Laravel\Prompts\text;
 
-use Noerd\Noerd\Models\Profile;
-use Noerd\Noerd\Models\Tenant;
+use Noerd\Models\Profile;
+use Noerd\Models\Tenant;
 
 class CreateTenantCommand extends Command
 {

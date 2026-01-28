@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
-use Noerd\Noerd\Helpers\TenantHelper;
-use Noerd\Noerd\Models\Tenant;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\Tenant;
 
 new class extends Component {
 
@@ -74,7 +74,7 @@ new class extends Component {
     }
 } ?>
 
-@inject('navigation', 'Noerd\\Noerd\\Services\\NavigationService')
+@inject('navigation', 'Noerd\\Services\\NavigationService')
 
 <div
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)

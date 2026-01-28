@@ -3,7 +3,7 @@
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Noerd\{{ModuleName}}\Models\{{Model}};
-use Noerd\Noerd\Traits\Noerd;
+use Noerd\Traits\Noerd;
 
 new class extends Component {
     use Noerd;

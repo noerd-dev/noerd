@@ -1,11 +1,11 @@
 <?php
 
-namespace Noerd\Noerd\Database\Factories;
+namespace Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\TenantApp;
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 
 class TenantFactory extends Factory
 {

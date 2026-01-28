@@ -2,7 +2,7 @@
 
 use Livewire\Volt\Component;
 use Illuminate\Support\Str;
-use Noerd\Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
 

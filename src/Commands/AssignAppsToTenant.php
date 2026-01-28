@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Commands;
+namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
@@ -9,8 +9,8 @@ use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 
-use Noerd\Noerd\Models\Tenant;
-use Noerd\Noerd\Models\TenantApp;
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 
 class AssignAppsToTenant extends Command
 {

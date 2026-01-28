@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Noerd\Traits;
+namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
-use Noerd\Noerd\Scopes\SearchScope;
-use Noerd\Noerd\Scopes\SortScope;
+use Noerd\Scopes\SearchScope;
+use Noerd\Scopes\SortScope;
 
 trait HasListScopes
 {

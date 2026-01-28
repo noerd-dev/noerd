@@ -1,6 +1,6 @@
 <?php
 
-namespace Noerd\Noerd\Models;
+namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

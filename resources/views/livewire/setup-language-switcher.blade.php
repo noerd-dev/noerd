@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Volt\Component;
-use Noerd\Noerd\Models\SetupLanguage;
+use Noerd\Models\SetupLanguage;
 
 new class extends Component
 {
