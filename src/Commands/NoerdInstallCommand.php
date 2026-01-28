@@ -166,9 +166,6 @@ class NoerdInstallCommand extends Command
             // Update app.css
             $this->updateAppCss();
 
-            // Update app.js
-            $this->updateAppJs();
-
             // Install npm packages
             $this->installNpmPackages();
 
@@ -217,58 +214,6 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Update app.js with Alpine.js configuration
-     */
-    protected function updateAppJs(): void
-    {
-        $jsPath = base_path('resources/js/app.js');
-
-        if (!file_exists($jsPath)) {
-            $this->warn('app.js not found, skipping JS updates.');
-            return;
-        }
-
-        $jsContent = file_get_contents($jsPath);
-
-        $alpineConfig = "
-import sort from '@alpinejs/sort'
-import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import { Markdown } from '@tiptap/markdown';
-
-// Make TipTap globally available
-window.TipTap = {
-    Editor,
-    StarterKit,
-    Link,
-    Markdown
-};
-
-Alpine.plugin(sort)
-
-Alpine.store('globalState', {
-    open: true,
-});
-
-Alpine.store('app', {
-    currentId: null,
-    setId(id) {
-        this.currentId = id;
-    }
-});
-";
-
-        // Check if Alpine sort plugin is already imported
-        if (!str_contains($jsContent, "import sort from '@alpinejs/sort'")) {
-            file_put_contents($jsPath, $jsContent . $alpineConfig);
-            $this->line('<info>Updated app.js with Alpine.js configuration.</info>');
-        } else {
-            $this->line('<comment>Alpine.js configuration already present in app.js.</comment>');
-        }
-    }
-
-    /**
      * Install required npm packages
      */
     protected function installNpmPackages(): void
@@ -279,11 +224,6 @@ Alpine.store('app', {
             '@tailwindcss/forms@^0.5.2',
             'tailwind-scrollbar@^4.0.2',
             'dotenv@^16.4.7',
-            '@alpinejs/sort',
-            '@tiptap/core',
-            '@tiptap/starter-kit',
-            '@tiptap/extension-link',
-            '@tiptap/markdown',
         ];
 
         $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
