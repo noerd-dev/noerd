@@ -60,7 +60,7 @@ class SetupLanguage extends Model
     {
         $default = static::getDefault();
 
-        return $default?->code ?? 'de';
+        return $default?->code ?? 'en';
     }
 
     /**
@@ -70,19 +70,11 @@ class SetupLanguage extends Model
     {
         if (static::count() === 0) {
             static::create([
-                'code' => 'de',
-                'name' => 'Deutsch',
-                'is_active' => true,
-                'is_default' => true,
-                'sort_order' => 0,
-            ]);
-
-            static::create([
                 'code' => 'en',
                 'name' => 'English',
                 'is_active' => true,
-                'is_default' => false,
-                'sort_order' => 1,
+                'is_default' => true,
+                'sort_order' => 0,
             ]);
         }
     }
