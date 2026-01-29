@@ -61,13 +61,17 @@ class NoerdServiceProvider extends ServiceProvider
 
         config(['livewire.layout' => 'noerd::components.layouts.app']);
 
-        // Publish public assets (fonts)
+        // Publish public assets (fonts + built Vite assets)
         $this->publishes([
             __DIR__ . '/../../public' => public_path('vendor/noerd'),
+            __DIR__ . '/../../dist/build' => public_path('vendor/noerd'),
         ], 'noerd-assets');
 
         // Auto-publish fonts if not exists (for development convenience)
         $this->publishFontsIfNotExists();
+
+        // Auto-publish built assets if not exists
+        $this->publishBuiltAssetsIfNotExist();
 
         // Register commands
         if ($this->app->runningInConsole()) {
@@ -96,6 +100,20 @@ class NoerdServiceProvider extends ServiceProvider
         if (! File::exists($targetPath) && File::exists($sourcePath)) {
             File::ensureDirectoryExists(dirname($targetPath));
             File::copyDirectory($sourcePath, $targetPath);
+        }
+    }
+
+    /**
+     * Automatically copy built Vite assets to public directory if they don't exist.
+     */
+    private function publishBuiltAssetsIfNotExist(): void
+    {
+        $targetPath = public_path('vendor/noerd/manifest.json');
+        $sourcePath = __DIR__ . '/../../dist/build/manifest.json';
+
+        if (! File::exists($targetPath) && File::exists($sourcePath)) {
+            File::ensureDirectoryExists(public_path('vendor/noerd'));
+            File::copyDirectory(__DIR__ . '/../../dist/build', public_path('vendor/noerd'));
         }
     }
 }
