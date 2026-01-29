@@ -239,6 +239,21 @@ trait HasModuleInstallation
      */
     protected function installAsNewApp(string $sourceDir, string $targetDir): void
     {
+        // Copy navigation.yml first, before app registration which may abort early
+        $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+        $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+
+        if (file_exists($navSource)) {
+            $navContent = file_get_contents($navSource);
+            $nav = Yaml::parse($navContent);
+            $nav[0]['name'] = $this->targetAppKey;
+            $nav[0]['title'] = $this->appTitle;
+            $nav[0]['route'] = $this->targetAppKey;
+            file_put_contents($navTarget, Yaml::dump($nav, 10, 2));
+            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->targetAppKey}/navigation.yml");
+            $this->installResults['copied_files']++;
+        }
+
         // App title was set in runModuleInstallation(), key is derived from module key
         $appKey = $this->deriveAppKey($this->getModuleKey());
 
@@ -266,21 +281,6 @@ trait HasModuleInstallation
                     $this->installedAppKey = $appKey;
                 }
             }
-        }
-
-        // Copy navigation.yml to the target app-configs folder
-        $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
-        $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
-
-        if (file_exists($navSource)) {
-            $navContent = file_get_contents($navSource);
-            $nav = Yaml::parse($navContent);
-            $nav[0]['name'] = $this->targetAppKey;
-            $nav[0]['title'] = $this->appTitle;
-            $nav[0]['route'] = $this->targetAppKey;
-            file_put_contents($navTarget, Yaml::dump($nav, 10, 2));
-            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->targetAppKey}/navigation.yml");
-            $this->installResults['copied_files']++;
         }
     }
 
