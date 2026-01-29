@@ -23,10 +23,10 @@ class UserSettingFactory extends Factory
         ]);
     }
 
-    public function withSelectedApp(string $app): static
+    public function withSelectedTenantId(?int $tenantId): static
     {
         return $this->state(fn(array $attributes) => [
-            'selected_app' => $app,
+            'selected_tenant_id' => $tenantId,
         ]);
     }
 }

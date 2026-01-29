@@ -172,6 +172,9 @@ return new class () extends Migration {
             Schema::create('user_settings', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
+                $table->unsignedBigInteger('selected_tenant_id')->nullable();
+                $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
+                $table->index('selected_tenant_id');
                 $table->string('locale', 5)->default('en');
                 $table->timestamps();
             });

@@ -17,6 +17,7 @@ class UserSetting extends Model
 
     protected $fillable = [
         'user_id',
+        'selected_tenant_id',
         'locale',
     ];
 

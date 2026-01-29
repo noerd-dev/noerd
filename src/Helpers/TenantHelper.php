@@ -16,11 +16,15 @@ class TenantHelper
     }
 
     /**
-     * Set the selected tenant ID in session.
+     * Set the selected tenant ID in session and persist to database.
      */
     public static function setSelectedTenantId(?int $tenantId): void
     {
         session(['noerd.selected_tenant_id' => $tenantId]);
+
+        if (auth()->check()) {
+            auth()->user()->setting->update(['selected_tenant_id' => $tenantId]);
+        }
     }
 
     /**
