@@ -87,6 +87,17 @@ trait HasModuleInstallation
     }
 
     /**
+     * Get Vite entry points that this module requires.
+     * Override in module install commands to register JS/CSS assets.
+     *
+     * @return array<string>
+     */
+    protected function getViteEntryPoints(): array
+    {
+        return [];
+    }
+
+    /**
      * Run the module installation process.
      */
     protected function runModuleInstallation(): int
@@ -196,6 +207,9 @@ trait HasModuleInstallation
 
             // Ask to run migrations
             $this->askForMigration();
+
+            // Update vite.config.js with module entry points
+            $this->updateViteConfig();
 
             // Ask to run npm build
             $this->askForNpmBuild();
@@ -549,6 +563,58 @@ trait HasModuleInstallation
             }
         } else {
             $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
+        }
+    }
+
+    /**
+     * Update vite.config.js to include this module's entry points.
+     */
+    protected function updateViteConfig(): void
+    {
+        $entryPoints = $this->getViteEntryPoints();
+
+        if (empty($entryPoints)) {
+            return;
+        }
+
+        $viteConfigPath = base_path('vite.config.js');
+
+        if (! file_exists($viteConfigPath)) {
+            $this->warn('vite.config.js not found, skipping Vite config update.');
+
+            return;
+        }
+
+        $content = file_get_contents($viteConfigPath);
+        $added = [];
+
+        foreach ($entryPoints as $entry) {
+            if (str_contains($content, $entry)) {
+                continue;
+            }
+
+            // Insert before the closing ], of the input array
+            $needle = "            ],\n            refresh:";
+            $replacement = "                '{$entry}',\n            ],\n            refresh:";
+
+            $updated = str_replace($needle, $replacement, $content);
+
+            if ($updated !== $content) {
+                $content = $updated;
+                $added[] = $entry;
+            }
+        }
+
+        if (empty($added)) {
+            $this->line('<comment>Module entry points already present in vite.config.js.</comment>');
+
+            return;
+        }
+
+        file_put_contents($viteConfigPath, $content);
+
+        foreach ($added as $entry) {
+            $this->line("<info>Added entry point to vite.config.js:</info> {$entry}");
         }
     }
 
