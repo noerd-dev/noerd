@@ -5,8 +5,8 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/js/noerd.js'],
-            publicDirectory: '../../public',
-            buildDirectory: 'vendor/noerd',
+            publicDirectory: 'dist',
+            buildDirectory: 'build',
             hotFile: '../../public/vendor/noerd/hot',
             refresh: ['resources/views/**'],
         }),

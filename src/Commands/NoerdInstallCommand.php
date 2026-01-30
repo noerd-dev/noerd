@@ -179,9 +179,6 @@ class NoerdInstallCommand extends Command
             // Update Livewire component layout
             $this->updateLivewireConfig();
 
-            // Update vite.config.js with noerd entry point
-            $this->updateViteConfig();
-
             // Update composer.json repositories
             $this->updateComposerRepositories();
 
@@ -374,44 +371,6 @@ export default {
         } else {
             $this->warn('Failed to update config/livewire.php. Please manually set component_layout to: noerd::components.layouts.app');
         }
-    }
-
-    /**
-     * Update vite.config.js to include the noerd entry point.
-     */
-    protected function updateViteConfig(): void
-    {
-        $viteConfigPath = base_path('vite.config.js');
-
-        if (! file_exists($viteConfigPath)) {
-            $this->warn('vite.config.js not found, skipping Vite config update.');
-
-            return;
-        }
-
-        $content = file_get_contents($viteConfigPath);
-        $entry = 'app-modules/noerd/resources/js/noerd.js';
-
-        if (str_contains($content, $entry)) {
-            $this->line('<comment>Noerd entry point already present in vite.config.js.</comment>');
-
-            return;
-        }
-
-        $needle = "'resources/js/app.js',";
-        $replacement = "'resources/js/app.js',\n                '{$entry}',";
-
-        $updated = str_replace($needle, $replacement, $content);
-
-        if ($updated === $content) {
-            $this->warn('Could not find insertion point in vite.config.js. Please add the following entry manually:');
-            $this->line("  '{$entry}'");
-
-            return;
-        }
-
-        file_put_contents($viteConfigPath, $updated);
-        $this->line('<info>Added noerd entry point to vite.config.js.</info>');
     }
 
     /**

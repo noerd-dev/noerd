@@ -1,0 +1,8 @@
+{
+  "resources/js/noerd.js": {
+    "file": "assets/noerd-hH11w-80.js",
+    "name": "noerd",
+    "src": "resources/js/noerd.js",
+    "isEntry": true
+  }
+}
