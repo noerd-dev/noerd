@@ -2,6 +2,8 @@
 
 Now that at least one user and one tenant have been set up, the first app can be created, which we can assign to a tenant.
 
+![Noerd Example App](/assets/apps.png "Navigation")
+
 ```bash
 php artisan noerd:create-app
 ```

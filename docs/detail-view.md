@@ -2,6 +2,8 @@
 
 Detail pages display and edit individual records with forms.
 
+![Noerd Example App](/assets/detail.png "Detail View")
+
 ## File Locations
 
 **YAML Configuration:**

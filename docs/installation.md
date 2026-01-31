@@ -4,9 +4,11 @@
 
 noerd is a Laravel Livewire boilerplate for building admin panels and business applications. It provides a solid foundation with multi-tenancy, declarative configuration, and a library of ready-to-use components.
 
+![Noerd Example App](/assets/app1.png "Title")
+
 ### Core Features
 - **Multi-Tenancy** — Built on a flexible multi-tenant architecture with complete data isolation. Users can belong to multiple tenants, manage environments like development, staging, and production, and handle multiple clients or enterprise groups from a single installation.
-- **YAML-Based Configuration** — Define lists, detail views, forms, and navigation through simple YAML files. Customize your instance without touching code—just configure tables, forms, and menus to fit your needs.
+- **YAML-Based Configuration** — Define lists, detail views, forms, and navigation through simple YAML files. Customize your instance without touching code—just configure tables, detail-views, and navigations to fit your needs.
 - **Multi-Language Admin Panel** — A fully translatable interface with built-in language management.
 - **App Management** — Create custom business apps for purchasing, sales, or any department. Alternatively, use ready-made apps like Booking or CMS to get started quickly.
 
@@ -19,7 +21,7 @@ php artisan noerd:install
 
 The install command can be run in a fresh or an existing Laravel application.
 
-During installation, you should create a default tenant and an admin user. If you skip those steps, you can also do it manually with an Artisan command later.
+During installation, you should create a default tenant and an admin user. If you skip those steps, you can also do it manually with an [Artisan command](artisan-commands.md) later.
 
 ### Created Tables
 
