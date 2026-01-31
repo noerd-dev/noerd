@@ -275,9 +275,9 @@ describe('Setup Collection Detail Component', function (): void {
 
     it('can save a new entry', function (): void {
         $component = Volt::test('setup-collection-detail', ['collectionKey' => 'example'])
-            ->set('entryData.title.de', 'Test Titel')
-            ->set('entryData.title.en', 'Test Title')
-            ->set('entryData.is_active', true)
+            ->set('model.title.de', 'Test Titel')
+            ->set('model.title.en', 'Test Title')
+            ->set('model.is_active', true)
             ->call('store');
 
         $component->assertSet('showSuccessIndicator', true);
