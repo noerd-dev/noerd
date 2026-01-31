@@ -1,8 +1,12 @@
 title: noerd_label_user_roles
 newLabel: noerd_label_new_user_role
-component: 'user-role-component'
+component: user-role-component
 disableSearch: false
 redirectAction: ''
 columns:
-  - { field: name, label: noerd_label_name, width: 30 }
-  - { field: description, label: noerd_label_description, width: 40 }
+  - field: name
+    label: noerd_label_name
+    width: 30
+  - field: description
+    label: noerd_label_description
+    width: 40

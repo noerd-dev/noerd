@@ -2,19 +2,21 @@
 
 Lists display data in a table format with search, pagination, and actions.
 
+![Noerd Example App](/assets/list.png "List View")
+
 ## File Locations
 
-**YAML Configuration:**
-```
+YAML Configuration:
+```bash
 app-configs/{app}/lists/{name}-list.yml
 ```
 
-**Livewire Component:**
-```
+Livewire Component:
+```bash
 app-modules/{module}/resources/views/livewire/{name}-list.blade.php
 ```
 
-## YAML Configuration
+## Example YAML Configuration
 
 Example: `app-configs/accounting/lists/customers-list.yml`
 

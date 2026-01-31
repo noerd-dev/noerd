@@ -2,6 +2,8 @@
 
 Navigation is defined in YAML files. Each app has its own navigation configuration.
 
+![Noerd Example App](/assets/navigation.png "Navigation")
+
 ## File Location
 
 ```

@@ -5,11 +5,19 @@ disableSearch: false
 redirectAction: ''
 description: ''
 columns:
-  - { field: email, label: noerd_label_email, width: 10 }
-  - { field: name, label: noerd_label_name, width: 10 }
-  - { field: last_login_at, label: noerd_label_last_login_at, width: 8 }
-  -
-    field: action
+  - field: email
+    label: noerd_label_email
+    width: 10
+  - field: name
+    label: noerd_label_name
+    width: 10
+  - field: last_login_at
+    label: noerd_label_last_login_at
+    width: 8
+  - field: action
     width: 3
     actions:
-      - { label: noerd_label_login_as_user, heroicon: user, action: loginAsUser, confirm: noerd_label_confirm_login_as_user }
+      - label: noerd_label_login_as_user
+        heroicon: user
+        action: loginAsUser
+        confirm: noerd_label_confirm_login_as_user

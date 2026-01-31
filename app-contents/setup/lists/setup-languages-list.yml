@@ -3,12 +3,26 @@ newLabel: noerd_label_new_language
 component: setup-language-detail
 disableSearch: false
 columns:
-  - { field: 'code', label: noerd_label_code, width: 10 }
-  - { field: 'name', label: noerd_label_name, width: 20 }
-  - { field: 'is_active', label: noerd_label_active, width: 10, type: boolean }
-  - { field: 'is_default', label: noerd_label_default, width: 10, type: boolean }
-  - { field: 'sort_order', label: noerd_label_sort, width: 10 }
+  - field: code
+    label: noerd_label_code
+    width: 10
+  - field: name
+    label: noerd_label_name
+    width: 20
+  - field: is_active
+    label: noerd_label_active
+    width: 10
+    type: boolean
+  - field: is_default
+    label: noerd_label_default
+    width: 10
+    type: boolean
+  - field: sort_order
+    label: noerd_label_sort
+    width: 10
   - field: action
     width: 5
     actions:
-      - { label: noerd_label_edit, heroicon: pencil-square, action: listAction }
+      - label: noerd_label_edit
+        heroicon: pencil-square
+        action: listAction
