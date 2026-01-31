@@ -8,6 +8,7 @@
         "laravel/framework": "^11.0|^12.0",
         "livewire/livewire": "^4.0",
         "livewire/volt": "^v1.6.7",
+        "noerd/noerd-modal": "^0.1",
         "composer/composer": "^2.9",
         "wireui/heroicons": "^2.9"
     },

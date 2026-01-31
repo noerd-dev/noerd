@@ -7,6 +7,7 @@
     <title>{{ config('app.name', 'Noerd') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-noerd::modal-assets/>
     <x-noerd::assets/>
 
     <link rel="stylesheet" href="/vendor/noerd/fonts/fonts.css">

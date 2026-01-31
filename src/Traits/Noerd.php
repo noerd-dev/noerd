@@ -9,22 +9,20 @@ use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ListQueryContext;
+use NoerdModal\Traits\NoerdModalTrait;
 
 trait Noerd
 {
+    use NoerdModalTrait {
+        NoerdModalTrait::mountModalProcess as baseModalMount;
+    }
+
     use WithoutUrlPagination;
     use WithPagination;
 
     protected const PAGINATION = 50;
 
-    public bool $showSuccessIndicator = false;
-    #[Url(as: 'tab', keep: false, except: 1)]
-    public int $currentTab = 1;
-
-    public array $pageLayout;
     public $lastChangeTime;
-
-    public bool $disableModal = false;
 
     public string $search = '';
 
@@ -40,14 +38,11 @@ trait Noerd
 
     #[Url]
     public ?string $filter = null;
+
     #[Url]
     public array $currentTableFilter = [];
 
     public array $activeListFilters = [];
-
-    public array $relationTitles = [];
-
-    public mixed $context = '';
 
     #[On('refreshList-' . self::COMPONENT)]
     public function refreshList(): void
@@ -79,7 +74,7 @@ trait Noerd
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
-            $this->sortAsc = !$this->sortAsc;
+            $this->sortAsc = ! $this->sortAsc;
         } else {
             $this->sortAsc = true;
         }
@@ -120,7 +115,7 @@ trait Noerd
         }
 
         $item = $listData->getCollection()->get($id);
-        if (!$item) {
+        if (! $item) {
             return;
         }
         $this->{$method}($item->id);
@@ -129,7 +124,7 @@ trait Noerd
     // Todo remove from Trait
     public function changeEditMode(): void
     {
-        $this->editMode = !$this->editMode;
+        $this->editMode = ! $this->editMode;
     }
 
     // Todo remove from Trait
@@ -140,65 +135,17 @@ trait Noerd
 
     /**
      * Process mount for modal detail components.
-     * Returns false if the model doesn't exist (null, deleted, or inaccessible).
-     * Automatically sets the model data array (e.g., customerData for customer-detail).
+     * Loads page layout from config and delegates to NoerdModalTrait.
      *
-     * @param string $component The component name for loading page layout
-     * @param mixed $model The model instance or array
+     * @param  string  $component  The component name for loading page layout
+     * @param  mixed  $model  The model instance or array
      * @return bool True if model exists and can be displayed, false otherwise
      */
     public function mountModalProcess(string $component, $model): bool
     {
-        $this->pageLayout = StaticConfigHelper::getComponentFields($component);
+        $pageLayout = StaticConfigHelper::getComponentFields($component);
 
-        // Handle null/non-existent/deleted models gracefully
-        $modelExists = $model !== null && (is_array($model) ? !empty($model['id']) : $model->exists);
-
-        if (!$modelExists) {
-            $this->{self::ID} = null;
-            $this->dispatch('closeModal', componentName: $component, source: null, modalKey: null);
-            return false;
-        }
-
-        $this->{self::ID} = is_array($model) ? $model['id'] : $model->id;
-
-        // Automatically set modelData property (e.g., customer-detail → customerData)
-        $dataProperty = Str::camel(Str::before($component, '-detail')) . 'Data';
-        if (property_exists($this, $dataProperty)) {
-            $this->{$dataProperty} = is_array($model) ? $model : $model->toArray();
-        }
-
-        return true;
-    }
-
-    /**
-     * Handle select action - dispatch selection event and close modal.
-     */
-    public function selectAction(mixed $modelId = null, mixed $relationId = null): void
-    {
-        $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
-
-        $this->dispatch('close-modal-' . self::COMPONENT);
-    }
-
-    #[On('close-modal-' . self::COMPONENT)]
-    public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
-    {
-        if (defined('self::ID')) {
-            $this->{self::ID} = '';
-        }
-        $this->currentTab = 1;
-        $this->dispatch('closeModal', componentName: self::COMPONENT, source: $source, modalKey: $modalKey);
-
-        if ($source) {
-            $this->dispatch('refreshList-' . $source);
-        }
-    }
-
-    public function storeProcess($model): void
-    {
-        $this->showSuccessIndicator = true;
-        $this->{self::ID} = $model['id'];
+        return $this->baseModalMount($component, $model, $pageLayout);
     }
 
     public function updateRow(): void
@@ -227,20 +174,6 @@ trait Noerd
     {
     }
 
-    /**
-     * Validate using rules from pageLayout YAML configuration.
-     * Fields with 'required: true' will be validated as required.
-     */
-    public function validateFromLayout(): void
-    {
-        $rules = [];
-        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
-
-        if (!empty($rules)) {
-            $this->validate($rules);
-        }
-    }
-
     protected function syncListQueryContext(): void
     {
         app(ListQueryContext::class)->set(
@@ -254,7 +187,7 @@ trait Noerd
      * Build complete list configuration including rows and table state.
      * Returns all data needed for the list.index component.
      *
-     * @param \Illuminate\Pagination\LengthAwarePaginator|array $rows
+     * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
@@ -275,7 +208,6 @@ trait Noerd
      * Get list configuration from YAML.
      * Uses self::COMPONENT by default, or a custom name if provided.
      * In select mode, uses selectListConfig if set.
-     *
      */
     protected function getListConfig(?string $customName = null): array
     {
@@ -284,43 +216,5 @@ trait Noerd
         }
 
         return StaticConfigHelper::getListConfig($customName ?? self::COMPONENT);
-    }
-
-    /**
-     * Get the event name for select mode.
-     * Derives from COMPONENT: 'customers-list' → 'customerSelected'
-     */
-    protected function getSelectEvent(): string
-    {
-        $entity = Str::singular(Str::before(self::COMPONENT, '-list'));
-
-        return Str::camel($entity) . 'Selected';
-    }
-
-    /**
-     * Recursively extract validation rules from fields array.
-     */
-    protected function extractRulesFromFields(array $fields, array &$rules): void
-    {
-        foreach ($fields as $field) {
-            if (($field['type'] ?? '') === 'block') {
-                $this->extractRulesFromFields($field['fields'] ?? [], $rules);
-                continue;
-            }
-
-            if (!isset($field['name'])) {
-                continue;
-            }
-
-            $fieldRules = [];
-
-            if ($field['required'] ?? false) {
-                $fieldRules[] = 'required';
-            }
-
-            if (!empty($fieldRules)) {
-                $rules[$field['name']] = $fieldRules;
-            }
-        }
     }
 }
