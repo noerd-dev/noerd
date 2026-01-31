@@ -24,16 +24,36 @@ Example: `app-configs/accounting/details/customer-detail.yml`
 title: accounting_label_customer_details
 description: ''
 tabs:
-  - { number: 1, label: customer_master_data }
-  - { label: customer_invoices, component: invoices-list, arguments: { customerId: '$customerId' }, requiresId: true }
+  - number: 1
+    label: customer_master_data
+  - label: customer_invoices
+    component: invoices-list
+    arguments:
+      customerId: '$customerId'
+    requiresId: true
 fields:
-  - { name: customerData.name, label: accounting_label_name, type: text, required: true }
-  - { name: customerData.company_name, label: accounting_label_company_name, type: text }
-  - { name: customerData.email, label: accounting_label_email, type: text }
-  - { name: customerData.phone, label: accounting_label_phone, type: text }
-  - { name: customerData.address, label: accounting_label_address, type: text }
-  - { name: customerData.zipcode, label: accounting_label_zip_code, type: text }
-  - { name: customerData.city, label: accounting_label_city, type: text }
+  - name: customerData.name
+    label: accounting_label_name
+    type: text
+    required: true
+  - name: customerData.company_name
+    label: accounting_label_company_name
+    type: text
+  - name: customerData.email
+    label: accounting_label_email
+    type: text
+  - name: customerData.phone
+    label: accounting_label_phone
+    type: text
+  - name: customerData.address
+    label: accounting_label_address
+    type: text
+  - name: customerData.zipcode
+    label: accounting_label_zip_code
+    type: text
+  - name: customerData.city
+    label: accounting_label_city
+    type: text
 ```
 
 ## Detail Properties
