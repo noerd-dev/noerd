@@ -9,7 +9,7 @@ new class extends Component
 {
     use Noerd;
 
-    public const COMPONENT = 'setup-language-detail';
+    public const DETAIL_COMPONENT = 'setup-language-detail';
     public const LIST_COMPONENT = 'setup-languages-list';
     public const ID = 'languageId';
 
@@ -24,7 +24,7 @@ new class extends Component
             $language = SetupLanguage::find($this->languageId) ?? new SetupLanguage;
         }
 
-        $this->mountModalProcess(self::COMPONENT, $language);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $language);
 
         $this->languageData = $language->toArray();
 

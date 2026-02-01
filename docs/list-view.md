@@ -68,14 +68,14 @@ use Nywerk\Customer\Models\Customer;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = 'customers-list';
+    public const DETAIL_COMPONENT = 'customers-list';
 
     public function listAction(mixed $customerId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'customer-detail',
-            source: self::COMPONENT,
+            source: self::DETAIL_COMPONENT,
             arguments: ['customerId' => $customerId, 'relationId' => $relationId],
         );
     }

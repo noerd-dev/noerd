@@ -8,14 +8,14 @@ use Noerd\Traits\Noerd;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = 'user-roles-list';
+    public const DETAIL_COMPONENT = 'user-roles-list';
 
     public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'user-role-detail',
-            source: self::COMPONENT,
+            source: self::DETAIL_COMPONENT,
             arguments: ['userRoleId' => $modelId, 'relationId' => $relationId],
         );
     }

@@ -21,7 +21,7 @@ new class extends Component
     use SetupLanguageFilterTrait;
     use WithFileUploads;
 
-    public const COMPONENT = 'setup-collection-detail';
+    public const DETAIL_COMPONENT = 'setup-collection-detail';
     public const LIST_COMPONENT = 'setup-collections-list';
     public const ID = 'entryId';
 

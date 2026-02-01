@@ -11,7 +11,7 @@ new class extends Component {
     use Noerd;
     use WithFileUploads;
 
-    public const COMPONENT = 'tenant-detail';
+    public const DETAIL_COMPONENT = 'tenant-detail';
     public const LIST_COMPONENT = 'tenants-list';
     public const ID = 'tenantId';
 
@@ -25,7 +25,7 @@ new class extends Component {
     {
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
 
-        $this->mountModalProcess(self::COMPONENT, $tenant);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $tenant);
         $this->tenantData = $tenant->toArray();
     }
 

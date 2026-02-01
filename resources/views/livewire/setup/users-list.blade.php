@@ -8,14 +8,14 @@ use Noerd\Traits\Noerd;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = 'users-list';
+    public const DETAIL_COMPONENT = 'users-list';
 
     public function listAction(mixed $userId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'user-detail',
-            source: self::COMPONENT,
+            source: self::DETAIL_COMPONENT,
             arguments: ['userId' => $userId, 'relationId' => $relationId],
         );
     }
