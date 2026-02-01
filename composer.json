@@ -2,7 +2,7 @@
     "name": "noerd/noerd",
     "description": "",
     "type": "library",
-    "version": "v0.1.0",
+    "version": "v0.1.2",
     "license": "proprietary",
     "require": {
         "livewire/livewire": "^4.0",
