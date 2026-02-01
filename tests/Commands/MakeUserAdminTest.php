@@ -190,7 +190,7 @@ it('handles user with partial admin access correctly', function (): void {
     $user->refresh();
     $tenant2Profile = $user->tenants()->where('tenant_id', $tenant2->id)->first();
     expect($tenant2Profile->pivot->profile_id)->toBe(
-        Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->first()->id
+        Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->first()->id,
     );
 });
 

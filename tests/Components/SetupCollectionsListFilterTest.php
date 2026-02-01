@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Profile;
 use Noerd\Models\SetupLanguage;

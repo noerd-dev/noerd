@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use Noerd\Controllers\DashboardController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {

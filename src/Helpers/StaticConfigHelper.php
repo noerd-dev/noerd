@@ -96,47 +96,6 @@ class StaticConfigHelper
     }
 
     /**
-     * Get collections filtered by hasPage property
-     */
-    private static function getCollectionsByHasPage(bool $hasPage): array
-    {
-        $collectionsPath = base_path('app-configs/cms/collections');
-
-        if (! is_dir($collectionsPath)) {
-            return [];
-        }
-
-        $collectionFiles = glob($collectionsPath . '/*.yml');
-        $dynamicNavigations = [];
-
-        foreach ($collectionFiles as $file) {
-            $collectionKey = basename($file, '.yml');
-
-            try {
-                $content = file_get_contents($file);
-                $collectionData = Yaml::parse($content ?: '');
-
-                if ($collectionData && isset($collectionData['titleList'])) {
-                    $collectionHasPage = $collectionData['hasPage'] ?? false;
-
-                    if ($collectionHasPage === $hasPage) {
-                        $dynamicNavigations[] = [
-                            'title' => $collectionData['titleList'],
-                            'link' => "/cms/collections?key={$collectionKey}",
-                            'icon' => 'icons.list-bullet',
-                        ];
-                    }
-                }
-            } catch (Exception) {
-                // Skip invalid YAML files
-                continue;
-            }
-        }
-
-        return $dynamicNavigations;
-    }
-
-    /**
      * Build dynamic Setup Collections navigation based on .yml files in /app-configs/setup/collections/
      */
     public static function setupCollections(): array
@@ -180,6 +139,47 @@ class StaticConfigHelper
     public static function clearModuleSourceCache(): void
     {
         self::$moduleSourceMappingCache = null;
+    }
+
+    /**
+     * Get collections filtered by hasPage property
+     */
+    private static function getCollectionsByHasPage(bool $hasPage): array
+    {
+        $collectionsPath = base_path('app-configs/cms/collections');
+
+        if (! is_dir($collectionsPath)) {
+            return [];
+        }
+
+        $collectionFiles = glob($collectionsPath . '/*.yml');
+        $dynamicNavigations = [];
+
+        foreach ($collectionFiles as $file) {
+            $collectionKey = basename($file, '.yml');
+
+            try {
+                $content = file_get_contents($file);
+                $collectionData = Yaml::parse($content ?: '');
+
+                if ($collectionData && isset($collectionData['titleList'])) {
+                    $collectionHasPage = $collectionData['hasPage'] ?? false;
+
+                    if ($collectionHasPage === $hasPage) {
+                        $dynamicNavigations[] = [
+                            'title' => $collectionData['titleList'],
+                            'link' => "/cms/collections?key={$collectionKey}",
+                            'icon' => 'icons.list-bullet',
+                        ];
+                    }
+                }
+            } catch (Exception) {
+                // Skip invalid YAML files
+                continue;
+            }
+        }
+
+        return $dynamicNavigations;
     }
 
     /**

@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;

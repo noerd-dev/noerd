@@ -28,7 +28,7 @@ describe('PublicAppMiddleware', function (): void {
 
         $request = Request::create('/docs/installation', 'GET');
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'documentation');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'documentation');
 
         expect($response->getContent())->toBe('OK');
     });
@@ -45,7 +45,7 @@ describe('PublicAppMiddleware', function (): void {
 
         $request = Request::create('/cms/pages', 'GET');
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
         expect($response->headers->get('Location'))->toContain('/login');
@@ -66,9 +66,9 @@ describe('PublicAppMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/docs/installation', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'documentation');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'documentation');
 
         expect($response->getContent())->toBe('OK');
     });
@@ -85,7 +85,7 @@ describe('PublicAppMiddleware', function (): void {
 
         $request = Request::create('/docs/installation', 'GET');
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'documentation');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'documentation');
 
         expect($response->getStatusCode())->toBe(302);
         expect($response->headers->get('Location'))->toContain('/login');
@@ -103,7 +103,7 @@ describe('PublicAppMiddleware', function (): void {
 
         $request = Request::create('/docs/installation', 'GET');
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'Documentation');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'Documentation');
 
         expect($response->getContent())->toBe('OK');
     });
@@ -125,9 +125,9 @@ describe('PublicAppMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $response = $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getContent())->toBe('OK');
     });
@@ -147,8 +147,8 @@ describe('PublicAppMiddleware', function (): void {
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
-        $request->setUserResolver(fn () => $user);
+        $request->setUserResolver(fn() => $user);
 
-        $this->middleware->handle($request, fn () => response('OK'), 'cms');
+        $this->middleware->handle($request, fn() => response('OK'), 'cms');
     })->throws(NoerdException::class, "App 'CMS' is not assigned to this tenant");
 });

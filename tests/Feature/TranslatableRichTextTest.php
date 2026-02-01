@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);

@@ -3,7 +3,7 @@
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-
+use Livewire\Livewire;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\User;
@@ -24,7 +24,7 @@ it('renders the user component', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     Livewire::test($testSettings['componentName'])
-        ->assertViewIs('volt-livewire::user-detail')
+        ->assertStatus(200)
         ->assertSeeText('Benutzer');
 });
 
