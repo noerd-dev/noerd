@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+
 use Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
@@ -17,7 +17,7 @@ describe('TranslatableRichText Component', function (): void {
         $content = '<p>Test content in German</p>';
 
         // TipTap editor receives content via Alpine x-data, which is JSON-escaped
-        Volt::test('translatable-rich-text-test', [
+        Livewire::test('translatable-rich-text-test', [
             'initialContent' => ['de' => $content, 'en' => 'English content'],
         ])
             ->assertSee('Test content in German', escape: false);
@@ -30,7 +30,7 @@ describe('TranslatableRichText Component', function (): void {
         $englishContent = '<p>English content</p>';
 
         // TipTap editor receives content via Alpine x-data, which is JSON-escaped
-        Volt::test('translatable-rich-text-test', [
+        Livewire::test('translatable-rich-text-test', [
             'initialContent' => ['de' => $germanContent, 'en' => $englishContent],
         ])
             ->assertSee('English content', escape: false)
@@ -44,14 +44,14 @@ describe('TranslatableRichText Component', function (): void {
         $englishContent = '<p>English content</p>';
 
         // TipTap editor receives content via Alpine x-data, which is JSON-escaped
-        Volt::test('translatable-rich-text-test', [
+        Livewire::test('translatable-rich-text-test', [
             'initialContent' => ['de' => $germanContent, 'en' => $englishContent],
         ])
             ->assertSee('German content', escape: false);
     });
 
     it('handles empty content gracefully', function (): void {
-        Volt::test('translatable-rich-text-test', [
+        Livewire::test('translatable-rich-text-test', [
             'initialContent' => ['de' => '', 'en' => ''],
         ])
             ->assertSuccessful();
@@ -60,7 +60,7 @@ describe('TranslatableRichText Component', function (): void {
     it('handles missing language key gracefully', function (): void {
         session(['selectedLanguage' => 'fr']);
 
-        Volt::test('translatable-rich-text-test', [
+        Livewire::test('translatable-rich-text-test', [
             'initialContent' => ['de' => 'German', 'en' => 'English'],
         ])
             ->assertSuccessful();

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -20,7 +20,7 @@ it('renders the create-new-tenant component', function () use ($testSettings): v
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->assertViewIs('volt-livewire::setup.create-new-tenant')
         ->assertSeeText('Neuen Mandanten erstellen');
 });
@@ -30,7 +30,7 @@ it('validates required name field', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->call('createTenant')
         ->assertHasErrors(['name' => 'required']);
 });
@@ -40,7 +40,7 @@ it('validates name field minimum length', function () use ($testSettings): void 
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', 'AB') // Only 2 characters, min is 3
         ->call('createTenant')
         ->assertHasErrors(['name' => 'min']);
@@ -51,7 +51,7 @@ it('validates name field maximum length', function () use ($testSettings): void 
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', str_repeat('A', 51)) // 51 characters, max is 50
         ->call('createTenant')
         ->assertHasErrors(['name' => 'max']);
@@ -62,7 +62,7 @@ it('accepts valid name with minimum length', function () use ($testSettings): vo
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', 'ABC') // Exactly 3 characters (minimum)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -74,7 +74,7 @@ it('successfully creates a new tenant', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -93,7 +93,7 @@ it('creates default USER and ADMIN profiles for new tenant', function () use ($t
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -121,7 +121,7 @@ it('attaches current user to new tenant as admin', function () use ($testSetting
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -165,7 +165,7 @@ it('copies tenant apps from current tenant to new tenant', function () use ($tes
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -200,7 +200,7 @@ it('copies user roles from current tenant to new tenant', function () use ($test
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -230,7 +230,7 @@ it('updates user selected_tenant_id to new tenant', function () use ($testSettin
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -256,7 +256,7 @@ it('handles case when current tenant has no apps', function () use ($testSetting
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -278,7 +278,7 @@ it('handles case when current tenant has no user roles', function () use ($testS
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->call('createTenant')
         ->assertHasNoErrors();
@@ -296,7 +296,7 @@ it('sets name property correctly in component', function () use ($testSettings):
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
         ->assertSet('name', $tenantName);
 });

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 

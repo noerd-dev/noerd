@@ -27,7 +27,7 @@
 </head>
 <body class="bg-brand-bg h-full">
 
-<livewire:framework.noerd-modal/> <!-- must be loaded before livewire components -->
+<livewire:noerd-modal/> <!-- must be loaded before livewire components -->
 
 <div class="h-dvh" x-data="{
            openProfile: false,

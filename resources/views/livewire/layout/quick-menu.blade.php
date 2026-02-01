@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
 

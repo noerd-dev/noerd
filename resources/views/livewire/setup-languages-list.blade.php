@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Scopes\SortScope;
 use Noerd\Traits\Noerd;

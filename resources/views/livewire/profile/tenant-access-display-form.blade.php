@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Models\Profile;
 
 new class extends Component {
@@ -12,11 +12,11 @@ new class extends Component {
     {
         $user = Auth::user();
         $tenantAccess = [];
-        
+
         foreach ($user->tenants as $tenant) {
             $profileId = $tenant->pivot->profile_id;
             $profile = Profile::find($profileId);
-            
+
             $tenantAccess[] = [
                 'id' => $tenant->id,
                 'name' => $tenant->name,
@@ -24,7 +24,7 @@ new class extends Component {
                 'profile_id' => $profileId,
             ];
         }
-        
+
         return $tenantAccess;
     }
 
@@ -46,7 +46,7 @@ new class extends Component {
             <div class="pb-4 font-medium text-gray-700">
                 {{ __('Access to the following tenants:') }}
             </div>
-            
+
             @if(count($this->userTenantAccess) > 0)
                 <div class="pl-2 space-y-3">
                     @foreach($this->userTenantAccess as $tenant)

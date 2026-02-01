@@ -4,7 +4,7 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component {
     public string $name = '';

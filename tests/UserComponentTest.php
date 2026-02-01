@@ -3,7 +3,7 @@
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Livewire\Volt\Volt;
+
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\User;
@@ -23,7 +23,7 @@ it('renders the user component', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->assertViewIs('volt-livewire::user-detail')
         ->assertSeeText('Benutzer');
 });
@@ -33,7 +33,7 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->call('store')
         ->assertHasErrors(['userData.name'])
         ->assertHasErrors(['userData.email'])
@@ -56,7 +56,7 @@ it('successfully creates a new user', function () use ($testSettings): void {
     $userName = fake()->name;
     $userEmail = fake()->email;
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userData.name', $userName)
         ->set('userData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -96,7 +96,7 @@ it('updates an existing user', function () use ($testSettings): void {
     $newName = 'Updated Name';
     $newEmail = 'updated@example.com';
 
-    Volt::test($testSettings['componentName'], [$existingUser])
+    Livewire::test($testSettings['componentName'], [$existingUser])
         ->set('userId', $existingUser->id)
         ->set('userData.name', $newName)
         ->set('userData.email', $newEmail)
@@ -130,7 +130,7 @@ it('handles existing user with same email', function () use ($testSettings): voi
     $this->actingAs($admin);
 
     // Try to create a new user with same email
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userData.name', 'New User')
         ->set('userData.email', 'existing@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -160,7 +160,7 @@ it('manages user roles correctly', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'], [$user])
+    Livewire::test($testSettings['componentName'], [$user])
         ->set('userId', $user->id)
         ->set('userData.name', $user->name)
         ->set('userData.email', $user->email)
@@ -206,7 +206,7 @@ it('manages tenant access correctly', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'], [$user])
+    Livewire::test($testSettings['componentName'], [$user])
         ->set('userId', $user->id)
         ->set('userData.name', $user->name)
         ->set('userData.email', $user->email)
@@ -228,7 +228,7 @@ it('requires at least one tenant access', function () use ($testSettings): void 
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userData.name', 'Test User')
         ->set('userData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", false)
@@ -254,7 +254,7 @@ it('loads user roles in mount', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     // Test that the component can successfully set and store user roles
-    $component = Volt::test($testSettings['componentName'], [$user])
+    $component = Livewire::test($testSettings['componentName'], [$user])
         ->set('userId', $user->id)
         ->set("userRoles.{$role->id}", true)
         ->set('userData.name', $user->name)
@@ -281,7 +281,7 @@ it('computes roles correctly', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    $component = Volt::test($testSettings['componentName']);
+    $component = Livewire::test($testSettings['componentName']);
     $roles = $component->get('roles');
 
     expect($roles)->toHaveKey($tenant->name);
@@ -299,7 +299,7 @@ it('computes tenant profiles correctly', function () use ($testSettings): void {
 
     $this->actingAs($admin);
 
-    $component = Volt::test($testSettings['componentName']);
+    $component = Livewire::test($testSettings['componentName']);
     $tenantProfiles = $component->get('tenantProfiles');
 
     expect($tenantProfiles)->toHaveKey($profile->id);
@@ -318,7 +318,7 @@ it('sets success indicator after storing', function () use ($testSettings): void
 
     $this->actingAs($admin);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userData.name', 'Test User')
         ->set('userData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -347,7 +347,7 @@ it('sends password reset link when creating new user', function () use ($testSet
     $userEmail = fake()->email;
 
     // Create new user via component
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userData.name', $userName)
         ->set('userData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -394,7 +394,7 @@ it('does not send password reset link when updating existing user', function () 
     $this->actingAs($admin);
 
     // Update existing user via component
-    Volt::test($testSettings['componentName'], [$existingUser])
+    Livewire::test($testSettings['componentName'], [$existingUser])
         ->set('userId', $existingUser->id)
         ->set('userData.name', 'Updated Name')
         ->set('userData.email', 'updated@example.com')
@@ -424,7 +424,7 @@ it('creates user with hashed password that user cannot login with before reset',
     $userEmail = fake()->email;
 
     // Create new user via component
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userData.name', $userName)
         ->set('userData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)

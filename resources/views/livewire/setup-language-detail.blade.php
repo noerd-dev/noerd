@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\Noerd;
 

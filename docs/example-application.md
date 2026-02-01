@@ -100,7 +100,7 @@ The module is registered in the main project's `composer.json` as a path reposit
 namespace Nywerk\Study\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Livewire\Volt\Volt;
+
 use Nywerk\Study\Commands\StudyInstallCommand;
 
 class StudyServiceProvider extends ServiceProvider
@@ -117,7 +117,6 @@ class StudyServiceProvider extends ServiceProvider
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/study-routes.php');
 
-        Volt::mount(__DIR__ . '/../../resources/views/livewire');
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -132,7 +131,6 @@ class StudyServiceProvider extends ServiceProvider
 - `loadViewsFrom()` — Registers views with the `study` namespace.
 - `loadJsonTranslationsFrom()` — Loads JSON translations from the module.
 - `loadRoutesFrom()` — Loads the module's route file.
-- `Volt::mount()` — Registers Livewire Volt components.
 - `commands()` — Registers Artisan commands (only in console).
 
 ## Migration
@@ -345,7 +343,7 @@ The `relation_link` column type creates a clickable link that opens the related 
 ```php
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Scopes\SortScope;
 use Noerd\Traits\Noerd;
 use Nywerk\Study\Models\StudyMaterial;
@@ -446,7 +444,7 @@ The `relation` type opens a list modal for selection. The `relationField` points
 <?php
 
 use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Traits\Noerd;
 use Nywerk\Study\Models\StudyMaterial;
 
@@ -551,23 +549,23 @@ public function studyMaterialSelected($studyMaterialId): void
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Livewire\Volt\Volt;
+
 use Nywerk\Study\Http\Controllers\FlashcardPrintController;
 
 Route::group(['middleware' => ['web', 'auth', 'verified']], function (): void {
-    Volt::route('study/study-materials', 'study-materials-list')->name('study.study-materials');
-    Volt::route('study/study-material/{model}', 'study-material-detail')->name('study.study-material.detail');
-    Volt::route('study/summaries', 'summaries-list')->name('study.summaries');
-    Volt::route('study/summary/{model}', 'summary-detail')->name('study.summary.detail');
-    Volt::route('study/flashcards', 'flashcards-list')->name('study.flashcards');
-    Volt::route('study/flashcard/{model}', 'flashcard-detail')->name('study.flashcard.detail');
-    Volt::route('study/flashcards-print', 'flashcard-print-detail')->name('study.flashcards-print');
+    Route::livewire('study/study-materials', 'study-materials-list')->name('study.study-materials');
+    Route::livewire('study/study-material/{model}', 'study-material-detail')->name('study.study-material.detail');
+    Route::livewire('study/summaries', 'summaries-list')->name('study.summaries');
+    Route::livewire('study/summary/{model}', 'summary-detail')->name('study.summary.detail');
+    Route::livewire('study/flashcards', 'flashcards-list')->name('study.flashcards');
+    Route::livewire('study/flashcard/{model}', 'flashcard-detail')->name('study.flashcard.detail');
+    Route::livewire('study/flashcards-print', 'flashcard-print-detail')->name('study.flashcards-print');
     Route::get('study/flashcards-print/pdf', [FlashcardPrintController::class, 'print'])
         ->name('study.flashcards-print.pdf');
 });
 ```
 
-- Use `Volt::route()` for Livewire Volt components.
+- Use `Route::livewire(')` for Livewire Volt components.
 - List routes use the plural form: `study/study-materials`.
 - Detail routes include `{model}`: `study/study-material/{model}`.
 - Route names: `study.{resource}` for lists, `study.{resource}.detail` for details.
@@ -725,7 +723,7 @@ it('validates the data', function (): void {
     $user = $this->withStudyModule();
     $this->actingAs($user);
 
-    Volt::test('summary-detail')
+    Livewire::test('summary-detail')
         ->call('store')
         ->assertHasErrors(['summaryData.title'])
         ->assertHasErrors(['summaryData.study_material_id']);
@@ -738,7 +736,7 @@ it('handles study material selection correctly', function (): void {
     ]);
     $this->actingAs($user);
 
-    Volt::test('summary-detail')
+    Livewire::test('summary-detail')
         ->call('studyMaterialSelected', $studyMaterial->id)
         ->assertSet('summaryData.study_material_id', $studyMaterial->id)
         ->assertSet('relationTitles.study_material_id', $studyMaterial->title);
