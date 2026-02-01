@@ -9,14 +9,14 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = '{{models}}-list';
+    public const DETAIL_COMPONENT = '{{models}}-list';
 
     public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             component: '{{model}}-detail',
-            source: self::COMPONENT,
+            source: self::DETAIL_COMPONENT,
             arguments: ['{{model}}Id' => $modelId, 'relationId' => $relationId],
         );
     }

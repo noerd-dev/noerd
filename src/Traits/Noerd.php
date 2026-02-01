@@ -44,7 +44,7 @@ trait Noerd
 
     public array $activeListFilters = [];
 
-    #[On('refreshList-' . self::COMPONENT)]
+    #[On('refreshList-' . self::DETAIL_COMPONENT)]
     public function refreshList(): void
     {
         $this->dispatch('$refresh');
@@ -134,18 +134,18 @@ trait Noerd
     }
 
     /**
-     * Process mount for modal detail components.
+     * Process mount for modal detail DETAIL_COMPONENTs.
      * Loads page layout from config and delegates to NoerdModalTrait.
      *
-     * @param  string  $component  The component name for loading page layout
+     * @param  string  $DETAIL_COMPONENT  The DETAIL_COMPONENT name for loading page layout
      * @param  mixed  $model  The model instance or array
      * @return bool True if model exists and can be displayed, false otherwise
      */
-    public function mountModalProcess(string $component, $model): bool
+    public function mountModalProcess(string $DETAIL_COMPONENT, $model): bool
     {
-        $pageLayout = StaticConfigHelper::getComponentFields($component);
+        $pageLayout = StaticConfigHelper::getComponentFields($DETAIL_COMPONENT);
 
-        return $this->baseModalMount($component, $model, $pageLayout);
+        return $this->baseModalMount($DETAIL_COMPONENT, $model, $pageLayout);
     }
 
     public function updateRow(): void {}
@@ -177,7 +177,7 @@ trait Noerd
 
     /**
      * Build complete list configuration including rows and table state.
-     * Returns all data needed for the list.index component.
+     * Returns all data needed for the list.index DETAIL_COMPONENT.
      *
      * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
      */
@@ -198,7 +198,7 @@ trait Noerd
 
     /**
      * Get list configuration from YAML.
-     * Uses self::COMPONENT by default, or a custom name if provided.
+     * Uses self::DETAIL_COMPONENT by default, or a custom name if provided.
      * In select mode, uses selectListConfig if set.
      */
     protected function getListConfig(?string $customName = null): array
@@ -207,6 +207,6 @@ trait Noerd
             return StaticConfigHelper::getListConfig($this->selectListConfig);
         }
 
-        return StaticConfigHelper::getListConfig($customName ?? self::COMPONENT);
+        return StaticConfigHelper::getListConfig($customName ?? self::DETAIL_COMPONENT);
     }
 }

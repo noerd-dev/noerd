@@ -15,7 +15,7 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'user-detail';
+    public const DETAIL_COMPONENT = 'user-detail';
     public const LIST_COMPONENT = 'users-list';
     public const ID = 'userId';
     #[Url(keep: false, except: '')]
@@ -76,7 +76,7 @@ new class extends Component {
             }
         }
 
-        $this->mountModalProcess(self::COMPONENT, $user);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $user);
         $this->userData = $user->toArray();
 
         foreach (auth()->user()->adminTenants as $tenant) {

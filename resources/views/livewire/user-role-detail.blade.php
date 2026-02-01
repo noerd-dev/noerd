@@ -9,7 +9,7 @@ new class extends Component {
 
     use Noerd;
 
-    public const COMPONENT = 'user-role-detail';
+    public const DETAIL_COMPONENT = 'user-role-detail';
     public const LIST_COMPONENT = 'user-roles-list';
     public const ID = 'userRoleId';
 
@@ -24,7 +24,7 @@ new class extends Component {
             $userRole = UserRole::find($this->userRoleId);
         }
 
-        $this->mountModalProcess(self::COMPONENT, $userRole);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $userRole);
         $this->userRoleData = $userRole->toArray();
     }
 

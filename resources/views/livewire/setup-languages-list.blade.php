@@ -9,7 +9,7 @@ new class extends Component
 {
     use Noerd;
 
-    public const COMPONENT = 'setup-languages-list';
+    public const DETAIL_COMPONENT = 'setup-languages-list';
 
     public function mount(): void
     {
@@ -26,7 +26,7 @@ new class extends Component
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'setup-language-detail',
-            source: self::COMPONENT,
+            source: self::DETAIL_COMPONENT,
             arguments: ['languageId' => $modelId, 'relationId' => $relationId],
         );
     }

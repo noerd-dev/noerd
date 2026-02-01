@@ -101,7 +101,7 @@ use Noerd\Traits\Noerd;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = 'customer-detail';
+    public const DETAIL_COMPONENT = 'customer-detail';
     public const LIST_COMPONENT = 'customers-list';
     public const ID = 'customerId';
 
@@ -116,7 +116,7 @@ new class extends Component {
             $customer = Customer::find($this->customerId);
         }
 
-        $this->mountModalProcess(self::COMPONENT, $customer);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $customer);
     }
 
     public function store(): void

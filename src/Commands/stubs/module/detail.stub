@@ -8,7 +8,7 @@ use Noerd\Traits\Noerd;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = '{{model}}-detail';
+    public const DETAIL_COMPONENT = '{{model}}-detail';
     public const LIST_COMPONENT = '{{models}}-list';
     public const ID = '{{model}}Id';
 
@@ -23,7 +23,7 @@ new class extends Component {
             $model = {{Model}}::find($this->{{model}}Id);
         }
 
-        $this->mountModalProcess(self::COMPONENT, $model);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $model);
         $this->{{model}} = $model->toArray();
     }
 

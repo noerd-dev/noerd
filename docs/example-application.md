@@ -351,14 +351,14 @@ use Nywerk\Study\Models\StudyMaterial;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = 'study-materials-list';
+    public const DETAIL_COMPONENT = 'study-materials-list';
 
     public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'study-material-detail',
-            source: self::COMPONENT,
+            source: self::DETAIL_COMPONENT,
             arguments: ['studyMaterialId' => $modelId, 'relationId' => $relationId],
         );
     }
@@ -451,7 +451,7 @@ use Nywerk\Study\Models\StudyMaterial;
 new class extends Component {
     use Noerd;
 
-    public const COMPONENT = 'study-material-detail';
+    public const DETAIL_COMPONENT = 'study-material-detail';
     public const LIST_COMPONENT = 'study-materials-list';
     public const ID = 'studyMaterialId';
 
@@ -466,7 +466,7 @@ new class extends Component {
             $studyMaterial = StudyMaterial::find($this->studyMaterialId);
         }
 
-        $this->mountModalProcess(self::COMPONENT, $studyMaterial);
+        $this->mountModalProcess(self::DETAIL_COMPONENT, $studyMaterial);
         $this->studyMaterialData = $studyMaterial->toArray();
     }
 
