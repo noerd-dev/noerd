@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenant;
 use Noerd\Commands\CreateAdminCommand;
 use Noerd\Commands\CreateTenantApp;
@@ -37,6 +37,7 @@ class NoerdServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
+        Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/livewire');
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/noerd-routes.php');
@@ -49,8 +50,6 @@ class NoerdServiceProvider extends ServiceProvider
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('public-app', PublicAppMiddleware::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
-
-        Volt::mount(__DIR__ . '/../../resources/views/livewire');
 
         // Register Blade components
         Blade::component('app-layout', AppLayout::class);

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+
 use Noerd\Models\User;
 use Noerd\Models\UserRole;
 
@@ -19,7 +19,7 @@ it('renders the user role component', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->assertViewIs('volt-livewire::user-role-detail')
         ->assertSeeText('Benutzerrolle');
 });
@@ -29,7 +29,7 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->call('store')
         ->assertHasErrors(['userRoleData.key'])
         ->assertHasErrors(['userRoleData.name']);
@@ -44,7 +44,7 @@ it('successfully creates a new user role', function () use ($testSettings): void
     $roleName = 'Administrator Role';
     $roleDescription = 'Has full administrative access';
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', $roleKey)
         ->set('userRoleData.name', $roleName)
         ->set('userRoleData.description', $roleDescription)
@@ -75,7 +75,7 @@ it('updates an existing user role', function () use ($testSettings): void {
     $newName = 'New Name';
     $newDescription = 'New Description';
 
-    Volt::test($testSettings['componentName'], [$existingRole])
+    Livewire::test($testSettings['componentName'], [$existingRole])
         ->set('userRoleId', $existingRole->id)
         ->set('userRoleData.key', $newKey)
         ->set('userRoleData.name', $newName)
@@ -97,7 +97,7 @@ it('sets tenant_id when storing', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', 'TEST_ROLE')
         ->set('userRoleData.name', 'Test Role')
         ->call('store')
@@ -121,7 +121,7 @@ it('deletes a user role', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'], [$userRole])
+    Livewire::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id)
         ->call('delete')
         ->assertDispatched('closeModal');
@@ -143,7 +143,7 @@ it('mounts with existing user role data', function () use ($testSettings): void 
 
     $this->actingAs($user);
 
-    $component = Volt::test($testSettings['componentName'], [$userRole])
+    $component = Livewire::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id);
 
     // Check if user role data is loaded correctly
@@ -158,7 +158,7 @@ it('mounts with new user role', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    $component = Volt::test($testSettings['componentName']);
+    $component = Livewire::test($testSettings['componentName']);
 
     // Check if default values are set for new user role
     expect($component->get('userRoleData'))->toBeArray();
@@ -170,7 +170,7 @@ it('sets success indicator after storing', function () use ($testSettings): void
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', 'SUCCESS_ROLE')
         ->set('userRoleData.name', 'Success Role')
         ->call('store')
@@ -182,7 +182,7 @@ it('sets userRoleId after creating new role', function () use ($testSettings): v
 
     $this->actingAs($user);
 
-    $component = Volt::test($testSettings['componentName'])
+    $component = Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', 'NEW_ROLE')
         ->set('userRoleData.name', 'New Role')
         ->call('store');
@@ -196,7 +196,7 @@ it('validates key field format', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', '') // Empty key
         ->set('userRoleData.name', 'Valid Name')
         ->call('store')
@@ -208,7 +208,7 @@ it('validates name field format', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', 'VALID_KEY')
         ->set('userRoleData.name', '') // Empty name
         ->call('store')
@@ -220,7 +220,7 @@ it('handles optional description field', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'])
+    Livewire::test($testSettings['componentName'])
         ->set('userRoleData.key', 'NO_DESC_ROLE')
         ->set('userRoleData.name', 'Role Without Description')
         // No description set
@@ -245,7 +245,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    Volt::test($testSettings['componentName'], [$userRole])
+    Livewire::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id)
         ->call('delete')
         ->assertDispatched('closeModal');
@@ -256,7 +256,7 @@ it('uses correct component constants', function () use ($testSettings): void {
 
     $this->actingAs($user);
 
-    $component = Volt::test($testSettings['componentName']);
+    $component = Livewire::test($testSettings['componentName']);
 
     // Check if constants are correctly defined (via reflection since they're used in the class)
     expect($testSettings['componentName'])->toBe('user-role-detail');

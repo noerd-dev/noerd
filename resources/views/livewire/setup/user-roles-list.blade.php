@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Models\UserRole;
 use Noerd\Traits\Noerd;
 

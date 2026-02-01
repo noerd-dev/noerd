@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Models\Profile;
 use Noerd\Models\User;
 use Noerd\Models\UserRole;

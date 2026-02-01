@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Layout('noerd::components.layouts.auth')] class extends Component {
     public string $email = '';

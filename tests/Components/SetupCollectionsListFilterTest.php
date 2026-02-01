@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Profile;
 use Noerd\Models\SetupLanguage;
@@ -70,7 +70,7 @@ afterEach(function (): void {
 });
 
 it('can set activeListFilters without error', function (): void {
-    Volt::test('setup-collections-list', ['collectionKey' => 'example'])
+    Livewire::test('setup-collections-list', ['collectionKey' => 'example'])
         ->set('activeListFilters.language', 'de')
         ->assertHasNoErrors();
 });
@@ -80,7 +80,7 @@ it('applies language filter without error', function (): void {
     // it uses the same value we're setting
     session(['selectedLanguage' => 'en']);
 
-    $component = Volt::test('setup-collections-list', ['collectionKey' => 'example'])
+    $component = Livewire::test('setup-collections-list', ['collectionKey' => 'example'])
         ->set('activeListFilters.language', 'en');
 
     expect($component->get('activeListFilters')['language'])->toBe('en');

@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Modelable;
 use Livewire\Attributes\Reactive;

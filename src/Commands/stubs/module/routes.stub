@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Livewire\Volt\Volt;
+
 
 Route::prefix('{{module-name}}')
     ->as('{{module-name}}.')
     ->middleware(['web', 'auth', 'verified'])
     ->group(function (): void {
-        Volt::route('/', '{{models}}-list')->name('index');
+        Route::livewire('/', '{{models}}-list')->name('index');
     });

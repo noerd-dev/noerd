@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Attributes\Computed;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;

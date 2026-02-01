@@ -3,7 +3,7 @@
 namespace Noerd\{{ModuleName}}\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Livewire\Volt\Volt;
+
 
 class {{ModuleName}}ServiceProvider extends ServiceProvider
 {
@@ -20,9 +20,6 @@ class {{ModuleName}}ServiceProvider extends ServiceProvider
 
         // Load routes
         $this->loadRoutesFrom(__DIR__ . '/../../routes/{{module-name}}-routes.php');
-
-        // Mount Volt components
-        Volt::mount(__DIR__ . '/../../resources/views/livewire');
 
         // Register commands (optional)
         if ($this->app->runningInConsole()) {

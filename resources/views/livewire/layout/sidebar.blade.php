@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 
 new class extends Component {

@@ -94,7 +94,7 @@ Example: `customer-detail.blade.php`
 <?php
 
 use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Nywerk\Customer\Models\Customer;
 use Noerd\Traits\Noerd;
 

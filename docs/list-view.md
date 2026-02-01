@@ -61,7 +61,7 @@ Example: `customers-list.blade.php`
 ```php
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Noerd\Traits\Noerd;
 use Nywerk\Customer\Models\Customer;
 

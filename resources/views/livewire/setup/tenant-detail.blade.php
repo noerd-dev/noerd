@@ -2,7 +2,7 @@
 
 use Noerd\Models\Tenant;
 use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Traits\Noerd;
 
