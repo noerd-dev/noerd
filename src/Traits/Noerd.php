@@ -148,17 +148,11 @@ trait Noerd
         return $this->baseModalMount($component, $model, $pageLayout);
     }
 
-    public function updateRow(): void
-    {
-    }
+    public function updateRow(): void {}
 
-    public function tableFilters(): void
-    {
-    }
+    public function tableFilters(): void {}
 
-    public function states(): void
-    {
-    }
+    public function states(): void {}
 
     public function listFilters(): array
     {
@@ -170,9 +164,7 @@ trait Noerd
         return [];
     }
 
-    public function filters(): void
-    {
-    }
+    public function filters(): void {}
 
     protected function syncListQueryContext(): void
     {

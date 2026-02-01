@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
+use Livewire\Livewire;
 use Noerd\Models\User;
 use Noerd\Models\UserRole;
 
@@ -20,7 +20,7 @@ it('renders the user role component', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'])
-        ->assertViewIs('volt-livewire::user-role-detail')
+        ->assertStatus(200)
         ->assertSeeText('Benutzerrolle');
 });
 

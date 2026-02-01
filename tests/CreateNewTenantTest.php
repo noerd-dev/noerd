@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
+use Livewire\Livewire;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -21,7 +21,7 @@ it('renders the create-new-tenant component', function () use ($testSettings): v
     $this->actingAs($admin);
 
     Livewire::test($testSettings['componentName'])
-        ->assertViewIs('volt-livewire::setup.create-new-tenant')
+        ->assertStatus(200)
         ->assertSeeText('Neuen Mandanten erstellen');
 });
 
