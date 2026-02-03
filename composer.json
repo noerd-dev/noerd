@@ -6,7 +6,7 @@
     "license": "proprietary",
     "require": {
         "livewire/livewire": "^4.0",
-        "noerd/noerd-modal": "^0.1",
+        "noerd/modal": "^0.1",
         "composer/composer": "^2.9",
         "wireui/heroicons": "^2.9"
     },
