@@ -3,7 +3,6 @@
 namespace Noerd\Traits;
 
 use Illuminate\Support\Str;
-use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -44,7 +43,55 @@ trait Noerd
 
     public array $activeListFilters = [];
 
-    #[On('refreshList-' . self::DETAIL_COMPONENT)]
+    /**
+     * Get the detail component name.
+     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     */
+    protected function getDetailComponent(): string
+    {
+        if (defined('static::DETAIL_COMPONENT')) {
+            return static::DETAIL_COMPONENT;
+        }
+
+        return $this->getName();
+    }
+
+    /**
+     * Get the list component name.
+     * Uses LIST_COMPONENT constant if defined, otherwise derives from detail component name.
+     * 'customer-detail' → 'customers-list'
+     */
+    protected function getListComponent(): string
+    {
+        if (defined('static::LIST_COMPONENT')) {
+            return static::LIST_COMPONENT;
+        }
+
+        $name = $this->getName();
+
+        // If this is already a list component, return as-is
+        if (Str::endsWith($name, '-list')) {
+            return $name;
+        }
+
+        // Extract entity: 'customer-detail' → 'customer'
+        $entity = Str::before($name, '-detail');
+
+        // Pluralize and add -list: 'customer' → 'customers-list'
+        return Str::plural($entity) . '-list';
+    }
+
+    /**
+     * Get the event listeners for the component.
+     * Dynamically registers the refreshList listener based on detail component name.
+     */
+    protected function getListeners(): array
+    {
+        return [
+            'refreshList-' . $this->getDetailComponent() => 'refreshList',
+        ];
+    }
+
     public function refreshList(): void
     {
         $this->dispatch('$refresh');
@@ -87,18 +134,6 @@ trait Noerd
         $this->activeListFilters = session('activeListFilters', []);
     }
 
-    /* @deprecated */
-    public function storeActiveListFilters(): void
-    {
-        session(['activeListFilters' => $this->activeListFilters]);
-    }
-
-    /* @deprecated */
-    public function getActiveListFilters(): void
-    {
-        $this->activeListFilters = session('activeListFilters', []);
-    }
-
     public function findListAction(int|string $id): void
     {
         $withData = $this->with();
@@ -132,20 +167,11 @@ trait Noerd
     {
         return call_user_func($callback);
     }
-
-    /**
-     * Process mount for modal detail DETAIL_COMPONENTs.
-     * Loads page layout from config and delegates to NoerdModalTrait.
-     *
-     * @param  string  $DETAIL_COMPONENT  The DETAIL_COMPONENT name for loading page layout
-     * @param  mixed  $model  The model instance or array
-     * @return bool True if model exists and can be displayed, false otherwise
-     */
-    public function mountModalProcess(string $DETAIL_COMPONENT, $model): bool
+    public function mountModalProcess(string $DETAIL_COMPONENT, $model): void
     {
         $pageLayout = StaticConfigHelper::getComponentFields($DETAIL_COMPONENT);
 
-        return $this->baseModalMount($DETAIL_COMPONENT, $model, $pageLayout);
+        $this->baseModalMount($DETAIL_COMPONENT, $model, $pageLayout);
     }
 
     public function updateRow(): void {}
@@ -207,6 +233,6 @@ trait Noerd
             return StaticConfigHelper::getListConfig($this->selectListConfig);
         }
 
-        return StaticConfigHelper::getListConfig($customName ?? self::DETAIL_COMPONENT);
+        return StaticConfigHelper::getListConfig($customName ?? $this->getDetailComponent());
     }
 }
