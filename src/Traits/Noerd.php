@@ -2,23 +2,20 @@
 
 namespace Noerd\Traits;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ListQueryContext;
-use NoerdModal\Traits\NoerdModalTrait;
 
 trait Noerd
 {
-    use NoerdModalTrait {
-        NoerdModalTrait::mountModalProcess as baseModalMount;
-    }
-
     use WithoutUrlPagination;
     use WithPagination;
 
+    // === List Properties ===
     protected const PAGINATION = 50;
 
     public $lastChangeTime;
@@ -42,6 +39,22 @@ trait Noerd
     public array $currentTableFilter = [];
 
     public array $activeListFilters = [];
+
+    // === Modal Properties ===
+    public bool $showSuccessIndicator = false;
+
+    #[Url(as: 'tab', keep: false, except: 1)]
+    public int $currentTab = 1;
+
+    public array $pageLayout;
+
+    public bool $disableModal = false;
+
+    public array $relationTitles = [];
+
+    public mixed $context = '';
+
+    public array $detailData = [];
 
     /**
      * Get the detail component name.
@@ -82,6 +95,65 @@ trait Noerd
     }
 
     /**
+     * Get the model ID property name.
+     * Uses ID constant if defined, otherwise derives from component name.
+     * 'customer-detail' → 'customerId'
+     */
+    protected function getModelIdProperty(): string
+    {
+        if (defined('static::ID')) {
+            return static::ID;
+        }
+
+        $entity = Str::before($this->getDetailComponent(), '-detail');
+
+        return Str::camel($entity) . 'Id';
+    }
+
+    /**
+     * Get the model data property name.
+     * 'customer-detail' → 'customerData'
+     */
+    protected function getModelDataProperty(): string
+    {
+        $entity = Str::before($this->getDetailComponent(), '-detail');
+
+        return Str::camel($entity) . 'Data';
+    }
+
+    /**
+     * Mount a detail component with automatic model loading.
+     * Handles: ID lookup, non-existent models, ID assignment, data population.
+     *
+     * @return bool True if model loaded successfully, false if not found
+     */
+    protected function mountDetailComponent(Model $model, string $modelClass): bool
+    {
+        $idProperty = $this->getModelIdProperty();
+
+        // Load by ID if property is set
+        if ($this->{$idProperty}) {
+            $model = $modelClass::find($this->{$idProperty});
+
+            if (! $model) {
+                $this->{$idProperty} = null;
+                $this->dispatch('closeTopModal');
+
+                return false;
+            }
+        }
+
+        // Set ID from loaded model
+        $this->{$idProperty} = $model->id;
+
+        // Standard mount process
+        $this->mountModalProcess($this->getDetailComponent(), $model);
+        $this->detailData = $model->toArray();
+
+        return true;
+    }
+
+    /**
      * Get the event listeners for the component.
      * Dynamically registers the refreshList listener based on detail component name.
      */
@@ -97,10 +169,24 @@ trait Noerd
         $this->dispatch('$refresh');
     }
 
-    public function mount(): void
+    public function mount(mixed $model = null): void
     {
+        // For list components
         $this->listId = Str::random();
         $this->loadActiveListFilters();
+
+        // For detail components with MODEL_CLASS constant
+        if (defined('static::MODEL_CLASS')) {
+            $modelClass = static::MODEL_CLASS;
+            $idProperty = $this->getModelIdProperty();
+
+            // If model or ID passed as parameter, set the ID property
+            if ($model !== null) {
+                $this->{$idProperty} = $model instanceof Model ? $model->id : $model;
+            }
+
+            $this->mountDetailComponent(new $modelClass(), $modelClass);
+        }
     }
 
     public function updatedSearch(): void
@@ -167,11 +253,95 @@ trait Noerd
     {
         return call_user_func($callback);
     }
-    public function mountModalProcess(string $DETAIL_COMPONENT, $model): void
+    public function mountModalProcess(string $component, $model, ?array $pageLayout = null): void
     {
-        $pageLayout = StaticConfigHelper::getComponentFields($DETAIL_COMPONENT);
+        if ($pageLayout === null) {
+            $pageLayout = StaticConfigHelper::getComponentFields($component);
+        }
+        $this->pageLayout = $pageLayout;
+    }
 
-        $this->baseModalMount($DETAIL_COMPONENT, $model, $pageLayout);
+    /**
+     * Handle select action - dispatch selection event and close modal.
+     */
+    public function selectAction(mixed $modelId = null, mixed $relationId = null): void
+    {
+        $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
+
+        $this->dispatch('closeTopModal');
+    }
+
+    public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
+    {
+        $this->currentTab = 1;
+
+        $this->dispatch('closeTopModal');
+        if ($source) {
+            $this->dispatch('refreshList-' . $source);
+        }
+    }
+
+    public function storeProcess($model): void
+    {
+        $this->showSuccessIndicator = true;
+    }
+
+    /**
+     * Validate using rules from pageLayout YAML configuration.
+     * Fields with 'required: true' will be validated as required.
+     */
+    public function validateFromLayout(): void
+    {
+        $rules = [];
+        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
+
+        if (! empty($rules)) {
+            $this->validate($rules);
+        }
+    }
+
+    protected function componentName(): string
+    {
+        return defined('static::COMPONENT') ? static::COMPONENT : $this->getName();
+    }
+
+    /**
+     * Get the event name for select mode.
+     * Derives from COMPONENT: 'customers-list' -> 'customerSelected'
+     */
+    protected function getSelectEvent(): string
+    {
+        $entity = Str::singular(Str::before($this->componentName(), '-list'));
+
+        return Str::camel($entity) . 'Selected';
+    }
+
+    /**
+     * Recursively extract validation rules from fields array.
+     */
+    protected function extractRulesFromFields(array $fields, array &$rules): void
+    {
+        foreach ($fields as $field) {
+            if (($field['type'] ?? '') === 'block') {
+                $this->extractRulesFromFields($field['fields'] ?? [], $rules);
+
+                continue;
+            }
+
+            if (! isset($field['name'])) {
+                continue;
+            }
+
+            $fieldRules = [];
+
+            if ($field['required'] ?? false) {
+                $fieldRules[] = 'required';
+            }
+
+            if (! empty($fieldRules)) {
+                $rules[$field['name']] = $fieldRules;
+            }
+        }
     }
 
     public function updateRow(): void {}

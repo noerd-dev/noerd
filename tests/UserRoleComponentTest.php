@@ -124,7 +124,7 @@ it('deletes a user role', function () use ($testSettings): void {
     Livewire::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id)
         ->call('delete')
-        ->assertDispatched('closeModal');
+        ->assertDispatched('closeTopModal');
 
     $this->assertDatabaseMissing('user_roles', [
         'id' => $userRole->id,
@@ -248,7 +248,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
     Livewire::test($testSettings['componentName'], [$userRole])
         ->set('userRoleId', $userRole->id)
         ->call('delete')
-        ->assertDispatched('closeModal');
+        ->assertDispatched('closeTopModal');
 });
 
 it('uses correct component constants', function () use ($testSettings): void {
