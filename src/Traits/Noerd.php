@@ -175,9 +175,9 @@ trait Noerd
         $this->listId = Str::random();
         $this->loadActiveListFilters();
 
-        // For detail components with MODEL_CLASS constant
-        if (defined('static::MODEL_CLASS')) {
-            $modelClass = static::MODEL_CLASS;
+        // For detail components with DETAIL_CLASS constant
+        if (defined('static::DETAIL_CLASS')) {
+            $modelClass = static::DETAIL_CLASS;
             $idProperty = $this->getModelIdProperty();
 
             // If model or ID passed as parameter, set the ID property
