@@ -10,8 +10,6 @@ new class extends Component
 
     public const DETAIL_CLASS = SetupLanguage::class;
 
-    public array $detailData = [];
-
     public function mount(mixed $model = null): void
     {
         $this->initDetail($model);

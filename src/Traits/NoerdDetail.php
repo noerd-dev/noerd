@@ -33,6 +33,59 @@ trait NoerdDetail
         return $this->getName();
     }
 
+    public function initDetail(mixed $model = null): void
+    {
+        // For detail components with DETAIL_CLASS constant
+        if (defined('static::DETAIL_CLASS')) {
+            $modelClass = static::DETAIL_CLASS;
+            $this->mountDetailComponent(new $modelClass(), $modelClass);
+        }
+    }
+
+    public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
+    {
+        $this->currentTab = 1;
+
+        $this->dispatch('closeTopModal');
+        if ($source) {
+            $this->dispatch('refreshList-' . $source);
+        }
+    }
+
+    public function storeProcess($model): void
+    {
+        $this->showSuccessIndicator = true;
+    }
+
+    /**
+     * Validate using rules from pageLayout YAML configuration.
+     * Fields with 'required: true' will be validated as required.
+     */
+    public function validateFromLayout(): void
+    {
+        $rules = [];
+        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
+
+        if (!empty($rules)) {
+            $this->validate($rules);
+        }
+    }
+
+    public function refreshList(): void
+    {
+        $this->dispatch('$refresh');
+    }
+
+    public function callAMethod(callable $callback)
+    {
+        return call_user_func($callback);
+    }
+
+    public function changeEditMode(): void
+    {
+        $this->editMode = !$this->editMode;
+    }
+
     /**
      * Get the detail component name.
      * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
@@ -72,20 +125,6 @@ trait NoerdDetail
     }
 
     /**
-     * Get the model ID property name.
-     * Uses ID constant if defined, otherwise derives from component name.
-     * 'customer-detail' → 'customerId'
-     */
-    protected function getModelIdProperty(): string
-    {
-        if (defined('static::ID')) {
-            return static::ID;
-        }
-
-        return 'id';
-    }
-
-    /**
      * Get the model data property name.
      * 'customer-detail' → 'customerData'
      */
@@ -95,103 +134,25 @@ trait NoerdDetail
 
         return Str::camel($entity) . 'Data';
     }
-
-    /**
-     * Mount a detail component with automatic model loading.
-     * Handles: ID lookup, non-existent models, ID assignment, data population.
-     *
-     * @return bool True if model loaded successfully, false if not found
-     */
-    protected function mountDetailComponent(Model $model, string $modelClass): bool
+    
+    protected function mountDetailComponent(Model $model, string $modelClass): void
     {
-        $idProperty = $this->getModelIdProperty();
-
-        // Check if the property exists on the component
-        if (! property_exists($this, $idProperty)) {
-            // Fall back to modelId if the derived property doesn't exist
-            $idProperty = 'modelId';
-        }
+        $idProperty = 'modelId';
 
         // Load by ID if property is set
         if (property_exists($this, $idProperty) && $this->{$idProperty}) {
             $model = $modelClass::find($this->{$idProperty});
 
-            if (! $model) {
+            if (!$model) {
                 $this->{$idProperty} = null;
                 $this->dispatch('closeTopModal');
-
-                return false;
+                return;
             }
         }
 
-        // Set ID from loaded model
-        if (property_exists($this, $idProperty)) {
-            $this->{$idProperty} = $model->id;
-        }
-
-        // Standard mount process
-        $this->mountModalProcess($this->getDetailComponent(), $model);
-        $this->detailData = $model->toArray();
-
-        return true;
-    }
-
-    public function initDetail(mixed $model = null): void
-    {
-        // For detail components with DETAIL_CLASS constant
-        if (defined('static::DETAIL_CLASS')) {
-            $modelClass = static::DETAIL_CLASS;
-            $idProperty = $this->getModelIdProperty();
-
-            // Check if the property exists, otherwise fall back to modelId
-            if (! property_exists($this, $idProperty)) {
-                $idProperty = 'modelId';
-            }
-
-            // If model or ID passed as parameter, set the ID property
-            if ($model !== null && property_exists($this, $idProperty)) {
-                $this->{$idProperty} = $model instanceof Model ? $model->id : $model;
-            }
-
-            $this->mountDetailComponent(new $modelClass(), $modelClass);
-        }
-    }
-
-    public function mountModalProcess(string $component, $model, ?array $pageLayout = null): void
-    {
-        if ($pageLayout === null) {
-            $pageLayout = StaticConfigHelper::getComponentFields($component);
-        }
+        $pageLayout = StaticConfigHelper::getComponentFields($this->getDetailComponent());
         $this->pageLayout = $pageLayout;
-    }
-
-    public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
-    {
-        $this->currentTab = 1;
-
-        $this->dispatch('closeTopModal');
-        if ($source) {
-            $this->dispatch('refreshList-' . $source);
-        }
-    }
-
-    public function storeProcess($model): void
-    {
-        $this->showSuccessIndicator = true;
-    }
-
-    /**
-     * Validate using rules from pageLayout YAML configuration.
-     * Fields with 'required: true' will be validated as required.
-     */
-    public function validateFromLayout(): void
-    {
-        $rules = [];
-        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
-
-        if (! empty($rules)) {
-            $this->validate($rules);
-        }
+        $this->detailData = $model->toArray();
     }
 
     /**
@@ -206,7 +167,7 @@ trait NoerdDetail
                 continue;
             }
 
-            if (! isset($field['name'])) {
+            if (!isset($field['name'])) {
                 continue;
             }
 
@@ -216,7 +177,7 @@ trait NoerdDetail
                 $fieldRules[] = 'required';
             }
 
-            if (! empty($fieldRules)) {
+            if (!empty($fieldRules)) {
                 $rules[$field['name']] = $fieldRules;
             }
         }
@@ -231,20 +192,5 @@ trait NoerdDetail
         return [
             'refreshList-' . $this->getDetailComponent() => 'refreshList',
         ];
-    }
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
-    }
-
-    public function callAMethod(callable $callback)
-    {
-        return call_user_func($callback);
-    }
-
-    public function changeEditMode(): void
-    {
-        $this->editMode = ! $this->editMode;
     }
 }
