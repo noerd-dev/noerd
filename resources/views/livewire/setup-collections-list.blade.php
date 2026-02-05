@@ -6,15 +6,15 @@ use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdList;
 use Noerd\Traits\SetupLanguageFilterTrait;
 
 new class extends Component
 {
-    use Noerd;
+    use NoerdList {
+        mount as noerdListMount;
+    }
     use SetupLanguageFilterTrait;
-
-    public const DETAIL_COMPONENT = 'setup-collections-list';
 
     protected const ALLOWED_TABLE_FILTERS = ['language'];
 
@@ -43,6 +43,8 @@ new class extends Component
 
     public function mount(): void
     {
+        $this->noerdListMount();
+
         // Ensure default languages exist
         SetupLanguage::ensureDefaultLanguages();
 
@@ -63,8 +65,8 @@ new class extends Component
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'setup-collection-detail',
-            source: self::DETAIL_COMPONENT,
-            arguments: ['entryId' => $modelId, 'collectionKey' => $this->collectionKey, 'relationId' => $relationId],
+            source: $this->getComponentName(),
+            arguments: ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relationId' => $relationId],
         );
     }
 

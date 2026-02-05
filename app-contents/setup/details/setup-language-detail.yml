@@ -1,24 +1,24 @@
 title: noerd_label_language
 fields:
-  - name: languageData.code
+  - name: detailData.code
     label: noerd_label_code
     type: text
     colspan: 3
     required: true
-  - name: languageData.name
+  - name: detailData.name
     label: noerd_label_name
     type: text
     colspan: 6
     required: true
-  - name: languageData.sort_order
+  - name: detailData.sort_order
     label: noerd_label_sort
     type: text
     colspan: 3
-  - name: languageData.is_active
+  - name: detailData.is_active
     label: noerd_label_active
     type: checkbox
     colspan: 6
-  - name: languageData.is_default
+  - name: detailData.is_default
     label: noerd_label_default
     type: checkbox
     colspan: 6

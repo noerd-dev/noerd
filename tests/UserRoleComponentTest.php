@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 $testSettings = [
     'componentName' => 'user-role-detail',
     'listName' => 'user-roles-list',
-    'id' => 'userRoleId',
+    'id' => 'id',
 ];
 
 it('renders the user role component', function () use ($testSettings): void {
@@ -31,8 +31,8 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     Livewire::test($testSettings['componentName'])
         ->call('store')
-        ->assertHasErrors(['userRoleData.key'])
-        ->assertHasErrors(['userRoleData.name']);
+        ->assertHasErrors(['detailData.key'])
+        ->assertHasErrors(['detailData.name']);
 });
 
 it('successfully creates a new user role', function () use ($testSettings): void {
@@ -45,9 +45,9 @@ it('successfully creates a new user role', function () use ($testSettings): void
     $roleDescription = 'Has full administrative access';
 
     Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', $roleKey)
-        ->set('userRoleData.name', $roleName)
-        ->set('userRoleData.description', $roleDescription)
+        ->set('detailData.key', $roleKey)
+        ->set('detailData.name', $roleName)
+        ->set('detailData.description', $roleDescription)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -76,10 +76,10 @@ it('updates an existing user role', function () use ($testSettings): void {
     $newDescription = 'New Description';
 
     Livewire::test($testSettings['componentName'], [$existingRole])
-        ->set('userRoleId', $existingRole->id)
-        ->set('userRoleData.key', $newKey)
-        ->set('userRoleData.name', $newName)
-        ->set('userRoleData.description', $newDescription)
+        ->set('modelId', $existingRole->id)
+        ->set('detailData.key', $newKey)
+        ->set('detailData.name', $newName)
+        ->set('detailData.description', $newDescription)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -98,8 +98,8 @@ it('sets tenant_id when storing', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', 'TEST_ROLE')
-        ->set('userRoleData.name', 'Test Role')
+        ->set('detailData.key', 'TEST_ROLE')
+        ->set('detailData.name', 'Test Role')
         ->call('store')
         ->assertHasNoErrors();
 
@@ -122,7 +122,7 @@ it('deletes a user role', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'], [$userRole])
-        ->set('userRoleId', $userRole->id)
+        ->set('modelId', $userRole->id)
         ->call('delete')
         ->assertDispatched('closeTopModal');
 
@@ -144,13 +144,13 @@ it('mounts with existing user role data', function () use ($testSettings): void 
     $this->actingAs($user);
 
     $component = Livewire::test($testSettings['componentName'], [$userRole])
-        ->set('userRoleId', $userRole->id);
+        ->set('modelId', $userRole->id);
 
     // Check if user role data is loaded correctly
-    expect($component->get('userRoleData.key'))->toBe($userRole->key);
-    expect($component->get('userRoleData.name'))->toBe($userRole->name);
-    expect($component->get('userRoleData.description'))->toBe($userRole->description);
-    expect($component->get('userRoleId'))->toBe($userRole->id);
+    expect($component->get('detailData.key'))->toBe($userRole->key);
+    expect($component->get('detailData.name'))->toBe($userRole->name);
+    expect($component->get('detailData.description'))->toBe($userRole->description);
+    expect($component->get('modelId'))->toBe($userRole->id);
 });
 
 it('mounts with new user role', function () use ($testSettings): void {
@@ -161,8 +161,8 @@ it('mounts with new user role', function () use ($testSettings): void {
     $component = Livewire::test($testSettings['componentName']);
 
     // Check if default values are set for new user role
-    expect($component->get('userRoleData'))->toBeArray();
-    expect($component->get('userRoleId'))->toBeNull();
+    expect($component->get('detailData'))->toBeArray();
+    expect($component->get('modelId'))->toBeNull();
 });
 
 it('sets success indicator after storing', function () use ($testSettings): void {
@@ -171,8 +171,8 @@ it('sets success indicator after storing', function () use ($testSettings): void
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', 'SUCCESS_ROLE')
-        ->set('userRoleData.name', 'Success Role')
+        ->set('detailData.key', 'SUCCESS_ROLE')
+        ->set('detailData.name', 'Success Role')
         ->call('store')
         ->assertSet('showSuccessIndicator', true);
 });
@@ -183,12 +183,12 @@ it('sets userRoleId after creating new role', function () use ($testSettings): v
     $this->actingAs($user);
 
     $component = Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', 'NEW_ROLE')
-        ->set('userRoleData.name', 'New Role')
+        ->set('detailData.key', 'NEW_ROLE')
+        ->set('detailData.name', 'New Role')
         ->call('store');
 
-    // Check if userRoleId was set after creation
-    expect($component->get('userRoleId'))->not->toBeNull();
+    // Check if modelId was set after creation
+    expect($component->get('modelId'))->not->toBeNull();
 });
 
 it('validates key field format', function () use ($testSettings): void {
@@ -197,10 +197,10 @@ it('validates key field format', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', '') // Empty key
-        ->set('userRoleData.name', 'Valid Name')
+        ->set('detailData.key', '') // Empty key
+        ->set('detailData.name', 'Valid Name')
         ->call('store')
-        ->assertHasErrors(['userRoleData.key']);
+        ->assertHasErrors(['detailData.key']);
 });
 
 it('validates name field format', function () use ($testSettings): void {
@@ -209,10 +209,10 @@ it('validates name field format', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', 'VALID_KEY')
-        ->set('userRoleData.name', '') // Empty name
+        ->set('detailData.key', 'VALID_KEY')
+        ->set('detailData.name', '') // Empty name
         ->call('store')
-        ->assertHasErrors(['userRoleData.name']);
+        ->assertHasErrors(['detailData.name']);
 });
 
 it('handles optional description field', function () use ($testSettings): void {
@@ -221,8 +221,8 @@ it('handles optional description field', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userRoleData.key', 'NO_DESC_ROLE')
-        ->set('userRoleData.name', 'Role Without Description')
+        ->set('detailData.key', 'NO_DESC_ROLE')
+        ->set('detailData.name', 'Role Without Description')
         // No description set
         ->call('store')
         ->assertHasNoErrors();
@@ -246,7 +246,7 @@ it('closes modal process after delete', function () use ($testSettings): void {
     $this->actingAs($user);
 
     Livewire::test($testSettings['componentName'], [$userRole])
-        ->set('userRoleId', $userRole->id)
+        ->set('modelId', $userRole->id)
         ->call('delete')
         ->assertDispatched('closeTopModal');
 });
@@ -261,5 +261,5 @@ it('uses correct component constants', function () use ($testSettings): void {
     // Check if constants are correctly defined (via reflection since they're used in the class)
     expect($testSettings['componentName'])->toBe('user-role-detail');
     expect($testSettings['listName'])->toBe('user-roles-list');
-    expect($testSettings['id'])->toBe('userRoleId');
+    expect($testSettings['id'])->toBe('id');
 });

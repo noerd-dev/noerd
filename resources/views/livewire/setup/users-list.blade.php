@@ -8,6 +8,8 @@ use Noerd\Traits\NoerdList;
 new class extends Component {
     use NoerdList;
 
+    public const DETAIL_COMPONENT = 'users-list';
+
     public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(

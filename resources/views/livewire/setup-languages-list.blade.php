@@ -3,16 +3,18 @@
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Scopes\SortScope;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdList;
 
 new class extends Component
 {
-    use Noerd;
-
-    public const DETAIL_COMPONENT = 'setup-languages-list';
+    use NoerdList {
+        mount as noerdListMount;
+    }
 
     public function mount(): void
     {
+        $this->noerdListMount();
+
         // Ensure default languages exist
         SetupLanguage::ensureDefaultLanguages();
 
@@ -26,8 +28,8 @@ new class extends Component
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'setup-language-detail',
-            source: self::DETAIL_COMPONENT,
-            arguments: ['languageId' => $modelId, 'relationId' => $relationId],
+            source: $this->getComponentName(),
+            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
     }
 

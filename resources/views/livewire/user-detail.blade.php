@@ -4,26 +4,21 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\Profile;
 use Noerd\Models\User;
 use Noerd\Models\UserRole;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
+    use NoerdDetail;
 
-    use Noerd;
+    public const DETAIL_CLASS = User::class;
 
-    public const DETAIL_COMPONENT = 'user-detail';
-    public const LIST_COMPONENT = 'users-list';
-    public const ID = 'userId';
-    #[Url(keep: false, except: '')]
-    public $userId = null;
     public bool $isOwner = false;
     public $selectedTenant;
 
-    public array $userData = [];
+    public array $detailData = [];
     public array $tenantAccess = [];
     public array $userRoles = [];
     public array $possibleTenants = [];
@@ -54,30 +49,33 @@ new class extends Component {
     #[Computed]
     public function assignedToCurrentTenant(): bool
     {
-        if (!isset($this->userId)) {
+        if (! isset($this->modelId)) {
             return false;
         }
 
-        $user = User::find($this->userId);
-        if(!$user) {
+        $user = User::find($this->modelId);
+        if (! $user) {
             return false;
         }
+
         return $user->tenants->contains(auth()->user()->selected_tenant_id);
     }
 
-    public function mount(User $user): void
+    public function mount(mixed $model = null): void
     {
+        $this->initDetail($model);
+
         $this->selectedTenant = auth()->user()->selectedTenant();
 
-        if ($this->userId) {
-            $user = User::find($this->userId);
+        $user = new User;
+        if ($this->modelId) {
+            $user = User::find($this->modelId);
             foreach ($user->roles as $role) {
                 $this->userRoles[$role->id] = true;
             }
         }
 
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $user);
-        $this->userData = $user->toArray();
+        $this->detailData = $user->toArray();
 
         foreach (auth()->user()->adminTenants as $tenant) {
             $this->possibleTenants[$tenant->id] = $tenant->toArray();
@@ -85,10 +83,10 @@ new class extends Component {
             $profileId = $userProfile?->pivot->profile_id;
 
             $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileId;
-            $hasAccess = (bool)$profileId;
+            $hasAccess = (bool) $profileId;
             $this->possibleTenants[$tenant->id]['hasAccess'] = $hasAccess;
 
-            if (!$hasAccess) {
+            if (! $hasAccess) {
                 $this->possibleTenants[$tenant->id]['selectedProfile'] = $tenant->profiles->first()->id;
             }
         }
@@ -101,8 +99,8 @@ new class extends Component {
         }
 
         $this->validate([
-            'userData.name' => ['required', 'string', 'max:255'],
-            'userData.email' => [
+            'detailData.name' => ['required', 'string', 'max:255'],
+            'detailData.email' => [
                 'required',
                 'string',
                 'email',
@@ -111,8 +109,8 @@ new class extends Component {
             'tenantAccess' => ['array', 'min:1', new \Noerd\Rules\AtLeastOneTrue()],
         ]);
 
-        if (!$this->userId) {
-            $userExists = User::where('email', $this->userData['email'])->first();
+        if (! $this->modelId) {
+            $userExists = User::where('email', $this->detailData['email'])->first();
             if ($userExists) {
                 $allowedTenants = Auth::user()->adminTenants()->pluck('id');
                 foreach ($this->possibleTenants as $tenantId => $value) {
@@ -126,10 +124,10 @@ new class extends Component {
             }
             // No password needed - user will set it via password reset link
             // Set a temporary password that will be overwritten when user resets
-            $this->userData['password'] = bcrypt(Str::random(32));
+            $this->detailData['password'] = bcrypt(Str::random(32));
         }
 
-        $user = User::updateOrCreate(['id' => $this->userId], $this->userData);
+        $user = User::updateOrCreate(['id' => $this->modelId], $this->detailData);
         foreach ($this->userRoles as $key => $value) {
             $user->roles()->detach($key);
             if ($value) {
@@ -149,7 +147,7 @@ new class extends Component {
         $this->showSuccessIndicator = true;
 
         if ($user->wasRecentlyCreated) {
-            $this->userId = $user['id'];
+            $this->modelId = $user['id'];
 
             // Send password reset link instead of generated password
             Password::sendResetLink(['email' => $user->email]);
@@ -160,10 +158,10 @@ new class extends Component {
 
     public function delete(): void
     {
-        $user = User::find($this->userId);
+        $user = User::find($this->modelId);
 
         $user->tenants()->detach(auth()->user()->selected_tenant_id);
-        $this->closeModalProcess(self::LIST_COMPONENT);
+        $this->closeModalProcess($this->getListComponent());
 
         // If user has no more tenants, delete the user
         if ($user->tenants()->count() === 0) {
@@ -179,7 +177,7 @@ new class extends Component {
 
     <x-noerd::tab-content :layout="$pageLayout">
         <x-slot:tab1>
-            @if(!isset($userId))
+            @if(!isset($modelId))
                 <div>
                     {{ __('The user will receive a link via email to set their password.') }}
                 </div>
@@ -245,10 +243,10 @@ new class extends Component {
                 @endforeach
             @endif
 
-            @isset($userId)
+            @isset($modelId)
                 <x-noerd::box>
                     <div class="max-w-xl">
-                        <livewire:setup.user-update-password :userId="$userId"/>
+                        <livewire:setup.user-update-password :userId="$modelId"/>
                     </div>
                 </x-noerd::box>
             @endisset
@@ -256,6 +254,6 @@ new class extends Component {
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($userId) && !$isOwner && $this->assignedToCurrentTenant"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId) && !$isOwner && $this->assignedToCurrentTenant"/>
     </x-slot:footer>
 </x-noerd::page>

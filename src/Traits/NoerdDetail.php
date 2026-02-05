@@ -26,6 +26,14 @@ trait NoerdDetail
     public array $detailData = [];
 
     /**
+     * Get the component name (alias for getName).
+     */
+    public function getComponentName(): string
+    {
+        return $this->getName();
+    }
+
+    /**
      * Get the detail component name.
      * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
      */
@@ -128,7 +136,7 @@ trait NoerdDetail
         return true;
     }
 
-    public function mount(mixed $model = null): void
+    public function initDetail(mixed $model = null): void
     {
         // For detail components with DETAIL_CLASS constant
         if (defined('static::DETAIL_CLASS')) {
