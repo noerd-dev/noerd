@@ -8,57 +8,94 @@ This document provides a comprehensive reference for all available field types i
 title: example_detail_title
 description: example_detail_description
 tabs:
-  - { number: 1, label: example_tab_general }
-  - { number: 2, label: example_tab_details }
-  - { number: 3, label: example_tab_media }
+  - number: 1
+    label: example_tab_general
+  - number: 2
+    label: example_tab_details
+  - number: 3
+    label: example_tab_media
 fields:
   # ===========================================
   # TAB 1: General (Basic Types)
   # ===========================================
 
   # text - Standard text input
-  - { name: model.name, label: example_label_name, type: text, colspan: 6, required: true }
+  - name: detailData.name
+    label: example_label_name
+    type: text
+    colspan: 6
+    required: true
 
   # text (email) - Email input
-  - { name: model.email, label: example_label_email, type: email, colspan: 6 }
+  - name: detailData.email
+    label: example_label_email
+    type: email
+    colspan: 6
 
   # text (number) - Number input
-  - { name: model.quantity, label: example_label_quantity, type: number, colspan: 3 }
+  - name: detailData.quantity
+    label: example_label_quantity
+    type: number
+    colspan: 3
 
   # text (date) - Date picker
-  - { name: model.birth_date, label: example_label_birth_date, type: date, colspan: 3 }
+  - name: detailData.birth_date
+    label: example_label_birth_date
+    type: date
+    colspan: 3
 
   # text (time) - Time picker
-  - { name: model.start_time, label: example_label_start_time, type: time, colspan: 3 }
+  - name: detailData.start_time
+    label: example_label_start_time
+    type: time
+    colspan: 3
 
   # text (datetime-local) - Datetime picker
-  - { name: model.scheduled_at, label: example_label_scheduled_at, type: datetime-local, colspan: 3 }
+  - name: detailData.scheduled_at
+    label: example_label_scheduled_at
+    type: datetime-local
+    colspan: 3
 
   # textarea - Multi-line text
-  - { name: model.description, label: example_label_description, type: textarea, colspan: 12, rows: 4 }
+  - name: detailData.description
+    label: example_label_description
+    type: textarea
+    colspan: 12
+    rows: 4
 
   # checkbox - Boolean toggle
-  - { name: model.is_active, label: example_label_active, type: checkbox, colspan: 3, live: true }
+  - name: detailData.is_active
+    label: example_label_active
+    type: checkbox
+    colspan: 3
+    live: true
 
   # checkbox with showIf condition
-  - { name: model.notify_email, label: example_label_notify, type: checkbox, colspan: 3, showIf: model.is_active }
+  - name: detailData.notify_email
+    label: example_label_notify
+    type: checkbox
+    colspan: 3
+    showIf: detailData.is_active
 
   # ===========================================
   # Selection Types
   # ===========================================
 
   # select - Static dropdown options
-  - name: model.priority
+  - name: detailData.priority
     label: example_label_priority
     type: select
     colspan: 4
     options:
-      - { value: low, label: Low }
-      - { value: medium, label: Medium }
-      - { value: high, label: High }
+      - value: low
+        label: Low
+      - value: medium
+        label: Medium
+      - value: high
+        label: High
 
   # picklist - Dynamic dropdown from component method
-  - name: model.warehouse_id
+  - name: detailData.warehouse_id
     label: example_label_warehouse
     type: picklist
     picklistField: getWarehouseOptions
@@ -69,7 +106,7 @@ fields:
   # ===========================================
 
   # relation - Modal-based foreign key selection
-  - name: model.customer_id
+  - name: detailData.customer_id
     label: example_label_customer
     type: relation
     relationField: relationTitles.customer_id
@@ -88,13 +125,13 @@ fields:
   # ===========================================
 
   # collection-select - CMS Collection dropdown
-  - name: model.collection_id
+  - name: detailData.collection_id
     label: example_label_collection
     type: collection-select
     colspan: 6
 
   # setupCollectionSelect - Setup Collection dropdown
-  - name: model.country_id
+  - name: detailData.country_id
     label: example_label_country
     type: setupCollectionSelect
     collectionKey: countries
@@ -106,23 +143,43 @@ fields:
   # ===========================================
 
   # richText - WYSIWYG editor
-  - { name: model.content, label: example_label_content, type: richText, colspan: 12, tab: 2 }
+  - name: detailData.content
+    label: example_label_content
+    type: richText
+    colspan: 12
+    tab: 2
 
   # translatableText - Multi-language text
-  - { name: model.title, label: example_label_title, type: translatableText, colspan: 12, tab: 2 }
+  - name: detailData.title
+    label: example_label_title
+    type: translatableText
+    colspan: 12
+    tab: 2
 
   # translatableTextarea - Multi-language textarea
-  - { name: model.summary, label: example_label_summary, type: translatableTextarea, colspan: 12, tab: 2 }
+  - name: detailData.summary
+    label: example_label_summary
+    type: translatableTextarea
+    colspan: 12
+    tab: 2
 
   # translatableRichText - Multi-language WYSIWYG
-  - { name: model.body, label: example_label_body, type: translatableRichText, colspan: 12, tab: 2 }
+  - name: detailData.body
+    label: example_label_body
+    type: translatableRichText
+    colspan: 12
+    tab: 2
 
   # ===========================================
   # TAB 3: Media & Actions
   # ===========================================
 
   # image - Media library image selection
-  - { name: model.image_id, label: example_label_image, type: image, colspan: 6, tab: 3 }
+  - name: detailData.image_id
+    label: example_label_image
+    type: image
+    colspan: 6
+    tab: 3
 
   # file - File upload
   - name: document
@@ -133,10 +190,19 @@ fields:
     tab: 3
 
   # button - Action button
-  - { name: generateCode, label: 'Generate Code', type: button, colspan: 3, tab: 3 }
+  - name: generateCode
+    label: 'Generate Code'
+    type: button
+    colspan: 3
+    tab: 3
 
   # text (readonly) - Read-only field showing generated value
-  - { name: model.code, label: example_label_code, type: text, colspan: 3, readonly: true, tab: 3 }
+  - name: detailData.code
+    label: example_label_code
+    type: text
+    colspan: 3
+    readonly: true
+    tab: 3
 
   # ===========================================
   # Block - Nested field container
@@ -147,47 +213,71 @@ fields:
     colspan: 12
     tab: 3
     fields:
-      - { name: model.street, label: example_label_street, type: text, colspan: 8 }
-      - { name: model.house_number, label: example_label_house_number, type: text, colspan: 4 }
-      - { name: model.zip, label: example_label_zip, type: text, colspan: 4 }
-      - { name: model.city, label: example_label_city, type: text, colspan: 8 }
+      - name: detailData.street
+        label: example_label_street
+        type: text
+        colspan: 8
+      - name: detailData.house_number
+        label: example_label_house_number
+        type: text
+        colspan: 4
+      - name: detailData.zip
+        label: example_label_zip
+        type: text
+        colspan: 4
+      - name: detailData.city
+        label: example_label_city
+        type: text
+        colspan: 8
 
   # ===========================================
   # Conditional Display Examples
   # ===========================================
 
   # showIf with boolean field
-  - { name: model.has_discount, label: example_label_has_discount, type: checkbox, colspan: 3, live: true, tab: 3 }
-  - { name: model.discount_percent, label: example_label_discount, type: number, colspan: 3, showIf: model.has_discount, tab: 3 }
+  - name: detailData.has_discount
+    label: example_label_has_discount
+    type: checkbox
+    colspan: 3
+    live: true
+    tab: 3
+  - name: detailData.discount_percent
+    label: example_label_discount
+    type: number
+    colspan: 3
+    showIf: detailData.has_discount
+    tab: 3
 
   # showIf with value comparison
-  - name: model.type
+  - name: detailData.type
     label: example_label_type
     type: select
     colspan: 3
     live: true
     tab: 3
     options:
-      - { value: private, label: Private }
-      - { value: business, label: Business }
+      - value: private
+        label: Private
+      - value: business
+        label: Business
 
-  - name: model.company_name
+  - name: detailData.company_name
     label: example_label_company
     type: text
     colspan: 3
     tab: 3
     showIf:
-      field: model.type
+      field: detailData.type
       value: business
 
   # showIfNot - Hide when condition is true
-  - name: model.private_notes
+  - name: detailData.private_notes
     label: example_label_private_notes
     type: textarea
     colspan: 6
     tab: 3
     showIfNot:
-      field: model.type
+      field: detailData.type
       value: business
 ```
 
@@ -219,7 +309,7 @@ These options are available for most field types:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `name` | string | required | Model attribute path (e.g., `model.email`, `model.customer_id`) |
+| `name` | string | required | Property path (e.g., `detailData.email`, `detailData.customer_id`) |
 | `label` | string | required | Translation key for the field label |
 | `type` | string | `text` | Field type |
 | `colspan` | int | `3` | Width in grid columns (1-12) |
@@ -252,25 +342,49 @@ Standard text input field. Also handles HTML5 input types like `email`, `number`
 
 ```yaml
 # Simple text field
-- { name: model.name, label: noerd_label_name, type: text, colspan: 6 }
+- name: detailData.name
+  label: noerd_label_name
+  type: text
+  colspan: 6
 
 # Email field
-- { name: model.email, label: noerd_label_email, type: email, colspan: 6, required: true }
+- name: detailData.email
+  label: noerd_label_email
+  type: email
+  colspan: 6
+  required: true
 
 # Number field
-- { name: model.quantity, label: noerd_label_quantity, type: number, colspan: 3 }
+- name: detailData.quantity
+  label: noerd_label_quantity
+  type: number
+  colspan: 3
 
 # Date field
-- { name: model.birth_date, label: noerd_label_birth_date, type: date, colspan: 4 }
+- name: detailData.birth_date
+  label: noerd_label_birth_date
+  type: date
+  colspan: 4
 
 # Time field
-- { name: model.start_time, label: noerd_label_start_time, type: time, colspan: 4 }
+- name: detailData.start_time
+  label: noerd_label_start_time
+  type: time
+  colspan: 4
 
 # Datetime field
-- { name: model.scheduled_at, label: noerd_label_scheduled_at, type: datetime-local, colspan: 6 }
+- name: detailData.scheduled_at
+  label: noerd_label_scheduled_at
+  type: datetime-local
+  colspan: 6
 
 # Read-only field with live updates
-- { name: model.code, label: noerd_label_code, type: text, colspan: 4, readonly: true, live: true }
+- name: detailData.code
+  label: noerd_label_code
+  type: text
+  colspan: 4
+  readonly: true
+  live: true
 ```
 
 **Notes:**
@@ -295,13 +409,24 @@ Multi-line text field.
 
 ```yaml
 # Standard textarea
-- { name: model.description, label: noerd_label_description, type: textarea, colspan: 12 }
+- name: detailData.description
+  label: noerd_label_description
+  type: textarea
+  colspan: 12
 
 # Textarea with custom rows
-- { name: model.notes, label: noerd_label_notes, type: textarea, colspan: 12, rows: 4 }
+- name: detailData.notes
+  label: noerd_label_notes
+  type: textarea
+  colspan: 12
+  rows: 4
 
 # Read-only textarea
-- { name: model.system_log, label: noerd_label_log, type: textarea, colspan: 12, readonly: true }
+- name: detailData.system_log
+  label: noerd_label_log
+  type: textarea
+  colspan: 12
+  readonly: true
 ```
 
 ---
@@ -321,13 +446,24 @@ Boolean checkbox field.
 
 ```yaml
 # Simple checkbox
-- { name: model.is_active, label: noerd_label_active, type: checkbox, colspan: 3 }
+- name: detailData.is_active
+  label: noerd_label_active
+  type: checkbox
+  colspan: 3
 
 # Checkbox with live updates (useful for conditional fields)
-- { name: model.has_discount, label: noerd_label_has_discount, type: checkbox, colspan: 3, live: true }
+- name: detailData.has_discount
+  label: noerd_label_has_discount
+  type: checkbox
+  colspan: 3
+  live: true
 
 # Disabled checkbox
-- { name: model.is_system, label: noerd_label_system, type: checkbox, colspan: 3, readonly: true }
+- name: detailData.is_system
+  label: noerd_label_system
+  type: checkbox
+  colspan: 3
+  readonly: true
 ```
 
 **Notes:**
@@ -353,8 +489,10 @@ Dropdown with statically defined options in the YAML file.
 **Option Format:**
 ```yaml
 options:
-  - { value: 'key1', label: 'Label 1' }
-  - { value: 'key2', label: 'Label 2' }
+  - value: key1
+    label: Label 1
+  - value: key2
+    label: Label 2
 # OR simple format (value = label):
 options:
   - 'Option 1'
@@ -365,17 +503,20 @@ options:
 
 ```yaml
 # Select with value/label pairs
-- name: model.priority
+- name: detailData.priority
   label: noerd_label_priority
   type: select
   colspan: 6
   options:
-    - { value: low, label: Low }
-    - { value: medium, label: Medium }
-    - { value: high, label: High }
+    - value: low
+      label: Low
+    - value: medium
+      label: Medium
+    - value: high
+      label: High
 
 # Select with simple options
-- name: model.status
+- name: detailData.status
   label: noerd_label_status
   type: select
   colspan: 6
@@ -385,14 +526,16 @@ options:
     - 'Archived'
 
 # Select with live updates
-- name: model.category
+- name: detailData.category
   label: noerd_label_category
   type: select
   colspan: 6
   live: true
   options:
-    - { value: a, label: Category A }
-    - { value: b, label: Category B }
+    - value: a
+      label: Category A
+    - value: b
+      label: Category B
 ```
 
 ---
@@ -412,7 +555,7 @@ Dropdown with dynamically loaded options from a Livewire component method.
 **YAML Example:**
 
 ```yaml
-- name: model.warehouse_id
+- name: detailData.warehouse_id
   label: noerd_label_warehouse
   type: picklist
   picklistField: getWarehouseOptions
@@ -456,7 +599,7 @@ Modal-based selection for foreign key relationships. Opens a list modal where us
 **YAML Example:**
 
 ```yaml
-- name: model.customer_id
+- name: detailData.customer_id
   label: noerd_label_customer
   type: relation
   relationField: relationTitles.customer_id
@@ -477,14 +620,14 @@ public function mount(Product $product): void
         $product = Product::with('customer')->find($this->modelId);
         $this->relationTitles['customer_id'] = $product->customer?->name ?? '';
     }
-    $this->model = $product->toArray();
+    $this->detailData = $product->toArray();
 }
 
 #[On('customerSelected')]
 public function customerSelected($customerId): void
 {
     $customer = Customer::find($customerId);
-    $this->model['customer_id'] = $customer->id;
+    $this->detailData['customer_id'] = $customer->id;
     $this->relationTitles['customer_id'] = $customer->name;
 }
 ```
@@ -538,7 +681,7 @@ public function store(): void
 {
     $article = Article::updateOrCreate(
         ['id' => $this->modelId],
-        $this->model
+        $this->detailData
     );
 
     $article->tags()->sync($this->tagIds);
@@ -568,7 +711,10 @@ Image selection from the Media library.
 **YAML Example:**
 
 ```yaml
-- { name: model.image_id, label: noerd_label_image, type: image, colspan: 6 }
+- name: detailData.image_id
+  label: noerd_label_image
+  type: image
+  colspan: 6
 ```
 
 **PHP Example (Livewire Component):**
@@ -588,12 +734,12 @@ public function openSelectMediaModal(string $fieldName): void
 #[On('mediaSelected')]
 public function mediaSelected($mediaId, $context): void
 {
-    $this->model[$context] = $mediaId;
+    $this->detailData[$context] = $mediaId;
 }
 
 public function deleteImage(string $fieldName): void
 {
-    $this->model[str_replace('model.', '', $fieldName)] = null;
+    $this->detailData[str_replace('detailData.', '', $fieldName)] = null;
 }
 ```
 
@@ -620,7 +766,10 @@ File upload field with Livewire integration.
 
 ```yaml
 # Single file upload
-- { name: document, label: noerd_label_document, type: file, colspan: 6 }
+- name: document
+  label: noerd_label_document
+  type: file
+  colspan: 6
 
 # Multiple files with type restriction
 - name: attachments
@@ -680,13 +829,16 @@ TipTap WYSIWYG editor for formatted text content.
 **YAML Example:**
 
 ```yaml
-- { name: model.content, label: noerd_label_content, type: richText, colspan: 12 }
+- name: detailData.content
+  label: noerd_label_content
+  type: richText
+  colspan: 12
 ```
 
 **Notes:**
 - Uses TipTap editor with standard formatting options
 - Content is stored as HTML
-- Automatically retrieves content from `$model` array
+- Automatically retrieves content from `$detailData` array
 
 ---
 
@@ -708,7 +860,10 @@ Multi-language single-line text field.
 **YAML Example:**
 
 ```yaml
-- { name: model.title, label: noerd_label_title, type: translatableText, colspan: 12 }
+- name: detailData.title
+  label: noerd_label_title
+  type: translatableText
+  colspan: 12
 ```
 
 **Database Value:**
@@ -732,7 +887,10 @@ Multi-language multi-line text field.
 **YAML Example:**
 
 ```yaml
-- { name: model.description, label: noerd_label_description, type: translatableTextarea, colspan: 12 }
+- name: detailData.description
+  label: noerd_label_description
+  type: translatableTextarea
+  colspan: 12
 ```
 
 ---
@@ -744,7 +902,10 @@ Multi-language WYSIWYG editor.
 **YAML Example:**
 
 ```yaml
-- { name: model.body, label: noerd_label_body, type: translatableRichText, colspan: 12 }
+- name: detailData.body
+  label: noerd_label_body
+  type: translatableRichText
+  colspan: 12
 ```
 
 **Notes:**
@@ -770,7 +931,7 @@ Dropdown for selecting CMS Collection entries.
 **YAML Example:**
 
 ```yaml
-- name: model.collection_id
+- name: detailData.collection_id
   label: noerd_label_collection
   type: collection-select
   colspan: 6
@@ -798,7 +959,7 @@ Dropdown for selecting entries from a Setup Collection.
 **YAML Example:**
 
 ```yaml
-- name: model.country_id
+- name: detailData.country_id
   label: noerd_label_country
   type: setupCollectionSelect
   collectionKey: countries
@@ -826,7 +987,10 @@ Action button that triggers a Livewire component method.
 **YAML Example:**
 
 ```yaml
-- { name: generateCode, label: 'Generate Code', type: button, colspan: 3 }
+- name: generateCode
+  label: 'Generate Code'
+  type: button
+  colspan: 3
 ```
 
 **PHP Example (Livewire Component):**
@@ -834,7 +998,7 @@ Action button that triggers a Livewire component method.
 ```php
 public function generateCode(): void
 {
-    $this->model['code'] = strtoupper(Str::random(8));
+    $this->detailData['code'] = strtoupper(Str::random(8));
 }
 ```
 
@@ -865,17 +1029,35 @@ Container for grouping nested fields with an optional title.
   title: noerd_label_address
   colspan: 12
   fields:
-    - { name: model.street, label: noerd_label_street, type: text, colspan: 8 }
-    - { name: model.zip, label: noerd_label_zip, type: text, colspan: 4 }
-    - { name: model.city, label: noerd_label_city, type: text, colspan: 8 }
-    - { name: model.country, label: noerd_label_country, type: text, colspan: 4 }
+    - name: detailData.street
+      label: noerd_label_street
+      type: text
+      colspan: 8
+    - name: detailData.zip
+      label: noerd_label_zip
+      type: text
+      colspan: 4
+    - name: detailData.city
+      label: noerd_label_city
+      type: text
+      colspan: 8
+    - name: detailData.country
+      label: noerd_label_country
+      type: text
+      colspan: 4
 
 # Block without title (just for layout grouping)
 - type: block
   colspan: 6
   fields:
-    - { name: model.first_name, label: noerd_label_first_name, type: text, colspan: 12 }
-    - { name: model.last_name, label: noerd_label_last_name, type: text, colspan: 12 }
+    - name: detailData.first_name
+      label: noerd_label_first_name
+      type: text
+      colspan: 12
+    - name: detailData.last_name
+      label: noerd_label_last_name
+      type: text
+      colspan: 12
 ```
 
 **Notes:**
@@ -894,21 +1076,21 @@ Show the field only when a condition is true.
 
 **String Format (Boolean Check):**
 ```yaml
-# Show when model.is_business is truthy
-- name: model.company_name
+# Show when detailData.is_business is truthy
+- name: detailData.company_name
   label: noerd_label_company
   type: text
-  showIf: model.is_business
+  showIf: detailData.is_business
 ```
 
 **Object Format (Value Check):**
 ```yaml
-# Show when model.type equals 'business'
-- name: model.company_name
+# Show when detailData.type equals 'business'
+- name: detailData.company_name
   label: noerd_label_company
   type: text
   showIf:
-    field: model.type
+    field: detailData.type
     value: business
 ```
 
@@ -918,21 +1100,21 @@ Hide the field when a condition is true.
 
 **String Format:**
 ```yaml
-# Hide when model.is_private is truthy
-- name: model.public_notes
+# Hide when detailData.is_private is truthy
+- name: detailData.public_notes
   label: noerd_label_notes
   type: textarea
-  showIfNot: model.is_private
+  showIfNot: detailData.is_private
 ```
 
 **Object Format:**
 ```yaml
-# Hide when model.status equals 'archived'
-- name: model.edit_notes
+# Hide when detailData.status equals 'archived'
+- name: detailData.edit_notes
   label: noerd_label_notes
   type: textarea
   showIfNot:
-    field: model.status
+    field: detailData.status
     value: archived
 ```
 
@@ -941,15 +1123,35 @@ Hide the field when a condition is true.
 ```yaml
 fields:
   # Checkbox with live updates to trigger conditional logic
-  - { name: model.is_business, label: noerd_label_business, type: checkbox, colspan: 12, live: true }
+  - name: detailData.is_business
+    label: noerd_label_business
+    type: checkbox
+    colspan: 12
+    live: true
 
   # These fields only show when is_business is checked
-  - { name: model.company_name, label: noerd_label_company, type: text, colspan: 6, showIf: model.is_business }
-  - { name: model.vat_number, label: noerd_label_vat, type: text, colspan: 6, showIf: model.is_business }
+  - name: detailData.company_name
+    label: noerd_label_company
+    type: text
+    colspan: 6
+    showIf: detailData.is_business
+  - name: detailData.vat_number
+    label: noerd_label_vat
+    type: text
+    colspan: 6
+    showIf: detailData.is_business
 
   # These fields only show when is_business is NOT checked
-  - { name: model.first_name, label: noerd_label_first_name, type: text, colspan: 6, showIfNot: model.is_business }
-  - { name: model.last_name, label: noerd_label_last_name, type: text, colspan: 6, showIfNot: model.is_business }
+  - name: detailData.first_name
+    label: noerd_label_first_name
+    type: text
+    colspan: 6
+    showIfNot: detailData.is_business
+  - name: detailData.last_name
+    label: noerd_label_last_name
+    type: text
+    colspan: 6
+    showIfNot: detailData.is_business
 ```
 
 **Notes:**

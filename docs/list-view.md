@@ -27,12 +27,25 @@ component: customer-detail
 disableSearch: false
 redirectAction: ''
 columns:
-  - { field: 'name', label: accounting_label_name, width: 12, type: 'text' }
-  - { field: 'company_name', label: accounting_label_company_name, width: 10 }
-  - { field: 'email', label: accounting_label_email, width: 12 }
-  - { field: 'address', label: accounting_label_address, width: 12 }
-  - { field: 'zipcode', label: accounting_label_zip_code, width: 10 }
-  - { field: 'city', label: accounting_label_city, width: 10 }
+  - field: name
+    label: accounting_label_name
+    width: 12
+    type: text
+  - field: company_name
+    label: accounting_label_company_name
+    width: 10
+  - field: email
+    label: accounting_label_email
+    width: 12
+  - field: address
+    label: accounting_label_address
+    width: 12
+  - field: zipcode
+    label: accounting_label_zip_code
+    width: 10
+  - field: city
+    label: accounting_label_city
+    width: 10
 ```
 
 ## List Properties
@@ -62,21 +75,19 @@ Example: `customers-list.blade.php`
 <?php
 
 use Livewire\Component;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdList;
 use Nywerk\Customer\Models\Customer;
 
 new class extends Component {
-    use Noerd;
+    use NoerdList;
 
-    public const DETAIL_COMPONENT = 'customers-list';
-
-    public function listAction(mixed $customerId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'customer-detail',
-            source: self::DETAIL_COMPONENT,
-            arguments: ['customerId' => $customerId, 'relationId' => $relationId],
+            source: $this->getComponentName(),
+            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
     }
 
@@ -91,8 +102,8 @@ new class extends Component {
 
     public function rendering()
     {
-        if ((int) request()->customerId) {
-            $this->listAction(request()->customerId);
+        if ((int) request()->id) {
+            $this->listAction(request()->id);
         }
 
         if (request()->create) {
@@ -110,11 +121,13 @@ new class extends Component {
 
 ## Key Concepts
 
-- `use Noerd` trait provides list building functionality
-- `COMPONENT` constant identifies the component
-- `listAction()` dispatches modal events to open detail views
-- `buildList()` generates the list configuration from the YAML
-- `<x-noerd::list />` renders the table
+- **Trait:** `NoerdList` provides all necessary properties and methods
+- **No constants needed:** The trait handles component identification
+- **listAction():** Dispatches modal events to open detail views with `['modelId' => $modelId]`
+- **$this->getComponentName():** Returns the current component name for the `source` parameter
+- **buildList():** Generates the list configuration from the YAML
+- **request()->id:** URL parameter for direct access to a specific record
+- **`<x-noerd::list />`:** Renders the table
 
 ## Next Steps
 
