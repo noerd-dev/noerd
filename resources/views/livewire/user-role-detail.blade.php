@@ -1,54 +1,48 @@
 <?php
 
-use Noerd\Models\UserRole;
-use Livewire\Attributes\Url;
 use Livewire\Component;
-use Noerd\Traits\Noerd;
+use Noerd\Models\UserRole;
+use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
+    use NoerdDetail;
 
-    use Noerd;
+    public const DETAIL_CLASS = UserRole::class;
 
-    public const DETAIL_COMPONENT = 'user-role-detail';
-    public const LIST_COMPONENT = 'user-roles-list';
-    public const ID = 'userRoleId';
+    public array $detailData = [];
 
-    #[Url(keep: false, except: '')]
-    public $userRoleId = null;
-
-    public array $userRoleData = [];
-
-    public function mount(UserRole $userRole): void
+    public function mount(mixed $model = null): void
     {
-        if ($this->userRoleId) {
-            $userRole = UserRole::find($this->userRoleId);
+        $this->initDetail($model);
+
+        $userRole = new UserRole;
+        if ($this->modelId) {
+            $userRole = UserRole::find($this->modelId);
         }
 
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $userRole);
-        $this->userRoleData = $userRole->toArray();
+        $this->detailData = $userRole->toArray();
     }
 
     public function store(): void
     {
         $this->validateFromLayout();
 
-        $this->userRoleData['tenant_id'] = auth()->user()->selected_tenant_id;
-        $userRole = UserRole::updateOrCreate(['id' => $this->userRoleId], $this->userRoleData);
+        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
+        $userRole = UserRole::updateOrCreate(['id' => $this->modelId], $this->detailData);
 
         $this->showSuccessIndicator = true;
 
         if ($userRole->wasRecentlyCreated) {
-            $this->userRoleId = $userRole['id'];
+            $this->modelId = $userRole['id'];
         }
     }
 
     public function delete(): void
     {
-        $userRole = UserRole::find($this->userRoleId);
+        $userRole = UserRole::find($this->modelId);
         $userRole->delete();
-        $this->closeModalProcess(self::LIST_COMPONENT);
+        $this->closeModalProcess($this->getListComponent());
     }
-
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">

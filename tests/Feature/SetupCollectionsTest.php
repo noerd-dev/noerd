@@ -402,24 +402,24 @@ describe('Setup Language Detail Component', function (): void {
     it('loads for new language', function (): void {
         Livewire::test('setup-language-detail')
             ->assertStatus(200)
-            ->assertSet('languageData.is_active', true);
+            ->assertSet('detailData.is_active', true);
     });
 
     it('loads existing language', function (): void {
         $english = SetupLanguage::where('code', 'en')->first();
 
-        Livewire::test('setup-language-detail', ['languageId' => $english->id])
+        Livewire::withUrlParams(['id' => $english->id])->test('setup-language-detail')
             ->assertStatus(200)
-            ->assertSet('languageData.code', 'en')
-            ->assertSet('languageData.name', 'English');
+            ->assertSet('detailData.code', 'en')
+            ->assertSet('detailData.name', 'English');
     });
 
     it('can save a new language', function (): void {
         Livewire::test('setup-language-detail')
-            ->set('languageData.code', 'fr')
-            ->set('languageData.name', 'Français')
-            ->set('languageData.is_active', true)
-            ->set('languageData.is_default', false)
+            ->set('detailData.code', 'fr')
+            ->set('detailData.name', 'Français')
+            ->set('detailData.is_active', true)
+            ->set('detailData.is_default', false)
             ->call('store')
             ->assertSet('showSuccessIndicator', true);
 

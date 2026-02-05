@@ -1,43 +1,37 @@
 <?php
 
-use Noerd\Models\Tenant;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Noerd\Traits\Noerd;
+use Noerd\Models\Tenant;
+use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
-
-    use Noerd;
+    use NoerdDetail;
     use WithFileUploads;
 
-    public const DETAIL_COMPONENT = 'tenant-detail';
-    public const LIST_COMPONENT = 'tenants-list';
-    public const ID = 'tenantId';
+    public const DETAIL_CLASS = Tenant::class;
 
-    #[Url(keep: false, except: '')]
-    public $tenantId = null;
-
-    public array $tenantData = [];
+    public array $detailData = [];
     public $logo;
 
-    public function mount(Tenant $tenant): void
+    public function mount(mixed $model = null): void
     {
+        $this->initDetail($model);
+
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
 
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $tenant);
-        $this->tenantData = $tenant->toArray();
+        $this->detailData = $tenant->toArray();
     }
 
     public function store(): void
     {
         $this->validate([
-            'tenantData.name' => ['required', 'string', 'max:255', 'min:3'],
+            'detailData.name' => ['required', 'string', 'max:255', 'min:3'],
         ]);
 
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
-        $tenant->name = $this->tenantData['name'];
-        $tenant->logo = $this->tenantData['logo'];
+        $tenant->name = $this->detailData['name'];
+        $tenant->logo = $this->detailData['logo'];
         $tenant->save();
 
         $this->showSuccessIndicator = true;
@@ -55,14 +49,13 @@ new class extends Component {
     public function storeFile()
     {
         $link = $this->logo->storePublicly(path: 'uploads', options: 'public');
-        $this->tenantData['logo'] = '/storage/' . $link;
+        $this->detailData['logo'] = '/storage/' . $link;
     }
 
     public function deleteImage()
     {
-        $this->tenantData['logo'] = null;
+        $this->detailData['logo'] = null;
     }
-
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">

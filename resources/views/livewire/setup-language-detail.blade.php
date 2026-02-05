@@ -1,38 +1,33 @@
 <?php
 
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdDetail;
 
 new class extends Component
 {
-    use Noerd;
+    use NoerdDetail;
 
-    public const DETAIL_COMPONENT = 'setup-language-detail';
-    public const LIST_COMPONENT = 'setup-languages-list';
-    public const ID = 'languageId';
+    public const DETAIL_CLASS = SetupLanguage::class;
 
-    #[Url(keep: false, except: '')]
-    public $languageId = null;
+    public array $detailData = [];
 
-    public array $languageData = [];
-
-    public function mount(SetupLanguage $language): void
+    public function mount(mixed $model = null): void
     {
-        if ($this->languageId) {
-            $language = SetupLanguage::find($this->languageId) ?? new SetupLanguage;
+        $this->initDetail($model);
+
+        $language = new SetupLanguage;
+        if ($this->modelId) {
+            $language = SetupLanguage::find($this->modelId) ?? new SetupLanguage;
         }
 
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $language);
-
-        $this->languageData = $language->toArray();
+        $this->detailData = $language->toArray();
 
         // Set defaults for new languages
         if (! $language->exists) {
-            $this->languageData['is_active'] = true;
-            $this->languageData['is_default'] = false;
-            $this->languageData['sort_order'] = SetupLanguage::max('sort_order') + 1;
+            $this->detailData['is_active'] = true;
+            $this->detailData['is_default'] = false;
+            $this->detailData['sort_order'] = SetupLanguage::max('sort_order') + 1;
         }
     }
 
@@ -41,21 +36,20 @@ new class extends Component
         $this->validateFromLayout();
 
         $language = SetupLanguage::updateOrCreate(
-            ['id' => $this->languageId],
-            $this->languageData
+            ['id' => $this->modelId],
+            $this->detailData
         );
 
         $this->showSuccessIndicator = true;
 
         if ($language->wasRecentlyCreated) {
-            $this->languageId = $language->id;
-            $this->languageId = $language->id;
+            $this->modelId = $language->id;
         }
     }
 
     public function delete(): void
     {
-        $language = SetupLanguage::find($this->languageId);
+        $language = SetupLanguage::find($this->modelId);
 
         // Prevent deleting the last language
         if (SetupLanguage::count() <= 1) {
@@ -72,7 +66,7 @@ new class extends Component
         }
 
         $language?->delete();
-        $this->closeModalProcess(self::LIST_COMPONENT);
+        $this->closeModalProcess($this->getListComponent());
     }
 } ?>
 
@@ -83,7 +77,7 @@ new class extends Component
 
     <x-noerd::tab-content :layout="$pageLayout">
         <x-slot:tab1>
-            @if($languageId && $languageData['is_default'] ?? false)
+            @if($modelId && $detailData['is_default'] ?? false)
                 <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p class="text-sm text-blue-800">
                         <x-icon name="information-circle" class="w-5 h-5 inline-block mr-1"/>
@@ -95,6 +89,6 @@ new class extends Component
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($languageId) && !($languageData['is_default'] ?? false)"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId) && !($detailData['is_default'] ?? false)"/>
     </x-slot:footer>
 </x-noerd::page>

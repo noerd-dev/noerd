@@ -1,32 +1,27 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Media\Models\Media;
+use Noerd\Media\Services\MediaUploadService;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
 use Noerd\Services\SetupFieldTypeConverter;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\SetupLanguageFilterTrait;
-use Noerd\Media\Models\Media;
-use Noerd\Media\Services\MediaUploadService;
-use Illuminate\Support\Facades\Storage;
 
 new class extends Component
 {
-    use Noerd;
+    use NoerdDetail;
     use SetupLanguageFilterTrait;
     use WithFileUploads;
 
-    public const DETAIL_COMPONENT = 'setup-collection-detail';
-    public const LIST_COMPONENT = 'setup-collections-list';
-    public const ID = 'entryId';
-
-    #[Url(keep: false, except: '')]
-    public $entryId = null;
+    // Note: This component does NOT use DETAIL_CLASS because it uses custom layout from collectionLayout
+    // instead of the standard YAML config system
 
     public array $model = [];
     public ?SetupCollectionEntry $entry = null;
@@ -34,13 +29,20 @@ new class extends Component
     public ?string $collectionKey = null;
     public array $images = [];
 
-    public function mount(SetupCollectionEntry $entry, ?string $collectionKey = null): void
+    public function mount(mixed $model = null, ?string $collectionKey = null): void
     {
+        // Note: We don't call initDetail here because this component uses custom layout
+        // from collectionLayout instead of YAML config. The modelId is bound via #[Url] attribute.
+        if ($model !== null) {
+            $this->modelId = $model instanceof SetupCollectionEntry ? $model->id : $model;
+        }
+
         // Ensure default languages exist
         SetupLanguage::ensureDefaultLanguages();
 
-        if ($this->entryId) {
-            $entry = SetupCollectionEntry::find($this->entryId) ?? new SetupCollectionEntry;
+        $entry = new SetupCollectionEntry;
+        if ($this->modelId) {
+            $entry = SetupCollectionEntry::find($this->modelId) ?? new SetupCollectionEntry;
         }
 
         $this->entry = $entry->exists ? $entry : new SetupCollectionEntry;
@@ -54,8 +56,6 @@ new class extends Component
         // Custom mount process - don't use mountModalProcess as it requires a YAML config
         // Instead, use the collection layout directly
         $this->pageLayout = $this->collectionLayout ?? ['fields' => []];
-        $this->entryId = $entry->id;
-        $this->entryId = $entry->id;
 
         // Load data from the JSON data field
         if ($this->entry->exists && $this->entry->data) {
@@ -89,22 +89,21 @@ new class extends Component
             'sort' => (int) ($this->model['sort'] ?? 0),
         ];
 
-        $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->entryId], $data);
+        $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->modelId], $data);
 
         $this->showSuccessIndicator = true;
 
         if ($entry->wasRecentlyCreated) {
-            $this->entryId = $entry->id;
+            $this->modelId = $entry->id;
             $this->entry = $entry;
-            $this->entryId = $entry->id;
         }
     }
 
     public function delete(): void
     {
-        $entry = SetupCollectionEntry::find($this->entryId);
+        $entry = SetupCollectionEntry::find($this->modelId);
         $entry?->delete();
-        $this->closeModalProcess(self::LIST_COMPONENT);
+        $this->closeModalProcess($this->getListComponent());
     }
 
     public function updatedImages(): void

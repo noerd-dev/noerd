@@ -15,7 +15,7 @@ uses(RefreshDatabase::class);
 $testSettings = [
     'componentName' => 'user-detail',
     'listName' => 'users-list',
-    'id' => 'userId',
+    'id' => 'id',
 ];
 
 it('renders the user component', function () use ($testSettings): void {
@@ -35,8 +35,8 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     Livewire::test($testSettings['componentName'])
         ->call('store')
-        ->assertHasErrors(['userData.name'])
-        ->assertHasErrors(['userData.email'])
+        ->assertHasErrors(['detailData.name'])
+        ->assertHasErrors(['detailData.email'])
         ->assertHasErrors(['tenantAccess']);
 });
 
@@ -57,8 +57,8 @@ it('successfully creates a new user', function () use ($testSettings): void {
     $userEmail = fake()->email;
 
     Livewire::test($testSettings['componentName'])
-        ->set('userData.name', $userName)
-        ->set('userData.email', $userEmail)
+        ->set('detailData.name', $userName)
+        ->set('detailData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -97,9 +97,9 @@ it('updates an existing user', function () use ($testSettings): void {
     $newEmail = 'updated@example.com';
 
     Livewire::test($testSettings['componentName'], [$existingUser])
-        ->set('userId', $existingUser->id)
-        ->set('userData.name', $newName)
-        ->set('userData.email', $newEmail)
+        ->set('modelId', $existingUser->id)
+        ->set('detailData.name', $newName)
+        ->set('detailData.email', $newEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -131,8 +131,8 @@ it('handles existing user with same email', function () use ($testSettings): voi
 
     // Try to create a new user with same email
     Livewire::test($testSettings['componentName'])
-        ->set('userData.name', 'New User')
-        ->set('userData.email', 'existing@example.com')
+        ->set('detailData.name', 'New User')
+        ->set('detailData.email', 'existing@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -161,9 +161,9 @@ it('manages user roles correctly', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     Livewire::test($testSettings['componentName'], [$user])
-        ->set('userId', $user->id)
-        ->set('userData.name', $user->name)
-        ->set('userData.email', $user->email)
+        ->set('modelId', $user->id)
+        ->set('detailData.name', $user->name)
+        ->set('detailData.email', $user->email)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->set("userRoles.{$role1->id}", true)
@@ -207,9 +207,9 @@ it('manages tenant access correctly', function () use ($testSettings): void {
     $this->actingAs($admin);
 
     Livewire::test($testSettings['componentName'], [$user])
-        ->set('userId', $user->id)
-        ->set('userData.name', $user->name)
-        ->set('userData.email', $user->email)
+        ->set('modelId', $user->id)
+        ->set('detailData.name', $user->name)
+        ->set('detailData.email', $user->email)
         ->set("possibleTenants.{$tenant1->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant1->id}.selectedProfile", $profile1->id)
         ->set("possibleTenants.{$tenant2->id}.hasAccess", false)
@@ -229,8 +229,8 @@ it('requires at least one tenant access', function () use ($testSettings): void 
     $this->actingAs($admin);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userData.name', 'Test User')
-        ->set('userData.email', 'test@example.com')
+        ->set('detailData.name', 'Test User')
+        ->set('detailData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", false)
         ->call('store')
         ->assertHasErrors(['tenantAccess']);
@@ -255,10 +255,10 @@ it('loads user roles in mount', function () use ($testSettings): void {
 
     // Test that the component can successfully set and store user roles
     $component = Livewire::test($testSettings['componentName'], [$user])
-        ->set('userId', $user->id)
+        ->set('modelId', $user->id)
         ->set("userRoles.{$role->id}", true)
-        ->set('userData.name', $user->name)
-        ->set('userData.email', $user->email)
+        ->set('detailData.name', $user->name)
+        ->set('detailData.email', $user->email)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -319,8 +319,8 @@ it('sets success indicator after storing', function () use ($testSettings): void
     $this->actingAs($admin);
 
     Livewire::test($testSettings['componentName'])
-        ->set('userData.name', 'Test User')
-        ->set('userData.email', 'test@example.com')
+        ->set('detailData.name', 'Test User')
+        ->set('detailData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -348,8 +348,8 @@ it('sends password reset link when creating new user', function () use ($testSet
 
     // Create new user via component
     Livewire::test($testSettings['componentName'])
-        ->set('userData.name', $userName)
-        ->set('userData.email', $userEmail)
+        ->set('detailData.name', $userName)
+        ->set('detailData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -395,9 +395,9 @@ it('does not send password reset link when updating existing user', function () 
 
     // Update existing user via component
     Livewire::test($testSettings['componentName'], [$existingUser])
-        ->set('userId', $existingUser->id)
-        ->set('userData.name', 'Updated Name')
-        ->set('userData.email', 'updated@example.com')
+        ->set('modelId', $existingUser->id)
+        ->set('detailData.name', 'Updated Name')
+        ->set('detailData.email', 'updated@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
@@ -425,8 +425,8 @@ it('creates user with hashed password that user cannot login with before reset',
 
     // Create new user via component
     Livewire::test($testSettings['componentName'])
-        ->set('userData.name', $userName)
-        ->set('userData.email', $userEmail)
+        ->set('detailData.name', $userName)
+        ->set('detailData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
         ->call('store')
