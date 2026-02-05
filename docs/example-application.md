@@ -202,14 +202,7 @@ class StudyMaterial extends Model
 
     protected $table = 'study_materials';
 
-    protected $fillable = [
-        'tenant_id',
-        'title',
-        'author',
-        'page_count',
-        'media_id',
-        'publication_year',
-    ];
+    protected $guarded = [];
 
     protected array $searchable = [
         'title',
@@ -261,7 +254,7 @@ class StudyMaterial extends Model
 
 **Properties:**
 - `$table` — Explicit table name (required when it does not follow Laravel's convention).
-- `$fillable` — Mass-assignable fields. Always include `tenant_id`.
+- `$guarded` — Mass-assignment protection. Use `[]` for all fields assignable or protect sensitive fields only.
 - `$searchable` — Fields searched by `HasListScopes` when the user types in the search box.
 
 **`casts()` method:** Define attribute casting as a method (Laravel 12 convention).
@@ -315,11 +308,22 @@ component: study-material-detail
 disableSearch: false
 redirectAction: ''
 columns:
-  - { field: 'title', label: study_label_title, width: 25 }
-  - { field: 'author', label: study_label_author, width: 20 }
-  - { field: 'page_count', label: study_label_page_count, width: 15 }
-  - { field: 'publication_year', label: study_label_publication_year, width: 15 }
-  - { field: 'created_at', label: study_label_created_at, width: 15, type: date }
+  - field: title
+    label: study_label_title
+    width: 25
+  - field: author
+    label: study_label_author
+    width: 20
+  - field: page_count
+    label: study_label_page_count
+    width: 15
+  - field: publication_year
+    label: study_label_publication_year
+    width: 15
+  - field: created_at
+    label: study_label_created_at
+    width: 15
+    type: date
 ```
 
 **summaries-list.yml** (with relation column):
@@ -331,9 +335,20 @@ component: summary-detail
 disableSearch: false
 redirectAction: ''
 columns:
-  - { field: 'title', label: study_label_title, width: 30 }
-  - { field: 'studyMaterial', label: study_label_book, width: 30, type: relation_link, modalComponent: study-material-detail, idField: study_material_id, idParam: studyMaterialId }
-  - { field: 'created_at', label: study_label_created_at, width: 20, type: date }
+  - field: title
+    label: study_label_title
+    width: 30
+  - field: studyMaterial
+    label: study_label_book
+    width: 30
+    type: relation_link
+    modalComponent: study-material-detail
+    idField: study_material_id
+    idParam: modelId
+  - field: created_at
+    label: study_label_created_at
+    width: 20
+    type: date
 ```
 
 The `relation_link` column type creates a clickable link that opens the related record's detail modal. It requires `modalComponent`, `idField`, and `idParam`.
@@ -345,21 +360,19 @@ The `relation_link` column type creates a clickable link that opens the related 
 
 use Livewire\Component;
 use Noerd\Scopes\SortScope;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdList;
 use Nywerk\Study\Models\StudyMaterial;
 
 new class extends Component {
-    use Noerd;
-
-    public const DETAIL_COMPONENT = 'study-materials-list';
+    use NoerdList;
 
     public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'study-material-detail',
-            source: self::DETAIL_COMPONENT,
-            arguments: ['studyMaterialId' => $modelId, 'relationId' => $relationId],
+            source: $this->getComponentName(),
+            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
     }
 
@@ -376,8 +389,8 @@ new class extends Component {
 
     public function rendering()
     {
-        if ((int) request()->studyMaterialId) {
-            $this->listAction(request()->studyMaterialId);
+        if ((int) request()->id) {
+            $this->listAction(request()->id);
         }
 
         if (request()->create) {
@@ -393,10 +406,11 @@ new class extends Component {
 
 | Part | Purpose |
 |------|---------|
-| `COMPONENT` | Unique identifier matching the YAML filename |
-| `listAction()` | Opens the detail modal via `noerdModal` event |
+| `NoerdList` trait | Provides all list functionality |
+| `listAction()` | Opens the detail modal via `noerdModal` event with `['modelId' => $modelId]` |
+| `$this->getComponentName()` | Returns the current component name for the `source` parameter |
 | `with()` | Returns `listConfig` built from query results via `$this->buildList($rows)` |
-| `rendering()` | Handles direct URL access with query parameters (e.g., `?studyMaterialId=5` or `?create=1`) |
+| `rendering()` | Handles direct URL access with query parameters (e.g., `?id=5` or `?create=1`) |
 
 **Filtering by parent record** (e.g., `summaries-list`): Add a `$studyMaterialId` property and use `->when($this->studyMaterialId, ...)` to conditionally filter. Replace relation objects with their title string for display using a `foreach` loop.
 
@@ -408,22 +422,49 @@ new class extends Component {
 title: study_label_study_material
 description: ''
 tabs:
-  - { number: 1, label: study_tab_general }
-  - { label: study_tab_summaries, component: summaries-list, arguments: { studyMaterialId: '$studyMaterialId' }, requiresId: true }
-  - { label: study_tab_flashcards, component: flashcards-list, arguments: { studyMaterialId: '$studyMaterialId' }, requiresId: true }
+  - number: 1
+    label: study_tab_general
+  - label: study_tab_summaries
+    component: summaries-list
+    arguments:
+      studyMaterialId: $studyMaterialId
+    requiresId: true
+  - label: study_tab_flashcards
+    component: flashcards-list
+    arguments:
+      studyMaterialId: $studyMaterialId
+    requiresId: true
 fields:
-  - { name: studyMaterialData.title, label: study_label_title, type: text, colspan: 6, required: true }
-  - { name: studyMaterialData.author, label: study_label_author, type: text, colspan: 6 }
-  - { name: studyMaterialData.page_count, label: study_label_page_count, type: number, colspan: 6 }
-  - { name: studyMaterialData.publication_year, label: study_label_publication_year, type: number, colspan: 6 }
-  - { name: studyMaterialData.media_id, label: study_label_cover_image, type: relation, colspan: 12, relationField: media, modalComponent: media-list }
+  - name: detailData.title
+    label: study_label_title
+    type: text
+    colspan: 6
+    required: true
+  - name: detailData.author
+    label: study_label_author
+    type: text
+    colspan: 6
+  - name: detailData.page_count
+    label: study_label_page_count
+    type: number
+    colspan: 6
+  - name: detailData.publication_year
+    label: study_label_publication_year
+    type: number
+    colspan: 6
+  - name: detailData.media_id
+    label: study_label_cover_image
+    type: relation
+    colspan: 12
+    relationField: media
+    modalComponent: media-list
 ```
 
 - Tab 1 uses `number: 1` and displays form fields.
 - Tabs 2+ embed list components with `component` and `arguments`.
 - `requiresId: true` — these tabs only appear after the record is saved.
-- `'$studyMaterialId'` passes the current model's ID to the embedded list.
-- Field names use the `Data` suffix: `studyMaterialData.title`.
+- `$studyMaterialId` passes the current model's ID to the embedded list.
+- Field names use `detailData.` prefix: `detailData.title`.
 
 **summary-detail.yml** (with relation field):
 
@@ -431,9 +472,22 @@ fields:
 title: study_label_summary
 description: ''
 fields:
-  - { name: summaryData.title, label: study_label_title, type: text, colspan: 12, required: true }
-  - { name: summaryData.study_material_id, label: study_label_study_material, type: relation, colspan: 12, relationField: relationTitles.study_material_id, modalComponent: study-materials-list }
-  - { name: summaryData.content, label: study_label_content, type: richText, colspan: 12, rows: 15 }
+  - name: detailData.title
+    label: study_label_title
+    type: text
+    colspan: 12
+    required: true
+  - name: detailData.study_material_id
+    label: study_label_study_material
+    type: relation
+    colspan: 12
+    relationField: relationTitles.study_material_id
+    modalComponent: study-materials-list
+  - name: detailData.content
+    label: study_label_content
+    type: richText
+    colspan: 12
+    rows: 15
 ```
 
 The `relation` type opens a list modal for selection. The `relationField` points to the display value in `relationTitles`.
@@ -443,55 +497,38 @@ The `relation` type opens a list modal for selection. The `relationField` points
 ```php
 <?php
 
-use Livewire\Attributes\Url;
+use Livewire\Attributes\On;
 use Livewire\Component;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdDetail;
 use Nywerk\Study\Models\StudyMaterial;
 
 new class extends Component {
-    use Noerd;
+    use NoerdDetail;
 
-    public const DETAIL_COMPONENT = 'study-material-detail';
-    public const LIST_COMPONENT = 'study-materials-list';
-    public const ID = 'studyMaterialId';
-
-    #[Url(keep: false, except: '')]
-    public $studyMaterialId = null;
-
-    public array $studyMaterialData = [];
-
-    public function mount(StudyMaterial $studyMaterial): void
-    {
-        if ($this->studyMaterialId) {
-            $studyMaterial = StudyMaterial::find($this->studyMaterialId);
-        }
-
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $studyMaterial);
-        $this->studyMaterialData = $studyMaterial->toArray();
-    }
+    public const DETAIL_CLASS = StudyMaterial::class;
 
     public function store(): void
     {
         $this->validateFromLayout();
 
-        $this->studyMaterialData['tenant_id'] = auth()->user()->selected_tenant_id;
+        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
         $studyMaterial = StudyMaterial::updateOrCreate(
-            ['id' => $this->studyMaterialId],
-            $this->studyMaterialData
+            ['id' => $this->modelId],
+            $this->detailData
         );
 
         $this->showSuccessIndicator = true;
 
         if ($studyMaterial->wasRecentlyCreated) {
-            $this->studyMaterialId = $studyMaterial['id'];
+            $this->modelId = $studyMaterial->id;
         }
     }
 
     public function delete(): void
     {
-        $studyMaterial = StudyMaterial::find($this->studyMaterialId);
+        $studyMaterial = StudyMaterial::find($this->modelId);
         $studyMaterial->delete();
-        $this->closeModalProcess(self::LIST_COMPONENT);
+        $this->closeModalProcess($this->getListComponent());
     }
 }; ?>
 
@@ -500,30 +537,30 @@ new class extends Component {
         <x-noerd::modal-title>{{ __('study_study_material') }}</x-noerd::modal-title>
     </x-slot:header>
 
-    <x-noerd::tab-content :layout="$pageLayout" :modelId="$studyMaterialId" />
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($studyMaterialId)"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
     </x-slot:footer>
 </x-noerd::page>
 ```
 
-**Constants:**
+**Constant:**
 
 | Constant | Purpose |
 |----------|---------|
-| `COMPONENT` | Matches the YAML filename |
-| `LIST_COMPONENT` | The list to reload after save/delete |
-| `ID` | Property name for the model ID |
+| `DETAIL_CLASS` | The Eloquent model class for this detail component |
 
-**Properties:**
-- `$studyMaterialId` — Model ID, bound to URL via `#[Url]`.
-- `$studyMaterialData` — Model data as an array. The Eloquent model is **never** stored as a property.
+**Properties (provided by NoerdDetail trait):**
+- `$modelId` — Model ID, automatically bound to URL
+- `$detailData` — Model data as an array. The Eloquent model is **never** stored as a property
+- `$pageLayout` — YAML configuration loaded automatically
 
 **Methods:**
-- `mount()` — Calls `mountModalProcess()` to load YAML config into `$pageLayout`.
-- `store()` — Validates via `validateFromLayout()`, saves with `updateOrCreate()`.
-- `delete()` — Deletes the record and calls `closeModalProcess()`.
+- `mount()` — Handled by the trait automatically
+- `store()` — Validates via `validateFromLayout()`, saves with `updateOrCreate()`
+- `delete()` — Deletes the record and calls `closeModalProcess()`
+- `$this->getListComponent()` — Automatically determines the associated list component
 
 ## Relation Selection
 
@@ -534,7 +571,7 @@ When a detail has a `relation` field, handle the selection event:
 public function studyMaterialSelected($studyMaterialId): void
 {
     $studyMaterial = StudyMaterial::find($studyMaterialId);
-    $this->summaryData['study_material_id'] = $studyMaterial->id;
+    $this->detailData['study_material_id'] = $studyMaterial->id;
     $this->relationTitles['study_material_id'] = $studyMaterial->title;
 }
 ```
@@ -725,8 +762,8 @@ it('validates the data', function (): void {
 
     Livewire::test('summary-detail')
         ->call('store')
-        ->assertHasErrors(['summaryData.title'])
-        ->assertHasErrors(['summaryData.study_material_id']);
+        ->assertHasErrors(['detailData.title'])
+        ->assertHasErrors(['detailData.study_material_id']);
 });
 
 it('handles study material selection correctly', function (): void {
@@ -738,7 +775,7 @@ it('handles study material selection correctly', function (): void {
 
     Livewire::test('summary-detail')
         ->call('studyMaterialSelected', $studyMaterial->id)
-        ->assertSet('summaryData.study_material_id', $studyMaterial->id)
+        ->assertSet('detailData.study_material_id', $studyMaterial->id)
         ->assertSet('relationTitles.study_material_id', $studyMaterial->title);
 });
 ```

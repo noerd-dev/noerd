@@ -3,20 +3,18 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Models\UserRole;
-use Noerd\Traits\Noerd;
+use Noerd\Traits\NoerdList;
 
 new class extends Component {
-    use Noerd;
-
-    public const DETAIL_COMPONENT = 'user-roles-list';
+    use NoerdList;
 
     public function listAction(mixed $modelId = null, mixed $relationId = null): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'user-role-detail',
-            source: self::DETAIL_COMPONENT,
-            arguments: ['userRoleId' => $modelId, 'relationId' => $relationId],
+            source: $this->getComponentName(),
+            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
         );
     }
 
@@ -37,8 +35,8 @@ new class extends Component {
             abort(401);
         }
 
-        if ((int) request()->userRoleId) {
-            $this->listAction(request()->userRoleId);
+        if ((int) request()->id) {
+            $this->listAction(request()->id);
         }
 
         if (request()->create) {

@@ -29,29 +29,29 @@ tabs:
   - label: customer_invoices
     component: invoices-list
     arguments:
-      customerId: '$customerId'
+      customerId: $customerId
     requiresId: true
 fields:
-  - name: customerData.name
+  - name: detailData.name
     label: accounting_label_name
     type: text
     required: true
-  - name: customerData.company_name
+  - name: detailData.company_name
     label: accounting_label_company_name
     type: text
-  - name: customerData.email
+  - name: detailData.email
     label: accounting_label_email
     type: text
-  - name: customerData.phone
+  - name: detailData.phone
     label: accounting_label_phone
     type: text
-  - name: customerData.address
+  - name: detailData.address
     label: accounting_label_address
     type: text
-  - name: customerData.zipcode
+  - name: detailData.zipcode
     label: accounting_label_zip_code
     type: text
-  - name: customerData.city
+  - name: detailData.city
     label: accounting_label_city
     type: text
 ```
@@ -79,7 +79,7 @@ fields:
 
 | Property | Description |
 |----------|-------------|
-| `name` | Property path (e.g., `customerData.name`) |
+| `name` | Property path (e.g., `detailData.name`) |
 | `label` | Field label (translation key) |
 | `type` | Field type (text, textarea, checkbox, relation, etc.) |
 | `required` | Mark field as required |
@@ -93,51 +93,34 @@ Example: `customer-detail.blade.php`
 ```php
 <?php
 
-use Livewire\Attributes\Url;
 use Livewire\Component;
+use Noerd\Traits\NoerdDetail;
 use Nywerk\Customer\Models\Customer;
-use Noerd\Traits\Noerd;
 
 new class extends Component {
-    use Noerd;
+    use NoerdDetail;
 
-    public const DETAIL_COMPONENT = 'customer-detail';
-    public const LIST_COMPONENT = 'customers-list';
-    public const ID = 'customerId';
-
-    #[Url(keep: false, except: '')]
-    public $customerId = null;
-
-    public array $customerData = [];
-
-    public function mount(Customer $customer): void
-    {
-        if ($this->customerId) {
-            $customer = Customer::find($this->customerId);
-        }
-
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $customer);
-    }
+    public const DETAIL_CLASS = Customer::class;
 
     public function store(): void
     {
         $this->validateFromLayout();
 
-        $this->customerData['tenant_id'] = auth()->user()->selected_tenant_id;
-        $customer = Customer::updateOrCreate(['id' => $this->customerId], $this->customerData);
+        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
+        $customer = Customer::updateOrCreate(['id' => $this->modelId], $this->detailData);
 
         $this->showSuccessIndicator = true;
 
         if ($customer->wasRecentlyCreated) {
-            $this->customerId = $customer->id;
+            $this->modelId = $customer->id;
         }
     }
 
     public function delete(): void
     {
-        $customer = Customer::find($this->customerId);
+        $customer = Customer::find($this->modelId);
         $customer->delete();
-        $this->closeModalProcess(self::LIST_COMPONENT);
+        $this->closeModalProcess($this->getListComponent());
     }
 }; ?>
 
@@ -146,26 +129,27 @@ new class extends Component {
         <x-noerd::modal-title>Kunde</x-noerd::modal-title>
     </x-slot:header>
 
-    <x-noerd::tab-content :layout="$pageLayout" :modelId="$customerId">
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
         <x-slot:tab1>
             {{-- Custom content for tab 1 --}}
         </x-slot:tab1>
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($customerId)"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
     </x-slot:footer>
 </x-noerd::page>
 ```
 
 ## Key Concepts
 
-- Property naming: `$customerData` (array) for form binding, never store the Eloquent model as property
-- `COMPONENT`, `LIST_COMPONENT`, `ID` constants identify the component
-- `mountModalProcess()` initializes the form with model data
-- `validateFromLayout()` validates against YAML-defined rules
-- `<x-noerd::tab-content>` renders tabs and fields from YAML
-- `<x-noerd::delete-save-bar>` provides save/delete buttons
+- **Trait:** `NoerdDetail` provides `$detailData`, `$modelId`, `$pageLayout`, and helper methods
+- **Constant:** Only `DETAIL_CLASS = Model::class` is required
+- **Properties:** `$detailData` (array) for form binding, `$modelId` (from trait) for the record ID
+- **mount():** Handled by the trait automatically - no need to define it
+- **validateFromLayout():** Validates against YAML-defined rules
+- **$this->getListComponent():** Automatically determines the associated list component
+- The Eloquent model is **never** stored as a component property
 
 ## Naming Conventions
 
