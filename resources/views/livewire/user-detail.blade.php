@@ -18,7 +18,6 @@ new class extends Component {
     public bool $isOwner = false;
     public $selectedTenant;
 
-    public array $detailData = [];
     public array $tenantAccess = [];
     public array $userRoles = [];
     public array $possibleTenants = [];

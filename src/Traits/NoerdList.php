@@ -42,44 +42,6 @@ trait NoerdList
 
     public bool $disableModal = false;
 
-    /**
-     * Get the detail component name.
-     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
-     */
-    protected function getDetailComponent(): string
-    {
-        if (defined('static::DETAIL_COMPONENT')) {
-            return static::DETAIL_COMPONENT;
-        }
-
-        return $this->getName();
-    }
-
-    /**
-     * Get the list component name.
-     * Uses LIST_COMPONENT constant if defined, otherwise derives from detail component name.
-     * 'customer-detail' → 'customers-list'
-     */
-    protected function getListComponent(): string
-    {
-        if (defined('static::LIST_COMPONENT')) {
-            return static::LIST_COMPONENT;
-        }
-
-        $name = $this->getName();
-
-        // If this is already a list component, return as-is
-        if (Str::endsWith($name, '-list')) {
-            return $name;
-        }
-
-        // Extract entity: 'customer-detail' → 'customer'
-        $entity = Str::before($name, '-detail');
-
-        // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity) . '-list';
-    }
-
     public function mount(): void
     {
         $this->listId = Str::random();
@@ -149,28 +111,12 @@ trait NoerdList
         $this->dispatch('closeTopModal');
     }
 
-    protected function componentName(): string
-    {
-        return defined('static::COMPONENT') ? static::COMPONENT : $this->getName();
-    }
-
     /**
      * Get the component name (alias for getName).
      */
     public function getComponentName(): string
     {
         return $this->getName();
-    }
-
-    /**
-     * Get the event name for select mode.
-     * Derives from COMPONENT: 'customers-list' -> 'customerSelected'
-     */
-    protected function getSelectEvent(): string
-    {
-        $entity = Str::singular(Str::before($this->componentName(), '-list'));
-
-        return Str::camel($entity) . 'Selected';
     }
 
     public function updateRow(): void {}
@@ -190,6 +136,65 @@ trait NoerdList
     }
 
     public function filters(): void {}
+
+    public function refreshList(): void
+    {
+        $this->dispatch('$refresh');
+    }
+
+    /**
+     * Get the detail component name.
+     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     */
+    protected function getDetailComponent(): string
+    {
+        if (defined('static::DETAIL_COMPONENT')) {
+            return static::DETAIL_COMPONENT;
+        }
+
+        return $this->getName();
+    }
+
+    /**
+     * Get the list component name.
+     * Uses LIST_COMPONENT constant if defined, otherwise derives from detail component name.
+     * 'customer-detail' → 'customers-list'
+     */
+    protected function getListComponent(): string
+    {
+        if (defined('static::LIST_COMPONENT')) {
+            return static::LIST_COMPONENT;
+        }
+
+        $name = $this->getName();
+
+        // If this is already a list component, return as-is
+        if (Str::endsWith($name, '-list')) {
+            return $name;
+        }
+
+        // Extract entity: 'customer-detail' → 'customer'
+        $entity = Str::before($name, '-detail');
+
+        // Pluralize and add -list: 'customer' → 'customers-list'
+        return Str::plural($entity) . '-list';
+    }
+
+    protected function componentName(): string
+    {
+        return defined('static::COMPONENT') ? static::COMPONENT : $this->getName();
+    }
+
+    /**
+     * Get the event name for select mode.
+     * Derives from COMPONENT: 'customers-list' -> 'customerSelected'
+     */
+    protected function getSelectEvent(): string
+    {
+        $entity = Str::singular(Str::before($this->componentName(), '-list'));
+
+        return Str::camel($entity) . 'Selected';
+    }
 
     protected function syncListQueryContext(): void
     {
@@ -244,10 +249,5 @@ trait NoerdList
         return [
             'refreshList-' . $this->getDetailComponent() => 'refreshList',
         ];
-    }
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
     }
 }

@@ -9,8 +9,6 @@ new class extends Component {
 
     public const DETAIL_CLASS = UserRole::class;
 
-    public array $detailData = [];
-
     public function mount(mixed $model = null): void
     {
         $this->initDetail($model);

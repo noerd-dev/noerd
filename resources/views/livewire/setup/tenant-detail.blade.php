@@ -11,7 +11,6 @@ new class extends Component {
 
     public const DETAIL_CLASS = Tenant::class;
 
-    public array $detailData = [];
     public $logo;
 
     public function mount(mixed $model = null): void
