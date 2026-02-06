@@ -33,7 +33,7 @@
         @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
     @endif
     <div class="grid py-8 pt-4 grid-cols-1 sm:grid-cols-{{$cols ?? '12'}} gap-6">
-        @foreach($fields as $field)
+        @foreach($fields ?? [] as $field)
             @if(isset($field['show']) && !$field['show'])
             @elseif($field['type'] === 'block')
                 {{-- Nested block with its own title and fields --}}
