@@ -3,7 +3,6 @@
 namespace Noerd\Providers;
 
 use Illuminate\Auth\Events\Login;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
@@ -24,7 +23,6 @@ use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Services\ListQueryContext;
-use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {
@@ -51,14 +49,9 @@ class NoerdServiceProvider extends ServiceProvider
         $router->aliasMiddleware('public-app', PublicAppMiddleware::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
 
-        // Register Blade components
-        Blade::component('app-layout', AppLayout::class);
-
-        View::composer('noerd::components.layouts.app', function ($view): void {
+        View::composer('noerd::layouts.app', function ($view): void {
             $view->with('showSidebar', ! session('hide_sidebar'));
         });
-
-        config(['livewire.layout' => 'noerd::components.layouts.app']);
 
         // Publish public assets (fonts + built Vite assets)
         $this->publishes([

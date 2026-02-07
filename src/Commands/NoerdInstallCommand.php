@@ -348,7 +348,7 @@ export default {
 
         $configContent = file_get_contents($configPath);
 
-        if (str_contains($configContent, "'noerd::components.layouts.app'")) {
+        if (str_contains($configContent, "'noerd::layouts.app'")) {
             $this->line('<comment>Livewire component_layout already set to noerd layout.</comment>');
 
             return;
@@ -356,20 +356,20 @@ export default {
 
         $updated = str_replace(
             "'layouts::app'",
-            "'noerd::components.layouts.app'",
+            "'noerd::layouts.app'",
             $configContent,
         );
 
         if ($updated === $configContent) {
-            $this->warn('Could not find default component_layout value in config/livewire.php. Please set it manually to: noerd::components.layouts.app');
+            $this->warn('Could not find default component_layout value in config/livewire.php. Please set it manually to: noerd::layouts.app');
 
             return;
         }
 
         if (file_put_contents($configPath, $updated) !== false) {
-            $this->line('<info>Updated Livewire component_layout to noerd::components.layouts.app.</info>');
+            $this->line('<info>Updated Livewire component_layout to noerd::layouts.app.</info>');
         } else {
-            $this->warn('Failed to update config/livewire.php. Please manually set component_layout to: noerd::components.layouts.app');
+            $this->warn('Failed to update config/livewire.php. Please manually set component_layout to: noerd::layouts.app');
         }
     }
 
