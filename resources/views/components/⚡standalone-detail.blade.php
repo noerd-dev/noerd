@@ -29,23 +29,30 @@ new class extends Component {
 
     private function findComponentModule(string $component): ?string
     {
-        // Check if the livewire component view file exists in main resources
-        $viewPath = resource_path("views/livewire/{$component}.blade.php");
-        if (file_exists($viewPath)) {
-            return 'main'; // Main Laravel resources directory
+        // Check main resources - both locations
+        $mainPaths = [
+            resource_path("views/components/⚡{$component}.blade.php"),
+            resource_path("views/livewire/{$component}.blade.php"),
+        ];
+        foreach ($mainPaths as $viewPath) {
+            if (file_exists($viewPath)) {
+                return 'main';
+            }
         }
 
         // Check all modules dynamically
         $modulesPath = base_path('app-modules');
         if (is_dir($modulesPath)) {
-            $moduleDirectories = glob($modulesPath . '/*', GLOB_ONLYDIR);
-
-            foreach ($moduleDirectories as $moduleDir) {
+            foreach (glob($modulesPath . '/*', GLOB_ONLYDIR) as $moduleDir) {
                 $moduleName = basename($moduleDir);
-                $moduleViewPath = base_path("app-modules/{$moduleName}/resources/views/livewire/{$component}.blade.php");
-
-                if (file_exists($moduleViewPath)) {
-                    return $moduleName;
+                $modulePaths = [
+                    "{$moduleDir}/resources/views/components/⚡{$component}.blade.php",
+                    "{$moduleDir}/resources/views/livewire/{$component}.blade.php",
+                ];
+                foreach ($modulePaths as $moduleViewPath) {
+                    if (file_exists($moduleViewPath)) {
+                        return $moduleName;
+                    }
                 }
             }
         }

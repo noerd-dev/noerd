@@ -15,6 +15,9 @@ class {{ModuleName}}ServiceProvider extends ServiceProvider
         // Load views with namespace
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', '{{module-name}}');
 
+        // Register Livewire component location
+        \Livewire\Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
+
         // Load JSON translations
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
 
