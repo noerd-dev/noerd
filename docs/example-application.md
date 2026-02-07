@@ -67,7 +67,7 @@ app-modules/study/
     "version": "0.1.0",
     "license": "proprietary",
     "require": {
-        "noerd/noerd": "^0.1"
+        "noerd/noerd": "^0.2"
     },
     "autoload": {
         "psr-4": {
