@@ -20,6 +20,7 @@ return new class () extends Migration {
                 $table->string('icon');
                 $table->string('route');
                 $table->boolean('is_active')->default(true);
+                $table->boolean('is_public')->default(false);
                 $table->timestamps();
             });
         }
