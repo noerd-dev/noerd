@@ -134,7 +134,7 @@ trait NoerdDetail
 
         return Str::camel($entity) . 'Data';
     }
-    
+
     protected function mountDetailComponent(Model $model, string $modelClass): void
     {
         $idProperty = 'modelId';

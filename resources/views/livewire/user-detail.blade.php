@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\Profile;
 use Noerd\Models\User;
@@ -12,6 +13,9 @@ use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
     use NoerdDetail;
+
+    #[Url(as: 'userId', keep: false, except: '')]
+    public $modelId = null;
 
     public const DETAIL_CLASS = User::class;
 

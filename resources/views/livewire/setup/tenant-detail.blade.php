@@ -1,5 +1,6 @@
 <?php
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Models\Tenant;
@@ -8,6 +9,9 @@ use Noerd\Traits\NoerdDetail;
 new class extends Component {
     use NoerdDetail;
     use WithFileUploads;
+
+    #[Url(as: 'tenantId', keep: false, except: '')]
+    public $modelId = null;
 
     public const DETAIL_CLASS = Tenant::class;
 
