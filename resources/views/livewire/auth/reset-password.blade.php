@@ -10,7 +10,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
-new #[Layout('noerd::components.layouts.auth')] class extends Component {
+new #[Layout('noerd::layouts.auth')] class extends Component {
     #[Locked]
     public string $token = '';
 
