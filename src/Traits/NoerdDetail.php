@@ -33,7 +33,7 @@ trait NoerdDetail
         return $this->getName();
     }
 
-    public function initDetail(mixed $model = null): void
+    public function initDetail(): void
     {
         // For detail components with DETAIL_CLASS constant
         if (defined('static::DETAIL_CLASS')) {

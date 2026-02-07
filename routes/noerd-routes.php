@@ -15,7 +15,6 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Route::livewire('setup-collection/{model}', 'setup-collection-detail')->name('setup-collection.detail');
     Route::livewire('setup-languages', 'setup-languages-list')->name('setup-languages');
     Route::livewire('setup-language/{model}', 'setup-language-detail')->name('setup-language.detail');
-    Route::livewire('/detail/{component}/{id}', 'standalone-detail')->name('detail');
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {
