@@ -13,9 +13,9 @@ new class extends Component {
 
     public const DETAIL_CLASS = UserRole::class;
 
-    public function mount(mixed $model = null): void
+    public function mount(): void
     {
-        $this->initDetail($model);
+        $this->initDetail();
 
         $userRole = new UserRole;
         if ($this->modelId) {
