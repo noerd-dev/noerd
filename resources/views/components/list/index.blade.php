@@ -1,5 +1,6 @@
 @props([
     'listConfig' => null,
+    'relationId' => null,
 ])
 
 @php
