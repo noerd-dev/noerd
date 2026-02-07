@@ -10,13 +10,13 @@ new class extends Component {
 
     public const DETAIL_COMPONENT = 'users-list';
 
-    public function listAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'user-detail',
             source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['modelId' => $modelId, 'relations' => $relations],
         );
     }
 

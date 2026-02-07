@@ -11,13 +11,13 @@ new class extends Component {
 
     public const DETAIL_COMPONENT = '{{models}}-list';
 
-    public function listAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
             component: '{{model}}-detail',
             source: self::DETAIL_COMPONENT,
-            arguments: ['{{model}}Id' => $modelId, 'relationId' => $relationId],
+            arguments: ['{{model}}Id' => $modelId, 'relations' => $relations],
         );
     }
 

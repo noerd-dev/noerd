@@ -104,7 +104,7 @@ trait NoerdList
     /**
      * Handle select action - dispatch selection event and close modal.
      */
-    public function selectAction(mixed $modelId = null, mixed $relationId = null): void
+    public function selectAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
 

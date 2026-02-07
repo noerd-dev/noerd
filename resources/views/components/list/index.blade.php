@@ -1,6 +1,6 @@
 @props([
     'listConfig' => null,
-    'relationId' => null,
+    'relations' => [],
 ])
 
 @php
@@ -48,7 +48,7 @@
                     'description' => $description ?? '',
                     'newLabel' => $newLabel ?? null,
                     'disableSearch' => $disableSearch ?? false,
-                    'relationId' => $relationId ?? null,
+                    'relations' => $relations ?? [],
                     'action' => $action ?? $listAction,
                     'states' => $this->listStates(),
                     'listFilters' => $this->listFilters(),

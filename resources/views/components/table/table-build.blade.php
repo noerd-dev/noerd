@@ -38,7 +38,7 @@
                         'description' => $description ?? '',
                         'newLabel' => $newLabel ?? null,
                         'disableSearch' => $disableSearch ?? false,
-                        'relationId' => $relationId ?? null,
+                        'relations' => $relations ?? [],
                         'action' => $action ?? $componentAction,
                         'states' => $this->states(),
                         'tableFilters' => $this->tableFilters(),
