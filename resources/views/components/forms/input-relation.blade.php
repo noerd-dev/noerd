@@ -47,7 +47,7 @@
         >
 
         <x-noerd::buttons.primary
-            @click="$modal('{{ $modalComponent }}', {id: {{ $modelId }}, context: '{{ $name }}', listActionMethod: 'selectAction'})"
+            @click="$modal('{{ $modalComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $name }}', listActionMethod: 'selectAction'})"
             class="h-9 rounded !mt-0 !ml-1"
             type="button"
         >

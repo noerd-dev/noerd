@@ -1,5 +1,8 @@
-@php $isFullscreen = session('modal_fullscreen', false); @endphp
-<div x-data="{currentTab: @entangle('currentTab')}"
+@php
+    $isFullscreen = session('modal_fullscreen', false);
+    $hasCurrentTab = property_exists($__livewire ?? new stdClass, 'currentTab');
+@endphp
+<div x-data="{currentTab: @if($hasCurrentTab)@entangle('currentTab')@else 1 @endif}"
      class="flex flex-col"
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
