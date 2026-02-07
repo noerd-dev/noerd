@@ -64,9 +64,9 @@ new class extends Component {
         return $user->tenants->contains(auth()->user()->selected_tenant_id);
     }
 
-    public function mount(mixed $model = null): void
+    public function mount(): void
     {
-        $this->initDetail($model);
+        $this->initDetail();
 
         $this->selectedTenant = auth()->user()->selectedTenant();
 
