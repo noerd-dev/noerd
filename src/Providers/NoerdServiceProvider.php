@@ -5,6 +5,7 @@ namespace Noerd\Providers;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -35,6 +36,7 @@ class NoerdServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
+        Blade::component('app-layout', \Noerd\View\Components\AppLayout::class);
         Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');

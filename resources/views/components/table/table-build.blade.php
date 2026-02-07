@@ -93,28 +93,6 @@
                                                        ])
                                                 @endforeach
                                             </tr>
-
-                                            <!-- START CUSTOM -->
-                                            @isset($secondLine)
-                                                @if($secondLine === 'stage')
-                                                    <tr>
-                                                        <td colspan="6" class="pt-3 pb-3">
-                                                            @include('project::livewire.stage-line', ['project' => $row])
-                                                        </td>
-                                                    </tr>
-                                                @endif
-                                            @endisset
-                                            @isset($thirdLine)
-                                                @if($thirdLine === 'wood_sum')
-                                                    <tr>
-                                                        <td colspan="6" class="pt-3 pb-3">
-                                                            @include('project::livewire.wood-sum-line', ['project' => $row])
-                                                        </td>
-                                                    </tr>
-                                                @endif
-                                            @endisset
-                                            <!-- END CUSTOM -->
-
                                         @endforeach
                                         </tbody>
                                     </table>
@@ -122,71 +100,6 @@
                             </div>
                         </div>
 
-                        {{--
-                        <table class="wrapper  w-full border-separate border-spacing-0">
-                            <thead class="sticky top-0">
-                            <tr>
-                                @foreach($table as $column)
-                                    @include('noerd::components.table.table-sort', [
-                                        'width' => $column['width'] ?? 10,
-                                        'field' => $column['field'],
-                                        'label' => $column['label'] ?? '',
-                                        'align' => $column['align'] ?? 'left',
-                                        ])
-                                @endforeach
-                            </tr>
-                            </thead>
-
-                            <tbody>
-
-                            @foreach($models ?? $rows as $key => $row)
-                                <tr :key="{{$key}}"
-                                    :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
-                                    @click="selectedRow{{$listId}} = '{{$key}}'"
-                                    class="group hover:bg-brand-bg border border-black/10">
-                                    @foreach($table as $index => $column)
-                                        @include('noerd::components.table.table-cell',
-                                            [
-                                                'row' => $key,
-                                                'column' => $index,
-                                                'label' => $column['label'] ?? '',
-                                                'value' =>$row[$column['field']] ?? '',
-                                                'redirectAction' => $redirectAction . $row[$primaryKey ?? 'id'],
-                                                'readOnly' => $column['readOnly'] ?? true,
-                                                'id' => $row['id'],
-                                                'columnValue' => $column['field'],
-                                                'type' => $column['type'] ?? 'text',
-                                                'action' => $column['action'] ?? $action ?? $componentAction,
-                                                'actions' => $column['actions'] ?? null,
-                                           ])
-                                    @endforeach
-                                </tr>
-
-                                <!-- START CUSTOM -->
-                                @isset($secondLine)
-                                    @if($secondLine === 'stage')
-                                        <tr>
-                                            <td colspan="6" class="pt-3 pb-3">
-                                                @include('project::livewire.stage-line', ['project' => $row])
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endisset
-                                @isset($thirdLine)
-                                    @if($thirdLine === 'wood_sum')
-                                        <tr>
-                                            <td colspan="6" class="pt-3 pb-3">
-                                                @include('project::livewire.wood-sum-line', ['project' => $row])
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endisset
-                                <!-- END CUSTOM -->
-
-                            @endforeach
-                            </tbody>
-                        </table>
-                        --}}
                     </div>
 
                 </div>

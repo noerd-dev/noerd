@@ -29,30 +29,17 @@ new class extends Component {
 
     private function findComponentModule(string $component): ?string
     {
-        // Check main resources - both locations
-        $mainPaths = [
-            resource_path("views/components/⚡{$component}.blade.php"),
-            resource_path("views/livewire/{$component}.blade.php"),
-        ];
-        foreach ($mainPaths as $viewPath) {
-            if (file_exists($viewPath)) {
-                return 'main';
-            }
+        // Check main resources
+        if (file_exists(resource_path("views/components/⚡{$component}.blade.php"))) {
+            return 'main';
         }
 
         // Check all modules dynamically
         $modulesPath = base_path('app-modules');
         if (is_dir($modulesPath)) {
             foreach (glob($modulesPath . '/*', GLOB_ONLYDIR) as $moduleDir) {
-                $moduleName = basename($moduleDir);
-                $modulePaths = [
-                    "{$moduleDir}/resources/views/components/⚡{$component}.blade.php",
-                    "{$moduleDir}/resources/views/livewire/{$component}.blade.php",
-                ];
-                foreach ($modulePaths as $moduleViewPath) {
-                    if (file_exists($moduleViewPath)) {
-                        return $moduleName;
-                    }
+                if (file_exists("{$moduleDir}/resources/views/components/⚡{$component}.blade.php")) {
+                    return basename($moduleDir);
                 }
             }
         }

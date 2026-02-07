@@ -12,6 +12,6 @@ class AppLayout extends Component
      */
     public function render(): View
     {
-        return view('noerd::components.app-layout');
+        return view('noerd::layouts.app');
     }
 }
