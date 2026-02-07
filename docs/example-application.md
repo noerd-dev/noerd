@@ -366,13 +366,13 @@ use Nywerk\Study\Models\StudyMaterial;
 new class extends Component {
     use NoerdList;
 
-    public function listAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'study-material-detail',
             source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relationId' => $relationId],
+            arguments: ['modelId' => $modelId, 'relations' => $relations],
         );
     }
 
@@ -578,7 +578,7 @@ public function studyMaterialSelected($studyMaterialId): void
 
 - Event name follows `{entity}Selected` pattern.
 - Always use `$this->relationTitles['field_id']` for the display value.
-- Pre-populate `relationTitles` in `mount()` from existing data and `$relationId`.
+- Pre-populate `relationTitles` in `mount()` from existing data and `$relations`.
 
 ## Routes
 

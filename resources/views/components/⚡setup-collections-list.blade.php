@@ -60,13 +60,13 @@ new class extends Component
         }
     }
 
-    public function listAction(mixed $modelId = null, mixed $relationId = null): void
+    public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'setup-collection-detail',
             source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relationId' => $relationId],
+            arguments: ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relations' => $relations],
         );
     }
 

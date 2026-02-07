@@ -50,7 +50,7 @@
             <div :class="isModal ? 'mr-22' : ''">
                 <x-noerd::buttons.primary class="!bg-brand-primary"
                                          style="height: 30px !important"
-                                         wire:click.prevent="{{$action ?? 'listAction'}}(null, {{$relationId ?? null}})">
+                                         wire:click.prevent="{{$action ?? 'listAction'}}(null, {{ Js::from($relations ?? []) }})">
                     <x-noerd::icons.plus class="text-white"/>
                     {{$newLabel}}
                 </x-noerd::buttons.primary>
