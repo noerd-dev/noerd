@@ -144,8 +144,8 @@ it('mounts with existing user role data', function () use ($testSettings): void 
 
     $this->actingAs($user);
 
-    $component = Livewire::test($testSettings['componentName'], [$userRole])
-        ->set('modelId', $userRole->id);
+    $component = Livewire::withUrlParams(['userRoleId' => $userRole->id])
+        ->test($testSettings['componentName']);
 
     // Check if user role data is loaded correctly
     expect($component->get('detailData.key'))->toBe($userRole->key);
