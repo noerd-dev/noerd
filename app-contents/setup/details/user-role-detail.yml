@@ -1,17 +1,17 @@
 title: ''
 description: ''
 fields:
-  - name: userRoleData.key
+  - name: detailData.key
     label: noerd_key
     type: text
     colspan: 6
     required: true
-  - name: userRoleData.name
+  - name: detailData.name
     label: noerd_label_name
     type: text
     colspan: 6
     required: true
-  - name: userRoleData.description
+  - name: detailData.description
     label: noerd_label_description
     type: text
     colspan: 6

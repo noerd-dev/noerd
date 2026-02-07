@@ -1,7 +1,7 @@
 title: noerd_label_tenant
 description: ''
 fields:
-  - name: tenantData.name
+  - name: detailData.name
     label: noerd_label_name
     type: text
     colspan: 6
