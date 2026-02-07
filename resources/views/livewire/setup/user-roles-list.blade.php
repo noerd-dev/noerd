@@ -37,8 +37,8 @@ new class extends Component {
             abort(401);
         }
 
-        if ((int) request()->id) {
-            $this->listAction(request()->id);
+        if ((int) request()->userRoleId) {
+            $this->listAction(request()->userRoleId);
         }
 
         if (request()->create) {

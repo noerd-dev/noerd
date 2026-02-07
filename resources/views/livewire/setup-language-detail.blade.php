@@ -1,5 +1,6 @@
 <?php
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdDetail;
@@ -7,6 +8,9 @@ use Noerd\Traits\NoerdDetail;
 new class extends Component
 {
     use NoerdDetail;
+
+    #[Url(as: 'setupLanguageId', keep: false, except: '')]
+    public $modelId = null;
 
     public const DETAIL_CLASS = SetupLanguage::class;
 

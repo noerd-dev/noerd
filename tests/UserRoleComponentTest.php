@@ -11,7 +11,8 @@ uses(RefreshDatabase::class);
 $testSettings = [
     'componentName' => 'user-role-detail',
     'listName' => 'user-roles-list',
-    'id' => 'id',
+    'modelId' => 'modelId',
+    'urlParam' => 'userRoleId',
 ];
 
 it('renders the user role component', function () use ($testSettings): void {
@@ -261,5 +262,5 @@ it('uses correct component constants', function () use ($testSettings): void {
     // Check if constants are correctly defined (via reflection since they're used in the class)
     expect($testSettings['componentName'])->toBe('user-role-detail');
     expect($testSettings['listName'])->toBe('user-roles-list');
-    expect($testSettings['id'])->toBe('id');
+    expect($testSettings['urlParam'])->toBe('userRoleId');
 });

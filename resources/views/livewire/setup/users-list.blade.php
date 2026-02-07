@@ -65,8 +65,8 @@ new class extends Component {
 
     public function rendering(): void
     {
-        if ((int) request()->id) {
-            $this->listAction(request()->id);
+        if ((int) request()->userId) {
+            $this->listAction(request()->userId);
         }
 
         if (request()->create) {

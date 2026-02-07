@@ -408,7 +408,7 @@ describe('Setup Language Detail Component', function (): void {
     it('loads existing language', function (): void {
         $english = SetupLanguage::where('code', 'en')->first();
 
-        Livewire::withUrlParams(['id' => $english->id])->test('setup-language-detail')
+        Livewire::withUrlParams(['setupLanguageId' => $english->id])->test('setup-language-detail')
             ->assertStatus(200)
             ->assertSet('detailData.code', 'en')
             ->assertSet('detailData.name', 'English');

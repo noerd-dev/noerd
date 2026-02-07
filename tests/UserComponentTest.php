@@ -15,7 +15,8 @@ uses(RefreshDatabase::class);
 $testSettings = [
     'componentName' => 'user-detail',
     'listName' => 'users-list',
-    'id' => 'id',
+    'modelId' => 'modelId',
+    'urlParam' => 'userId',
 ];
 
 it('renders the user component', function () use ($testSettings): void {

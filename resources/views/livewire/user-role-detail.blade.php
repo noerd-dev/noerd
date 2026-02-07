@@ -1,11 +1,15 @@
 <?php
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\UserRole;
 use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
     use NoerdDetail;
+
+    #[Url(as: 'userRoleId', keep: false, except: '')]
+    public $modelId = null;
 
     public const DETAIL_CLASS = UserRole::class;
 

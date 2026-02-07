@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Helpers\SetupCollectionHelper;
@@ -19,6 +20,9 @@ new class extends Component
     use NoerdDetail;
     use SetupLanguageFilterTrait;
     use WithFileUploads;
+
+    #[Url(as: 'setupCollectionId', keep: false, except: '')]
+    public $modelId = null;
 
     // Note: This component does NOT use DETAIL_CLASS because it uses custom layout from collectionLayout
     // instead of the standard YAML config system
