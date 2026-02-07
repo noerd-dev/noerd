@@ -120,7 +120,7 @@ class MakeModuleCommand extends Command
             'src/Providers',
             'src/Models',
             'src/Commands',
-            'resources/views/livewire',
+            'resources/views/components',
             'resources/lang',
             'database/migrations',
             'database/factories',
@@ -225,14 +225,14 @@ PHP;
         // List component
         $listContent = $this->getStub('list.stub');
         $this->filesystem->put(
-            "{$this->basePath}/resources/views/livewire/{$this->modelNamePlural}-list.blade.php",
+            "{$this->basePath}/resources/views/components/⚡{$this->modelNamePlural}-list.blade.php",
             $listContent,
         );
 
         // Detail component
         $detailContent = $this->getStub('detail.stub');
         $this->filesystem->put(
-            "{$this->basePath}/resources/views/livewire/{$this->modelName}-detail.blade.php",
+            "{$this->basePath}/resources/views/components/⚡{$this->modelName}-detail.blade.php",
             $detailContent,
         );
 

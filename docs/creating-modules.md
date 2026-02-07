@@ -23,9 +23,9 @@ app-modules/{module-name}/
 ├── database/
 │   └── migrations/
 ├── resources/
-│   ├── views/livewire/
-│   │   ├── {models}-list.blade.php
-│   │   └── {model}-detail.blade.php
+│   ├── views/components/
+│   │   ├── ⚡{models}-list.blade.php
+│   │   └── ⚡{model}-detail.blade.php
 │   └── lang/
 │       ├── de.json
 │       └── en.json
@@ -70,7 +70,7 @@ After creation, customize the module:
 |-----------|---------|
 | `app-contents/` | YAML configurations |
 | `database/migrations/` | Database migrations |
-| `resources/views/livewire/` | Volt components |
+| `resources/views/components/` | Volt components (⚡ prefix) |
 | `resources/lang/` | Translations (JSON) |
 | `routes/` | Route definitions |
 | `src/Models/` | Eloquent models |

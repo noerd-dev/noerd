@@ -13,7 +13,7 @@ app-configs/{app}/lists/{name}-list.yml
 
 Livewire Component:
 ```bash
-app-modules/{module}/resources/views/livewire/{name}-list.blade.php
+app-modules/{module}/resources/views/components/⚡{name}-list.blade.php
 ```
 
 ## Example YAML Configuration

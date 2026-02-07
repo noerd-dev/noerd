@@ -13,7 +13,7 @@ app-configs/{app}/details/{name}-detail.yml
 
 **Livewire Component:**
 ```
-app-modules/{module}/resources/views/livewire/{name}-detail.blade.php
+app-modules/{module}/resources/views/components/⚡{name}-detail.blade.php
 ```
 
 ## YAML Configuration
@@ -155,7 +155,7 @@ new class extends Component {
 
 - Lists: `{plural}-list.blade.php` (e.g., `customers-list.blade.php`)
 - Details: `{singular}-detail.blade.php` (e.g., `customer-detail.blade.php`)
-- Components must be placed directly in the `livewire/` folder, not in subfolders
+- Components must be placed directly in the `components/` folder, not in subfolders
 
 ## Next Steps
 
