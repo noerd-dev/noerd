@@ -137,7 +137,7 @@
                            wire:click.prevent="{{$action}}('{{$redirectAction}}')"
                            @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                            class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                           value="{{$value}}">
+                           value="{{ $value instanceof \Illuminate\Support\Carbon ? $value->format('Y-m-d') : $value }}">
                 @endif
             @elseif($type == 'number')
                 <input type="{{$type}}"
