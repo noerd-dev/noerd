@@ -6,6 +6,4 @@ new class extends Component {
     //
 } ?>
 
-<x-noerd::layouts.app>
-    {{ $slot }}
-</x-noerd::layouts.app>
+@include('noerd::layouts.app')
