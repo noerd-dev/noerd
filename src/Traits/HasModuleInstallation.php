@@ -87,6 +87,109 @@ trait HasModuleInstallation
     }
 
     /**
+     * Run the module update process (YML config files only).
+     */
+    protected function runModuleUpdate(): int
+    {
+        if (! $this->ensureNoerdInstalled()) {
+            return 1;
+        }
+
+        $sourceDir = $this->getSourceDir();
+
+        if (! is_dir($sourceDir)) {
+            $this->error("Source directory not found: {$sourceDir}");
+
+            return 1;
+        }
+
+        $targetDir = base_path('app-configs/' . $this->getModuleKey());
+
+        if (! is_dir($targetDir)) {
+            $this->error("Target not found: app-configs/{$this->getModuleKey()}/");
+            $this->line('Run the install command first.');
+
+            return 1;
+        }
+
+        $this->info("Updating {$this->getModuleName()} configurations...");
+        $this->line('');
+
+        try {
+            // Copy lists
+            $listsSource = $sourceDir . DIRECTORY_SEPARATOR . 'lists';
+            $listsTarget = $targetDir . DIRECTORY_SEPARATOR . 'lists';
+            if (is_dir($listsSource)) {
+                $this->copyDirectoryContents($listsSource, $listsTarget);
+            }
+
+            // Copy details
+            $detailsSource = $sourceDir . DIRECTORY_SEPARATOR . 'details';
+            $detailsTarget = $targetDir . DIRECTORY_SEPARATOR . 'details';
+            if (is_dir($detailsSource)) {
+                $this->copyDirectoryContents($detailsSource, $detailsTarget);
+            }
+
+            // Copy additional subdirectories
+            foreach ($this->getAdditionalSubdirectories() as $subdir) {
+                $additionalSource = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
+                $additionalTarget = $targetDir . DIRECTORY_SEPARATOR . $subdir;
+                if (is_dir($additionalSource)) {
+                    $this->copyDirectoryContents($additionalSource, $additionalTarget);
+                }
+            }
+
+            // Copy navigation.yml
+            $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+            $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+            if (file_exists($navSource)) {
+                $displayPath = $this->getModuleKey() . '/navigation.yml';
+
+                if (file_exists($navTarget)) {
+                    if (! $this->option('force')) {
+                        $choice = $this->choice(
+                            "File already exists: {$displayPath}. What do you want to do?",
+                            ['skip', 'overwrite', 'overwrite-all'],
+                            'skip',
+                        );
+
+                        if ($choice === 'skip') {
+                            $this->line("<comment>Skipped:</comment> {$displayPath}");
+                            $this->installResults['skipped_files']++;
+                        } else {
+                            if ($choice === 'overwrite-all') {
+                                $this->input->setOption('force', true);
+                            }
+                            copy($navSource, $navTarget);
+                            $this->line("<comment>Overwriting:</comment> {$displayPath}");
+                            $this->installResults['overwritten_files']++;
+                        }
+                    } else {
+                        copy($navSource, $navTarget);
+                        $this->line("<comment>Overwriting:</comment> {$displayPath}");
+                        $this->installResults['overwritten_files']++;
+                    }
+                } else {
+                    copy($navSource, $navTarget);
+                    $this->line("<info>Copying:</info> {$displayPath}");
+                    $this->installResults['copied_files']++;
+                }
+            }
+
+            $this->displayInstallSummary();
+
+            $this->line('');
+            $this->info("{$this->getModuleName()} configurations updated!");
+
+            return 0;
+        } catch (Exception $e) {
+            $this->error("Error updating {$this->getModuleName()}: " . $e->getMessage());
+
+            return 1;
+        }
+    }
+
+    /**
      * Run the module installation process.
      */
     protected function runModuleInstallation(): int
