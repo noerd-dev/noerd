@@ -3,11 +3,14 @@
 namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Noerd\Database\Factories\SetupLanguageFactory;
 use Noerd\Traits\HasListScopes;
 
 class SetupLanguage extends Model
 {
+    use HasFactory;
     use HasListScopes;
 
     protected $guarded = [];
@@ -77,6 +80,11 @@ class SetupLanguage extends Model
                 'sort_order' => 0,
             ]);
         }
+    }
+
+    protected static function newFactory(): SetupLanguageFactory
+    {
+        return SetupLanguageFactory::new();
     }
 
     protected static function boot(): void
