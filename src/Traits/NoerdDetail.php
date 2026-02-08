@@ -193,6 +193,31 @@ trait NoerdDetail
         }
     }
 
+    protected function setPreselect(string $key, mixed $value): void
+    {
+        $filters = session('listFilters', []);
+        $filters[$key] = $value;
+        session(['listFilters' => $filters]);
+    }
+
+    protected function preselect(string $key, bool $onlyNew = true): void
+    {
+        if ($onlyNew) {
+            if ($this->modelId) {
+                return;
+            }
+            if (property_exists($this, 'relations') && ($this->relations[$key] ?? null)) {
+                return;
+            }
+        }
+
+        $filters = session('listFilters', []);
+        if (! empty($filters[$key])) {
+            $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
+            $this->{$method}($filters[$key]);
+        }
+    }
+
     /**
      * Get the event listeners for the component.
      * Dynamically registers the refreshList listener based on detail component name.

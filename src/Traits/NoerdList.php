@@ -3,6 +3,7 @@
 namespace Noerd\Traits;
 
 use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -33,10 +34,7 @@ trait NoerdList
     #[Url]
     public ?string $filter = null;
 
-    #[Url]
-    public array $currentTableFilter = [];
-
-    public array $activeListFilters = [];
+    public array $listFilters = [];
 
     public mixed $context = '';
 
@@ -45,7 +43,7 @@ trait NoerdList
     public function mount(): void
     {
         $this->listId = Str::random();
-        $this->loadActiveListFilters();
+        $this->loadListFilters();
     }
 
     public function updatedSearch(): void
@@ -74,9 +72,14 @@ trait NoerdList
         $this->syncListQueryContext();
     }
 
-    public function loadActiveListFilters(): void
+    public function loadListFilters(): void
     {
-        $this->activeListFilters = session('activeListFilters', []);
+        $this->listFilters = session('listFilters', []);
+    }
+
+    public function storeActiveListFilters(): void
+    {
+        // Override in components that need session persistence (e.g. CMS language filter)
     }
 
     public function findListAction(int|string $id): void
@@ -121,7 +124,44 @@ trait NoerdList
 
     public function updateRow(): void {}
 
-    public function tableFilters(): void {}
+    #[Computed]
+    public function tableFilters(): array
+    {
+        $filters = [];
+        foreach (get_class_methods($this) as $method) {
+            if (preg_match('/^get.+ListFilter$/', $method)) {
+                $filter = $this->$method();
+                if ($filter !== null) {
+                    $filters[] = $filter;
+                }
+            }
+        }
+
+        return $filters;
+    }
+
+    protected function getAllowedListFilterColumns(): array
+    {
+        if (defined('static::ALLOWED_TABLE_FILTERS') && ! empty(static::ALLOWED_TABLE_FILTERS)) {
+            return static::ALLOWED_TABLE_FILTERS;
+        }
+
+        return collect($this->tableFilters)->pluck('column')->filter()->toArray();
+    }
+
+    protected function applyListFilters($query): void
+    {
+        if (! $this->listFilters) {
+            return;
+        }
+
+        $allowed = $this->getAllowedListFilterColumns();
+        foreach ($this->listFilters as $key => $value) {
+            if (in_array($key, $allowed) && $value) {
+                $query->where($key, $value);
+            }
+        }
+    }
 
     public function states(): void {}
 

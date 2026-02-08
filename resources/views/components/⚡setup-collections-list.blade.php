@@ -16,8 +16,6 @@ new class extends Component
     }
     use SetupLanguageFilterTrait;
 
-    protected const ALLOWED_TABLE_FILTERS = ['language'];
-
     public string|int|null $collectionKey = null;
 
     public ?array $collectionLayout = null;
@@ -29,15 +27,15 @@ new class extends Component
             return [];
         }
 
-        return [$this->getLanguageFilter()];
+        return [$this->getLanguageListFilter()];
     }
 
     public function storeActiveListFilters(): void
     {
-        session(['activeListFilters' => $this->activeListFilters]);
+        session(['listFilters' => $this->listFilters]);
 
-        if (! empty($this->activeListFilters['language'])) {
-            session(['selectedLanguage' => $this->activeListFilters['language']]);
+        if (! empty($this->listFilters['language'])) {
+            session(['selectedLanguage' => $this->listFilters['language']]);
         }
     }
 
@@ -121,7 +119,7 @@ new class extends Component
 
         $rows = $query->paginate(self::PAGINATION);
 
-        $selectedLanguage = $this->activeListFilters['language']
+        $selectedLanguage = $this->listFilters['language']
             ?? session('selectedLanguage')
             ?? $this->getDefaultLanguageCode();
 
@@ -207,16 +205,16 @@ new class extends Component
 
     public function rendering(): void
     {
-        $this->loadActiveListFilters();
+        $this->loadListFilters();
 
         $selectedLanguage = session('selectedLanguage');
-        if ($selectedLanguage && empty($this->activeListFilters['language'])) {
-            $this->activeListFilters['language'] = $selectedLanguage;
+        if ($selectedLanguage && empty($this->listFilters['language'])) {
+            $this->listFilters['language'] = $selectedLanguage;
         }
 
-        if (empty($this->activeListFilters['language']) && empty(session('selectedLanguage'))) {
+        if (empty($this->listFilters['language']) && empty(session('selectedLanguage'))) {
             $defaultCode = $this->getDefaultLanguageCode();
-            $this->activeListFilters['language'] = $defaultCode;
+            $this->listFilters['language'] = $defaultCode;
             session(['selectedLanguage' => $defaultCode]);
         }
     }

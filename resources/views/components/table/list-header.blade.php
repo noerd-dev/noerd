@@ -9,25 +9,12 @@
             @endisset
         </div>
 
-        @isset($filters)
-            <div :class="isModal ? '' : 'ml-6'" class="flex my-auto">
-                @foreach($filters as $key => $availableFilter)
-                    <div class="-mt-6 mr-1">
-                        <label class="break-keep text-xs">{{$availableFilter['title']}}</label>
-                        <input wire:change="$refresh()" wire:model.live="currentTableFilter.{{ $key }}"
-                               type="{{$availableFilter['type']}}"
-                               class="disabled:opacity-50 border px-3 mr-1 block w-full py-1 rounded-md border-gray-300 shadow-xs focus:border-brand-border focus:ring-brand-border sm:text-sm {{ !empty($currentTableFilter[$key]) ? '!border-brand-primary border !border-solid' : '' }}">
-                    </div>
-                @endforeach
-            </div>
-        @endisset
-
         @if($this->tableFilters())
             <div class="flex ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
                     <select wire:change="storeActiveListFilters"
-                            wire:model.live="activeListFilters.{{$tableFilter['column']}}"
-                            class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($activeListFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
+                            wire:model.live="listFilters.{{$tableFilter['column']}}"
+                            class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($listFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
                         <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
                             <option value="{{$key}}">{{$option}}</option>

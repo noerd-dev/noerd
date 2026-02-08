@@ -68,9 +68,9 @@ afterEach(function (): void {
     }
 });
 
-it('can set activeListFilters without error', function (): void {
+it('can set listFilters without error', function (): void {
     Livewire::test('setup-collections-list', ['collectionKey' => 'example'])
-        ->set('activeListFilters.language', 'de')
+        ->set('listFilters.language', 'de')
         ->assertHasNoErrors();
 });
 
@@ -80,7 +80,7 @@ it('applies language filter without error', function (): void {
     session(['selectedLanguage' => 'en']);
 
     $component = Livewire::test('setup-collections-list', ['collectionKey' => 'example'])
-        ->set('activeListFilters.language', 'en');
+        ->set('listFilters.language', 'en');
 
-    expect($component->get('activeListFilters')['language'])->toBe('en');
+    expect($component->get('listFilters')['language'])->toBe('en');
 });

@@ -232,7 +232,7 @@ The modal system automatically handles `#[Url]` attributes:
 
 - URL parameters are preserved while the modal is open
 - Parameters are cleared when the modal closes
-- Blacklisted parameters (`filter`, `currentTableFilter`, `currentTab`) are never cleared
+- Blacklisted parameters (`filter`, `currentTab`) are never cleared
 
 ```php
 use Livewire\Attributes\Url;

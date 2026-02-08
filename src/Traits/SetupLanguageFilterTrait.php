@@ -11,7 +11,7 @@ trait SetupLanguageFilterTrait
         return SetupLanguage::where('is_active', true)->count() > 1;
     }
 
-    protected function getLanguageFilter(): array
+    protected function getLanguageListFilter(): array
     {
         $filter['label'] = __('noerd_label_language');
         $filter['column'] = 'language';
