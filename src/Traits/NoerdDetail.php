@@ -71,6 +71,16 @@ trait NoerdDetail
         }
     }
 
+    public function clearRelation(string $fieldName): void
+    {
+        $key = str_replace(['model.', 'detailData.'], '', $fieldName);
+        $this->relationTitles[$key] = '';
+
+        if (array_key_exists($key, $this->detailData)) {
+            $this->detailData[$key] = null;
+        }
+    }
+
     public function refreshList(): void
     {
         $this->dispatch('$refresh');
