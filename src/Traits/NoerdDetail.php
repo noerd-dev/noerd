@@ -55,6 +55,10 @@ trait NoerdDetail
     public function storeProcess($model): void
     {
         $this->showSuccessIndicator = true;
+
+        if ($model->wasRecentlyCreated) {
+            $this->modelId = $model->id;
+        }
     }
 
     /**
