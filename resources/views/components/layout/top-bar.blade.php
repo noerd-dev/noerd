@@ -83,7 +83,7 @@ new class extends Component {
             :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
         @endif
         @class([
-        'fixed top-0 left-0 w-full bg-white z-40',
+        'fixed top-[var(--banner-height,0px)] left-0 w-full bg-white z-40',
     ])>
     <div>
         <div class="flex gap-x-4 px-6 w-full">

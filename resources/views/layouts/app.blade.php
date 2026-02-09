@@ -18,6 +18,7 @@
             --sidebar-apps-width: {{ config('noerd.sidebar.apps_width', '80px') }};
             --sidebar-nav-width: {{ session('sidebar_nav_width', config('noerd.sidebar.navigation_width', '280px')) }};
             --sidebar-total-width: calc(var(--sidebar-apps-width) + var(--sidebar-nav-width));
+            --banner-height: 0px;
         }
 
         body {
@@ -29,6 +30,10 @@
 <body class="bg-brand-bg h-full">
 
 <livewire:noerd-modal/> <!-- must be loaded before livewire components -->
+
+@auth
+    <livewire:layout.banner />
+@endauth
 
 <div class="h-dvh" x-data="{
            openProfile: false,
@@ -48,7 +53,7 @@
               :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
-        <div class="bg-white h-full @auth pt-11.75 @endauth">
+        <div class="bg-white h-full @auth pt-[calc(2.9375rem+var(--banner-height,0px))] @endauth">
             {{ $slot }}
         </div>
     </main>
