@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
+use Noerd\Models\Tenant;
 use Noerd\Models\User;
 
 class CreateAdminCommand extends Command
@@ -35,6 +36,13 @@ class CreateAdminCommand extends Command
      */
     public function handle(): int
     {
+        // Check if any tenants exist
+        if (Tenant::count() === 0) {
+            $this->error('No tenants found. Please run "php artisan noerd:create-tenant" first.');
+
+            return self::FAILURE;
+        }
+
         // Get name
         $name = $this->option('name');
         if (empty($name)) {

@@ -2,6 +2,10 @@
 
 This guide walks through building a complete Noerd module using the **Study** app as a real example. The Study app manages study materials, summaries, and flashcards.
 
+**Resources:**
+- [GitHub Repository](https://github.com/noerd-dev/study)
+- [Live Demo](https://demo.noerd.dev)
+
 ## Module Structure
 
 ```bash
@@ -29,9 +33,9 @@ app-modules/study/
 │   │   ├── de.json
 │   │   └── en.json
 │   └── views/
-│       ├── components/icons/
-│       │   └── app.blade.php
-│       └── livewire/
+│       └── components/
+│           ├── icons/
+│           │   └── app.blade.php
 │           ├── study-materials-list.blade.php
 │           ├── study-material-detail.blade.php
 │           ├── summaries-list.blade.php
@@ -100,8 +104,9 @@ The module is registered in the main project's `composer.json` as a path reposit
 namespace Nywerk\Study\Providers;
 
 use Illuminate\Support\ServiceProvider;
-
+use Livewire\Livewire;
 use Nywerk\Study\Commands\StudyInstallCommand;
+use Nywerk\Study\Commands\StudyUpdateCommand;
 
 class StudyServiceProvider extends ServiceProvider
 {
@@ -117,10 +122,12 @@ class StudyServiceProvider extends ServiceProvider
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/study-routes.php');
 
+        Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
 
         if ($this->app->runningInConsole()) {
             $this->commands([
                 StudyInstallCommand::class,
+                StudyUpdateCommand::class,
             ]);
         }
     }
@@ -188,7 +195,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Noerd\Media\Models\Media;
 use Noerd\Models\Tenant;
 use Noerd\Traits\BelongsToTenant;
 use Noerd\Traits\HasListScopes;
@@ -212,11 +218,6 @@ class StudyMaterial extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
-    }
-
-    public function media(): BelongsTo
-    {
-        return $this->belongsTo(Media::class);
     }
 
     public function summaries(): HasMany
@@ -282,7 +283,6 @@ class StudyMaterialFactory extends Factory
             'title' => $this->faker->sentence(3),
             'author' => $this->faker->name(),
             'page_count' => $this->faker->numberBetween(100, 800),
-            'media_id' => null,
             'publication_year' => $this->faker->numberBetween(1990, 2025),
         ];
     }
@@ -389,8 +389,8 @@ new class extends Component {
 
     public function rendering()
     {
-        if ((int) request()->id) {
-            $this->listAction(request()->id);
+        if ((int) request()->studyMaterialId) {
+            $this->listAction(request()->studyMaterialId);
         }
 
         if (request()->create) {
@@ -427,12 +427,12 @@ tabs:
   - label: study_tab_summaries
     component: summaries-list
     arguments:
-      studyMaterialId: $studyMaterialId
+      studyMaterialId: $modelId
     requiresId: true
   - label: study_tab_flashcards
     component: flashcards-list
     arguments:
-      studyMaterialId: $studyMaterialId
+      studyMaterialId: $modelId
     requiresId: true
 fields:
   - name: detailData.title
@@ -452,12 +452,6 @@ fields:
     label: study_label_publication_year
     type: number
     colspan: 6
-  - name: detailData.media_id
-    label: study_label_cover_image
-    type: relation
-    colspan: 12
-    relationField: media
-    modalComponent: media-list
 ```
 
 - Tab 1 uses `number: 1` and displays form fields.
@@ -498,6 +492,7 @@ The `relation` type opens a list modal for selection. The `relationField` points
 <?php
 
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
 use Nywerk\Study\Models\StudyMaterial;
@@ -506,6 +501,15 @@ new class extends Component {
     use NoerdDetail;
 
     public const DETAIL_CLASS = StudyMaterial::class;
+
+    #[Url(as: 'studyMaterialId', keep: false, except: '')]
+    public $modelId = '';
+
+    public function mount(): void
+    {
+        $this->initDetail();
+        $this->setPreselect('study_material_id', $this->modelId);
+    }
 
     public function store(): void
     {
@@ -590,12 +594,13 @@ use Illuminate\Support\Facades\Route;
 use Nywerk\Study\Http\Controllers\FlashcardPrintController;
 
 Route::group(['middleware' => ['web', 'auth', 'verified']], function (): void {
+    Route::livewire('study', 'study-dashboard')->name('study.dashboard');
     Route::livewire('study/study-materials', 'study-materials-list')->name('study.study-materials');
-    Route::livewire('study/study-material/{model}', 'study-material-detail')->name('study.study-material.detail');
+    Route::livewire('study/study-material/{modelId}', 'study-material-detail')->name('study.study-material.detail');
     Route::livewire('study/summaries', 'summaries-list')->name('study.summaries');
-    Route::livewire('study/summary/{model}', 'summary-detail')->name('study.summary.detail');
+    Route::livewire('study/summary/{modelId}', 'summary-detail')->name('study.summary.detail');
     Route::livewire('study/flashcards', 'flashcards-list')->name('study.flashcards');
-    Route::livewire('study/flashcard/{model}', 'flashcard-detail')->name('study.flashcard.detail');
+    Route::livewire('study/flashcard/{modelId}', 'flashcard-detail')->name('study.flashcard.detail');
     Route::livewire('study/flashcards-print', 'flashcard-print-detail')->name('study.flashcards-print');
     Route::get('study/flashcards-print/pdf', [FlashcardPrintController::class, 'print'])
         ->name('study.flashcards-print.pdf');
@@ -604,7 +609,7 @@ Route::group(['middleware' => ['web', 'auth', 'verified']], function (): void {
 
 - Use `Route::livewire(')` for Livewire Volt components.
 - List routes use the plural form: `study/study-materials`.
-- Detail routes include `{model}`: `study/study-material/{model}`.
+- Detail routes include `{modelId}`: `study/study-material/{modelId}`.
 - Route names: `study.{resource}` for lists, `study.{resource}.detail` for details.
 - All routes use `web`, `auth`, and `verified` middleware.
 
@@ -615,8 +620,15 @@ Route::group(['middleware' => ['web', 'auth', 'verified']], function (): void {
   title: Study
   name: study
   hidden: true
-  route: study.study-materials
+  route: study.dashboard
   block_menus:
+    -
+      title: study_nav_dashboard
+      navigations:
+        -
+          title: study_nav_dashboard
+          route: study.dashboard
+          heroicon: home
     -
       title: study_nav_learning
       navigations:

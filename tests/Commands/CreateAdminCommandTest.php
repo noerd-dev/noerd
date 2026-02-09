@@ -7,6 +7,19 @@ use Noerd\Models\User;
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
+it('fails when no tenants exist', function (): void {
+    $this->artisan('noerd:create-admin', [
+        '--name' => 'Test Admin',
+        '--email' => 'admin@example.com',
+        '--password' => 'password123',
+    ])
+        ->expectsOutput('No tenants found. Please run "php artisan noerd:create-tenant" first.')
+        ->assertExitCode(1);
+
+    // Verify user was NOT created
+    expect(User::where('email', 'admin@example.com')->exists())->toBeFalse();
+});
+
 it('creates a new admin user with command options', function (): void {
     // Create a tenant first so the make-admin command has something to work with
     Tenant::factory()->create(['name' => 'Test Tenant']);
@@ -48,6 +61,8 @@ it('creates a super admin user when flag is provided', function (): void {
 });
 
 it('fails with invalid email format', function (): void {
+    Tenant::factory()->create(['name' => 'Test Tenant']);
+
     $this->artisan('noerd:create-admin', [
         '--name' => 'Test User',
         '--email' => 'invalid-email',
@@ -58,7 +73,7 @@ it('fails with invalid email format', function (): void {
 });
 
 it('fails with duplicate email', function (): void {
-    // Create existing user
+    Tenant::factory()->create(['name' => 'Test Tenant']);
     User::factory()->create(['email' => 'existing@example.com']);
 
     $this->artisan('noerd:create-admin', [
@@ -71,6 +86,8 @@ it('fails with duplicate email', function (): void {
 });
 
 it('fails with password shorter than 8 characters', function (): void {
+    Tenant::factory()->create(['name' => 'Test Tenant']);
+
     $this->artisan('noerd:create-admin', [
         '--name' => 'Test User',
         '--email' => 'test@example.com',
