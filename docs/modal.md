@@ -2,19 +2,8 @@
 
 A modal system for Livewire 4 that opens any Livewire component in a modal — no traits, no modifications to your component code.
 
-## Standalone Package
-
-The modal system is available as an independent package with only one dependency:
-
-```json
-{
-    "require": {
-        "livewire/livewire": "^4.0"
-    }
-}
-```
-
 ## Installation
+If you're using noerd/noerd, the noerd/modal package is already included as a dependency. To use noerd/modal standalone, install it via Composer:
 
 ```bash
 composer require noerd/modal
@@ -135,7 +124,6 @@ $this->closeModalProcess($this->getListComponent());
 |-------|-------------|
 | `noerdModal` | Opens a modal (dispatched by `$modal()`) |
 | `closeTopModal` | Closes the topmost modal |
-| `closeModal` | Closes a specific modal by component name and key |
 | `modal-closed-global` | Fired when all modals are closed |
 | `refreshList-{component}` | Refreshes a specific list component |
 
@@ -174,75 +162,3 @@ Example flow:
 - State persists via session (`modal_fullscreen`)
 - Applies to all modals during the session
 
-## Integration with NoerdDetail Trait
-
-When using the `NoerdDetail` trait, you get enhanced functionality:
-
-```php
-<?php
-
-use Livewire\Component;
-use Noerd\Traits\NoerdDetail;
-use App\Models\Customer;
-
-new class extends Component {
-    use NoerdDetail;
-
-    public const DETAIL_CLASS = Customer::class;
-
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        $customer = Customer::updateOrCreate(
-            ['id' => $this->modelId],
-            $this->detailData
-        );
-
-        $this->showSuccessIndicator = true;
-
-        if ($customer->wasRecentlyCreated) {
-            $this->modelId = $customer->id;
-        }
-    }
-
-    public function delete(): void
-    {
-        Customer::find($this->modelId)?->delete();
-
-        // Closes modal and refreshes the list
-        $this->closeModalProcess($this->getListComponent());
-    }
-};
-?>
-```
-
-### Available Helper Methods
-
-| Method | Description |
-|--------|-------------|
-| `closeModalProcess($source)` | Close modal and refresh source list |
-| `getListComponent()` | Auto-detect list component name |
-| `getDetailComponent()` | Get current detail component name |
-| `mountModalProcess()` | Initialize modal with YAML config |
-
-## URL Parameters
-
-The modal system automatically handles `#[Url]` attributes:
-
-- URL parameters are preserved while the modal is open
-- Parameters are cleared when the modal closes
-- Blacklisted parameters (`filter`, `currentTab`) are never cleared
-
-```php
-use Livewire\Attributes\Url;
-
-#[Url(as: 'id', keep: false)]
-public $modelId = null;  // URL: ?id=123
-```
-
-## Next Steps
-
-- [List View](list-view.md) - Create list components with modal actions
-- [Detail View](detail-view.md) - Build detail forms for modals
-- [Creating Modules](creating-modules.md) - Build independent modules

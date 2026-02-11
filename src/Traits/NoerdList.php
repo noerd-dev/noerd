@@ -79,7 +79,7 @@ trait NoerdList
 
     public function storeActiveListFilters(): void
     {
-        // Override in components that need session persistence (e.g. CMS language filter)
+        session(['listFilters' => $this->listFilters]);
     }
 
     public function findListAction(int|string $id): void

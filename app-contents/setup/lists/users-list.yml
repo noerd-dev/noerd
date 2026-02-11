@@ -7,13 +7,17 @@ description: ''
 columns:
   - field: email
     label: noerd_label_email
-    width: 10
+    width: 8
   - field: name
     label: noerd_label_name
-    width: 10
+    width: 8
+  - field: roles_for_tenant
+    label: noerd_label_profile_roles
+    width: 6
+    type: badge_with_text
   - field: last_login_at
     label: noerd_label_last_login_at
-    width: 8
+    width: 5
   - field: action
     width: 3
     actions:

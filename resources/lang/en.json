@@ -197,5 +197,7 @@
     "noerd_error_app_not_assigned_message": "The app \":app\" is not assigned to this tenant.",
     "noerd_error_config_not_found_title": "Configuration not found",
     "noerd_error_config_not_found_message": "The required configuration file was not found:",
-    "noerd_error_back_to_home": "Back to home"
+    "noerd_error_back_to_home": "Back to home",
+    "noerd_impersonating_banner": "You are logged in as :name",
+    "noerd_stop_impersonating": "Return to your account"
 }
