@@ -204,7 +204,7 @@ class NoerdInstallCommand extends Command
 
         $noerdStyles = "
 @source '../../vendor/noerd/noerd/resources/views/**/*.blade.php';
-@source '../../vendor/noerd/cms/resources/views/**/*.blade.php';
+@source '../../vendor/noerd/modal/resources/views/**/*.blade.php';
 @config '../../tailwind.config.js';
 ";
 
