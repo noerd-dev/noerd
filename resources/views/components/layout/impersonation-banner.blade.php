@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
     public bool $isImpersonating = false;
@@ -19,6 +20,10 @@ new class extends Component {
     {
         $originalUserId = session('impersonating_from');
         session()->forget('impersonating_from');
+
+        // Clear tenant session so InitializeTenantSession will set the correct tenant
+        TenantHelper::clear();
+
         Auth::loginUsingId($originalUserId);
 
         return redirect('/');

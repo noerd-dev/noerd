@@ -78,6 +78,8 @@
                         @include('noerd::components.forms.translatable-textarea', ['field' => $field])
                     @elseif($field['type'] === 'button')
                         @include('noerd::components.forms.button', ['field' => $field])
+                    @elseif($field['type'] === 'colorHex')
+                        @include('noerd::components.forms.color-hex', ['field' => $field])
                     @else
                         @include('noerd::components.forms.input', ['field' => $field])
                     @endif

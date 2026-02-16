@@ -24,6 +24,11 @@ Noerd is a YAML-driven modular framework for Laravel applications with list and 
 - Use `@verbatim$guarded = []@endverbatim` instead of `@verbatim$fillable@endverbatim`
 - Never store Eloquent models as Livewire component properties
 
+### List Components
+- Use `setDefaultSort()` in `mount()` for custom default sorting
+- Never set `@verbatim$this->sortField@endverbatim` or `@verbatim$this->sortAsc@endverbatim` directly
+- Always call `@verbatim$this->mountList()@endverbatim` before `@verbatim$this->setDefaultSort()@endverbatim`
+
 ### Detail Components
 - Property: `@verbatim$modelNameData@endverbatim` (array) for `wire:model` binding
 - Model only as local variable in methods, never as property

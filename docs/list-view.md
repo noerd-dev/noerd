@@ -129,6 +129,26 @@ new class extends Component {
 - **request()->id:** URL parameter for direct access to a specific record
 - **`<x-noerd::list />`:** Renders the table
 
+## Default Sorting
+
+To set a custom default sort order, use `setDefaultSort()` in your `mount()` method:
+
+```php
+public function mount(): void
+{
+    $this->mountList();
+    $this->setDefaultSort('created_at', false);  // Sort by created_at descending
+}
+```
+
+**Parameters:**
+- `$field`: Column name to sort by
+- `$ascending`: `true` for ascending (A-Z), `false` for descending (Z-A)
+
+Without `setDefaultSort()`, lists default to `id` descending.
+
+See [List Search](list-search.md) for more details on search and sorting.
+
 ## Next Steps
 
 Continue with [Create a Detail View](detail-view.md) to build forms for editing records.

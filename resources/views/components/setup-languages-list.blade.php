@@ -7,13 +7,11 @@ use Noerd\Traits\NoerdList;
 
 new class extends Component
 {
-    use NoerdList {
-        mount as noerdListMount;
-    }
+    use NoerdList;
 
     public function mount(): void
     {
-        $this->noerdListMount();
+        $this->mountList();
 
         // Ensure default languages exist
         SetupLanguage::ensureDefaultLanguages();

@@ -28,9 +28,9 @@
     >
         @foreach($options as $option)
             @isset($option['value'])
-                <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+                <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
             @else
-                <option>{{ $option }}</option>
+                <option>{{ __($option) }}</option>
             @endisset
         @endforeach
     </select>

@@ -56,6 +56,12 @@ fields:
     type: datetime-local
     colspan: 3
 
+  # colorHex - Color picker with HEX value
+  - name: detailData.color
+    label: example_label_color
+    type: colorHex
+    colspan: 3
+
   # textarea - Multi-line text
   - name: detailData.description
     label: example_label_description
@@ -286,6 +292,7 @@ fields:
 | Type | Description | Component |
 |------|-------------|-----------|
 | `text` | Standard text input (also email, number, date, time, datetime-local) | `input.blade.php` |
+| `colorHex` | Color picker with HEX value | `color-hex.blade.php` |
 | `textarea` | Multi-line text field | `input-textarea.blade.php` |
 | `select` | Dropdown with static options | `input-select.blade.php` |
 | `picklist` | Dropdown with dynamic options (via Livewire method) | `picklist.blade.php` |
@@ -390,6 +397,55 @@ Standard text input field. Also handles HTML5 input types like `email`, `number`
 **Notes:**
 - `date` type automatically truncates datetime values to date only (YYYY-MM-DD)
 - `time` type automatically truncates to HH:MM format
+
+---
+
+### colorHex
+
+Color picker with HEX value input. Combines a text input for manual HEX entry with a native color picker for visual selection. Both inputs are synchronized.
+
+**Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `readonly` | bool | `false` | Make field read-only |
+| `live` | bool | `false` | Enable real-time updates |
+| `required` | bool | `false` | Show required indicator |
+
+**YAML Example:**
+
+```yaml
+# Basic color picker
+- name: detailData.color
+  label: noerd_label_color
+  type: colorHex
+  colspan: 4
+
+# Color picker with live updates
+- name: detailData.background_color
+  label: noerd_label_background_color
+  type: colorHex
+  colspan: 4
+  live: true
+
+# Read-only color display
+- name: detailData.theme_color
+  label: noerd_label_theme_color
+  type: colorHex
+  colspan: 4
+  readonly: true
+```
+
+**Database Value:**
+```
+#efefef
+```
+
+**Notes:**
+- Stores the color as a 7-character HEX string (e.g., `#efefef`)
+- The text input allows manual entry with a `#` prefix
+- The color picker synchronizes with the text input in both directions
+- Maximum length is 7 characters
 
 ---
 

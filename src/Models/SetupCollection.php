@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Noerd\Database\Factories\SetupCollectionFactory;
+use Noerd\Traits\BelongsToTenant;
 
 class SetupCollection extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $guarded = [];

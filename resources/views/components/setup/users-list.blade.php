@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\User;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\TenantFilterTrait;
@@ -37,6 +38,10 @@ new class () extends Component {
             abort(401);
         }
         session(['impersonating_from' => Auth::id()]);
+
+        // Clear tenant session so InitializeTenantSession will set the correct tenant
+        TenantHelper::clear();
+
         Auth::loginUsingId($userId);
 
         return redirect('/');
@@ -59,6 +64,7 @@ new class () extends Component {
                         ->orWhere('email', 'like', '%' . $this->search . '%');
                 });
             })
+            ->orderBy('name')
             ->with(['roles', 'tenants'])
             ->paginate(self::PAGINATION);
 

@@ -42,8 +42,24 @@ trait NoerdList
 
     public function mount(): void
     {
+        $this->mountList();
+    }
+
+    public function mountList(): void
+    {
         $this->listId = Str::random();
         $this->loadListFilters();
+    }
+
+    /**
+     * Set the default sort field and direction.
+     * Call this in mount() to configure initial sorting.
+     */
+    protected function setDefaultSort(string $field, bool $ascending = false): void
+    {
+        $this->sortField = $field;
+        $this->sortAsc = $ascending;
+        $this->syncListQueryContext();
     }
 
     public function updatedSearch(): void

@@ -11,9 +11,7 @@ use Noerd\Traits\SetupLanguageFilterTrait;
 
 new class extends Component
 {
-    use NoerdList {
-        mount as noerdListMount;
-    }
+    use NoerdList;
     use SetupLanguageFilterTrait;
 
     public string|int|null $collectionKey = null;
@@ -41,7 +39,7 @@ new class extends Component
 
     public function mount(): void
     {
-        $this->noerdListMount();
+        $this->mountList();
 
         // Ensure default languages exist
         SetupLanguage::ensureDefaultLanguages();

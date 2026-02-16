@@ -33,4 +33,14 @@ class ListQueryContext
     {
         return $this->sortAsc;
     }
+
+    /**
+     * Reset to default values.
+     */
+    public function reset(): void
+    {
+        $this->search = '';
+        $this->sortField = 'id';
+        $this->sortAsc = false;
+    }
 }

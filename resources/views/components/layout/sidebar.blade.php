@@ -42,7 +42,7 @@ new class extends Component {
          @click="showSidebar = false; $wire.openSidebar()"></div>
 
     <!-- Mobile Close Button (nur <xl) -->
-    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-[calc(var(--banner-height,0px)+1rem)] right-4 z-50">
+    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_1rem)] right-4 z-50">
         <button @click="showSidebar = false; $wire.openSidebar()" type="button" class="p-2 bg-black/50 rounded-full">
             <span class="sr-only">Close sidebar</span>
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -60,7 +60,7 @@ new class extends Component {
             <div x-show="showSidebar && showAppbar"
                  x-transition
                  @class([
-                    'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[var(--banner-height,0px)] bottom-0 z-50 xl:z-40 flex flex-col'
+                    'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px))] bottom-0 z-50 xl:z-40 flex flex-col'
                 ])
                  :style="'width: var(--sidebar-apps-width)'"
             >
@@ -101,7 +101,7 @@ new class extends Component {
                 <div x-show="showSidebar && showAppbar"
                      x-transition
                      @class([
-                        'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[var(--banner-height,0px)] bottom-0 z-50 xl:z-40 flex flex-col'
+                        'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px))] bottom-0 z-50 xl:z-40 flex flex-col'
                     ])
                      :style="'width: var(--sidebar-apps-width)'"
                 >
@@ -144,7 +144,7 @@ new class extends Component {
                     $wire.saveSidebarWidth(width);
                  }"
                  @class([
-                    'fixed top-[var(--banner-height,0px)] bottom-0 z-50 xl:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
+                    'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px))] bottom-0 z-50 xl:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
                  ])
                  :style="'width: var(--sidebar-nav-width); margin-left: ' + (showAppbar ? 'var(--sidebar-apps-width)' : '0')"
             >
