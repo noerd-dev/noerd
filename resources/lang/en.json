@@ -199,5 +199,12 @@
     "noerd_error_config_not_found_message": "The required configuration file was not found:",
     "noerd_error_back_to_home": "Back to home",
     "noerd_impersonating_banner": "You are logged in as :name",
-    "noerd_stop_impersonating": "Return to your account"
+    "noerd_stop_impersonating": "Return to your account",
+
+    "noerd_nav_apps": "Apps",
+    "noerd_label_apps": "Apps",
+    "noerd_label_assigned_apps": "Assigned Apps",
+    "noerd_label_available_apps": "Available Apps",
+    "noerd_label_no_assigned_apps": "No apps assigned",
+    "noerd_label_no_available_apps": "No more apps available"
 }

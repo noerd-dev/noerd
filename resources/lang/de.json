@@ -315,5 +315,12 @@
     "noerd_error_config_not_found_message": "Die erforderliche Konfigurationsdatei wurde nicht gefunden:",
     "noerd_error_back_to_home": "Zurück zur Startseite",
     "noerd_impersonating_banner": "Du bist als :name angemeldet",
-    "noerd_stop_impersonating": "Zurück zum eigenen Konto"
+    "noerd_stop_impersonating": "Zurück zum eigenen Konto",
+
+    "noerd_nav_apps": "Apps",
+    "noerd_label_apps": "Apps",
+    "noerd_label_assigned_apps": "Zugewiesene Apps",
+    "noerd_label_available_apps": "Verfügbare Apps",
+    "noerd_label_no_assigned_apps": "Keine Apps zugewiesen",
+    "noerd_label_no_available_apps": "Keine weiteren Apps verfügbar"
 }

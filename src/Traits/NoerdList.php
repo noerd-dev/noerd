@@ -100,6 +100,7 @@ trait NoerdList
 
     public function findListAction(int|string $id): void
     {
+        $this->syncListQueryContext();
         $withData = $this->with();
         $listData = $withData['listConfig']['rows'] ?? [];
         $method = $this->listActionMethod;
@@ -250,6 +251,11 @@ trait NoerdList
         $entity = Str::singular(Str::before($this->componentName(), '-list'));
 
         return Str::camel($entity) . 'Selected';
+    }
+
+    public function renderingNoerdList(): void
+    {
+        $this->syncListQueryContext();
     }
 
     protected function syncListQueryContext(): void

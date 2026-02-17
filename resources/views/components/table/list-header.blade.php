@@ -2,11 +2,11 @@
     <x-noerd::modal-title>
         <div class="pb-3 lg:pb-0">
             {{$title}}
-            @isset($rows)
+            @if(isset($rows) && ! is_array($rows))
                 <span class="font-light">
                     ({{ $rows->total() }})
                 </span>
-            @endisset
+            @endif
         </div>
 
         @if($this->tableFilters())
@@ -14,7 +14,7 @@
                 @foreach($this->tableFilters() as $tableFilter)
                     <select wire:change="storeActiveListFilters"
                             wire:model.live="listFilters.{{$tableFilter['column']}}"
-                            class="mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border {{ !empty($listFilters[$tableFilter['column']]) ? '!border-brand-primary !border-solid' : '' }}">
+                            class="@if( ($this->listFilters[$tableFilter['column']] ?? '') !== '') !border-brand-primary !border-solid !border-2 @endif mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border">
                         <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
                             <option value="{{$key}}">{{$option}}</option>

@@ -5,6 +5,7 @@ use Noerd\Controllers\DashboardController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
     Route::livewire('setup', 'setup.users-list')->name('setup');
+    Route::livewire('tenant-apps', 'setup.tenant-apps-list')->name('tenant-apps');
     Route::livewire('users', 'setup.users-list')->name('users');
     Route::livewire('user/{modelId}', 'user-detail')->name('user.detail');
     Route::livewire('user-roles', 'setup.user-roles-list')->name('user-roles');

@@ -81,3 +81,31 @@ it('shows navigation items when config value is true', function (): void {
 
     expect($navTitles)->toContain('noerd_nav_user_roles');
 });
+
+it('shows superAdmin navigation items for super admins', function (): void {
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create([
+        'super_admin' => true,
+    ]);
+    $this->actingAs($user);
+
+    $navigation = StaticConfigHelper::getNavigationStructure();
+
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
+
+    expect($navTitles)->toContain('noerd_nav_apps');
+});
+
+it('hides superAdmin navigation items for non-super admins', function (): void {
+    $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create([
+        'super_admin' => false,
+    ]);
+    $this->actingAs($user);
+
+    $navigation = StaticConfigHelper::getNavigationStructure();
+
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
+
+    expect($navTitles)->not->toContain('noerd_nav_apps');
+});

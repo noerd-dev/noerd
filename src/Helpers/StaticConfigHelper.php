@@ -319,17 +319,22 @@ class StaticConfigHelper
     }
 
     /**
-     * Filter navigation items based on the config attribute.
+     * Filter navigation items based on the config and superAdmin attributes.
      * Items with a config attribute are only included if the config value is truthy.
+     * Items with superAdmin: true are only included if the current user is a super admin.
      */
     private static function filterNavigationByConfig(array $navigations): array
     {
         return array_values(array_filter($navigations, function ($nav) {
-            if (! isset($nav['config'])) {
-                return true;
+            if (isset($nav['config']) && ! config($nav['config'])) {
+                return false;
             }
 
-            return (bool) config($nav['config']);
+            if (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin()) {
+                return false;
+            }
+
+            return true;
         }));
     }
 

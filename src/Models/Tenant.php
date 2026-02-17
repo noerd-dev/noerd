@@ -86,8 +86,9 @@ class Tenant extends Authenticatable
     public function tenantApps(): BelongsToMany
     {
         return $this->belongsToMany(TenantApp::class, 'tenant_app')
-            ->withPivot('is_hidden')
-            ->where('is_active', true);
+            ->withPivot('is_hidden', 'sort_order')
+            ->where('is_active', true)
+            ->orderByPivot('sort_order');
     }
 
     public function profiles(): HasMany
