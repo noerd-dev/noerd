@@ -1,8 +1,20 @@
 @php
     $isFullscreen = session('modal_fullscreen', false);
     $hasCurrentTab = property_exists($__livewire ?? new stdClass, 'currentTab');
+
+    $shortcuts = [];
+    if (method_exists($__livewire ?? new stdClass, 'store')) {
+        $shortcuts['save'] = config('noerd.keyboard_shortcuts.save', 'ctrl+enter');
+    }
+    if (method_exists($__livewire ?? new stdClass, 'delete')) {
+        $shortcuts['delete'] = config('noerd.keyboard_shortcuts.delete', 'ctrl+backspace');
+    }
 @endphp
-<div x-data="{currentTab: @if($hasCurrentTab)@entangle('currentTab')@else 1 @endif}"
+<div x-data="noerdPage({
+        currentTab: @if($hasCurrentTab)@entangle('currentTab')@else 1 @endif,
+        shortcuts: @js($shortcuts),
+        deleteMessage: @js(__('Are you sure you want to delete this entry?'))
+    })"
      class="flex flex-col"
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
