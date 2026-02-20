@@ -3,7 +3,7 @@
 namespace Noerd\Helpers;
 
 use Exception;
-use Noerd\Exceptions\NoerdException;
+use Illuminate\Support\Facades\Log;
 use Noerd\Models\TenantApp;
 use Symfony\Component\Yaml\Yaml;
 
@@ -17,10 +17,9 @@ class StaticConfigHelper
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
-            throw new NoerdException(
-                NoerdException::TYPE_CONFIG_NOT_FOUND,
-                configFile: "details/{$component}.yml (app: {$currentApp})",
-            );
+            Log::warning("Config file not found: details/{$component}.yml (app: {$currentApp})");
+
+            return [];
         }
 
         $content = file_get_contents($yamlPath);
@@ -34,10 +33,9 @@ class StaticConfigHelper
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
-            throw new NoerdException(
-                NoerdException::TYPE_CONFIG_NOT_FOUND,
-                configFile: "lists/{$tableName}.yml (app: {$currentApp})",
-            );
+            Log::warning("Config file not found: lists/{$tableName}.yml (app: {$currentApp})");
+
+            return [];
         }
 
         $content = file_get_contents($yamlPath);

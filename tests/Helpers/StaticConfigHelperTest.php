@@ -1,17 +1,23 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Models\User;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
-it('throws exception for non-existing table config', function (): void {
+it('returns empty array and logs warning for non-existing table config', function (): void {
+    Log::shouldReceive('warning')
+        ->once()
+        ->withArgs(fn (string $message) => str_contains($message, 'lists/___not_existing___.yml'));
+
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
     $this->actingAs($user);
 
-    StaticConfigHelper::getListConfig('___not_existing___');
-})->throws(Exception::class, 'Config file not found');
+    $config = StaticConfigHelper::getListConfig('___not_existing___');
+    expect($config)->toBeArray()->toBeEmpty();
+});
 
 it('loads table config for existing list', function (): void {
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
@@ -21,12 +27,17 @@ it('loads table config for existing list', function (): void {
     expect($config)->toBeArray()->and($config)->not->toBeEmpty();
 });
 
-it('throws exception for non-existing model config', function (): void {
+it('returns empty array and logs warning for non-existing model config', function (): void {
+    Log::shouldReceive('warning')
+        ->once()
+        ->withArgs(fn (string $message) => str_contains($message, 'details/___not_existing___.yml'));
+
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
     $this->actingAs($user);
 
-    StaticConfigHelper::getComponentFields('___not_existing___');
-})->throws(Exception::class, 'Config file not found');
+    $fields = StaticConfigHelper::getComponentFields('___not_existing___');
+    expect($fields)->toBeArray()->toBeEmpty();
+});
 
 it('loads model config for existing component', function (): void {
     $user = User::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
