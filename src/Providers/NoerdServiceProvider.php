@@ -105,7 +105,14 @@ class NoerdServiceProvider extends ServiceProvider
         $targetPath = public_path('vendor/noerd/manifest.json');
         $sourcePath = __DIR__ . '/../../dist/build/manifest.json';
 
-        if (! File::exists($targetPath) && File::exists($sourcePath)) {
+        if (! File::exists($sourcePath)) {
+            return;
+        }
+
+        $shouldPublish = ! File::exists($targetPath)
+            || File::lastModified($sourcePath) > File::lastModified($targetPath);
+
+        if ($shouldPublish) {
             File::ensureDirectoryExists(public_path('vendor/noerd'));
             File::copyDirectory(__DIR__ . '/../../dist/build', public_path('vendor/noerd'));
         }

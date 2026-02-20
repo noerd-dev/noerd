@@ -30,6 +30,12 @@ describe('Noerd Asset Publishing', function (): void {
     it('publishes built assets when manifest does not exist', function (): void {
         $targetDir = public_path('vendor/noerd');
         $targetManifest = $targetDir . '/manifest.json';
+        $sourceDir = base_path('app-modules/noerd/dist/build');
+        $sourceManifest = $sourceDir . '/manifest.json';
+
+        if (! File::exists($sourceManifest)) {
+            $this->markTestSkipped('Noerd module has not been built yet (dist/build/manifest.json missing).');
+        }
 
         // Remember original state
         $manifestExisted = File::exists($targetManifest);
@@ -40,18 +46,11 @@ describe('Noerd Asset Publishing', function (): void {
             File::delete($targetManifest);
         }
 
-        $sourceDir = base_path('app-modules/noerd/dist/build');
-
-        if (! File::exists($sourceDir . '/manifest.json')) {
-            // Restore if we removed it
-            if ($manifestExisted) {
-                File::put($targetManifest, $originalContent);
-            }
-            $this->markTestSkipped('Noerd module has not been built yet (dist/build/manifest.json missing).');
-        }
-
         // Simulate the publishBuiltAssetsIfNotExist logic
-        if (! File::exists($targetManifest) && File::exists($sourceDir . '/manifest.json')) {
+        $shouldPublish = ! File::exists($targetManifest)
+            || File::lastModified($sourceManifest) > File::lastModified($targetManifest);
+
+        if ($shouldPublish) {
             File::ensureDirectoryExists($targetDir);
             File::copyDirectory($sourceDir, $targetDir);
         }
@@ -66,13 +65,13 @@ describe('Noerd Asset Publishing', function (): void {
         }
     });
 
-    it('does not overwrite existing assets', function (): void {
+    it('does not overwrite when target is up to date', function (): void {
         $targetDir = public_path('vendor/noerd');
         $targetManifest = $targetDir . '/manifest.json';
-
         $sourceDir = base_path('app-modules/noerd/dist/build');
+        $sourceManifest = $sourceDir . '/manifest.json';
 
-        if (! File::exists($sourceDir . '/manifest.json')) {
+        if (! File::exists($sourceManifest)) {
             $this->markTestSkipped('Noerd module has not been built yet (dist/build/manifest.json missing).');
         }
 
@@ -80,19 +79,63 @@ describe('Noerd Asset Publishing', function (): void {
         $manifestExisted = File::exists($targetManifest);
         $originalContent = $manifestExisted ? File::get($targetManifest) : null;
 
-        // Place a marker
+        // Place a marker with a future timestamp so it appears newer than source
         File::ensureDirectoryExists($targetDir);
         $marker = 'test-marker-' . uniqid();
         File::put($targetManifest, $marker);
+        touch($targetManifest, time() + 3600);
 
-        // Run the publish logic - should NOT overwrite
-        if (! File::exists($targetManifest) && File::exists($sourceDir . '/manifest.json')) {
+        // Run the publish logic - should NOT overwrite because target is newer
+        $shouldPublish = ! File::exists($targetManifest)
+            || File::lastModified($sourceManifest) > File::lastModified($targetManifest);
+
+        if ($shouldPublish) {
             File::ensureDirectoryExists($targetDir);
             File::copyDirectory($sourceDir, $targetDir);
         }
 
         // The marker should still be there (not overwritten)
         expect(File::get($targetManifest))->toBe($marker);
+
+        // Restore original state
+        if ($manifestExisted) {
+            File::put($targetManifest, $originalContent);
+        } else {
+            File::delete($targetManifest);
+        }
+    });
+
+    it('overwrites when source is newer than target', function (): void {
+        $targetDir = public_path('vendor/noerd');
+        $targetManifest = $targetDir . '/manifest.json';
+        $sourceDir = base_path('app-modules/noerd/dist/build');
+        $sourceManifest = $sourceDir . '/manifest.json';
+
+        if (! File::exists($sourceManifest)) {
+            $this->markTestSkipped('Noerd module has not been built yet (dist/build/manifest.json missing).');
+        }
+
+        // Remember original state
+        $manifestExisted = File::exists($targetManifest);
+        $originalContent = $manifestExisted ? File::get($targetManifest) : null;
+
+        // Place a marker with an old timestamp so source appears newer
+        File::ensureDirectoryExists($targetDir);
+        $marker = 'test-marker-' . uniqid();
+        File::put($targetManifest, $marker);
+        touch($targetManifest, 1000000);
+
+        // Run the publish logic - should overwrite because source is newer
+        $shouldPublish = ! File::exists($targetManifest)
+            || File::lastModified($sourceManifest) > File::lastModified($targetManifest);
+
+        if ($shouldPublish) {
+            File::ensureDirectoryExists($targetDir);
+            File::copyDirectory($sourceDir, $targetDir);
+        }
+
+        // The marker should be gone (overwritten with actual source content)
+        expect(File::get($targetManifest))->not->toBe($marker);
 
         // Restore original state
         if ($manifestExisted) {
