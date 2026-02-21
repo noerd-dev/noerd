@@ -1,7 +1,6 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
-import { Markdown } from '@tiptap/markdown';
 import sort from '@alpinejs/sort';
 import focus from '@alpinejs/focus';
 
@@ -9,8 +8,7 @@ import focus from '@alpinejs/focus';
 window.TipTap = {
     Editor,
     StarterKit,
-    Link,
-    Markdown
+    Link
 };
 
 function parseShortcut(shortcut) {

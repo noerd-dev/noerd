@@ -1,9 +1,15 @@
 @props(['field', 'content' => ''])
 
 <style>
+    .tiptap-wrapper .ProseMirror p {
+        margin-bottom: 1em !important;
+    }
+    .tiptap-wrapper .ProseMirror p:last-child {
+        margin-bottom: 0 !important;
+    }
     .tiptap-wrapper .ProseMirror p:empty,
-    .tiptap-wrapper .ProseMirror p:has(> br:only-child) {
-        margin: 0;
+    .tiptap-wrapper .ProseMirror p:has(> br.ProseMirror-trailingBreak:only-child) {
+        margin: 0 !important;
         min-height: 1.5em;
     }
 </style>
