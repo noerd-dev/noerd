@@ -21,26 +21,7 @@
         linkUrl: '',
         showLinkInput: false,
         updatedAt: Date.now(),
-        emptyLineMarker: '\u200B', // Zero-width space
-        preserveEmptyLines(markdown) {
-            // Convert 4+ newlines to paragraphs with zero-width space marker
-            // In TipTap: each paragraph break = 2 newlines
-            // So 4 newlines = 1 empty paragraph, 6 newlines = 2 empty paragraphs
-            return markdown.replace(/\n{4,}/g, (match) => {
-                const emptyParagraphs = Math.floor((match.length - 2) / 2);
-                let result = '\n\n';
-                for (let i = 0; i < emptyParagraphs; i++) {
-                    result += this.emptyLineMarker + '\n\n';
-                }
-                return result;
-            });
-        },
-        restoreEmptyLines(markdown) {
-            // Convert zero-width space paragraphs back to double newlines
-            return markdown.replace(new RegExp(this.emptyLineMarker + '\\n\\n', 'g'), '\n\n');
-        },
         init() {
-            const processedContent = this.preserveEmptyLines(this.content);
             this.editor = new window.TipTap.Editor({
                 element: this.$refs.editor,
                 extensions: [
@@ -52,20 +33,15 @@
                     window.TipTap.Link.configure({
                         openOnClick: false,
                     }),
-                    window.TipTap.Markdown.configure({
-                        html: false,
-                    }),
                 ],
-                content: processedContent,
-                contentType: 'markdown',
+                content: this.content,
                 editorProps: {
                     attributes: {
                         class: 'rich-text focus:outline-none min-h-[150px] p-3',
                     },
                 },
                 onUpdate: ({ editor }) => {
-                    const rawMarkdown = editor.getMarkdown();
-                    this.content = this.restoreEmptyLines(rawMarkdown);
+                    this.content = editor.getHTML();
                     this.updatedAt = Date.now();
                     this.$wire.set('{{ $field }}', this.content);
                 },
