@@ -1,16 +1,89 @@
 @props(['field', 'content' => ''])
 
 <style>
+    .tiptap-wrapper .ProseMirror {
+        outline: none;
+        min-height: 150px;
+        padding: 0.75rem;
+    }
+    .tiptap-wrapper .ProseMirror h1 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+    }
+    .tiptap-wrapper .ProseMirror h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+    }
+    .tiptap-wrapper .ProseMirror h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.3;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+    }
     .tiptap-wrapper .ProseMirror p {
-        margin-bottom: 1em !important;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
     }
     .tiptap-wrapper .ProseMirror p:last-child {
-        margin-bottom: 0 !important;
+        margin-bottom: 0;
     }
     .tiptap-wrapper .ProseMirror p:empty,
     .tiptap-wrapper .ProseMirror p:has(> br.ProseMirror-trailingBreak:only-child) {
-        margin: 0 !important;
+        margin: 0;
         min-height: 1.5em;
+    }
+    .tiptap-wrapper .ProseMirror ul {
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+    }
+    .tiptap-wrapper .ProseMirror ol {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+    }
+    .tiptap-wrapper .ProseMirror li {
+        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .tiptap-wrapper .ProseMirror blockquote {
+        border-left: 3px solid #d1d5db;
+        padding-left: 1rem;
+        margin-left: 0;
+        margin-right: 0;
+        font-style: italic;
+        color: #6b7280;
+    }
+    .tiptap-wrapper .ProseMirror hr {
+        border: none;
+        border-top: 1px solid #d1d5db;
+        margin: 1rem 0;
+    }
+    .tiptap-wrapper .ProseMirror a {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+    .tiptap-wrapper .ProseMirror code {
+        background-color: #f3f4f6;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+        font-size: 0.875em;
+    }
+    .tiptap-wrapper .ProseMirror strong {
+        font-weight: 700;
+    }
+    .tiptap-wrapper .ProseMirror em {
+        font-style: italic;
     }
 </style>
 
