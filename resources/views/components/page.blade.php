@@ -9,11 +9,15 @@
     if (method_exists($__livewire ?? new stdClass, 'delete')) {
         $shortcuts['delete'] = config('noerd.keyboard_shortcuts.delete', 'ctrl+backspace');
     }
+
+    $hasRecordNav = property_exists($__livewire ?? new stdClass, 'recordNavigationIds')
+        && !empty($__livewire->recordNavigationIds ?? []);
 @endphp
 <div x-data="noerdPage({
         currentTab: @if($hasCurrentTab)@entangle('currentTab')@else 1 @endif,
         shortcuts: @js($shortcuts),
-        deleteMessage: @js(__('Are you sure you want to delete this entry?'))
+        deleteMessage: @js(__('noerd_confirm_delete')),
+        hasRecordNav: @js($hasRecordNav)
     })"
      class="flex flex-col"
      @if($disableModal ?? false)

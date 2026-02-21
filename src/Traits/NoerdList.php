@@ -105,6 +105,8 @@ trait NoerdList
         $listData = $withData['listConfig']['rows'] ?? [];
         $method = $this->listActionMethod;
 
+        $this->storeRecordNavigation($listData);
+
         if (is_array($listData)) {
             $item = $listData[$id] ?? null;
             if ($item) {
@@ -119,6 +121,24 @@ trait NoerdList
             return;
         }
         $this->{$method}($item->id);
+    }
+
+    /**
+     * Store ordered record IDs in session for arrow-key navigation in detail modals.
+     *
+     * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
+     */
+    protected function storeRecordNavigation(mixed $rows): void
+    {
+        $ids = [];
+        if (is_array($rows)) {
+            $ids = array_column($rows, 'id');
+        } else {
+            $ids = $rows->getCollection()->pluck('id')->toArray();
+        }
+
+        $listComponent = $this->getListComponent();
+        session(["record_navigation.{$listComponent}" => $ids]);
     }
 
     /**

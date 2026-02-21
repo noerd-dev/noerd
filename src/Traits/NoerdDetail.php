@@ -25,6 +25,8 @@ trait NoerdDetail
 
     public array $detailData = [];
 
+    public array $recordNavigationIds = [];
+
     /**
      * Get the component name (alias for getName).
      */
@@ -35,11 +37,89 @@ trait NoerdDetail
 
     public function initDetail(): void
     {
+        $this->loadRecordNavigation();
+
         // For detail components with DETAIL_CLASS constant
         if (defined('static::DETAIL_CLASS')) {
             $modelClass = static::DETAIL_CLASS;
             $this->mountDetailComponent(new $modelClass(), $modelClass);
         }
+    }
+
+    /**
+     * Load record navigation IDs from session.
+     */
+    protected function loadRecordNavigation(): void
+    {
+        $listComponent = $this->getListComponent();
+        $this->recordNavigationIds = session("record_navigation.{$listComponent}", []);
+    }
+
+    /**
+     * Navigate to the next or previous record.
+     */
+    public function navigateRecord(string $direction): void
+    {
+        if (empty($this->recordNavigationIds) || ! $this->modelId) {
+            file_put_contents(storage_path('logs/nav-debug.log'), date('H:i:s') . " NAVIGATE early return: ids=" . count($this->recordNavigationIds) . " modelId={$this->modelId}\n", FILE_APPEND);
+
+            return;
+        }
+
+        $currentIndex = array_search((int) $this->modelId, $this->recordNavigationIds);
+        if ($currentIndex === false) {
+            file_put_contents(storage_path('logs/nav-debug.log'), date('H:i:s') . " NAVIGATE not found: modelId={$this->modelId}(" . gettype($this->modelId) . ") first3ids=" . implode(',', array_slice($this->recordNavigationIds, 0, 3)) . '(' . gettype($this->recordNavigationIds[0] ?? null) . ")\n", FILE_APPEND);
+
+            return;
+        }
+
+        $newIndex = $direction === 'next' ? $currentIndex + 1 : $currentIndex - 1;
+
+        if ($newIndex < 0 || $newIndex >= count($this->recordNavigationIds)) {
+            return;
+        }
+
+        file_put_contents(storage_path('logs/nav-debug.log'), date('H:i:s') . " NAVIGATE OK: {$this->modelId} -> {$this->recordNavigationIds[$newIndex]}\n", FILE_APPEND);
+        $this->loadRecord($this->recordNavigationIds[$newIndex]);
+    }
+
+    /**
+     * Load a different record into the current detail component.
+     * Calls mount() to re-initialize all component properties.
+     */
+    public function loadRecord(mixed $id): void
+    {
+        $this->modelId = $id;
+        $this->currentTab = 1;
+        $this->showSuccessIndicator = false;
+        $this->relationTitles = [];
+
+        $this->mount();
+
+        $this->dispatch('record-navigated', id: $id);
+    }
+
+    /**
+     * Get record navigation position info for the UI indicator.
+     */
+    public function getRecordNavigationInfo(): array
+    {
+        if (empty($this->recordNavigationIds) || ! $this->modelId) {
+            return ['available' => false];
+        }
+
+        $currentIndex = array_search((int) $this->modelId, $this->recordNavigationIds);
+        if ($currentIndex === false) {
+            return ['available' => false];
+        }
+
+        return [
+            'available' => true,
+            'hasPrev' => $currentIndex > 0,
+            'hasNext' => $currentIndex < count($this->recordNavigationIds) - 1,
+            'current' => $currentIndex + 1,
+            'total' => count($this->recordNavigationIds),
+        ];
     }
 
     public function closeModalProcess(?string $source = null, ?string $modalKey = null): void

@@ -39,6 +39,11 @@
          @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$listId}}++"
          @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$listId}}--"
          @keydown.window.enter.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && $wire.findListAction(selectedRow{{$listId}})"
+         @record-navigated.window="
+            const rowIds = @js(is_array($rows) ? array_column($rows, 'id') : $rows->getCollection()->pluck('id')->values()->toArray());
+            const idx = rowIds.indexOf(parseInt($event.detail.id));
+            if (idx !== -1) selectedRow{{$listId}} = idx;
+         "
     >
 
         @if(!isset($hideHead) || $hideHead !== true)

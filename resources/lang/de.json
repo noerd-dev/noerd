@@ -322,5 +322,6 @@
     "noerd_label_assigned_apps": "Zugewiesene Apps",
     "noerd_label_available_apps": "Verfügbare Apps",
     "noerd_label_no_assigned_apps": "Keine Apps zugewiesen",
-    "noerd_label_no_available_apps": "Keine weiteren Apps verfügbar"
+    "noerd_label_no_available_apps": "Keine weiteren Apps verfügbar",
+    "noerd_confirm_delete": "Möchten Sie diesen Eintrag wirklich löschen?"
 }

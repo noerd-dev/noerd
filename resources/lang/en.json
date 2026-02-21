@@ -206,5 +206,6 @@
     "noerd_label_assigned_apps": "Assigned Apps",
     "noerd_label_available_apps": "Available Apps",
     "noerd_label_no_assigned_apps": "No apps assigned",
-    "noerd_label_no_available_apps": "No more apps available"
+    "noerd_label_no_available_apps": "No more apps available",
+    "noerd_confirm_delete": "Are you sure you want to delete this entry?"
 }
