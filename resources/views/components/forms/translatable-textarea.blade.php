@@ -11,6 +11,8 @@
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? $readonly;
     $required = $field['required'] ?? $required;
+    // Filter out non-scalar values that leak from parent scope via @include
+    $attributes = $attributes->filter(fn($value) => is_scalar($value) || is_null($value));
 @endphp
 
 <div wire:key="{{ $name . (session('selectedLanguage') ?? 'de') }}" {{ $attributes->merge(['class' => '']) }}>

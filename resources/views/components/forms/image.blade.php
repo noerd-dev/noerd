@@ -2,11 +2,14 @@
     'field' => null,
     'name' => '',
     'label' => '',
+    'model' => null,
 ])
 
 @php
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
+    // Filter out non-scalar values that leak from parent scope via @include
+    $attributes = $attributes->filter(fn($value) => is_scalar($value) || is_null($value));
 @endphp
 
 <div {{ $attributes->merge(['class' => '']) }}>

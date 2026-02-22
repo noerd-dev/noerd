@@ -17,6 +17,8 @@
     // Access the data from the Livewire component
     $dataArray = $this->$dataArrayName ?? $model ?? [];
     $contentValue = $dataArray[$fieldKey] ?? '';
+    // Filter out non-scalar values that leak from parent scope via @include
+    $attributes = $attributes->filter(fn($value) => is_scalar($value) || is_null($value));
 @endphp
 
 <div {{ $attributes->merge(['class' => '']) }}>
