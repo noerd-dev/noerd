@@ -25,6 +25,15 @@ php artisan noerd:install
 
 The installation wizard will guide you through creating an admin user and an initial tenant.
 
+## Tailwind CSS
+
+Noerd's Blade views use Tailwind CSS classes. To ensure Tailwind detects and generates the required utility classes, add the following `@source` directives to your project's `resources/css/app.css`:
+
+```css
+@source '../../app-modules/noerd-modal/resources/views';
+@source '../../app-modules/noerd/resources/views';
+```
+
 ## Usage
 
 Noerd is designed around the concept of apps, where each app has its own navigation defined in a YAML file.
