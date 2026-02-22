@@ -30,8 +30,8 @@ The installation wizard will guide you through creating an admin user and an ini
 Noerd's Blade views use Tailwind CSS classes. To ensure Tailwind detects and generates the required utility classes, add the following `@source` directives to your project's `resources/css/app.css`:
 
 ```css
-@source '../../app-modules/noerd-modal/resources/views';
-@source '../../app-modules/noerd/resources/views';
+@source '../../vendor/noerd/noerd-modal/resources/views';
+@source '../../vendor/noerd/noerd/resources/views';
 ```
 
 ## Usage
