@@ -41,3 +41,13 @@ php artisan noerd:create-app
 php artisan noerd:assign-apps-to-tenant
 ```
 
+## Auto installed packages
+
+### Composer
+
+- `wireui/heroicons` — Heroicon SVG components
+- `pestphp/pest` (dev) — Testing framework
+
+### NPM
+
+- `@tiptap/core` — Rich text editor core

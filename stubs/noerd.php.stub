@@ -26,4 +26,34 @@ return [
         'logo' => env('NOERD_LOGO', ''),
         'auth_background_image' => env('NOERD_AUTH_BACKGROUND_IMAGE', ''),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sidebar
+    |--------------------------------------------------------------------------
+    |
+    | Configure the sidebar dimensions.
+    |
+    */
+    'sidebar' => [
+        'apps_width' => env('NOERD_SIDEBAR_APPS_WIDTH', '80px'),
+        'navigation_width' => env('NOERD_SIDEBAR_NAVIGATION_WIDTH', '280px'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Keyboard Shortcuts
+    |--------------------------------------------------------------------------
+    |
+    | Configure keyboard shortcuts for the application.
+    | Format: 'modifier+key' (e.g., 'ctrl+f', 'shift+k', '/').
+    | Supported modifiers: ctrl, shift, alt, meta.
+    |
+    */
+    'keyboard_shortcuts' => [
+        'search_focus' => 's',
+        'new_entry' => 'n',
+        'save' => 'ctrl+enter',
+        'delete' => 'ctrl+backspace',
+    ],
 ];

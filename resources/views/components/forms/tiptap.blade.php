@@ -122,6 +122,18 @@
                     this.updatedAt = Date.now();
                 },
             });
+
+             // Listen for record navigation to update editor content
+            this.$wire.$on('record-navigated', () => {
+                this.$nextTick(() => {
+                    const newContent = this.$wire.get('{{ $field }}') ?? '';
+                    const processedContent = this.preserveEmptyLines(newContent);
+                    Alpine.raw(this.editor).commands.setContent(processedContent, false, {
+                        preserveWhitespace: 'full',
+                    });
+                    this.content = newContent;
+                });
+            });
         },
         isActive(type, attrs = {}) {
             return this.updatedAt && Alpine.raw(this.editor)?.isActive(type, attrs);

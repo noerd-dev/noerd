@@ -25,8 +25,8 @@
         @endif
 
         @php
-            $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', '/');
-            $newEntryShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('new_entry', 'alt+n');
+            $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', 's');
+            $newEntryShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('new_entry', 'n');
         @endphp
 
         @if(isset($disableSearch) && !$disableSearch)

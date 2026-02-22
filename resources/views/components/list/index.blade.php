@@ -31,14 +31,25 @@
     <div x-data="{
         selectedRow{{$listId}}: 0,
         isInsideModal: false,
+        isInBlockingField() {
+            const el = document.activeElement;
+            return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el?.tagName)
+                || el?.isContentEditable
+                || !!el?.closest?.('[contenteditable]');
+        },
+        canHandleListKey() {
+            return ($store.app.currentId == '{{$listId}}')
+                && (this.isInsideModal || !$store.app.modalOpen)
+                && !this.isInBlockingField();
+        },
     }"
          x-init="
         $store.app.setId('{{$listId}}');
         isInsideModal = !!$el.closest('#modal') || !!$el.closest('[modal]');"
          @mouseenter="$store.app.setId('{{$listId}}')"
-         @keydown.window.arrow-down.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$listId}}++"
-         @keydown.window.arrow-up.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && selectedRow{{$listId}}--"
-         @keydown.window.enter.prevent="($store.app.currentId == '{{$listId}}') && (isInsideModal || !$store.app.modalOpen) && $wire.findListAction(selectedRow{{$listId}})"
+         @keydown.window.arrow-down="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{$listId}}++ }"
+         @keydown.window.arrow-up="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{$listId}}-- }"
+         @keydown.window.enter="if (canHandleListKey()) { $event.preventDefault(); $wire.findListAction(selectedRow{{$listId}}) }"
          @record-navigated.window="
             const rowIds = @js(is_array($rows) ? array_column($rows, 'id') : $rows->getCollection()->pluck('id')->values()->toArray());
             const idx = rowIds.indexOf(parseInt($event.detail.id));
