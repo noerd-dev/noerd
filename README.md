@@ -1,6 +1,6 @@
 # noerd/noerd
 
-Noerd is a Laravel Livewire boilerplate for building admin panels efficiently. It provides pre-built list and detail
+Noerd is a Laravel Livewire 4 framework for building admin panels efficiently. It provides pre-built list and detail
 views that can be configured entirely through YAML files, eliminating the need for repetitive CRUD code.
 
 ## Key Features
@@ -24,15 +24,6 @@ php artisan noerd:install
 ```
 
 The installation wizard will guide you through creating an admin user and an initial tenant.
-
-## Tailwind CSS
-
-Noerd's Blade views use Tailwind CSS classes. To ensure Tailwind detects and generates the required utility classes, add the following `@source` directives to your project's `resources/css/app.css`:
-
-```css
-@source '../../vendor/noerd/modal/resources/views';
-@source '../../vendor/noerd/noerd/resources/views';
-```
 
 ## Usage
 

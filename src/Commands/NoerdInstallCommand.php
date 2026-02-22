@@ -203,13 +203,13 @@ class NoerdInstallCommand extends Command
         $cssContent = file_get_contents($cssPath);
 
         $noerdStyles = "
-@source '../../vendor/noerd/noerd/resources/views/**/*.blade.php';
-@source '../../vendor/noerd/modal/resources/views/**/*.blade.php';
+@source '../../vendor/noerd/modal/resources/views';
+@source '../../vendor/noerd/noerd/resources/views';
 @config '../../tailwind.config.js';
 ";
 
         // Check if noerd styles are already present
-        if (!str_contains($cssContent, '@source \'../../vendor/noerd/noerd/resources/views/**/*.blade.php\';')) {
+        if (!str_contains($cssContent, '@source \'../../vendor/noerd/noerd/resources/views\';')) {
             file_put_contents($cssPath, $cssContent . $noerdStyles);
             $this->line('<info>Updated app.css with noerd styles.</info>');
         } else {
