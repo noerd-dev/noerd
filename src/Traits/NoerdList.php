@@ -130,11 +130,12 @@ trait NoerdList
      */
     protected function storeRecordNavigation(mixed $rows): void
     {
-        $ids = [];
         if (is_array($rows)) {
             $ids = array_column($rows, 'id');
-        } else {
+        } elseif (method_exists($rows, 'getCollection')) {
             $ids = $rows->getCollection()->pluck('id')->toArray();
+        } else {
+            $ids = $rows->pluck('id')->toArray();
         }
 
         $listComponent = $this->getListComponent();
@@ -295,6 +296,8 @@ trait NoerdList
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
+        $this->storeRecordNavigation($rows);
+
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);

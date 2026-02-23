@@ -56,20 +56,51 @@ trait NoerdDetail
     }
 
     /**
+     * Check if record navigation is available.
+     */
+    public function hasRecordNavigation(): bool
+    {
+        if (! $this->modelId) {
+            return false;
+        }
+
+        if (! empty($this->recordNavigationIds)) {
+            return true;
+        }
+
+        return defined('static::DETAIL_CLASS');
+    }
+
+    /**
      * Navigate to the next or previous record.
      */
     public function navigateRecord(string $direction): void
     {
-        if (empty($this->recordNavigationIds) || ! $this->modelId) {
-            file_put_contents(storage_path('logs/nav-debug.log'), date('H:i:s') . " NAVIGATE early return: ids=" . count($this->recordNavigationIds) . " modelId={$this->modelId}\n", FILE_APPEND);
+        if (! $this->modelId) {
+            return;
+        }
+
+        // Fallback: query model by ID when not opened from a list
+        if (empty($this->recordNavigationIds)) {
+            if (! defined('static::DETAIL_CLASS')) {
+                return;
+            }
+
+            $modelClass = static::DETAIL_CLASS;
+            // Down (next) = older record (lower ID), Up (prev) = newer record (higher ID)
+            $newId = $direction === 'next'
+                ? $modelClass::where('id', '<', $this->modelId)->orderByDesc('id')->value('id')
+                : $modelClass::where('id', '>', $this->modelId)->orderBy('id')->value('id');
+
+            if ($newId) {
+                $this->loadRecord($newId);
+            }
 
             return;
         }
 
         $currentIndex = array_search((int) $this->modelId, $this->recordNavigationIds);
         if ($currentIndex === false) {
-            file_put_contents(storage_path('logs/nav-debug.log'), date('H:i:s') . " NAVIGATE not found: modelId={$this->modelId}(" . gettype($this->modelId) . ") first3ids=" . implode(',', array_slice($this->recordNavigationIds, 0, 3)) . '(' . gettype($this->recordNavigationIds[0] ?? null) . ")\n", FILE_APPEND);
-
             return;
         }
 
@@ -79,7 +110,6 @@ trait NoerdDetail
             return;
         }
 
-        file_put_contents(storage_path('logs/nav-debug.log'), date('H:i:s') . " NAVIGATE OK: {$this->modelId} -> {$this->recordNavigationIds[$newIndex]}\n", FILE_APPEND);
         $this->loadRecord($this->recordNavigationIds[$newIndex]);
     }
 
@@ -104,8 +134,26 @@ trait NoerdDetail
      */
     public function getRecordNavigationInfo(): array
     {
-        if (empty($this->recordNavigationIds) || ! $this->modelId) {
+        if (! $this->modelId) {
             return ['available' => false];
+        }
+
+        // Fallback mode: query model by ID
+        if (empty($this->recordNavigationIds)) {
+            if (! defined('static::DETAIL_CLASS')) {
+                return ['available' => false];
+            }
+
+            $modelClass = static::DETAIL_CLASS;
+
+            // Up (prev) = newer (higher ID), Down (next) = older (lower ID)
+            return [
+                'available' => true,
+                'hasPrev' => $modelClass::where('id', '>', $this->modelId)->exists(),
+                'hasNext' => $modelClass::where('id', '<', $this->modelId)->exists(),
+                'current' => null,
+                'total' => null,
+            ];
         }
 
         $currentIndex = array_search((int) $this->modelId, $this->recordNavigationIds);

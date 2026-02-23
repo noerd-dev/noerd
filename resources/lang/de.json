@@ -323,5 +323,7 @@
     "noerd_label_available_apps": "Verfügbare Apps",
     "noerd_label_no_assigned_apps": "Keine Apps zugewiesen",
     "noerd_label_no_available_apps": "Keine weiteren Apps verfügbar",
-    "noerd_confirm_delete": "Möchten Sie diesen Eintrag wirklich löschen?"
+    "noerd_confirm_delete": "Möchten Sie diesen Eintrag wirklich löschen?",
+    "noerd_nav_previous_record": "Vorheriger Datensatz",
+    "noerd_nav_next_record": "Nächster Datensatz"
 }

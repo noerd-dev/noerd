@@ -35,6 +35,7 @@
     <div class="grid py-8 pt-4 grid-cols-1 sm:grid-cols-{{$cols ?? '12'}} gap-6">
         @foreach($fields ?? [] as $field)
             @if(isset($field['show']) && !$field['show'])
+            @elseif(isset($field['viewExists']) && !\Illuminate\Support\Facades\View::exists($field['viewExists']))
             @elseif($field['type'] === 'block')
                 {{-- Nested block with its own title and fields --}}
                 <div class="col-span-1 sm:col-span-{{$field['colspan'] ?? '12'}}" {!! $getShowIfDirective($field) !!}>
