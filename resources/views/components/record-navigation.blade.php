@@ -2,7 +2,7 @@
     'recordNavInfo' => ['available' => false],
 ])
 
-<div class="hidden sm:flex flex-col gap-1 absolute -left-14 top-5 z-10">
+<div class="hidden sm:flex flex-col gap-1 absolute -left-14 top-0 z-10">
     <button
         wire:click="navigateRecord('prev')"
         @if(!$recordNavInfo['hasPrev']) disabled @endif
