@@ -9,6 +9,7 @@ The Noerd Framework provides several Artisan commands.
 | Command | Description |
 |---------|-------------|
 | `noerd:install` | Install framework |
+| `noerd:demo` | Install demo data (model, migration, YAML config, navigation) |
 | `noerd:update` | Update noerd content files without running installation setup |
 | `noerd:create-admin` | Create admin user |
 | `noerd:make-admin` | Make user admin |
@@ -25,6 +26,16 @@ Installs the Noerd Framework and performs basic configuration.
 ```bash
 php artisan noerd:install
 ```
+
+## noerd:demo
+
+Installs demo data into your project. This publishes a fully working Demo Customers app with model, migration, Blade components, YAML configuration, navigation, and routes. The demo app is automatically registered as a TenantApp and assigned to all tenants.
+
+```bash
+php artisan noerd:demo
+```
+
+This command is also offered during `noerd:install`. It can be run independently at any time.
 
 ## noerd:update
 

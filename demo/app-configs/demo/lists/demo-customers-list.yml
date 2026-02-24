@@ -1,0 +1,21 @@
+title: Demo Customers
+newLabel: New Demo Customer
+component: demo-customer-detail
+disableSearch: false
+columns:
+  - field: name
+    label: Name
+    width: 12
+    type: text
+  - field: company_name
+    label: Company
+    width: 10
+  - field: email
+    label: Email
+    width: 12
+  - field: phone
+    label: Phone
+    width: 10
+  - field: city
+    label: City
+    width: 10

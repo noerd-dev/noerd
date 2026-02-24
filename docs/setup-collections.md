@@ -68,7 +68,7 @@ Use the `setupCollectionSelect` field type in your detail YAML files to create a
 
 ```yaml
 - name: detailData.country_id
-  label: noerd_label_country
+  label: Country
   type: setupCollectionSelect
   collectionKey: countries
   displayField: name

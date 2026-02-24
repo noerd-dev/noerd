@@ -16,6 +16,7 @@ use Noerd\Commands\CreateTenantCommand;
 use Noerd\Commands\MakeCollectionCommand;
 use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakeUserAdmin;
+use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Listeners\InitializeTenantSession;
@@ -79,6 +80,7 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeCollectionCommand::class,
                 CreateAdminCommand::class,
                 CreateTenantCommand::class,
+                NoerdDemoCommand::class,
             ]);
         }
     }

@@ -1,0 +1,10 @@
+- title: Demo
+  name: demo
+  hidden: true
+  route: demo-customers
+  block_menus:
+    - title: Demo
+      navigations:
+        - title: Demo Customers
+          route: demo-customers
+          heroicon: users

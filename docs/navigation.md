@@ -20,18 +20,18 @@ For example: `app-configs/accounting/navigation.yml`
   hidden: true
   route: accounting-tool
   block_menus:
-    - title: accounting_nav_customers
+    - title: Customers
       navigations:
-        - title: accounting_nav_customers
+        - title: Customers
           route: 'customers'
           heroicon: 'users'
           newComponent: 'customer-detail'
-        - title: accounting_nav_invoices
+        - title: Invoices
           route: 'invoices'
           heroicon: 'document-currency-euro'
-    - title: accounting_nav_products
+    - title: Products
       navigations:
-        - title: accounting_nav_products
+        - title: Products
           route: 'products'
           newComponent: 'product-detail'
           heroicon: 'archive-box'
@@ -59,22 +59,41 @@ For example: `app-configs/accounting/navigation.yml`
   hidden: true
   route: accounting-tool
   block_menus:
-    - title: accounting_nav_customers
+    - title: Customers
       navigations:
-        - { title: accounting_nav_customers, route: 'customers', heroicon: 'users', newComponent: 'customer-detail' }
-        - { title: accounting_nav_invoices, route: 'invoices', heroicon: 'document-currency-euro' }
-        - { title: accounting_nav_quotes, route: 'accounting.quotes', heroicon: 'document-currency-euro' }
-    - title: accounting_nav_finances
+        - title: Customers
+          route: 'customers'
+          heroicon: 'users'
+          newComponent: 'customer-detail'
+        - title: Invoices
+          route: 'invoices'
+          heroicon: 'document-currency-euro'
+        - title: Quotes
+          route: 'accounting.quotes'
+          heroicon: 'document-currency-euro'
+    - title: Finances
       navigations:
-        - { title: accounting_nav_bank_accounts, route: 'accounting.bank-accounts', heroicon: 'building-library', newComponent: 'bank-account-detail' }
-        - { title: accounting_nav_bank_transactions, route: 'accounting.bank-transactions', heroicon: 'banknotes' }
-    - title: accounting_nav_products
+        - title: Bank Accounts
+          route: 'accounting.bank-accounts'
+          heroicon: 'building-library'
+          newComponent: 'bank-account-detail'
+        - title: Bank Transactions
+          route: 'accounting.bank-transactions'
+          heroicon: 'banknotes'
+    - title: Products
       navigations:
-        - { title: accounting_nav_products, route: 'products', newComponent: 'product-detail', heroicon: 'archive-box' }
-        - { title: accounting_nav_product_groups, route: 'product-groups', heroicon: 'rectangle-group' }
-    - title: accounting_nav_settings
+        - title: Products
+          route: 'products'
+          newComponent: 'product-detail'
+          heroicon: 'archive-box'
+        - title: Product Groups
+          route: 'product-groups'
+          heroicon: 'rectangle-group'
+    - title: Settings
       navigations:
-        - { title: accounting_nav_settings, route: 'accounting-settings', heroicon: 'cog-6-tooth' }
+        - title: Settings
+          route: 'accounting-settings'
+          heroicon: 'cog-6-tooth'
 ```
 
 ## Next Steps

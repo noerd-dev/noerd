@@ -81,6 +81,10 @@
                         @include('noerd::components.forms.button', ['field' => $field])
                     @elseif($field['type'] === 'colorHex')
                         @include('noerd::components.forms.color-hex', ['field' => $field])
+                    @elseif($field['type'] === 'textarea')
+                        @include('noerd::components.forms.input-textarea', ['field' => $field])
+                    @elseif($field['type'] === 'file')
+                        @include('noerd::components.forms.file', ['field' => $field])
                     @else
                         @include('noerd::components.forms.input', ['field' => $field])
                     @endif

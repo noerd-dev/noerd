@@ -7,11 +7,11 @@ The search functionality allows users to filter list data by typing in a search 
 In the YAML configuration, use `disableSearch` to control the search field visibility:
 
 ```yaml
-title: accounting_label_customers
+title: Customers
 disableSearch: false  # Search is enabled (default)
 columns:
   - field: name
-    label: accounting_label_name
+    label: Name
 ```
 
 To disable the search field:

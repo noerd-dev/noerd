@@ -1,5 +1,9 @@
 # Creating Modules
 
+Using modules is completely optional. The application works perfectly fine without any modules. 
+
+The module approach is very inspired by https://github.com/InterNACHI/modular
+
 Use the `noerd:module` Artisan command to create a new module with complete directory structure.
 
 ## Quick Start
@@ -12,30 +16,6 @@ The command will ask for:
 1. **Module name** (e.g., `inventory`)
 2. **Main model name** (e.g., `item`)
 
-## What Gets Created
-
-```
-app-modules/{module-name}/
-├── app-contents/{module-name}/
-│   ├── lists/{models}-list.yml
-│   ├── details/{model}-detail.yml
-│   └── navigation.yml
-├── database/
-│   └── migrations/
-├── resources/
-│   ├── views/components/
-│   │   ├── ⚡{models}-list.blade.php
-│   │   └── ⚡{model}-detail.blade.php
-│   └── lang/
-│       ├── de.json
-│       └── en.json
-├── routes/{module-name}-routes.php
-├── src/
-│   ├── Models/{Model}.php
-│   └── Providers/{ModuleName}ServiceProvider.php
-├── tests/
-└── composer.json
-```
 
 ## Next Steps
 

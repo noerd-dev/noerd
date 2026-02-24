@@ -1,19 +1,19 @@
 # Field Types Reference
 
-This document provides a comprehensive reference for all available field types in YAML configuration files for detail components.
+This document provides a comprehensive reference for all available field types in YAML configuration files for **detail components**.
 
 ## Example yml File with all field types
 
 ```yaml
-title: example_detail_title
-description: example_detail_description
+title: Example Detail
+description: An example detail with all field types
 tabs:
   - number: 1
-    label: example_tab_general
+    label: General
   - number: 2
-    label: example_tab_details
+    label: Details
   - number: 3
-    label: example_tab_media
+    label: Media
 fields:
   # ===========================================
   # TAB 1: General (Basic Types)
@@ -21,64 +21,64 @@ fields:
 
   # text - Standard text input
   - name: detailData.name
-    label: example_label_name
+    label: Name
     type: text
     colspan: 6
     required: true
 
   # text (email) - Email input
   - name: detailData.email
-    label: example_label_email
+    label: Email
     type: email
     colspan: 6
 
   # text (number) - Number input
   - name: detailData.quantity
-    label: example_label_quantity
+    label: Quantity
     type: number
     colspan: 3
 
   # text (date) - Date picker
   - name: detailData.birth_date
-    label: example_label_birth_date
+    label: Birth Date
     type: date
     colspan: 3
 
   # text (time) - Time picker
   - name: detailData.start_time
-    label: example_label_start_time
+    label: Start Time
     type: time
     colspan: 3
 
   # text (datetime-local) - Datetime picker
   - name: detailData.scheduled_at
-    label: example_label_scheduled_at
+    label: Scheduled At
     type: datetime-local
     colspan: 3
 
   # colorHex - Color picker with HEX value
   - name: detailData.color
-    label: example_label_color
+    label: Color
     type: colorHex
     colspan: 3
 
   # textarea - Multi-line text
   - name: detailData.description
-    label: example_label_description
+    label: Description
     type: textarea
     colspan: 12
     rows: 4
 
   # checkbox - Boolean toggle
   - name: detailData.is_active
-    label: example_label_active
+    label: Active
     type: checkbox
     colspan: 3
     live: true
 
   # checkbox with showIf condition
   - name: detailData.notify_email
-    label: example_label_notify
+    label: Notify
     type: checkbox
     colspan: 3
     showIf: detailData.is_active
@@ -89,7 +89,7 @@ fields:
 
   # select - Static dropdown options
   - name: detailData.priority
-    label: example_label_priority
+    label: Priority
     type: select
     colspan: 4
     options:
@@ -102,7 +102,7 @@ fields:
 
   # picklist - Dynamic dropdown from component method
   - name: detailData.warehouse_id
-    label: example_label_warehouse
+    label: Warehouse
     type: picklist
     picklistField: getWarehouseOptions
     colspan: 4
@@ -113,7 +113,7 @@ fields:
 
   # relation - Modal-based foreign key selection
   - name: detailData.customer_id
-    label: example_label_customer
+    label: Customer
     type: relation
     relationField: relationTitles.customer_id
     modalComponent: customers-list
@@ -121,7 +121,7 @@ fields:
 
   # belongsToMany - Tag-style many-to-many selection
   - name: tagIds
-    label: example_label_tags
+    label: Tags
     type: belongsToMany
     optionsMethod: getTagOptions
     colspan: 6
@@ -132,13 +132,13 @@ fields:
 
   # collection-select - CMS Collection dropdown
   - name: detailData.collection_id
-    label: example_label_collection
+    label: Collection
     type: collection-select
     colspan: 6
 
   # setupCollectionSelect - Setup Collection dropdown
   - name: detailData.country_id
-    label: example_label_country
+    label: Country
     type: setupCollectionSelect
     collectionKey: countries
     displayField: name
@@ -150,28 +150,28 @@ fields:
 
   # richText - WYSIWYG editor
   - name: detailData.content
-    label: example_label_content
+    label: Content
     type: richText
     colspan: 12
     tab: 2
 
   # translatableText - Multi-language text
   - name: detailData.title
-    label: example_label_title
+    label: Title
     type: translatableText
     colspan: 12
     tab: 2
 
   # translatableTextarea - Multi-language textarea
   - name: detailData.summary
-    label: example_label_summary
+    label: Summary
     type: translatableTextarea
     colspan: 12
     tab: 2
 
   # translatableRichText - Multi-language WYSIWYG
   - name: detailData.body
-    label: example_label_body
+    label: Body
     type: translatableRichText
     colspan: 12
     tab: 2
@@ -182,14 +182,14 @@ fields:
 
   # image - Media library image selection
   - name: detailData.image_id
-    label: example_label_image
+    label: Image
     type: image
     colspan: 6
     tab: 3
 
   # file - File upload
   - name: document
-    label: example_label_document
+    label: Document
     type: file
     accept: '.pdf,.doc,.docx'
     colspan: 6
@@ -204,7 +204,7 @@ fields:
 
   # text (readonly) - Read-only field showing generated value
   - name: detailData.code
-    label: example_label_code
+    label: Code
     type: text
     colspan: 3
     readonly: true
@@ -215,24 +215,24 @@ fields:
   # ===========================================
 
   - type: block
-    title: example_label_address
+    title: Address
     colspan: 12
     tab: 3
     fields:
       - name: detailData.street
-        label: example_label_street
+        label: Street
         type: text
         colspan: 8
       - name: detailData.house_number
-        label: example_label_house_number
+        label: House Number
         type: text
         colspan: 4
       - name: detailData.zip
-        label: example_label_zip
+        label: Zip Code
         type: text
         colspan: 4
       - name: detailData.city
-        label: example_label_city
+        label: City
         type: text
         colspan: 8
 
@@ -242,13 +242,13 @@ fields:
 
   # showIf with boolean field
   - name: detailData.has_discount
-    label: example_label_has_discount
+    label: Has Discount
     type: checkbox
     colspan: 3
     live: true
     tab: 3
   - name: detailData.discount_percent
-    label: example_label_discount
+    label: Discount
     type: number
     colspan: 3
     showIf: detailData.has_discount
@@ -256,7 +256,7 @@ fields:
 
   # showIf with value comparison
   - name: detailData.type
-    label: example_label_type
+    label: Type
     type: select
     colspan: 3
     live: true
@@ -268,7 +268,7 @@ fields:
         label: Business
 
   - name: detailData.company_name
-    label: example_label_company
+    label: Company
     type: text
     colspan: 3
     tab: 3
@@ -278,7 +278,7 @@ fields:
 
   # showIfNot - Hide when condition is true
   - name: detailData.private_notes
-    label: example_label_private_notes
+    label: Private Notes
     type: textarea
     colspan: 6
     tab: 3
@@ -350,44 +350,44 @@ Standard text input field. Also handles HTML5 input types like `email`, `number`
 ```yaml
 # Simple text field
 - name: detailData.name
-  label: noerd_label_name
+  label: Name
   type: text
   colspan: 6
 
 # Email field
 - name: detailData.email
-  label: noerd_label_email
+  label: Email
   type: email
   colspan: 6
   required: true
 
 # Number field
 - name: detailData.quantity
-  label: noerd_label_quantity
+  label: Quantity
   type: number
   colspan: 3
 
 # Date field
 - name: detailData.birth_date
-  label: noerd_label_birth_date
+  label: Birth Date
   type: date
   colspan: 4
 
 # Time field
 - name: detailData.start_time
-  label: noerd_label_start_time
+  label: Start Time
   type: time
   colspan: 4
 
 # Datetime field
 - name: detailData.scheduled_at
-  label: noerd_label_scheduled_at
+  label: Scheduled At
   type: datetime-local
   colspan: 6
 
 # Read-only field with live updates
 - name: detailData.code
-  label: noerd_label_code
+  label: Code
   type: text
   colspan: 4
   readonly: true
@@ -417,20 +417,20 @@ Color picker with HEX value input. Combines a text input for manual HEX entry wi
 ```yaml
 # Basic color picker
 - name: detailData.color
-  label: noerd_label_color
+  label: Color
   type: colorHex
   colspan: 4
 
 # Color picker with live updates
 - name: detailData.background_color
-  label: noerd_label_background_color
+  label: Background Color
   type: colorHex
   colspan: 4
   live: true
 
 # Read-only color display
 - name: detailData.theme_color
-  label: noerd_label_theme_color
+  label: Theme Color
   type: colorHex
   colspan: 4
   readonly: true
@@ -466,20 +466,20 @@ Multi-line text field.
 ```yaml
 # Standard textarea
 - name: detailData.description
-  label: noerd_label_description
+  label: Description
   type: textarea
   colspan: 12
 
 # Textarea with custom rows
 - name: detailData.notes
-  label: noerd_label_notes
+  label: Notes
   type: textarea
   colspan: 12
   rows: 4
 
 # Read-only textarea
 - name: detailData.system_log
-  label: noerd_label_log
+  label: Log
   type: textarea
   colspan: 12
   readonly: true
@@ -503,20 +503,20 @@ Boolean checkbox field.
 ```yaml
 # Simple checkbox
 - name: detailData.is_active
-  label: noerd_label_active
+  label: Active
   type: checkbox
   colspan: 3
 
 # Checkbox with live updates (useful for conditional fields)
 - name: detailData.has_discount
-  label: noerd_label_has_discount
+  label: Has Discount
   type: checkbox
   colspan: 3
   live: true
 
 # Disabled checkbox
 - name: detailData.is_system
-  label: noerd_label_system
+  label: System
   type: checkbox
   colspan: 3
   readonly: true
@@ -560,7 +560,7 @@ options:
 ```yaml
 # Select with value/label pairs
 - name: detailData.priority
-  label: noerd_label_priority
+  label: Priority
   type: select
   colspan: 6
   options:
@@ -573,7 +573,7 @@ options:
 
 # Select with simple options
 - name: detailData.status
-  label: noerd_label_status
+  label: Status
   type: select
   colspan: 6
   options:
@@ -583,7 +583,7 @@ options:
 
 # Select with live updates
 - name: detailData.category
-  label: noerd_label_category
+  label: Category
   type: select
   colspan: 6
   live: true
@@ -612,7 +612,7 @@ Dropdown with dynamically loaded options from a Livewire component method.
 
 ```yaml
 - name: detailData.warehouse_id
-  label: noerd_label_warehouse
+  label: Warehouse
   type: picklist
   picklistField: getWarehouseOptions
   colspan: 6
@@ -656,7 +656,7 @@ Modal-based selection for foreign key relationships. Opens a list modal where us
 
 ```yaml
 - name: detailData.customer_id
-  label: noerd_label_customer
+  label: Customer
   type: relation
   relationField: relationTitles.customer_id
   modalComponent: customers-list
@@ -710,7 +710,7 @@ Tag-style selection for many-to-many relationships with search functionality.
 
 ```yaml
 - name: tagIds
-  label: noerd_label_tags
+  label: Tags
   type: belongsToMany
   optionsMethod: getTagOptions
   colspan: 12
@@ -768,7 +768,7 @@ Image selection from the Media library.
 
 ```yaml
 - name: detailData.image_id
-  label: noerd_label_image
+  label: Image
   type: image
   colspan: 6
 ```
@@ -823,13 +823,13 @@ File upload field with Livewire integration.
 ```yaml
 # Single file upload
 - name: document
-  label: noerd_label_document
+  label: Document
   type: file
   colspan: 6
 
 # Multiple files with type restriction
 - name: attachments
-  label: noerd_label_attachments
+  label: Attachments
   type: file
   multiple: true
   accept: '.pdf,.doc,.docx'
@@ -837,7 +837,7 @@ File upload field with Livewire integration.
 
 # Image upload with live preview
 - name: photo
-  label: noerd_label_photo
+  label: Photo
   type: file
   accept: 'image/*'
   live: true
@@ -886,7 +886,7 @@ TipTap WYSIWYG editor for formatted text content.
 
 ```yaml
 - name: detailData.content
-  label: noerd_label_content
+  label: Content
   type: richText
   colspan: 12
 ```
@@ -917,7 +917,7 @@ Multi-language single-line text field.
 
 ```yaml
 - name: detailData.title
-  label: noerd_label_title
+  label: Title
   type: translatableText
   colspan: 12
 ```
@@ -944,7 +944,7 @@ Multi-language multi-line text field.
 
 ```yaml
 - name: detailData.description
-  label: noerd_label_description
+  label: Description
   type: translatableTextarea
   colspan: 12
 ```
@@ -959,7 +959,7 @@ Multi-language WYSIWYG editor.
 
 ```yaml
 - name: detailData.body
-  label: noerd_label_body
+  label: Body
   type: translatableRichText
   colspan: 12
 ```
@@ -988,7 +988,7 @@ Dropdown for selecting CMS Collection entries.
 
 ```yaml
 - name: detailData.collection_id
-  label: noerd_label_collection
+  label: Collection
   type: collection-select
   colspan: 6
 ```
@@ -1016,7 +1016,7 @@ Dropdown for selecting entries from a Setup Collection.
 
 ```yaml
 - name: detailData.country_id
-  label: noerd_label_country
+  label: Country
   type: setupCollectionSelect
   collectionKey: countries
   displayField: name
@@ -1082,23 +1082,23 @@ Container for grouping nested fields with an optional title.
 
 ```yaml
 - type: block
-  title: noerd_label_address
+  title: Address
   colspan: 12
   fields:
     - name: detailData.street
-      label: noerd_label_street
+      label: Street
       type: text
       colspan: 8
     - name: detailData.zip
-      label: noerd_label_zip
+      label: Zip Code
       type: text
       colspan: 4
     - name: detailData.city
-      label: noerd_label_city
+      label: City
       type: text
       colspan: 8
     - name: detailData.country
-      label: noerd_label_country
+      label: Country
       type: text
       colspan: 4
 
@@ -1107,11 +1107,11 @@ Container for grouping nested fields with an optional title.
   colspan: 6
   fields:
     - name: detailData.first_name
-      label: noerd_label_first_name
+      label: First Name
       type: text
       colspan: 12
     - name: detailData.last_name
-      label: noerd_label_last_name
+      label: Last Name
       type: text
       colspan: 12
 ```
@@ -1134,7 +1134,7 @@ Show the field only when a condition is true.
 ```yaml
 # Show when detailData.is_business is truthy
 - name: detailData.company_name
-  label: noerd_label_company
+  label: Company
   type: text
   showIf: detailData.is_business
 ```
@@ -1143,7 +1143,7 @@ Show the field only when a condition is true.
 ```yaml
 # Show when detailData.type equals 'business'
 - name: detailData.company_name
-  label: noerd_label_company
+  label: Company
   type: text
   showIf:
     field: detailData.type
@@ -1158,7 +1158,7 @@ Hide the field when a condition is true.
 ```yaml
 # Hide when detailData.is_private is truthy
 - name: detailData.public_notes
-  label: noerd_label_notes
+  label: Notes
   type: textarea
   showIfNot: detailData.is_private
 ```
@@ -1167,7 +1167,7 @@ Hide the field when a condition is true.
 ```yaml
 # Hide when detailData.status equals 'archived'
 - name: detailData.edit_notes
-  label: noerd_label_notes
+  label: Notes
   type: textarea
   showIfNot:
     field: detailData.status
@@ -1180,31 +1180,31 @@ Hide the field when a condition is true.
 fields:
   # Checkbox with live updates to trigger conditional logic
   - name: detailData.is_business
-    label: noerd_label_business
+    label: Business
     type: checkbox
     colspan: 12
     live: true
 
   # These fields only show when is_business is checked
   - name: detailData.company_name
-    label: noerd_label_company
+    label: Company
     type: text
     colspan: 6
     showIf: detailData.is_business
   - name: detailData.vat_number
-    label: noerd_label_vat
+    label: VAT Number
     type: text
     colspan: 6
     showIf: detailData.is_business
 
   # These fields only show when is_business is NOT checked
   - name: detailData.first_name
-    label: noerd_label_first_name
+    label: First Name
     type: text
     colspan: 6
     showIfNot: detailData.is_business
   - name: detailData.last_name
-    label: noerd_label_last_name
+    label: Last Name
     type: text
     colspan: 6
     showIfNot: detailData.is_business

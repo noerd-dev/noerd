@@ -6,12 +6,12 @@ Detail pages display and edit individual records with forms.
 
 ## File Locations
 
-**YAML Configuration:**
+### YAML Configuration:
 ```
 app-configs/{app}/details/{name}-detail.yml
 ```
 
-**Livewire Component:**
+### Livewire Component:
 ```
 app-modules/{module}/resources/views/components/⚡{name}-detail.blade.php
 ```
@@ -21,38 +21,38 @@ app-modules/{module}/resources/views/components/⚡{name}-detail.blade.php
 Example: `app-configs/accounting/details/customer-detail.yml`
 
 ```yaml
-title: accounting_label_customer_details
+title: Customer Details
 description: ''
 tabs:
   - number: 1
-    label: customer_master_data
-  - label: customer_invoices
+    label: Master Data
+  - label: Invoices
     component: invoices-list
     arguments:
       customerId: $customerId
     requiresId: true
 fields:
   - name: detailData.name
-    label: accounting_label_name
+    label: Name
     type: text
     required: true
   - name: detailData.company_name
-    label: accounting_label_company_name
+    label: Company Name
     type: text
   - name: detailData.email
-    label: accounting_label_email
+    label: Email
     type: text
   - name: detailData.phone
-    label: accounting_label_phone
+    label: Phone
     type: text
   - name: detailData.address
-    label: accounting_label_address
+    label: Address
     type: text
   - name: detailData.zipcode
-    label: accounting_label_zip_code
+    label: Zip Code
     type: text
   - name: detailData.city
-    label: accounting_label_city
+    label: City
     type: text
 ```
 
@@ -128,12 +128,6 @@ new class extends Component {
     <x-slot:header>
         <x-noerd::modal-title>Kunde</x-noerd::modal-title>
     </x-slot:header>
-
-    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
-        <x-slot:tab1>
-            {{-- Custom content for tab 1 --}}
-        </x-slot:tab1>
-    </x-noerd::tab-content>
 
     <x-slot:footer>
         <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>

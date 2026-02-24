@@ -13,7 +13,7 @@ app-configs/{app}/lists/{name}-list.yml
 
 Livewire Component:
 ```bash
-app-modules/{module}/resources/views/components/⚡{name}-list.blade.php
+app-modules/{module}/resources/views/components/{name}-list.blade.php
 ```
 
 ## Example YAML Configuration
@@ -21,30 +21,30 @@ app-modules/{module}/resources/views/components/⚡{name}-list.blade.php
 Example: `app-configs/accounting/lists/customers-list.yml`
 
 ```yaml
-title: accounting_label_customers
-newLabel: accounting_label_new_customer
+title: Customers
+newLabel: New Customer
 component: customer-detail
 disableSearch: false
 redirectAction: ''
 columns:
   - field: name
-    label: accounting_label_name
+    label: Name
     width: 12
     type: text
   - field: company_name
-    label: accounting_label_company_name
+    label: Company Name
     width: 10
   - field: email
-    label: accounting_label_email
+    label: Email
     width: 12
   - field: address
-    label: accounting_label_address
+    label: Address
     width: 12
   - field: zipcode
-    label: accounting_label_zip_code
+    label: Zip Code
     width: 10
   - field: city
-    label: accounting_label_city
+    label: City
     width: 10
 ```
 

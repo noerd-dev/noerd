@@ -1,0 +1,32 @@
+title: Demo Customer
+description: ''
+fields:
+  - name: detailData.name
+    label: Name
+    type: text
+    colspan: 6
+    required: true
+  - name: detailData.company_name
+    label: Company
+    type: text
+    colspan: 6
+  - name: detailData.email
+    label: Email
+    type: email
+    colspan: 6
+  - name: detailData.phone
+    label: Phone
+    type: text
+    colspan: 6
+  - name: detailData.address
+    label: Address
+    type: text
+    colspan: 6
+  - name: detailData.zipcode
+    label: Zip Code
+    type: text
+    colspan: 6
+  - name: detailData.city
+    label: City
+    type: text
+    colspan: 6

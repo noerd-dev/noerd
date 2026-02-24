@@ -65,6 +65,9 @@ class NoerdInstallCommand extends Command
             // Ask to run npm build
             $this->runNpmBuild();
 
+            // Ask to install demo data
+            $this->askForDemoInstall();
+
             $this->info('Noerd content successfully installed!');
 
             return 0;
@@ -755,6 +758,22 @@ export default {
 
         // Setup admin user
         $this->setupAdminUser();
+    }
+
+    /**
+     * Ask to install demo data
+     */
+    protected function askForDemoInstall(): void
+    {
+        $this->newLine();
+
+        if (! confirm('Would you like to install demo data? (Recommended)', default: true)) {
+            $this->line('<comment>Skipping demo data. You can install it later with: php artisan noerd:demo</comment>');
+
+            return;
+        }
+
+        $this->call('noerd:demo', ['--force' => $this->option('force')]);
     }
 
     /**

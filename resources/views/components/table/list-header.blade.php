@@ -14,7 +14,7 @@
                 @foreach($this->tableFilters() as $tableFilter)
                     <select wire:change="storeActiveListFilters"
                             wire:model.live="listFilters.{{$tableFilter['column']}}"
-                            class="@if( ($this->listFilters[$tableFilter['column']] ?? '') !== '') !border-brand-primary !border-solid !border-2 @endif mr-4 min-w-36 rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border">
+                            class="@if( ($this->listFilters[$tableFilter['column']] ?? '') !== '') !border-brand-primary !border-solid !border-2 @endif mr-4 min-w-36 max-w-48 truncate rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border">
                         <option value="">{{$tableFilter['label']}}</option>
                         @foreach($tableFilter['options'] ?? [] as $key => $option)
                             <option value="{{$key}}">{{$option}}</option>
