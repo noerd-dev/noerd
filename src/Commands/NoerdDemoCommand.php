@@ -134,7 +134,7 @@ ROUTE;
             ['name' => 'DEMO'],
             [
                 'title' => 'Demo',
-                'icon' => 'customer::icons.app',
+                'icon' => 'noerd::icons.app',
                 'route' => 'demo-customers',
                 'is_active' => true,
             ],
