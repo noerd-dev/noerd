@@ -3,6 +3,8 @@
 Noerd is a Laravel Livewire 4 framework for building admin panels efficiently. It provides pre-built list and detail
 views that can be configured entirely through YAML files, eliminating the need for repetitive CRUD code.
 
+![Noerd](https://noerd.dev/assets/Noerd.gif)
+
 ## Key Features
 
 - **List Views** – Display data in configurable tables with minimal setup
