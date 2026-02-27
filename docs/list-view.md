@@ -65,7 +65,43 @@ columns:
 | `field` | Model attribute name |
 | `label` | Column header (translation key) |
 | `width` | Column width (percentage or fixed) |
-| `type` | Display type (text, date, etc.) |
+| `type` | Display type (see Column Types below) |
+
+## Column Types
+
+| Type | Description |
+|------|-------------|
+| `text` | Default. Standard text display |
+| `date` | Formats value as date (YYYY-MM-DD) |
+| `number` | Right-aligned number, rounded to 2 decimals |
+| `currency` | Right-aligned number formatted as currency with `€` |
+| `id` | Clickable ID link |
+| `bool` | Toggleable boolean: green checkmark (true), red circle (false). Clickable to toggle value |
+| `inversebool` | Green checkmark when true, nothing when false. Clickable to toggle value |
+| `badge_with_text` | Badge with optional text (value must be array with `badge` and `text` keys) |
+| `relation_link` | Clickable link that opens a modal (requires `modalComponent` and `idField` in column config) |
+
+**Example:**
+
+```yaml
+columns:
+  - field: name
+    label: Name
+    width: 30
+    type: text
+  - field: start_date
+    label: Start Date
+    width: 15
+    type: date
+  - field: is_active
+    label: Active
+    width: 10
+    type: bool
+  - field: is_emergency
+    label: Emergency
+    width: 10
+    type: inversebool
+```
 
 ## Livewire Component
 

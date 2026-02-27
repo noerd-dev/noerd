@@ -1,4 +1,4 @@
-<th style="width: {{$width}}%;" scope="col"
+<th style="width: {{$width}}%;@if($minWidth ?? null) min-width: {{$minWidth}}px;@endif" scope="col"
     class="text-{{$align}} border-r last:border-r-0 first:pl-6 sticky top-0 z-10 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">
     <div class="flex top-5 whitespace-nowrap">
         @if($field !== 'action')

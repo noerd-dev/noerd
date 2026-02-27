@@ -90,6 +90,7 @@
                                                     'field' => $column['field'],
                                                     'label' => $column['label'] ?? '',
                                                     'align' => $column['align'] ?? 'left',
+                                                    'minWidth' => $column['minWidth'] ?? null,
                                                 ])
                                             @endforeach
                                         </tr>

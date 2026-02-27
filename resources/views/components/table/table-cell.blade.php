@@ -174,6 +174,16 @@
                 @elseif($value)
                     <span class="text-sm py-0.5 px-1.5">{{ $value }}</span>
                 @endif
+            @elseif($type == 'colored_text')
+                <div wire:click.prevent="{{$action}}('{{$redirectAction}}')" class="cursor-pointer py-0.5 px-1.5">
+                    @if(is_array($value) && isset($value['text']) && $value['text'] !== '')
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
+                            {{ $value['text'] }}
+                        </span>
+                    @elseif(!is_array($value) && $value !== '' && $value !== null)
+                        <span class="text-sm">{{ $value }}</span>
+                    @endif
+                </div>
             @else
                 <input type="{{$type}}"
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
