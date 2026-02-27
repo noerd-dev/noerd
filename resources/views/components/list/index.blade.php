@@ -131,7 +131,7 @@
                 </div>
             </div>
 
-            @if(isset($rows) && count($rows) > 0)
+            @if(isset($rows) && count($rows) > 0 && (is_array($rows) ? '' : $rows->links()) )
                 <div class="py-8">
                     {{ is_array($rows) ? '' : $rows->links() }}
                 </div>

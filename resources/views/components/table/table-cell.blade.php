@@ -175,7 +175,12 @@
                     <span class="text-sm py-0.5 px-1.5">{{ $value }}</span>
                 @endif
             @elseif($type == 'colored_text')
-                <div wire:click.prevent="{{$action}}('{{$redirectAction}}')" class="cursor-pointer py-0.5 px-1.5">
+                <div @if(isset($columnConfig['wireClick']))
+                         wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
+                     @else
+                         wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                     @endif
+                     class="cursor-pointer py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['text']) && $value['text'] !== '')
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
                             {{ $value['text'] }}
