@@ -126,7 +126,7 @@
                                             <tfoot>
                                                 <tr class="bg-gray-50 font-semibold">
                                                     @foreach($table as $index => $column)
-                                                        <td class="border-t-2 border-b border-r border-gray-300 py-2 px-1.5 first:pl-4 text-sm @if(($column['align'] ?? 'left') === 'right' || in_array($column['type'] ?? 'text', ['currency', 'number'])) text-right @endif">
+                                                        <td class="border-t-2 border-b border-r border-gray-300 py-2 px-1.5 first:pl-6 text-sm @if(($column['align'] ?? 'left') === 'right' || in_array($column['type'] ?? 'text', ['currency', 'number'])) text-right @endif">
                                                             @if(isset($summary[$column['field']]))
                                                                 @if(($column['type'] ?? 'text') === 'currency')
                                                                     {{ number_format((float) $summary[$column['field']], 2, ',', '.') }} €
