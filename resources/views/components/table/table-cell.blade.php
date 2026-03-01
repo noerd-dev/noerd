@@ -182,7 +182,7 @@
                      @endif
                      class="cursor-pointer py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['text']) && $value['text'] !== '')
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
+                        <span class="inline-flex items-center px-2 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
                             {{ $value['text'] }}
                         </span>
                     @elseif(!is_array($value) && $value !== '' && $value !== null)

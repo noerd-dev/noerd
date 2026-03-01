@@ -213,6 +213,29 @@ trait NoerdDetail
         }
     }
 
+    public function openRelationDetail(string $detailComponent, string $fieldName): void
+    {
+        $parts = explode('.', $fieldName);
+        $key = end($parts);
+
+        $id = $this->detailData[$key] ?? null;
+
+        if (! $id) {
+            $camelKey = Str::camel($key);
+            if (property_exists($this, $camelKey)) {
+                $id = $this->{$camelKey};
+            }
+        }
+
+        if ($id) {
+            $this->dispatch(
+                event: 'noerdModal',
+                modalComponent: $detailComponent,
+                arguments: ['modelId' => $id],
+            );
+        }
+    }
+
     public function refreshList(): void
     {
         $this->dispatch('$refresh');

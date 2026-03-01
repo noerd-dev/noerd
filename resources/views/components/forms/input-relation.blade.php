@@ -3,6 +3,7 @@
     'name' => '',
     'label' => '',
     'modalComponent' => '',
+    'detailComponent' => '',
     'relationField' => null,
     'modelId' => 0,
     'readonly' => false,
@@ -19,6 +20,14 @@
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
+
+    $detailComponent = $field['detailComponent'] ?? $detailComponent;
+    if (empty($detailComponent) && !empty($modalComponent)) {
+        $detailComponent = \Illuminate\Support\Str::singular(
+            \Illuminate\Support\Str::before($modalComponent, '-list')
+        ) . '-detail';
+    }
+
     $wireModel = $relationField ?: 'relationTitles.' . str_replace(['model.', 'detailData.'], '', $name);
 @endphp
 
@@ -32,7 +41,7 @@
             readonly
             id="{{ $name }}"
             name="{{ $name }}"
-            @click="$modal('{{ $modalComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $name }}', listActionMethod: 'selectAction'})"
+            @click="$wire.{{ $wireModel }} ? $wire.openRelationDetail('{{ $detailComponent }}', '{{ $name }}') : $modal('{{ $modalComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $name }}', listActionMethod: 'selectAction'})"
             @if($live)
                 wire:model.live.debounce="{{ $wireModel }}"
             @else
