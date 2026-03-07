@@ -9,12 +9,8 @@
     {{ $attributes->merge(['class' => 'ml-auto']) }}
     x-data="{showButtons: false}">
 
-    @php
-        $deleteBadge = \Noerd\Helpers\KeyboardShortcutHelper::toBadge('delete', 'ctrl+backspace');
-        $saveBadge = \Noerd\Helpers\KeyboardShortcutHelper::toBadge('save', 'ctrl+enter');
-    @endphp
 
-    <div class="ml-auto flex gap-2">
+<div class="ml-auto flex gap-2">
         <div x-show="$wire.showSuccessIndicator"
              x-transition.out.opacity.duration.1000ms
              x-noerd::effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
@@ -60,14 +56,12 @@
             <x-noerd::buttons.delete wire:key="{{\Illuminate\Support\Str::uuid()}}" x-show="!showButtons"
                               @click="showButtons = true">
                 {{ __('Delete') }}
-                <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $deleteBadge }}</kbd>
             </x-noerd::buttons.delete>
         @endif
 
         @if($showSave)
             <x-noerd::store-button wire:click="store">
                 {{__('Save')}}
-                <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $saveBadge }}</kbd>
             </x-noerd::store-button>
         @endif
     </div>

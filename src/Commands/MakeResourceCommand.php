@@ -80,7 +80,7 @@ class MakeResourceCommand extends Command
 
     protected string $entityCamel;
 
-    protected string $appName;
+    protected ?string $appName = null;
 
     protected string $appConfigName;
 
@@ -98,6 +98,10 @@ class MakeResourceCommand extends Command
     public function handle(): int
     {
         $this->modelClass = $this->argument('model');
+
+        if (! str_contains($this->modelClass, '\\')) {
+            $this->modelClass = 'App\\Models\\' . $this->modelClass;
+        }
 
         if (! class_exists($this->modelClass)) {
             $this->error("Class {$this->modelClass} does not exist.");
@@ -122,10 +126,22 @@ class MakeResourceCommand extends Command
         // Derive app name from module directory
         $this->appName = $this->detectModuleName();
 
-        if (! $this->appName) {
-            $this->error('Could not detect module name from model namespace.');
+        // App selection via tenant_apps
+        $apps = TenantApp::where('is_active', true)->pluck('title', 'name')->toArray();
+
+        if (empty($apps)) {
+            $this->error('No active apps found in tenant_apps.');
 
             return 1;
+        }
+
+        $appChoices = array_values($apps);
+        $selectedTitle = $this->choice('Which app should this resource belong to?', $appChoices);
+        $selectedName = array_search($selectedTitle, $apps);
+        $this->appConfigName = Str::lower($selectedName);
+
+        if (! $this->appName) {
+            $this->appName = $this->appConfigName;
         }
 
         // Read columns from database
@@ -147,20 +163,6 @@ class MakeResourceCommand extends Command
 
             return 1;
         }
-
-        // App selection via tenant_apps
-        $apps = TenantApp::where('is_active', true)->pluck('title', 'name')->toArray();
-
-        if (empty($apps)) {
-            $this->error('No active apps found in tenant_apps.');
-
-            return 1;
-        }
-
-        $appChoices = array_values($apps);
-        $selectedTitle = $this->choice('Which app should this resource belong to?', $appChoices);
-        $selectedName = array_search($selectedTitle, $apps);
-        $this->appConfigName = Str::lower($selectedName);
 
         // Define target paths (always in project, not in module)
         $bladeBase = base_path('resources/views/components');
@@ -404,7 +406,7 @@ class MakeResourceCommand extends Command
         foreach ($listColumns as $col) {
             $field = $col['name'];
             $type = $this->getListType($col['type_name']);
-            $label = "{$this->appName}_label_{$field}";
+            $label = Str::headline($field);
             $width = $this->guessColumnWidth($type);
 
             $lines[] = "  - field: {$field}";
@@ -428,7 +430,7 @@ class MakeResourceCommand extends Command
         foreach ($this->columns as $col) {
             $field = $col['name'];
             $type = $this->getDetailType($col['type_name']);
-            $label = "{$this->appName}_label_{$field}";
+            $label = Str::headline($field);
 
             $lines[] = "  - name: detailData.{$field}";
             $lines[] = "    label: {$label}";

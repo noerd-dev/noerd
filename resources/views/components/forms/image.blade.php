@@ -17,7 +17,12 @@
 
     @php
         $resolvedName = str_replace(['detailData.', 'model.'], '', $name);
-        $rawValue = isset($model) && isset($model[$resolvedName]) ? $model[$resolvedName] : null;
+        $rawValue = null;
+        if (isset($model) && isset($model[$resolvedName])) {
+            $rawValue = $model[$resolvedName];
+        } elseif (isset($this->detailData[$resolvedName])) {
+            $rawValue = $this->detailData[$resolvedName];
+        }
         $previewUrl = null;
         if (is_numeric($rawValue)) {
             try {
