@@ -16,7 +16,8 @@
     <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
 
     @php
-        $rawValue = isset($model) && isset($model[$name]) ? $model[$name] : null;
+        $resolvedName = str_replace(['detailData.', 'model.'], '', $name);
+        $rawValue = isset($model) && isset($model[$resolvedName]) ? $model[$resolvedName] : null;
         $previewUrl = null;
         if (is_numeric($rawValue)) {
             try {

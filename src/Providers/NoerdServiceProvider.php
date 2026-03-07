@@ -3,9 +3,9 @@
 namespace Noerd\Providers;
 
 use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -15,6 +15,7 @@ use Noerd\Commands\CreateTenantApp;
 use Noerd\Commands\CreateTenantCommand;
 use Noerd\Commands\MakeCollectionCommand;
 use Noerd\Commands\MakeModuleCommand;
+use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInstallCommand;
@@ -77,6 +78,7 @@ class NoerdServiceProvider extends ServiceProvider
                 CreateTenantApp::class,
                 AssignAppsToTenant::class,
                 MakeModuleCommand::class,
+                MakeResourceCommand::class,
                 MakeCollectionCommand::class,
                 CreateAdminCommand::class,
                 CreateTenantCommand::class,

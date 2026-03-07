@@ -56,6 +56,7 @@ columns:
 | `newLabel` | Label for the "New" button |
 | `component` | Detail component to open on row click |
 | `disableSearch` | Disable the search functionality |
+| `showSummary` | Show or hide the summary row in the table footer (default: `true`) |
 | `columns` | Array of column definitions |
 
 ## Column Properties

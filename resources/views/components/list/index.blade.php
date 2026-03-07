@@ -21,6 +21,7 @@
     $redirectAction = $listSettings['redirectAction'] ?? '';
     $disableSearch = $listSettings['disableSearch'] ?? false;
     $description = $listSettings['description'] ?? false;
+    $showSummary = $listSettings['showSummary'] ?? true;
     $table = $listSettings['columns'] ?? [];
 
     $listAction = $this->listActionMethod ?? 'listAction';
@@ -122,7 +123,7 @@
                                             </tr>
                                         @endforeach
                                         </tbody>
-                                        @if($summary)
+                                        @if($summary && $showSummary)
                                             <tfoot>
                                                 <tr class="bg-gray-50 font-semibold">
                                                     @foreach($table as $index => $column)

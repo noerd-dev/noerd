@@ -1,0 +1,63 @@
+<?php
+
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Noerd\Traits\NoerdDetail;
+use {{ModelClass}};
+
+new class extends Component {
+    use NoerdDetail;
+
+    public const DETAIL_CLASS = {{ModelBaseName}}::class;
+
+    #[Url(as: '{{entity}}Id', keep: false, except: '')]
+    public $modelId = null;
+
+    public function mount(): void
+    {
+        $this->initDetail();
+
+        if ($this->modelId) {
+            ${{entityCamel}} = {{ModelBaseName}}::find($this->modelId);
+            if (${{entityCamel}}) {
+                $this->detailData = ${{entityCamel}}->toArray();
+            }
+        }
+    }
+
+    public function store(): void
+    {
+        $this->validateFromLayout();
+
+        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
+        ${{entityCamel}} = {{ModelBaseName}}::updateOrCreate(
+            ['id' => $this->modelId],
+            $this->detailData,
+        );
+
+        $this->showSuccessIndicator = true;
+
+        if (${{entityCamel}}->wasRecentlyCreated) {
+            $this->modelId = ${{entityCamel}}->id;
+        }
+    }
+
+    public function delete(): void
+    {
+        ${{entityCamel}} = {{ModelBaseName}}::find($this->modelId);
+        ${{entityCamel}}->delete();
+        $this->closeModalProcess($this->getListComponent());
+    }
+}; ?>
+
+<x-noerd::page :disableModal="$disableModal">
+    <x-slot:header>
+        <x-noerd::modal-title>{{ModelBaseName}}</x-noerd::modal-title>
+    </x-slot:header>
+
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
+
+    <x-slot:footer>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
+    </x-slot:footer>
+</x-noerd::page>

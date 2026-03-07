@@ -4,8 +4,10 @@ namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Media\Models\Media;
 
 trait NoerdDetail
 {
@@ -22,6 +24,8 @@ trait NoerdDetail
     public bool $disableModal = false;
 
     public array $relationTitles = [];
+
+    public ?string $mediaToken = null;
 
     public array $detailData = [];
 
@@ -168,6 +172,44 @@ trait NoerdDetail
             'current' => $currentIndex + 1,
             'total' => count($this->recordNavigationIds),
         ];
+    }
+
+    public function openSelectMediaModal(string $fieldName): void
+    {
+        $this->mediaToken = uniqid('media_', true);
+        $this->dispatch(
+            event: 'noerdModal',
+            modalComponent: 'media-list',
+            arguments: ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $this->mediaToken],
+        );
+    }
+
+    #[On('mediaSelected')]
+    public function mediaSelected(int $mediaId, ?string $fieldName = null, ?string $token = null): void
+    {
+        if ($this->mediaToken === null || $this->mediaToken !== $token) {
+            return;
+        }
+
+        $media = Media::find($mediaId);
+        if (! $media) {
+            return;
+        }
+
+        $key = $this->resolveImageFieldKey($fieldName);
+        $this->detailData[$key] = $media->id;
+        $this->mediaToken = null;
+    }
+
+    public function deleteImage(string $fieldName): void
+    {
+        $key = $this->resolveImageFieldKey($fieldName);
+        $this->detailData[$key] = null;
+    }
+
+    protected function resolveImageFieldKey(string $fieldName): string
+    {
+        return str_replace(['detailData.', 'model.'], '', $fieldName);
     }
 
     public function closeModalProcess(?string $source = null, ?string $modalKey = null): void

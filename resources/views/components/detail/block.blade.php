@@ -68,7 +68,7 @@
                     @elseif($field['type'] === 'checkbox')
                         @include('noerd::components.forms.checkbox', ['field' => $field])
                     @elseif($field['type'] === 'image')
-                        @include('noerd::components.forms.image', ['field' => $field, 'model' => $model ?? null])
+                        @include('noerd::components.forms.image', ['field' => $field, 'model' => $model ?? $detailData ?? null])
                     @elseif($field['type'] === 'richText')
                         @include('noerd::components.forms.rich-text', ['field' => $field])
                     @elseif($field['type'] === 'translatableRichText')
