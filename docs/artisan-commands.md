@@ -17,6 +17,7 @@ The Noerd Framework provides several Artisan commands.
 | `noerd:create-app` | Create new TenantApp |
 | `noerd:assign-apps-to-tenant` | Assign apps to tenant |
 | `noerd:module` | Create new module with complete structure |
+| `noerd:make-resource` | Generate list/detail Blade and YAML files from an existing Eloquent model |
 | `noerd:make-collection` | Create setup collection |
 
 ## noerd:install
@@ -95,6 +96,45 @@ php artisan noerd:module
 # or with module name
 php artisan noerd:module inventory
 ```
+
+## noerd:make-resource
+
+Generates list and detail Blade components along with their YAML configuration files from an existing Eloquent model. The command reads the model's database columns and automatically maps them to appropriate YAML field types.
+
+```bash
+# With full namespace
+php artisan noerd:make-resource "App\Models\Invoice"
+
+# Short name (resolves to App\Models\Invoice)
+php artisan noerd:make-resource Invoice
+
+# Module model
+php artisan noerd:make-resource "Modules\Accounting\Models\BankAccount"
+```
+
+### What it generates
+
+The command creates four files:
+
+| File | Location |
+|------|----------|
+| List Blade | `resources/views/components/{entities}-list.blade.php` |
+| Detail Blade | `resources/views/components/{entity}-detail.blade.php` |
+| List YAML | `app-configs/{app}/lists/{entities}-list.yml` |
+| Detail YAML | `app-configs/{app}/details/{entity}-detail.yml` |
+
+### Additional actions
+
+- **Routes** — Appends list and detail routes to `routes/web.php`
+- **Navigation** — Adds a navigation entry to `app-configs/{app}/navigation.yml`
+
+### Interactive app selection
+
+The command prompts you to select which app the resource belongs to from all active entries in `tenant_apps`. The module name is auto-detected from the model's namespace via `composer.json` autoload mappings.
+
+### Database column type mapping
+
+Columns `id`, `tenant_id`, `created_at`, `updated_at`, and `deleted_at` are excluded.
 
 ## noerd:make-collection
 

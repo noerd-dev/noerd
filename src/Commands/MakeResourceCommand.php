@@ -210,9 +210,6 @@ class MakeResourceCommand extends Command
             // Add navigation entry
             $this->addNavigation();
 
-            // Add translations
-            $this->addTranslations();
-
             $this->line('');
             $this->info('Resource files created successfully!');
 
@@ -250,7 +247,6 @@ class MakeResourceCommand extends Command
     {
         $navPaths = [
             base_path("app-configs/{$this->appConfigName}/navigation.yml"),
-            base_path("app-modules/{$this->appName}/app-configs/{$this->appConfigName}/navigation.yml"),
         ];
 
         foreach ($navPaths as $navPath) {
@@ -295,45 +291,6 @@ class MakeResourceCommand extends Command
             $this->filesystem->put($navPath, $content);
             $this->line("<info>Navigation added to:</info> {$navPath}");
         }
-    }
-
-    private function addTranslations(): void
-    {
-        $langDir = base_path("app-modules/{$this->appName}/resources/lang");
-        $navKey = "{$this->appName}_nav_{$this->entities}";
-        $entitiesLabel = Str::headline(str_replace('-', ' ', $this->entities));
-
-        $translations = [
-            'de.json' => [$navKey => $entitiesLabel],
-            'en.json' => [$navKey => $entitiesLabel],
-        ];
-
-        foreach ($translations as $file => $newEntries) {
-            $filePath = "{$langDir}/{$file}";
-
-            if (! $this->filesystem->exists($filePath)) {
-                $this->warn("Translation file not found: {$filePath} — skipping.");
-
-                continue;
-            }
-
-            $existing = json_decode($this->filesystem->get($filePath), true) ?? [];
-
-            foreach ($newEntries as $key => $value) {
-                if (isset($existing[$key])) {
-                    $this->warn("Translation key '{$key}' already exists in {$file} — skipping.");
-
-                    continue;
-                }
-
-                $existing[$key] = $value;
-            }
-
-            $this->filesystem->put($filePath, json_encode($existing, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n");
-            $this->line("<info>Translation added to:</info> {$filePath}");
-        }
-
-        $this->line("<comment>Translation key added: '{$navKey}' — adjust the value as needed.</comment>");
     }
 
     private function detectModuleName(): ?string
