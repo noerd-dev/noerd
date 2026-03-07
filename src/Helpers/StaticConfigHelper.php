@@ -328,11 +328,11 @@ class StaticConfigHelper
                 return false;
             }
 
-            if (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin()) {
-                return false;
-            }
+            return ! (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin())
 
-            return true;
+
+
+            ;
         }));
     }
 

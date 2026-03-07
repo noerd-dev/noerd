@@ -94,7 +94,7 @@ class KeyboardShortcutHelper
             $badge[] = '⇧';
         }
 
-        $badge[] = self::KEY_SYMBOLS[$key] ?? strtolower($key);
+        $badge[] = self::KEY_SYMBOLS[$key] ?? mb_strtolower($key);
 
         return implode('+', $badge);
     }
@@ -104,7 +104,7 @@ class KeyboardShortcutHelper
      */
     private static function parseShortcutString(string $shortcut): array
     {
-        $parts = array_map('trim', explode('+', strtolower($shortcut)));
+        $parts = array_map('trim', explode('+', mb_strtolower($shortcut)));
         $key = array_pop($parts);
 
         return ['modifiers' => $parts, 'key' => $key];

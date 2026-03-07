@@ -51,15 +51,6 @@ trait NoerdDetail
     }
 
     /**
-     * Load record navigation IDs from session.
-     */
-    protected function loadRecordNavigation(): void
-    {
-        $listComponent = $this->getListComponent();
-        $this->recordNavigationIds = session("record_navigation.{$listComponent}", []);
-    }
-
-    /**
      * Check if record navigation is available.
      */
     public function hasRecordNavigation(): bool
@@ -207,11 +198,6 @@ trait NoerdDetail
         $this->detailData[$key] = null;
     }
 
-    protected function resolveImageFieldKey(string $fieldName): string
-    {
-        return str_replace(['detailData.', 'model.'], '', $fieldName);
-    }
-
     public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
     {
         $this->currentTab = 1;
@@ -291,6 +277,20 @@ trait NoerdDetail
     public function changeEditMode(): void
     {
         $this->editMode = !$this->editMode;
+    }
+
+    /**
+     * Load record navigation IDs from session.
+     */
+    protected function loadRecordNavigation(): void
+    {
+        $listComponent = $this->getListComponent();
+        $this->recordNavigationIds = session("record_navigation.{$listComponent}", []);
+    }
+
+    protected function resolveImageFieldKey(string $fieldName): string
+    {
+        return str_replace(['detailData.', 'model.'], '', $fieldName);
     }
 
     /**

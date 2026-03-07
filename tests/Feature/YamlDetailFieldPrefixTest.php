@@ -74,6 +74,6 @@ it('ensures all YAML detail files use detailData prefix for NoerdDetail componen
     }
 
     expect($violations)->toBeEmpty(
-        "Found YAML detail fields with incorrect prefixes:\n" . implode("\n", $violations)
+        "Found YAML detail fields with incorrect prefixes:\n" . implode("\n", $violations),
     );
 });

@@ -4,10 +4,11 @@ namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Noerd\Models\Tenant;
-use Noerd\Models\TenantApp;
 
 use function Laravel\Prompts\confirm;
+
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 
 class NoerdDemoCommand extends Command
 {

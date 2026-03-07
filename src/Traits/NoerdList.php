@@ -51,17 +51,6 @@ trait NoerdList
         $this->loadListFilters();
     }
 
-    /**
-     * Set the default sort field and direction.
-     * Call this in mount() to configure initial sorting.
-     */
-    protected function setDefaultSort(string $field, bool $ascending = false): void
-    {
-        $this->sortField = $field;
-        $this->sortAsc = $ascending;
-        $this->syncListQueryContext();
-    }
-
     public function updatedSearch(): void
     {
         $this->syncListQueryContext();
@@ -124,25 +113,6 @@ trait NoerdList
     }
 
     /**
-     * Store ordered record IDs in session for arrow-key navigation in detail modals.
-     *
-     * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
-     */
-    protected function storeRecordNavigation(mixed $rows): void
-    {
-        if (is_array($rows)) {
-            $ids = array_column($rows, 'id');
-        } elseif (method_exists($rows, 'getCollection')) {
-            $ids = $rows->getCollection()->pluck('id')->toArray();
-        } else {
-            $ids = $rows->pluck('id')->toArray();
-        }
-
-        $listComponent = $this->getListComponent();
-        session(["record_navigation.{$listComponent}" => $ids]);
-    }
-
-    /**
      * Handle select action - dispatch selection event and close modal.
      */
     public function selectAction(mixed $modelId = null, array $relations = []): void
@@ -168,7 +138,7 @@ trait NoerdList
         $filters = [];
         foreach (get_class_methods($this) as $method) {
             if (preg_match('/^get.+ListFilter$/', $method)) {
-                $filter = $this->$method();
+                $filter = $this->{$method}();
                 if ($filter !== null) {
                     $filters[] = $filter;
                 }
@@ -176,6 +146,60 @@ trait NoerdList
         }
 
         return $filters;
+    }
+
+    public function states(): void {}
+
+    public function listFilters(): array
+    {
+        return [];
+    }
+
+    public function listStates(): array
+    {
+        return [];
+    }
+
+    public function filters(): void {}
+
+    public function refreshList(): void
+    {
+        $this->dispatch('$refresh');
+    }
+
+    public function renderingNoerdList(): void
+    {
+        $this->syncListQueryContext();
+    }
+
+    /**
+     * Set the default sort field and direction.
+     * Call this in mount() to configure initial sorting.
+     */
+    protected function setDefaultSort(string $field, bool $ascending = false): void
+    {
+        $this->sortField = $field;
+        $this->sortAsc = $ascending;
+        $this->syncListQueryContext();
+    }
+
+    /**
+     * Store ordered record IDs in session for arrow-key navigation in detail modals.
+     *
+     * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
+     */
+    protected function storeRecordNavigation(mixed $rows): void
+    {
+        if (is_array($rows)) {
+            $ids = array_column($rows, 'id');
+        } elseif (method_exists($rows, 'getCollection')) {
+            $ids = $rows->getCollection()->pluck('id')->toArray();
+        } else {
+            $ids = $rows->pluck('id')->toArray();
+        }
+
+        $listComponent = $this->getListComponent();
+        session(["record_navigation.{$listComponent}" => $ids]);
     }
 
     protected function getAllowedListFilterColumns(): array
@@ -199,25 +223,6 @@ trait NoerdList
                 $query->where($key, $value);
             }
         }
-    }
-
-    public function states(): void {}
-
-    public function listFilters(): array
-    {
-        return [];
-    }
-
-    public function listStates(): array
-    {
-        return [];
-    }
-
-    public function filters(): void {}
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
     }
 
     /**
@@ -272,11 +277,6 @@ trait NoerdList
         $entity = Str::singular(Str::before($this->componentName(), '-list'));
 
         return Str::camel($entity) . 'Selected';
-    }
-
-    public function renderingNoerdList(): void
-    {
-        $this->syncListQueryContext();
     }
 
     protected function syncListQueryContext(): void

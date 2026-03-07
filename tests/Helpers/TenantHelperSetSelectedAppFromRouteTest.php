@@ -16,11 +16,11 @@ beforeEach(function (): void {
 
 function setRequestRoute(string $routeName): void
 {
-    $route = new Route('GET', '/test', fn () => 'ok');
+    $route = new Route('GET', '/test', fn() => 'ok');
     $route->name($routeName);
 
     $request = Request::create('/test');
-    $request->setRouteResolver(fn () => $route);
+    $request->setRouteResolver(fn() => $route);
 
     app()->instance('request', $request);
 }

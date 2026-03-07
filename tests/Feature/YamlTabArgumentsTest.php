@@ -31,7 +31,7 @@ it('ensures all YAML detail tab arguments only reference $modelId, not component
                         continue;
                     }
 
-                    $varName = substr($value, 1);
+                    $varName = mb_substr($value, 1);
 
                     // $modelId is the only variable reliably available in tabs.blade.php
                     if ($varName !== 'modelId') {
@@ -45,6 +45,6 @@ it('ensures all YAML detail tab arguments only reference $modelId, not component
     }
 
     expect($violations)->toBeEmpty(
-        "Found YAML tab arguments referencing properties other than \$modelId:\n" . implode("\n", $violations)
+        "Found YAML tab arguments referencing properties other than \$modelId:\n" . implode("\n", $violations),
     );
 });
