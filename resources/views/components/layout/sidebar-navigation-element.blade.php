@@ -6,7 +6,7 @@ new class extends Component {
     public $navi = [];
 } ?>
 
-<li class="{{ request()->routeIs($navi['link'] ?? $navi['route'] ?? null)  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
+<li class="{{ (isset($navi['link']) ? request()->is(ltrim($navi['link'], '/')) : request()->routeIs($navi['route'] ?? null))  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
     @isset($navi['component'])
         <a @click="$modal('{{$navi['component']}}', {{json_encode($arguments ?? [])}})"
            class="border-l-2 cursor-pointer  border-transparent pl-3 group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
@@ -24,7 +24,7 @@ new class extends Component {
     @endif
     @isset($navi['link'])
         <a wire:navigate href="{{ $navi['link'] }}" @isset($navi['external']) target="_blank" @endisset
-        class="{{ request()->routeIs($navi['link'])  ? 'border-brand-primary!' : '' }} border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
+        class="{{ request()->is(ltrim($navi['link'], '/'))  ? 'border-brand-primary!' : '' }} border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset

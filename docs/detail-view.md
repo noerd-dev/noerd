@@ -64,6 +64,7 @@ fields:
 | `description` | Optional description text |
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
+| `footerComponents` | Array of Livewire components rendered in the footer bar |
 
 ## Tab Properties
 
@@ -85,6 +86,41 @@ fields:
 | `required` | Mark field as required |
 | `colspan` | Grid column span (1-12) |
 | `tab` | Tab number (defaults to 1) |
+
+## Footer Components
+
+Footer components are additional Livewire components rendered in the footer bar next to the delete and save buttons. They are defined in the YAML configuration and automatically passed to the `delete-save-bar` component.
+
+### YAML Configuration
+
+```yaml
+footerComponents:
+  - component: customer-test-button
+    requiresId: false
+  - component: customer-export
+    requiresId: true
+```
+
+### Footer Component Properties
+
+| Property | Description |
+|----------|-------------|
+| `component` | Name of the Livewire component to render |
+| `requiresId` | Only render when editing an existing record (`modelId` is set). Defaults to `false` |
+
+### Blade Usage
+
+Pass `footerComponents` and `modelId` from the page layout to the `delete-save-bar`:
+
+```blade
+<x-slot:footer>
+    <x-noerd::delete-save-bar :showDelete="isset($modelId)"
+        :footerComponents="$pageLayout['footerComponents'] ?? []"
+        :modelId="$modelId ?? null"/>
+</x-slot:footer>
+```
+
+Each footer component receives `modelId` as a prop and is rendered via `<livewire:is>`.
 
 ## Livewire Component
 
@@ -130,7 +166,9 @@ new class extends Component {
     </x-slot:header>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"
+            :footerComponents="$pageLayout['footerComponents'] ?? []"
+            :modelId="$modelId ?? null"/>
     </x-slot:footer>
 </x-noerd::page>
 ```
