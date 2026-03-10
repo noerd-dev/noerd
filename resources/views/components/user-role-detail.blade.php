@@ -13,6 +13,8 @@ new class extends Component {
 
     public const DETAIL_CLASS = UserRole::class;
 
+    public bool $hasUsers = false;
+
     public function mount(): void
     {
         $this->initDetail();
@@ -20,6 +22,7 @@ new class extends Component {
         $userRole = new UserRole;
         if ($this->modelId) {
             $userRole = UserRole::find($this->modelId);
+            $this->hasUsers = $userRole->users()->exists();
         }
 
         $this->detailData = $userRole->toArray();
@@ -42,6 +45,13 @@ new class extends Component {
     public function delete(): void
     {
         $userRole = UserRole::find($this->modelId);
+
+        if ($userRole->users()->exists()) {
+            $this->dispatch('toast', message: __('noerd_cannot_delete_role_with_users'), type: 'error');
+
+            return;
+        }
+
         $userRole->delete();
         $this->closeModalProcess($this->getListComponent());
     }
@@ -55,6 +65,6 @@ new class extends Component {
     <x-noerd::tab-content :layout="$pageLayout" />
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId) && !$hasUsers"/>
     </x-slot:footer>
 </x-noerd::page>

@@ -18,6 +18,11 @@ class SortScope implements Scope
         $sortField = $context->getSortField();
         $sortAsc = $context->getSortAsc();
 
+        // Only allow sorting on sortable fields (if defined via $sortable or $notSortable)
+        if (method_exists($model, 'isFieldSortable') && ! $model->isFieldSortable($sortField)) {
+            $sortField = 'id';
+        }
+
         // Only apply sort if the column exists on the model's table
         if (! Schema::connection($model->getConnectionName())->hasColumn($model->getTable(), $sortField)) {
             $sortField = 'id';

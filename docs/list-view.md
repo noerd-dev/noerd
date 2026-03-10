@@ -54,6 +54,7 @@ columns:
 |----------|-------------|
 | `title` | Page title (translation key) |
 | `newLabel` | Label for the "New" button |
+| `newAction` | Custom Livewire method name for the "New" button (default: `listAction`) |
 | `component` | Detail component to open on row click |
 | `disableSearch` | Disable the search functionality |
 | `showSummary` | Show or hide the summary row in the table footer (default: `true`) |
@@ -61,12 +62,16 @@ columns:
 
 ## Column Properties
 
-| Property | Description |
-|----------|-------------|
-| `field` | Model attribute name |
-| `label` | Column header (translation key) |
-| `width` | Column width (percentage or fixed) |
-| `type` | Display type (see Column Types below) |
+| Property | Description | Default |
+|----------|-------------|---------|
+| `field` | Model attribute name | |
+| `label` | Column header (translation key) | |
+| `width` | Column width as CSS percentage | `10` |
+| `minWidth` | Minimum width in pixels (`min-width`) | none |
+| `align` | Text alignment (`left`, `right`) | `left` |
+| `type` | Display type (see Column Types below) | `text` |
+
+**Width behavior:** The `width` value is applied as `style="width: 15%;"` on the `<th>` element. If the sum of all column widths exceeds 100, the table becomes wider than its container and horizontal scrolling is enabled.
 
 ## Column Types
 
@@ -185,6 +190,40 @@ public function mount(): void
 Without `setDefaultSort()`, lists default to `id` descending.
 
 See [List Search](list-search.md) for more details on search and sorting.
+
+## Custom New Action
+
+By default, the "New" button calls `listAction()` to open the standard detail modal. Use `newAction` to call a custom method instead — for example, to open an import modal.
+
+**YAML Configuration:**
+
+```yaml
+title: accounting_label_bank_transactions
+newLabel: accounting_label_import
+newAction: openImportModal
+component: bank-transaction-detail
+```
+
+- `newLabel`: Translation key for the button label (replaces default "New" label)
+- `newAction`: Livewire method name to call when the button is clicked
+
+**PHP method in the list component:**
+
+```php
+public function openImportModal(mixed $modelId = null, array $relations = []): void
+{
+    $this->dispatch(
+        event: 'noerdModal',
+        modalComponent: 'bank-transaction-import',
+        source: $this->getComponentName(),
+        arguments: [],
+    );
+}
+```
+
+The custom method must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
+
+Without `newAction`, the button defaults to `listAction` which opens the standard detail component modal. `newLabel` and `newAction` are typically used together.
 
 ## Next Steps
 

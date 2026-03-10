@@ -25,6 +25,41 @@ trait HasListScopes
     }
 
     /**
+     * Get the sortable fields for this model.
+     */
+    public function getSortableFields(): array
+    {
+        return $this->sortable ?? [];
+    }
+
+    /**
+     * Get the not-sortable fields for this model.
+     */
+    public function getNotSortableFields(): array
+    {
+        return $this->notSortable ?? [];
+    }
+
+    /**
+     * Check if a given field is sortable.
+     */
+    public function isFieldSortable(string $field): bool
+    {
+        $sortable = $this->getSortableFields();
+        $notSortable = $this->getNotSortableFields();
+
+        if (! empty($sortable)) {
+            return in_array($field, $sortable);
+        }
+
+        if (! empty($notSortable)) {
+            return ! in_array($field, $notSortable);
+        }
+
+        return true;
+    }
+
+    /**
      * Manual scope to search across searchable fields (for backward compatibility).
      */
     public function scopeSearch(Builder $query, ?string $search): Builder

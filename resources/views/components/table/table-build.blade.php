@@ -75,6 +75,8 @@
                                                     'field' => $column['field'],
                                                     'label' => $column['label'] ?? '',
                                                     'align' => $column['align'] ?? 'left',
+                                                    'sortableFields' => $sortableFields ?? [],
+                                                    'notSortableFields' => $notSortableFields ?? [],
                                                     ])
                                             @endforeach
                                         </tr>

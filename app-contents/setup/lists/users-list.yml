@@ -18,6 +18,7 @@ columns:
   - field: last_login_at
     label: noerd_label_last_login_at
     width: 5
+    type: datetime
   - field: action
     width: 3
     actions:

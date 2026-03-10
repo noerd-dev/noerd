@@ -62,7 +62,7 @@
                 <x-noerd::buttons.primary x-ref="newEntryBtn"
                                          class="!bg-brand-primary relative"
                                          style="height: 30px !important"
-                                         wire:click.prevent="{{$action ?? 'listAction'}}(null, {{ Js::from($relations ?? []) }})">
+                                         wire:click.prevent="{{ $newAction ?? $action ?? 'listAction' }}(null, {{ Js::from($relations ?? []) }})">
                     <x-noerd::icons.plus class="text-white"/>
                     {{$newLabel}}
                     <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $newEntryShortcut['badge'] }}</kbd>

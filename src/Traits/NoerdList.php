@@ -40,6 +40,10 @@ trait NoerdList
 
     public bool $disableModal = false;
 
+    protected array $resolvedSortableFields = [];
+
+    protected array $resolvedNotSortableFields = [];
+
     public function mount(): void
     {
         $this->mountList();
@@ -49,6 +53,12 @@ trait NoerdList
     {
         $this->listId = Str::random();
         $this->loadListFilters();
+
+        $savedSort = session("listSort.{$this->componentName()}");
+        if ($savedSort) {
+            $this->sortField = $savedSort['field'];
+            $this->sortAsc = $savedSort['asc'];
+        }
     }
 
     public function updatedSearch(): void
@@ -68,6 +78,10 @@ trait NoerdList
 
     public function sortBy(string $field): void
     {
+        if (! $this->isFieldSortableInList($field)) {
+            return;
+        }
+
         if ($this->sortField === $field) {
             $this->sortAsc = ! $this->sortAsc;
         } else {
@@ -75,6 +89,11 @@ trait NoerdList
         }
         $this->sortField = $field;
         $this->syncListQueryContext();
+
+        session(["listSort.{$this->componentName()}" => [
+            'field' => $this->sortField,
+            'asc' => $this->sortAsc,
+        ]]);
     }
 
     public function loadListFilters(): void
@@ -178,8 +197,14 @@ trait NoerdList
      */
     protected function setDefaultSort(string $field, bool $ascending = false): void
     {
-        $this->sortField = $field;
-        $this->sortAsc = $ascending;
+        $savedSort = session("listSort.{$this->componentName()}");
+        if ($savedSort) {
+            $this->sortField = $savedSort['field'];
+            $this->sortAsc = $savedSort['asc'];
+        } else {
+            $this->sortField = $field;
+            $this->sortAsc = $ascending;
+        }
         $this->syncListQueryContext();
     }
 
@@ -279,6 +304,47 @@ trait NoerdList
         return Str::camel($entity) . 'Selected';
     }
 
+    /**
+     * Check if a field is sortable based on the resolved model constraints.
+     */
+    protected function isFieldSortableInList(string $field): bool
+    {
+        $sortable = $this->resolvedSortableFields ?? [];
+        $notSortable = $this->resolvedNotSortableFields ?? [];
+
+        if (! empty($sortable)) {
+            return in_array($field, $sortable);
+        }
+
+        if (! empty($notSortable)) {
+            return ! in_array($field, $notSortable);
+        }
+
+        return true;
+    }
+
+    /**
+     * Resolve sortable/notSortable fields from the paginated rows.
+     */
+    protected function resolveSortabilityFromRows(mixed $rows): void
+    {
+        $firstItem = null;
+
+        if ($rows instanceof \Illuminate\Pagination\LengthAwarePaginator || $rows instanceof \Illuminate\Pagination\Paginator) {
+            $firstItem = $rows->first();
+        } elseif ($rows instanceof \Illuminate\Support\Collection) {
+            $firstItem = $rows->first();
+        }
+
+        $this->resolvedSortableFields = ($firstItem && method_exists($firstItem, 'getSortableFields'))
+            ? $firstItem->getSortableFields()
+            : [];
+
+        $this->resolvedNotSortableFields = ($firstItem && method_exists($firstItem, 'getNotSortableFields'))
+            ? $firstItem->getNotSortableFields()
+            : [];
+    }
+
     protected function syncListQueryContext(): void
     {
         app(ListQueryContext::class)->set(
@@ -298,6 +364,8 @@ trait NoerdList
     {
         $this->storeRecordNavigation($rows);
 
+        $this->resolveSortabilityFromRows($rows);
+
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);
@@ -306,6 +374,8 @@ trait NoerdList
             'listId' => $this->listId,
             'sortField' => $this->sortField,
             'sortAsc' => $this->sortAsc,
+            'sortableFields' => $this->resolvedSortableFields,
+            'notSortableFields' => $this->resolvedNotSortableFields,
             'rows' => $rows,
             'listSettings' => $listSettings,
         ];
@@ -331,8 +401,15 @@ trait NoerdList
      */
     protected function getListeners(): array
     {
-        return [
-            'refreshList-' . $this->getDetailComponent() => 'refreshList',
-        ];
+        $name = $this->getDetailComponent();
+        $stripped = Str::afterLast($name, '.');
+
+        $listeners = ['refreshList-' . $name => 'refreshList'];
+
+        if ($name !== $stripped) {
+            $listeners['refreshList-' . $stripped] = 'refreshList';
+        }
+
+        return $listeners;
     }
 }

@@ -13,6 +13,8 @@
     $sortField = $listConfig['sortField'] ?? 'id';
     $sortAsc = $listConfig['sortAsc'] ?? false;
     $rows = $listConfig['rows'] ?? [];
+    $sortableFields = $listConfig['sortableFields'] ?? [];
+    $notSortableFields = $listConfig['notSortableFields'] ?? [];
     $listSettings = $listConfig['listSettings'] ?? [];
 
     // Extract values from listSettings
@@ -22,6 +24,7 @@
     $disableSearch = $listSettings['disableSearch'] ?? false;
     $description = $listSettings['description'] ?? false;
     $showSummary = $listSettings['showSummary'] ?? true;
+    $newAction = $listSettings['newAction'] ?? null;
     $table = $listSettings['columns'] ?? [];
 
     $listAction = $this->listActionMethod ?? 'listAction';
@@ -93,6 +96,8 @@
                                                     'label' => $column['label'] ?? '',
                                                     'align' => $column['align'] ?? 'left',
                                                     'minWidth' => $column['minWidth'] ?? null,
+                                                    'sortableFields' => $sortableFields,
+                                                    'notSortableFields' => $notSortableFields,
                                                 ])
                                             @endforeach
                                         </tr>

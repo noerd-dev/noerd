@@ -204,7 +204,7 @@ trait NoerdDetail
 
         $this->dispatch('closeTopModal');
         if ($source) {
-            $this->dispatch('refreshList-' . $source);
+            $this->dispatch('refreshList-' . Str::afterLast($source, '.'));
         }
     }
 

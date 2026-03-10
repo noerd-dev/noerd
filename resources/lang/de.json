@@ -325,5 +325,6 @@
     "noerd_label_no_available_apps": "Keine weiteren Apps verfügbar",
     "noerd_confirm_delete": "Möchten Sie diesen Eintrag wirklich löschen?",
     "noerd_nav_previous_record": "Vorheriger Datensatz",
-    "noerd_nav_next_record": "Nächster Datensatz"
+    "noerd_nav_next_record": "Nächster Datensatz",
+    "noerd_cannot_delete_role_with_users": "Diese Rolle kann nicht gelöscht werden, da ihr noch Benutzer zugewiesen sind."
 }

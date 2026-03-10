@@ -139,6 +139,13 @@
                            class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
                            value="{{ $value instanceof \Illuminate\Support\Carbon ? $value->format('Y-m-d') : $value }}">
                 @endif
+            @elseif($type == 'datetime')
+                @if($value)
+                    <span wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                          class="cursor-pointer text-sm py-0.5 px-1.5">
+                        {{ app()->getLocale() === 'de' ? \Carbon\Carbon::parse($value)->format('d.m.Y H:i') : \Carbon\Carbon::parse($value)->format('Y-m-d H:i') }}
+                    </span>
+                @endif
             @elseif($type == 'number')
                 <input type="{{$type}}"
                        wire:click.prevent="{{$action}}('{{$redirectAction}}')"
