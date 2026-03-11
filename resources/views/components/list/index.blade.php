@@ -78,91 +78,86 @@
         @endif
 
         @isset($table)
-            <div class="relative">
-
-                <div class=" min-w-full pb-2 align-middle overflow-visible">
-                    <div class="overflow-visible">
-
-                        <div class="flow-root">
-                            <div class="-my-2 -mx-6">
-                                <div class="inline-block min-w-full py-2 align-middle">
-                                    @php
-                                        $totalWeight = array_sum(array_map(fn($c) => $c['width'] ?? 1, $table));
-                                        foreach ($table as $i => $col) {
-                                            $table[$i]['_widthPercent'] = round((($col['width'] ?? 1) / $totalWeight) * 100, 2);
-                                        }
-                                    @endphp
-                                    <table class="min-w-full border-separate border-spacing-0">
-                                        <thead>
-                                        <tr>
-                                            @foreach($table as $column)
-                                                @include('noerd::components.table.table-sort', [
-                                                    'width' => $column['_widthPercent'],
-                                                    'field' => $column['field'],
+            <div class="min-w-full pb-2 align-middle">
+                <div>
+                    <div class="flow-root">
+                        <div class="-my-2 -mx-6">
+                            <div class="w-3xl overflow-scroll inline-block min-w-full py-2 pb-0 align-middle">
+                                @php
+                                    $totalWeight = array_sum(array_map(fn($c) => $c['width'] ?? 1, $table));
+                                    foreach ($table as $i => $col) {
+                                        $table[$i]['_widthPercent'] = round((($col['width'] ?? 1) / $totalWeight) * 100, 2);
+                                    }
+                                @endphp
+                                <table class="min-w-full border-separate border-spacing-0">
+                                    <thead>
+                                    <tr>
+                                        @foreach($table as $column)
+                                            @include('noerd::components.table.table-sort', [
+                                                'width' => $column['_widthPercent'],
+                                                'field' => $column['field'],
+                                                'label' => $column['label'] ?? '',
+                                                'align' => $column['align'] ?? 'left',
+                                                'minWidth' => $column['minWidth'] ?? null,
+                                                'sortableFields' => $sortableFields,
+                                                'notSortableFields' => $notSortableFields,
+                                            ])
+                                        @endforeach
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach($rows as $key => $row)
+                                        <tr :key="{{$key}}"
+                                            :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
+                                            @click="selectedRow{{$listId}} = '{{$key}}'"
+                                            class="group hover:bg-brand-bg border border-black/10">
+                                            @foreach($table as $index => $column)
+                                                @include('noerd::components.table.table-cell', [
+                                                    'row' => $key,
+                                                    'column' => $index,
                                                     'label' => $column['label'] ?? '',
-                                                    'align' => $column['align'] ?? 'left',
-                                                    'minWidth' => $column['minWidth'] ?? null,
-                                                    'sortableFields' => $sortableFields,
-                                                    'notSortableFields' => $notSortableFields,
+                                                    'value' => $row[$column['field']] ?? '',
+                                                    'redirectAction' => $redirectAction . $row['id'],
+                                                    'readOnly' => $column['readOnly'] ?? true,
+                                                    'id' => $row['id'],
+                                                    'columnValue' => $column['field'],
+                                                    'type' => $column['type'] ?? 'text',
+                                                    'action' => $column['action'] ?? $listAction,
+                                                    'actions' => $column['actions'] ?? null,
+                                                    'columnConfig' => $column,
+                                                    'rowData' => $row,
                                                 ])
                                             @endforeach
                                         </tr>
-                                        </thead>
-                                        <tbody>
-                                        @foreach($rows as $key => $row)
-                                            <tr :key="{{$key}}"
-                                                :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
-                                                @click="selectedRow{{$listId}} = '{{$key}}'"
-                                                class="group hover:bg-brand-bg border border-black/10">
-                                                @foreach($table as $index => $column)
-                                                    @include('noerd::components.table.table-cell', [
-                                                        'row' => $key,
-                                                        'column' => $index,
-                                                        'label' => $column['label'] ?? '',
-                                                        'value' => $row[$column['field']] ?? '',
-                                                        'redirectAction' => $redirectAction . $row['id'],
-                                                        'readOnly' => $column['readOnly'] ?? true,
-                                                        'id' => $row['id'],
-                                                        'columnValue' => $column['field'],
-                                                        'type' => $column['type'] ?? 'text',
-                                                        'action' => $column['action'] ?? $listAction,
-                                                        'actions' => $column['actions'] ?? null,
-                                                        'columnConfig' => $column,
-                                                        'rowData' => $row,
-                                                    ])
-                                                @endforeach
-                                            </tr>
-                                        @endforeach
-                                        </tbody>
-                                        @if($summary && $showSummary)
-                                            <tfoot>
-                                                <tr class="bg-gray-50 font-semibold">
-                                                    @foreach($table as $index => $column)
-                                                        <td class="border-t-2 border-b border-r border-gray-300 py-2 px-1.5 first:pl-6 text-sm @if(($column['align'] ?? 'left') === 'right' || in_array($column['type'] ?? 'text', ['currency', 'number'])) text-right @endif">
-                                                            @if(isset($summary[$column['field']]))
-                                                                @if(($column['type'] ?? 'text') === 'currency')
-                                                                    {{ number_format((float) $summary[$column['field']], 2, ',', '.') }} €
-                                                                @else
-                                                                    {{ $summary[$column['field']] }}
-                                                                @endif
-                                                            @endif
-                                                        </td>
-                                                    @endforeach
-                                                </tr>
-                                            </tfoot>
-                                        @endif
-                                    </table>
-                                </div>
+                                    @endforeach
+                                    </tbody>
+                                    @if($summary && $showSummary)
+                                        <tfoot>
+                                        <tr class="bg-gray-50 font-semibold">
+                                            @foreach($table as $index => $column)
+                                                <td class="border-t-2 border-b border-r border-gray-300 py-2 px-1.5 first:pl-6 text-sm @if(($column['align'] ?? 'left') === 'right' || in_array($column['type'] ?? 'text', ['currency', 'number'])) text-right @endif">
+                                                    @if(isset($summary[$column['field']]))
+                                                        @if(($column['type'] ?? 'text') === 'currency')
+                                                            {{ number_format((float) $summary[$column['field']], 2, ',', '.') }}
+                                                            €
+                                                        @else
+                                                            {{ $summary[$column['field']] }}
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                        </tfoot>
+                                    @endif
+                                </table>
                             </div>
                         </div>
-
                     </div>
-
                 </div>
             </div>
 
             @if(isset($rows) && count($rows) > 0 && (is_array($rows) ? '' : $rows->links()) )
-                <div class="py-8">
+                <div>
                     {{ is_array($rows) ? '' : $rows->links() }}
                 </div>
             @endif
