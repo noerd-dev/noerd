@@ -6,7 +6,5 @@ redirectAction: ''
 columns:
   - field: name
     label: noerd_label_name
-    width: 30
   - field: description
     label: noerd_label_description
-    width: 40

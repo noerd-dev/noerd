@@ -42,11 +42,7 @@ new class extends Component
             $this->detailData
         );
 
-        $this->showSuccessIndicator = true;
-
-        if ($language->wasRecentlyCreated) {
-            $this->modelId = $language->id;
-        }
+        $this->storeProcess($language);
     }
 
     public function delete(): void

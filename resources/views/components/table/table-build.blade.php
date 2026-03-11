@@ -66,15 +66,22 @@
                         <div class="flow-root">
                             <div class="-my-2 -mx-6">
                                 <div class="inline-block min-w-full py-2 align-middle">
+                                    @php
+                                        $totalWeight = array_sum(array_map(fn($c) => $c['width'] ?? 1, $table));
+                                        foreach ($table as $i => $col) {
+                                            $table[$i]['_widthPercent'] = round((($col['width'] ?? 1) / $totalWeight) * 100, 2);
+                                        }
+                                    @endphp
                                     <table class="min-w-full border-separate border-spacing-0">
                                         <thead>
                                         <tr>
                                             @foreach($table as $column)
                                                 @include('noerd::components.table.table-sort', [
-                                                    'width' => $column['width'] ?? 10,
+                                                    'width' => $column['_widthPercent'],
                                                     'field' => $column['field'],
                                                     'label' => $column['label'] ?? '',
                                                     'align' => $column['align'] ?? 'left',
+                                                    'minWidth' => $column['minWidth'] ?? null,
                                                     'sortableFields' => $sortableFields ?? [],
                                                     'notSortableFields' => $notSortableFields ?? [],
                                                     ])

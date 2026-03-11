@@ -31,14 +31,9 @@ new class extends Component {
     {
         $this->validateFromLayout();
 
-        $this->{{model}}['tenant_id'] = auth()->user()->selected_tenant_id;
         ${{model}} = {{Model}}::updateOrCreate(['id' => $this->{{model}}Id], $this->{{model}});
 
-        $this->showSuccessIndicator = true;
-
-        if (${{model}}->wasRecentlyCreated) {
-            $this->{{model}}Id = ${{model}}['id'];
-        }
+        $this->storeProcess(${{model}});
     }
 
     public function delete(): void

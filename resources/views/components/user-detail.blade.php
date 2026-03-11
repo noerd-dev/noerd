@@ -147,11 +147,9 @@ new class extends Component {
             }
         }
 
-        $this->showSuccessIndicator = true;
+        $this->storeProcess($user);
 
         if ($user->wasRecentlyCreated) {
-            $this->modelId = $user['id'];
-
             // Send password reset link instead of generated password
             Password::sendResetLink(['email' => $user->email]);
 

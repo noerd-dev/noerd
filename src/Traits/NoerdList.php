@@ -336,11 +336,11 @@ trait NoerdList
             $firstItem = $rows->first();
         }
 
-        $this->resolvedSortableFields = ($firstItem && method_exists($firstItem, 'getSortableFields'))
+        $this->resolvedSortableFields = ($firstItem && is_object($firstItem) && method_exists($firstItem, 'getSortableFields'))
             ? $firstItem->getSortableFields()
             : [];
 
-        $this->resolvedNotSortableFields = ($firstItem && method_exists($firstItem, 'getNotSortableFields'))
+        $this->resolvedNotSortableFields = ($firstItem && is_object($firstItem) && method_exists($firstItem, 'getNotSortableFields'))
             ? $firstItem->getNotSortableFields()
             : [];
     }

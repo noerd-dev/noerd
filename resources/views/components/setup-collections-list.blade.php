@@ -171,12 +171,12 @@ new class extends Component
                 $fieldKey = str_replace('model.', '', $fieldName);
                 $label = $field['label'] ?? ucfirst($fieldKey);
 
-                // Calculate width based on field type
+                // Calculate width weight based on field type
                 $width = match ($field['type'] ?? 'text') {
-                    'image' => 15,
-                    'translatableText' => 25,
-                    'translatableTextarea' => 30,
-                    default => 20,
+                    'image' => 0.8,
+                    'translatableText' => 1.2,
+                    'translatableTextarea' => 1.5,
+                    default => 1,
                 };
 
                 $columns[] = [
@@ -188,8 +188,8 @@ new class extends Component
         }
 
         // Add standard columns
-        $columns[] = ['field' => 'sort', 'label' => __('noerd_label_sort'), 'width' => 10];
-        $columns[] = ['field' => 'updated_at', 'label' => __('noerd_label_last_modified'), 'width' => 15];
+        $columns[] = ['field' => 'sort', 'label' => __('noerd_label_sort'), 'width' => 0.5];
+        $columns[] = ['field' => 'updated_at', 'label' => __('noerd_label_last_modified')];
 
         return [
             'listConfig' => $this->buildList($rows, [

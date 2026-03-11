@@ -95,10 +95,9 @@ new class extends Component
 
         $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->modelId], $data);
 
-        $this->showSuccessIndicator = true;
+        $this->storeProcess($entry);
 
         if ($entry->wasRecentlyCreated) {
-            $this->modelId = $entry->id;
             $this->entry = $entry;
         }
     }

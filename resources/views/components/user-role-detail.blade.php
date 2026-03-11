@@ -32,14 +32,9 @@ new class extends Component {
     {
         $this->validateFromLayout();
 
-        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
         $userRole = UserRole::updateOrCreate(['id' => $this->modelId], $this->detailData);
 
-        $this->showSuccessIndicator = true;
-
-        if ($userRole->wasRecentlyCreated) {
-            $this->modelId = $userRole['id'];
-        }
+        $this->storeProcess($userRole);
     }
 
     public function delete(): void

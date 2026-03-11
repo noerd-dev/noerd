@@ -29,17 +29,12 @@ new class extends Component {
     {
         $this->validateFromLayout();
 
-        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
         ${{entityCamel}} = {{ModelBaseName}}::updateOrCreate(
             ['id' => $this->modelId],
             $this->detailData,
         );
 
-        $this->showSuccessIndicator = true;
-
-        if (${{entityCamel}}->wasRecentlyCreated) {
-            $this->modelId = ${{entityCamel}}->id;
-        }
+        $this->storeProcess(${{entityCamel}});
     }
 
     public function delete(): void

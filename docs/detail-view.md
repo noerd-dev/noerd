@@ -142,7 +142,6 @@ new class extends Component {
     {
         $this->validateFromLayout();
 
-        $this->detailData['tenant_id'] = auth()->user()->selected_tenant_id;
         $customer = Customer::updateOrCreate(['id' => $this->modelId], $this->detailData);
 
         $this->showSuccessIndicator = true;
@@ -182,6 +181,7 @@ new class extends Component {
 - **validateFromLayout():** Validates against YAML-defined rules
 - **$this->getListComponent():** Automatically determines the associated list component
 - The Eloquent model is **never** stored as a component property
+- **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
 
 ## Naming Conventions
 
