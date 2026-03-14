@@ -82,7 +82,7 @@
                 <div>
                     <div class="flow-root">
                         <div class="-my-2 -mx-6">
-                            <div class="w-3xl overflow-scroll inline-block min-w-full py-2 pb-0 align-middle">
+                            <div class="inline-block min-w-full py-2 pb-0 align-middle">
                                 @php
                                     $totalWeight = array_sum(array_map(fn($c) => $c['width'] ?? 1, $table));
                                     foreach ($table as $i => $col) {

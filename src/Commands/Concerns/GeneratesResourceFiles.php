@@ -275,6 +275,8 @@ trait GeneratesResourceFiles
 
         $content = $this->filesystem->get($path);
 
+        $translationPrefix = Str::snake($this->appConfigName ?? '') . '_' . Str::snake(str_replace('-', '_', $this->entity));
+
         $content = str_replace(
             [
                 '{{ModelClass}}',
@@ -282,6 +284,7 @@ trait GeneratesResourceFiles
                 '{{entity}}',
                 '{{entities}}',
                 '{{entityCamel}}',
+                '{{translationPrefix}}',
             ],
             [
                 $this->modelClass ?? '',
@@ -289,6 +292,7 @@ trait GeneratesResourceFiles
                 $this->entity,
                 $this->entities,
                 $this->entityCamel,
+                $translationPrefix,
             ],
             $content,
         );
@@ -386,6 +390,45 @@ trait GeneratesResourceFiles
         return $path;
     }
 
+    protected function createPageBlade(): string
+    {
+        $bladeBase = base_path('resources/views/components');
+        $path = "{$bladeBase}/{$this->entity}-page.blade.php";
+
+        if ($this->checkFileExists($path)) {
+            return '';
+        }
+
+        $this->filesystem->ensureDirectoryExists(dirname($path));
+        $this->filesystem->put($path, $this->processStub('page.blade.stub'));
+        $this->line("<info>Created:</info> {$path}");
+
+        return $path;
+    }
+
+    protected function addPageRoute(): void
+    {
+        $routeFile = base_path('routes/web.php');
+        $content = $this->filesystem->get($routeFile);
+
+        $routeName = "{$this->appConfigName}.{$this->entity}";
+
+        if (str_contains($content, "'{$routeName}'")) {
+            $this->warn("Route '{$routeName}' already exists in routes/web.php — skipping.");
+
+            return;
+        }
+
+        $route = "Route::livewire('{$this->appConfigName}/{$this->entity}', '{$this->entity}-page')->name('{$routeName}');";
+
+        if (! $this->confirm("Add page route to routes/web.php?\n  <comment>{$route}</comment>", true)) {
+            return;
+        }
+
+        $this->filesystem->append($routeFile, "\n{$route}\n");
+        $this->line("<info>Route added:</info> {$route}");
+    }
+
     protected function createListYaml(): string
     {
         $yamlBase = base_path("app-configs/{$this->appConfigName}");
@@ -464,7 +507,7 @@ trait GeneratesResourceFiles
         $this->line("<info>Route added:</info> {$detailRoute}");
     }
 
-    protected function addNavigation(): void
+    protected function addNavigation(bool $useSingularRoute = false): void
     {
         $navPaths = [
             base_path("app-configs/{$this->appConfigName}/navigation.yml"),
@@ -479,19 +522,24 @@ trait GeneratesResourceFiles
 
             $content = $this->filesystem->get($navPath);
 
-            if (str_contains($content, "route: {$this->appConfigName}.{$this->entities}")) {
-                $this->warn("Navigation entry for '{$this->appConfigName}.{$this->entities}' already exists in {$navPath} — skipping.");
+            $routeEntity = $useSingularRoute ? $this->entity : $this->entities;
+
+            if (str_contains($content, "route: {$this->appConfigName}.{$routeEntity}")) {
+                $this->warn("Navigation entry for '{$this->appConfigName}.{$routeEntity}' already exists in {$navPath} — skipping.");
 
                 continue;
             }
 
             $entitiesHeadline = Str::headline($this->entities);
             $navEntry = "        - title: {$entitiesHeadline}\n"
-                . "          route: {$this->appConfigName}.{$this->entities}\n"
-                . "          heroicon: rectangle-stack\n"
-                . "          newComponent: {$this->entity}-detail";
+                . "          route: {$this->appConfigName}.{$routeEntity}\n"
+                . "          heroicon: rectangle-stack";
 
-            if (! $this->confirm("Add navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>", false)) {
+            if (! $useSingularRoute) {
+                $navEntry .= "\n          newComponent: {$this->entity}-detail";
+            }
+
+            if (! $this->confirm("Add navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>", true)) {
                 continue;
             }
 

@@ -27,7 +27,7 @@
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
      @else
-     :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] {{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}' : 'h-full'"
+     :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] ' + (isRight ? '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh)]' }}' : '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}') : 'h-full'"
     @endif
 >
     @if($hasRecordNav && $recordNavInfo['available'] && !($disableModal ?? false) && !$isFullscreen)

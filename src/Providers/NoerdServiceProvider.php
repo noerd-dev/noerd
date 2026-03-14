@@ -14,8 +14,10 @@ use Noerd\Commands\CreateAdminCommand;
 use Noerd\Commands\CreateTenantApp;
 use Noerd\Commands\CreateTenantCommand;
 use Noerd\Commands\MakeCollectionCommand;
+use Noerd\Commands\MakeDashboardCommand;
 use Noerd\Commands\MakeDetailCommand;
 use Noerd\Commands\MakeListCommand;
+use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeUserAdmin;
@@ -83,6 +85,8 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeResourceCommand::class,
                 MakeListCommand::class,
                 MakeDetailCommand::class,
+                MakePageCommand::class,
+                MakeDashboardCommand::class,
                 MakeCollectionCommand::class,
                 CreateAdminCommand::class,
                 CreateTenantCommand::class,

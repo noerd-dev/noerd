@@ -1,0 +1,42 @@
+<?php
+
+use Livewire\Component;
+use Noerd\Traits\NoerdDetail;
+
+new class extends Component {
+    use NoerdDetail;
+
+    public function mount(): void
+    {
+        $this->initDetail();
+    }
+
+    public function with()
+    {
+        return [];
+    }
+}; ?>
+
+<x-noerd::page :disableModal="$disableModal">
+
+    <div class="mb-12">
+        <div class="font-semibold text-sm border-b border-gray-300 pb-2">
+            Section 1
+        </div>
+        <div class="flex">
+            <x-noerd::dashboard-card heroicon="rectangle-stack" title="Card 1" />
+            <x-noerd::dashboard-card heroicon="chart-bar" title="Card 2" />
+        </div>
+    </div>
+
+    <div class="mb-12">
+        <div class="font-semibold text-sm border-b border-gray-300 pb-2">
+            Section 2
+        </div>
+        <div class="flex">
+            <x-noerd::dashboard-card heroicon="plus-circle" title="Card 3" />
+            <x-noerd::dashboard-card heroicon="cog-6-tooth" title="Card 4" />
+        </div>
+    </div>
+
+</x-noerd::page>
