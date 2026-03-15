@@ -30,7 +30,7 @@
         @endphp
 
         @if(isset($disableSearch) && !$disableSearch)
-            <div @if(!$newLabel)  :class="isModal ? 'mr-22' : ''" @endif
+            <div @if(empty($actions))  :class="isModal ? 'mr-22' : ''" @endif
                  class="ml-auto mr-2"
                  x-data="{ searchFocused: false }"
                  @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }">
@@ -55,18 +55,67 @@
         @else
             <div class="ml-auto"></div>
         @endif
-        @if($newLabel)
-            <div :class="isModal ? 'mr-22' : ''"
-                 x-data
-                 @keydown.window="let e = $event; if ({{ $newEntryShortcut['js'] }}) { e.preventDefault(); $refs.newEntryBtn.click(); }">
-                <x-noerd::buttons.primary x-ref="newEntryBtn"
-                                         class="!bg-brand-primary relative"
-                                         style="height: 30px !important"
-                                         wire:click.prevent="{{ $newAction ?? $action ?? 'listAction' }}(null, {{ Js::from($relations ?? []) }})">
-                    <x-noerd::icons.plus class="text-white"/>
-                    {{$newLabel}}
-                    <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $newEntryShortcut['badge'] }}</kbd>
-                </x-noerd::buttons.primary>
+        @if(!empty($actions))
+            <div :class="isModal ? 'mr-22' : ''" class="flex gap-2">
+                @foreach($actions as $actionIndex => $actionItem)
+                    @php $isSecondary = ($actionItem['style'] ?? '') === 'secondary'; @endphp
+                    @if($actionIndex === 0)
+                        <div x-data
+                             @keydown.window="let e = $event; if ({{ $newEntryShortcut['js'] }}) { e.preventDefault(); $refs.newEntryBtn.click(); }">
+                            @if($isSecondary)
+                                <x-noerd::buttons.secondary x-ref="newEntryBtn"
+                                                           style="height: 30px !important"
+                                                           wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                    @if(isset($actionItem['heroicon']))
+                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4" />
+                                    @else
+                                        <x-noerd::icons.plus />
+                                    @endif
+                                    {{ __($actionItem['label']) }}
+                                    <kbd class="ml-2 rounded border border-gray-300 bg-gray-100 px-1 py-0.5 text-xs text-gray-500">{{ $newEntryShortcut['badge'] }}</kbd>
+                                </x-noerd::buttons.secondary>
+                            @else
+                                <x-noerd::buttons.primary x-ref="newEntryBtn"
+                                                         class="!bg-brand-primary relative"
+                                                         style="height: 30px !important"
+                                                         wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                    @if(isset($actionItem['heroicon']))
+                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4 text-white" />
+                                    @else
+                                        <x-noerd::icons.plus class="text-white"/>
+                                    @endif
+                                    {{ __($actionItem['label']) }}
+                                    <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $newEntryShortcut['badge'] }}</kbd>
+                                </x-noerd::buttons.primary>
+                            @endif
+                        </div>
+                    @else
+                        <div>
+                            @if($isSecondary)
+                                <x-noerd::buttons.secondary
+                                    style="height: 30px !important"
+                                    wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                    @if(isset($actionItem['heroicon']))
+                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4" />
+                                    @endif
+                                    {{ __($actionItem['label']) }}
+                                </x-noerd::buttons.secondary>
+                            @else
+                                <x-noerd::buttons.primary
+                                    class="!bg-brand-primary relative"
+                                    style="height: 30px !important"
+                                    wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                    @if(isset($actionItem['heroicon']))
+                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4 text-white" />
+                                    @else
+                                        <x-noerd::icons.plus class="text-white"/>
+                                    @endif
+                                    {{ __($actionItem['label']) }}
+                                </x-noerd::buttons.primary>
+                            @endif
+                        </div>
+                    @endif
+                @endforeach
             </div>
         @endif
     </x-noerd::modal-title>

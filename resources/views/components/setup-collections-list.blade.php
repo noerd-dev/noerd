@@ -72,7 +72,7 @@ new class extends Component
             return [
                 'listConfig' => $this->buildList(collect([]), [
                     'title' => __('noerd_nav_collections'),
-                    'newLabel' => __('noerd_label_new_entry'),
+                    'actions' => [['label' => __('noerd_label_new_entry'), 'action' => 'listAction']],
                     'disableSearch' => false,
                     'columns' => [],
                 ]),
@@ -161,7 +161,7 @@ new class extends Component
         });
 
         $collectionTitle = $this->collectionLayout['titleList'] ?? ucfirst($this->collectionKey);
-        $newLabel = $this->collectionLayout['buttonList'] ?? __('noerd_label_new_entry');
+        $actionLabel = $this->collectionLayout['buttonList'] ?? __('noerd_label_new_entry');
 
         // Generate dynamic columns from YAML fields
         $columns = [];
@@ -194,7 +194,7 @@ new class extends Component
         return [
             'listConfig' => $this->buildList($rows, [
                 'title' => $collectionTitle,
-                'newLabel' => $newLabel,
+                'actions' => [['label' => $actionLabel, 'action' => 'listAction']],
                 'disableSearch' => false,
                 'columns' => $columns,
             ]),

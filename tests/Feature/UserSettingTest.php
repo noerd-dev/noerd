@@ -7,14 +7,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\UserSetting;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 describe('UserSetting Model', function (): void {
     it('auto-creates user setting when accessing setting attribute', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
 
         expect($user->setting)->toBeInstanceOf(UserSetting::class);
         expect($user->setting->user_id)->toBe($user->id);
@@ -22,7 +22,7 @@ describe('UserSetting Model', function (): void {
     });
 
     it('returns existing user setting when accessing setting attribute', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $setting = UserSetting::factory()->create([
             'user_id' => $user->id,
             'locale' => 'de',
@@ -36,7 +36,7 @@ describe('UserSetting Model', function (): void {
     });
 
     it('allows setting locale via user attribute', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
 
         $user->locale = 'de';
 
@@ -45,7 +45,7 @@ describe('UserSetting Model', function (): void {
     });
 
     it('deletes user setting when user is deleted', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $settingId = $user->setting->id;
 
         $user->delete();
@@ -54,7 +54,7 @@ describe('UserSetting Model', function (): void {
     });
 
     it('has userSetting relationship on User model', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
 
         expect($user->userSetting())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasOne::class);
     });
@@ -71,7 +71,7 @@ describe('TenantSessionHelper', function (): void {
     });
 
     it('persists selected_tenant_id to database when user is authenticated', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
 
         $this->actingAs($user);
@@ -136,7 +136,7 @@ describe('TenantSessionHelper', function (): void {
 
 describe('User Model with TenantSessionHelper', function (): void {
     it('allows setting selected_tenant_id via user attribute using session', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
 
         $user->selected_tenant_id = $tenant->id;
@@ -146,7 +146,7 @@ describe('User Model with TenantSessionHelper', function (): void {
     });
 
     it('allows setting selected_app via user attribute using session', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
 
         $user->selected_app = 'SETUP';
 
@@ -155,7 +155,7 @@ describe('User Model with TenantSessionHelper', function (): void {
     });
 
     it('returns selectedTenant from session via User model', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
         TenantHelper::setSelectedTenantId($tenant->id);
 
@@ -168,14 +168,14 @@ describe('User Model with TenantSessionHelper', function (): void {
 
 describe('UserSetting via User Factory', function (): void {
     it('creates user with tenant via withExampleTenant', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
 
         expect($user->tenants)->toHaveCount(1);
         expect(TenantHelper::getSelectedTenantId())->toBe($user->tenants->first()->id);
     });
 
     it('creates admin user via adminUser', function (): void {
-        $user = User::factory()->adminUser()->create();
+        $user = NoerdUser::factory()->adminUser()->create();
 
         expect($user->tenants)->toHaveCount(1);
         expect(TenantHelper::getSelectedTenantId())->toBe($user->tenants->first()->id);
@@ -183,7 +183,7 @@ describe('UserSetting via User Factory', function (): void {
     });
 
     it('sets selected_app via withSelectedApp', function (): void {
-        $user = User::factory()->withExampleTenant()->withSelectedApp('setup')->create();
+        $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
         expect(TenantHelper::getSelectedApp())->toBe('SETUP');
     });
@@ -191,7 +191,7 @@ describe('UserSetting via User Factory', function (): void {
 
 describe('InitializeTenantSession', function (): void {
     it('restores saved tenant from database on login', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
         $user->tenants()->attach($tenant->id);
 
@@ -209,7 +209,7 @@ describe('InitializeTenantSession', function (): void {
     });
 
     it('falls back to first tenant when saved tenant is not available', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
         $inaccessibleTenant = Tenant::factory()->create();
         $user->tenants()->attach($tenant->id);
@@ -226,7 +226,7 @@ describe('InitializeTenantSession', function (): void {
     });
 
     it('falls back to first tenant when no saved tenant exists', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
         $user->tenants()->attach($tenant->id);
 
@@ -239,7 +239,7 @@ describe('InitializeTenantSession', function (): void {
     });
 
     it('does not override existing session tenant', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $tenant1 = Tenant::factory()->create();
         $tenant2 = Tenant::factory()->create();
         $user->tenants()->attach([$tenant1->id, $tenant2->id]);

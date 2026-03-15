@@ -3,14 +3,14 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
 it('successfully makes a user admin', function (): void {
     // Create a user with tenant access but no admin privileges
-    $user = User::factory()->withExampleTenant()->create();
+    $user = NoerdUser::factory()->withExampleTenant()->create();
     $tenant = $user->tenants->first();
 
     // Ensure user is not admin initially
@@ -46,7 +46,7 @@ it('successfully makes a user admin', function (): void {
 
 it('handles user with multiple tenants', function (): void {
     // Create user with multiple tenants
-    $user = User::factory()->create();
+    $user = NoerdUser::factory()->create();
     $tenant1 = Tenant::factory()->create(['name' => 'Tenant 1']);
     $tenant2 = Tenant::factory()->create(['name' => 'Tenant 2']);
 
@@ -88,7 +88,7 @@ it('handles user with multiple tenants', function (): void {
 
 it('recognizes user who is already admin but ensures tenant assignment', function (): void {
     // Create an admin user
-    $user = User::factory()->adminUser()->create();
+    $user = NoerdUser::factory()->adminUser()->create();
 
     expect($user->isAdmin())->toBeTrue();
 
@@ -106,7 +106,7 @@ it('recognizes user who is already admin but ensures tenant assignment', functio
 
 it('handles existing admin profile correctly', function (): void {
     // Create user with tenant access
-    $user = User::factory()->create();
+    $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create(['name' => 'Test Tenant']);
 
     // Create admin profile for the tenant
@@ -155,7 +155,7 @@ it('fails with non-existent user id', function (): void {
 
 it('handles user with partial admin access correctly', function (): void {
     // Create user with two tenants, admin on one, user on the other
-    $user = User::factory()->create();
+    $user = NoerdUser::factory()->create();
     $tenant1 = Tenant::factory()->create(['name' => 'Admin Tenant']);
     $tenant2 = Tenant::factory()->create(['name' => 'User Tenant']);
 
@@ -195,7 +195,7 @@ it('handles user with partial admin access correctly', function (): void {
 });
 
 it('provides detailed summary output', function (): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = NoerdUser::factory()->withExampleTenant()->create();
 
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput('Summary:')
@@ -206,7 +206,7 @@ it('provides detailed summary output', function (): void {
 });
 
 it('verifies admin status after completion', function (): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = NoerdUser::factory()->withExampleTenant()->create();
 
     expect($user->isAdmin())->toBeFalse();
 

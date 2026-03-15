@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Models\User;
 
-class UserFactory extends Factory
+class NoerdUserFactory extends Factory
 {
-    protected $model = User::class;
+    protected $model = NoerdUser::class;
 
     protected static ?string $password;
 

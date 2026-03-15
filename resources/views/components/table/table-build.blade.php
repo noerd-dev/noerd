@@ -2,8 +2,7 @@
     // Auto-extract values from tableConfig if provided
     if (isset($listConfig) && is_array($listConfig)) {
         $title = $title ?? __($listConfig['title'] ?? '');
-        $newLabel = $newLabel ?? __($listConfig['newLabel'] ?? '');
-        $redirectAction = $redirectAction ?? ($listConfig['redirectAction'] ?? '');
+        $actions = $actions ?? ($listConfig['actions'] ?? []);
         $disableSearch = $disableSearch ?? ($listConfig['disableSearch'] ?? false);
         $description = $description ?? ($listConfig['description'] ?? false);
         $table = $table ?? ($listConfig['columns'] ?? []);
@@ -47,7 +46,7 @@
                     [
                         'title' => $title,
                         'description' => $description ?? '',
-                        'newLabel' => $newLabel ?? null,
+                        'actions' => $actions,
                         'disableSearch' => $disableSearch ?? false,
                         'relations' => $relations ?? [],
                         'action' => $action ?? $componentAction,
@@ -101,7 +100,6 @@
                                                             'column' => $index,
                                                             'label' => $column['label'] ?? '',
                                                             'value' =>$row[$column['field']] ?? '',
-                                                            'redirectAction' => $redirectAction . $row[$primaryKey ?? 'id'],
                                                             'readOnly' => $column['readOnly'] ?? true,
                                                             'id' => $row['id'],
                                                             'columnValue' => $column['field'],

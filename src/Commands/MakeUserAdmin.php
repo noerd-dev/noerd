@@ -5,7 +5,7 @@ namespace Noerd\Commands;
 use Illuminate\Console\Command;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 class MakeUserAdmin extends Command
 {
@@ -37,7 +37,7 @@ class MakeUserAdmin extends Command
         }
 
         // Find the user
-        $user = User::find($userId);
+        $user = NoerdUser::find($userId);
         if (!$user) {
             $this->error("User with ID {$userId} not found.");
             return self::FAILURE;

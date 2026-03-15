@@ -308,7 +308,9 @@ trait GeneratesResourceFiles
         $entitiesHeadline = Str::headline($this->entities);
         $entityHeadline = Str::headline($this->entity);
         $lines[] = "title: {$entitiesHeadline}";
-        $lines[] = "newLabel: New {$entityHeadline}";
+        $lines[] = 'actions:';
+        $lines[] = "  - label: New {$entityHeadline}";
+        $lines[] = '    action: listAction';
         $lines[] = "component: {$this->entity}-detail";
         $lines[] = 'columns:';
 

@@ -5,13 +5,13 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 it('sets the impersonating_from session key when logging in as user', function (): void {
-    $admin = User::factory()->adminUser()->create();
-    $targetUser = User::factory()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
+    $targetUser = NoerdUser::factory()->create();
 
     // Attach target user to the same tenant as admin
     $tenant = $admin->adminTenants()->first();
@@ -19,15 +19,15 @@ it('sets the impersonating_from session key when logging in as user', function (
 
     $this->actingAs($admin);
 
-    Livewire::test('setup.users-list')
+    Livewire::test('setup.noerd-users-list')
         ->call('loginAsUser', $targetUser->id);
 
     expect(session('impersonating_from'))->toBe($admin->id);
 });
 
 it('shows the impersonation banner when session key exists', function (): void {
-    $admin = User::factory()->adminUser()->create();
-    $targetUser = User::factory()->create(['name' => 'Test Target']);
+    $admin = NoerdUser::factory()->adminUser()->create();
+    $targetUser = NoerdUser::factory()->create(['name' => 'Test Target']);
 
     session(['impersonating_from' => $admin->id]);
     $this->actingAs($targetUser);
@@ -38,7 +38,7 @@ it('shows the impersonation banner when session key exists', function (): void {
 });
 
 it('does not show the impersonation banner without session key', function (): void {
-    $user = User::factory()->create(['name' => 'Regular User']);
+    $user = NoerdUser::factory()->create(['name' => 'Regular User']);
     $this->actingAs($user);
 
     Livewire::test('layout.impersonation-banner')
@@ -47,8 +47,8 @@ it('does not show the impersonation banner without session key', function (): vo
 });
 
 it('restores original user when stopping impersonation', function (): void {
-    $admin = User::factory()->adminUser()->create();
-    $targetUser = User::factory()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
+    $targetUser = NoerdUser::factory()->create();
 
     session(['impersonating_from' => $admin->id]);
     $this->actingAs($targetUser);
@@ -62,8 +62,8 @@ it('restores original user when stopping impersonation', function (): void {
 });
 
 it('shows the impersonation banner with correct state when session key exists', function (): void {
-    $admin = User::factory()->adminUser()->create();
-    $targetUser = User::factory()->create(['name' => 'Impersonated User']);
+    $admin = NoerdUser::factory()->adminUser()->create();
+    $targetUser = NoerdUser::factory()->create(['name' => 'Impersonated User']);
 
     session(['impersonating_from' => $admin->id]);
     $this->actingAs($targetUser);
@@ -74,8 +74,8 @@ it('shows the impersonation banner with correct state when session key exists', 
 });
 
 it('clears tenant session when logging in as user', function (): void {
-    $admin = User::factory()->adminUser()->create();
-    $targetUser = User::factory()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
+    $targetUser = NoerdUser::factory()->create();
 
     // Attach target user to the same tenant as admin
     $tenant = $admin->adminTenants()->first();
@@ -87,7 +87,7 @@ it('clears tenant session when logging in as user', function (): void {
     session(['noerd.selected_tenant_id' => $tenant->id]);
     session(['noerd.selected_app' => 'some-app']);
 
-    $response = Livewire::test('setup.users-list')
+    $response = Livewire::test('setup.noerd-users-list')
         ->call('loginAsUser', $targetUser->id)
         ->assertRedirect('/');
 
@@ -96,8 +96,8 @@ it('clears tenant session when logging in as user', function (): void {
 });
 
 it('clears tenant session when stopping impersonation', function (): void {
-    $admin = User::factory()->adminUser()->create();
-    $targetUser = User::factory()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
+    $targetUser = NoerdUser::factory()->create();
 
     session(['impersonating_from' => $admin->id]);
     session(['noerd.selected_app' => 'another-app']);

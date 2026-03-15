@@ -5,7 +5,7 @@
     x-noerd::on:keydown.arrow-left.prevent="left()"
     x-noerd::on:keydown.arrow-right.prevent="right()"
     --}}
-    wire:keydown.enter.prevent="{{$action}}('{{$redirectAction}}')"
+    wire:keydown.enter.prevent="{{$action}}('{{$id}}')"
 >
 
     @if($columnValue === 'action')
@@ -65,7 +65,7 @@
     @elseif($columnValue === 'selectAction')
         <a class="m-0.5 flex" wire:navigate
            {{--
-           @click="show = !show" wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+           @click="show = !show" wire:click.prevent="{{$action}}('{{$id}}')"
            --}}
         >
             <x-noerd::buttons.primary icon="noerd::icons.plus-circle" class="ml-auto">
@@ -110,7 +110,7 @@
         @else
             @if($type == 'id')
                 <a wire:navigate class="bg-gray-100"
-                   wire:click.prevent="{{$action}}('{{$redirectAction}}')">
+                   wire:click.prevent="{{$action}}('{{$id}}')">
                     <input type="text"
                            wire:change="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}', $event.target.value)"
                            @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"

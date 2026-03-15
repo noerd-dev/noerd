@@ -8,7 +8,7 @@ use Noerd\Models\Profile;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
@@ -23,7 +23,7 @@ beforeEach(function (): void {
         'name' => 'Admin',
     ]);
 
-    $this->user = User::factory()->create();
+    $this->user = NoerdUser::factory()->create();
     $this->user->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
 
     TenantHelper::setSelectedTenantId($this->tenant->id);
@@ -32,10 +32,10 @@ beforeEach(function (): void {
     $this->actingAs($this->user);
 });
 
-it('loads user-detail via direct route', function (): void {
-    $this->get('/user/' . $this->user->id)
+it('loads noerd-user-detail via direct route', function (): void {
+    $this->get('/noerd-user/' . $this->user->id)
         ->assertSuccessful()
-        ->assertSeeLivewire('user-detail');
+        ->assertSeeLivewire('noerd-user-detail');
 });
 
 it('loads user-role-detail via direct route', function (): void {

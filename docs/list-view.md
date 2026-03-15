@@ -22,10 +22,10 @@ Example: `app-configs/accounting/lists/customers-list.yml`
 
 ```yaml
 title: Customers
-newLabel: New Customer
-component: customer-detail
+actions:
+  - label: New Customer
+    action: listAction
 disableSearch: false
-redirectAction: ''
 columns:
   - field: name
     label: Name
@@ -53,9 +53,7 @@ columns:
 | Property | Description |
 |----------|-------------|
 | `title` | Page title (translation key) |
-| `newLabel` | Label for the "New" button |
-| `newAction` | Custom Livewire method name for the "New" button (default: `listAction`) |
-| `component` | Detail component to open on row click |
+| `actions` | Array of action buttons (see Actions below) |
 | `disableSearch` | Disable the search functionality |
 | `showSummary` | Show or hide the summary row in the table footer (default: `true`) |
 | `columns` | Array of column definitions |
@@ -191,23 +189,57 @@ Without `setDefaultSort()`, lists default to `id` descending.
 
 See [List Search](list-search.md) for more details on search and sorting.
 
-## Custom New Action
+## Actions
 
-By default, the "New" button calls `listAction()` to open the standard detail modal. Use `newAction` to call a custom method instead — for example, to open an import modal.
+List components support multiple action buttons via the `actions` array in the YAML configuration.
 
 **YAML Configuration:**
 
 ```yaml
-title: accounting_label_bank_transactions
-newLabel: accounting_label_import
-newAction: openImportModal
-component: bank-transaction-detail
+actions:
+  - label: accounting_label_import
+    action: openImportModal
+    heroicon: arrow-up-tray
+  - label: accounting_label_new_transaction
+    action: listAction
 ```
 
-- `newLabel`: Translation key for the button label (replaces default "New" label)
-- `newAction`: Livewire method name to call when the button is clicked
+| Property | Description |
+|----------|-------------|
+| `label` | Translation key for the button text |
+| `action` | Livewire method name to call (always explicit, no fallback) |
+| `heroicon` | (optional) Heroicon name for the button icon |
+| `style` | (optional) Set to `secondary` for secondary button style. Default is primary |
 
-**PHP method in the list component:**
+**Button layout:**
+- All buttons are primary style by default
+- Set `style: secondary` on individual actions for secondary style
+- Keyboard shortcut (N) applies only to the first button
+- Buttons are displayed side by side
+- No `actions` key means no button is rendered
+
+**Standard single action (most common):**
+
+```yaml
+title: accounting_label_customers
+actions:
+  - label: accounting_label_new_customer
+    action: listAction
+```
+
+**Multiple actions with icon:**
+
+```yaml
+title: accounting_label_bank_transactions
+actions:
+  - label: accounting_label_import
+    action: openImportModal
+    heroicon: arrow-up-tray
+  - label: accounting_label_new_transaction
+    action: listAction
+```
+
+**PHP method for custom actions:**
 
 ```php
 public function openImportModal(mixed $modelId = null, array $relations = []): void
@@ -221,9 +253,7 @@ public function openImportModal(mixed $modelId = null, array $relations = []): v
 }
 ```
 
-The custom method must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
-
-Without `newAction`, the button defaults to `listAction` which opens the standard detail component modal. `newLabel` and `newAction` are typically used together.
+Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
 
 ## Next Steps
 

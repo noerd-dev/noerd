@@ -57,10 +57,32 @@ return new class () extends Migration {
             });
         }
 
-        // Create users_tenants table (pivot table) - only if users table exists
-        if (!Schema::hasTable('users_tenants') && Schema::hasTable('users')) {
+        // Create noerd_users table
+        if (!Schema::hasTable('noerd_users')) {
+            Schema::create('noerd_users', function (Blueprint $table): void {
+                $table->id();
+                $table->string('name');
+                $table->string('email')->unique();
+                $table->timestamp('email_verified_at')->nullable();
+                $table->string('password');
+                $table->unsignedBigInteger('selected_tenant_id')->nullable();
+                $table->string('selected_app')->nullable();
+                $table->boolean('super_admin')->default(false);
+                $table->string('locale', 5)->default('en');
+                $table->rememberToken();
+                $table->string('api_token', 80)->unique()->nullable();
+                $table->timestamp('last_login_at')->nullable();
+                $table->timestamps();
+
+                $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
+                $table->index('selected_tenant_id');
+            });
+        }
+
+        // Create users_tenants table (pivot table) - only if noerd_users table exists
+        if (!Schema::hasTable('users_tenants') && Schema::hasTable('noerd_users')) {
             Schema::create('users_tenants', function (Blueprint $table): void {
-                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                $table->foreignId('user_id')->constrained('noerd_users')->onDelete('cascade');
                 $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
                 $table->foreignId('profile_id')->nullable()->constrained('profiles');
                 $table->timestamps();
@@ -168,11 +190,11 @@ return new class () extends Migration {
             });
         }
 
-        // Create user_settings table - only if users table exists
-        if (!Schema::hasTable('user_settings') && Schema::hasTable('users')) {
+        // Create user_settings table - only if noerd_users table exists
+        if (!Schema::hasTable('user_settings') && Schema::hasTable('noerd_users')) {
             Schema::create('user_settings', function (Blueprint $table): void {
                 $table->id();
-                $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
+                $table->foreignId('user_id')->unique()->constrained('noerd_users')->onDelete('cascade');
                 $table->unsignedBigInteger('selected_tenant_id')->nullable();
                 $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
                 $table->index('selected_tenant_id');
@@ -181,48 +203,16 @@ return new class () extends Migration {
             });
         }
 
-        // Add noerd columns to users table and migrate data - only if users table exists
-        if (Schema::hasTable('users')) {
-            // Migrate existing data from users table to user_settings if columns exist and user_settings is empty
-            if (Schema::hasColumn('users', 'locale') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
-                DB::table('users')->orderBy('id')->each(function ($user): void {
-                    DB::table('user_settings')->insert([
-                        'user_id' => $user->id,
-                        'locale' => $user->locale ?? 'en',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                });
-            }
-
-            // Add noerd columns to users table if they don't exist
-            $hasSelectedTenantId = Schema::hasColumn('users', 'selected_tenant_id');
-            $hasSelectedApp = Schema::hasColumn('users', 'selected_app');
-            $hasSuperAdmin = Schema::hasColumn('users', 'super_admin');
-            $hasLocale = Schema::hasColumn('users', 'locale');
-            $hasApiToken = Schema::hasColumn('users', 'api_token');
-
-            if (!$hasSelectedTenantId || !$hasSelectedApp || !$hasSuperAdmin || !$hasLocale || !$hasApiToken) {
-                Schema::table('users', function (Blueprint $table) use ($hasSelectedTenantId, $hasSelectedApp, $hasSuperAdmin, $hasLocale, $hasApiToken): void {
-                    if (!$hasSelectedTenantId) {
-                        $table->unsignedBigInteger('selected_tenant_id')->nullable()->after('email_verified_at');
-                        $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-                        $table->index('selected_tenant_id');
-                    }
-                    if (!$hasSelectedApp) {
-                        $table->string('selected_app')->nullable()->after('selected_tenant_id');
-                    }
-                    if (!$hasSuperAdmin) {
-                        $table->boolean('super_admin')->default(false)->after('selected_app');
-                    }
-                    if (!$hasLocale) {
-                        $table->string('locale', 5)->default('en')->after('super_admin');
-                    }
-                    if (!$hasApiToken) {
-                        $table->string('api_token', 80)->unique()->nullable()->after('remember_token');
-                    }
-                });
-            }
+        // Migrate existing data from noerd_users table to user_settings if locale column exists and user_settings is empty
+        if (Schema::hasTable('noerd_users') && Schema::hasColumn('noerd_users', 'locale') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
+            DB::table('noerd_users')->orderBy('id')->each(function ($user): void {
+                DB::table('user_settings')->insert([
+                    'user_id' => $user->id,
+                    'locale' => $user->locale ?? 'en',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            });
         }
 
         // Handle existing invoices table if it exists (rename to tenant_invoices)
@@ -240,31 +230,8 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        // Drop in reverse order of creation - only if users table exists
-        if (Schema::hasTable('users') && Schema::hasColumn('users', 'selected_tenant_id')) {
-            $driver = Schema::getConnection()->getDriverName();
-
-            if ($driver === 'mysql' || $driver === 'mariadb') {
-                // MySQL/MariaDB: Need to explicitly drop foreign key and index
-                Schema::table('users', function (Blueprint $table): void {
-                    $table->dropForeign(['selected_tenant_id']);
-                    $table->dropIndex(['selected_tenant_id']);
-                });
-            }
-            // SQLite: Foreign keys and indexes are dropped automatically with columns
-
-            // Drop columns one by one for SQLite compatibility
-            $columnsToDrop = ['selected_tenant_id', 'selected_app', 'super_admin', 'locale', 'api_token'];
-            foreach ($columnsToDrop as $column) {
-                if (Schema::hasColumn('users', $column)) {
-                    Schema::table('users', function (Blueprint $table) use ($column): void {
-                        $table->dropColumn($column);
-                    });
-                }
-            }
-        }
-
         Schema::dropIfExists('user_settings');
+        Schema::dropIfExists('noerd_users');
         Schema::dropIfExists('setup_collection_entries');
         Schema::dropIfExists('setup_collections');
         Schema::dropIfExists('setup_languages');

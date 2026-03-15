@@ -4,10 +4,10 @@ use Illuminate\Support\Facades\Route;
 use Noerd\Controllers\DashboardController;
 
 Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
-    Route::livewire('setup', 'setup.users-list')->name('setup');
+    Route::livewire('setup', 'setup.noerd-users-list')->name('setup');
     Route::livewire('tenant-apps', 'setup.tenant-apps-list')->name('tenant-apps');
-    Route::livewire('users', 'setup.users-list')->name('users');
-    Route::livewire('user/{modelId}', 'user-detail')->name('user.detail');
+    Route::livewire('users', 'setup.noerd-users-list')->name('users');
+    Route::livewire('noerd-user/{modelId}', 'noerd-user-detail')->name('noerd-user.detail');
     Route::livewire('user-roles', 'setup.user-roles-list')->name('user-roles');
     Route::livewire('user-role/{modelId}', 'user-role-detail')->name('user-role.detail');
     Route::livewire('tenant', 'setup.tenant-detail')->name('tenant');

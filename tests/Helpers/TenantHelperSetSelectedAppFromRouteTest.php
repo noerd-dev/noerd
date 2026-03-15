@@ -5,12 +5,12 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\TenantApp;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    $user = User::factory()->withExampleTenant()->create();
+    $user = NoerdUser::factory()->withExampleTenant()->create();
     $this->actingAs($user);
 });
 

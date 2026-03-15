@@ -8,7 +8,7 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
@@ -20,7 +20,7 @@ beforeEach(function (): void {
         'name' => 'Admin',
     ]);
 
-    $this->admin = User::factory()->create(['super_admin' => true]);
+    $this->admin = NoerdUser::factory()->create(['super_admin' => true]);
     $this->admin->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
 
     TenantHelper::setSelectedTenantId($this->tenant->id);
@@ -40,7 +40,7 @@ it('renders the tenant-apps page for super admins', function (): void {
 });
 
 it('denies access to regular admins', function (): void {
-    $regularAdmin = User::factory()->create();
+    $regularAdmin = NoerdUser::factory()->create();
     $regularAdmin->tenants()->attach($this->tenant->id, [
         'profile_id' => Profile::factory()->create([
             'tenant_id' => $this->tenant->id,
@@ -56,7 +56,7 @@ it('denies access to regular admins', function (): void {
 });
 
 it('denies access to non-admin users', function (): void {
-    $nonAdmin = User::factory()->create();
+    $nonAdmin = NoerdUser::factory()->create();
 
     $this->actingAs($nonAdmin);
 

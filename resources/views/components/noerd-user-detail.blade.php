@@ -7,7 +7,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\Profile;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\UserRole;
 use Noerd\Traits\NoerdDetail;
 
@@ -17,7 +17,7 @@ new class extends Component {
     #[Url(as: 'userId', keep: false, except: '')]
     public $modelId = null;
 
-    public const DETAIL_CLASS = User::class;
+    public const DETAIL_CLASS = NoerdUser::class;
 
     public bool $isOwner = false;
     public $selectedTenant;
@@ -56,7 +56,7 @@ new class extends Component {
             return false;
         }
 
-        $user = User::find($this->modelId);
+        $user = NoerdUser::find($this->modelId);
         if (! $user) {
             return false;
         }
@@ -70,9 +70,9 @@ new class extends Component {
 
         $this->selectedTenant = auth()->user()->selectedTenant();
 
-        $user = new User;
+        $user = new NoerdUser;
         if ($this->modelId) {
-            $user = User::find($this->modelId);
+            $user = NoerdUser::find($this->modelId);
             foreach ($user->roles as $role) {
                 $this->userRoles[$role->id] = true;
             }
@@ -113,7 +113,7 @@ new class extends Component {
         ]);
 
         if (! $this->modelId) {
-            $userExists = User::where('email', $this->detailData['email'])->first();
+            $userExists = NoerdUser::where('email', $this->detailData['email'])->first();
             if ($userExists) {
                 $allowedTenants = Auth::user()->adminTenants()->pluck('id');
                 foreach ($this->possibleTenants as $tenantId => $value) {
@@ -130,7 +130,7 @@ new class extends Component {
             $this->detailData['password'] = bcrypt(Str::random(32));
         }
 
-        $user = User::updateOrCreate(['id' => $this->modelId], $this->detailData);
+        $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $this->detailData);
         foreach ($this->userRoles as $key => $value) {
             $user->roles()->detach($key);
             if ($value) {
@@ -159,7 +159,7 @@ new class extends Component {
 
     public function delete(): void
     {
-        $user = User::find($this->modelId);
+        $user = NoerdUser::find($this->modelId);
 
         $user->tenants()->detach(auth()->user()->selected_tenant_id);
         $this->closeModalProcess($this->getListComponent());

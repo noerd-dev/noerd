@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Models\TenantApp;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
@@ -52,7 +52,7 @@ describe('PublicAppMiddleware', function (): void {
     });
 
     it('allows authenticated access to public apps', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
 
         TenantApp::create([
             'name' => 'DOCUMENTATION',
@@ -109,7 +109,7 @@ describe('PublicAppMiddleware', function (): void {
     });
 
     it('falls back to tenant-based access for non-public apps when authenticated', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
         $tenant = $user->selectedTenant();
 
         $app = TenantApp::create([
@@ -133,7 +133,7 @@ describe('PublicAppMiddleware', function (): void {
     });
 
     it('throws exception for authenticated user without app access on private apps', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
 
         TenantApp::create([
             'name' => 'CMS',

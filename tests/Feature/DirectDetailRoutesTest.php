@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Route;
 
 uses(Tests\TestCase::class);
 
-it('has direct route for user-detail', function (): void {
-    expect(Route::has('user.detail'))->toBeTrue();
+it('has direct route for noerd-user-detail', function (): void {
+    expect(Route::has('noerd-user.detail'))->toBeTrue();
 });
 
 it('has direct route for user-role-detail', function (): void {

@@ -11,7 +11,7 @@ use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Services\SetupFieldTypeConverter;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
@@ -30,7 +30,7 @@ beforeEach(function (): void {
         'name' => 'Admin',
     ]);
 
-    $this->user = User::factory()->create();
+    $this->user = NoerdUser::factory()->create();
 
     // Attach user to tenant with admin profile
     $this->user->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);

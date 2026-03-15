@@ -1,6 +1,6 @@
 <?php
 
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -29,7 +29,7 @@ new class extends Component {
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($user->id)
+                Rule::unique(NoerdUser::class)->ignore($user->id)
             ],
         ]);
 

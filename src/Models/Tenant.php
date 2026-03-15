@@ -75,7 +75,7 @@ class Tenant extends Authenticatable
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'users_tenants')->withPivot('profile_id');
+        return $this->belongsToMany(NoerdUser::class, 'users_tenants', 'tenant_id', 'user_id')->withPivot('profile_id');
     }
 
     public function userRoles(): HasMany

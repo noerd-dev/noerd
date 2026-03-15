@@ -63,7 +63,7 @@
            @click="show = !show"
            wire:navigate
 
-           wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+           wire:click.prevent="{{$action}}('{{$id}}')"
         >
             <x-noerd::buttons.primary icon="noerd::icons.plus-circle" class="ml-auto">
                 {{ __($label) }}
@@ -123,7 +123,7 @@
         @else
             @if($type == 'id')
                 <a wire:navigate class="bg-gray-100"
-                   wire:click.prevent="{{$action}}('{{$redirectAction}}')">
+                   wire:click.prevent="{{$action}}('{{$id}}')">
                     <input type="text"
 
                            wire:change="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}', $event.target.value)"
@@ -134,32 +134,32 @@
             @elseif($type == 'date')
                 @if($value)
                     <input type="{{$type}}"
-                           wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                           wire:click.prevent="{{$action}}('{{$id}}')"
                            @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                            class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
                            value="{{ $value instanceof \Illuminate\Support\Carbon ? $value->format('Y-m-d') : $value }}">
                 @endif
             @elseif($type == 'datetime')
                 @if($value)
-                    <span wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                    <span wire:click.prevent="{{$action}}('{{$id}}')"
                           class="cursor-pointer text-sm py-0.5 px-1.5">
                         {{ app()->getLocale() === 'de' ? \Carbon\Carbon::parse($value)->format('d.m.Y H:i') : \Carbon\Carbon::parse($value)->format('Y-m-d H:i') }}
                     </span>
                 @endif
             @elseif($type == 'number')
                 <input type="{{$type}}"
-                       wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                       wire:click.prevent="{{$action}}('{{$id}}')"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
                        value="{{round((float)$value,2)}}">
             @elseif($type == 'currency')
                 <input type="{{$type}}"
-                       wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                       wire:click.prevent="{{$action}}('{{$id}}')"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
                        value="{{number_format((float)$value,2, ',', '.')}} €">
             @elseif($type == 'badge_with_text')
-                <div wire:click.prevent="{{$action}}('{{$redirectAction}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
+                <div wire:click.prevent="{{$action}}('{{$id}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['badge']) && $value['badge'])
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary">
                             {{ $value['badge'] }}
@@ -185,7 +185,7 @@
                 <div @if(isset($columnConfig['wireClick']))
                          wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
                      @else
-                         wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                         wire:click.prevent="{{$action}}('{{$id}}')"
                      @endif
                      class="cursor-pointer py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['text']) && $value['text'] !== '')
@@ -198,7 +198,7 @@
                 </div>
             @else
                 <input type="{{$type}}"
-                       wire:click.prevent="{{$action}}('{{$redirectAction}}')"
+                       wire:click.prevent="{{$action}}('{{$id}}')"
                        wire:change="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}', $event.target.value)"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5"

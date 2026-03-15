@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 it('authenticates a user and redirects without navigate', function (): void {
-    $user = User::factory()->create([
+    $user = NoerdUser::factory()->create([
         'password' => bcrypt('password'),
     ]);
 
@@ -21,7 +21,7 @@ it('authenticates a user and redirects without navigate', function (): void {
 });
 
 it('fails login with invalid credentials', function (): void {
-    $user = User::factory()->create([
+    $user = NoerdUser::factory()->create([
         'password' => bcrypt('password'),
     ]);
 
@@ -39,7 +39,7 @@ it('requires email and password', function (): void {
 });
 
 it('rate limits login attempts', function (): void {
-    $user = User::factory()->create([
+    $user = NoerdUser::factory()->create([
         'password' => bcrypt('password'),
     ]);
 

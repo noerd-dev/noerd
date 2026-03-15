@@ -9,7 +9,7 @@ use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 class CreateAdminCommand extends Command
 {
@@ -62,7 +62,7 @@ class CreateAdminCommand extends Command
                     if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         return 'Please enter a valid email address.';
                     }
-                    if (User::where('email', $value)->exists()) {
+                    if (NoerdUser::where('email', $value)->exists()) {
                         return 'A user with this email already exists.';
                     }
 
@@ -76,7 +76,7 @@ class CreateAdminCommand extends Command
 
                 return self::FAILURE;
             }
-            if (User::where('email', $email)->exists()) {
+            if (NoerdUser::where('email', $email)->exists()) {
                 $this->error('A user with this email already exists.');
 
                 return self::FAILURE;
@@ -107,7 +107,7 @@ class CreateAdminCommand extends Command
         }
 
         // Create the user
-        $user = User::create([
+        $user = NoerdUser::create([
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($passwordValue),

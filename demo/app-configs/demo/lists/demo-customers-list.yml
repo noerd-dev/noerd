@@ -1,6 +1,7 @@
 title: Demo Customers
-newLabel: New Demo Customer
-component: demo-customer-detail
+actions:
+  - label: New Demo Customer
+    action: listAction
 disableSearch: false
 columns:
   - field: name

@@ -7,25 +7,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Noerd\Database\Factories\UserFactory;
+use Noerd\Database\Factories\NoerdUserFactory;
 use Noerd\Helpers\TenantHelper;
 use Nywerk\LegalRegister\Models\Standort;
 
-class User extends Authenticatable
+class NoerdUser extends Authenticatable
 {
     use HasFactory;
     use Notifiable;
 
-    protected $guarded = ['id'];
+    protected $table = 'noerd_users';
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'super_admin',
-        'api_token',
-        'last_login_at',
-    ];
+    protected $guarded = ['id'];
 
     protected $hidden = [
         'password',
@@ -67,7 +60,7 @@ class User extends Authenticatable
 
     public function tenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class, 'users_tenants')
+        return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
             ->withPivot('profile_id');
     }
 
@@ -75,7 +68,7 @@ class User extends Authenticatable
     {
         // TODO
         $adminIds = Profile::where('key', 'ADMIN')->pluck('id');
-        return $this->belongsToMany(Tenant::class, 'users_tenants')
+        return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
             ->withPivot('profile_id')
             ->wherePivotIn('profile_id', $adminIds)->with('profiles');
     }
@@ -99,7 +92,7 @@ class User extends Authenticatable
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(UserRole::class, 'user_role');
+        return $this->belongsToMany(UserRole::class, 'user_role', 'user_id');
     }
 
     public function getRolesForTenantAttribute(): array
@@ -127,7 +120,7 @@ class User extends Authenticatable
 
     public function profiles(): BelongsToMany
     {
-        return $this->belongsToMany(Profile::class, 'users_tenants')
+        return $this->belongsToMany(Profile::class, 'users_tenants', 'user_id')
             ->withPivot('profile_id');
     }
 
@@ -157,7 +150,7 @@ class User extends Authenticatable
     // Belongs to many Sites
     public function sites(): BelongsToMany
     {
-        return $this->belongsToMany(Standort::class, 'standort_user');
+        return $this->belongsToMany(Standort::class, 'standort_user', 'user_id');
     }
 
     public function userSetting(): HasOne
@@ -231,8 +224,8 @@ class User extends Authenticatable
         ];
     }
 
-    protected static function newFactory(): UserFactory
+    protected static function newFactory(): NoerdUserFactory
     {
-        return UserFactory::new();
+        return NoerdUserFactory::new();
     }
 }

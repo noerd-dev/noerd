@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use function Laravel\Prompts\confirm;
 
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -322,12 +322,12 @@ export default {
             return;
         }
 
-        $authModelLine = "\nAUTH_MODEL=Noerd\\Models\\User\n";
+        $authModelLine = "\nAUTH_MODEL=Noerd\\Models\\NoerdUser\n";
 
         if (file_put_contents($envPath, $envContent . $authModelLine) !== false) {
             $this->line('<info>Added AUTH_MODEL to .env file.</info>');
         } else {
-            $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Models\\User');
+            $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Models\\NoerdUser');
         }
     }
 
@@ -578,7 +578,7 @@ export default {
         $this->info('Admin User Setup');
         $this->line('================');
 
-        $userCount = User::count();
+        $userCount = NoerdUser::count();
 
         if ($userCount === 0) {
             $this->setupNewAdminUser();
@@ -617,7 +617,7 @@ export default {
             } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $this->error('Please enter a valid email address.');
                 $email = null;
-            } elseif (User::where('email', $email)->exists()) {
+            } elseif (NoerdUser::where('email', $email)->exists()) {
                 $this->error('A user with this email already exists.');
                 $email = null;
             }
@@ -636,7 +636,7 @@ export default {
         }
 
         // Create the user
-        $user = User::create([
+        $user = NoerdUser::create([
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($passwordValue),
@@ -658,8 +658,8 @@ export default {
      */
     protected function setupExistingAdminUser(): void
     {
-        $users = User::all();
-        $adminUsers = $users->filter(fn(User $user) => $user->isAdmin());
+        $users = NoerdUser::all();
+        $adminUsers = $users->filter(fn(NoerdUser $user) => $user->isAdmin());
 
         if ($adminUsers->isNotEmpty()) {
             $this->line('<comment>Admin user(s) already exist:</comment>');
@@ -680,7 +680,7 @@ export default {
         }
 
         // Build options for choice prompt
-        $options = $users->mapWithKeys(function (User $user) {
+        $options = $users->mapWithKeys(function (NoerdUser $user) {
             $adminTag = $user->isAdmin() ? ' [ADMIN]' : '';
             return [$user->id => "{$user->name} ({$user->email}){$adminTag}"];
         })->toArray();
@@ -693,7 +693,7 @@ export default {
 
         // Find the actual user ID from the selected option
         $selectedUserId = array_search($selectedUserId, $options);
-        $selectedUser = User::find($selectedUserId);
+        $selectedUser = NoerdUser::find($selectedUserId);
 
         if ($selectedUser->isAdmin()) {
             $this->line("<comment>User '{$selectedUser->name}' is already an admin.</comment>");
@@ -706,7 +706,7 @@ export default {
     /**
      * Make a user admin by calling the noerd:make-admin command
      */
-    protected function makeUserAdmin(User $user): void
+    protected function makeUserAdmin(NoerdUser $user): void
     {
         $this->line("Making user '{$user->name}' an admin...");
 

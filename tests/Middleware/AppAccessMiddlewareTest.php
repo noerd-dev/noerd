@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Models\TenantApp;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
@@ -26,7 +26,7 @@ describe('AppAccessMiddleware', function (): void {
     });
 
     it('redirects to home when user has no selected tenant', function (): void {
-        $user = User::factory()->create();
+        $user = NoerdUser::factory()->create();
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
@@ -39,7 +39,7 @@ describe('AppAccessMiddleware', function (): void {
     });
 
     it('throws NoerdException when tenant does not have the app assigned', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
         $this->actingAs($user);
 
         $request = Request::create('/cms/pages', 'GET');
@@ -49,7 +49,7 @@ describe('AppAccessMiddleware', function (): void {
     })->throws(NoerdException::class, "App 'CMS' is not assigned to this tenant");
 
     it('allows access when tenant has the app assigned', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
         $tenant = $user->selectedTenant();
 
         $app = TenantApp::create([
@@ -72,7 +72,7 @@ describe('AppAccessMiddleware', function (): void {
     });
 
     it('sets selected_app when access is allowed', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
         $tenant = $user->selectedTenant();
 
         $app = TenantApp::create([
@@ -95,7 +95,7 @@ describe('AppAccessMiddleware', function (): void {
     });
 
     it('matches app name case-insensitively', function (): void {
-        $user = User::factory()->withExampleTenant()->create();
+        $user = NoerdUser::factory()->withExampleTenant()->create();
         $tenant = $user->selectedTenant();
 
         $app = TenantApp::create([

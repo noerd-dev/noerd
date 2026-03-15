@@ -23,7 +23,7 @@ class UserSetting extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->belongsTo(NoerdUser::class, 'user_id', 'id');
     }
 
     protected static function newFactory(): UserSettingFactory

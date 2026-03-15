@@ -1,8 +1,8 @@
 title: noerd_label_users
-newLabel: noerd_label_new_user
-component: user-detail
+actions:
+  - label: noerd_label_new_user
+    action: listAction
 disableSearch: false
-redirectAction: ''
 description: ''
 columns:
   - field: email

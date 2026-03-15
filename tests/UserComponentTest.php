@@ -6,21 +6,21 @@ use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
 $testSettings = [
-    'componentName' => 'user-detail',
-    'listName' => 'users-list',
+    'componentName' => 'noerd-user-detail',
+    'listName' => 'noerd-users-list',
     'modelId' => 'modelId',
     'urlParam' => 'userId',
 ];
 
 it('renders the user component', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
 
     $this->actingAs($admin);
 
@@ -30,7 +30,7 @@ it('renders the user component', function () use ($testSettings): void {
 });
 
 it('validates required fields when storing', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
 
     $this->actingAs($admin);
 
@@ -42,7 +42,7 @@ it('validates required fields when storing', function () use ($testSettings): vo
 });
 
 it('successfully creates a new user', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
@@ -65,18 +65,18 @@ it('successfully creates a new user', function () use ($testSettings): void {
         ->call('store')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('users', [
+    $this->assertDatabaseHas('noerd_users', [
         'name' => $userName,
         'email' => $userEmail,
     ]);
 
     // Check if user is attached to tenant with correct profile
-    $createdUser = User::where('email', $userEmail)->first();
+    $createdUser = NoerdUser::where('email', $userEmail)->first();
     expect($createdUser->tenants->contains($tenant->id))->toBeTrue();
 });
 
 it('updates an existing user', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -85,7 +85,7 @@ it('updates an existing user', function () use ($testSettings): void {
         'name' => 'Standard User',
     ]);
 
-    $existingUser = User::factory()->create([
+    $existingUser = NoerdUser::factory()->create([
         'name' => 'Old Name',
         'email' => 'old@example.com',
     ]);
@@ -106,7 +106,7 @@ it('updates an existing user', function () use ($testSettings): void {
         ->call('store')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('users', [
+    $this->assertDatabaseHas('noerd_users', [
         'id' => $existingUser->id,
         'name' => $newName,
         'email' => $newEmail,
@@ -114,7 +114,7 @@ it('updates an existing user', function () use ($testSettings): void {
 });
 
 it('handles existing user with same email', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -124,7 +124,7 @@ it('handles existing user with same email', function () use ($testSettings): voi
     ]);
 
     // Create an existing user
-    $existingUser = User::factory()->create([
+    $existingUser = NoerdUser::factory()->create([
         'email' => 'existing@example.com',
     ]);
 
@@ -144,7 +144,7 @@ it('handles existing user with same email', function () use ($testSettings): voi
 });
 
 it('manages user roles correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -156,7 +156,7 @@ it('manages user roles correctly', function () use ($testSettings): void {
     $role1 = UserRole::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Role 1']);
     $role2 = UserRole::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Role 2']);
 
-    $user = User::factory()->create();
+    $user = NoerdUser::factory()->create();
     $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
 
     $this->actingAs($admin);
@@ -179,7 +179,7 @@ it('manages user roles correctly', function () use ($testSettings): void {
 });
 
 it('manages tenant access correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant1 = $admin->tenants->first();
     $tenant2 = Tenant::factory()->create();
 
@@ -203,7 +203,7 @@ it('manages tenant access correctly', function () use ($testSettings): void {
         'name' => 'User 2',
     ]);
 
-    $user = User::factory()->create();
+    $user = NoerdUser::factory()->create();
 
     $this->actingAs($admin);
 
@@ -224,7 +224,7 @@ it('manages tenant access correctly', function () use ($testSettings): void {
 });
 
 it('requires at least one tenant access', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $this->actingAs($admin);
@@ -238,7 +238,7 @@ it('requires at least one tenant access', function () use ($testSettings): void 
 });
 
 it('loads user roles in mount', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -248,7 +248,7 @@ it('loads user roles in mount', function () use ($testSettings): void {
     ]);
 
     $role = UserRole::factory()->create(['tenant_id' => $tenant->id]);
-    $user = User::factory()->create();
+    $user = NoerdUser::factory()->create();
     $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
     $user->roles()->attach($role->id);
 
@@ -271,7 +271,7 @@ it('loads user roles in mount', function () use ($testSettings): void {
 });
 
 it('computes roles correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     UserRole::factory()->create([
@@ -290,7 +290,7 @@ it('computes roles correctly', function () use ($testSettings): void {
 });
 
 it('computes tenant profiles correctly', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -308,7 +308,7 @@ it('computes tenant profiles correctly', function () use ($testSettings): void {
 });
 
 it('sets success indicator after storing', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -332,7 +332,7 @@ it('sends password reset link when creating new user', function () use ($testSet
     // Fake notifications to capture what is sent
     Notification::fake();
 
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
@@ -357,7 +357,7 @@ it('sends password reset link when creating new user', function () use ($testSet
         ->assertHasNoErrors();
 
     // Verify user was created
-    $createdUser = User::where('email', $userEmail)->first();
+    $createdUser = NoerdUser::where('email', $userEmail)->first();
     expect($createdUser)->not->toBeNull();
     expect($createdUser->name)->toBe($userName);
     expect($createdUser->email)->toBe($userEmail);
@@ -376,7 +376,7 @@ it('does not send password reset link when updating existing user', function () 
     // Fake notifications to capture what is sent
     Notification::fake();
 
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     $profile = Profile::factory()->create([
@@ -386,7 +386,7 @@ it('does not send password reset link when updating existing user', function () 
     ]);
 
     // Create an existing user
-    $existingUser = User::factory()->create([
+    $existingUser = NoerdUser::factory()->create([
         'name' => 'Old Name',
         'email' => 'old@example.com',
     ]);
@@ -409,7 +409,7 @@ it('does not send password reset link when updating existing user', function () 
 });
 
 it('creates user with hashed password that user cannot login with before reset', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
@@ -434,7 +434,7 @@ it('creates user with hashed password that user cannot login with before reset',
         ->assertHasNoErrors();
 
     // Verify user was created with a hashed password
-    $createdUser = User::where('email', $userEmail)->first();
+    $createdUser = NoerdUser::where('email', $userEmail)->first();
     expect($createdUser)->not->toBeNull();
     expect($createdUser->password)->not->toBeNull();
     expect($createdUser->password)->not->toBe('');

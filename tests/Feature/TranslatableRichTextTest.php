@@ -1,14 +1,14 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 describe('TranslatableRichText Component', function (): void {
 
     beforeEach(function (): void {
-        $this->admin = User::factory()->adminUser()->withSelectedApp('setup')->create();
+        $this->admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
         $this->actingAs($this->admin);
     });
 

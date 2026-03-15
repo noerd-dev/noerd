@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\TenantFilterTrait;
 
@@ -11,13 +11,13 @@ new class () extends Component {
     use NoerdList;
     use TenantFilterTrait;
 
-    public const DETAIL_COMPONENT = 'users-list';
+    public const DETAIL_COMPONENT = 'noerd-users-list';
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
-            modalComponent: 'user-detail',
+            modalComponent: 'noerd-user-detail',
             source: $this->getComponentName(),
             arguments: ['modelId' => $modelId, 'relations' => $relations],
         );
@@ -30,7 +30,7 @@ new class () extends Component {
         }
 
         $tenants = Auth::user()->adminTenants();
-        $allowedUserIds = User::whereHas('tenants', function ($relationQuery) use ($tenants): void {
+        $allowedUserIds = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
             $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
         })->get()->pluck('id')->toArray();
 
@@ -51,7 +51,7 @@ new class () extends Component {
     {
         $tenants = Auth::user()->adminTenants();
 
-        $rows = User::whereHas('tenants', function ($relationQuery) use ($tenants): void {
+        $rows = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
             if (! empty($this->listFilters['tenant_id'])) {
                 $relationQuery->where('tenant_id', $this->listFilters['tenant_id']);
             } else {

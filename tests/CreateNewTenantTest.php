@@ -5,7 +5,7 @@ use Livewire\Livewire;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\UserRole;
 
 uses(Tests\TestCase::class);
@@ -16,7 +16,7 @@ $testSettings = [
 ];
 
 it('renders the create-new-tenant component', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
 
     $this->actingAs($admin);
 
@@ -26,7 +26,7 @@ it('renders the create-new-tenant component', function () use ($testSettings): v
 });
 
 it('validates required name field', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
 
     $this->actingAs($admin);
 
@@ -36,7 +36,7 @@ it('validates required name field', function () use ($testSettings): void {
 });
 
 it('validates name field minimum length', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
 
     $this->actingAs($admin);
 
@@ -47,7 +47,7 @@ it('validates name field minimum length', function () use ($testSettings): void 
 });
 
 it('validates name field maximum length', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
 
     $this->actingAs($admin);
 
@@ -58,7 +58,7 @@ it('validates name field maximum length', function () use ($testSettings): void 
 });
 
 it('accepts valid name with minimum length', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
 
     $this->actingAs($admin);
 
@@ -69,7 +69,7 @@ it('accepts valid name with minimum length', function () use ($testSettings): vo
 });
 
 it('successfully creates a new tenant', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $tenantName = 'Test Tenant';
 
     $this->actingAs($admin);
@@ -88,7 +88,7 @@ it('successfully creates a new tenant', function () use ($testSettings): void {
 });
 
 it('creates default USER and ADMIN profiles for new tenant', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $tenantName = 'Test Tenant';
 
     $this->actingAs($admin);
@@ -116,7 +116,7 @@ it('creates default USER and ADMIN profiles for new tenant', function () use ($t
 });
 
 it('attaches current user to new tenant as admin', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $tenantName = 'Test Tenant';
 
     $this->actingAs($admin);
@@ -141,7 +141,7 @@ it('attaches current user to new tenant as admin', function () use ($testSetting
 });
 
 it('copies tenant apps from current tenant to new tenant', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $currentTenant = $admin->tenants->first();
 
     // Create some tenant apps and attach them to current tenant
@@ -178,7 +178,7 @@ it('copies tenant apps from current tenant to new tenant', function () use ($tes
 });
 
 it('copies user roles from current tenant to new tenant', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $currentTenant = $admin->tenants->first();
 
     // Create some user roles for current tenant
@@ -224,7 +224,7 @@ it('copies user roles from current tenant to new tenant', function () use ($test
 });
 
 it('updates user selected_tenant_id to new tenant', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $originalTenantId = $admin->selected_tenant_id;
     $tenantName = 'Test Tenant';
 
@@ -246,7 +246,7 @@ it('updates user selected_tenant_id to new tenant', function () use ($testSettin
 });
 
 it('handles case when current tenant has no apps', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $currentTenant = $admin->tenants->first();
 
     // Ensure current tenant has no apps
@@ -268,7 +268,7 @@ it('handles case when current tenant has no apps', function () use ($testSetting
 });
 
 it('handles case when current tenant has no user roles', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $currentTenant = $admin->tenants->first();
 
     // Ensure current tenant has no user roles
@@ -291,7 +291,7 @@ it('handles case when current tenant has no user roles', function () use ($testS
 });
 
 it('sets name property correctly in component', function () use ($testSettings): void {
-    $admin = User::factory()->adminUser()->create();
+    $admin = NoerdUser::factory()->adminUser()->create();
     $tenantName = 'Test Tenant';
 
     $this->actingAs($admin);

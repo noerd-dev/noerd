@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\Tenant;
-use Noerd\Models\User;
+use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
@@ -17,7 +17,7 @@ it('fails when no tenants exist', function (): void {
         ->assertExitCode(1);
 
     // Verify user was NOT created
-    expect(User::where('email', 'admin@example.com')->exists())->toBeFalse();
+    expect(NoerdUser::where('email', 'admin@example.com')->exists())->toBeFalse();
 });
 
 it('creates a new admin user with command options', function (): void {
@@ -33,7 +33,7 @@ it('creates a new admin user with command options', function (): void {
         ->assertExitCode(0);
 
     // Verify user was created
-    $user = User::where('email', 'admin@example.com')->first();
+    $user = NoerdUser::where('email', 'admin@example.com')->first();
     expect($user)->not->toBeNull();
     expect($user->name)->toBe('Test Admin');
     expect($user->isAdmin())->toBeTrue();
@@ -54,7 +54,7 @@ it('creates a super admin user when flag is provided', function (): void {
         ->assertExitCode(0);
 
     // Verify user was created as super admin
-    $user = User::where('email', 'superadmin@example.com')->first();
+    $user = NoerdUser::where('email', 'superadmin@example.com')->first();
     expect($user)->not->toBeNull();
     expect($user->super_admin)->toBeTrue();
     expect($user->isSuperAdmin())->toBeTrue();
@@ -74,7 +74,7 @@ it('fails with invalid email format', function (): void {
 
 it('fails with duplicate email', function (): void {
     Tenant::factory()->create(['name' => 'Test Tenant']);
-    User::factory()->create(['email' => 'existing@example.com']);
+    NoerdUser::factory()->create(['email' => 'existing@example.com']);
 
     $this->artisan('noerd:create-admin', [
         '--name' => 'Test User',
@@ -109,7 +109,7 @@ it('assigns user to all tenants as admin', function (): void {
     ])
         ->assertExitCode(0);
 
-    $user = User::where('email', 'multiadmin@example.com')->first();
+    $user = NoerdUser::where('email', 'multiadmin@example.com')->first();
 
     // Verify user has access to all tenants
     expect($user->tenants->count())->toBe(2);
@@ -127,6 +127,6 @@ it('sets selected_tenant_id after creation', function (): void {
     ])
         ->assertExitCode(0);
 
-    $user = User::where('email', 'admin@example.com')->first();
+    $user = NoerdUser::where('email', 'admin@example.com')->first();
     expect($user->selected_tenant_id)->not->toBeNull();
 });

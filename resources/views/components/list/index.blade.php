@@ -19,12 +19,10 @@
 
     // Extract values from listSettings
     $title = __($listSettings['title'] ?? '');
-    $newLabel = __($listSettings['newLabel'] ?? '');
-    $redirectAction = $listSettings['redirectAction'] ?? '';
+    $actions = $listSettings['actions'] ?? [];
     $disableSearch = $listSettings['disableSearch'] ?? false;
     $description = $listSettings['description'] ?? false;
     $showSummary = $listSettings['showSummary'] ?? true;
-    $newAction = $listSettings['newAction'] ?? null;
     $table = $listSettings['columns'] ?? [];
 
     $listAction = $this->listActionMethod ?? 'listAction';
@@ -67,7 +65,7 @@
                 @include('noerd::components.table.title-search', [
                     'title' => $title,
                     'description' => $description ?? '',
-                    'newLabel' => $newLabel ?? null,
+                    'actions' => $actions,
                     'disableSearch' => $disableSearch ?? false,
                     'relations' => $relations ?? [],
                     'action' => $action ?? $listAction,
@@ -117,7 +115,6 @@
                                                     'column' => $index,
                                                     'label' => $column['label'] ?? '',
                                                     'value' => $row[$column['field']] ?? '',
-                                                    'redirectAction' => $redirectAction . $row['id'],
                                                     'readOnly' => $column['readOnly'] ?? true,
                                                     'id' => $row['id'],
                                                     'columnValue' => $column['field'],
