@@ -359,7 +359,9 @@ trait NoerdDetail
 
         $pageLayout = StaticConfigHelper::getComponentFields($this->getDetailComponent());
         $this->pageLayout = $pageLayout;
-        $this->detailData = $model->toArray();
+        $this->detailData = collect($model->toArray())
+            ->except(['created_at', 'updated_at'])
+            ->toArray();
     }
 
     /**
