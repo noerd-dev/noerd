@@ -274,11 +274,6 @@ trait NoerdDetail
         return call_user_func($callback);
     }
 
-    public function changeEditMode(): void
-    {
-        $this->editMode = !$this->editMode;
-    }
-
     /**
      * Load record navigation IDs from session.
      */
