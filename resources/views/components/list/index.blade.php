@@ -158,7 +158,7 @@
 
             @if(isset($rows) && count($rows) > 0 && (is_array($rows) ? '' : $rows->links()) )
                 <div>
-                    {{ is_array($rows) ? '' : $rows->links() }}
+                    {{ is_array($rows) ? '' : $rows->links('noerd::pagination') }}
                 </div>
             @endif
         @endisset

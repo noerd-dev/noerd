@@ -161,10 +161,10 @@
     "noerd_select_project": "Projekt auswählen",
     "noerd_select_storage_location": "Lagerstelle auswählen",
     "noerd_original_value": "Ursprünglicher Wert",
-    "noerd_opening_hours": "Öffnungszeiten",
-    "noerd_new_opening_hours": "Neue Öffnungszeit",
+    "noerd_opening_hours": "Geschäftszeiten",
+    "noerd_new_opening_hours": "Neue Geschäftszeit",
     "noerd_business_hours": "Geschäftszeit",
-    "noerd_business_hours_description": "Verwaltung der Geschäfts- und Öffnungszeiten",
+    "noerd_business_hours_description": "Verwaltung der Geschäftszeiten",
     "noerd_delivery_times_settings": "Lieferzeiten Einstellungen",
     "noerd_timeslot_length": "Zeitslot Länge (Minuten)",
     "noerd_order_confirmation": "Auftragsbestätigung",
@@ -326,5 +326,11 @@
     "noerd_confirm_delete": "Möchten Sie diesen Eintrag wirklich löschen?",
     "noerd_nav_previous_record": "Vorheriger Datensatz",
     "noerd_nav_next_record": "Nächster Datensatz",
-    "noerd_cannot_delete_role_with_users": "Diese Rolle kann nicht gelöscht werden, da ihr noch Benutzer zugewiesen sind."
+    "noerd_cannot_delete_role_with_users": "Diese Rolle kann nicht gelöscht werden, da ihr noch Benutzer zugewiesen sind.",
+    "Showing": "Zeige",
+    "of": "von",
+    "Previous": "Zurück",
+    "Next": "Weiter",
+    "results": "Ergebnisse",
+    "to": "bis"
 }
