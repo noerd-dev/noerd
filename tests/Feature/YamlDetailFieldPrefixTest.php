@@ -24,6 +24,7 @@ $customPropertyComponents = [
     'invoice-detail',
     'bank-account-detail',
     'customer-detail',
+    'collection-definition-detail',
 ];
 
 it('ensures all YAML detail files use detailData prefix for NoerdDetail components', function () use ($customPropertyComponents): void {
