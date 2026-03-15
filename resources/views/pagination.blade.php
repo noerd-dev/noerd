@@ -1,8 +1,8 @@
 
 
-<div>
+<div class="">
     @if ($paginator->hasPages())
-        <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-between border-t border-gray-200 py-3">
+        <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-between py-3 !h-[44px] my-auto">
             {{-- Info text left --}}
             <div class="hidden sm:block">
                 <p class="text-sm text-gray-700">

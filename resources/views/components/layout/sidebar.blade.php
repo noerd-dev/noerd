@@ -152,16 +152,19 @@ new class extends Component {
                                                     :navigations="$navigation->blockMenus()"/>
 
                 <!-- Toggle Appbar Button -->
-                <button @click="showAppbar = !showAppbar; $wire.toggleAppbar()"
-                        class="mt-auto p-3 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor"
-                         class="w-5 h-5 transition-transform duration-200"
-                         :class="showAppbar ? '' : 'rotate-180'">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-                    </svg>
-                </button>
+<div class="border-gray-200 border-t">
 
+
+    <button @click="showAppbar = !showAppbar; $wire.toggleAppbar()"
+            class="mt-auto p-3 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+             stroke="currentColor"
+             class="w-5 h-5 transition-transform duration-200"
+             :class="showAppbar ? '' : 'rotate-180'">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+        </svg>
+    </button>
+</div>
                 <!-- Resize Handle -->
                 <div
                     class="absolute right-0 top-0 h-full w-0.5 cursor-col-resize hover:bg-brand-primary/40 transition-all"
