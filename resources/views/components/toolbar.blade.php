@@ -1,6 +1,6 @@
 @props(['buttons' => []])
 
-<div class="flex items-center gap-1 border-b border-gray-200 py-2 px-1">
+<div class="flex items-center gap-3 pb-3">
     @foreach($buttons as $button)
         @if(($button['type'] ?? '') === 'separator')
             <div class="h-6 w-px bg-gray-300 mx-2"></div>
@@ -11,7 +11,7 @@
                 @isset($button['confirm']) wire:confirm="{{ __($button['confirm']) }}" @endisset
                 wire:loading.attr="disabled"
                 wire:target="{{ $button['action'] }}"
-                class="inline-flex items-center gap-1.5 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                class="inline-flex items-center cursor-pointer gap-1.5 px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
             >
                 @isset($button['heroicon'])
                     <x-icon name="{{ $button['heroicon'] }}" class="w-4 h-4"/>

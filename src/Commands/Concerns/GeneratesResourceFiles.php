@@ -355,6 +355,10 @@ trait GeneratesResourceFiles
             $lines[] = "    label: {$label}";
             $lines[] = "    type: {$type}";
             $lines[] = '    colspan: 6';
+
+            if (! $col['nullable']) {
+                $lines[] = '    required: true';
+            }
         }
 
         return implode("\n", $lines) . "\n";

@@ -2,7 +2,6 @@
 
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
-use Noerd\Scopes\SortScope;
 use Noerd\Traits\NoerdList;
 
 new class extends Component
@@ -34,7 +33,11 @@ new class extends Component
     public function with(): array
     {
         // Custom sort order: is_default desc, sort_order, name
-        $rows = SetupLanguage::withoutGlobalScope(SortScope::class)
+        $rows = SetupLanguage::query()
+            ->when($this->search, fn ($query) => $query->where(function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('code', 'like', '%' . $this->search . '%');
+            }))
             ->orderBy('is_default', 'desc')
             ->orderBy('sort_order')
             ->orderBy('name')

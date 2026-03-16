@@ -11,7 +11,11 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('tenant_app', function (Blueprint $table): void {
-            $table->integer('sort_order')->default(0)->after('is_hidden');
+            if (Schema::hasColumn('tenant_app', 'is_hidden')) {
+                $table->integer('sort_order')->default(0)->after('is_hidden');
+            } else {
+                $table->integer('sort_order')->default(0);
+            }
         });
     }
 

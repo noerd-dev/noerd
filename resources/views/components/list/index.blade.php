@@ -13,8 +13,7 @@
     $sortField = $listConfig['sortField'] ?? 'id';
     $sortAsc = $listConfig['sortAsc'] ?? false;
     $rows = $listConfig['rows'] ?? [];
-    $sortableFields = $listConfig['sortableFields'] ?? [];
-    $notSortableFields = $listConfig['notSortableFields'] ?? [];
+    $notSortableColumns = $listConfig['notSortableColumns'] ?? [];
     $listSettings = $listConfig['listSettings'] ?? [];
 
     // Extract values from listSettings
@@ -97,8 +96,7 @@
                                                 'label' => $column['label'] ?? '',
                                                 'align' => $column['align'] ?? 'left',
                                                 'minWidth' => $column['minWidth'] ?? null,
-                                                'sortableFields' => $sortableFields,
-                                                'notSortableFields' => $notSortableFields,
+                                                'notSortableColumns' => $notSortableColumns,
                                             ])
                                         @endforeach
                                     </tr>

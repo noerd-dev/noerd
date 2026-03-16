@@ -2,12 +2,16 @@
 
 namespace Noerd\Traits;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Scopes\SearchScope;
+use Noerd\Scopes\SortScope;
 use Noerd\Services\ListQueryContext;
 
 trait NoerdList
@@ -39,10 +43,6 @@ trait NoerdList
     public mixed $context = '';
 
     public bool $disableModal = false;
-
-    protected array $resolvedSortableFields = [];
-
-    protected array $resolvedNotSortableFields = [];
 
     public function mount(): void
     {
@@ -78,7 +78,9 @@ trait NoerdList
 
     public function sortBy(string $field): void
     {
-        if (! $this->isFieldSortableInList($field)) {
+        $listConfig = $this->getListConfig();
+        $notSortable = $listConfig['notSortableColumns'] ?? [];
+        if (in_array($field, $notSortable)) {
             return;
         }
 
@@ -304,47 +306,6 @@ trait NoerdList
         return Str::camel($entity) . 'Selected';
     }
 
-    /**
-     * Check if a field is sortable based on the resolved model constraints.
-     */
-    protected function isFieldSortableInList(string $field): bool
-    {
-        $sortable = $this->resolvedSortableFields ?? [];
-        $notSortable = $this->resolvedNotSortableFields ?? [];
-
-        if (! empty($sortable)) {
-            return in_array($field, $sortable);
-        }
-
-        if (! empty($notSortable)) {
-            return ! in_array($field, $notSortable);
-        }
-
-        return true;
-    }
-
-    /**
-     * Resolve sortable/notSortable fields from the paginated rows.
-     */
-    protected function resolveSortabilityFromRows(mixed $rows): void
-    {
-        $firstItem = null;
-
-        if ($rows instanceof \Illuminate\Pagination\LengthAwarePaginator || $rows instanceof \Illuminate\Pagination\Paginator) {
-            $firstItem = $rows->first();
-        } elseif ($rows instanceof \Illuminate\Support\Collection) {
-            $firstItem = $rows->first();
-        }
-
-        $this->resolvedSortableFields = ($firstItem && is_object($firstItem) && method_exists($firstItem, 'getSortableFields'))
-            ? $firstItem->getSortableFields()
-            : [];
-
-        $this->resolvedNotSortableFields = ($firstItem && is_object($firstItem) && method_exists($firstItem, 'getNotSortableFields'))
-            ? $firstItem->getNotSortableFields()
-            : [];
-    }
-
     protected function syncListQueryContext(): void
     {
         app(ListQueryContext::class)->set(
@@ -352,6 +313,44 @@ trait NoerdList
             $this->sortField,
             $this->sortAsc,
         );
+    }
+
+    /**
+     * Build a query with search and sort applied based on YAML columns.
+     */
+    protected function listQuery(string $modelClass): Builder
+    {
+        $query = $modelClass::query()
+            ->withoutGlobalScope(SearchScope::class)
+            ->withoutGlobalScope(SortScope::class);
+
+        $listConfig = $this->getListConfig();
+
+        if (! empty($this->search)) {
+            $searchableFields = ! empty($listConfig['searchableColumns'])
+                ? $listConfig['searchableColumns']
+                : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
+
+            $table = (new $modelClass())->getTable();
+            $validFields = array_filter($searchableFields, fn($f) => Schema::hasColumn($table, $f));
+
+            if (! empty($validFields)) {
+                $search = $this->search;
+                $query->where(function (Builder $q) use ($validFields, $search): void {
+                    foreach (array_values($validFields) as $index => $field) {
+                        $index === 0
+                            ? $q->where($field, 'like', '%' . $search . '%')
+                            : $q->orWhere($field, 'like', '%' . $search . '%');
+                    }
+                });
+            }
+        }
+
+        $table = (new $modelClass())->getTable();
+        $sortField = Schema::hasColumn($table, $this->sortField) ? $this->sortField : 'id';
+        $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
+
+        return $query;
     }
 
     /**
@@ -364,8 +363,6 @@ trait NoerdList
     {
         $this->storeRecordNavigation($rows);
 
-        $this->resolveSortabilityFromRows($rows);
-
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);
@@ -374,8 +371,7 @@ trait NoerdList
             'listId' => $this->listId,
             'sortField' => $this->sortField,
             'sortAsc' => $this->sortAsc,
-            'sortableFields' => $this->resolvedSortableFields,
-            'notSortableFields' => $this->resolvedNotSortableFields,
+            'notSortableColumns' => $listSettings['notSortableColumns'] ?? [],
             'rows' => $rows,
             'listSettings' => $listSettings,
         ];

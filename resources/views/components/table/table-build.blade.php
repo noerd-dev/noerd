@@ -81,8 +81,7 @@
                                                     'label' => $column['label'] ?? '',
                                                     'align' => $column['align'] ?? 'left',
                                                     'minWidth' => $column['minWidth'] ?? null,
-                                                    'sortableFields' => $sortableFields ?? [],
-                                                    'notSortableFields' => $notSortableFields ?? [],
+                                                    'notSortableColumns' => $notSortableColumns ?? [],
                                                     ])
                                             @endforeach
                                         </tr>

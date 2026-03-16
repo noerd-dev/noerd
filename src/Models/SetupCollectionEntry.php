@@ -6,18 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Noerd\Services\SetupFieldTypeConverter;
 use Noerd\Traits\BelongsToTenant;
-use Noerd\Traits\HasListScopes;
 
 class SetupCollectionEntry extends Model
 {
     use BelongsToTenant;
-    use HasListScopes;
 
     protected $guarded = [];
-
-    protected array $searchable = [
-        'data',
-    ];
 
     protected $casts = [
         'data' => 'array',

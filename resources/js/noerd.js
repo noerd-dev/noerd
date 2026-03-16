@@ -59,7 +59,7 @@ document.addEventListener('alpine:init', () => {
                 const inBlockingField = ['TEXTAREA', 'SELECT'].includes(tag) || document.activeElement?.isContentEditable;
 
                 // Record navigation: ArrowDown/ArrowUp (blocked only in textarea, select, contenteditable)
-                if (this.hasRecordNav && Alpine.store('app').modalOpen && !inBlockingField) {
+                if (this.hasRecordNav && Alpine.store('app').modalOpen && !Alpine.store('app').modalFullscreen && !inBlockingField) {
                     if (e.key === 'ArrowDown' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
                         e.preventDefault();
                         this.$wire.navigateRecord('next');

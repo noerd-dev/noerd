@@ -3,11 +3,7 @@
     <div class="flex top-5 whitespace-nowrap">
         @if($field !== 'action')
             @php
-                $sf = $sortableFields ?? [];
-                $nsf = $notSortableFields ?? [];
-                $isSortable = empty($sf) && empty($nsf)
-                    || (!empty($sf) && in_array($field, $sf))
-                    || (!empty($nsf) && !in_array($field, $nsf));
+                $isSortable = !in_array($field, $notSortableColumns ?? []);
             @endphp
             @if($isSortable)
                 <button type="button" class="text-black @if($align === 'right') ml-auto pr-2 @endif" wire:click="sortBy('{{$field}}')">

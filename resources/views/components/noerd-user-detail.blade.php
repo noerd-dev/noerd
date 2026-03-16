@@ -130,7 +130,8 @@ new class extends Component {
             $this->detailData['password'] = bcrypt(Str::random(32));
         }
 
-        $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $this->detailData);
+        $userData = collect($this->detailData)->only(['name', 'email', 'password'])->toArray();
+        $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $userData);
         foreach ($this->userRoles as $key => $value) {
             $user->roles()->detach($key);
             if ($value) {

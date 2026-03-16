@@ -6,19 +6,12 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Noerd\Database\Factories\SetupLanguageFactory;
-use Noerd\Traits\HasListScopes;
 
 class SetupLanguage extends Model
 {
     use HasFactory;
-    use HasListScopes;
 
     protected $guarded = [];
-
-    protected array $searchable = [
-        'name',
-        'code',
-    ];
 
     protected $casts = [
         'is_active' => 'boolean',

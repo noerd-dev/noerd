@@ -1,6 +1,6 @@
 # List Search
 
-The search functionality allows users to filter list data by typing in a search field. The search is automatically applied via Global Scopes when the model uses the `HasListScopes` trait.
+The search functionality allows users to filter list data by typing in a search field. The search is applied via the `listQuery()` method in `NoerdList`, which reads searchable columns from the YAML configuration.
 
 ## Enabling/Disabling the Search Field
 
@@ -23,41 +23,13 @@ disableSearch: true
 ## How Search Works
 
 1. The `NoerdList` trait provides a `$search` property bound to the search input via `wire:model.live="search"`
-2. When the user types, `updatedSearch()` syncs the search value to `ListQueryContext`
-3. The `SearchScope` (Global Scope) automatically reads from `ListQueryContext` and applies the filter
-4. The model's `$searchable` property defines which fields are searched
+2. When the user types, the search value is available in `$this->search`
+3. `listQuery()` applies WHERE conditions based on `searchableColumns` (or all column fields as fallback)
+4. Filtered results are returned
 
-## Setting Up Search in a Model
+## Using `listQuery()` in a List Component
 
-Add the `HasListScopes` trait and define the `$searchable` property:
-
-```php
-<?php
-
-namespace Nywerk\Customer\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Noerd\Traits\HasListScopes;
-
-class Customer extends Model
-{
-    use HasListScopes;
-
-    /**
-     * Fields that are searchable via the search scope.
-     */
-    protected array $searchable = [
-        'name',
-        'company_name',
-        'email',
-        'zipcode',
-    ];
-}
-```
-
-## Complete List Component Example
-
-With `HasListScopes` and `$searchable` configured in the model, the list component is minimal:
+The `listQuery()` method handles search and sort automatically based on YAML configuration:
 
 ```php
 <?php
@@ -81,7 +53,7 @@ new class extends Component {
 
     public function with()
     {
-        $rows = Customer::paginate(self::PAGINATION);
+        $rows = $this->listQuery(Customer::class)->paginate(self::PAGINATION);
 
         return [
             'listConfig' => $this->buildList($rows),
@@ -94,7 +66,27 @@ new class extends Component {
 </x-noerd::page>
 ```
 
-No manual search logic is needed in `with()` - the `SearchScope` handles it automatically.
+## Searchable Columns Configuration
+
+By default, `listQuery()` searches across all columns defined in the YAML `columns` array. To limit search to specific fields, use `searchableColumns`:
+
+```yaml
+title: Customers
+searchableColumns:
+  - name
+  - company_name
+  - email
+  - zipcode
+columns:
+  - field: name
+    label: Name
+    width: 15
+  - field: company_name
+    label: Company
+    width: 15
+```
+
+If `searchableColumns` is not defined, all `columns[].field` values are used as searchable fields.
 
 ## Architecture Overview
 
@@ -103,56 +95,39 @@ User types in search field
         ↓
 wire:model.live="search" updates $this->search
         ↓
-updatedSearch() syncs to ListQueryContext
+listQuery() reads searchableColumns from YAML (or all columns)
         ↓
-Model query executes (e.g., Customer::paginate())
+WHERE conditions applied with LIKE operators
         ↓
-SearchScope (Global Scope) reads from ListQueryContext
+Sort applied based on $this->sortField / $this->sortAsc
         ↓
-SearchScope applies WHERE conditions based on $searchable
-        ↓
-Filtered results returned
+Filtered and sorted results returned
 ```
 
-## The HasListScopes Trait
+## Eager Loading
 
-The trait provides:
-
-- **Global Scopes**: Automatically registers `SearchScope` and `SortScope`
-- **`getSearchableFields()`**: Returns the `$searchable` array
-- **`scopeSearch()`**: Manual scope for backward compatibility
-- **`scopeSorted()`**: Manual scope for sorting
+To add eager loading, chain `->with()` on the query:
 
 ```php
-trait HasListScopes
-{
-    public static function bootHasListScopes(): void
-    {
-        static::addGlobalScope(new SearchScope());
-        static::addGlobalScope(new SortScope());
-    }
-
-    public function getSearchableFields(): array
-    {
-        return $this->searchable ?? [];
-    }
-}
+$rows = $this->listQuery(BookingType::class)
+    ->with(['staff', 'slots'])
+    ->paginate(self::PAGINATION);
 ```
 
 ## Manual Search (Fallback)
 
-For models without `HasListScopes` or for custom search logic, use the manual approach:
+For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, use manual search:
 
 ```php
 public function with()
 {
-    $rows = SomeModel::query()
+    $rows = Menu::query()
         ->when($this->search, function ($query): void {
             $query->where(function ($query): void {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
+                $query->where('name', 'like', '%' . $this->search . '%');
             });
         })
+        ->orderBy('sort')
         ->paginate(self::PAGINATION);
 
     return [
@@ -182,17 +157,35 @@ protected function setDefaultSort(string $field, bool $ascending = false): void
 - `$field`: The column name to sort by
 - `$ascending`: `true` for ascending (A-Z, oldest first), `false` for descending (Z-A, newest first)
 
-The method automatically syncs the sort state to `ListQueryContext`, ensuring the `SortScope` applies the correct ordering.
+## Not Sortable Columns
+
+By default, all columns in a list are sortable. To disable sorting for specific columns, use `notSortableColumns` in the YAML configuration:
+
+```yaml
+title: Orders
+notSortableColumns:
+  - computed_field
+  - relation_display
+columns:
+  - field: name
+    label: Name
+    width: 15
+  - field: computed_field
+    label: Computed
+    width: 10
+```
+
+Columns listed in `notSortableColumns` will display their label as plain text instead of a clickable sort button. Clicking `sortBy()` for these fields will be ignored.
 
 ## Best Practices
 
-1. **Use `HasListScopes`**: Prefer the automatic approach via the trait and `$searchable` property
+1. **Use `listQuery()`**: Prefer the automatic approach via `listQuery()` for all standard lists
 
-2. **Choose searchable fields wisely**: Only include fields users would expect to search
+2. **Use `searchableColumns`**: Define specific searchable fields in YAML when not all columns should be searchable
 
 3. **Consider performance**: For large datasets, add database indexes on searchable columns
 
-4. **Keep it simple**: The automatic approach keeps list components clean and consistent
+4. **Keep it simple**: The `listQuery()` approach keeps list components clean and consistent
 
 ## Related Documentation
 
