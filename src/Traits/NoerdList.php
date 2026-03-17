@@ -21,6 +21,22 @@ trait NoerdList
 
     protected const PAGINATION = 50;
 
+    protected const COLUMN_TYPE_MAP = [
+        'tinyint' => 'bool',
+        'boolean' => 'bool',
+        'integer' => 'number',
+        'bigint' => 'number',
+        'smallint' => 'number',
+        'decimal' => 'number',
+        'float' => 'number',
+        'double' => 'number',
+        'date' => 'date',
+        'datetime' => 'datetime',
+        'timestamp' => 'datetime',
+    ];
+
+    private static array $schemaColumnCache = [];
+
     public $lastChangeTime;
 
     public string $search = '';
@@ -354,6 +370,66 @@ trait NoerdList
     }
 
     /**
+     * Auto-detect column types from database schema for columns without explicit type in YAML.
+     */
+    protected function applyAutoColumnTypes(array $listSettings, mixed $rows): array
+    {
+        $model = $this->resolveModelFromRows($rows);
+        if (! $model) {
+            return $listSettings;
+        }
+
+        $table = $model->getTable();
+        $schemaColumns = self::$schemaColumnCache[$table]
+            ??= Schema::getColumns($table);
+
+        $columnTypeMap = [];
+        foreach ($schemaColumns as $col) {
+            $normalized = mb_strtolower(preg_replace('/\(.*\)/', '', $col['type_name']));
+            if (isset(self::COLUMN_TYPE_MAP[$normalized])) {
+                $columnTypeMap[$col['name']] = self::COLUMN_TYPE_MAP[$normalized];
+            }
+        }
+
+        foreach ($listSettings['columns'] ?? [] as $i => $column) {
+            if (isset($column['type'])) {
+                continue;
+            }
+            $field = $column['field'] ?? null;
+            if ($field && isset($columnTypeMap[$field])) {
+                $listSettings['columns'][$i]['type'] = $columnTypeMap[$field];
+            }
+        }
+
+        // Auto-align number/currency columns to the right (matching cell alignment)
+        foreach ($listSettings['columns'] ?? [] as $i => $column) {
+            if (isset($column['align'])) {
+                continue;
+            }
+            $type = $column['type'] ?? 'text';
+            if (in_array($type, ['number', 'currency'])) {
+                $listSettings['columns'][$i]['align'] = 'right';
+            }
+        }
+
+        return $listSettings;
+    }
+
+    protected function resolveModelFromRows(mixed $rows): ?\Illuminate\Database\Eloquent\Model
+    {
+        if ($rows instanceof \Illuminate\Pagination\LengthAwarePaginator
+            || $rows instanceof \Illuminate\Pagination\Paginator) {
+            $first = $rows->getCollection()->first();
+        } elseif ($rows instanceof \Illuminate\Support\Collection) {
+            $first = $rows->first();
+        } else {
+            return null;
+        }
+
+        return $first instanceof \Illuminate\Database\Eloquent\Model ? $first : null;
+    }
+
+    /**
      * Build complete list configuration including rows and table state.
      * Returns all data needed for the list.index DETAIL_COMPONENT.
      *
@@ -366,6 +442,8 @@ trait NoerdList
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);
+
+        $listSettings = $this->applyAutoColumnTypes($listSettings, $rows);
 
         return [
             'listId' => $this->listId,
