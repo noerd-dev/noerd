@@ -1,15 +1,8 @@
 <?php
 
 use Livewire\Component;
-use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
-    public function openApp(string $appName, string $route): void
-    {
-        TenantHelper::setSelectedApp($appName);
-        $this->redirect(route($route), navigate: true);
-    }
-
     public function openSidebar(): void
     {
         if (session('hide_sidebar')) {
@@ -56,73 +49,7 @@ new class extends Component {
     <div class="flex">
 
         <!-- First column sidebar / Apps -->
-        @auth
-            <div x-show="showSidebar && showAppbar"
-                 x-transition
-                 @class([
-                    'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px))] bottom-0 z-50 xl:z-40 flex flex-col'
-                ])
-                 :style="'width: var(--sidebar-apps-width)'"
-            >
-                @php
-                    $selectedTenant = TenantHelper::getSelectedTenant();
-                    $selectedApp = TenantHelper::getSelectedApp();
-                @endphp
-                <div class="text-xs text-center overflow-y-auto flex-1">
-                    @foreach($selectedTenant?->tenantApps ?? [] as $tenantApp)
-                        @continue($tenantApp->pivot->is_hidden)
-                        <a @if($tenantApp->is_active)
-                               wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
-                           class="cursor-pointer"
-                           @else class="opacity-50" @endif>
-                            <div
-                                @class(['!bg-brand-primary/5  border-brand-primary!' => $selectedApp === $tenantApp->name,
-                                            'hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm  mx-auto'])>
-                                @if($tenantApp->icon)
-                                    <x-noerd::app-icon
-                                        :icon="$tenantApp->icon"
-                                        class="{{ $selectedApp === $tenantApp->name  ? 'stroke-brand-primary border-brand-primary' :
-                                    'stroke-black border-transparent hover:border-gray-500!' }}
-                                        border-l-2"/>
-                                @endif
-                            </div>
-                            <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-        @else
-            @php
-                $publicApps = \Noerd\Models\TenantApp::where('is_active', true)
-                    ->where('is_public', true)
-                    ->get();
-            @endphp
-            @if($publicApps->count() > 1)
-                <div x-show="showSidebar && showAppbar"
-                     x-transition
-                     @class([
-                        'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px))] bottom-0 z-50 xl:z-40 flex flex-col'
-                    ])
-                     :style="'width: var(--sidebar-apps-width)'"
-                >
-                    <div class="text-xs text-center overflow-y-auto flex-1">
-                        @foreach($publicApps as $tenantApp)
-                            <a href="{{ route($tenantApp->route) }}" class="cursor-pointer">
-                                <div class="hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm mx-auto">
-                                    @if($tenantApp->icon)
-                                        <x-noerd::app-icon
-                                            :icon="$tenantApp->icon"
-                                            class="stroke-black border-transparent hover:border-gray-500! border-l-2"/>
-                                    @endif
-                                </div>
-                                <div x-show="showSidebar"
-                                     class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-        @endauth
+        <livewire:layout.app-bar />
 
         <!-- Second column sidebar / Navigation -->
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
@@ -152,19 +79,17 @@ new class extends Component {
                                                     :navigations="$navigation->blockMenus()"/>
 
                 <!-- Toggle Appbar Button -->
-<div class="border-gray-200 border-t">
-
-
-    <button @click="showAppbar = !showAppbar; $wire.toggleAppbar()"
-            class="mt-auto p-3 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-             stroke="currentColor"
-             class="w-5 h-5 transition-transform duration-200"
-             :class="showAppbar ? '' : 'rotate-180'">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-        </svg>
-    </button>
-</div>
+                <div class="border-gray-200 border-t">
+                    <button @click="showAppbar = !showAppbar; $wire.toggleAppbar()"
+                            class="mt-auto p-3 text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor"
+                             class="w-5 h-5 transition-transform duration-200"
+                             :class="showAppbar ? '' : 'rotate-180'">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+                        </svg>
+                    </button>
+                </div>
                 <!-- Resize Handle -->
                 <div
                     class="absolute right-0 top-0 h-full w-0.5 cursor-col-resize hover:bg-brand-primary/40 transition-all"

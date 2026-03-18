@@ -2,19 +2,30 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Models\SetupLanguage;
 
 new class extends Component {
     public string $locale = '';
 
+    public array $languages = [];
+
     public function mount(): void
     {
         $this->locale = Auth::user()->locale ?? 'en';
+        $this->languages = SetupLanguage::getActive()
+            ->map(fn (SetupLanguage $language) => [
+                'value' => $language->code,
+                'label' => $language->name,
+            ])
+            ->toArray();
     }
 
     public function updateLanguage(): void
     {
+        $activeCodes = implode(',', SetupLanguage::getActiveCodes());
+
         $validated = $this->validate([
-            'locale' => ['required', 'string', 'in:de,en'],
+            'locale' => ['required', 'string', "in:{$activeCodes}"],
         ]);
 
         Auth::user()->setting->update($validated);
@@ -38,10 +49,7 @@ new class extends Component {
         <x-noerd::forms.input-select
             name="locale"
             label="{{ __('noerd_label_language') }}"
-            :options="[
-                ['value' => 'en', 'label' => 'English'],
-                ['value' => 'de', 'label' => 'Deutsch'],
-            ]"
+            :options="$languages"
         />
 
         <div class="flex items-center gap-4">

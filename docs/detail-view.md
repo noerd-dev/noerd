@@ -131,7 +131,7 @@ Example: `customer-detail.blade.php`
 
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
-use Nywerk\Customer\Models\Customer;
+use Noerd\Customer\Models\Customer;
 
 new class extends Component {
     use NoerdDetail;

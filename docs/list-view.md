@@ -116,7 +116,7 @@ Example: `customers-list.blade.php`
 
 use Livewire\Component;
 use Noerd\Traits\NoerdList;
-use Nywerk\Customer\Models\Customer;
+use Noerd\Customer\Models\Customer;
 
 new class extends Component {
     use NoerdList;

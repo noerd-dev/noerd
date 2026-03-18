@@ -24,6 +24,8 @@ $customPropertyComponents = [
     'invoice-detail',
     'bank-account-detail',
     'customer-detail',
+    'article-detail',
+    'author-detail',
     'collection-definition-detail',
 ];
 

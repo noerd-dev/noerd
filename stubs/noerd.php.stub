@@ -70,7 +70,7 @@ return [
         | When enabled, the make commands (noerd:make-list, noerd:make-detail,
         | noerd:make-resource) will also search for models in app-modules.
         | This allows using short model names like "Customer" instead of
-        | the full namespace "Nywerk\Customer\Models\Customer".
+        | the full namespace "Noerd\Customer\Models\Customer".
         */
         'search_modules' => true,
         'modules_path' => 'app-modules',

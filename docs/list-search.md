@@ -36,7 +36,7 @@ The `listQuery()` method handles search and sort automatically based on YAML con
 
 use Livewire\Component;
 use Noerd\Traits\NoerdList;
-use Nywerk\Customer\Models\Customer;
+use Noerd\Customer\Models\Customer;
 
 new class extends Component {
     use NoerdList;
