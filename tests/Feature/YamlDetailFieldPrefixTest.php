@@ -12,22 +12,7 @@ uses(Tests\TestCase::class);
  * instead of using the NoerdDetail trait's $detailData.
  * These are excluded from the detailData.* prefix check.
  */
-$customPropertyComponents = [
-    'page-detail',
-    'form-type-detail',
-    'navigation-detail',
-    'global-parameter-detail',
-    'form-request-detail',
-    'cms-settings-detail',
-    'element-page-detail',
-    'collection-detail',
-    'invoice-detail',
-    'bank-account-detail',
-    'customer-detail',
-    'article-detail',
-    'author-detail',
-    'collection-definition-detail',
-];
+$customPropertyComponents = [];
 
 it('ensures all YAML detail files use detailData prefix for NoerdDetail components', function () use ($customPropertyComponents): void {
     $directories = [
