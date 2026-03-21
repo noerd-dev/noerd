@@ -51,11 +51,15 @@ class Tenant extends Authenticatable
         $this->attributes['hash'] = $value;
     }
 
-    public function getDomainAttribute(?string $value): string
+    public function getDomainAttribute(?string $value): ?string
     {
-        return env('APP_ENV') !== 'production'
-            ? env('APP_MENU_URL') . '?uuid=' . $this->uuid
-            : $value ?? env('APP_MENU_URL') . '?uuid=' . $this->uuid;
+        if ($value) {
+            return $value;
+        }
+
+        $menuUrl = env('APP_MENU_URL');
+
+        return $menuUrl ? $menuUrl . '?uuid=' . $this->uuid : null;
     }
 
     public function getInvoiceInformation(): array
