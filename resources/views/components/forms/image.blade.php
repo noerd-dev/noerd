@@ -2,7 +2,7 @@
     'field' => null,
     'name' => '',
     'label' => '',
-    'model' => null,
+    'detailData' => null,
 ])
 
 @php
@@ -16,10 +16,10 @@
     <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
 
     @php
-        $resolvedName = str_replace(['detailData.', 'model.'], '', $name);
+        $resolvedName = str_replace('detailData.', '', $name);
         $rawValue = null;
-        if (isset($model) && isset($model[$resolvedName])) {
-            $rawValue = $model[$resolvedName];
+        if (isset($detailData) && isset($detailData[$resolvedName])) {
+            $rawValue = $detailData[$resolvedName];
         } elseif (isset($this->detailData[$resolvedName])) {
             $rawValue = $this->detailData[$resolvedName];
         }

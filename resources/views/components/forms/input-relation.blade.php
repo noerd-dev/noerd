@@ -28,7 +28,7 @@
         ) . '-detail';
     }
 
-    $wireModel = $relationField ?: 'relationTitles.' . str_replace(['model.', 'detailData.'], '', $name);
+    $wireModel = $relationField ?: 'relationTitles.' . str_replace('detailData.', '', $name);
 @endphp
 
 <div>

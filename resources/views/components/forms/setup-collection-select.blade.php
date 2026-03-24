@@ -28,7 +28,7 @@
 
     // Get collection config to check if displayField is translatable
     $collectionConfig = SetupCollectionHelper::getCollectionFields(mb_strtolower($collectionKey));
-    $fieldConfig = collect($collectionConfig['fields'] ?? [])->firstWhere('name', 'model.' . $displayField);
+    $fieldConfig = collect($collectionConfig['fields'] ?? [])->firstWhere('name', 'detailData.' . $displayField);
     $isTranslatable = in_array($fieldConfig['type'] ?? '', ['translatableText', 'translatableTextarea']);
 
     // Build options array

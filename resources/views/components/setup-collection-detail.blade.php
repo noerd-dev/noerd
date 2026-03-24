@@ -27,7 +27,7 @@ new class extends Component
     // Note: This component does NOT use DETAIL_CLASS because it uses custom layout from collectionLayout
     // instead of the standard YAML config system
 
-    public array $model = [];
+    public array $detailData = [];
     public ?SetupCollectionEntry $entry = null;
     public ?array $collectionLayout = null;
     public ?string $collectionKey = null;
@@ -64,13 +64,13 @@ new class extends Component
         // Load data from the JSON data field
         if ($this->entry->exists && $this->entry->data) {
             $rawData = is_array($this->entry->data) ? $this->entry->data : [];
-            $this->model = SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey);
+            $this->detailData = SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey);
         } else {
-            $this->model = [];
+            $this->detailData = [];
         }
 
         // Ensure sort field is available
-        $this->model['sort'] ??= $this->entry->sort ?? 0;
+        $this->detailData['sort'] ??= $this->entry->sort ?? 0;
     }
 
     public function store(): void
@@ -84,13 +84,13 @@ new class extends Component
         ]);
 
         // Apply field type conversion before saving
-        $convertedEntryData = SetupFieldTypeConverter::convertCollectionData($this->model, $this->collectionKey);
+        $convertedEntryData = SetupFieldTypeConverter::convertCollectionData($this->detailData, $this->collectionKey);
 
         $data = [
             'tenant_id' => auth()->user()->selected_tenant_id,
             'setup_collection_id' => $parentCollection->id,
             'data' => $convertedEntryData,
-            'sort' => (int) ($this->model['sort'] ?? 0),
+            'sort' => (int) ($this->detailData['sort'] ?? 0),
         ];
 
         $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->modelId], $data);
@@ -114,19 +114,19 @@ new class extends Component
         $mediaUploadService = app()->make(MediaUploadService::class);
         foreach ($this->images as $key => $image) {
             $media = $mediaUploadService->storeFromUploadedFile($image);
-            $this->model[$key] = $this->urlWithoutDomain($media);
+            $this->detailData[$key] = $this->urlWithoutDomain($media);
         }
     }
 
     public function deleteImage(string $fieldName): void
     {
-        $this->model[$fieldName] = null;
+        $this->detailData[$fieldName] = null;
     }
 
     public function openSelectMediaModal(string $fieldName): void
     {
         $token = uniqid('media_', true);
-        $this->model['__mediaToken'] = $token;
+        $this->detailData['__mediaToken'] = $token;
         $this->dispatch(
             event: 'noerdModal',
             modalComponent: 'media-list',
@@ -137,15 +137,15 @@ new class extends Component
     #[On('mediaSelected')]
     public function mediaSelected(int $mediaId, ?string $fieldName = 'image', ?string $token = null): void
     {
-        if (($this->model['__mediaToken'] ?? null) !== $token) {
+        if (($this->detailData['__mediaToken'] ?? null) !== $token) {
             return;
         }
         $media = Media::find($mediaId);
         if (! $media) {
             return;
         }
-        $this->model[$fieldName ?? 'image'] = $this->urlWithoutDomain($media);
-        unset($this->model['__mediaToken']);
+        $this->detailData[$fieldName ?? 'image'] = $this->urlWithoutDomain($media);
+        unset($this->detailData['__mediaToken']);
     }
 
     #[On('setupLanguageChanged')]
@@ -180,7 +180,7 @@ new class extends Component
                 <div class="flex ml-auto items-center space-x-2">
                     <label for="sort" class="text-sm text-gray-600 font-medium">{{ __('noerd_label_sort') }}:</label>
                     <input
-                        wire:model="model.sort"
+                        wire:model="detailData.sort"
                         id="sort"
                         type="number"
                         min="0"
