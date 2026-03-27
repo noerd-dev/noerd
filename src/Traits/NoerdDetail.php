@@ -233,7 +233,7 @@ trait NoerdDetail
 
     public function clearRelation(string $fieldName): void
     {
-        $key = str_replace(['model.', 'detailData.'], '', $fieldName);
+        $key = str_replace('detailData.', '', $fieldName);
         $this->relationTitles[$key] = '';
 
         if (array_key_exists($key, $this->detailData)) {
@@ -285,7 +285,7 @@ trait NoerdDetail
 
     protected function resolveImageFieldKey(string $fieldName): string
     {
-        return str_replace(['detailData.', 'model.'], '', $fieldName);
+        return str_replace('detailData.', '', $fieldName);
     }
 
     /**

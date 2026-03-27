@@ -19,7 +19,7 @@ trait NoerdList
     use WithoutUrlPagination;
     use WithPagination;
 
-    protected const PAGINATION = 50;
+    public int $perPage = 50;
 
     protected const COLUMN_TYPE_MAP = [
         'tinyint' => 'bool',
@@ -68,6 +68,7 @@ trait NoerdList
     public function mountList(): void
     {
         $this->listId = Str::random();
+        $this->perPage = session('listPerPage', 50);
         $this->loadListFilters();
 
         $savedSort = session("listSort.{$this->componentName()}");
@@ -75,6 +76,12 @@ trait NoerdList
             $this->sortField = $savedSort['field'];
             $this->sortAsc = $savedSort['asc'];
         }
+    }
+
+    public function updatedPerPage(): void
+    {
+        session(['listPerPage' => $this->perPage]);
+        $this->resetPage();
     }
 
     public function updatedSearch(): void

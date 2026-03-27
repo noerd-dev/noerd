@@ -274,9 +274,9 @@ describe('Setup Collection Detail Component', function (): void {
 
     it('can save a new entry', function (): void {
         $component = Livewire::test('setup-collection-detail', ['collectionKey' => 'example'])
-            ->set('model.title.de', 'Test Titel')
-            ->set('model.title.en', 'Test Title')
-            ->set('model.is_active', true)
+            ->set('detailData.title.de', 'Test Titel')
+            ->set('detailData.title.en', 'Test Title')
+            ->set('detailData.is_active', true)
             ->call('store');
 
         $component->assertSet('showSuccessIndicator', true);

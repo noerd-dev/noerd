@@ -133,7 +133,7 @@ new class extends Component {
 
     public function with()
     {
-        $rows = Customer::paginate(self::PAGINATION);
+        $rows = Customer::paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),

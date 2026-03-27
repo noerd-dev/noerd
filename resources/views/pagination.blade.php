@@ -1,22 +1,27 @@
 
 
 <div class="">
-    @if ($paginator->hasPages())
-        <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-between py-3 !h-[44px] my-auto">
-            {{-- Info text left --}}
-            <div class="hidden sm:block">
-                <p class="text-sm text-gray-700">
-                    <span>{!! __('Showing') !!}</span>
-                    <span class="font-medium">{{ $paginator->firstItem() }}</span>
-                    <span>{!! __('to') !!}</span>
-                    <span class="font-medium">{{ $paginator->lastItem() }}</span>
-                    <span>{!! __('of') !!}</span>
-                    <span class="font-medium">{{ $paginator->total() }}</span>
-                    <span>{!! __('results') !!}</span>
-                </p>
-            </div>
+    <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-between py-3 !h-[44px] my-auto">
+        {{-- Info text + per-page dropdown left --}}
+        <div class="hidden sm:flex sm:items-center sm:gap-4">
+            <p class="text-sm text-gray-700">
+                <span>{!! __('Showing') !!}</span>
+                <span class="font-medium">{{ $paginator->firstItem() }}</span>
+                <span>{!! __('to') !!}</span>
+                <span class="font-medium">{{ $paginator->lastItem() }}</span>
+                <span>{!! __('of') !!}</span>
+                <span class="font-medium">{{ $paginator->total() }}</span>
+                <span>{!! __('results') !!}</span>
+            </p>
+            <select wire:model.live="perPage" class="text-sm text-gray-700 border-gray-300 rounded-md py-1 pl-2 pr-7 focus:border-brand-primary focus:ring-brand-primary cursor-pointer">
+                @foreach([10, 50, 100, 250, 500, 1000] as $size)
+                    <option value="{{ $size }}">{{ $size }}</option>
+                @endforeach
+            </select>
+        </div>
 
-            {{-- Previous + Next right --}}
+        {{-- Previous + Next right --}}
+        @if ($paginator->hasPages())
             <div class="flex items-center gap-6">
                 @if ($paginator->onFirstPage())
                     <span class="inline-flex items-center border-t-2 border-transparent text-sm font-medium text-gray-300 cursor-default">
@@ -50,6 +55,6 @@
                     </span>
                 @endif
             </div>
-        </nav>
-    @endif
+        @endif
+    </nav>
 </div>

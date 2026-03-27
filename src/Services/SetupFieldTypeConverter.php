@@ -24,7 +24,7 @@ class SetupFieldTypeConverter
         $convertedData = $currentData;
 
         foreach ($collectionFields['fields'] as $field) {
-            $fieldName = str_replace('model.', '', $field['name']);
+            $fieldName = str_replace('detailData.', '', $field['name']);
             $fieldType = $field['type'] ?? 'text';
 
             if (! array_key_exists($fieldName, $currentData)) {

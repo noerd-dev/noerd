@@ -53,7 +53,7 @@ new class extends Component {
 
     public function with()
     {
-        $rows = $this->listQuery(Customer::class)->paginate(self::PAGINATION);
+        $rows = $this->listQuery(Customer::class)->paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),
@@ -111,7 +111,7 @@ To add eager loading, chain `->with()` on the query:
 ```php
 $rows = $this->listQuery(BookingType::class)
     ->with(['staff', 'slots'])
-    ->paginate(self::PAGINATION);
+    ->paginate($this->perPage);
 ```
 
 ## Manual Search (Fallback)
@@ -128,7 +128,7 @@ public function with()
             });
         })
         ->orderBy('sort')
-        ->paginate(self::PAGINATION);
+        ->paginate($this->perPage);
 
     return [
         'listConfig' => $this->buildList($rows),

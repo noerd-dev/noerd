@@ -19,7 +19,7 @@ new class extends Component {
 
     public function with()
     {
-        $rows = DemoCustomer::paginate(self::PAGINATION);
+        $rows = DemoCustomer::paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),

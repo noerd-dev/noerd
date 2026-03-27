@@ -24,7 +24,7 @@ new class extends Component {
     {
         $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)
             ->orderBy('name')
-            ->paginate(self::PAGINATION);
+            ->paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),

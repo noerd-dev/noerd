@@ -41,7 +41,7 @@ new class extends Component
             ->orderBy('is_default', 'desc')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->paginate(self::PAGINATION);
+            ->paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),

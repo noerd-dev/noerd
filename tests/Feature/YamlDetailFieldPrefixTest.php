@@ -52,8 +52,8 @@ it('ensures all YAML detail files use detailData prefix for NoerdDetail componen
                     continue;
                 }
 
-                // The field name must start with detailData. or model.
-                if (! str_starts_with($name, 'detailData.') && ! str_starts_with($name, 'model.')) {
+                // The field name must start with detailData.
+                if (! str_starts_with($name, 'detailData.')) {
                     $relativePath = str_replace(base_path('/'), '', $yamlFile);
                     $violations[] = "{$relativePath}: field '{$name}' should use 'detailData.' prefix";
                 }

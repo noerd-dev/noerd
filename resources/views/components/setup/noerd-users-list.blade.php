@@ -66,7 +66,7 @@ new class () extends Component {
             })
             ->orderBy('name')
             ->with(['roles', 'tenants'])
-            ->paginate(self::PAGINATION);
+            ->paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),

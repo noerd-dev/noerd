@@ -92,7 +92,7 @@ git submodule add git@github.com:noerd-dev/noerd.git app-modules/noerd
 Then add the package manually to the `require` section of your `composer.json`:
 
 ```json
-"noerd/noerd": "dev-main"
+"noerd/noerd": "*"
 ```
 
 Then run:

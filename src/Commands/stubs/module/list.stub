@@ -28,7 +28,7 @@ new class extends Component {
             ->when($this->search, function ($query): void {
                 $query->where('name', 'like', '%' . $this->search . '%');
             })
-            ->paginate(self::PAGINATION);
+            ->paginate($this->perPage);
 
         $listConfig = $this->getListConfig();
 

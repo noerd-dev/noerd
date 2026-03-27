@@ -157,7 +157,7 @@
                        wire:click.prevent="{{$action}}('{{$id}}')"
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
-                       value="{{number_format((float)$value,2, ',', '.')}} €">
+                       value="{{ \Noerd\Helpers\CurrencyHelper::format((float)$value) }}">
             @elseif($type == 'badge_with_text')
                 <div wire:click.prevent="{{$action}}('{{$id}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['badge']) && $value['badge'])

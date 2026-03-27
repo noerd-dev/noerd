@@ -69,6 +69,8 @@ class NoerdInstallCommand extends Command
             $this->askForDemoInstall();
 
             $this->info('Noerd content successfully installed!');
+            $this->newLine();
+            $this->line('Visit your application at: <info>' . url('/noerd-home') . '</info>');
 
             return 0;
         } catch (Exception $e) {

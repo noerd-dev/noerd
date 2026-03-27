@@ -57,7 +57,7 @@ class SetupCollectionHelper
 
             $tableColumn['width'] = $collectionField['width'] ?? 10;
             $tableColumn['label'] = $collectionField['label'] ?? $collectionField['name'];
-            $tableColumn['field'] = str_replace('model.', '', $collectionField['name']);
+            $tableColumn['field'] = str_replace('detailData.', '', $collectionField['name']);
 
             if ($tableColumn['field'] !== 'page_id') {
                 $table[] = $tableColumn;
