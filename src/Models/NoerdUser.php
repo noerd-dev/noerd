@@ -9,7 +9,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\NoerdUserFactory;
 use Noerd\Helpers\TenantHelper;
-use Nywerk\LegalRegister\Models\Standort;
 
 class NoerdUser extends Authenticatable
 {
@@ -37,25 +36,6 @@ class NoerdUser extends Authenticatable
     public function selectedTenant(): ?Tenant
     {
         return TenantHelper::getSelectedTenant();
-    }
-
-    public function selectedClientDemo(): ?bool
-    {
-        $selectedClientId = TenantHelper::getSelectedTenantId();
-
-        $freeModules = ['MENU'];
-
-        if ($selectedClientId) {
-            $selectedClient = Tenant::find($selectedClientId);
-
-            if (in_array($selectedClient->module, $freeModules)) {
-                return false;
-            }
-
-            return Tenant::find($selectedClientId)->demo_user;
-        }
-
-        return null;
     }
 
     public function tenants(): BelongsToMany
@@ -145,12 +125,6 @@ class NoerdUser extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return (bool) $this->super_admin;
-    }
-
-    // Belongs to many Sites
-    public function sites(): BelongsToMany
-    {
-        return $this->belongsToMany(Standort::class, 'standort_user', 'user_id');
     }
 
     public function userSetting(): HasOne

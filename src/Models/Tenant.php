@@ -51,30 +51,9 @@ class Tenant extends Authenticatable
         $this->attributes['hash'] = $value;
     }
 
-    public function getDomainAttribute(?string $value): ?string
-    {
-        if ($value) {
-            return $value;
-        }
-
-        $menuUrl = env('APP_MENU_URL');
-
-        return $menuUrl ? $menuUrl . '?uuid=' . $this->uuid : null;
-    }
-
-    public function getInvoiceInformation(): array
-    {
-        return [$this->name, $this->email];
-    }
-
     public function getFrontendSessionAttribute(): int
     {
         return (int) Carbon::now()->addMinutes(60)->timestamp;
-    }
-
-    public function taxPercentage(): int
-    {
-        return 19;
     }
 
     public function users(): BelongsToMany
