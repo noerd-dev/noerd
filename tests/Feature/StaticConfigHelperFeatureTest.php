@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Noerd\Contracts\DynamicNavigationProviderContract;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Services\DynamicNavigationRegistry;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
@@ -27,23 +29,24 @@ afterEach(function (): void {
 });
 
 describe('StaticConfigHelper Dynamic Navigation', function (): void {
-    it('collections method returns array with navigation items', function (): void {
-        // Test the actual collections method
-        $result = StaticConfigHelper::collections();
+    it('processes dynamic navigation via registry providers', function (): void {
+        // Register a test provider
+        $registry = app(DynamicNavigationRegistry::class);
+        $provider = new class implements DynamicNavigationProviderContract
+        {
+            public function type(): string
+            {
+                return 'collections';
+            }
 
-        expect($result)->toBeArray();
-
-        // Should contain at least the existing collections
-        foreach ($result as $item) {
-            expect($item)->toHaveKeys(['title', 'link', 'icon'])
-                ->and($item['link'])->toStartWith('/cms/collections?key=')
-                ->and($item['icon'])->toBe('icons.list-bullet');
-        }
-    });
-
-    it('processes dynamic navigation structure correctly with real collections', function (): void {
-        // Get actual collections to test with
-        $collectionsResult = StaticConfigHelper::collections();
+            public function items(): array
+            {
+                return [
+                    ['title' => 'Test Collection', 'link' => '/test/collections?key=test', 'icon' => 'icons.list-bullet'],
+                ];
+            }
+        };
+        $registry->register($provider);
 
         $navigationStructure = [
             [
@@ -63,7 +66,6 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
             ],
         ];
 
-        // Use reflection to test the private method
         $reflection = new ReflectionClass(StaticConfigHelper::class);
         $method = $reflection->getMethod('processDynamicNavigation');
         $method->setAccessible(true);
@@ -73,13 +75,31 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
         expect($result[0]['block_menus'][0])->toHaveKey('navigations')
             ->and($result[0]['block_menus'][0])->not->toHaveKey('dynamic')
             ->and($result[0]['block_menus'][0]['navigations'])->toBeArray()
-            ->and($result[0]['block_menus'][1])->toHaveKey('navigations') // Static menu unchanged
-            ->and($result[0]['block_menus'][1])->not->toHaveKey('dynamic'); // No dynamic key on static menu
+            ->and($result[0]['block_menus'][0]['navigations'][0]['title'])->toBe('Test Collection')
+            ->and($result[0]['block_menus'][1])->toHaveKey('navigations')
+            ->and($result[0]['block_menus'][1])->not->toHaveKey('dynamic');
     });
 
-    it('handles method_exists check for dynamic methods', function (): void {
-        expect(method_exists(StaticConfigHelper::class, 'collections'))->toBeTrue();
-        expect(method_exists(StaticConfigHelper::class, 'nonExistentMethod'))->toBeFalse();
+    it('returns empty navigations for unregistered dynamic type', function (): void {
+        $navigationStructure = [
+            [
+                'title' => 'Test App',
+                'block_menus' => [
+                    [
+                        'title' => 'Unknown Dynamic',
+                        'dynamic' => 'nonexistent-type',
+                    ],
+                ],
+            ],
+        ];
+
+        $reflection = new ReflectionClass(StaticConfigHelper::class);
+        $method = $reflection->getMethod('processDynamicNavigation');
+        $method->setAccessible(true);
+
+        $result = $method->invoke(null, $navigationStructure);
+
+        expect($result[0]['block_menus'][0])->not->toHaveKey('dynamic');
     });
 
     it('leaves non-dynamic navigation blocks unchanged', function (): void {
@@ -104,6 +124,6 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
 
         $result = $method->invoke(null, $navigationStructure);
 
-        expect($result)->toEqual($navigationStructure); // Should be unchanged
+        expect($result)->toEqual($navigationStructure);
     });
 });

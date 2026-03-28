@@ -52,7 +52,7 @@
                     @if($field['type'] === 'relation')
                         @include('noerd::components.forms.input-relation', ['field' => $field, 'modelId' => $modelId ?? null])
                     @elseif($field['type'] === 'collection-select')
-                        @include('noerd::components.forms.input-collection-select', ['field' => $field])
+                        @include('cms::components.forms.input-collection-select', ['field' => $field])
                     @elseif($field['type'] === 'select')
                         {{-- options are defined in a yml file --}}
                         @include('noerd::components.forms.input-select', ['field' => $field])

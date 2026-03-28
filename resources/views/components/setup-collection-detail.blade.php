@@ -1,13 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Noerd\Contracts\MediaResolverContract;
 use Noerd\Helpers\SetupCollectionHelper;
-use Noerd\Media\Models\Media;
-use Noerd\Media\Services\MediaUploadService;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
@@ -111,10 +109,12 @@ new class extends Component
 
     public function updatedImages(): void
     {
-        $mediaUploadService = app()->make(MediaUploadService::class);
+        $resolver = app(MediaResolverContract::class);
         foreach ($this->images as $key => $image) {
-            $media = $mediaUploadService->storeFromUploadedFile($image);
-            $this->detailData[$key] = $this->urlWithoutDomain($media);
+            $url = $resolver->storeUploadedFile($image);
+            if ($url) {
+                $this->detailData[$key] = $url;
+            }
         }
     }
 
@@ -140,11 +140,12 @@ new class extends Component
         if (($this->detailData['__mediaToken'] ?? null) !== $token) {
             return;
         }
-        $media = Media::find($mediaId);
-        if (! $media) {
+        $resolver = app(MediaResolverContract::class);
+        $url = $resolver->getRelativeUrl($mediaId);
+        if (! $url) {
             return;
         }
-        $this->detailData[$fieldName ?? 'image'] = $this->urlWithoutDomain($media);
+        $this->detailData[$fieldName ?? 'image'] = $url;
         unset($this->detailData['__mediaToken']);
     }
 
@@ -154,12 +155,6 @@ new class extends Component
         $this->dispatch('$refresh');
     }
 
-    private function urlWithoutDomain(Media $media): string
-    {
-        $url = Storage::disk($media->disk)->url($media->path);
-
-        return mb_strstr($url, '/storage');
-    }
 } ?>
 
 <x-noerd::page :disableModal="$disableModal">

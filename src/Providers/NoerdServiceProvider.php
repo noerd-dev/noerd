@@ -29,13 +29,18 @@ use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
+use Noerd\Contracts\MediaResolverContract;
+use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ListQueryContext;
+use Noerd\Services\NullMediaResolver;
 
 class NoerdServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->singleton(ListQueryContext::class);
+        $this->app->singleton(DynamicNavigationRegistry::class);
+        $this->app->singleton(MediaResolverContract::class, NullMediaResolver::class);
     }
 
     public function boot(): void

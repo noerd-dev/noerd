@@ -53,19 +53,4 @@ class NavigationService
     {
         return $this->blockMenus;
     }
-
-    private function invoiceFeatureEnabled(): bool
-    {
-        return (bool) env('INVOICE_FEATURE_ENABLED', false);
-    }
-
-    private function roleFeatureEnabled(): bool
-    {
-        return (bool) env('ROLE_FEATURE_ENABLED', false);
-    }
-
-    private function newTenantFeature(): bool
-    {
-        return (bool) env('NEW_TENANT_FEATURE_ENABLED', false);
-    }
 }

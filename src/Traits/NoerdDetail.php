@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
+use Noerd\Contracts\MediaResolverContract;
 use Noerd\Helpers\StaticConfigHelper;
-use Noerd\Media\Models\Media;
 
 trait NoerdDetail
 {
@@ -182,13 +182,13 @@ trait NoerdDetail
             return;
         }
 
-        $media = Media::find($mediaId);
-        if (! $media) {
+        $resolver = app(MediaResolverContract::class);
+        if (! $resolver->exists($mediaId)) {
             return;
         }
 
         $key = $this->resolveImageFieldKey($fieldName);
-        $this->detailData[$key] = $media->id;
+        $this->detailData[$key] = $mediaId;
         $this->mediaToken = null;
     }
 

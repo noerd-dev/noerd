@@ -26,10 +26,7 @@
         $previewUrl = null;
         if (is_numeric($rawValue)) {
             try {
-                $media = \Noerd\Media\Models\Media::find((int) $rawValue);
-                if ($media) {
-                    $previewUrl = \Illuminate\Support\Facades\Storage::disk($media->disk)->url($media->thumbnail ?? $media->path);
-                }
+                $previewUrl = app(\Noerd\Contracts\MediaResolverContract::class)->getPreviewUrl((int) $rawValue);
             } catch (Throwable $e) {
                 $previewUrl = null;
             }
