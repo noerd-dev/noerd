@@ -3,7 +3,7 @@
     "description": "",
     "type": "library",
     "version": "v0.3.7",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "livewire/livewire": "^4.0",
         "noerd/modal": "^0.2",
