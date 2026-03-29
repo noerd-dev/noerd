@@ -1,5 +1,9 @@
 # noerd/noerd
 
+[![Total Downloads](https://img.shields.io/packagist/dt/noerd/noerd.svg)](https://packagist.org/packages/noerd/noerd)
+[![Latest Stable Version](https://img.shields.io/packagist/v/noerd/noerd.svg)](https://packagist.org/packages/noerd/noerd)
+[![License](https://img.shields.io/packagist/l/noerd/noerd.svg)](https://packagist.org/packages/noerd/noerd)
+
 Noerd is a Laravel Livewire 4 package for building admin panels efficiently. It provides pre-built list and detail
 views that can be configured entirely through YAML files, eliminating the need for repetitive CRUD code.
 
