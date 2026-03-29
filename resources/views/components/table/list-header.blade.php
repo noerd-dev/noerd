@@ -26,7 +26,6 @@
 
         @php
             $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', 's');
-            $newEntryShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('new_entry', 'n');
         @endphp
 
         @if(isset($disableSearch) && !$disableSearch)
@@ -58,63 +57,51 @@
         @if(!empty($actions))
             <div :class="isModal ? 'mr-22' : ''" class="flex gap-2">
                 @foreach($actions as $actionIndex => $actionItem)
-                    @php $isSecondary = ($actionItem['style'] ?? '') === 'secondary'; @endphp
-                    @if($actionIndex === 0)
-                        <div x-data
-                             @keydown.window="let e = $event; if ({{ $newEntryShortcut['js'] }}) { e.preventDefault(); $refs.newEntryBtn.click(); }">
-                            @if($isSecondary)
-                                <x-noerd::buttons.secondary x-ref="newEntryBtn"
-                                                           style="height: 30px !important"
-                                                           wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                    @if(isset($actionItem['heroicon']))
-                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4" />
-                                    @else
-                                        <x-noerd::icons.plus />
-                                    @endif
-                                    {{ __($actionItem['label']) }}
-                                    <kbd class="ml-2 rounded border border-gray-300 bg-gray-100 px-1 py-0.5 text-xs text-gray-500">{{ $newEntryShortcut['badge'] }}</kbd>
-                                </x-noerd::buttons.secondary>
-                            @else
-                                <x-noerd::buttons.primary x-ref="newEntryBtn"
-                                                         class="!bg-brand-primary relative"
-                                                         style="height: 30px !important"
-                                                         wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                    @if(isset($actionItem['heroicon']))
-                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4 text-white" />
-                                    @else
-                                        <x-noerd::icons.plus class="text-white"/>
-                                    @endif
-                                    {{ __($actionItem['label']) }}
-                                    <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $newEntryShortcut['badge'] }}</kbd>
-                                </x-noerd::buttons.primary>
-                            @endif
-                        </div>
+                    @php
+                        $isSecondary = ($actionItem['style'] ?? '') === 'secondary';
+                        $effectiveShortcut = $actionItem['shortcut']
+                            ?? ($actionIndex === 0 ? 'n' : null);
+                        $hasShortcut = $effectiveShortcut !== null;
+                        $shortcut = $hasShortcut
+                            ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . $actionItem['action'], $effectiveShortcut)
+                            : null;
+                    @endphp
+                    @if($hasShortcut)
+                        <div x-data @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }">
                     @else
                         <div>
-                            @if($isSecondary)
-                                <x-noerd::buttons.secondary
-                                    style="height: 30px !important"
-                                    wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                    @if(isset($actionItem['heroicon']))
-                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4" />
-                                    @endif
-                                    {{ __($actionItem['label']) }}
-                                </x-noerd::buttons.secondary>
-                            @else
-                                <x-noerd::buttons.primary
-                                    class="!bg-brand-primary relative"
-                                    style="height: 30px !important"
-                                    wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                    @if(isset($actionItem['heroicon']))
-                                        <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4 text-white" />
-                                    @else
-                                        <x-noerd::icons.plus class="text-white"/>
-                                    @endif
-                                    {{ __($actionItem['label']) }}
-                                </x-noerd::buttons.primary>
-                            @endif
-                        </div>
                     @endif
+                        @if($isSecondary)
+                            <x-noerd::buttons.secondary
+                                x-ref="actionBtn{{ $actionIndex }}"
+                                style="height: 30px !important"
+                                wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                @if(isset($actionItem['heroicon']))
+                                    <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4" />
+                                @endif
+                                {{ __($actionItem['label']) }}
+                                @if($hasShortcut)
+                                    <kbd class="ml-2 rounded border border-gray-300 bg-gray-100 px-1 py-0.5 text-xs text-gray-500">{{ $shortcut['badge'] }}</kbd>
+                                @endif
+                            </x-noerd::buttons.secondary>
+                        @else
+                            <x-noerd::buttons.primary
+                                x-ref="actionBtn{{ $actionIndex }}"
+                                class="!bg-brand-primary relative"
+                                style="height: 30px !important"
+                                wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                @if(isset($actionItem['heroicon']))
+                                    <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4 text-white" />
+                                @else
+                                    <x-noerd::icons.plus class="text-white"/>
+                                @endif
+                                {{ __($actionItem['label']) }}
+                                @if($hasShortcut)
+                                    <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $shortcut['badge'] }}</kbd>
+                                @endif
+                            </x-noerd::buttons.primary>
+                        @endif
+                    </div>
                 @endforeach
             </div>
         @endif
