@@ -89,7 +89,7 @@ new class extends Component {
         <div class="flex gap-x-4 px-6 w-full">
             <div class=" flex border-gray-300 w-full py-1">
 
-                <button @click="showSidebar = !showSidebar" wire:click="openSidebar" type="button"
+                <button @click="showSidebar = !showSidebar; if(window.innerWidth >= 1280) $wire.openSidebar()" type="button"
                         class="my-auto mr-6 text-gray-600 hover:text-gray-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><title>
                             layout-left</title>
