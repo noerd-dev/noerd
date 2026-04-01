@@ -33,7 +33,7 @@ buttonList: 'Neuer Eintrag'
 description: ''
 hasPage: false
 fields:
-  - name: model.name
+  - name: detailData.name
     label: Name
     type: text
     colspan: 6
@@ -50,11 +50,11 @@ key: INVOICE_TEMPLATES
 buttonList: 'Neue Vorlage'
 description: ''
 fields:
-  - name: model.name
+  - name: detailData.name
     label: Name
     type: text
     colspan: 6
-  - name: model.template_path
+  - name: detailData.template_path
     label: Template Path
     type: text
     colspan: 6

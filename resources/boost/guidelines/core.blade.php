@@ -82,11 +82,11 @@ tabs:
   - number: 2
     label: module_tab_settings
 fields:
-  - name: model.name
+  - name: detailData.name
     label: Name
     type: text
     colspan: 6
-  - name: model.setting_a
+  - name: detailData.setting_a
     label: Setting A
     type: checkbox
     colspan: 6

@@ -51,9 +51,9 @@ buttonList: 'Neuer Eintrag'
 description: 'Eine Beispiel-Collection für Setup'
 hasPage: false
 fields:
-  - { name: model.title, label: noerd_label_title, type: translatableText, colspan: 6 }
-  - { name: model.description, label: noerd_label_description, type: translatableTextarea, colspan: 6 }
-  - { name: model.is_active, label: noerd_label_active, type: checkbox, colspan: 3 }
+  - { name: detailData.title, label: noerd_label_title, type: translatableText, colspan: 6 }
+  - { name: detailData.description, label: noerd_label_description, type: translatableTextarea, colspan: 6 }
+  - { name: detailData.is_active, label: noerd_label_active, type: checkbox, colspan: 3 }
 YAML;
 
     // Ensure directory exists
