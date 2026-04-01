@@ -188,6 +188,9 @@
                          wire:click.prevent="{{$action}}('{{$id}}')"
                      @endif
                      class="cursor-pointer py-0.5 px-1.5">
+                    @if(is_array($value) && isset($value['prefix']))
+                        <span class="text-sm {{ $value['prefixClass'] ?? '' }}">{{ $value['prefix'] }}</span>
+                    @endif
                     @if(is_array($value) && isset($value['text']) && $value['text'] !== '')
                         <span class="inline-flex items-center px-2 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
                             {{ $value['text'] }}

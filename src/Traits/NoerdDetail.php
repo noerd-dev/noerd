@@ -274,6 +274,18 @@ trait NoerdDetail
         return call_user_func($callback);
     }
 
+    public function resolvePicklistOptions(string $picklistField): array
+    {
+        if (method_exists($this, $picklistField)) {
+            return $this->{$picklistField}();
+        }
+
+        $registry = app(\Noerd\Services\PicklistRegistry::class);
+        $provider = $registry->resolve($picklistField);
+
+        return $provider ? $provider() : [];
+    }
+
     /**
      * Load record navigation IDs from session.
      */

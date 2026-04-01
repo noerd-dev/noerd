@@ -210,5 +210,9 @@
     "noerd_confirm_delete": "Are you sure you want to delete this entry?",
     "noerd_nav_previous_record": "Previous record",
     "noerd_nav_next_record": "Next record",
-    "noerd_cannot_delete_role_with_users": "This role cannot be deleted because it still has users assigned."
+    "noerd_cannot_delete_role_with_users": "This role cannot be deleted because it still has users assigned.",
+    "noerd_nav_currency_settings": "Currency",
+    "noerd_label_currency_settings_title": "Currency Settings",
+    "noerd_label_currency": "Currency",
+    "noerd_label_currency_desc": "Select the currency for your company"
 }

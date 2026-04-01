@@ -16,6 +16,7 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Route::livewire('setup-collection/{modelId}', 'setup-collection-detail')->name('setup-collection.detail');
     Route::livewire('setup-languages', 'setup-languages-list')->name('setup-languages');
     Route::livewire('setup-language/{modelId}', 'setup-language-detail')->name('setup-language.detail');
+    Route::livewire('noerd-settings', 'setup.noerd-settings-detail')->name('noerd-settings');
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {

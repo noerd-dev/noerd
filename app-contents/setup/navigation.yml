@@ -19,5 +19,8 @@
         - title: noerd_nav_languages
           route: setup-languages
           heroicon: language
+        - title: noerd_nav_currency_settings
+          route: noerd-settings
+          heroicon: currency-euro
     - title: noerd_nav_data_management
       dynamic: setup-collections

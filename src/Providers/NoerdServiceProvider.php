@@ -33,6 +33,7 @@ use Noerd\Contracts\MediaResolverContract;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NullMediaResolver;
+use Noerd\Services\PicklistRegistry;
 
 class NoerdServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,7 @@ class NoerdServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
+        $this->app->singleton(PicklistRegistry::class);
         $this->app->singleton(MediaResolverContract::class, NullMediaResolver::class);
     }
 
