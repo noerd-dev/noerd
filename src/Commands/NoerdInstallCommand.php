@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use function Laravel\Prompts\confirm;
 
 use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 use Noerd\Models\NoerdUser;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -751,7 +752,15 @@ export default {
 
         // Create default tenant if none exist
         if (Tenant::count() === 0) {
-            $this->call('noerd:create-tenant');
+            $multiTenant = confirm('Do you want to enable multi-tenant mode?', default: false);
+            $this->setEnvValue('NOERD_MULTI_TENANT', $multiTenant ? 'true' : 'false');
+
+            if ($multiTenant) {
+                $this->call('noerd:create-tenant');
+            } else {
+                $this->call('noerd:create-tenant', ['--default' => true]);
+                $this->autoAssignAllApps();
+            }
         } else {
             $this->line('<comment>Tenant(s) already exist, skipping.</comment>');
         }
@@ -760,6 +769,34 @@ export default {
 
         // Setup admin user
         $this->setupAdminUser();
+    }
+
+    /**
+     * Auto-assign all active apps to the default tenant (single-tenant mode).
+     */
+    private function autoAssignAllApps(): void
+    {
+        $tenant = Tenant::first();
+        $allAppIds = TenantApp::where('is_active', true)->pluck('id')->toArray();
+        $tenant->tenantApps()->sync($allAppIds);
+        $this->info("All apps auto-assigned to tenant '{$tenant->name}'.");
+    }
+
+    /**
+     * Set or update a value in the .env file.
+     */
+    private function setEnvValue(string $key, string $value): void
+    {
+        $envPath = base_path('.env');
+        $envContent = file_get_contents($envPath);
+
+        if (preg_match("/^{$key}=/m", $envContent)) {
+            $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $envContent);
+        } else {
+            $envContent .= "\n{$key}={$value}\n";
+        }
+
+        file_put_contents($envPath, $envContent);
     }
 
     /**

@@ -13,7 +13,16 @@ class TenantHelper
      */
     public static function getSelectedTenantId(): ?int
     {
-        return session('noerd.selected_tenant_id');
+        $id = session('noerd.selected_tenant_id');
+
+        if (! $id && ! config('noerd.features.multi_tenant')) {
+            $id = Tenant::first()?->id;
+            if ($id) {
+                session(['noerd.selected_tenant_id' => $id]);
+            }
+        }
+
+        return $id;
     }
 
     /**

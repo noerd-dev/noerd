@@ -19,11 +19,13 @@
             </div>
         </x-noerd::box>
 
-        <x-noerd::box>
-            <div class="max-w-xl">
-                <livewire:profile.tenant-access-display-form/>
-            </div>
-        </x-noerd::box>
+        @if(config('noerd.features.multi_tenant'))
+            <x-noerd::box>
+                <div class="max-w-xl">
+                    <livewire:profile.tenant-access-display-form/>
+                </div>
+            </x-noerd::box>
+        @endif
 
         {{--
         <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">

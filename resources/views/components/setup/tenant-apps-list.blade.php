@@ -11,6 +11,10 @@ new class extends Component {
 
     public function mount(): void
     {
+        if (! config('noerd.features.multi_tenant')) {
+            abort(404);
+        }
+
         if (! Auth::user()->isSuperAdmin()) {
             abort(403);
         }

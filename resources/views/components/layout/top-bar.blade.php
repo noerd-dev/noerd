@@ -119,7 +119,7 @@ new class extends Component {
                         </a>
                     @endif
 
-                    @if(auth()->user()->tenants->count() > 1)
+                    @if(config('noerd.features.multi_tenant') && auth()->user()->tenants->count() > 1)
                         <!-- Tenants (nur Desktop) -->
                         <x-noerd::select-input class="hidden xl:block w-48! mt-0!" wire:model="selectedTenantId"
                                                wire:change="changeClient">

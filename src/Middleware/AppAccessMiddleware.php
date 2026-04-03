@@ -29,6 +29,13 @@ class AppAccessMiddleware
             return redirect('/');
         }
 
+        // In single-tenant mode, all apps are always accessible
+        if (! config('noerd.features.multi_tenant')) {
+            TenantHelper::setSelectedAppFromRoute();
+
+            return $next($request);
+        }
+
         $hasApp = $tenant->tenantApps()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($appName)])
             ->exists();
