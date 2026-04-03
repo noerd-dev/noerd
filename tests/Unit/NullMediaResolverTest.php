@@ -20,8 +20,28 @@ it('returns null for getRelativeUrl', function (): void {
     expect($resolver->getRelativeUrl(1))->toBeNull();
 });
 
-it('returns null for storeUploadedFile', function (): void {
+it('returns null for storeUploadedFile with null input', function (): void {
     $resolver = new NullMediaResolver;
 
-    expect($resolver->storeUploadedFile('test'))->toBeNull();
+    expect($resolver->storeUploadedFile(null))->toBeNull();
+});
+
+it('stores uploaded file and returns url', function (): void {
+    $fakeFile = Mockery::mock();
+    $fakeFile->shouldReceive('store')
+        ->with('uploads', 'public')
+        ->once()
+        ->andReturn('uploads/photo.jpg');
+
+    $resolver = new NullMediaResolver;
+
+    $result = $resolver->storeUploadedFile($fakeFile);
+
+    expect($result)->toBe('/storage/uploads/photo.jpg');
+});
+
+it('returns false for isAvailable', function (): void {
+    $resolver = new NullMediaResolver;
+
+    expect($resolver->isAvailable())->toBeFalse();
 });

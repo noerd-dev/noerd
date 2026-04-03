@@ -72,7 +72,7 @@ class NoerdUser extends Authenticatable
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(UserRole::class, 'user_role', 'user_id');
+        return $this->belongsToMany(UserRole::class, 'noerd_user_role', 'user_id', 'noerd_user_role_id');
     }
 
     public function getRolesForTenantAttribute(): array

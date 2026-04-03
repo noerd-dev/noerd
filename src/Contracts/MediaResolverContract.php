@@ -23,4 +23,9 @@ interface MediaResolverContract
      * Store an uploaded file and return its relative URL.
      */
     public function storeUploadedFile(mixed $uploadedFile): ?string;
+
+    /**
+     * Whether the full media module is available.
+     */
+    public function isAvailable(): bool;
 }

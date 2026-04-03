@@ -11,15 +11,9 @@ class UserSetting extends Model
 {
     use HasFactory;
 
-    protected $table = 'user_settings';
+    protected $table = 'noerd_user_settings';
 
     protected $guarded = ['id'];
-
-    protected $fillable = [
-        'user_id',
-        'selected_tenant_id',
-        'locale',
-    ];
 
     public function user(): BelongsTo
     {

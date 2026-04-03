@@ -29,6 +29,8 @@ trait NoerdDetail
 
     public array $detailData = [];
 
+    public array $imageUploads = [];
+
     public array $recordNavigationIds = [];
 
     /**
@@ -196,6 +198,18 @@ trait NoerdDetail
     {
         $key = $this->resolveImageFieldKey($fieldName);
         $this->detailData[$key] = null;
+    }
+
+    public function updatedImageUploads(mixed $value, string $fieldKey): void
+    {
+        $resolver = app(MediaResolverContract::class);
+        $url = $resolver->storeUploadedFile($value);
+
+        if ($url) {
+            $this->detailData[$fieldKey] = $url;
+        }
+
+        unset($this->imageUploads[$fieldKey]);
     }
 
     public function closeModalProcess(?string $source = null, ?string $modalKey = null): void

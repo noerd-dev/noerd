@@ -10,6 +10,8 @@ class Profile extends Model
 {
     use HasFactory;
 
+    protected $table = 'noerd_profiles';
+
     protected $guarded = [];
 
     protected static function newFactory(): ProfileFactory

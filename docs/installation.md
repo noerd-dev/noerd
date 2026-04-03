@@ -33,8 +33,8 @@ If you skip any of these steps, you can run them later with the respective [Arti
 | Table | Description                                                |
 |-------|------------------------------------------------------------|
 | `users` | User accounts (if not already exists)                      |
-| `user_settings` | User settings (language, selected tenant)                  |
-| `user_roles` | User roles per tenant. One User can have many roles        |
+| `noerd_user_settings` | User settings (language, selected tenant)                  |
+| `noerd_user_roles` | User roles per tenant. One User can have many roles        |
 | `tenants` | Tenants / Organizations / Environments                     |
 | `tenant_apps` | Available apps which can be assigned to tenants            |
 | `profiles` | Role profiles (ADMIN, USER, etc.) One User has one profile |

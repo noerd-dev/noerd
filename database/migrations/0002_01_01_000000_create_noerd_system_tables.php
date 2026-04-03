@@ -35,9 +35,9 @@ return new class () extends Migration {
             });
         }
 
-        // Create profiles table (before users_tenants because of foreign key)
-        if (!Schema::hasTable('profiles')) {
-            Schema::create('profiles', function (Blueprint $table): void {
+        // Create noerd_profiles table (before users_tenants because of foreign key)
+        if (!Schema::hasTable('noerd_profiles')) {
+            Schema::create('noerd_profiles', function (Blueprint $table): void {
                 $table->id();
                 $table->string('key');
                 $table->string('name');
@@ -68,7 +68,6 @@ return new class () extends Migration {
                 $table->unsignedBigInteger('selected_tenant_id')->nullable();
                 $table->string('selected_app')->nullable();
                 $table->boolean('super_admin')->default(false);
-                $table->string('locale', 5)->default('en');
                 $table->rememberToken();
                 $table->string('api_token', 80)->unique()->nullable();
                 $table->timestamp('last_login_at')->nullable();
@@ -84,14 +83,14 @@ return new class () extends Migration {
             Schema::create('users_tenants', function (Blueprint $table): void {
                 $table->foreignId('user_id')->constrained('noerd_users')->onDelete('cascade');
                 $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
-                $table->foreignId('profile_id')->nullable()->constrained('profiles');
+                $table->foreignId('profile_id')->nullable()->constrained('noerd_profiles');
                 $table->timestamps();
             });
         }
 
         // Create user_roles table
-        if (!Schema::hasTable('user_roles')) {
-            Schema::create('user_roles', function (Blueprint $table): void {
+        if (!Schema::hasTable('noerd_user_roles')) {
+            Schema::create('noerd_user_roles', function (Blueprint $table): void {
                 $table->id();
                 $table->unsignedBigInteger('tenant_id')->nullable();
                 $table->string('key');
@@ -108,11 +107,11 @@ return new class () extends Migration {
         }
 
         // Create user_role pivot table
-        if (!Schema::hasTable('user_role')) {
-            Schema::create('user_role', function (Blueprint $table): void {
+        if (!Schema::hasTable('noerd_user_role')) {
+            Schema::create('noerd_user_role', function (Blueprint $table): void {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
-                $table->unsignedBigInteger('user_role_id');
+                $table->unsignedBigInteger('noerd_user_role_id');
                 $table->timestamps();
 
                 // Note: Foreign key constraints are not added here since the referenced tables
@@ -120,10 +119,10 @@ return new class () extends Migration {
 
                 // Indexes for performance
                 $table->index('user_id');
-                $table->index('user_role_id');
+                $table->index('noerd_user_role_id');
 
                 // Unique constraint to prevent duplicate assignments
-                $table->unique(['user_id', 'user_role_id']);
+                $table->unique(['user_id', 'noerd_user_role_id']);
             });
         }
 
@@ -191,8 +190,8 @@ return new class () extends Migration {
         }
 
         // Create user_settings table - only if noerd_users table exists
-        if (!Schema::hasTable('user_settings') && Schema::hasTable('noerd_users')) {
-            Schema::create('user_settings', function (Blueprint $table): void {
+        if (!Schema::hasTable('noerd_user_settings') && Schema::hasTable('noerd_users')) {
+            Schema::create('noerd_user_settings', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('user_id')->unique()->constrained('noerd_users')->onDelete('cascade');
                 $table->unsignedBigInteger('selected_tenant_id')->nullable();
@@ -200,18 +199,6 @@ return new class () extends Migration {
                 $table->index('selected_tenant_id');
                 $table->string('locale', 5)->default('en');
                 $table->timestamps();
-            });
-        }
-
-        // Migrate existing data from noerd_users table to user_settings if locale column exists and user_settings is empty
-        if (Schema::hasTable('noerd_users') && Schema::hasColumn('noerd_users', 'locale') && Schema::hasTable('user_settings') && DB::table('user_settings')->count() === 0) {
-            DB::table('noerd_users')->orderBy('id')->each(function ($user): void {
-                DB::table('user_settings')->insert([
-                    'user_id' => $user->id,
-                    'locale' => $user->locale ?? 'en',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
             });
         }
 
@@ -230,17 +217,17 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_settings');
+        Schema::dropIfExists('noerd_user_settings');
         Schema::dropIfExists('noerd_users');
         Schema::dropIfExists('setup_collection_entries');
         Schema::dropIfExists('setup_collections');
         Schema::dropIfExists('setup_languages');
         Schema::dropIfExists('tenant_invoices');
-        Schema::dropIfExists('user_role');
-        Schema::dropIfExists('user_roles');
+        Schema::dropIfExists('noerd_user_role');
+        Schema::dropIfExists('noerd_user_roles');
         Schema::dropIfExists('users_tenants');
         Schema::dropIfExists('tenant_app');
-        Schema::dropIfExists('profiles');
+        Schema::dropIfExists('noerd_profiles');
         Schema::dropIfExists('tenants');
         Schema::dropIfExists('tenant_apps');
     }

@@ -27,6 +27,11 @@ describe('Image Form Component', function (): void {
     });
 
     it('shows choose image from media button', function (): void {
+        $resolver = Mockery::mock(\Noerd\Contracts\MediaResolverContract::class);
+        $resolver->shouldReceive('isAvailable')->andReturn(true);
+        $resolver->shouldReceive('getPreviewUrl')->andReturn(null);
+        app()->instance(\Noerd\Contracts\MediaResolverContract::class, $resolver);
+
         Livewire::test('image-field-test', [
             'initialModel' => [],
         ])

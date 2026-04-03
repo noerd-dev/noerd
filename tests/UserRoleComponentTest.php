@@ -52,7 +52,7 @@ it('successfully creates a new user role', function () use ($testSettings): void
         ->call('store')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('user_roles', [
+    $this->assertDatabaseHas('noerd_user_roles', [
         'key' => $roleKey,
         'name' => $roleName,
         'description' => $roleDescription,
@@ -84,7 +84,7 @@ it('updates an existing user role', function () use ($testSettings): void {
         ->call('store')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('user_roles', [
+    $this->assertDatabaseHas('noerd_user_roles', [
         'id' => $existingRole->id,
         'key' => $newKey,
         'name' => $newName,
@@ -104,7 +104,7 @@ it('sets tenant_id when storing', function () use ($testSettings): void {
         ->call('store')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('user_roles', [
+    $this->assertDatabaseHas('noerd_user_roles', [
         'key' => 'TEST_ROLE',
         'name' => 'Test Role',
         'tenant_id' => $user->selected_tenant_id,
@@ -127,7 +127,7 @@ it('deletes a user role', function () use ($testSettings): void {
         ->call('delete')
         ->assertDispatched('closeTopModal');
 
-    $this->assertDatabaseMissing('user_roles', [
+    $this->assertDatabaseMissing('noerd_user_roles', [
         'id' => $userRole->id,
     ]);
 });
@@ -228,7 +228,7 @@ it('handles optional description field', function () use ($testSettings): void {
         ->call('store')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('user_roles', [
+    $this->assertDatabaseHas('noerd_user_roles', [
         'key' => 'NO_DESC_ROLE',
         'name' => 'Role Without Description',
         'tenant_id' => $user->selected_tenant_id,

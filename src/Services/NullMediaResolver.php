@@ -2,6 +2,7 @@
 
 namespace Noerd\Services;
 
+use Illuminate\Support\Facades\Storage;
 use Noerd\Contracts\MediaResolverContract;
 
 class NullMediaResolver implements MediaResolverContract
@@ -23,6 +24,17 @@ class NullMediaResolver implements MediaResolverContract
 
     public function storeUploadedFile(mixed $uploadedFile): ?string
     {
-        return null;
+        if (! $uploadedFile) {
+            return null;
+        }
+
+        $path = $uploadedFile->store('uploads', 'public');
+
+        return '/storage/' . $path;
+    }
+
+    public function isAvailable(): bool
+    {
+        return false;
     }
 }
