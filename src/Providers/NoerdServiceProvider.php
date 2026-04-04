@@ -23,6 +23,7 @@ use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInstallCommand;
+use Noerd\Commands\PublishHomeCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
@@ -98,6 +99,7 @@ class NoerdServiceProvider extends ServiceProvider
                 CreateAdminCommand::class,
                 CreateTenantCommand::class,
                 NoerdDemoCommand::class,
+                PublishHomeCommand::class,
             ]);
         }
     }
