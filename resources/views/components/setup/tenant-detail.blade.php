@@ -34,10 +34,12 @@ new class extends Component {
     {
         $this->validate([
             'detailData.name' => ['required', 'string', 'max:255', 'min:3'],
+            'detailData.email' => ['required', 'email', 'max:255'],
         ]);
 
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
         $tenant->name = $this->detailData['name'];
+        $tenant->email = $this->detailData['email'];
         $tenant->logo = $this->detailData['logo'];
         $tenant->save();
 

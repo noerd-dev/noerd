@@ -131,6 +131,12 @@ trait NoerdList
         session(['listFilters' => $this->listFilters]);
     }
 
+    public function clearAllListFilters(): void
+    {
+        $this->listFilters = [];
+        session(['listFilters' => []]);
+    }
+
     public function findListAction(int|string $id): void
     {
         $this->syncListQueryContext();

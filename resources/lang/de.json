@@ -336,5 +336,7 @@
     "Previous": "Zurück",
     "Next": "Weiter",
     "results": "Ergebnisse",
-    "to": "bis"
+    "to": "bis",
+
+    "noerd_clear_filters": "Alle Filter löschen"
 }

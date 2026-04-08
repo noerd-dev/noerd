@@ -214,5 +214,7 @@
     "noerd_nav_currency_settings": "Currency",
     "noerd_label_currency_settings_title": "Currency Settings",
     "noerd_label_currency": "Currency",
-    "noerd_label_currency_desc": "Select the currency for your company"
+    "noerd_label_currency_desc": "Select the currency for your company",
+
+    "noerd_clear_filters": "Clear all filters"
 }

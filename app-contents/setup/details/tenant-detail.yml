@@ -5,6 +5,11 @@ fields:
     label: noerd_label_name
     type: text
     colspan: 6
+  - name: detailData.email
+    label: noerd_label_email
+    type: email
+    colspan: 6
+    required: true
   - name: logo
     label: noerd_label_logo
     type: image
