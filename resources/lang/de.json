@@ -243,6 +243,10 @@
     "noerd_label_new_user": "Neuer Benutzer",
     "noerd_label_email": "E-Mail",
     "noerd_label_name": "Name",
+    "noerd_label_contact_name": "Ansprechpartner",
+    "noerd_label_address": "Adresse",
+    "noerd_label_zipcode": "PLZ",
+    "noerd_label_city": "Ort",
     "noerd_label_logo": "Logo",
     "noerd_label_user_roles": "Benutzerrollen",
     "noerd_label_new_user_role": "Neue Benutzerrolle",
@@ -259,6 +263,9 @@
     "noerd_nav_user_roles": "Benutzerrollen",
     "noerd_nav_data_management": "Datenverwaltung",
     "noerd_nav_collections": "Sammlungen",
+    "noerd_nav_tenant": "Mandant",
+    "noerd_nav_create_tenant": "Neuer Mandant",
+    "noerd_label_create_tenant": "Neuen Mandanten erstellen",
     "noerd_nav_administration": "Administration",
     "noerd_nav_dashboard": "Dashboard",
     "noerd_nav_orders_customers": "Bestellungen & Kunden",
@@ -338,5 +345,20 @@
     "results": "Ergebnisse",
     "to": "bis",
 
-    "noerd_clear_filters": "Alle Filter löschen"
+    "noerd_clear_filters": "Alle Filter löschen",
+
+    "noerd_label_show_from": "Zeige ab",
+    "noerd_label_show_until": "Zeige bis",
+    "noerd_show_from_today": "Heute",
+    "noerd_show_from_this_week": "Diese Woche",
+    "noerd_show_from_this_quarter": "Dieses Quartal",
+    "noerd_show_from_last_quarter": "Letztes Quartal",
+    "noerd_show_from_this_month": "Diesen Monat",
+    "noerd_show_from_last_month": "Letzten Monat",
+    "noerd_show_from_this_year": "Dieses Jahr",
+    "noerd_show_from_one_week": "Eine Woche",
+    "noerd_show_from_one_month": "Ein Monat",
+    "noerd_show_from_one_year": "Ein Jahr",
+    "noerd_show_from_custom_date": "Datum wählen",
+    "noerd_show_from_apply": "Anwenden"
 }

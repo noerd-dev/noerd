@@ -5,6 +5,9 @@
   block_menus:
     - title: noerd_nav_administration
       navigations:
+        - title: noerd_nav_tenant
+          route: tenant
+          heroicon: building-office
         - title: noerd_nav_apps
           route: tenant-apps
           heroicon: squares-2x2

@@ -14,15 +14,12 @@ new class extends Component {
     public $modelId = null;
 
     public const DETAIL_CLASS = Tenant::class;
+    public const DETAIL_COMPONENT = 'tenant-detail';
 
     public $logo;
 
     public function mount(): void
     {
-        if (! config('noerd.features.multi_tenant')) {
-            abort(404);
-        }
-
         $this->initDetail();
 
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
@@ -40,6 +37,10 @@ new class extends Component {
         $tenant = Tenant::find(auth()->user()->selected_tenant_id);
         $tenant->name = $this->detailData['name'];
         $tenant->email = $this->detailData['email'];
+        $tenant->contact_name = $this->detailData['contact_name'] ?? null;
+        $tenant->address = $this->detailData['address'] ?? null;
+        $tenant->zipcode = $this->detailData['zipcode'] ?? null;
+        $tenant->city = $this->detailData['city'] ?? null;
         $tenant->logo = $this->detailData['logo'];
         $tenant->save();
 
@@ -69,22 +70,12 @@ new class extends Component {
 
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
-        <x-noerd::modal-title>
-            Mandanten
-        </x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('noerd_label_tenant') }}</x-noerd::modal-title>
     </x-slot:header>
 
-    <x-noerd::tab-content :layout="$pageLayout">
-        <x-slot:tab1>
-            <x-noerd::box>
-                <div class="max-w-xl">
-                    <livewire:setup.create-new-tenant/>
-                </div>
-            </x-noerd::box>
-        </x-slot:tab1>
-    </x-noerd::tab-content>
+    <x-noerd::tab-content :layout="$pageLayout" />
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar/>
+        <x-noerd::delete-save-bar :showDelete="false" />
     </x-slot:footer>
 </x-noerd::page>

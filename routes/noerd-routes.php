@@ -11,6 +11,7 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Route::livewire('user-roles', 'setup.user-roles-list')->name('user-roles');
     Route::livewire('user-role/{modelId}', 'user-role-detail')->name('user-role.detail');
     Route::livewire('tenant', 'setup.tenant-detail')->name('tenant');
+    Route::livewire('create-tenant', 'setup.create-tenant')->name('create-tenant');
     Route::livewire('models', 'models-list')->name('models');
     Route::livewire('setup-collections', 'setup-collections-list')->name('setup-collections');
     Route::livewire('setup-collection/{modelId}', 'setup-collection-detail')->name('setup-collection.detail');

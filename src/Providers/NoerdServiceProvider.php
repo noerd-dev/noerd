@@ -43,7 +43,9 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(PicklistRegistry::class);
-        $this->app->singleton(MediaResolverContract::class, NullMediaResolver::class);
+        if (! $this->app->bound(MediaResolverContract::class)) {
+            $this->app->singleton(MediaResolverContract::class, NullMediaResolver::class);
+        }
     }
 
     public function boot(): void

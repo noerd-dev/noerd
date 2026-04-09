@@ -10,6 +10,22 @@ fields:
     type: email
     colspan: 6
     required: true
+  - name: detailData.contact_name
+    label: noerd_label_contact_name
+    type: text
+    colspan: 6
+  - name: detailData.address
+    label: noerd_label_address
+    type: text
+    colspan: 6
+  - name: detailData.zipcode
+    label: noerd_label_zipcode
+    type: text
+    colspan: 3
+  - name: detailData.city
+    label: noerd_label_city
+    type: text
+    colspan: 3
   - name: logo
     label: noerd_label_logo
     type: image

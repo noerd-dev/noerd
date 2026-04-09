@@ -12,14 +12,11 @@
         @if($this->tableFilters())
             <div class="flex items-center ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
-                    <select wire:change="storeActiveListFilters"
-                            wire:model.live="listFilters.{{$tableFilter['column']}}"
-                            class="@if( ($this->listFilters[$tableFilter['column']] ?? '') !== '') !border-brand-primary !border-solid !border-2 @endif mr-4 min-w-36 max-w-48 truncate rounded-md border border-dashed border-zinc-300 px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border">
-                        <option value="">{{$tableFilter['label']}}</option>
-                        @foreach($tableFilter['options'] ?? [] as $key => $option)
-                            <option value="{{$key}}">{{$option}}</option>
-                        @endforeach
-                    </select>
+                    @if(in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
+                        <x-noerd::filters.date-dropdown :filter="$tableFilter" :value="$this->listFilters[$tableFilter['column']] ?? ''" />
+                    @else
+                        <x-noerd::filters.picklist :filter="$tableFilter" :value="$this->listFilters[$tableFilter['column']] ?? ''" />
+                    @endif
                 @endforeach
                 @if(collect($this->listFilters)->filter()->isNotEmpty())
                     <button wire:click="clearAllListFilters" type="button"

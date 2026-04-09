@@ -274,8 +274,26 @@ trait NoerdList
         }
 
         $allowed = $this->getAllowedListFilterColumns();
+        $filterTypes = collect($this->tableFilters())->pluck('type', 'column')->toArray();
+
         foreach ($this->listFilters as $key => $value) {
-            if (in_array($key, $allowed) && $value) {
+            if (! in_array($key, $allowed) || ! $value) {
+                continue;
+            }
+
+            $type = $filterTypes[$key] ?? '';
+
+            if ($type === 'ShowFrom' && method_exists($this, 'resolveShowDate')) {
+                $date = $this->resolveShowDate($value);
+                if ($date) {
+                    $query->where($this->getShowFromDateColumn(), '>=', $date);
+                }
+            } elseif ($type === 'ShowUntil' && method_exists($this, 'resolveShowDate')) {
+                $date = $this->resolveShowDate($value);
+                if ($date) {
+                    $query->where($this->getShowUntilDateColumn(), '<=', $date);
+                }
+            } else {
                 $query->where($key, $value);
             }
         }

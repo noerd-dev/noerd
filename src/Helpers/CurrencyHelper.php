@@ -25,6 +25,24 @@ class CurrencyHelper
             'thousands_separator' => ',',
             'symbol_position' => 'before',
         ],
+        'CHF' => [
+            'symbol' => 'CHF',
+            'decimal_separator' => '.',
+            'thousands_separator' => '\'',
+            'symbol_position' => 'before',
+        ],
+        'CZK' => [
+            'symbol' => 'Kč',
+            'decimal_separator' => ',',
+            'thousands_separator' => '.',
+            'symbol_position' => 'after',
+        ],
+        'DKK' => [
+            'symbol' => 'kr',
+            'decimal_separator' => ',',
+            'thousands_separator' => '.',
+            'symbol_position' => 'after',
+        ],
     ];
 
     protected static array $cache = [];

@@ -33,7 +33,7 @@ new class () extends Component {
     public function store(): void
     {
         $this->validate([
-            'settingsData.currency' => ['required', 'in:EUR,USD,GBP'],
+            'settingsData.currency' => ['required', 'in:EUR,USD,GBP,CHF,CZK,DKK'],
         ]);
 
         NoerdSettings::updateOrCreate(
@@ -63,6 +63,9 @@ new class () extends Component {
                 <option value="EUR">EUR - Euro (1.234,56 €)</option>
                 <option value="USD">USD - US Dollar ($1,234.56)</option>
                 <option value="GBP">GBP - British Pound (£1,234.56)</option>
+                <option value="CHF">CHF - Schweizer Franken (CHF 1'234.56)</option>
+                <option value="CZK">CZK - Tschechische Krone (1.234,56 Kč)</option>
+                <option value="DKK">DKK - Dänische Krone (1.234,56 kr)</option>
             </x-noerd::select-input>
             <p class="text-sm text-gray-500 mt-1">{{ __('noerd_label_currency_desc') }}</p>
         </div>

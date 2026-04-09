@@ -165,7 +165,9 @@ class StaticConfigHelper
             ->map(fn($name) => mb_strtolower($name))
             ->toArray();
 
-        foreach ($allAppFolders as $folder) {
+        $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
+
+        foreach ($searchFolders as $folder) {
             if (! in_array($folder, $allowedFolders)) {
                 continue;
             }
