@@ -6,7 +6,8 @@
     <title>{{ config('app.name', 'Noerd') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-white">
+<body class="min-h-screen bg-white pt-[var(--environment-banner-height,0px)]">
+    <livewire:layout.environment-banner />
     {{ $slot }}
 </body>
 </html>

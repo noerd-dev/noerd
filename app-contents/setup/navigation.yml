@@ -26,5 +26,9 @@
         - title: noerd_nav_currency_settings
           route: noerd-settings
           heroicon: currency-euro
+        - title: noerd_nav_collection_definitions
+          route: setup-collection-definitions
+          heroicon: rectangle-stack
+          config: noerd.collections.show_definitions_ui
     - title: noerd_nav_data_management
       dynamic: setup-collections

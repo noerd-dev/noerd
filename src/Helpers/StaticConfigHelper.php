@@ -2,7 +2,6 @@
 
 namespace Noerd\Helpers;
 
-use Exception;
 use Illuminate\Support\Facades\Log;
 use Noerd\Models\TenantApp;
 use Symfony\Component\Yaml\Yaml;
@@ -73,43 +72,6 @@ class StaticConfigHelper
         $selectedApp = TenantHelper::getSelectedApp();
 
         return $selectedApp ? mb_strtolower($selectedApp) : null;
-    }
-
-    /**
-     * Build dynamic Setup Collections navigation based on .yml files in /app-configs/setup/collections/
-     */
-    public static function setupCollections(): array
-    {
-        $collectionsPath = base_path('app-configs/setup/collections');
-
-        if (! is_dir($collectionsPath)) {
-            return [];
-        }
-
-        $collectionFiles = glob($collectionsPath . '/*.yml');
-        $dynamicNavigations = [];
-
-        foreach ($collectionFiles as $file) {
-            $collectionKey = basename($file, '.yml');
-
-            try {
-                $content = file_get_contents($file);
-                $collectionData = Yaml::parse($content ?: '');
-
-                if ($collectionData && isset($collectionData['titleList'])) {
-                    $dynamicNavigations[] = [
-                        'title' => $collectionData['titleList'],
-                        'link' => "/setup-collections?key={$collectionKey}",
-                        'heroicon' => 'archive-box',
-                    ];
-                }
-            } catch (Exception) {
-                // Skip invalid YAML files
-                continue;
-            }
-        }
-
-        return $dynamicNavigations;
     }
 
     /**
@@ -226,13 +188,9 @@ class StaticConfigHelper
                 foreach ($blockMenus as $j => $menu) {
                     $dynamicType = $menu['dynamic'] ?? null;
                     if ($dynamicType) {
-                        if ($dynamicType === 'setup-collections') {
-                            $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::setupCollections();
-                        } else {
-                            $provider = $registry->resolve($dynamicType);
-                            if ($provider) {
-                                $navigationStructure[$i]['block_menus'][$j]['navigations'] = $provider->items();
-                            }
+                        $provider = $registry->resolve($dynamicType);
+                        if ($provider) {
+                            $navigationStructure[$i]['block_menus'][$j]['navigations'] = $provider->items();
                         }
                         unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
                     }

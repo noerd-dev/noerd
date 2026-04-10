@@ -35,7 +35,7 @@ new class extends Component {
          @click="showSidebar = false"></div>
 
     <!-- Mobile Close Button (nur <xl) -->
-    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_1rem)] right-4 z-50">
+    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px)_+_1rem)] right-4 z-50">
         <button @click="showSidebar = false" type="button" class="p-2 bg-black/50 rounded-full">
             <span class="sr-only">Close sidebar</span>
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -71,7 +71,7 @@ new class extends Component {
                     $wire.saveSidebarWidth(width);
                  }"
                  @class([
-                    'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px))] bottom-0 z-50 xl:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
+                    'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 xl:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
                  ])
                  :style="'width: var(--sidebar-nav-width); margin-left: ' + (showAppbar ? 'var(--sidebar-apps-width)' : '0')"
             >

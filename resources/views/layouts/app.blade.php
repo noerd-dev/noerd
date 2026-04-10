@@ -20,6 +20,7 @@
             --sidebar-total-width: calc(var(--sidebar-apps-width) + var(--sidebar-nav-width));
             --banner-height: 0px;
             --impersonation-banner-height: 0px;
+            --environment-banner-height: 0px;
         }
 
         body {
@@ -31,6 +32,8 @@
 <body class="bg-brand-bg h-full">
 
 <livewire:noerd-modal/> <!-- must be loaded before livewire components -->
+
+<livewire:layout.environment-banner />
 
 @auth
     <livewire:layout.impersonation-banner />
@@ -55,7 +58,7 @@
               :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
-        <div class="bg-white h-full @auth pt-[calc(2.9375rem+var(--banner-height,0px)+var(--impersonation-banner-height,0px))] @endauth">
+        <div class="bg-white h-full @auth pt-[calc(2.9375rem+var(--banner-height,0px)+var(--impersonation-banner-height,0px)+var(--environment-banner-height,0px))] @else pt-[var(--environment-banner-height,0px)] @endauth">
             {{ $slot }}
         </div>
     </main>

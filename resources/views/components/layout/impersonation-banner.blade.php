@@ -35,7 +35,7 @@ new class extends Component {
     x-init="document.documentElement.style.setProperty('--impersonation-banner-height', isImpersonating ? '36px' : '0px')"
 >
     @if($isImpersonating)
-        <div class="fixed top-0 left-0 w-full z-50 bg-yellow-500 text-yellow-900">
+        <div class="fixed top-[var(--environment-banner-height,0px)] left-0 w-full z-50 bg-yellow-500 text-yellow-900">
             <div class="px-4 py-2 text-center text-sm font-medium flex items-center justify-center relative">
                 <div class="flex-1 text-center">
                     {{ __('noerd_impersonating_banner', ['name' => $userName]) }}

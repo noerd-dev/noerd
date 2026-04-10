@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\SetupCollectionHelper;
-use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Profile;
 use Noerd\Models\SetupCollection;
@@ -17,6 +17,13 @@ use Noerd\Services\SetupFieldTypeConverter;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
+    // Force yaml mode so the helper reads from the temporary example.yml
+    // created below, rather than the database-backed repository.
+    config(['noerd.collections.mode' => 'yaml']);
+    config(['noerd.collections.show_definitions_ui' => false]);
+    app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
+    app()->forgetInstance(SetupCollectionHelper::class);
+
     // Ensure default languages exist
     SetupLanguage::ensureDefaultLanguages();
 
@@ -51,9 +58,18 @@ buttonList: 'Neuer Eintrag'
 description: 'Eine Beispiel-Collection für Setup'
 hasPage: false
 fields:
-  - { name: detailData.title, label: noerd_label_title, type: translatableText, colspan: 6 }
-  - { name: detailData.description, label: noerd_label_description, type: translatableTextarea, colspan: 6 }
-  - { name: detailData.is_active, label: noerd_label_active, type: checkbox, colspan: 3 }
+  - name: detailData.title
+    label: noerd_label_title
+    type: translatableText
+    colspan: 6
+  - name: detailData.description
+    label: noerd_label_description
+    type: translatableTextarea
+    colspan: 6
+  - name: detailData.is_active
+    label: noerd_label_active
+    type: checkbox
+    colspan: 3
 YAML;
 
     // Ensure directory exists
@@ -130,44 +146,6 @@ describe('SetupCollectionHelper', function (): void {
         $exampleCollection = collect($collections)->firstWhere('key', 'example');
         expect($exampleCollection)->not->toBeNull()
             ->and($exampleCollection['titleList'])->toBe('Beispiele');
-    });
-});
-
-describe('StaticConfigHelper Setup Collections', function (): void {
-    it('returns setup collections for navigation', function (): void {
-        $result = StaticConfigHelper::setupCollections();
-
-        expect($result)->toBeArray();
-
-        foreach ($result as $item) {
-            expect($item)->toHaveKeys(['title', 'link', 'heroicon'])
-                ->and($item['link'])->toStartWith('/setup-collections?key=')
-                ->and($item['heroicon'])->toBe('archive-box');
-        }
-    });
-
-    it('processes dynamic setup-collections navigation correctly', function (): void {
-        $navigationStructure = [
-            [
-                'title' => 'Setup',
-                'block_menus' => [
-                    [
-                        'title' => 'Data Management',
-                        'dynamic' => 'setup-collections',
-                    ],
-                ],
-            ],
-        ];
-
-        $reflection = new ReflectionClass(StaticConfigHelper::class);
-        $method = $reflection->getMethod('processDynamicNavigation');
-        $method->setAccessible(true);
-
-        $result = $method->invoke(null, $navigationStructure);
-
-        expect($result[0]['block_menus'][0])->toHaveKey('navigations')
-            ->and($result[0]['block_menus'][0])->not->toHaveKey('dynamic')
-            ->and($result[0]['block_menus'][0]['navigations'])->toBeArray();
     });
 });
 

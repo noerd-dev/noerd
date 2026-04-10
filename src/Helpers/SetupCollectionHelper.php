@@ -2,30 +2,55 @@
 
 namespace Noerd\Helpers;
 
-use Exception;
-use Symfony\Component\Yaml\Yaml;
+use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 
 class SetupCollectionHelper
 {
-    private const COLLECTIONS_PATH = 'app-configs/setup/collections';
+    public function __construct(
+        private readonly SetupCollectionDefinitionRepositoryContract $repository,
+    ) {}
 
     /**
-     * Get collection field definitions from YAML
+     * Get collection field definitions.
+     * Static method delegates to the container-resolved instance for mockability.
      */
     public static function getCollectionFields(?string $collection): ?array
+    {
+        return app(self::class)->resolveCollectionFields($collection);
+    }
+
+    /**
+     * Get table columns configuration from the resolved collection definition.
+     */
+    public static function getCollectionTable(string $collection): array
+    {
+        return app(self::class)->resolveCollectionTable($collection);
+    }
+
+    /**
+     * Get all available collections from the active repository.
+     *
+     * @return array<int, array{key: string, title: string, titleList: string, buttonList: string}>
+     */
+    public static function getAllCollections(): array
+    {
+        return app(self::class)->resolveAllCollections();
+    }
+
+    /**
+     * Instance method: resolve collection fields via the repository.
+     */
+    public function resolveCollectionFields(?string $collection): ?array
     {
         if ($collection === null) {
             return null;
         }
 
-        try {
-            $path = base_path(self::COLLECTIONS_PATH . '/' . $collection . '.yml');
-            $content = file_get_contents($path);
-        } catch (Exception) {
+        $fields = $this->repository->resolveFields($collection);
+
+        if ($fields === null) {
             return null;
         }
-
-        $fields = Yaml::parse($content ?: '');
 
         // Remove any page_id references (not used in Setup collections)
         if (isset($fields['fields'])) {
@@ -41,12 +66,12 @@ class SetupCollectionHelper
     }
 
     /**
-     * Get table columns configuration from collection YAML
+     * Instance method: resolve collection table configuration.
      */
-    public static function getCollectionTable(string $collection): array
+    public function resolveCollectionTable(string $collection): array
     {
         $table = [];
-        $collectionFields = self::getCollectionFields($collection);
+        $collectionFields = $this->resolveCollectionFields($collection);
 
         if (! $collectionFields || ! isset($collectionFields['fields'])) {
             return $table;
@@ -68,39 +93,17 @@ class SetupCollectionHelper
     }
 
     /**
-     * Get all available collections from the setup collections folder
+     * @return array<int, array{key: string, title: string, titleList: string, buttonList: string}>
      */
-    public static function getAllCollections(): array
+    public function resolveAllCollections(): array
     {
-        $collectionsPath = base_path(self::COLLECTIONS_PATH);
-
-        if (! is_dir($collectionsPath)) {
-            return [];
-        }
-
-        $collectionFiles = glob($collectionsPath . '/*.yml');
-        $collections = [];
-
-        foreach ($collectionFiles as $file) {
-            $collectionKey = basename($file, '.yml');
-
-            try {
-                $content = file_get_contents($file);
-                $collectionData = Yaml::parse($content ?: '');
-
-                if ($collectionData) {
-                    $collections[] = [
-                        'key' => $collectionKey,
-                        'title' => $collectionData['title'] ?? ucfirst($collectionKey),
-                        'titleList' => $collectionData['titleList'] ?? ucfirst($collectionKey),
-                        'buttonList' => $collectionData['buttonList'] ?? 'Neuer Eintrag',
-                    ];
-                }
-            } catch (Exception) {
-                continue;
-            }
-        }
-
-        return $collections;
+        return $this->repository->all()
+            ->map(fn ($definition) => [
+                'key' => $definition->filename,
+                'title' => $definition->title ?: ucfirst($definition->filename),
+                'titleList' => $definition->titleList ?: ucfirst($definition->filename),
+                'buttonList' => 'Neuer Eintrag',
+            ])
+            ->all();
     }
 }

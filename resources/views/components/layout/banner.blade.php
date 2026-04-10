@@ -73,7 +73,7 @@ $styles = [
             $dismissible = $banner['dismissible'] ?? false;
         @endphp
 
-        <div class="fixed top-0 left-0 w-full z-50 {{ $bgClass }}">
+        <div class="fixed top-[calc(var(--environment-banner-height,0px)+var(--impersonation-banner-height,0px))] left-0 w-full z-50 {{ $bgClass }}">
             <div class="px-4 py-2 text-center text-sm font-medium flex items-center justify-center relative">
                 <div class="flex-1 text-center">
                     @if(isset($banner['component']))

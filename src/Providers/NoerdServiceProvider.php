@@ -13,6 +13,8 @@ use Noerd\Commands\AssignAppsToTenant;
 use Noerd\Commands\CreateAdminCommand;
 use Noerd\Commands\CreateTenantApp;
 use Noerd\Commands\CreateTenantCommand;
+use Noerd\Commands\ExportSetupCollectionDefinitionsCommand;
+use Noerd\Commands\ImportSetupCollectionDefinitionsCommand;
 use Noerd\Commands\MakeCollectionCommand;
 use Noerd\Commands\MakeDashboardCommand;
 use Noerd\Commands\MakeDetailCommand;
@@ -27,10 +29,16 @@ use Noerd\Commands\PublishHomeCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
+use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
 use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
+use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Contracts\MediaResolverContract;
+use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
+use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NullMediaResolver;
@@ -40,12 +48,32 @@ class NoerdServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Merge module defaults so noerd.* keys resolve even when the project
+        // root config/noerd.php is absent (e.g., module-only test boots).
+        $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
+
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(PicklistRegistry::class);
-        if (! $this->app->bound(MediaResolverContract::class)) {
-            $this->app->singleton(MediaResolverContract::class, NullMediaResolver::class);
-        }
+        $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
+
+        // Bind the Setup collection definition repository based on the shared mode toggle.
+        $this->app->singleton(SetupCollectionDefinitionRepositoryContract::class, function ($app) {
+            $mode = config('noerd.collections.mode', 'yaml');
+
+            return match ($mode) {
+                'database' => new DatabaseSetupCollectionDefinitionRepository(),
+                default => new YamlSetupCollectionDefinitionRepository(
+                    base_path(config('noerd.collections.setup_yaml_path', 'app-configs/setup/collections')),
+                ),
+            };
+        });
+
+        // Register SetupCollectionHelper as singleton so static proxies resolve
+        // the container-bound repository and tests can replace it.
+        $this->app->singleton(SetupCollectionHelper::class, fn ($app) => new SetupCollectionHelper(
+            $app->make(SetupCollectionDefinitionRepositoryContract::class)
+        ));
     }
 
     public function boot(): void
@@ -65,7 +93,12 @@ class NoerdServiceProvider extends ServiceProvider
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('public-app', PublicAppMiddleware::class);
+        $router->aliasMiddleware('setup.collections.ui', EnsureSetupCollectionDefinitionsEnabled::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
+
+        // Register the Setup collections dynamic navigation provider.
+        $registry = $this->app->make(DynamicNavigationRegistry::class);
+        $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
 
         View::composer('noerd::layouts.app', function ($view): void {
             $view->with('showSidebar', ! session('hide_sidebar'));
@@ -102,6 +135,8 @@ class NoerdServiceProvider extends ServiceProvider
                 CreateTenantCommand::class,
                 NoerdDemoCommand::class,
                 PublishHomeCommand::class,
+                ImportSetupCollectionDefinitionsCommand::class,
+                ExportSetupCollectionDefinitionsCommand::class,
             ]);
         }
     }

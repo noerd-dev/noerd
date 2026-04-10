@@ -187,7 +187,7 @@
                      @else
                          wire:click.prevent="{{$action}}('{{$id}}')"
                      @endif
-                     class="cursor-pointer py-0.5 px-1.5">
+                     class="cursor-pointer py-0.5 px-1.5 inline-flex items-center gap-1.5">
                     @if(is_array($value) && isset($value['prefix']))
                         <span class="text-sm {{ $value['prefixClass'] ?? '' }}">{{ $value['prefix'] }}</span>
                     @endif
@@ -197,6 +197,9 @@
                         </span>
                     @elseif(!is_array($value) && $value !== '' && $value !== null)
                         <span class="text-sm">{{ $value }}</span>
+                    @endif
+                    @if(is_array($value) && ! empty($value['icon']))
+                        <x-icon name="{{ $value['icon'] }}" class="w-4 h-4 {{ $value['iconClass'] ?? 'text-gray-500' }}" />
                     @endif
                 </div>
             @else

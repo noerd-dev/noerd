@@ -1,0 +1,18 @@
+title: noerd_label_collection_definition
+fields:
+  - name: detailData.filename
+    label: noerd_label_filename
+    type: text
+    colspan: 4
+  - name: detailData.title
+    label: noerd_label_title_singular
+    type: text
+    colspan: 4
+  - name: detailData.titleList
+    label: noerd_label_title_plural
+    type: text
+    colspan: 4
+  - name: detailData.description
+    label: noerd_label_description
+    type: text
+    colspan: 12
