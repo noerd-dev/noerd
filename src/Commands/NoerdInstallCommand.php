@@ -20,9 +20,25 @@ class NoerdInstallCommand extends Command
 
     protected $description = 'Install noerd content to the local content directory';
 
+    private bool $shouldInstallDemo = false;
+
     public function handle()
     {
         $this->info('Installing noerd content...');
+
+        // Ask upfront whether to install demo data so the decision
+        // is preserved even if later steps fail. On "no", noerd:demo
+        // is never invoked — no migration, views, configs or routes copied.
+        $this->shouldInstallDemo = confirm(
+            'Would you like to install demo data (DemoCustomer)? (Recommended)',
+            default: true,
+        );
+
+        if (! $this->shouldInstallDemo) {
+            $this->line('<comment>Demo data will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
+        }
+
+        $this->newLine();
 
         $sourceDir = dirname(__DIR__, 2) . '/app-contents/setup';
         $targetDir = base_path('app-configs/setup');
@@ -66,8 +82,10 @@ class NoerdInstallCommand extends Command
             // Ask to run npm build
             $this->runNpmBuild();
 
-            // Ask to install demo data
-            $this->askForDemoInstall();
+            // Install demo data only if the user confirmed at the start.
+            if ($this->shouldInstallDemo) {
+                $this->call('noerd:demo', ['--force' => $this->option('force')]);
+            }
 
             $this->info('Noerd content successfully installed!');
             $this->newLine();
@@ -797,22 +815,6 @@ export default {
         }
 
         file_put_contents($envPath, $envContent);
-    }
-
-    /**
-     * Ask to install demo data
-     */
-    protected function askForDemoInstall(): void
-    {
-        $this->newLine();
-
-        if (! confirm('Would you like to install demo data? (Recommended)', default: true)) {
-            $this->line('<comment>Skipping demo data. You can install it later with: php artisan noerd:demo</comment>');
-
-            return;
-        }
-
-        $this->call('noerd:demo', ['--force' => $this->option('force')]);
     }
 
     /**
