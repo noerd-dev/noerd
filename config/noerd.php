@@ -14,8 +14,8 @@
 
 return [
     'collections' => [
-        'mode' => env('NOERD_COLLECTIONS_MODE', env('CMS_COLLECTIONS_MODE', 'yaml')),
-        'show_definitions_ui' => env('NOERD_COLLECTIONS_MODE', env('CMS_COLLECTIONS_MODE', 'yaml')) === 'database',
+        'mode' => env('NOERD_COLLECTIONS_MODE', 'yaml'),
+        'show_definitions_ui' => env('NOERD_COLLECTIONS_MODE', 'yaml') === 'database',
         'setup_yaml_path' => 'app-configs/setup/collections',
     ],
 ];
