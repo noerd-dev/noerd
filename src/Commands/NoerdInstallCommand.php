@@ -20,9 +20,39 @@ class NoerdInstallCommand extends Command
 
     protected $description = 'Install noerd content to the local content directory';
 
+    private bool $shouldInstallDemo = false;
+
+    private bool $shouldInstallUiLibrary = false;
+
     public function handle()
     {
         $this->info('Installing noerd content...');
+
+        // Ask upfront whether to install demo data so the decision
+        // is preserved even if later steps fail. On "no", noerd:demo
+        // is never invoked — no migration, views, configs or routes copied.
+        $this->shouldInstallDemo = confirm(
+            label: 'Would you like to install the Demo App?',
+            default: true,
+            hint: 'DemoCustomer with lists & details',
+        );
+
+        if (! $this->shouldInstallDemo) {
+            $this->line('<comment>Demo app will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
+        }
+
+        // Ask independently whether to install UI Library
+        $this->shouldInstallUiLibrary = confirm(
+            label: 'Would you like to install the UI Library?',
+            default: true,
+            hint: 'Interactive showcase of all UI components',
+        );
+
+        if (! $this->shouldInstallUiLibrary) {
+            $this->line('<comment>UI Library will NOT be installed. You can run it later with: php artisan noerd:ui-library</comment>');
+        }
+
+        $this->newLine();
 
         $sourceDir = dirname(__DIR__, 2) . '/app-contents/setup';
         $targetDir = base_path('app-configs/setup');
@@ -66,8 +96,15 @@ class NoerdInstallCommand extends Command
             // Ask to run npm build
             $this->runNpmBuild();
 
-            // Ask to install demo data
-            $this->askForDemoInstall();
+            // Install demo data only if the user confirmed at the start.
+            if ($this->shouldInstallDemo) {
+                $this->call('noerd:demo', ['--force' => $this->option('force')]);
+            }
+
+            // Install UI Library only if the user confirmed at the start.
+            if ($this->shouldInstallUiLibrary) {
+                $this->call('noerd:ui-library', ['--force' => $this->option('force')]);
+            }
 
             $this->info('Noerd content successfully installed!');
             $this->newLine();
@@ -268,23 +305,20 @@ require('dotenv').config();
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-
-    ],
-
-    safelist: [
-
-    ],
-
     theme: {
         extend: {
             display: ['group-hover'],
             colors: {
-                'brand-bg': process.env.VITE_BG_COLOR || '#f9f9f9',
-                'brand-navi': process.env.VITE_BRAND_NAVI || '#fafafa',
-                'brand-navi-hover': process.env.VITE_BRAND_NAVI_HOVER || '#f5f5f5',
-                'brand-primary': process.env.VITE_BRAND_PRIMARY || '#000',
-                'brand-border': process.env.VITE_BRAND_BORDER || '#000',
+                'brand-bg': '#f9f9f9', // Page background, table row hover
+                'brand-navi': process.env.VITE_BRAND_NAVI || '#fafafa', // Sidebar background
+                'brand-navi-hover': process.env.VITE_BRAND_NAVI_HOVER || '#f5f5f5', // Sidebar item hover
+                'brand-primary': process.env.VITE_BRAND_PRIMARY || '#000', // Primary buttons, active indicators, checkbox bg
+                'brand-primary-text': process.env.VITE_BRAND_PRIMARY_TEXT || '#fff', // Text on primary buttons, checkbox checkmark
+                'brand-secondary': process.env.VITE_BRAND_SECONDARY || '#ffffff', // Secondary button background
+                'brand-secondary-text': process.env.VITE_BRAND_SECONDARY_TEXT || '#374151', // Text on secondary buttons
+                'brand-danger': process.env.VITE_BRAND_DANGER || '#fecaca', // Danger button background
+                'brand-danger-text': process.env.VITE_BRAND_DANGER_TEXT || '#374151', // Text on danger buttons
+                'brand-border': process.env.VITE_BRAND_BORDER || '#000', // Focus ring, active nav border
             },
         },
     },
@@ -797,22 +831,6 @@ export default {
         }
 
         file_put_contents($envPath, $envContent);
-    }
-
-    /**
-     * Ask to install demo data
-     */
-    protected function askForDemoInstall(): void
-    {
-        $this->newLine();
-
-        if (! confirm('Would you like to install demo data? (Recommended)', default: true)) {
-            $this->line('<comment>Skipping demo data. You can install it later with: php artisan noerd:demo</comment>');
-
-            return;
-        }
-
-        $this->call('noerd:demo', ['--force' => $this->option('force')]);
     }
 
     /**

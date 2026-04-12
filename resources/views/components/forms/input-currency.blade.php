@@ -69,7 +69,7 @@
             x-ref="input"
             {{ $readonly ? 'readonly' : '' }}
             autocomplete="off"
-            class="w-full border rounded-lg block read-only:shadow-none appearance-none text-base sm:text-sm py-2 h-9 leading-[1.375rem] bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 shadow-xs border-zinc-200 border-b-zinc-300/80 read-only:border-b-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2 text-right {{ $symbolPosition === 'before' ? 'ps-8 pe-3' : 'ps-3 pe-8' }}"
+            class="w-full border rounded-lg block read-only:shadow-none appearance-none text-base sm:text-sm py-2 h-8 leading-[1.375rem] bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 shadow-xs border-zinc-200 border-b-zinc-300/80 read-only:border-b-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2 text-right {{ $symbolPosition === 'before' ? 'ps-8 pe-3' : 'ps-3 pe-8' }}"
             type="text"
             inputmode="decimal"
             id="{{ $name }}"

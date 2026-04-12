@@ -53,7 +53,7 @@ new class extends Component {
         />
 
         <div class="flex items-center gap-4">
-            <x-noerd::buttons.primary>{{ __('Save') }}</x-noerd::buttons.primary>
+            <x-noerd::button>{{ __('Save') }}</x-noerd::button>
 
             <x-noerd::action-message class="me-3" on="language-updated">
                 {{ __('Saved.') }}

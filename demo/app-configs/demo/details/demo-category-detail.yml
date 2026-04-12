@@ -1,0 +1,8 @@
+title: ui_library_label_demo_category
+description: ''
+fields:
+  - name: detailData.name
+    label: ui_library_label_name
+    type: text
+    colspan: 6
+    required: true

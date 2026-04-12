@@ -86,9 +86,9 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 
                     <!-- Submit Button -->
                     <div>
-                        <x-noerd::buttons.primary type="submit" class="w-full justify-center">
+                        <x-noerd::button type="submit" class="w-full justify-center">
                             {{ __('Reset password') }}
-                        </x-noerd::buttons.primary>
+                        </x-noerd::button>
                     </div>
                 </form>
             </div>

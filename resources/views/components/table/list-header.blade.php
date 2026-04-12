@@ -43,7 +43,7 @@
                         @blur="searchFocused = false"
                         @keydown.escape="$refs.searchInput.blur()"
                         placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
-                        class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-[30px] pr-8"/>
+                        class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-8 pr-8"/>
                     <kbd x-show="!searchFocused"
                          x-transition:enter="transition ease-out duration-100"
                          x-transition:enter-start="opacity-0"
@@ -74,36 +74,21 @@
                     @else
                         <div>
                     @endif
-                        @if($isSecondary)
-                            <x-noerd::buttons.secondary
-                                x-ref="actionBtn{{ $actionIndex }}"
-                                style="height: 30px !important"
-                                wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                @if(isset($actionItem['heroicon']))
-                                    <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4" />
-                                @endif
-                                {{ __($actionItem['label']) }}
-                                @if($hasShortcut)
-                                    <kbd class="ml-2 rounded border border-gray-300 bg-gray-100 px-1 py-0.5 text-xs text-gray-500">{{ $shortcut['badge'] }}</kbd>
-                                @endif
-                            </x-noerd::buttons.secondary>
-                        @else
-                            <x-noerd::buttons.primary
-                                x-ref="actionBtn{{ $actionIndex }}"
-                                class="!bg-brand-primary relative"
-                                style="height: 30px !important"
-                                wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                @if(isset($actionItem['heroicon']))
-                                    <x-dynamic-component :component="'heroicon-o-' . $actionItem['heroicon']" class="size-4 text-white" />
-                                @else
-                                    <x-noerd::icons.plus class="text-white"/>
-                                @endif
-                                {{ __($actionItem['label']) }}
-                                @if($hasShortcut)
-                                    <kbd class="ml-2 rounded border border-white/30 bg-white/20 px-1 py-0.5 text-xs text-white">{{ $shortcut['badge'] }}</kbd>
-                                @endif
-                            </x-noerd::buttons.primary>
-                        @endif
+                        <x-noerd::button
+                            :variant="$isSecondary ? 'secondary' : 'primary'"
+                            :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
+                            x-ref="actionBtn{{ $actionIndex }}"
+                            class="relative h-8"
+                            wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                            {{ __($actionItem['label']) }}
+                            @if($hasShortcut)
+                                <kbd @class([
+                                    'ml-2 rounded px-1 py-0.5 text-xs',
+                                    'border border-gray-300 bg-gray-100 text-gray-500' => $isSecondary,
+                                    'border border-white/30 bg-white/20 text-brand-primary-text' => !$isSecondary,
+                                ])>{{ $shortcut['badge'] }}</kbd>
+                            @endif
+                        </x-noerd::button>
                     </div>
                 @endforeach
             </div>

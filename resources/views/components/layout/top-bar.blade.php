@@ -1,21 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 
-new class extends Component {
-
+new class () extends Component {
     public $selectedTenantId;
 
-    public function mount()
+    public function mount(): void
     {
         $this->selectedTenantId = TenantHelper::getSelectedTenantId() ?? 0;
     }
 
-    public function logout()
+    public function logout(): void
     {
         Auth::guard('web')->logout();
 
@@ -38,7 +36,7 @@ new class extends Component {
 
             if ($referer) {
                 $path = parse_url($referer, PHP_URL_PATH);
-                $segments = explode('/', trim($path, '/'));
+                $segments = explode('/', mb_trim($path, '/'));
                 $appPrefix = $segments[0] ?? null;
 
                 if ($appPrefix) {
@@ -50,7 +48,7 @@ new class extends Component {
                     } else {
                         $newTenant = Tenant::find($this->selectedTenantId);
                         $hasApp = $newTenant?->tenantApps()
-                            ->whereRaw('LOWER(name) = ?', [strtolower($appPrefix)])
+                            ->whereRaw('LOWER(name) = ?', [mb_strtolower($appPrefix)])
                             ->exists();
 
                         if ($hasApp) {
@@ -86,7 +84,7 @@ new class extends Component {
         'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] left-0 w-full bg-white z-40',
     ])>
     <div>
-        <div class="flex gap-x-4 px-6 w-full">
+        <div class="flex py-2 gap-x-4 px-6 w-full">
             <div class=" flex border-gray-300 w-full py-1">
 
                 <button @click="showSidebar = !showSidebar; if(window.innerWidth >= 1280) $wire.openSidebar()" type="button"
@@ -106,23 +104,16 @@ new class extends Component {
 
                 <div class="ml-auto my-auto flex items-center gap-x-4 shrink-0">
                     @if(auth()->user()->isAdmin())
-                        <a class="pt-2 shrink-0" href="{{route('setup')}}">
-                            <button type="button" class="-m-2.5 p-2.5 text-gray-600 hover:text-gray-500">
+                        <a class="shrink-0" wire:navigate href="{{route('setup')}}">
+                            <x-noerd::button variant="icon" icon="cog-6-tooth" type="button">
                                 <span class="sr-only">View setup</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor" class="h-6 w-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495"/>
-                                </svg>
-                            </button>
+                            </x-noerd::button>
                         </a>
                     @endif
 
                     @if(config('noerd.features.multi_tenant') && auth()->user()->tenants->count() > 1)
                         <!-- Tenants (nur Desktop) -->
-                        <x-noerd::select-input class="hidden xl:block w-48! mt-0!" wire:model="selectedTenantId"
-                                               wire:change="changeClient">
+                        <x-noerd::select-input class="hidden xl:block h-8 w-48! mt-0!" wire:model="selectedTenantId" wire:change="changeClient">
                             @foreach(auth()->user()->tenants as $client)
                                 <option value="{{$client->id}}">{{$client->name}}</option>
                             @endforeach
@@ -147,11 +138,11 @@ new class extends Component {
                              class="absolute right-0 z-90 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                              role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button"
                              tabindex="-1">
-                            <a href="{{route('profile')}}" class="block px-4 py-2 text-sm text-gray-700"
+                            <a wire:navigate href="{{route('profile')}}" class="block px-4 py-2 text-sm text-gray-700"
                                role="menuitem"
                                tabindex="-1" id="user-menu-item-0">{{__('Profile')}}</a>
 
-                            <a wire:click="logout" class="block px-4 py-2 cursor-pointer text-sm text-gray-700"
+                            <a wire:navigate wire:click="logout" class="block px-4 py-2 cursor-pointer text-sm text-gray-700"
                                role="menuitem"
                                tabindex="-1" id="user-menu-item-2">{{__('Sign Out')}}</a>
                         </div>

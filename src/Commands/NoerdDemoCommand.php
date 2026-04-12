@@ -14,7 +14,7 @@ class NoerdDemoCommand extends Command
 {
     protected $signature = 'noerd:demo {--force : Overwrite existing files}';
 
-    protected $description = 'Install demo data (model, migration, views, configs, route) directly into the project';
+    protected $description = 'Install demo data (models, migrations, views, configs, routes) directly into the project';
 
     private string $demoDir;
 
@@ -24,13 +24,15 @@ class NoerdDemoCommand extends Command
 
         $this->info('Installing noerd demo data...');
 
-        $this->publishModel();
-        $this->publishMigration();
+        $this->publishModels();
+        $this->publishMigrations();
+        $this->publishSeeder();
         $this->publishViews();
         $this->publishAppConfigs();
-        $this->addRoute();
+        $this->addRoutes();
         $this->registerDemoApp();
         $this->runMigration();
+        $this->seedDemoData();
 
         $this->newLine();
         $this->info('Noerd demo data installed successfully!');
@@ -38,95 +40,141 @@ class NoerdDemoCommand extends Command
         return self::SUCCESS;
     }
 
-    private function publishModel(): void
+    private function publishModels(): void
     {
-        $source = $this->demoDir . '/Models/DemoCustomer.php';
-        $target = app_path('Models/DemoCustomer.php');
+        $models = [
+            'DemoCustomer.php',
+            'DemoCategory.php',
+            'DemoTag.php',
+        ];
 
-        $this->copyFile($source, $target, 'app/Models/DemoCustomer.php');
+        foreach ($models as $model) {
+            $source = $this->demoDir . '/Models/' . $model;
+            $target = app_path('Models/' . $model);
+
+            if (File::exists($source)) {
+                $this->copyFile($source, $target, 'app/Models/' . $model);
+            }
+        }
     }
 
-    private function publishMigration(): void
+    private function publishMigrations(): void
     {
         $targetDir = database_path('migrations');
-        $existing = glob($targetDir . '/*_create_demo_customers_table.php');
 
-        if (! empty($existing)) {
-            $this->line('<comment>Migration for demo_customers already exists.</comment>');
+        // Order matters: tables referenced by foreign keys must be created first.
+        $migrations = [
+            'create_demo_customers_table',
+            'create_demo_categories_table',
+            'create_demo_tags_table',
+            'extend_demo_customers_table',
+        ];
 
-            return;
+        $timestamp = (int) date('His');
+
+        foreach ($migrations as $migration) {
+            $existing = glob($targetDir . '/*_' . $migration . '.php');
+
+            if (! empty($existing)) {
+                $this->line("<comment>Migration for {$migration} already exists.</comment>");
+
+                continue;
+            }
+
+            $source = $this->demoDir . '/migrations/' . $migration . '.php';
+            if (! File::exists($source)) {
+                continue;
+            }
+
+            $filename = date('Y_m_d_') . str_pad((string) $timestamp, 6, '0', STR_PAD_LEFT) . '_' . $migration . '.php';
+            $timestamp++;
+            $target = $targetDir . '/' . $filename;
+
+            File::copy($source, $target);
+            $this->info("Published: database/migrations/{$filename}");
         }
-
-        $source = $this->demoDir . '/migrations/create_demo_customers_table.php';
-        $filename = date('Y_m_d_His') . '_create_demo_customers_table.php';
-        $target = $targetDir . '/' . $filename;
-
-        File::copy($source, $target);
-        $this->info("Published: database/migrations/{$filename}");
     }
 
     private function publishViews(): void
     {
         $targetDir = resource_path('views/components');
-
         File::ensureDirectoryExists($targetDir);
 
-        $files = [
+        $views = [
             'demo-customers-list.blade.php',
             'demo-customer-detail.blade.php',
+            'demo-categories-list.blade.php',
+            'demo-category-detail.blade.php',
+            'demo-tags-list.blade.php',
+            'demo-tag-detail.blade.php',
         ];
 
-        foreach ($files as $file) {
+        foreach ($views as $file) {
             $source = $this->demoDir . '/views/' . $file;
             $target = $targetDir . '/' . $file;
 
-            $this->copyFile($source, $target, 'resources/views/components/' . $file);
+            if (File::exists($source)) {
+                $this->copyFile($source, $target, 'resources/views/components/' . $file);
+            }
         }
     }
 
     private function publishAppConfigs(): void
     {
-        $sourceDir = $this->demoDir . '/app-configs/demo';
-        $targetDir = base_path('app-configs/demo');
-
-        $files = [
+        $this->publishAppConfigDir('demo', [
             'navigation.yml',
             'lists/demo-customers-list.yml',
             'details/demo-customer-detail.yml',
-        ];
+            'lists/demo-categories-list.yml',
+            'details/demo-category-detail.yml',
+            'lists/demo-tags-list.yml',
+            'details/demo-tag-detail.yml',
+        ]);
+    }
+
+    private function publishAppConfigDir(string $appName, array $files): void
+    {
+        $sourceDir = $this->demoDir . '/app-configs/' . $appName;
+        $targetDir = base_path('app-configs/' . $appName);
 
         foreach ($files as $file) {
             $source = $sourceDir . '/' . $file;
             $target = $targetDir . '/' . $file;
 
+            if (! File::exists($source)) {
+                continue;
+            }
+
             File::ensureDirectoryExists(dirname($target));
-            $this->copyFile($source, $target, 'app-configs/demo/' . $file);
+            $this->copyFile($source, $target, 'app-configs/' . $appName . '/' . $file);
         }
     }
 
-    private function addRoute(): void
+    private function addRoutes(): void
     {
         $routeFile = base_path('routes/web.php');
         $content = File::get($routeFile);
 
-        if (str_contains($content, 'demo-customers')) {
-            $this->line('<comment>Demo route already exists in routes/web.php</comment>');
-
-            return;
-        }
-
-        $route = <<<'ROUTE'
+        if (! str_contains($content, 'demo-customers')) {
+            $route = <<<'ROUTE'
 
 
 // Noerd Demo
 Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
     Route::livewire('demo-customers', 'demo-customers-list')->name('demo-customers');
     Route::livewire('demo-customer/{modelId}', 'demo-customer-detail')->name('demo-customer.detail');
+    Route::livewire('demo-categories', 'demo-categories-list')->name('demo-categories');
+    Route::livewire('demo-category/{modelId}', 'demo-category-detail')->name('demo-category.detail');
+    Route::livewire('demo-tags', 'demo-tags-list')->name('demo-tags');
+    Route::livewire('demo-tag/{modelId}', 'demo-tag-detail')->name('demo-tag.detail');
 });
 ROUTE;
 
-        File::append($routeFile, $route);
-        $this->info('Demo routes added to routes/web.php');
+            File::append($routeFile, $route);
+            $this->info('Demo routes added to routes/web.php');
+        } else {
+            $this->line('<comment>Demo routes already exist in routes/web.php</comment>');
+        }
     }
 
     private function registerDemoApp(): void
@@ -147,6 +195,11 @@ ROUTE;
             $this->line('<comment>Demo app already registered in database.</comment>');
         }
 
+        $this->assignAppToAllTenants($app);
+    }
+
+    private function assignAppToAllTenants(TenantApp $app): void
+    {
         $tenants = Tenant::all();
 
         foreach ($tenants as $tenant) {
@@ -154,8 +207,35 @@ ROUTE;
         }
 
         if ($tenants->isNotEmpty()) {
-            $this->info("Demo app assigned to {$tenants->count()} tenant(s).");
+            $this->info("{$app->title} app assigned to {$tenants->count()} tenant(s).");
         }
+    }
+
+    private function publishSeeder(): void
+    {
+        $source = $this->demoDir . '/seeders/DemoSeeder.php';
+        $target = database_path('seeders/DemoSeeder.php');
+
+        if (File::exists($source)) {
+            $this->copyFile($source, $target, 'database/seeders/DemoSeeder.php');
+        }
+    }
+
+    private function seedDemoData(): void
+    {
+        $seederPath = database_path('seeders/DemoSeeder.php');
+
+        if (! File::exists($seederPath)) {
+            return;
+        }
+
+        if (! confirm('Would you like to seed demo data (sample customers, categories, tags)?', default: true)) {
+            $this->line('<comment>Skipping demo seed data. Run manually: php artisan db:seed --class=DemoSeeder</comment>');
+
+            return;
+        }
+
+        $this->call('db:seed', ['--class' => 'DemoSeeder', '--no-interaction' => true]);
     }
 
     private function runMigration(): void

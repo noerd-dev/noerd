@@ -26,10 +26,10 @@ new class extends Component {
         </p>
     </header>
 
-    <x-noerd::danger-button
+    <x-noerd::button variant="danger" :icon="false"
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-    >{{ __('Delete Account') }}</x-noerd::danger-button>
+    >{{ __('Delete Account') }}</x-noerd::button>
 
     <x-noerd::modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable>
         <form wire:submit="deleteUser" class="p-6">
@@ -58,13 +58,13 @@ new class extends Component {
             </div>
 
             <div class="mt-6 flex justify-end">
-                <x-noerd::secondary-button x-on:click="$dispatch('close')">
+                <x-noerd::button variant="ghost" x-on:click="$dispatch('close')">
                     {{ __('Cancel') }}
-                </x-noerd::secondary-button>
+                </x-noerd::button>
 
-                <x-noerd::danger-button class="ms-3">
+                <x-noerd::button variant="danger" :icon="false" class="ms-3">
                     {{ __('Delete Account') }}
-                </x-noerd::danger-button>
+                </x-noerd::button>
             </div>
         </form>
     </x-noerd::modal>

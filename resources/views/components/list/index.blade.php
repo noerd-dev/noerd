@@ -106,7 +106,8 @@
                                         <tr :key="{{$key}}"
                                             :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
                                             @click="selectedRow{{$listId}} = '{{$key}}'"
-                                            class="group hover:bg-brand-bg border border-black/10">
+                                            wire:click="findListAction('{{$key}}')"
+                                            class="cursor-pointer group hover:bg-brand-bg border border-black/10">
                                             @foreach($table as $index => $column)
                                                 @include('noerd::components.table.table-cell', [
                                                     'row' => $key,

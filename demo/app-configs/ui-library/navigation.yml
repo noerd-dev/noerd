@@ -1,0 +1,5 @@
+- title: UI Library
+  name: ui-library
+  hidden: true
+  route: ui-library.dashboard
+  block_menus: []

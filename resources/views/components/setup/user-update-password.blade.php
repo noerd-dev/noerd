@@ -72,7 +72,7 @@ new class extends Component {
         </div>
 
         <div class="flex items-center gap-4">
-            <x-noerd::buttons.primary>{{ __('Passwort speichern') }}</x-noerd::buttons.primary>
+            <x-noerd::button>{{ __('Passwort speichern') }}</x-noerd::button>
 
             <div x-show="$wire.showSuccessIndicator"
                  x-transition.out.opacity.duration.1000ms
