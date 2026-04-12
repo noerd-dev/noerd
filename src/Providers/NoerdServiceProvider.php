@@ -24,6 +24,7 @@ use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
+use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUiLibraryCommand;
 use Noerd\Commands\PublishHomeCommand;
@@ -121,6 +122,7 @@ class NoerdServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 MakeUserAdmin::class,
+                NoerdInfoCommand::class,
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,
                 CreateTenantApp::class,
