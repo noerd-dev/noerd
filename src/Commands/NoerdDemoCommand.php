@@ -26,11 +26,13 @@ class NoerdDemoCommand extends Command
 
         $this->publishModels();
         $this->publishMigrations();
+        $this->publishSeeder();
         $this->publishViews();
         $this->publishAppConfigs();
         $this->addRoutes();
         $this->registerDemoApp();
         $this->runMigration();
+        $this->seedDemoData();
 
         $this->newLine();
         $this->info('Noerd demo data installed successfully!');
@@ -207,6 +209,33 @@ ROUTE;
         if ($tenants->isNotEmpty()) {
             $this->info("{$app->title} app assigned to {$tenants->count()} tenant(s).");
         }
+    }
+
+    private function publishSeeder(): void
+    {
+        $source = $this->demoDir . '/seeders/DemoSeeder.php';
+        $target = database_path('seeders/DemoSeeder.php');
+
+        if (File::exists($source)) {
+            $this->copyFile($source, $target, 'database/seeders/DemoSeeder.php');
+        }
+    }
+
+    private function seedDemoData(): void
+    {
+        $seederPath = database_path('seeders/DemoSeeder.php');
+
+        if (! File::exists($seederPath)) {
+            return;
+        }
+
+        if (! confirm('Would you like to seed demo data (sample customers, categories, tags)?', default: true)) {
+            $this->line('<comment>Skipping demo seed data. Run manually: php artisan db:seed --class=DemoSeeder</comment>');
+
+            return;
+        }
+
+        $this->call('db:seed', ['--class' => 'DemoSeeder', '--no-interaction' => true]);
     }
 
     private function runMigration(): void
