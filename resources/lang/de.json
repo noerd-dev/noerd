@@ -409,14 +409,10 @@
     "ui_library_demo_required_label": "Pflichtfeld",
 
     "ui_library_nav_dashboard": "Dashboard",
-    "ui_library_nav_demo_items": "Demo Items",
     "ui_library_nav_demo_categories": "Demo Kategorien",
     "ui_library_nav_demo_tags": "Demo Tags",
     "ui_library_nav_demo_customers": "Demo Kunden",
 
-    "ui_library_label_demo_item": "Demo Item",
-    "ui_library_label_demo_items": "Demo Items",
-    "ui_library_label_new_demo_item": "Neues Demo Item",
     "ui_library_label_demo_category": "Demo Kategorie",
     "ui_library_label_demo_categories": "Demo Kategorien",
     "ui_library_label_new_demo_category": "Neue Demo Kategorie",
