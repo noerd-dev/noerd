@@ -92,10 +92,21 @@ If you want to contribute to the development of Noerd, you can install it as a g
 git submodule add git@github.com:noerd-dev/noerd.git app-modules/noerd
 ```
 
-Then add the package manually to the `require` section of your `composer.json`:
+Then add a path repository and the package to your `composer.json`:
 
 ```json
-"noerd/noerd": "*"
+"repositories": [
+    {
+        "type": "path",
+        "url": "app-modules/noerd",
+        "options": {
+            "symlink": true
+        }
+    }
+],
+"require": {
+    "noerd/noerd": "*"
+}
 ```
 
 Then run:

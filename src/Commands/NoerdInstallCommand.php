@@ -32,8 +32,9 @@ class NoerdInstallCommand extends Command
         // is preserved even if later steps fail. On "no", noerd:demo
         // is never invoked — no migration, views, configs or routes copied.
         $this->shouldInstallDemo = confirm(
-            'Would you like to install the Demo App (DemoCustomer with lists & details)?',
+            label: 'Would you like to install the Demo App?',
             default: true,
+            hint: 'DemoCustomer with lists & details',
         );
 
         if (! $this->shouldInstallDemo) {
@@ -42,8 +43,9 @@ class NoerdInstallCommand extends Command
 
         // Ask independently whether to install UI Library
         $this->shouldInstallUiLibrary = confirm(
-            'Would you like to install the UI Library (interactive showcase of all UI components)?',
+            label: 'Would you like to install the UI Library?',
             default: true,
+            hint: 'Interactive showcase of all UI components',
         );
 
         if (! $this->shouldInstallUiLibrary) {
