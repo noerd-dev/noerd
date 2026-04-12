@@ -106,11 +106,7 @@ new class extends Component {
                             <span class="font-medium truncate">{{ $app['title'] }}</span>
                         </div>
 
-                        <button wire:click="toggleApp({{ $app['id'] }})" class="shrink-0 text-red-500 hover:text-red-700 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <x-noerd::button variant="icon" icon="x-mark" wire:click="toggleApp({{ $app['id'] }})" class="text-red-500! shrink-0"/>
                     </div>
                 @endforeach
             </div>
@@ -135,11 +131,7 @@ new class extends Component {
                             <span class="font-medium truncate">{{ $app['title'] }}</span>
                         </div>
 
-                        <button wire:click="toggleApp({{ $app['id'] }})" class="shrink-0 text-green-600 hover:text-green-800 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                        </button>
+                        <x-noerd::button variant="icon" icon="plus" wire:click="toggleApp({{ $app['id'] }})" class="text-green-600! shrink-0"/>
                     </div>
                 @endforeach
             </div>

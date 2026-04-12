@@ -38,14 +38,12 @@
     @if($previewUrl)
         <div class="relative mr-4 mb-4">
             <div style="height: 150px; width: 150px; background: url('{{ $previewUrl }}') 0% 0% / cover;">
-                <button
-                    wire:confirm="{{ __('Really delete image?') }}"
-                    wire:click="deleteImage('{{ $name }}')"
-                    type="button"
-                    class="top-5 right-0 inline-flex uppercase items-center rounded !bg-red-400 p-1.5 m-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
-                >
+                <x-noerd::button variant="danger" :icon="false"
+                                 wire:confirm="{{ __('Really delete image?') }}"
+                                 wire:click="deleteImage('{{ $name }}')"
+                                 class="m-2">
                     X
-                </button>
+                </x-noerd::button>
             </div>
         </div>
     @endif
@@ -56,12 +54,12 @@
 
     <div class="mt-2 flex gap-2">
         @if($mediaAvailable)
-            <x-noerd::buttons.secondary
+            <x-noerd::button variant="secondary"
                 type="button"
                 wire:click="openSelectMediaModal('{{ $name }}')"
             >
                 {{ __('Choose image from media') }}
-            </x-noerd::buttons.secondary>
+            </x-noerd::button>
         @else
             <input
                 type="file"

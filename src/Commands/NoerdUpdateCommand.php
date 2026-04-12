@@ -40,6 +40,7 @@ class NoerdUpdateCommand extends NoerdInstallCommand
             // 2. Update configs
             $this->updatePhpunitXml();
             $this->publishNoerdConfig();
+            $this->createTailwindConfig();
 
             // 3. Setup frontend assets
             $this->setupFrontendAssets();

@@ -40,37 +40,41 @@
         </div>
 
         @if($deleteMessage)
-            <x-noerd::buttons.delete wire:key="{{\Illuminate\Support\Str::uuid()}}"
-                              wire:click="delete"
-                              x-show="showButtons"
-                              wire:confirm="{{$deleteMessage}}"
-                              @click="show= false">
+            <x-noerd::button variant="danger"
+                             wire:key="{{\Illuminate\Support\Str::uuid()}}"
+                             wire:click="delete"
+                             x-show="showButtons"
+                             wire:confirm="{{$deleteMessage}}"
+                             @click="show= false">
                 {{ __('Delete') }}
-            </x-noerd::buttons.delete>
+            </x-noerd::button>
         @else
-            <x-noerd::buttons.delete wire:key="{{\Illuminate\Support\Str::uuid()}}"
-                              wire:click="delete"
-                              x-show="showButtons"
-                              @click="show= false">
+            <x-noerd::button variant="danger"
+                             wire:key="{{\Illuminate\Support\Str::uuid()}}"
+                             wire:click="delete"
+                             x-show="showButtons"
+                             @click="show= false">
                 {{ __('Delete') }}
-            </x-noerd::buttons.delete>
+            </x-noerd::button>
         @endif
 
-        <x-noerd::buttons.cancel x-show="showButtons" @click="showButtons = false">
+        <x-noerd::button variant="ghost" x-show="showButtons" @click="showButtons = false">
             {{__('Cancel')}}
-        </x-noerd::buttons.cancel>
+        </x-noerd::button>
 
         @if($showDelete)
-            <x-noerd::buttons.delete wire:key="{{\Illuminate\Support\Str::uuid()}}" x-show="!showButtons"
-                              @click="showButtons = true">
+            <x-noerd::button variant="danger"
+                             wire:key="{{\Illuminate\Support\Str::uuid()}}"
+                             x-show="!showButtons"
+                             @click="showButtons = true">
                 {{ __('Delete') }}
-            </x-noerd::buttons.delete>
+            </x-noerd::button>
         @endif
 
         @if($showSave)
-            <x-noerd::store-button wire:click="store">
+            <x-noerd::button wireTarget="store" icon="check-circle" wire:click="store">
                 {{__('Save')}}
-            </x-noerd::store-button>
+            </x-noerd::button>
         @endif
     </div>
 

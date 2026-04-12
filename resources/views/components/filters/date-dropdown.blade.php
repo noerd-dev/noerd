@@ -10,7 +10,7 @@
      @click.outside="open = false; showDatePicker = false"
      class="relative mr-4">
     <button @click="open = !open; showDatePicker = false" type="button"
-            class="{{ $active ? '!border-brand-primary !border-solid !border-2' : 'border border-dashed border-zinc-300' }} flex items-center gap-1 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
+            class="{{ $active ? '!border-brand-primary !border-solid !border-2' : 'border border-dashed border-zinc-300' }} flex items-center gap-1 rounded-md px-3 h-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
         <span>{{ $filter['label'] }}</span>
         @if($active)
             <span class="text-gray-400 mx-0.5">|</span>

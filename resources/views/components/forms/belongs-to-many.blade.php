@@ -63,11 +63,7 @@
         <template x-for="id in selectedIds" :key="id">
             <span class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-zinc-100 text-zinc-700 rounded-md border border-zinc-200">
                 <span x-text="getLabel(id)"></span>
-                <button type="button" @click="removeItem(id)" class="text-zinc-400 hover:text-zinc-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+                <x-noerd::button variant="icon" icon="x-mark" type="button" @click="removeItem(id)"/>
             </span>
         </template>
         <span x-show="selectedIds.length === 0" class="text-zinc-400 text-sm py-1">

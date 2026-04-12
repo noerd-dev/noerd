@@ -1,0 +1,9 @@
+title: ui_library_label_demo_tags
+actions:
+  - label: ui_library_label_new_demo_tag
+    action: listAction
+disableSearch: false
+columns:
+  - field: name
+    label: ui_library_label_name
+    type: text
