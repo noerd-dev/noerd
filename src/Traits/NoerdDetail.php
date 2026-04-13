@@ -245,6 +245,24 @@ trait NoerdDetail
         }
     }
 
+    /**
+     * Strips "detailData." prefix from validation attribute names in error messages.
+     * Called by Livewire before building the Validator instance.
+     */
+    public function validate($rules = null, $messages = [], $attributes = []): array
+    {
+        if (empty($attributes) && is_array($rules)) {
+            foreach (array_keys($rules) as $ruleKey) {
+                if (str_starts_with($ruleKey, 'detailData.')) {
+                    $field = Str::after($ruleKey, 'detailData.');
+                    $attributes[$ruleKey] = str_replace('_', ' ', $field);
+                }
+            }
+        }
+
+        return parent::validate($rules, $messages, $attributes);
+    }
+
     public function clearRelation(string $fieldName): void
     {
         $key = str_replace('detailData.', '', $fieldName);
