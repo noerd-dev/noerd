@@ -1,5 +1,4 @@
 <section class="mb-12">
-    <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-4">{{ __('ui_library_section_form_inputs') }}</h2>
 
     {{-- Text Input --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Text Input</h3>
@@ -14,8 +13,8 @@
             <x-noerd::forms.input name="demoText" label="Readonly" :readonly="true" />
         </div>
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::forms.input name="detailData.name" label="Name" /&gt;
 &lt;x-noerd::forms.input name="detailData.email" label="Email" type="email" /&gt;
 &lt;x-noerd::forms.input name="detailData.count" label="Count" type="number" /&gt;
@@ -24,7 +23,7 @@
 &lt;x-noerd::forms.input name="detailData.name" label="Readonly" :readonly="true" /&gt;
 &lt;x-noerd::forms.input name="detailData.name" label="Live" :live="true" /&gt;
 &lt;x-noerd::forms.input name="detailData.name" label="Required" :required="true" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Textarea --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Textarea</h3>
@@ -34,11 +33,11 @@
             <x-noerd::forms.input-textarea name="demoTextarea" label="Description" rows="4" />
         </div>
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::forms.input-textarea name="detailData.description" label="Description" rows="4" /&gt;
 &lt;x-noerd::forms.input-textarea name="detailData.notes" label="Notes" :readonly="true" :required="true" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Checkbox --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Checkbox</h3>
@@ -46,11 +45,11 @@
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::forms.checkbox name="demoCheckbox" label="Active" />
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::forms.checkbox name="detailData.is_active" label="Active" /&gt;
 &lt;x-noerd::forms.checkbox name="detailData.send_email" label="Send email" :live="true" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Select --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Select</h3>
@@ -60,8 +59,8 @@
             <x-noerd::forms.input-select name="demoSelect" label="Choose option" :options="$this->demoSelectOptions" />
         </div>
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::forms.input-select
     name="detailData.status"
     label="Status"
@@ -78,7 +77,7 @@
     :options="$this-&gt;typeOptions"
     :live="true"
 /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Currency Input --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Currency Input</h3>
@@ -88,11 +87,11 @@
             <x-noerd::forms.input-currency name="demoCurrency" label="Amount" />
         </div>
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::forms.input-currency name="detailData.price" label="Price" /&gt;
 &lt;x-noerd::forms.input-currency name="detailData.total" label="Total" :readonly="true" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Color Picker --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Color Picker</h3>
@@ -102,9 +101,9 @@
             <x-noerd::forms.color-hex name="demoColor" label="Brand Color" />
         </div>
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::forms.color-hex name="detailData.color" label="Brand Color" /&gt;
 &lt;x-noerd::forms.color-hex name="detailData.color" label="Color" :live="true" /&gt;</code></pre>
-    </details>
+    </div>
 </section>

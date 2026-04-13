@@ -1,5 +1,4 @@
 <section class="mb-12">
-    <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-4">{{ __('ui_library_section_buttons') }}</h2>
     <p class="text-sm text-gray-500 mb-4">The button component supports 6 variants, heroicons, and wire loading states.</p>
 
     {{-- Variants --}}
@@ -14,15 +13,15 @@
             <x-noerd::button variant="icon" icon="pencil" />
         </div>
     </div>
-    <details class="group mb-4">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::button variant="primary"&gt;Primary&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="secondary"&gt;Secondary&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="danger"&gt;Danger&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="pill"&gt;Pill&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="ghost"&gt;Ghost&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="icon" icon="pencil" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Sizes --}}
     <div class="border rounded-lg p-6 bg-white mb-2">
@@ -36,15 +35,15 @@
             <x-noerd::button variant="icon" size="lg" icon="pencil" />
         </div>
     </div>
-    <details class="group mb-4">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::button size="sm"&gt;Small&lt;/x-noerd::button&gt;
 &lt;x-noerd::button&gt;Default (md)&lt;/x-noerd::button&gt;
 &lt;x-noerd::button size="lg"&gt;Large&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="icon" size="sm" icon="pencil" /&gt;
 &lt;x-noerd::button variant="icon" icon="pencil" /&gt;
 &lt;x-noerd::button variant="icon" size="lg" icon="pencil" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- With Icons --}}
     <div class="border rounded-lg p-6 bg-white mb-2">
@@ -58,8 +57,8 @@
             <x-noerd::button variant="icon" icon="plus" />
         </div>
     </div>
-    <details class="group mb-4">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::button icon="check-circle"&gt;Save&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="secondary" icon="arrow-down-tray"&gt;Download&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="danger"&gt;Delete&lt;/x-noerd::button&gt;
@@ -69,11 +68,11 @@
 
 &lt;!-- With wire loading spinner --&gt;
 &lt;x-noerd::button icon="check-circle" wireTarget="store"&gt;Save&lt;/x-noerd::button&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- All Props --}}
-    <details class="group">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">All props</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">All props</p>
         <div class="mt-2 overflow-x-auto">
             <table class="min-w-full text-sm border border-gray-200 rounded-lg">
                 <thead class="bg-gray-50">
@@ -91,5 +90,5 @@
                 </tbody>
             </table>
         </div>
-    </details>
+    </div>
 </section>

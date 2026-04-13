@@ -1,5 +1,4 @@
 <section class="mb-12">
-    <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-4">{{ __('ui_library_section_advanced') }}</h2>
 
     {{-- Markdown --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Markdown</h3>
@@ -12,18 +11,18 @@
 
 `Inline code` is also supported." />
     </div>
-    <details class="group mb-6">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::markdown content="**Bold** and *italic* with a [link](https://example.com)." /&gt;
 &lt;x-noerd::markdown :content="$article-&gt;body" class="prose" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Tabs --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Tabs</h3>
     <p class="text-sm text-gray-500 mb-3">Tab container supporting three modes: route-based, component-modal, and simple numbered tabs.</p>
-    <x-noerd::info-box>{{ __('ui_library_requires_yaml_layout') }}</x-noerd::info-box>
-    <details class="group mb-6 mt-2">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <x-noerd::info-box>Requires a YAML layout configuration with tabs defined.</x-noerd::info-box>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code># YAML tab definition
 tabs:
   - number: 1
@@ -58,14 +57,14 @@ fields:
         &#64;include('noerd::components.detail.block', $tabLayout)
     &lt;/div&gt;
 &#64;endforeach</code></pre>
-    </details>
+    </div>
 
     {{-- Record Navigation --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Record Navigation</h3>
     <p class="text-sm text-gray-500 mb-3">Previous/next record navigation arrows displayed alongside the detail modal.</p>
-    <x-noerd::info-box>{{ __('ui_library_requires_noerd_detail') }}</x-noerd::info-box>
-    <details class="group mb-6 mt-2">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <x-noerd::info-box>Requires the NoerdDetail trait in the Livewire component.</x-noerd::info-box>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;!-- Automatically rendered by x-noerd::page when the component --&gt;
 &lt;!-- implements hasRecordNavigation() and getRecordNavigationInfo() --&gt;
 &lt;!-- The NoerdDetail trait provides these methods. --&gt;
@@ -79,14 +78,14 @@ $recordNavInfo = [
 
 # Manual usage
 &lt;x-noerd::record-navigation :recordNavInfo="$recordNavInfo" /&gt;</code></pre>
-    </details>
+    </div>
 
     {{-- Dropzone --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Dropzone</h3>
     <p class="text-sm text-gray-500 mb-3">Drag-and-drop file upload zone with progress indicator, file list, and validation.</p>
-    <x-noerd::info-box>{{ __('ui_library_requires_file_uploads') }}</x-noerd::info-box>
-    <details class="group mb-6 mt-2">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-1">Show code</summary>
+    <x-noerd::info-box>Requires the WithFileUploads trait in the Livewire component.</x-noerd::info-box>
+    <div>
+        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;livewire:noerd::dropzone
     wire:model="files"
     :rules="['mimes:pdf,jpg,png', 'max:10240']"
@@ -106,5 +105,5 @@ public function filesUpdated(array $files): void { ... }
 
 #[On('files-cleared')]
 public function filesCleared(): void { ... }</code></pre>
-    </details>
+    </div>
 </section>

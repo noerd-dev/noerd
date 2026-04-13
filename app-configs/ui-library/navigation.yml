@@ -1,0 +1,34 @@
+- title: UI Library
+  name: ui-library
+  hidden: true
+  route: ui-library.dashboard
+  block_menus:
+    - title: UI Library
+      navigations:
+        - title: Overview
+          route: ui-library.dashboard
+          heroicon: squares-2x2
+        - title: Buttons
+          route: ui-library.buttons
+          heroicon: cursor-arrow-ripple
+        - title: Form Inputs
+          route: ui-library.form-inputs
+          heroicon: pencil-square
+        - title: Form Inputs (Advanced)
+          route: ui-library.form-inputs-advanced
+          heroicon: adjustments-horizontal
+        - title: Labels & Errors
+          route: ui-library.labels-errors
+          heroicon: tag
+        - title: Layout Components
+          route: ui-library.layout
+          heroicon: view-columns
+        - title: Action Components
+          route: ui-library.actions
+          heroicon: play
+        - title: Advanced Components
+          route: ui-library.advanced
+          heroicon: cog-6-tooth
+        - title: Filters
+          route: ui-library.filters
+          heroicon: funnel
