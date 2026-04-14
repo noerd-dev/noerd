@@ -72,10 +72,10 @@ it('hides navigation items when config value is false', function (): void {
     $navigation = StaticConfigHelper::getNavigationStructure();
 
     // Find user-roles in navigation
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
     $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
 
-    expect($navTitles)->not->toContain('noerd_nav_user_roles');
+    expect($navTitles)->not->toContain('User Roles');
 });
 
 it('shows navigation items when config value is true', function (): void {
@@ -87,10 +87,10 @@ it('shows navigation items when config value is true', function (): void {
     $navigation = StaticConfigHelper::getNavigationStructure();
 
     // Find user-roles in navigation
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
     $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
 
-    expect($navTitles)->toContain('noerd_nav_user_roles');
+    expect($navTitles)->toContain('User Roles');
 });
 
 it('shows superAdmin navigation items for super admins', function (): void {
@@ -101,10 +101,10 @@ it('shows superAdmin navigation items for super admins', function (): void {
 
     $navigation = StaticConfigHelper::getNavigationStructure();
 
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
     $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
 
-    expect($navTitles)->toContain('noerd_nav_apps');
+    expect($navTitles)->toContain('Apps');
 });
 
 it('hides superAdmin navigation items for non-super admins', function (): void {
@@ -115,8 +115,8 @@ it('hides superAdmin navigation items for non-super admins', function (): void {
 
     $navigation = StaticConfigHelper::getNavigationStructure();
 
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'noerd_nav_administration');
+    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
     $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
 
-    expect($navTitles)->not->toContain('noerd_nav_apps');
+    expect($navTitles)->not->toContain('Apps');
 });
