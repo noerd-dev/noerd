@@ -248,10 +248,29 @@ trait NoerdDetail
     #[On('setFieldValue')]
     public function setFieldValue(string $field, mixed $value, ?string $relationTitle = null): void
     {
-        $key = str_replace('detailData.', '', $field);
-        $detailData = $this->detailData;
-        data_set($detailData, $key, $value);
-        $this->detailData = $detailData;
+        if (str_starts_with($field, 'detailData.')) {
+            $key = str_replace('detailData.', '', $field);
+            $detailData = $this->detailData;
+            data_set($detailData, $key, $value);
+            $this->detailData = $detailData;
+        } else {
+            $key = $field;
+            $rootKey = Str::before($field, '.');
+
+            if (property_exists($this, $rootKey)) {
+                if ($rootKey === $field) {
+                    $this->{$field} = $value;
+                } else {
+                    $rootValue = $this->{$rootKey};
+                    data_set($rootValue, Str::after($field, $rootKey . '.'), $value);
+                    $this->{$rootKey} = $rootValue;
+                }
+            } else {
+                $detailData = $this->detailData;
+                data_set($detailData, $field, $value);
+                $this->detailData = $detailData;
+            }
+        }
 
         if ($relationTitle !== null) {
             $relationKey = last(explode('.', $key));

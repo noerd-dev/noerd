@@ -53,34 +53,23 @@ public function deleteImage(string $fieldName): void { ... }</code></pre>
     </div>
 
     {{-- Relation Input --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Relation Input</h3>
-    <p class="text-sm text-gray-500 mb-3">Opens a list modal to select a related record. Shows the relation title and allows clearing.</p>
-    <x-noerd::info-box>Requires a modal component and relation methods in the Livewire component.</x-noerd::info-box>
+    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Registered Relation Input</h3>
+    <p class="text-sm text-gray-500 mb-3">Uses an explicitly registered relation type such as <code>customerRelation</code>. The list modal, detail modal and title resolution come from the registry.</p>
+    <x-noerd::info-box>Relations must be registered in a module service provider. The generic <code>relation</code> type is no longer supported.</x-noerd::info-box>
     <div>
         <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
         <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code># YAML configuration
 - name: detailData.customer_id
   label: Customer
-  type: relation
-  relationField: relationTitles.customer_id
-  modalComponent: customers-list
+  type: customerRelation
 
-# Blade usage
-&lt;x-noerd::forms.input-relation
-    name="detailData.customer_id"
-    label="Customer"
-    modalComponent="customers-list"
-    relationField="relationTitles.customer_id"
-/&gt;
-
-# Required event handler in the component
-#[On('customerSelected')]
-public function customerSelected($customerId): void
-{
-    $customer = Customer::find($customerId);
-    $this-&gt;detailData['customer_id'] = $customer-&gt;id;
-    $this-&gt;relationTitles['customer_id'] = $customer-&gt;name;
-}</code></pre>
+# Service provider registration
+$relationFieldRegistry-&gt;register('customerRelation', RelationFieldDefinition::model(
+    listComponent: 'customers-list',
+    detailComponent: 'customer-detail',
+    modelClass: Customer::class,
+    titleResolver: 'name',
+));</code></pre>
     </div>
 
     {{-- Belongs to Many --}}

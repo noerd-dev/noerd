@@ -167,9 +167,7 @@ trait NoerdList
      */
     public function selectAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
-
-        $this->dispatch('closeTopModal');
+        $this->dispatchSelectionEvents($modelId);
     }
 
     /**
@@ -351,6 +349,13 @@ trait NoerdList
         $entity = Str::singular(Str::before($this->componentName(), '-list'));
 
         return Str::camel($entity) . 'Selected';
+    }
+
+    protected function dispatchSelectionEvents(mixed $modelId = null): void
+    {
+        $this->dispatch('noerdRelationSelected', $modelId, $this->context);
+        $this->dispatch($this->getSelectEvent(), $modelId, $this->context);
+        $this->dispatch('closeTopModal');
     }
 
     protected function syncListQueryContext(): void
