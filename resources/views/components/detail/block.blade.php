@@ -27,6 +27,8 @@
 
         return $directive;
     };
+
+    $fieldTypeRegistry = app(\Noerd\Services\FieldTypeRegistry::class);
 @endphp
 <div>
     @if(isset($title) || isset($description))
@@ -49,44 +51,30 @@
                 </div>
             @else
                 <div class="col-span-1 sm:col-span-{{$field['colspan'] ?? '3'}}" {!! $getShowIfDirective($field) !!}>
-                    @if($field['type'] === 'relation')
-                        @include('noerd::components.forms.input-relation', ['field' => $field, 'modelId' => $modelId ?? null])
-                    @elseif($field['type'] === 'collection-select')
-                        @include('cms::components.forms.input-collection-select', ['field' => $field])
-                    @elseif($field['type'] === 'select')
-                        {{-- options are defined in a yml file --}}
-                        @include('noerd::components.forms.input-select', ['field' => $field])
-                    @elseif($field['type'] === 'picklist')
-                        {{-- options are defined in a computed method --}}
-                        @include('noerd::components.forms.picklist', ['field' => $field])
-                    @elseif($field['type'] === 'setupCollectionSelect')
-                        {{-- options from a setup collection --}}
-                        @include('noerd::components.forms.setup-collection-select', ['field' => $field])
-                    @elseif($field['type'] === 'belongsToMany')
-                        {{-- many-to-many relationship with tag selection UI --}}
-                        @include('noerd::components.forms.belongs-to-many', ['field' => $field])
-                    @elseif($field['type'] === 'checkbox')
-                        @include('noerd::components.forms.checkbox', ['field' => $field])
-                    @elseif($field['type'] === 'image')
-                        @include('noerd::components.forms.image', ['field' => $field, 'detailData' => $detailData ?? null])
-                    @elseif($field['type'] === 'richText')
-                        @include('noerd::components.forms.rich-text', ['field' => $field])
-                    @elseif($field['type'] === 'translatableRichText')
-                        @include('noerd::components.forms.translatable-rich-text', ['field' => $field])
-                    @elseif($field['type'] === 'translatableText')
-                        @include('noerd::components.forms.translatable-text', ['field' => $field])
-                    @elseif($field['type'] === 'translatableTextarea')
-                        @include('noerd::components.forms.translatable-textarea', ['field' => $field])
-                    @elseif($field['type'] === 'button')
-                        @include('noerd::components.forms.button', ['field' => $field])
-                    @elseif($field['type'] === 'colorHex')
-                        @include('noerd::components.forms.color-hex', ['field' => $field])
-                    @elseif($field['type'] === 'currency')
-                        @include('noerd::components.forms.input-currency', ['field' => $field])
-                    @elseif($field['type'] === 'textarea')
-                        @include('noerd::components.forms.input-textarea', ['field' => $field])
-                    @elseif($field['type'] === 'file')
-                        @include('noerd::components.forms.file', ['field' => $field])
+                    @php
+                        $fieldTypeDefinition = $fieldTypeRegistry->resolve($field['type'] ?? '');
+                        $resolvedRendererProps = $fieldTypeDefinition?->resolveProps(
+                            $field,
+                            $this ?? null,
+                            $detailData ?? null,
+                            $modelId ?? null,
+                        ) ?? [];
+                        $resolvedRendererKey = $fieldTypeDefinition?->resolveKey(
+                            $field,
+                            $this ?? null,
+                            $detailData ?? null,
+                            $modelId ?? null,
+                        );
+                    @endphp
+
+                    @if($fieldTypeDefinition?->kind === 'livewire')
+                        @livewire(
+                            $fieldTypeDefinition->target,
+                            $resolvedRendererProps,
+                            key($resolvedRendererKey ?? ($field['name'] ?? $field['type']) . '-' . ($modelId ?? 'new'))
+                        )
+                    @elseif($fieldTypeDefinition?->kind === 'include')
+                        @include($fieldTypeDefinition->target, $resolvedRendererProps)
                     @else
                         @include('noerd::components.forms.input', ['field' => $field])
                     @endif

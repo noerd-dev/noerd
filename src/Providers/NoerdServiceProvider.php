@@ -44,9 +44,11 @@ use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\DynamicNavigationRegistry;
+use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Support\FieldTypeDefinition;
 
 class NoerdServiceProvider extends ServiceProvider
 {
@@ -58,6 +60,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
+        $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(PicklistRegistry::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
 
@@ -108,6 +111,78 @@ class NoerdServiceProvider extends ServiceProvider
         // Register the Setup collections dynamic navigation provider.
         $registry = $this->app->make(DynamicNavigationRegistry::class);
         $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
+
+        $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
+        $fieldTypeRegistry->register('relation', FieldTypeDefinition::include(
+            'noerd::components.forms.input-relation',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+                'field' => $field,
+                'modelId' => $modelId,
+            ],
+        ));
+        $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
+            'noerd::components.forms.input-select',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('picklist', FieldTypeDefinition::include(
+            'noerd::components.forms.picklist',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('setupCollectionSelect', FieldTypeDefinition::include(
+            'noerd::components.forms.setup-collection-select',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('belongsToMany', FieldTypeDefinition::include(
+            'noerd::components.forms.belongs-to-many',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('checkbox', FieldTypeDefinition::include(
+            'noerd::components.forms.checkbox',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('image', FieldTypeDefinition::include(
+            'noerd::components.forms.image',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+                'field' => $field,
+                'detailData' => $detailData,
+            ],
+        ));
+        $fieldTypeRegistry->register('richText', FieldTypeDefinition::include(
+            'noerd::components.forms.rich-text',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('translatableRichText', FieldTypeDefinition::include(
+            'noerd::components.forms.translatable-rich-text',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('translatableText', FieldTypeDefinition::include(
+            'noerd::components.forms.translatable-text',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('translatableTextarea', FieldTypeDefinition::include(
+            'noerd::components.forms.translatable-textarea',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('button', FieldTypeDefinition::include(
+            'noerd::components.forms.button',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('colorHex', FieldTypeDefinition::include(
+            'noerd::components.forms.color-hex',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('currency', FieldTypeDefinition::include(
+            'noerd::components.forms.input-currency',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('textarea', FieldTypeDefinition::include(
+            'noerd::components.forms.input-textarea',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('file', FieldTypeDefinition::include(
+            'noerd::components.forms.file',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
 
         View::composer('noerd::layouts.app', function ($view): void {
             $view->with('showSidebar', ! session('hide_sidebar'));

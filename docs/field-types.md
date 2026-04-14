@@ -1227,3 +1227,17 @@ The main rendering logic is in:
 ```
 app-modules/noerd/resources/views/components/detail/block.blade.php
 ```
+
+## Custom Field Types
+
+- Register shared field types in `NoerdServiceProvider` via `Noerd\Services\FieldTypeRegistry`
+- Register module-specific field types in the module's own service provider, for example `CmsServiceProvider`
+- In YAML you still only reference the field type:
+
+```yaml
+- name: detailData.custom_attributes.page_id
+  label: booking_label_page
+  type: pageRelation
+```
+
+Use `FieldTypeDefinition::include()` for Blade partials and `FieldTypeDefinition::livewire()` for dedicated Livewire field components.
