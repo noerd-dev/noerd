@@ -12,11 +12,9 @@ use Noerd\Models\Tenant;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    // Ensure default languages exist
-    SetupLanguage::ensureDefaultLanguages();
-
     // Create a tenant and user for testing
     $this->tenant = Tenant::factory()->create();
+    SetupLanguage::ensureDefaultLanguagesForTenant($this->tenant->id);
 
     // Create admin profile for the tenant
     $adminProfile = Profile::factory()->create([

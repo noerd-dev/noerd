@@ -14,9 +14,8 @@ use Noerd\Models\UserRole;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    SetupLanguage::ensureDefaultLanguages();
-
     $this->tenant = Tenant::factory()->create();
+    SetupLanguage::ensureDefaultLanguagesForTenant($this->tenant->id);
     $adminProfile = Profile::factory()->create([
         'tenant_id' => $this->tenant->id,
         'key' => 'ADMIN',

@@ -20,9 +20,8 @@ trait CreatesSetupUser
      */
     protected function createUserWithSetupAccess(): array
     {
-        SetupLanguage::ensureDefaultLanguages();
-
         $tenant = Tenant::factory()->create();
+        SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
 
         $adminProfile = Profile::factory()->create([
             'tenant_id' => $tenant->id,

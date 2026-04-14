@@ -12,8 +12,8 @@ new class extends Component
     {
         $this->mountList();
 
-        // Ensure default languages exist
-        SetupLanguage::ensureDefaultLanguages();
+        // Ensure default languages exist for current tenant
+        SetupLanguage::ensureDefaultLanguagesForTenant(auth()->user()->selected_tenant_id);
 
         if (request()->create) {
             $this->listAction();

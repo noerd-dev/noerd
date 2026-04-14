@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Noerd\Database\Factories\SetupLanguageFactory;
+use Noerd\Traits\BelongsToTenant;
 
 class SetupLanguage extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $guarded = [];
@@ -60,17 +62,26 @@ class SetupLanguage extends Model
     }
 
     /**
-     * Ensure default languages exist
+     * Ensure default languages exist for a tenant
      */
-    public static function ensureDefaultLanguages(): void
+    public static function ensureDefaultLanguagesForTenant(int $tenantId): void
     {
-        if (static::count() === 0) {
+        if (static::withoutGlobalScopes()->where('tenant_id', $tenantId)->count() === 0) {
             static::create([
-                'code' => 'en',
-                'name' => 'English',
+                'tenant_id' => $tenantId,
+                'code' => 'de',
+                'name' => 'Deutsch',
                 'is_active' => true,
                 'is_default' => true,
                 'sort_order' => 0,
+            ]);
+            static::create([
+                'tenant_id' => $tenantId,
+                'code' => 'en',
+                'name' => 'English',
+                'is_active' => true,
+                'is_default' => false,
+                'sort_order' => 1,
             ]);
         }
     }
@@ -84,19 +95,40 @@ class SetupLanguage extends Model
     {
         parent::boot();
 
-        // Ensure only one default language exists
-        static::saving(function (SetupLanguage $language): void {
+        // After saving, ensure only one default per tenant
+        static::saved(function (SetupLanguage $language): void {
             if ($language->is_default) {
-                static::where('id', '!=', $language->id ?? 0)
+                static::withoutGlobalScopes()
+                    ->where('tenant_id', $language->tenant_id)
+                    ->where('id', '!=', $language->id)
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
             }
+
+            // If no default exists for this tenant, set one
+            $hasDefault = static::withoutGlobalScopes()
+                ->where('tenant_id', $language->tenant_id)
+                ->where('is_default', true)
+                ->exists();
+
+            if (! $hasDefault) {
+                $firstActive = static::withoutGlobalScopes()
+                    ->where('tenant_id', $language->tenant_id)
+                    ->where('is_active', true)
+                    ->first();
+
+                $firstActive?->update(['is_default' => true]);
+            }
         });
 
-        // After deleting, ensure there's still a default language
+        // After deleting, ensure there's still a default language for the tenant
         static::deleted(function (SetupLanguage $language): void {
             if ($language->is_default) {
-                $newDefault = static::where('is_active', true)->first();
+                $newDefault = static::withoutGlobalScopes()
+                    ->where('tenant_id', $language->tenant_id)
+                    ->where('is_active', true)
+                    ->first();
+
                 $newDefault?->update(['is_default' => true]);
             }
         });
