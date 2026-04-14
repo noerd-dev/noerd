@@ -17,7 +17,7 @@ Noerd is a YAML-driven modular framework for Laravel applications with list and 
 ### Module Independence
 - Tests, migrations, seeders belong in the module (`app-modules/{module}/`)
 - Modules must be independent from each other
-- Translations: `app-modules/{module}/resources/lang/{de,en}.json`
+- Translations: `app-modules/{module}/resources/lang/de.json` (no en.json needed)
 - Use `loadJsonTranslationsFrom()` in ServiceProvider
 
 ### Eloquent Models
@@ -113,9 +113,10 @@ fields:
 - Apps: Use module icons (`noerd::icons.app`)
 
 ### Translations
-- Format: `{module}_{key}` (e.g., `accounting_dashboard`)
-- Labels: `{module}_label_{key}`
-- Navigation: `{module}_nav_{key}`
-- Tabs: `{module}_tab_{key}`
-- Place in module's lang directory based on key prefix
-- Root `lang/` directory only for generic translations without module prefix
+- Use English text as translation keys (e.g., `__('Dashboard')`, not `__('module_dashboard')`)
+- Only `de.json` needed per module — maps English to German (e.g., `"Invoice": "Rechnung"`)
+- No `en.json` — English works by fallback (key = English text)
+- Omit entries where English = German (e.g., "Dashboard")
+- Place in module's lang directory: `app-modules/{module}/resources/lang/de.json`
+- All JSON translations share a flat namespace — avoid duplicate keys with different German values
+- Root `lang/` directory only for Laravel framework translations

@@ -106,7 +106,7 @@ class MakeCollectionCommand extends Command
 
         if (empty($fields)) {
             $this->warn('No fields added. Adding a default title field.');
-            $fields[] = ['name' => 'model.title', 'label' => 'noerd_label_title', 'type' => 'translatableText', 'colspan' => 6];
+            $fields[] = ['name' => 'model.title', 'label' => 'Title', 'type' => 'translatableText', 'colspan' => 6];
         }
 
         // Build the collection array

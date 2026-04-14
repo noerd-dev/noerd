@@ -270,9 +270,6 @@ PHP;
         $deContent = $this->getStub('lang-de.stub');
         $this->filesystem->put("{$this->basePath}/resources/lang/de.json", $deContent);
 
-        $enContent = $this->getStub('lang-en.stub');
-        $this->filesystem->put("{$this->basePath}/resources/lang/en.json", $enContent);
-
         $this->line('<info>✓ Created:</info> Translations');
     }
 
