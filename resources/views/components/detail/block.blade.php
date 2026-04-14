@@ -76,7 +76,18 @@
                     @elseif($fieldTypeDefinition?->kind === 'include')
                         @include($fieldTypeDefinition->target, $resolvedRendererProps)
                     @else
-                        @include('noerd::components.forms.input', ['field' => $field])
+                        @php
+                            $fieldType = $field['type'] ?? '';
+                            $looksLikeRelation = $fieldType === 'relation' || \Illuminate\Support\Str::endsWith($fieldType, 'Relation');
+                        @endphp
+
+                        @if($looksLikeRelation)
+                            @php
+                                throw new \RuntimeException("Relation field type [{$fieldType}] is not registered. Register it in a module service provider and reference that explicit type in YAML.");
+                            @endphp
+                        @else
+                            @include('noerd::components.forms.input', ['field' => $field])
+                        @endif
                     @endif
                 </div>
             @endif

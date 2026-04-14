@@ -111,12 +111,10 @@ fields:
   # Relations
   # ===========================================
 
-  # relation - Modal-based foreign key selection
+  # registered relation type
   - name: detailData.customer_id
     label: Customer
-    type: relation
-    relationField: relationTitles.customer_id
-    modalComponent: customers-list
+    type: customerRelation
     colspan: 6
 
   # belongsToMany - Tag-style many-to-many selection
@@ -297,7 +295,7 @@ fields:
 | `select` | Dropdown with static options | `input-select.blade.php` |
 | `picklist` | Dropdown with dynamic options (via Livewire method) | `picklist.blade.php` |
 | `checkbox` | Boolean checkbox | `checkbox.blade.php` |
-| `relation` | Modal-based selection for relations | `input-relation.blade.php` |
+| `*Relation` | Registered relation field type such as `customerRelation` or `pageRelation` | `noerd-relation-field.blade.php` |
 | `image` | Image selection from Media library | `image.blade.php` |
 | `file` | File upload | `file.blade.php` |
 | `richText` | TipTap WYSIWYG editor | `rich-text.blade.php` |
@@ -637,61 +635,26 @@ public function getWarehouseOptions(): array
 
 ## Relations
 
-### relation
+### Registered Relation Types
 
-Modal-based selection for foreign key relationships. Opens a list modal where users can search and select a related record.
-
-**Options:**
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `modalComponent` | string | required | Livewire list component to show in modal |
-| `relationField` | string | - | Path to display value (default: `relationTitles.{field_id}`) |
-| `modelId` | int | `0` | Optional ID passed to modal |
-| `readonly` | bool | `false` | Make field read-only |
-| `live` | bool | `false` | Enable real-time updates |
-| `required` | bool | `false` | Show required indicator |
+Relations must use explicit registered field types such as `customerRelation`, `vehicleRelation`, `authorRelation` or `pageRelation`.
 
 **YAML Example:**
 
 ```yaml
 - name: detailData.customer_id
   label: Customer
-  type: relation
-  relationField: relationTitles.customer_id
-  modalComponent: customers-list
+  type: customerRelation
   colspan: 6
 ```
 
-**PHP Example (Livewire Component):**
+**Important:**
+- `type: relation` is no longer allowed
+- `modalComponent` and `relationField` are no longer configured in YAML for registered relation fields
+- The list component, detail component and display title resolver are defined centrally in the module service provider
+- Unregistered relation field types fail explicitly during rendering
 
-```php
-use Livewire\Attributes\On;
-
-public array $relationTitles = [];
-
-public function mount(Product $product): void
-{
-    if ($this->modelId) {
-        $product = Product::with('customer')->find($this->modelId);
-        $this->relationTitles['customer_id'] = $product->customer?->name ?? '';
-    }
-    $this->detailData = $product->toArray();
-}
-
-#[On('customerSelected')]
-public function customerSelected($customerId): void
-{
-    $customer = Customer::find($customerId);
-    $this->detailData['customer_id'] = $customer->id;
-    $this->relationTitles['customer_id'] = $customer->name;
-}
-```
-
-**Notes:**
-- The modal component must dispatch an event named `{entity}Selected` (e.g., `customerSelected`)
-- Always use `relationTitles` array for display values, never create separate properties
-- The `modalComponent` must have `listActionMethod: 'selectAction'` configured
+See [relation-field-types.md](relation-field-types.md) for the full registration guide.
 
 ---
 
@@ -1241,3 +1204,5 @@ app-modules/noerd/resources/views/components/detail/block.blade.php
 ```
 
 Use `FieldTypeDefinition::include()` for Blade partials and `FieldTypeDefinition::livewire()` for dedicated Livewire field components.
+
+Registered relation types are configured through `RelationFieldRegistry` and rendered by `noerd-relation-field`.

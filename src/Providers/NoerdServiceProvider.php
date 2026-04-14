@@ -48,7 +48,9 @@ use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\FieldTypeDefinition;
+use Noerd\Support\RelationFieldDefinition;
 
 class NoerdServiceProvider extends ServiceProvider
 {
@@ -61,6 +63,9 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
+        $this->app->singleton(RelationFieldRegistry::class, fn($app) => new RelationFieldRegistry(
+            $app->make(FieldTypeRegistry::class),
+        ));
         $this->app->singleton(PicklistRegistry::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
 
@@ -113,13 +118,7 @@ class NoerdServiceProvider extends ServiceProvider
         $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
 
         $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
-        $fieldTypeRegistry->register('relation', FieldTypeDefinition::include(
-            'noerd::components.forms.input-relation',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
-                'field' => $field,
-                'modelId' => $modelId,
-            ],
-        ));
+        $relationFieldRegistry = $this->app->make(RelationFieldRegistry::class);
         $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
             'noerd::components.forms.input-select',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
@@ -182,6 +181,15 @@ class NoerdServiceProvider extends ServiceProvider
         $fieldTypeRegistry->register('file', FieldTypeDefinition::include(
             'noerd::components.forms.file',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+
+        // Some project-level app-configs reference legal-register even when the
+        // module is not installed. Register the type so YAML stays explicit.
+        $relationFieldRegistry->register('lawRelation', RelationFieldDefinition::model(
+            listComponent: 'laws-list',
+            detailComponent: 'law-detail',
+            modelClass: 'Noerd\\LegalRegister\\Models\\Law',
+            titleResolver: 'title',
         ));
 
         View::composer('noerd::layouts.app', function ($view): void {
