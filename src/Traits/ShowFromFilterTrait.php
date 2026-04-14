@@ -46,7 +46,7 @@ trait ShowFromFilterTrait
     protected function getShowFromListFilter(): array
     {
         return [
-            'label' => __('noerd_label_show_from'),
+            'label' => __('Show From'),
             'column' => 'show_from',
             'type' => 'ShowFrom',
             'options' => $this->getDateFilterOptions(),
@@ -56,7 +56,7 @@ trait ShowFromFilterTrait
     protected function getShowUntilListFilter(): array
     {
         return [
-            'label' => __('noerd_label_show_until'),
+            'label' => __('Show Until'),
             'column' => 'show_until',
             'type' => 'ShowUntil',
             'options' => $this->getDateFilterOptions(),
@@ -67,13 +67,13 @@ trait ShowFromFilterTrait
     {
         return [
             '' => '',
-            'today' => __('noerd_show_from_today'),
-            'this_week' => __('noerd_show_from_this_week'),
-            'this_month' => __('noerd_show_from_this_month'),
-            'last_month' => __('noerd_show_from_last_month'),
-            'this_quarter' => __('noerd_show_from_this_quarter'),
-            'last_quarter' => __('noerd_show_from_last_quarter'),
-            'this_year' => __('noerd_show_from_this_year'),
+            'today' => __('Today'),
+            'this_week' => __('This Week'),
+            'this_month' => __('This Month'),
+            'last_month' => __('Last Month'),
+            'this_quarter' => __('This Quarter'),
+            'last_quarter' => __('Last Quarter'),
+            'this_year' => __('This Year'),
         ];
     }
 }

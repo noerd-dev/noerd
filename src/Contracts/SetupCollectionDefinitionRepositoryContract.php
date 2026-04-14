@@ -4,6 +4,7 @@ namespace Noerd\Contracts;
 
 use Illuminate\Support\Collection;
 use Noerd\Support\SetupCollectionDefinitionData;
+use RuntimeException;
 
 interface SetupCollectionDefinitionRepositoryContract
 {
@@ -30,19 +31,19 @@ interface SetupCollectionDefinitionRepositoryContract
      * Persist a definition (create or update).
      * Returns the canonical filename of the saved definition.
      *
-     * @throws \RuntimeException when the implementation is read-only.
+     * @throws RuntimeException when the implementation is read-only.
      */
     public function save(SetupCollectionDefinitionData $data, ?string $originalFilename = null, ?int $tenantId = null): string;
 
     /**
      * Duplicate an existing definition, suffixing its filename and key with "2".
      *
-     * @throws \RuntimeException when the implementation is read-only.
+     * @throws RuntimeException when the implementation is read-only.
      */
     public function copy(string $filename, ?int $tenantId = null): string;
 
     /**
-     * @throws \RuntimeException when the implementation is read-only.
+     * @throws RuntimeException when the implementation is read-only.
      */
     public function delete(string $filename, ?int $tenantId = null): void;
 

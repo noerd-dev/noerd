@@ -51,14 +51,14 @@ new class extends Component
 
         // Prevent deleting the last language
         if (SetupLanguage::count() <= 1) {
-            session()->flash('error', __('noerd_cannot_delete_last_language'));
+            session()->flash('error', __('The last language cannot be deleted.'));
 
             return;
         }
 
         // Prevent deleting default language if it's the only one
         if ($language?->is_default && SetupLanguage::where('is_active', true)->count() <= 1) {
-            session()->flash('error', __('noerd_cannot_delete_default_language'));
+            session()->flash('error', __('The default language cannot be deleted while it is the only active language.'));
 
             return;
         }
@@ -70,7 +70,7 @@ new class extends Component
 
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
-        <x-noerd::modal-title>{{ __('noerd_label_language') }}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Language') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout">
@@ -79,7 +79,7 @@ new class extends Component
                 <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p class="text-sm text-blue-800">
                         <x-icon name="information-circle" class="w-5 h-5 inline-block mr-1"/>
-                        {{ __('noerd_default_language_info') }}
+                        {{ __('This language is set as the default language and cannot be deleted.') }}
                     </p>
                 </div>
             @endif

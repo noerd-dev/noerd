@@ -3,9 +3,9 @@
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Noerd\Models\NoerdUser;
 
 class MakeUserAdmin extends Command
 {

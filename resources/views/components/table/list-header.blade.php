@@ -21,7 +21,7 @@
                 @if(collect($this->listFilters)->filter()->isNotEmpty())
                     <button wire:click="clearAllListFilters" type="button"
                             class="ml-1 mt-0.5 whitespace-nowrap text-xs text-gray-400 hover:text-gray-600 transition-colors">
-                        {{ __('noerd_clear_filters') }}
+                        {{ __('Clear all filters') }}
                     </button>
                 @endif
             </div>

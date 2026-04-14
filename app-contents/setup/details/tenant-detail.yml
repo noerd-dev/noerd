@@ -1,32 +1,32 @@
-title: noerd_label_tenant
+title: Tenant
 description: ''
 fields:
   - name: detailData.name
-    label: noerd_label_name
+    label: Name
     type: text
     colspan: 6
   - name: detailData.email
-    label: noerd_label_email
+    label: Email
     type: email
     colspan: 6
     required: true
   - name: detailData.contact_name
-    label: noerd_label_contact_name
+    label: Contact Person
     type: text
     colspan: 6
   - name: detailData.address
-    label: noerd_label_address
+    label: Address
     type: text
     colspan: 6
   - name: detailData.zipcode
-    label: noerd_label_zipcode
+    label: ZIP Code
     type: text
     colspan: 3
   - name: detailData.city
-    label: noerd_label_city
+    label: City
     type: text
     colspan: 3
   - name: logo
-    label: noerd_label_logo
+    label: Logo
     type: image
     colspan: 6

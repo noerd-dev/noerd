@@ -27,9 +27,9 @@ class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefiniti
         $files = glob($this->basePath . '/*.yml') ?: [];
 
         return collect($files)
-            ->map(fn (string $path) => $this->loadFile($path))
+            ->map(fn(string $path) => $this->loadFile($path))
             ->filter()
-            ->sortBy(fn (SetupCollectionDefinitionData $d) => mb_strtolower($d->titleList))
+            ->sortBy(fn(SetupCollectionDefinitionData $d) => mb_strtolower($d->titleList))
             ->values();
     }
 
@@ -44,7 +44,7 @@ class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefiniti
     {
         $key = mb_strtoupper($key);
 
-        return $this->all()->first(fn (SetupCollectionDefinitionData $d) => $d->key === $key);
+        return $this->all()->first(fn(SetupCollectionDefinitionData $d) => $d->key === $key);
     }
 
     public function exists(string $filename, ?int $tenantId = null): bool

@@ -8,7 +8,7 @@ trait TenantFilterTrait
 {
     protected function getTenantsListFilter(): array
     {
-        $filter['label'] = __('noerd_label_tenant');
+        $filter['label'] = __('Tenant');
         $filter['column'] = 'tenant_id';
         $filter['type'] = 'Picklist';
         $filter['options'] = [];

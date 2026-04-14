@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Hash;
 
 use function Laravel\Prompts\confirm;
 
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Models\NoerdUser;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -806,34 +806,6 @@ export default {
     }
 
     /**
-     * Auto-assign all active apps to the default tenant (single-tenant mode).
-     */
-    private function autoAssignAllApps(): void
-    {
-        $tenant = Tenant::first();
-        $allAppIds = TenantApp::where('is_active', true)->pluck('id')->toArray();
-        $tenant->tenantApps()->sync($allAppIds);
-        $this->info("All apps auto-assigned to tenant '{$tenant->name}'.");
-    }
-
-    /**
-     * Set or update a value in the .env file.
-     */
-    private function setEnvValue(string $key, string $value): void
-    {
-        $envPath = base_path('.env');
-        $envContent = file_get_contents($envPath);
-
-        if (preg_match("/^{$key}=/m", $envContent)) {
-            $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $envContent);
-        } else {
-            $envContent .= "\n{$key}={$value}\n";
-        }
-
-        file_put_contents($envPath, $envContent);
-    }
-
-    /**
      * Ask to run npm build for frontend assets
      */
     protected function runNpmBuild(): void
@@ -871,5 +843,33 @@ export default {
         } else {
             $this->warn('Could not execute npm run build. Please run it manually.');
         }
+    }
+
+    /**
+     * Auto-assign all active apps to the default tenant (single-tenant mode).
+     */
+    private function autoAssignAllApps(): void
+    {
+        $tenant = Tenant::first();
+        $allAppIds = TenantApp::where('is_active', true)->pluck('id')->toArray();
+        $tenant->tenantApps()->sync($allAppIds);
+        $this->info("All apps auto-assigned to tenant '{$tenant->name}'.");
+    }
+
+    /**
+     * Set or update a value in the .env file.
+     */
+    private function setEnvValue(string $key, string $value): void
+    {
+        $envPath = base_path('.env');
+        $envContent = file_get_contents($envPath);
+
+        if (preg_match("/^{$key}=/m", $envContent)) {
+            $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $envContent);
+        } else {
+            $envContent .= "\n{$key}={$value}\n";
+        }
+
+        file_put_contents($envPath, $envContent);
     }
 }

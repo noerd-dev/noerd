@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Noerd\Models\NoerdUser;
 
 uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);

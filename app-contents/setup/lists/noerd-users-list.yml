@@ -1,23 +1,23 @@
-title: noerd_label_users
+title: Users
 actions:
-  - label: noerd_label_new_user
+  - label: New User
     action: listAction
 disableSearch: false
 description: ''
 columns:
   - field: email
-    label: noerd_label_email
+    label: Email
   - field: name
-    label: noerd_label_name
+    label: Name
   - field: roles_for_tenant
-    label: noerd_label_profile_roles
+    label: Profile / Roles
     type: badge_with_text
   - field: last_login_at
-    label: noerd_label_last_login_at
+    label: Last Login
     type: datetime
   - field: action
     actions:
-      - label: noerd_label_login_as_user
+      - label: Login as user
         heroicon: user
         action: loginAsUser
-        confirm: noerd_label_confirm_login_as_user
+        confirm: Do you really want to log in as this user?

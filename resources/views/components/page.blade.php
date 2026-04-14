@@ -20,7 +20,7 @@
 <div x-data="noerdPage({
         currentTab: @if($hasCurrentTab)@entangle('currentTab')@else 1 @endif,
         shortcuts: @js($shortcuts),
-        deleteMessage: @js(__('noerd_confirm_delete')),
+        deleteMessage: @js(__('Are you sure you want to delete this entry?')),
         hasRecordNav: @js($hasRecordNav)
     })"
      class="flex flex-col"

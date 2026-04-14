@@ -5,14 +5,14 @@
   block_menus:
     - title: Demo
       navigations:
-        - title: ui_library_nav_demo_customers
+        - title: Demo Customers
           route: demo-customers
           heroicon: users
-        - title: ui_library_nav_demo_categories
+        - title: Demo Categories
           route: demo-categories
           heroicon: tag
           newComponent: demo-category-detail
-        - title: ui_library_nav_demo_tags
+        - title: Demo Tags
           route: demo-tags
           heroicon: hashtag
           newComponent: demo-tag-detail

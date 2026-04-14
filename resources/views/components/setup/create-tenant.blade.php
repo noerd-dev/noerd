@@ -13,7 +13,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>{{ __('noerd_label_create_tenant') }}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Create New Tenant') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::box>

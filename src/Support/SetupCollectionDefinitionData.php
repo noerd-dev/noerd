@@ -77,7 +77,7 @@ final class SetupCollectionDefinitionData
         $yamlFields = [];
         foreach ($this->fields as $field) {
             $yamlFields[] = array_merge($field, [
-                'name' => 'detailData.' . ltrim($field['name'], '.'),
+                'name' => 'detailData.' . mb_ltrim($field['name'], '.'),
                 'label' => $field['label'],
                 'type' => $field['type'],
                 'colspan' => (int) $field['colspan'],

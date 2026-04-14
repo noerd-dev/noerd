@@ -4,8 +4,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Models\TenantApp;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\TenantApp;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

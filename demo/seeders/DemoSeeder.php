@@ -33,7 +33,7 @@ class DemoSeeder extends Seeder
             'Startup',
             'Government',
             'Non-Profit',
-        ])->map(fn (string $name) => DemoCategory::create([
+        ])->map(fn(string $name) => DemoCategory::create([
             'tenant_id' => $tenant->id,
             'name' => $name,
         ]));
@@ -48,7 +48,7 @@ class DemoSeeder extends Seeder
             'East Coast',
             'Midwest',
             'International',
-        ])->map(fn (string $name) => DemoTag::create([
+        ])->map(fn(string $name) => DemoTag::create([
             'tenant_id' => $tenant->id,
             'name' => $name,
         ]));
@@ -223,7 +223,7 @@ class DemoSeeder extends Seeder
             ]));
 
             $customer->tags()->attach(
-                collect($tagNames)->map(fn (string $name) => $tagMap[$name]->id),
+                collect($tagNames)->map(fn(string $name) => $tagMap[$name]->id),
             );
         }
 

@@ -71,8 +71,8 @@ new class extends Component
         if (! $this->collectionKey) {
             return [
                 'listConfig' => $this->buildList(collect([]), [
-                    'title' => __('noerd_nav_collections'),
-                    'actions' => [['label' => __('noerd_label_new_entry'), 'action' => 'listAction']],
+                    'title' => __('Collections'),
+                    'actions' => [['label' => __('New Entry'), 'action' => 'listAction']],
                     'disableSearch' => false,
                     'columns' => [],
                 ]),
@@ -150,7 +150,7 @@ new class extends Component
 
                     // Handle special field types
                     if (($field['type'] ?? '') === 'image' && $value) {
-                        $value = '✓ '.__('noerd_label_image_present');
+                        $value = '✓ '.__('Image present');
                     }
 
                     $transformedData[$fieldKey] = $value ?: '-';
@@ -161,7 +161,7 @@ new class extends Component
         });
 
         $collectionTitle = $this->collectionLayout['titleList'] ?? ucfirst($this->collectionKey);
-        $actionLabel = $this->collectionLayout['buttonList'] ?? __('noerd_label_new_entry');
+        $actionLabel = $this->collectionLayout['buttonList'] ?? __('New Entry');
 
         // Generate dynamic columns from YAML fields
         $columns = [];
@@ -188,8 +188,8 @@ new class extends Component
         }
 
         // Add standard columns
-        $columns[] = ['field' => 'sort', 'label' => __('noerd_label_sort'), 'width' => 0.5];
-        $columns[] = ['field' => 'updated_at', 'label' => __('noerd_label_last_modified')];
+        $columns[] = ['field' => 'sort', 'label' => __('Sort Order'), 'width' => 0.5];
+        $columns[] = ['field' => 'updated_at', 'label' => __('Last Modified')];
 
         return [
             'listConfig' => $this->buildList($rows, [
@@ -223,7 +223,7 @@ new class extends Component
         <x-noerd::list />
     @else
         <div class="text-center py-8">
-            <p class="text-gray-500">{{ __('noerd_please_select_collection') }}</p>
+            <p class="text-gray-500">{{ __('Please select a collection') }}</p>
         </div>
     @endif
 </x-noerd::page>

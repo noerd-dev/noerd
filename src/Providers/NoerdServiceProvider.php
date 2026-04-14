@@ -19,16 +19,19 @@ use Noerd\Commands\MakeCollectionCommand;
 use Noerd\Commands\MakeDashboardCommand;
 use Noerd\Commands\MakeDetailCommand;
 use Noerd\Commands\MakeListCommand;
-use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeModuleCommand;
+use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUiLibraryCommand;
-use Noerd\Commands\PublishHomeCommand;
 use Noerd\Commands\NoerdUpdateCommand;
+use Noerd\Commands\PublishHomeCommand;
+use Noerd\Contracts\MediaResolverContract;
+use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
@@ -36,9 +39,6 @@ use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Navigation\SetupCollectionsNavigationProvider;
-use Noerd\Contracts\MediaResolverContract;
-use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
-use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\DynamicNavigationRegistry;
@@ -73,8 +73,8 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register SetupCollectionHelper as singleton so static proxies resolve
         // the container-bound repository and tests can replace it.
-        $this->app->singleton(SetupCollectionHelper::class, fn ($app) => new SetupCollectionHelper(
-            $app->make(SetupCollectionDefinitionRepositoryContract::class)
+        $this->app->singleton(SetupCollectionHelper::class, fn($app) => new SetupCollectionHelper(
+            $app->make(SetupCollectionDefinitionRepositoryContract::class),
         ));
     }
 

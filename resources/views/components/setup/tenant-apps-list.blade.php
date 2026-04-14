@@ -86,7 +86,7 @@ new class extends Component {
 
     <div class="max-w-3xl">
         <div class="mb-6">
-            <h2 class="text-lg font-semibold">{{ __('noerd_label_assigned_apps') }}</h2>
+            <h2 class="text-lg font-semibold">{{ __('Assigned Apps') }}</h2>
         </div>
 
         @if(count($assignedApps) > 0)
@@ -111,11 +111,11 @@ new class extends Component {
                 @endforeach
             </div>
         @else
-            <div class="text-gray-500 italic mb-4">{{ __('noerd_label_no_assigned_apps') }}</div>
+            <div class="text-gray-500 italic mb-4">{{ __('No apps assigned') }}</div>
         @endif
 
         <div class="mt-10 mb-6">
-            <h2 class="text-lg font-semibold">{{ __('noerd_label_available_apps') }}</h2>
+            <h2 class="text-lg font-semibold">{{ __('Available Apps') }}</h2>
         </div>
 
         @if(count($availableApps) > 0)
@@ -136,7 +136,7 @@ new class extends Component {
                 @endforeach
             </div>
         @else
-            <div class="text-gray-500 italic">{{ __('noerd_label_no_available_apps') }}</div>
+            <div class="text-gray-500 italic">{{ __('No more apps available') }}</div>
         @endif
     </div>
 

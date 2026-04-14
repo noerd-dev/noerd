@@ -13,7 +13,7 @@ trait SetupLanguageFilterTrait
 
     protected function getLanguageListFilter(): array
     {
-        $filter['label'] = __('noerd_label_language');
+        $filter['label'] = __('Language');
         $filter['column'] = 'language';
         $filter['type'] = 'Picklist';
         $filter['options'] = [];

@@ -1,23 +1,23 @@
-title: noerd_label_languages
+title: Languages
 actions:
-  - label: noerd_label_new_language
+  - label: New Language
     action: listAction
 disableSearch: false
 columns:
   - field: code
-    label: noerd_label_code
+    label: Code
   - field: name
-    label: noerd_label_name
+    label: Name
   - field: is_active
-    label: noerd_label_active
+    label: Active
     type: boolean
   - field: is_default
-    label: noerd_label_default
+    label: Default
     type: boolean
   - field: sort_order
-    label: noerd_label_sort
+    label: Sort Order
   - field: action
     actions:
-      - label: noerd_label_edit
+      - label: Edit
         heroicon: pencil-square
         action: listAction

@@ -1,10 +1,10 @@
-title: noerd_label_user_roles
+title: User Roles
 actions:
-  - label: noerd_label_new_user_role
+  - label: New User Role
     action: listAction
 disableSearch: false
 columns:
   - field: name
-    label: noerd_label_name
+    label: Name
   - field: description
-    label: noerd_label_description
+    label: Description

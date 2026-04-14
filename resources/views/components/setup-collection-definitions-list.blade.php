@@ -84,14 +84,14 @@ new class extends Component
 
         return [
             'listConfig' => $this->buildList($rows, [
-                'title' => 'noerd_label_collection_definitions',
-                'actions' => [['label' => 'noerd_label_new_collection_definition', 'action' => 'listAction']],
+                'title' => 'Collection Definitions',
+                'actions' => [['label' => 'New Collection Definition', 'action' => 'listAction']],
                 'disableSearch' => false,
                 'columns' => [
-                    ['field' => 'titleList', 'label' => __('noerd_label_title_plural')],
+                    ['field' => 'titleList', 'label' => __('Title (plural)')],
                     ['field' => 'key', 'label' => 'Key'],
-                    ['field' => 'fieldCount', 'label' => __('noerd_label_field_count')],
-                    ['field' => 'entryCount', 'label' => __('noerd_label_entry_count')],
+                    ['field' => 'fieldCount', 'label' => __('Fields')],
+                    ['field' => 'entryCount', 'label' => __('Entries')],
                 ],
             ]),
         ];

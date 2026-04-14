@@ -1,34 +1,34 @@
-- title: noerd_label_setup
+- title: Setup
   name: setup
   hidden: true
   route: setup
   block_menus:
-    - title: noerd_nav_administration
+    - title: Administration
       navigations:
-        - title: noerd_nav_tenant
+        - title: Tenant
           route: tenant
           heroicon: building-office
-        - title: noerd_nav_apps
+        - title: Apps
           route: tenant-apps
           heroicon: squares-2x2
           superAdmin: true
           config: noerd.features.multi_tenant
-        - title: noerd_nav_users
+        - title: Users
           route: users
           heroicon: users
-        - title: noerd_nav_user_roles
+        - title: User Roles
           route: user-roles
           heroicon: shield-check
           config: noerd.features.roles
-        - title: noerd_nav_languages
+        - title: Languages
           route: setup-languages
           heroicon: language
-        - title: noerd_nav_currency_settings
+        - title: Currency
           route: noerd-settings
           heroicon: currency-euro
-        - title: noerd_nav_collection_definitions
+        - title: Collection Definitions
           route: setup-collection-definitions
           heroicon: rectangle-stack
           config: noerd.collections.show_definitions_ui
-    - title: noerd_nav_data_management
+    - title: Data Management
       dynamic: setup-collections

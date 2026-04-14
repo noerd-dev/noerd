@@ -23,7 +23,7 @@ class SetupCollectionsNavigationProvider implements DynamicNavigationProviderCon
     public function items(): array
     {
         return $this->repository->all()
-            ->map(fn (SetupCollectionDefinitionData $d) => [
+            ->map(fn(SetupCollectionDefinitionData $d) => [
                 'title' => $d->titleList,
                 'link' => "/setup-collections?key={$d->filename}",
                 'heroicon' => 'archive-box',

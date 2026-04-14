@@ -37,18 +37,18 @@ new class extends Component {
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
-            {{ __('noerd_language') }}
+            {{ __('Language') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __('noerd_language_description') }}
+            {{ __('Select your preferred language for the user interface.') }}
         </p>
     </header>
 
     <form wire:submit="updateLanguage" class="mt-6 space-y-6">
         <x-noerd::forms.input-select
             name="locale"
-            label="{{ __('noerd_label_language') }}"
+            label="{{ __('Language') }}"
             :options="$languages"
         />
 

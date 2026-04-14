@@ -160,7 +160,7 @@ new class extends Component
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
         <x-noerd::modal-title class="flex items-center">
-            {{ $collectionLayout['title'] ?? __('noerd_collection_entry') }}
+            {{ $collectionLayout['title'] ?? __('Entry') }}
 
             <div class="ml-auto" :class="isModal ? 'mr-22' : ''">
                 <livewire:setup-language-switcher/>
@@ -173,7 +173,7 @@ new class extends Component
         <div class="flex">
             <div class="flex ml-auto items-center my-6 space-x-4">
                 <div class="flex ml-auto items-center space-x-2">
-                    <label for="sort" class="text-sm text-gray-600 font-medium">{{ __('noerd_label_sort') }}:</label>
+                    <label for="sort" class="text-sm text-gray-600 font-medium">{{ __('Sort Order') }}:</label>
                     <input
                         wire:model="detailData.sort"
                         id="sort"
@@ -189,7 +189,7 @@ new class extends Component
         <x-noerd::tab-content :layout="$collectionLayout" />
     @else
         <div class="text-center py-8">
-            <p class="text-gray-500">{{ __('noerd_collection_not_found') }}</p>
+            <p class="text-gray-500">{{ __('Collection not found') }}</p>
         </div>
     @endif
 

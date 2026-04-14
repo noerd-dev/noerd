@@ -42,7 +42,7 @@ new class extends Component {
         $userRole = UserRole::find($this->modelId);
 
         if ($userRole->users()->exists()) {
-            $this->dispatch('toast', message: __('noerd_cannot_delete_role_with_users'), type: 'error');
+            $this->dispatch('toast', message: __('This role cannot be deleted because it still has users assigned.'), type: 'error');
 
             return;
         }

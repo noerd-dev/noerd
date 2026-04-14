@@ -19,8 +19,6 @@ trait NoerdList
     use WithoutUrlPagination;
     use WithPagination;
 
-    public int $perPage = 50;
-
     protected const COLUMN_TYPE_MAP = [
         'tinyint' => 'bool',
         'boolean' => 'bool',
@@ -35,7 +33,7 @@ trait NoerdList
         'timestamp' => 'datetime',
     ];
 
-    private static array $schemaColumnCache = [];
+    public int $perPage = 50;
 
     public $lastChangeTime;
 
@@ -59,6 +57,8 @@ trait NoerdList
     public mixed $context = '';
 
     public bool $disableModal = false;
+
+    private static array $schemaColumnCache = [];
 
     public function mount(): void
     {

@@ -103,7 +103,7 @@ new class extends Component
         // Prevent duplicate filenames (when creating or renaming)
         $isRenaming = $this->isEditing && $filename !== $this->modelId;
         if ((! $this->isEditing || $isRenaming) && $repository->exists($filename)) {
-            $this->addError('detailData.filename', __('noerd_file_already_exists'));
+            $this->addError('detailData.filename', __('A collection with this filename already exists.'));
 
             return;
         }
@@ -235,7 +235,7 @@ new class extends Component
         try {
             $newFilename = $repository->copy($this->modelId);
         } catch (\RuntimeException) {
-            $this->addError('detailData.filename', __('noerd_file_already_exists'));
+            $this->addError('detailData.filename', __('A collection with this filename already exists.'));
 
             return;
         }
@@ -284,32 +284,32 @@ new class extends Component
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
         <x-noerd::modal-title>
-            {{ __('noerd_label_collection_definition') }}
+            {{ __('Collection Definition') }}
         </x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout" />
 
     <div class="px-6 py-4">
-        <h3 class="text-sm font-medium text-gray-700 mb-3">{{ __('noerd_label_fields') }}</h3>
+        <h3 class="text-sm font-medium text-gray-700 mb-3">{{ __('Fields') }}</h3>
 
         @if(count($fields) === 0)
-            <p class="text-sm text-gray-500 italic">{{ __('noerd_label_no_fields') }}</p>
+            <p class="text-sm text-gray-500 italic">{{ __('No fields defined yet.') }}</p>
         @else
             <table class="min-w-full border-separate border-spacing-0">
                 <thead>
                     <tr>
                         <th class="border-r first:pl-6 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">
-                            {{ __('noerd_label_field_name') }}
+                            {{ __('Field name') }}
                         </th>
                         <th class="border-r border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">
-                            {{ __('noerd_label_field_label') }}
+                            {{ __('Field label') }}
                         </th>
                         <th class="border-r border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter" style="width: 200px;">
-                            {{ __('noerd_label_field_type') }}
+                            {{ __('Field type') }}
                         </th>
                         <th class="border-r border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter" style="width: 80px;">
-                            {{ __('noerd_label_colspan') }}
+                            {{ __('Colspan') }}
                         </th>
                         <th class="last:border-r-0 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter" style="width: 50px;">
                         </th>
@@ -320,13 +320,13 @@ new class extends Component
                         <tr wire:key="field-{{ $index }}" class="group hover:bg-brand-bg border border-black/10">
                             <td class="py-1 first:pl-4 border-gray-300 border-r border-b">
                                 <input type="text" wire:model="fields.{{ $index }}.name"
-                                       placeholder="{{ __('noerd_label_field_name') }}"
+                                       placeholder="{{ __('Field name') }}"
                                        class="border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5">
                                 @error("fields.{$index}.name") <span class="text-red-500 text-xs px-1.5">{{ $message }}</span> @enderror
                             </td>
                             <td class="py-1 border-gray-300 border-r border-b">
                                 <input type="text" wire:model="fields.{{ $index }}.label"
-                                       placeholder="{{ __('noerd_label_field_label') }}"
+                                       placeholder="{{ __('Field label') }}"
                                        class="border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5">
                                 @error("fields.{$index}.label") <span class="text-red-500 text-xs px-1.5">{{ $message }}</span> @enderror
                             </td>
@@ -371,7 +371,7 @@ new class extends Component
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
-            {{ __('noerd_label_add_field') }}
+            {{ __('Add field') }}
         </button>
     </div>
 
@@ -379,8 +379,8 @@ new class extends Component
         <div class="fixed inset-0 z-50 flex items-center justify-center" x-data x-on:keydown.escape.window="$wire.skipRenameAndSave()">
             <div class="fixed inset-0 bg-gray-800/50" wire:click="skipRenameAndSave"></div>
             <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ __('noerd_rename_fields_title') }}</h3>
-                <p class="text-sm text-gray-600 mb-4">{{ __('noerd_rename_fields_description') }}</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ __('Fields were renamed') }}</h3>
+                <p class="text-sm text-gray-600 mb-4">{{ __('Would you like to update existing entries to use the new field names?') }}</p>
                 <ul class="text-sm text-gray-700 mb-4 space-y-1">
                     @foreach($pendingRenames as $oldName => $newName)
                         <li class="flex items-center gap-2">
@@ -395,11 +395,11 @@ new class extends Component
                 <div class="flex justify-end gap-2">
                     <button type="button" wire:click="skipRenameAndSave"
                             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        {{ __('noerd_rename_skip') }}
+                        {{ __('No, skip') }}
                     </button>
                     <button type="button" wire:click="confirmRenameAndSave"
                             class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                        {{ __('noerd_rename_confirm') }}
+                        {{ __('Yes, update') }}
                     </button>
                 </div>
             </div>
@@ -410,8 +410,8 @@ new class extends Component
         <div class="flex items-center w-full gap-2">
             @if($isEditing)
                 <div class="flex gap-2 mr-auto">
-                    <x-noerd::button variant="secondary" wire:click="copy" wire:confirm="{{ __('noerd_confirm_copy_collection') }}">
-                        {{ __('noerd_label_copy') }}
+                    <x-noerd::button variant="secondary" wire:click="copy" wire:confirm="{{ __('Copy collection?') }}">
+                        {{ __('Copy') }}
                     </x-noerd::button>
                 </div>
             @endif
@@ -427,7 +427,7 @@ new class extends Component
                     }
                 }
             @endphp
-            <x-noerd::delete-save-bar :showDelete="$isEditing" deleteMessage="{{ __('noerd_confirm_delete_collection', ['count' => $entryCount]) }}" />
+            <x-noerd::delete-save-bar :showDelete="$isEditing" deleteMessage="{{ __('Really delete this collection and all :count entries?', ['count' => $entryCount]) }}" />
         </div>
     </x-slot:footer>
 </x-noerd::page>

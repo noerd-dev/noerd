@@ -2,7 +2,6 @@
 
 namespace Noerd\Services;
 
-use Illuminate\Support\Facades\Storage;
 use Noerd\Contracts\MediaResolverContract;
 
 class NullMediaResolver implements MediaResolverContract

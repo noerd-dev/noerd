@@ -32,8 +32,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
     it('processes dynamic navigation via registry providers', function (): void {
         // Register a test provider
         $registry = app(DynamicNavigationRegistry::class);
-        $provider = new class implements DynamicNavigationProviderContract
-        {
+        $provider = new class () implements DynamicNavigationProviderContract {
             public function type(): string
             {
                 return 'collections';

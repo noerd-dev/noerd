@@ -2,16 +2,16 @@ title: ''
 description: ''
 fields:
   - name: detailData.key
-    label: noerd_key
+    label: Key
     type: text
     colspan: 6
     required: true
   - name: detailData.name
-    label: noerd_label_name
+    label: Name
     type: text
     colspan: 6
     required: true
   - name: detailData.description
-    label: noerd_label_description
+    label: Description
     type: text
     colspan: 6

@@ -1,9 +1,9 @@
-title: ui_library_label_demo_tags
+title: Demo Tags
 actions:
-  - label: ui_library_label_new_demo_tag
+  - label: New Demo Tag
     action: listAction
 disableSearch: false
 columns:
   - field: name
-    label: ui_library_label_name
+    label: Name
     type: text

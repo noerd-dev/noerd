@@ -50,14 +50,14 @@ new class () extends Component {
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
         <x-noerd::modal-title>
-            {{ __('noerd_label_currency_settings_title') }}
+            {{ __('Currency Settings') }}
         </x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::box>
         <div class="mt-4">
             <x-noerd::input-label>
-                {{ __('noerd_label_currency') }}
+                {{ __('Currency') }}
             </x-noerd::input-label>
             <x-noerd::select-input wire:model.live="settingsData.currency">
                 <option value="EUR">EUR - Euro (1.234,56 €)</option>
@@ -67,7 +67,7 @@ new class () extends Component {
                 <option value="CZK">CZK - Tschechische Krone (1.234,56 Kč)</option>
                 <option value="DKK">DKK - Dänische Krone (1.234,56 kr)</option>
             </x-noerd::select-input>
-            <p class="text-sm text-gray-500 mt-1">{{ __('noerd_label_currency_desc') }}</p>
+            <p class="text-sm text-gray-500 mt-1">{{ __('Select the currency for your company') }}</p>
         </div>
     </x-noerd::box>
 

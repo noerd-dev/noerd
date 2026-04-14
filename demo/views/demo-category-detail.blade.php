@@ -46,7 +46,7 @@ new class extends Component {
 
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
-        <x-noerd::modal-title>{{ __('ui_library_label_demo_category') }}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Demo Category') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">

@@ -245,43 +245,43 @@ trait NoerdDetail
         }
     }
 
-    /**
-     * Strips "detailData." prefix from validation attribute names in error messages.
-     * Called by Livewire before building the Validator instance.
-     */
-    public function validate($rules = null, $messages = [], $attributes = []): array
+    #[On('setFieldValue')]
+    public function setFieldValue(string $field, mixed $value, ?string $relationTitle = null): void
     {
-        if (empty($attributes) && is_array($rules)) {
-            foreach (array_keys($rules) as $ruleKey) {
-                if (str_starts_with($ruleKey, 'detailData.')) {
-                    $field = Str::after($ruleKey, 'detailData.');
-                    $attributes[$ruleKey] = str_replace('_', ' ', $field);
-                }
-            }
-        }
+        $key = str_replace('detailData.', '', $field);
+        $detailData = $this->detailData;
+        data_set($detailData, $key, $value);
+        $this->detailData = $detailData;
 
-        return parent::validate($rules, $messages, $attributes);
+        if ($relationTitle !== null) {
+            $relationKey = last(explode('.', $key));
+            $this->relationTitles[$relationKey] = $relationTitle;
+        }
     }
 
     public function clearRelation(string $fieldName): void
     {
         $key = str_replace('detailData.', '', $fieldName);
-        $this->relationTitles[$key] = '';
+        $relationKey = last(explode('.', $key));
+        $this->relationTitles[$relationKey] = '';
 
-        if (array_key_exists($key, $this->detailData)) {
+        if (str_contains($key, '.')) {
+            $detailData = $this->detailData;
+            data_set($detailData, $key, null);
+            $this->detailData = $detailData;
+        } elseif (array_key_exists($key, $this->detailData)) {
             $this->detailData[$key] = null;
         }
     }
 
     public function openRelationDetail(string $detailComponent, string $fieldName): void
     {
-        $parts = explode('.', $fieldName);
-        $key = end($parts);
-
-        $id = $this->detailData[$key] ?? null;
+        $key = str_replace('detailData.', '', $fieldName);
+        $id = data_get($this->detailData, $key);
 
         if (! $id) {
-            $camelKey = Str::camel($key);
+            $lastKey = last(explode('.', $key));
+            $camelKey = Str::camel($lastKey);
             if (property_exists($this, $camelKey)) {
                 $id = $this->{$camelKey};
             }

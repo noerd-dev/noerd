@@ -5,7 +5,6 @@ namespace Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Str;
 use Noerd\Commands\Concerns\GeneratesResourceFiles;
 
 class MakeDashboardCommand extends Command

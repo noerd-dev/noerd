@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Hash;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
-use Noerd\Models\Tenant;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Tenant;
 
 class CreateAdminCommand extends Command
 {

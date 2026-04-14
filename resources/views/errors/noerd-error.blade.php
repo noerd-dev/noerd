@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ __('noerd_error_title') }}</title>
+    <title>{{ __('Error') }}</title>
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
@@ -16,17 +16,17 @@
 
         @if($type === 'app_not_assigned')
             <h1 class="text-xl font-semibold text-gray-900 mb-4">
-                {{ __('noerd_error_app_not_assigned_title') }}
+                {{ __('App not available') }}
             </h1>
             <p class="text-gray-600 mb-6">
-                {{ __('noerd_error_app_not_assigned_message', ['app' => $appName]) }}
+                {{ __('The app ":app" is not assigned to this tenant.', ['app' => $appName]) }}
             </p>
         @elseif($type === 'config_not_found')
             <h1 class="text-xl font-semibold text-gray-900 mb-4">
-                {{ __('noerd_error_config_not_found_title') }}
+                {{ __('Configuration not found') }}
             </h1>
             <p class="text-gray-600 mb-4">
-                {{ __('noerd_error_config_not_found_message') }}
+                {{ __('The required configuration file was not found:') }}
             </p>
             <code class="block bg-gray-100 text-sm text-red-600 px-4 py-2 rounded mb-6">
                 {{ $configFile }}
@@ -34,7 +34,7 @@
         @endif
 
         <a href="/" class="inline-flex items-center px-4 py-2 bg-brand-border text-white rounded-md hover:bg-brand-border/90">
-            {{ __('noerd_error_back_to_home') }}
+            {{ __('Back to home') }}
         </a>
     </div>
 </body>

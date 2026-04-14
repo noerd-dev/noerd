@@ -35,7 +35,7 @@
         <div class="border-t border-zinc-200 mt-1">
             <button type="button" @mouseenter="showDatePicker = true" x-ref="dateBtn_{{ $filter['column'] }}"
                     class="flex w-full items-center justify-between px-4 py-2 text-left text-sm {{ $isCustomDate ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}">
-                <span>{{ __('noerd_show_from_custom_date') }}</span>
+                <span>{{ __('Select date') }}</span>
                 <svg class="size-3.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
                 </svg>
@@ -55,7 +55,7 @@
             <button type="button"
                     @click="if (customDate) { $wire.set('listFilters.{{ $filter['column'] }}', customDate); open = false; showDatePicker = false; $nextTick(() => $wire.storeActiveListFilters()); }"
                     class="rounded-md bg-brand-primary px-3 py-1 text-sm text-white hover:opacity-90">
-                {{ __('noerd_show_from_apply') }}
+                {{ __('Apply') }}
             </button>
         </div>
     </div>

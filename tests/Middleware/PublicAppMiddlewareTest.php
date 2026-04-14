@@ -6,8 +6,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Middleware\PublicAppMiddleware;
-use Noerd\Models\TenantApp;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\TenantApp;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 

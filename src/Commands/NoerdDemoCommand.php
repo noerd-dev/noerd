@@ -86,7 +86,7 @@ class NoerdDemoCommand extends Command
                 continue;
             }
 
-            $filename = date('Y_m_d_') . str_pad((string) $timestamp, 6, '0', STR_PAD_LEFT) . '_' . $migration . '.php';
+            $filename = date('Y_m_d_') . mb_str_pad((string) $timestamp, 6, '0', STR_PAD_LEFT) . '_' . $migration . '.php';
             $timestamp++;
             $target = $targetDir . '/' . $filename;
 

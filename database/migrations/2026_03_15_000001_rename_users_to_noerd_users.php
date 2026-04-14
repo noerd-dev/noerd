@@ -7,21 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class () extends Migration {
     /**
-     * Discover all foreign keys referencing a given table.
-     *
-     * @return array<int, object{TABLE_NAME: string, CONSTRAINT_NAME: string, COLUMN_NAME: string}>
-     */
-    private function getForeignKeysReferencingTable(string $tableName): array
-    {
-        return DB::select("
-            SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME
-            FROM information_schema.KEY_COLUMN_USAGE
-            WHERE REFERENCED_TABLE_NAME = ?
-            AND REFERENCED_TABLE_SCHEMA = DATABASE()
-        ", [$tableName]);
-    }
-
-    /**
      * Run the migrations.
      */
     public function up(): void
@@ -75,5 +60,19 @@ return new class () extends Migration {
                 $table->foreign($fk->COLUMN_NAME)->references('id')->on('users')->onDelete('cascade');
             });
         }
+    }
+    /**
+     * Discover all foreign keys referencing a given table.
+     *
+     * @return array<int, object{TABLE_NAME: string, CONSTRAINT_NAME: string, COLUMN_NAME: string}>
+     */
+    private function getForeignKeysReferencingTable(string $tableName): array
+    {
+        return DB::select("
+            SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME
+            FROM information_schema.KEY_COLUMN_USAGE
+            WHERE REFERENCED_TABLE_NAME = ?
+            AND REFERENCED_TABLE_SCHEMA = DATABASE()
+        ", [$tableName]);
     }
 };

@@ -26,13 +26,13 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function all(?int $tenantId = null): Collection
     {
-        $tenantId = $tenantId ?? TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::getSelectedTenantId();
 
         return SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId))
             ->orderBy('title_list')
             ->get()
-            ->map(fn (SetupCollectionDefinition $m) => $this->toData($m));
+            ->map(fn(SetupCollectionDefinition $m) => $this->toData($m));
     }
 
     public function find(string $filename, ?int $tenantId = null): ?SetupCollectionDefinitionData
@@ -44,10 +44,10 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function findByKey(string $key, ?int $tenantId = null): ?SetupCollectionDefinitionData
     {
-        $tenantId = $tenantId ?? TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::getSelectedTenantId();
 
         $model = SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId))
             ->where('key', mb_strtoupper($key))
             ->first();
 
@@ -71,45 +71,9 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
         return self::$requestCache[$cacheKey] = $this->resolveFieldsUncached($filename, $tenantId);
     }
 
-    private function resolveFieldsUncached(string $filename, ?int $tenantId): ?array
-    {
-        $query = SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId));
-
-        $model = (clone $query)->where('filename', $filename)->first();
-
-        if (! $model) {
-            // Fallback: caller may have passed the key (uppercase) by mistake.
-            $model = $query->where('key', mb_strtoupper($filename))->first();
-        }
-
-        if (! $model) {
-            return null;
-        }
-
-        $fields = [];
-        foreach ($model->fields ?? [] as $field) {
-            $name = (string) ($field['name'] ?? '');
-            $fields[] = array_merge($field, [
-                'name' => 'detailData.' . ltrim(preg_replace('/^(model\.|detailData\.)/', '', $name), '.'),
-                'label' => $field['label'] ?? '',
-                'type' => $field['type'] ?? 'text',
-                'colspan' => (int) ($field['colspan'] ?? 6),
-            ]);
-        }
-
-        return [
-            'title' => $model->title,
-            'titleList' => $model->title_list,
-            'key' => $model->key,
-            'description' => $model->description ?? '',
-            'fields' => $fields,
-        ];
-    }
-
     public function save(SetupCollectionDefinitionData $data, ?string $originalFilename = null, ?int $tenantId = null): string
     {
-        $tenantId = $tenantId ?? TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::getSelectedTenantId();
         if ($tenantId === null) {
             throw new RuntimeException('Cannot save a setup collection definition without a tenant context.');
         }
@@ -143,7 +107,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function copy(string $filename, ?int $tenantId = null): string
     {
-        $tenantId = $tenantId ?? TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::getSelectedTenantId();
         $source = $this->findModel($filename, $tenantId);
         if (! $source) {
             throw new RuntimeException("Setup collection definition '{$filename}' not found.");
@@ -183,12 +147,48 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
         return true;
     }
 
+    private function resolveFieldsUncached(string $filename, ?int $tenantId): ?array
+    {
+        $query = SetupCollectionDefinition::query()
+            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId));
+
+        $model = (clone $query)->where('filename', $filename)->first();
+
+        if (! $model) {
+            // Fallback: caller may have passed the key (uppercase) by mistake.
+            $model = $query->where('key', mb_strtoupper($filename))->first();
+        }
+
+        if (! $model) {
+            return null;
+        }
+
+        $fields = [];
+        foreach ($model->fields ?? [] as $field) {
+            $name = (string) ($field['name'] ?? '');
+            $fields[] = array_merge($field, [
+                'name' => 'detailData.' . mb_ltrim(preg_replace('/^(model\.|detailData\.)/', '', $name), '.'),
+                'label' => $field['label'] ?? '',
+                'type' => $field['type'] ?? 'text',
+                'colspan' => (int) ($field['colspan'] ?? 6),
+            ]);
+        }
+
+        return [
+            'title' => $model->title,
+            'titleList' => $model->title_list,
+            'key' => $model->key,
+            'description' => $model->description ?? '',
+            'fields' => $fields,
+        ];
+    }
+
     private function findModel(string $filename, ?int $tenantId): ?SetupCollectionDefinition
     {
-        $tenantId = $tenantId ?? TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::getSelectedTenantId();
 
         return SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId))
             ->where('filename', $filename)
             ->first();
     }

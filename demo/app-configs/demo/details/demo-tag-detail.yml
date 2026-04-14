@@ -1,8 +1,8 @@
-title: ui_library_label_demo_tag
+title: Demo Tag
 description: ''
 fields:
   - name: detailData.name
-    label: ui_library_label_name
+    label: Name
     type: text
     colspan: 6
     required: true

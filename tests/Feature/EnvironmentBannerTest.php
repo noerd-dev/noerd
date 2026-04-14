@@ -7,7 +7,7 @@ use Livewire\Livewire;
 uses(Tests\TestCase::class);
 
 it('shows blue Local banner when env is local', function (): void {
-    app()->detectEnvironment(fn () => 'local');
+    app()->detectEnvironment(fn() => 'local');
 
     Livewire::test('layout.environment-banner')
         ->assertSet('environment', 'local')
@@ -17,7 +17,7 @@ it('shows blue Local banner when env is local', function (): void {
 });
 
 it('shows green Development banner when env is development', function (): void {
-    app()->detectEnvironment(fn () => 'development');
+    app()->detectEnvironment(fn() => 'development');
 
     Livewire::test('layout.environment-banner')
         ->assertSet('environment', 'development')
@@ -27,7 +27,7 @@ it('shows green Development banner when env is development', function (): void {
 });
 
 it('shows orange Staging banner when env is staging', function (): void {
-    app()->detectEnvironment(fn () => 'staging');
+    app()->detectEnvironment(fn() => 'staging');
 
     Livewire::test('layout.environment-banner')
         ->assertSet('environment', 'staging')
@@ -37,7 +37,7 @@ it('shows orange Staging banner when env is staging', function (): void {
 });
 
 it('hides banner in production', function (): void {
-    app()->detectEnvironment(fn () => 'production');
+    app()->detectEnvironment(fn() => 'production');
 
     Livewire::test('layout.environment-banner')
         ->assertSet('environment', null)
@@ -47,7 +47,7 @@ it('hides banner in production', function (): void {
 });
 
 it('hides banner for unknown custom environments', function (): void {
-    app()->detectEnvironment(fn () => 'qa');
+    app()->detectEnvironment(fn() => 'qa');
 
     Livewire::test('layout.environment-banner')
         ->assertSet('environment', null);

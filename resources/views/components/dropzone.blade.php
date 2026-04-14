@@ -32,8 +32,8 @@ new class extends Component {
             'temporaryFiles' => $this->multiple ? 'array' : 'required',
             'temporaryFiles.*' => $this->rules,
         ], [
-            'temporaryFiles.*.mimes' => __('noerd_file_format_error'),
-            'temporaryFiles.*.max' => __('noerd_file_max_error'),
+            'temporaryFiles.*.mimes' => __('The file must be one of the following formats: :values'),
+            'temporaryFiles.*.max' => __('The file may not be larger than :max KB'),
         ]);
 
         foreach ($this->temporaryFiles as $file) {
@@ -114,7 +114,7 @@ new class extends Component {
                 return $this->formatBytes($kb * 1024);
             }
         }
-        return __('noerd_unlimited');
+        return __('unlimited');
     }
 
     private function formatBytes($bytes): string
@@ -135,7 +135,7 @@ new class extends Component {
         if (isset($file['_original']) && method_exists($file['_original'], 'getClientOriginalName')) {
             return $file['_original']->getClientOriginalName();
         }
-        return $file['name'] ?? __('noerd_unknown_file');
+        return $file['name'] ?? __('Unknown file');
     }
 
     public function getFileSize($file): int
@@ -175,7 +175,7 @@ new class extends Component {
             <!-- Upload Text -->
             <p class="mt-2 text-sm text-gray-600">
                 <label for="file-upload-{{ $this->getId() }}" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
-                    <span>{{ __('noerd_select_file') }}</span>
+                    <span>{{ __('Select file') }}</span>
                     <input
                         id="file-upload-{{ $this->getId() }}"
                         wire:model.live="temporaryFiles"
@@ -185,16 +185,16 @@ new class extends Component {
                         @if($multiple) multiple @endif
                     >
                 </label>
-                <span class="text-gray-500"> {{ __('noerd_drag_drop') }}</span>
+                <span class="text-gray-500"> {{ __('or drag & drop') }}</span>
             </p>
 
             <!-- File Info -->
             <p class="mt-1 text-xs text-gray-500">
                 @if($this->getAcceptAttribute())
-                    {{ __('noerd_allowed_types') }} {{ str_replace('.', '', $this->getAcceptAttribute()) }}
+                    {{ __('Allowed file types:') }} {{ str_replace('.', '', $this->getAcceptAttribute()) }}
                 @endif
-                @if($this->getMaxSizeAttribute() !== __('noerd_unlimited'))
-                    <br>{{ __('noerd_max_file_size') }} {{ $this->getMaxSizeAttribute() }}
+                @if($this->getMaxSizeAttribute() !== __('unlimited'))
+                    <br>{{ __('Max. file size:') }} {{ $this->getMaxSizeAttribute() }}
                 @endif
             </p>
         </div>
@@ -206,7 +206,7 @@ new class extends Component {
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="mt-2 text-sm text-gray-600">{{ __('noerd_uploading') }}</p>
+                <p class="mt-2 text-sm text-gray-600">{{ __('Uploading...') }}</p>
             </div>
         </div>
     </div>
@@ -231,14 +231,14 @@ new class extends Component {
     @if($fileCount > 0)
         <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-medium text-gray-700">{{ __('noerd_uploaded_files') }} ({{ $fileCount }})</h4>
+                <h4 class="text-sm font-medium text-gray-700">{{ __('Uploaded files') }} ({{ $fileCount }})</h4>
                 @if($fileCount > 1)
                     <button
                         wire:click="clearFiles"
                         type="button"
                         class="text-xs text-red-600 hover:text-red-500"
                     >
-                        {{ __('noerd_remove_all') }}
+                        {{ __('Remove all') }}
                     </button>
                 @endif
             </div>
