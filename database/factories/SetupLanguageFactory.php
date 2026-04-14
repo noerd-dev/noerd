@@ -4,6 +4,7 @@ namespace Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Noerd\Models\SetupLanguage;
+use Noerd\Models\Tenant;
 
 class SetupLanguageFactory extends Factory
 {
@@ -12,6 +13,7 @@ class SetupLanguageFactory extends Factory
     public function definition(): array
     {
         return [
+            'tenant_id' => Tenant::factory(),
             'code' => $this->faker->unique()->languageCode(),
             'name' => $this->faker->word(),
             'is_active' => true,

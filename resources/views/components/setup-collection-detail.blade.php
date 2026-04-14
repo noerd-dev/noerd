@@ -39,8 +39,8 @@ new class extends Component
             $this->modelId = $model instanceof SetupCollectionEntry ? $model->id : $model;
         }
 
-        // Ensure default languages exist
-        SetupLanguage::ensureDefaultLanguages();
+        // Ensure default languages exist for current tenant
+        SetupLanguage::ensureDefaultLanguagesForTenant(auth()->user()->selected_tenant_id);
 
         $entry = new SetupCollectionEntry;
         if ($this->modelId) {

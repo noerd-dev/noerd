@@ -31,6 +31,8 @@ use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Models\SetupLanguage;
+use Noerd\Models\Tenant;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
@@ -90,6 +92,11 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register event listeners
         Event::listen(Login::class, InitializeTenantSession::class);
+
+        // Create default languages when a new tenant is created
+        Tenant::created(function (Tenant $tenant): void {
+            SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
+        });
 
         $router = $this->app['router'];
         $router->aliasMiddleware('setup', SetupMiddleware::class);

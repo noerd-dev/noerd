@@ -24,10 +24,7 @@ beforeEach(function (): void {
     app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
     app()->forgetInstance(SetupCollectionHelper::class);
 
-    // Ensure default languages exist
-    SetupLanguage::ensureDefaultLanguages();
-
-    // Create a tenant and user for testing
+    // Create a tenant and user for testing (Tenant::created seeds default languages)
     $this->tenant = Tenant::factory()->create();
 
     // Create admin profile for the tenant
@@ -94,30 +91,32 @@ afterEach(function (): void {
 describe('SetupLanguage Model', function (): void {
     it('creates default languages when none exist', function (): void {
         SetupLanguage::query()->delete();
-        SetupLanguage::ensureDefaultLanguages();
+        SetupLanguage::ensureDefaultLanguagesForTenant($this->tenant->id);
 
-        expect(SetupLanguage::count())->toBe(1);
+        expect(SetupLanguage::count())->toBe(2);
+        expect(SetupLanguage::where('code', 'de')->exists())->toBeTrue();
         expect(SetupLanguage::where('code', 'en')->exists())->toBeTrue();
-        expect(SetupLanguage::where('is_default', true)->first()->code)->toBe('en');
+        expect(SetupLanguage::where('is_default', true)->first()->code)->toBe('de');
     });
 
     it('returns active languages', function (): void {
         $languages = SetupLanguage::getActive();
 
-        expect($languages)->toHaveCount(1);
-        expect($languages->first()->code)->toBe('en'); // Default first
+        expect($languages)->toHaveCount(2);
+        expect($languages->first()->code)->toBe('de'); // Default first
     });
 
     it('returns active language codes', function (): void {
         $codes = SetupLanguage::getActiveCodes();
 
+        expect($codes)->toContain('de');
         expect($codes)->toContain('en');
     });
 
     it('returns default language code', function (): void {
         $code = SetupLanguage::getDefaultCode();
 
-        expect($code)->toBe('en');
+        expect($code)->toBe('de');
     });
 });
 
@@ -265,45 +264,31 @@ describe('Setup Collection Detail Component', function (): void {
 
 describe('SetupLanguage Boot Events', function (): void {
     it('ensures only one default language exists', function (): void {
-        // English is default from ensureDefaultLanguages
-        $english = SetupLanguage::where('code', 'en')->first();
-        expect($english->is_default)->toBeTrue();
-
-        // Add German and set it as default
-        $german = SetupLanguage::create([
-            'code' => 'de',
-            'name' => 'Deutsch',
-            'is_active' => true,
-            'is_default' => true,
-            'sort_order' => 1,
-        ]);
-
-        // Refresh English from DB
-        $english->refresh();
-
+        // German is default from ensureDefaultLanguagesForTenant
+        $german = SetupLanguage::where('code', 'de')->first();
         expect($german->is_default)->toBeTrue();
-        expect($english->is_default)->toBeFalse();
+
+        // Set English as default
+        $english = SetupLanguage::where('code', 'en')->first();
+        $english->update(['is_default' => true]);
+
+        // Refresh German from DB
+        $german->refresh();
+
+        expect($english->is_default)->toBeTrue();
+        expect($german->is_default)->toBeFalse();
         expect(SetupLanguage::where('is_default', true)->count())->toBe(1);
     });
 
     it('sets new default after deleting default language', function (): void {
-        // Add German as a non-default language
-        SetupLanguage::create([
-            'code' => 'de',
-            'name' => 'Deutsch',
-            'is_active' => true,
-            'is_default' => false,
-            'sort_order' => 1,
-        ]);
-
-        $english = SetupLanguage::where('code', 'en')->first();
-        expect($english->is_default)->toBeTrue();
-
-        $english->delete();
-
-        // German should now be default
         $german = SetupLanguage::where('code', 'de')->first();
         expect($german->is_default)->toBeTrue();
+
+        $german->delete();
+
+        // English should now be default
+        $english = SetupLanguage::where('code', 'en')->first();
+        expect($english->is_default)->toBeTrue();
     });
 
     it('can create a new language', function (): void {
@@ -316,7 +301,7 @@ describe('SetupLanguage Boot Events', function (): void {
         ]);
 
         expect($french->exists)->toBeTrue();
-        expect(SetupLanguage::count())->toBe(2);
+        expect(SetupLanguage::count())->toBe(3);
     });
 });
 

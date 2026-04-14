@@ -9,8 +9,8 @@ new class extends Component
 
     public function mount(): void
     {
-        // Ensure default languages exist
-        SetupLanguage::ensureDefaultLanguages();
+        // Ensure default languages exist for current tenant
+        SetupLanguage::ensureDefaultLanguagesForTenant(auth()->user()->selected_tenant_id);
 
         $this->languages = SetupLanguage::where('is_active', true)
             ->orderBy('is_default', 'desc')
