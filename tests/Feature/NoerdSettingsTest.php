@@ -98,7 +98,7 @@ describe('NoerdSettings component', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('setup.noerd-settings-detail')
+            ->test('setup.system-settings-detail')
             ->assertSet('settingsData.currency', 'EUR');
     });
 
@@ -106,7 +106,7 @@ describe('NoerdSettings component', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('setup.noerd-settings-detail')
+            ->test('setup.system-settings-detail')
             ->set('settingsData.currency', 'USD')
             ->call('store');
 
@@ -125,7 +125,7 @@ describe('NoerdSettings component', function (): void {
         ]);
 
         Livewire::actingAs($user)
-            ->test('setup.noerd-settings-detail')
+            ->test('setup.system-settings-detail')
             ->assertSet('settingsData.currency', 'GBP');
     });
 
@@ -133,7 +133,7 @@ describe('NoerdSettings component', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('setup.noerd-settings-detail')
+            ->test('setup.system-settings-detail')
             ->set('settingsData.currency', 'INVALID')
             ->call('store')
             ->assertHasErrors(['settingsData.currency']);

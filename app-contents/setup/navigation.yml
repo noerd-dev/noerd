@@ -23,9 +23,9 @@
         - title: Languages
           route: setup-languages
           heroicon: language
-        - title: Currency
-          route: noerd-settings
-          heroicon: currency-euro
+        - title: System Settings
+          route: system-settings
+          heroicon: cog-6-tooth
         - title: Collection Definitions
           route: setup-collection-definitions
           heroicon: rectangle-stack

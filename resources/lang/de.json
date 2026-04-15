@@ -275,7 +275,7 @@
     "Next record": "Nächster Datensatz",
     "This role cannot be deleted because it still has users assigned.": "Diese Rolle kann nicht gelöscht werden, da ihr noch Benutzer zugewiesen sind.",
     "Currency": "Währung",
-    "Currency Settings": "Währungseinstellungen",
+    "System Settings": "Systemeinstellungen",
     "Select the currency for your company": "Wählen Sie die Währung für Ihr Unternehmen",
 
     "Clear all filters": "Alle Filter löschen",
