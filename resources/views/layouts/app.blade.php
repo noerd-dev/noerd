@@ -57,9 +57,9 @@
 
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-              :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'padding-left: var(--sidebar-total-width)' : 'padding-left: var(--sidebar-nav-width)') : ''"
+              :style="showSidebar && window.innerWidth >= 1024 ? (showAppbar ? 'padding-left: var(--sidebar-total-width)' : 'padding-left: var(--sidebar-nav-width)') : ''"
           @else
-              :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
+              :style="showSidebar && window.innerWidth >= 1024 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
         <div class="bg-white min-h-full @auth pt-[calc(2.9375rem+var(--banner-height,0px)+var(--impersonation-banner-height,0px)+var(--environment-banner-height,0px))] @else pt-[var(--environment-banner-height,0px)] @endauth">

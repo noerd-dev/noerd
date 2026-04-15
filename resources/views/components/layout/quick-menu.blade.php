@@ -34,10 +34,12 @@ new class extends Component {
     }
 } ?>
 
-<div class="flex gap-x-2">
+<div class="flex gap-x-2 overflow-x-auto min-w-0 flex-1">
     @foreach($config['buttons'] ?? [] as $button)
         @if(!isset($button['policy']) || $this->canAccess($button['policy']))
-            <livewire:dynamic-component :component="$button['component']" />
+            <div class="shrink-0">
+                <livewire:dynamic-component :component="$button['component']" />
+            </div>
         @endif
     @endforeach
 </div>

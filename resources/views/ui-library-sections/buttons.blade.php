@@ -13,15 +13,12 @@
             <x-noerd::button variant="icon" icon="pencil" />
         </div>
     </div>
-    <div>
-        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
-        <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::button variant="primary"&gt;Primary&lt;/x-noerd::button&gt;
+    <x-noerd::code-snippet>&lt;x-noerd::button variant="primary"&gt;Primary&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="secondary"&gt;Secondary&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="danger"&gt;Danger&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="pill"&gt;Pill&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="ghost"&gt;Ghost&lt;/x-noerd::button&gt;
-&lt;x-noerd::button variant="icon" icon="pencil" /&gt;</code></pre>
-    </div>
+&lt;x-noerd::button variant="icon" icon="pencil" /&gt;</x-noerd::code-snippet>
 
     {{-- Sizes --}}
     <div class="border rounded-lg p-6 bg-white mb-2">
@@ -35,15 +32,12 @@
             <x-noerd::button variant="icon" size="lg" icon="pencil" />
         </div>
     </div>
-    <div>
-        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
-        <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::button size="sm"&gt;Small&lt;/x-noerd::button&gt;
+    <x-noerd::code-snippet>&lt;x-noerd::button size="sm"&gt;Small&lt;/x-noerd::button&gt;
 &lt;x-noerd::button&gt;Default (md)&lt;/x-noerd::button&gt;
 &lt;x-noerd::button size="lg"&gt;Large&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="icon" size="sm" icon="pencil" /&gt;
 &lt;x-noerd::button variant="icon" icon="pencil" /&gt;
-&lt;x-noerd::button variant="icon" size="lg" icon="pencil" /&gt;</code></pre>
-    </div>
+&lt;x-noerd::button variant="icon" size="lg" icon="pencil" /&gt;</x-noerd::code-snippet>
 
     {{-- With Icons --}}
     <div class="border rounded-lg p-6 bg-white mb-2">
@@ -57,9 +51,7 @@
             <x-noerd::button variant="icon" icon="plus" />
         </div>
     </div>
-    <div>
-        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
-        <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::button icon="check-circle"&gt;Save&lt;/x-noerd::button&gt;
+    <x-noerd::code-snippet>&lt;x-noerd::button icon="check-circle"&gt;Save&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="secondary" icon="arrow-down-tray"&gt;Download&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="danger"&gt;Delete&lt;/x-noerd::button&gt;
 &lt;x-noerd::button variant="icon" icon="pencil" /&gt;
@@ -67,8 +59,7 @@
 &lt;x-noerd::button variant="icon" icon="plus" /&gt;
 
 &lt;!-- With wire loading spinner --&gt;
-&lt;x-noerd::button icon="check-circle" wireTarget="store"&gt;Save&lt;/x-noerd::button&gt;</code></pre>
-    </div>
+&lt;x-noerd::button icon="check-circle" wireTarget="store"&gt;Save&lt;/x-noerd::button&gt;</x-noerd::code-snippet>
 
     {{-- All Props --}}
     <div>

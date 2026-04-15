@@ -3,7 +3,7 @@
 use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 
-new class extends Component {
+new class () extends Component {
     public function mount(): void
     {
         TenantHelper::setSelectedAppFromRoute();
@@ -16,7 +16,9 @@ new class extends Component {
     </x-slot:header>
 
     <div class="max-w-5xl mx-auto">
-        <p class="text-sm text-gray-500 mb-6">All available Noerd UI components with live demos and usage code.</p>
+        <p class="text-sm text-gray-500 my-6">
+            All available Noerd UI components with live demos and usage code.
+        </p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <a href="{{ route('ui-library.buttons') }}" class="block p-6 bg-white border rounded-lg hover:shadow-sm transition">

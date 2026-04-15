@@ -76,9 +76,9 @@ new class () extends Component {
 
 <div
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-            :style="showSidebar && window.innerWidth >= 1280 ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : ''"
+            :style="showSidebar && window.innerWidth >= 1024 ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : ''"
         @else
-            :style="showSidebar && window.innerWidth >= 1280 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
+            :style="showSidebar && window.innerWidth >= 1024 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
         @endif
         @class([
         'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] left-0 w-full bg-white z-40',
@@ -87,8 +87,8 @@ new class () extends Component {
         <div class="flex py-2 gap-x-4 px-6 w-full">
             <div class=" flex border-gray-300 w-full py-1">
 
-                <button @click="showSidebar = !showSidebar; if(window.innerWidth >= 1280) $wire.openSidebar()" type="button"
-                        class="my-auto mr-6 text-gray-600 hover:text-gray-500">
+                <button @click="showSidebar = !showSidebar; if(window.innerWidth >= 1024) $wire.openSidebar()" type="button"
+                        class="my-auto mr-6 shrink-0 text-gray-600 hover:text-gray-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><title>
                             layout-left</title>
                         <g fill="currentColor" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10">
@@ -113,7 +113,7 @@ new class () extends Component {
 
                     @if(config('noerd.features.multi_tenant') && auth()->user()->tenants->count() > 1)
                         <!-- Tenants (nur Desktop) -->
-                        <x-noerd::select-input class="hidden xl:block h-8 w-48! mt-0!" wire:model="selectedTenantId" wire:change="changeClient">
+                        <x-noerd::select-input class="hidden lg:block h-8 w-48! mt-0!" wire:model="selectedTenantId" wire:change="changeClient">
                             @foreach(auth()->user()->tenants as $client)
                                 <option value="{{$client->id}}">{{$client->name}}</option>
                             @endforeach

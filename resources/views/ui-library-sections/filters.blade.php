@@ -5,9 +5,7 @@
     {{-- Picklist Filter --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Picklist Filter</h3>
     <p class="text-sm text-gray-500 mb-3">Dropdown filter with active state styling (dashed border when inactive, solid brand border when active).</p>
-    <div>
-        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
-        <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::filters.picklist
+    <x-noerd::code-snippet>&lt;x-noerd::filters.picklist
     :filter="[
         'column' =&gt; 'status',
         'label' =&gt; 'Status',
@@ -17,15 +15,12 @@
         ],
     ]"
     :value="$listFilters['status'] ?? ''"
-/&gt;</code></pre>
-    </div>
+/&gt;</x-noerd::code-snippet>
 
     {{-- Date Dropdown --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Date Dropdown Filter</h3>
     <p class="text-sm text-gray-500 mb-3">Date range filter with preset options and a custom date picker sub-panel.</p>
-    <div>
-        <p class="text-xs font-medium text-gray-400 uppercase mt-3 mb-2">Code</p>
-        <pre class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-4 text-sm overflow-x-auto font-mono"><code>&lt;x-noerd::filters.date-dropdown
+    <x-noerd::code-snippet>&lt;x-noerd::filters.date-dropdown
     :filter="[
         'column' =&gt; 'created_at',
         'label' =&gt; 'Created',
@@ -36,6 +31,5 @@
         ],
     ]"
     :value="$listFilters['created_at'] ?? ''"
-/&gt;</code></pre>
-    </div>
+/&gt;</x-noerd::code-snippet>
 </section>

@@ -31,11 +31,11 @@ new class extends Component {
 
 <div>
     <!-- Mobile Overlay Background (nur <xl) -->
-    <div x-show="showSidebar" x-transition.opacity class="xl:hidden fixed inset-0 z-50 bg-gray-900/80"
+    <div x-show="showSidebar" x-transition.opacity class="lg:hidden fixed inset-0 z-50 bg-gray-900/80"
          @click="showSidebar = false"></div>
 
     <!-- Mobile Close Button (nur <xl) -->
-    <div x-show="showSidebar" x-transition class="xl:hidden fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px)_+_1rem)] right-4 z-50">
+    <div x-show="showSidebar" x-transition class="lg:hidden fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px)_+_1rem)] right-4 z-50">
         <x-noerd::button variant="icon" icon="x-mark" @click="showSidebar = false" type="button" class="bg-black/50! text-white!">
             <span class="sr-only">Close sidebar</span>
         </x-noerd::button>
@@ -67,7 +67,7 @@ new class extends Component {
                     $wire.saveSidebarWidth(width);
                  }"
                  @class([
-                    'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 xl:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
+                    'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
                  ])
                  :style="'width: var(--sidebar-nav-width); margin-left: ' + (showAppbar ? 'var(--sidebar-apps-width)' : '0')"
             >
