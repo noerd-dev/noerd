@@ -44,7 +44,7 @@ buttonList: 'Neuer Eintrag'
 description: 'Eine Beispiel-Collection für Setup'
 hasPage: false
 fields:
-  - { name: detailData.title, label: noerd_label_title, type: translatableText, colspan: 6 }
+  - { name: detailData.title, label: Title, type: translatableText, colspan: 6 }
 YAML;
 
     // Ensure directory exists

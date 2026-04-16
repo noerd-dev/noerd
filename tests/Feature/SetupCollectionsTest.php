@@ -56,15 +56,15 @@ description: 'Eine Beispiel-Collection für Setup'
 hasPage: false
 fields:
   - name: detailData.title
-    label: noerd_label_title
+    label: Title
     type: translatableText
     colspan: 6
   - name: detailData.description
-    label: noerd_label_description
+    label: Description
     type: translatableTextarea
     colspan: 6
   - name: detailData.is_active
-    label: noerd_label_active
+    label: Active
     type: checkbox
     colspan: 3
 YAML;

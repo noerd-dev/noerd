@@ -21,7 +21,7 @@
         </svg>
     </button>
     {{-- Main dropdown --}}
-    <div x-show="open" x-transition
+    <div x-show="open" x-cloak x-transition
          class="absolute left-0 z-50 mt-1 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden">
         @foreach($filter['options'] ?? [] as $key => $option)
             <button type="button"
@@ -43,7 +43,7 @@
         </div>
     </div>
     {{-- Date picker sub-panel --}}
-    <div x-show="open && showDatePicker" x-transition x-anchor.right-start="$refs.dateBtn_{{ $filter['column'] }}"
+    <div x-show="open && showDatePicker" x-cloak x-transition x-anchor.right-start="$refs.dateBtn_{{ $filter['column'] }}"
          class="z-50 ml-1 w-56 rounded-md bg-white p-4 shadow-lg ring-1 ring-black/5 focus:outline-hidden">
         <input type="date" x-model="customDate"
                class="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border" />
