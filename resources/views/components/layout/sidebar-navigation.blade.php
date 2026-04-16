@@ -49,12 +49,21 @@ new class extends Component {
                         </div>
                     </button>
                     <div x-show="show || !showSidebar" class="pt-2 pb-2">
-                        <ul role="list" class="space-y-1">
-                            @foreach($block['navigations'] as $navi)
-                                <livewire:layout.sidebar-navigation-element wire:key="{{$navi['title']}}"
-                                                                            :navi="$navi"/>
-                            @endforeach
-                        </ul>
+                        @if(($block['style'] ?? 'list') === 'buttons')
+                            <div class="flex flex-col gap-2">
+                                @foreach($block['navigations'] as $navi)
+                                    <livewire:layout.sidebar-navigation-button wire:key="btn-{{$navi['title']}}"
+                                                                               :navi="$navi"/>
+                                @endforeach
+                            </div>
+                        @else
+                            <ul role="list" class="space-y-1">
+                                @foreach($block['navigations'] as $navi)
+                                    <livewire:layout.sidebar-navigation-element wire:key="{{$navi['title']}}"
+                                                                                :navi="$navi"/>
+                                @endforeach
+                            </ul>
+                        @endif
                     </div>
                 </div>
             @endif

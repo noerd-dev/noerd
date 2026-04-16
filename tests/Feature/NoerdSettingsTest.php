@@ -139,3 +139,37 @@ describe('NoerdSettings component', function (): void {
             ->assertHasErrors(['settingsData.currency']);
     });
 });
+
+describe('Currency feature flag', function (): void {
+    it('shows currency section when feature is enabled', function (): void {
+        config()->set('noerd.features.currency', true);
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('setup.system-settings-detail')
+            ->assertSee(__('Currency'));
+    });
+
+    it('hides currency section when feature is disabled', function (): void {
+        config()->set('noerd.features.currency', false);
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('setup.system-settings-detail')
+            ->assertDontSee(__('Currency'));
+    });
+
+    it('does not save when currency feature is disabled', function (): void {
+        config()->set('noerd.features.currency', false);
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('setup.system-settings-detail')
+            ->set('settingsData.currency', 'USD')
+            ->call('store');
+
+        $this->assertDatabaseMissing('noerd_settings', [
+            'tenant_id' => $user->selected_tenant_id,
+        ]);
+    });
+});

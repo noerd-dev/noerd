@@ -49,6 +49,7 @@ use Noerd\Services\ListQueryContext;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationFieldRegistry;
+use Noerd\Services\ThemeService;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\RelationFieldDefinition;
 
@@ -67,6 +68,7 @@ class NoerdServiceProvider extends ServiceProvider
             $app->make(FieldTypeRegistry::class),
         ));
         $this->app->singleton(PicklistRegistry::class);
+        $this->app->singleton(ThemeService::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
 
         // Bind the Setup collection definition repository based on the shared mode toggle.

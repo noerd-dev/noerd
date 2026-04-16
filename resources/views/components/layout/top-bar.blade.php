@@ -81,7 +81,7 @@ new class () extends Component {
             :style="showSidebar && window.innerWidth >= 1024 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
         @endif
         @class([
-        'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] left-0 w-full bg-white z-40',
+        'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] left-0 w-full bg-brand-topbar z-40',
     ])>
     <div>
         <div class="flex py-2 gap-x-4 px-6 w-full">
