@@ -4,6 +4,7 @@
     'label' => '',
     'collectionKey' => '',
     'displayField' => 'name',
+    'valueField' => null,
     'live' => false,
     'required' => false,
 ])
@@ -16,6 +17,7 @@
     $label = $field['label'] ?? $label;
     $collectionKey = $field['collectionKey'] ?? $collectionKey;
     $displayField = $field['displayField'] ?? $displayField;
+    $valueField = $field['valueField'] ?? $valueField;
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 
@@ -34,12 +36,13 @@
     // Build options array
     $options = [['value' => '', 'label' => 'Bitte wählen']];
     foreach ($entries as $entry) {
-        $value = $entry->data[$displayField] ?? '';
+        $optionLabel = $entry->data[$displayField] ?? '';
         // Always handle array values (translatable fields) - get locale, fallback to 'de', then any available
-        if (is_array($value)) {
-            $value = $value[$locale] ?? $value['de'] ?? reset($value) ?? '';
+        if (is_array($optionLabel)) {
+            $optionLabel = $optionLabel[$locale] ?? $optionLabel['de'] ?? reset($optionLabel) ?? '';
         }
-        $options[] = ['value' => $entry->id, 'label' => $value];
+        $optionValue = $valueField ? ($entry->data[$valueField] ?? '') : $entry->id;
+        $options[] = ['value' => $optionValue, 'label' => $optionLabel];
     }
 @endphp
 
