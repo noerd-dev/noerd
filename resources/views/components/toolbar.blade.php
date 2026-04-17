@@ -1,6 +1,6 @@
 @props(['buttons' => []])
 
-<div class="flex flex-wrap items-center gap-3 pb-3">
+<div class="flex flex-wrap items-center gap-3 pt-8">
     @foreach($buttons as $button)
         @php
             $type = $button['type'] ?? '';
