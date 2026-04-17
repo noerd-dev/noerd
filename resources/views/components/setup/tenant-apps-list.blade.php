@@ -57,6 +57,20 @@ new class extends Component {
         $this->loadApps();
     }
 
+    public function toggleHidden(int $appId): void
+    {
+        $tenant = TenantHelper::getSelectedTenant();
+        $current = $tenant->tenantApps()->where('tenant_apps.id', $appId)->first();
+
+        if ($current) {
+            $tenant->tenantApps()->updateExistingPivot($appId, [
+                'is_hidden' => ! $current->pivot->is_hidden,
+            ]);
+        }
+
+        $this->loadApps();
+    }
+
     private function loadApps(): void
     {
         $tenant = TenantHelper::getSelectedTenant();
@@ -67,6 +81,7 @@ new class extends Component {
             'title' => $app->title,
             'icon' => $app->icon,
             'name' => $app->name,
+            'is_hidden' => (bool) $app->pivot->is_hidden,
         ])->toArray();
 
         $this->availableApps = TenantApp::where('is_active', true)
@@ -84,15 +99,18 @@ new class extends Component {
 
 <x-noerd::page>
 
-    <div class="max-w-3xl">
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold">{{ __('Assigned Apps') }}</h2>
-        </div>
+    <x-slot:header>
+        <x-noerd::modal-title>
+            {{ __('Assigned Apps') }}
+        </x-noerd::modal-title>
+    </x-slot:header>
+
+    <div class="max-w-3xl py-8">
 
         @if(count($assignedApps) > 0)
             <div x-sort="$wire.appSort($item, $position)" class="space-y-2">
                 @foreach($assignedApps as $app)
-                    <div x-sort:item="{{ $app['id'] }}" wire:key="assigned-{{ $app['id'] }}" class="bg-gray-100 rounded-lg p-4 flex items-center gap-4">
+                    <div x-sort:item="{{ $app['id'] }}" wire:key="assigned-{{ $app['id'] }}" @class(['bg-gray-100 rounded-lg p-4 flex items-center gap-4', 'opacity-50' => $app['is_hidden']])>
                         <a href="#/" class="cursor-grab active:cursor-grabbing">
                             <img alt="" width="20" src="/svg/drag.svg">
                         </a>
@@ -106,7 +124,8 @@ new class extends Component {
                             <span class="font-medium truncate">{{ $app['title'] }}</span>
                         </div>
 
-                        <x-noerd::button variant="icon" icon="x-mark" wire:click="toggleApp({{ $app['id'] }})" class="text-red-500! shrink-0"/>
+                        <x-noerd::button variant="icon" :icon="$app['is_hidden'] ? 'eye-slash' : 'eye'" wire:click="toggleHidden({{ $app['id'] }})" wire:confirm="{{ $app['is_hidden'] ? __('Are you sure you want to make this app visible?') : __('Are you sure you want to hide this app?') }}" class="shrink-0"/>
+                        <x-noerd::button variant="icon" icon="x-mark" wire:click="toggleApp({{ $app['id'] }})" wire:confirm="{{ __('Are you sure you want to remove this app?') }}" class="text-red-500! shrink-0"/>
                     </div>
                 @endforeach
             </div>
@@ -131,7 +150,7 @@ new class extends Component {
                             <span class="font-medium truncate">{{ $app['title'] }}</span>
                         </div>
 
-                        <x-noerd::button variant="icon" icon="plus" wire:click="toggleApp({{ $app['id'] }})" class="text-green-600! shrink-0"/>
+                        <x-noerd::button variant="icon" icon="plus" wire:click="toggleApp({{ $app['id'] }})" wire:confirm="{{ __('Are you sure you want to install this app?') }}" class="text-green-600! shrink-0"/>
                     </div>
                 @endforeach
             </div>

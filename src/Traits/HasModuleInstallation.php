@@ -60,12 +60,6 @@ trait HasModuleInstallation
     abstract protected function getSourceDir(): string;
 
     /**
-     * Get the snippet title for duplicate checking.
-     * Example: "Business Hours"
-     */
-    abstract protected function getSnippetTitle(): string;
-
-    /**
      * Get the navigation source folder name.
      *
      * @deprecated No longer needed with new app-configs structure
@@ -202,13 +196,9 @@ trait HasModuleInstallation
         $this->info("Installing {$this->getModuleName()}...");
         $this->line('');
 
-        $installationType = $this->choice(
-            "How should {$this->getModuleName()} be installed?",
-            [
-                'new' => 'As a new standalone app',
-                'existing' => 'Add to an existing app',
-            ],
-            'new',
+        $isHidden = $this->confirm(
+            "Should {$this->getModuleName()} be installed as a hidden app (not shown in main navigation)?",
+            false,
         );
 
         $sourceDir = $this->getSourceDir();
@@ -219,22 +209,11 @@ trait HasModuleInstallation
             return 1;
         }
 
-        // Determine target directory based on installation type
-        if ($installationType === 'new') {
-            $this->line('');
-            $this->info('New app configuration:');
-            $this->appTitle = $this->ask('App title', $this->getDefaultAppTitle());
-            $this->targetAppKey = $this->getModuleKey();
-            $this->line("<comment>App folder:</comment> app-configs/{$this->targetAppKey}/");
-        } else {
-            // Get target from existing app selection
-            $selectedApp = $this->selectExistingApp();
-            if (! $selectedApp) {
-                return 1;
-            }
-            $this->targetAppKey = mb_strtolower(str_replace('_', '-', $selectedApp->name));
-            $this->appTitle = $selectedApp->title;
-        }
+        $this->line('');
+        $this->info('New app configuration:');
+        $this->appTitle = $this->ask('App title', $this->getDefaultAppTitle());
+        $this->targetAppKey = $this->getModuleKey();
+        $this->line("<comment>App folder:</comment> app-configs/{$this->targetAppKey}/");
 
         $targetDir = base_path('app-configs/' . $this->targetAppKey);
 
@@ -272,12 +251,7 @@ trait HasModuleInstallation
                 }
             }
 
-            // Install navigation based on choice
-            if ($installationType === 'new') {
-                $this->installAsNewApp($sourceDir, $targetDir);
-            } else {
-                $this->installToExistingApp($sourceDir, $targetDir);
-            }
+            $this->installAsNewApp($sourceDir, $targetDir, $isHidden);
 
             $this->displayInstallSummary();
 
@@ -312,35 +286,9 @@ trait HasModuleInstallation
     }
 
     /**
-     * Select an existing app from the database.
-     */
-    protected function selectExistingApp(): ?TenantApp
-    {
-        $apps = TenantApp::where('is_active', true)->get();
-
-        if ($apps->isEmpty()) {
-            $this->error('No active apps found in the database.');
-
-            return null;
-        }
-
-        $choices = [];
-        foreach ($apps as $app) {
-            $choices[$app->name] = $app->title . ' (' . $app->name . ')';
-        }
-
-        $selectedAppKey = $this->choice(
-            "Select the app to add {$this->getModuleName()} to:",
-            $choices,
-        );
-
-        return $apps->firstWhere('name', $selectedAppKey);
-    }
-
-    /**
      * Install as a new standalone app.
      */
-    protected function installAsNewApp(string $sourceDir, string $targetDir): void
+    protected function installAsNewApp(string $sourceDir, string $targetDir, bool $isHidden): void
     {
         // Copy navigation.yml first, before app registration which may abort early
         $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
@@ -352,6 +300,7 @@ trait HasModuleInstallation
             $nav[0]['name'] = $this->targetAppKey;
             $nav[0]['title'] = $this->appTitle;
             $nav[0]['route'] = $this->targetAppKey;
+            $nav[0]['hidden'] = $isHidden;
             file_put_contents($navTarget, Yaml::dump($nav, 10, 2));
             $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->targetAppKey}/navigation.yml");
             $this->installResults['copied_files']++;
@@ -461,59 +410,6 @@ trait HasModuleInstallation
         }
 
         return $exitCode === 0;
-    }
-
-    /**
-     * Install to an existing app by adding navigation snippet.
-     */
-    protected function installToExistingApp(string $sourceDir, string $targetDir): void
-    {
-        // Target app was already selected in runModuleInstallation()
-        // Find navigation file in the target app folder
-        $navFile = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
-
-        if (! file_exists($navFile)) {
-            $this->error("Navigation file not found: app-configs/{$this->targetAppKey}/navigation.yml");
-            $this->line('Please make sure the app is installed correctly.');
-
-            return;
-        }
-
-        // Read snippet file
-        $snippetFile = $sourceDir . DIRECTORY_SEPARATOR . 'navigation-snippet.yml';
-        if (! file_exists($snippetFile)) {
-            $this->error('Navigation snippet not found.');
-
-            return;
-        }
-
-        // Read current navigation
-        $navContent = file_get_contents($navFile);
-        $nav = Yaml::parse($navContent);
-
-        // Check if module navigation already exists
-        $snippetTitle = $this->getSnippetTitle();
-        foreach ($nav[0]['block_menus'] ?? [] as $menu) {
-            if (($menu['title'] ?? '') === $snippetTitle) {
-                $this->warn("{$this->getModuleName()} navigation already exists in {$this->appTitle} navigation.");
-
-                return;
-            }
-        }
-
-        // Read snippet
-        $snippetContent = file_get_contents($snippetFile);
-        $snippet = Yaml::parse($snippetContent);
-
-        // Add snippet to navigation
-        $nav[0]['block_menus'][] = $snippet[0];
-
-        // Write updated navigation
-        $newContent = Yaml::dump($nav, 10, 2);
-        file_put_contents($navFile, $newContent);
-
-        $this->line("<info>✓ Navigation added to app-configs/{$this->targetAppKey}/navigation.yml</info>");
-        $this->installResults['overwritten_files']++;
     }
 
     /**
