@@ -3,6 +3,10 @@
 namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -240,7 +244,7 @@ trait NoerdList
     /**
      * Store ordered record IDs in session for arrow-key navigation in detail modals.
      *
-     * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
+     * @param  LengthAwarePaginator|array  $rows
      */
     protected function storeRecordNavigation(mixed $rows): void
     {
@@ -332,7 +336,7 @@ trait NoerdList
         $entity = Str::before($name, '-detail');
 
         // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity) . '-list';
+        return Str::plural($entity).'-list';
     }
 
     protected function componentName(): string
@@ -343,12 +347,19 @@ trait NoerdList
     /**
      * Get the event name for select mode.
      * Derives from COMPONENT: 'customers-list' -> 'customerSelected'
+     * Strips any Livewire namespace prefix: 'booking-members::customers-list' -> 'customerSelected'
      */
     protected function getSelectEvent(): string
     {
-        $entity = Str::singular(Str::before($this->componentName(), '-list'));
+        $name = $this->componentName();
 
-        return Str::camel($entity) . 'Selected';
+        if (str_contains($name, '::')) {
+            $name = Str::afterLast($name, '::');
+        }
+
+        $entity = Str::singular(Str::before($name, '-list'));
+
+        return Str::camel($entity).'Selected';
     }
 
     protected function dispatchSelectionEvents(mixed $modelId = null): void
@@ -383,22 +394,22 @@ trait NoerdList
                 ? $listConfig['searchableColumns']
                 : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
 
-            $table = (new $modelClass())->getTable();
-            $validFields = array_filter($searchableFields, fn($f) => Schema::hasColumn($table, $f));
+            $table = (new $modelClass)->getTable();
+            $validFields = array_filter($searchableFields, fn ($f) => Schema::hasColumn($table, $f));
 
             if (! empty($validFields)) {
                 $search = $this->search;
                 $query->where(function (Builder $q) use ($validFields, $search): void {
                     foreach (array_values($validFields) as $index => $field) {
                         $index === 0
-                            ? $q->where($field, 'like', '%' . $search . '%')
-                            : $q->orWhere($field, 'like', '%' . $search . '%');
+                            ? $q->where($field, 'like', '%'.$search.'%')
+                            : $q->orWhere($field, 'like', '%'.$search.'%');
                     }
                 });
             }
         }
 
-        $table = (new $modelClass())->getTable();
+        $table = (new $modelClass)->getTable();
         $sortField = Schema::hasColumn($table, $this->sortField) ? $this->sortField : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
@@ -451,25 +462,25 @@ trait NoerdList
         return $listSettings;
     }
 
-    protected function resolveModelFromRows(mixed $rows): ?\Illuminate\Database\Eloquent\Model
+    protected function resolveModelFromRows(mixed $rows): ?Model
     {
-        if ($rows instanceof \Illuminate\Pagination\LengthAwarePaginator
-            || $rows instanceof \Illuminate\Pagination\Paginator) {
+        if ($rows instanceof LengthAwarePaginator
+            || $rows instanceof Paginator) {
             $first = $rows->getCollection()->first();
-        } elseif ($rows instanceof \Illuminate\Support\Collection) {
+        } elseif ($rows instanceof Collection) {
             $first = $rows->first();
         } else {
             return null;
         }
 
-        return $first instanceof \Illuminate\Database\Eloquent\Model ? $first : null;
+        return $first instanceof Model ? $first : null;
     }
 
     /**
      * Build complete list configuration including rows and table state.
      * Returns all data needed for the list.index DETAIL_COMPONENT.
      *
-     * @param  \Illuminate\Pagination\LengthAwarePaginator|array  $rows
+     * @param  LengthAwarePaginator|array  $rows
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
@@ -514,10 +525,10 @@ trait NoerdList
         $name = $this->getDetailComponent();
         $stripped = Str::afterLast($name, '.');
 
-        $listeners = ['refreshList-' . $name => 'refreshList'];
+        $listeners = ['refreshList-'.$name => 'refreshList'];
 
         if ($name !== $stripped) {
-            $listeners['refreshList-' . $stripped] = 'refreshList';
+            $listeners['refreshList-'.$stripped] = 'refreshList';
         }
 
         return $listeners;
