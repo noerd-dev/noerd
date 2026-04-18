@@ -12,6 +12,7 @@ class StaticConfigHelper
 
     public static function getComponentFields(string $component): array
     {
+        $component = self::stripComponentNamespace($component);
         $yamlPath = self::findConfigPath("details/{$component}.yml");
 
         if (! $yamlPath) {
@@ -28,6 +29,7 @@ class StaticConfigHelper
 
     public static function getListConfig(string $tableName): array
     {
+        $tableName = self::stripComponentNamespace($tableName);
         $yamlPath = self::findConfigPath("lists/{$tableName}.yml");
 
         if (! $yamlPath) {
@@ -40,6 +42,11 @@ class StaticConfigHelper
         $content = file_get_contents($yamlPath);
 
         return Yaml::parse($content ?: '');
+    }
+
+    private static function stripComponentNamespace(string $component): string
+    {
+        return str_contains($component, '::') ? explode('::', $component, 2)[1] : $component;
     }
 
     public static function getNavigationStructure(): ?array
