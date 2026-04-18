@@ -79,8 +79,8 @@ class CurrencyHelper
         $formatted = number_format($value, 2, $dec, $thou);
 
         return $pos === 'before'
-            ? $symbol . ' ' . $formatted
-            : $formatted . ' ' . $symbol;
+            ? $symbol.' '.$formatted
+            : $formatted.' '.$symbol;
     }
 
     public static function clearCache(): void

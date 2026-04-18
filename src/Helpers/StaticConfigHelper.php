@@ -4,6 +4,7 @@ namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Log;
 use Noerd\Models\TenantApp;
+use Noerd\Services\DynamicNavigationRegistry;
 use Symfony\Component\Yaml\Yaml;
 
 class StaticConfigHelper
@@ -131,7 +132,7 @@ class StaticConfigHelper
 
         $allAppFolders = TenantApp::where('is_active', true)
             ->pluck('name')
-            ->map(fn($name) => mb_strtolower($name))
+            ->map(fn ($name) => mb_strtolower($name))
             ->toArray();
 
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
@@ -156,7 +157,7 @@ class StaticConfigHelper
         if ($currentApp) {
             $moduleSourcePath = self::getModuleSourcePath($currentApp);
             if ($moduleSourcePath) {
-                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
+                $sourceFallbackPath = $moduleSourcePath.DIRECTORY_SEPARATOR.$subPath;
                 if (file_exists($sourceFallbackPath)) {
                     return $sourceFallbackPath;
                 }
@@ -171,7 +172,7 @@ class StaticConfigHelper
 
             $moduleSourcePath = self::getModuleSourcePath($folder);
             if ($moduleSourcePath) {
-                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
+                $sourceFallbackPath = $moduleSourcePath.DIRECTORY_SEPARATOR.$subPath;
                 if (file_exists($sourceFallbackPath)) {
                     return $sourceFallbackPath;
                 }
@@ -186,7 +187,7 @@ class StaticConfigHelper
      */
     private static function processDynamicNavigation(array $navigationStructure): array
     {
-        $registry = app(\Noerd\Services\DynamicNavigationRegistry::class);
+        $registry = app(DynamicNavigationRegistry::class);
 
         // Support legacy navigation structure with block_menus at top level
         if (isset($navigationStructure[0]['block_menus'])) {
@@ -243,11 +244,7 @@ class StaticConfigHelper
                 return false;
             }
 
-            return ! (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin())
-
-
-
-            ;
+            return ! (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin());
         }));
     }
 
@@ -257,7 +254,7 @@ class StaticConfigHelper
     private static function copyComponentsFromDirectory(string $sourceDir, array $componentMapping, string $userGroup): array
     {
         $results = [];
-        $files = glob($sourceDir . '/*.yml');
+        $files = glob($sourceDir.'/*.yml');
 
         foreach ($files as $file) {
             $componentName = basename($file, '.yml');
@@ -291,11 +288,11 @@ class StaticConfigHelper
     private static function copyComponentToModule(string $sourceFile, string $module, string $componentName): bool
     {
         $targetDir = base_path("app-modules/{$module}/content/components");
-        $targetFile = $targetDir . "/{$componentName}.yml";
+        $targetFile = $targetDir."/{$componentName}.yml";
 
         // Create directory if it doesn't exist
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
+        if (! is_dir($targetDir)) {
+            if (! mkdir($targetDir, 0755, true)) {
                 return false;
             }
         }
@@ -349,7 +346,7 @@ class StaticConfigHelper
                 continue;
             }
 
-            $appContentsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-contents';
+            $appContentsPath = $appModulesPath.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR.'app-contents';
             if (! is_dir($appContentsPath)) {
                 continue;
             }
@@ -360,7 +357,7 @@ class StaticConfigHelper
                     continue;
                 }
 
-                $fullPath = $appContentsPath . DIRECTORY_SEPARATOR . $appKey;
+                $fullPath = $appContentsPath.DIRECTORY_SEPARATOR.$appKey;
                 if (is_dir($fullPath)) {
                     $mappings[$appKey] = $module;
                 }

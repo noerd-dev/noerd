@@ -52,7 +52,7 @@ class KeyboardShortcutHelper
     {
         ['modifiers' => $modifiers, 'key' => $key] = self::parseShortcutString($shortcut);
 
-        $js = 'e.key.toLowerCase() === ' . json_encode($key);
+        $js = 'e.key.toLowerCase() === '.json_encode($key);
 
         if (in_array('ctrl', $modifiers)) {
             $js .= ' && (e.ctrlKey || e.metaKey)';
