@@ -13,21 +13,21 @@ describe('RichText Form Component', function (): void {
     });
 
     it('renders without error with empty content', function (): void {
-        Livewire::test('rich-text-field-test', [
+        Livewire::test('noerd::rich-text-field-test', [
             'initialModel' => [],
         ])
             ->assertSuccessful();
     });
 
     it('renders without error with HTML content', function (): void {
-        Livewire::test('rich-text-field-test', [
+        Livewire::test('noerd::rich-text-field-test', [
             'initialModel' => ['content' => '<p>Hello world</p>'],
         ])
             ->assertSuccessful();
     });
 
     it('shows the label', function (): void {
-        Livewire::test('rich-text-field-test', [
+        Livewire::test('noerd::rich-text-field-test', [
             'initialModel' => [],
         ])
             ->assertSee('Content');

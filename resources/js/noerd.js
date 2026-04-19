@@ -135,9 +135,8 @@ document.addEventListener('alpine:init', () => {
     }));
 
     // Keyboard shortcut support for detail pages
-    Alpine.data('noerdPage', ({ currentTab, shortcuts, deleteMessage, hasRecordNav }) => ({
+    Alpine.data('noerdPage', ({ currentTab, shortcuts, deleteMessage }) => ({
         currentTab,
-        hasRecordNav: hasRecordNav || false,
         _parsedShortcuts: {},
         _keydownHandler: null,
 
@@ -147,23 +146,6 @@ document.addEventListener('alpine:init', () => {
             }
 
             this._keydownHandler = (e) => {
-                const tag = document.activeElement?.tagName;
-                const inBlockingField = ['TEXTAREA', 'SELECT'].includes(tag) || document.activeElement?.isContentEditable;
-
-                // Record navigation: ArrowDown/ArrowUp (blocked only in textarea, select, contenteditable)
-                if (this.hasRecordNav && Alpine.store('app').modalOpen && !Alpine.store('app').modalFullscreen && !inBlockingField) {
-                    if (e.key === 'ArrowDown' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
-                        e.preventDefault();
-                        this.$wire.navigateRecord('next');
-                        return;
-                    }
-                    if (e.key === 'ArrowUp' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
-                        e.preventDefault();
-                        this.$wire.navigateRecord('prev');
-                        return;
-                    }
-                }
-
                 if ('save' in this._parsedShortcuts && matchesShortcut(e, this._parsedShortcuts.save)) {
                     e.preventDefault();
                     this.$wire.store();

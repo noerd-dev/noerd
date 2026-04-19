@@ -13,8 +13,8 @@ uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
 $testSettings = [
-    'componentName' => 'noerd-user-detail',
-    'listName' => 'noerd-users-list',
+    'componentName' => 'noerd::noerd-user-detail',
+    'listName' => 'noerd::noerd-users-list',
     'modelId' => 'modelId',
     'urlParam' => 'userId',
 ];

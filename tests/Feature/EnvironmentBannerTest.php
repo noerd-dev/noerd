@@ -9,7 +9,7 @@ uses(Tests\TestCase::class);
 it('shows blue Local banner when env is local', function (): void {
     app()->detectEnvironment(fn() => 'local');
 
-    Livewire::test('layout.environment-banner')
+    Livewire::test('noerd::layout.environment-banner')
         ->assertSet('environment', 'local')
         ->assertSet('label', 'Local')
         ->assertSee('Local')
@@ -19,7 +19,7 @@ it('shows blue Local banner when env is local', function (): void {
 it('shows green Development banner when env is development', function (): void {
     app()->detectEnvironment(fn() => 'development');
 
-    Livewire::test('layout.environment-banner')
+    Livewire::test('noerd::layout.environment-banner')
         ->assertSet('environment', 'development')
         ->assertSet('label', 'Development')
         ->assertSee('Development')
@@ -29,7 +29,7 @@ it('shows green Development banner when env is development', function (): void {
 it('shows orange Staging banner when env is staging', function (): void {
     app()->detectEnvironment(fn() => 'staging');
 
-    Livewire::test('layout.environment-banner')
+    Livewire::test('noerd::layout.environment-banner')
         ->assertSet('environment', 'staging')
         ->assertSet('label', 'Staging')
         ->assertSee('Staging')
@@ -39,7 +39,7 @@ it('shows orange Staging banner when env is staging', function (): void {
 it('hides banner in production', function (): void {
     app()->detectEnvironment(fn() => 'production');
 
-    Livewire::test('layout.environment-banner')
+    Livewire::test('noerd::layout.environment-banner')
         ->assertSet('environment', null)
         ->assertDontSee('Local')
         ->assertDontSee('Development')
@@ -49,6 +49,6 @@ it('hides banner in production', function (): void {
 it('hides banner for unknown custom environments', function (): void {
     app()->detectEnvironment(fn() => 'qa');
 
-    Livewire::test('layout.environment-banner')
+    Livewire::test('noerd::layout.environment-banner')
         ->assertSet('environment', null);
 });

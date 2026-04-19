@@ -13,7 +13,7 @@ it('authenticates a user and redirects without navigate', function (): void {
         'password' => bcrypt('password'),
     ]);
 
-    Livewire::test('auth.login')
+    Livewire::test('noerd::auth.login')
         ->set('email', $user->email)
         ->set('password', 'password')
         ->call('login')
@@ -25,7 +25,7 @@ it('fails login with invalid credentials', function (): void {
         'password' => bcrypt('password'),
     ]);
 
-    Livewire::test('auth.login')
+    Livewire::test('noerd::auth.login')
         ->set('email', $user->email)
         ->set('password', 'wrong-password')
         ->call('login')
@@ -33,7 +33,7 @@ it('fails login with invalid credentials', function (): void {
 });
 
 it('requires email and password', function (): void {
-    Livewire::test('auth.login')
+    Livewire::test('noerd::auth.login')
         ->call('login')
         ->assertHasErrors(['email', 'password']);
 });
@@ -43,7 +43,7 @@ it('rate limits login attempts', function (): void {
         'password' => bcrypt('password'),
     ]);
 
-    $component = Livewire::test('auth.login')
+    $component = Livewire::test('noerd::auth.login')
         ->set('email', $user->email);
 
     for ($i = 0; $i < 5; $i++) {

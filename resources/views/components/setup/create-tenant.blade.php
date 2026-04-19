@@ -18,7 +18,7 @@ new class extends Component {
 
     <x-noerd::box>
         <div class="max-w-xl">
-            <livewire:setup.create-new-tenant />
+            <livewire:noerd::setup.create-new-tenant />
         </div>
     </x-noerd::box>
 </x-noerd::page>

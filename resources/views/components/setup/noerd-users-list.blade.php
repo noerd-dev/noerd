@@ -11,13 +11,13 @@ new class () extends Component {
     use NoerdList;
     use TenantFilterTrait;
 
-    public const DETAIL_COMPONENT = 'noerd-users-list';
+    public const DETAIL_COMPONENT = 'noerd::noerd-users-list';
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
-            modalComponent: 'noerd-user-detail',
+            modalComponent: 'noerd::noerd-user-detail',
             source: $this->getComponentName(),
             arguments: ['modelId' => $modelId, 'relations' => $relations],
         );

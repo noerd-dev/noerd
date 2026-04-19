@@ -45,7 +45,7 @@ new class extends Component {
     <div class="flex">
 
         <!-- First column sidebar / Apps -->
-        <livewire:layout.app-bar />
+        <livewire:noerd::layout.app-bar />
 
         <!-- Second column sidebar / Navigation -->
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
@@ -71,7 +71,7 @@ new class extends Component {
                  ])
                  :style="'width: var(--sidebar-nav-width); margin-left: ' + (showAppbar ? 'var(--sidebar-apps-width)' : '0')"
             >
-                <livewire:layout.sidebar-navigation :navigation="$navigation->subMenu()"
+                <livewire:noerd::layout.sidebar-navigation :navigation="$navigation->subMenu()"
                                                     :navigations="$navigation->blockMenus()"/>
 
                 <!-- Toggle Appbar Button -->

@@ -45,7 +45,7 @@ it('renders the list component and shows existing definitions', function (): voi
     $response = $this->get('/setup-collection-definitions');
     $response->assertOk();
 
-    Livewire::test('setup-collection-definitions-list')
+    Livewire::test('noerd::setup-collection-definitions-list')
         ->assertNotSet('listId', '');
 });
 
@@ -55,9 +55,9 @@ it('dispatches modal when listAction is called', function (): void {
 
     createExpenseCategoriesDefinition($tenant->id);
 
-    Livewire::test('setup-collection-definitions-list')
+    Livewire::test('noerd::setup-collection-definitions-list')
         ->call('listAction', 'expense_categories')
-        ->assertDispatched('noerdModal', modalComponent: 'setup-collection-definition-detail');
+        ->assertDispatched('noerdModal', modalComponent: 'noerd::setup-collection-definition-detail');
 });
 
 it('loads existing collection definition in detail component', function (): void {
@@ -66,7 +66,7 @@ it('loads existing collection definition in detail component', function (): void
 
     createExpenseCategoriesDefinition($tenant->id);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'expense_categories'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'expense_categories'])
         ->assertSet('isEditing', true)
         ->assertSet('detailData.filename', 'expense_categories')
         ->assertSet('detailData.title', 'Ausgabenkategorie');
@@ -76,7 +76,7 @@ it('loads pageLayout with metadata fields from YAML config', function (): void {
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    $component = Livewire::test('setup-collection-definition-detail');
+    $component = Livewire::test('noerd::setup-collection-definition-detail');
 
     $pageLayout = $component->get('pageLayout');
     expect($pageLayout)->not->toBeEmpty();
@@ -94,7 +94,7 @@ it('allows renaming the filename of an existing collection definition', function
 
     createExpenseCategoriesDefinition($tenant->id);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'expense_categories'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'expense_categories'])
         ->set('detailData.filename', 'expense_categories_renamed')
         ->call('store')
         ->assertHasNoErrors();
@@ -119,7 +119,7 @@ it('prevents renaming to an existing filename', function (): void {
         'fields' => [],
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'expense_categories'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'expense_categories'])
         ->set('detailData.filename', 'expense_categories_renamed')
         ->call('store')
         ->assertHasErrors('detailData.filename');
@@ -131,7 +131,7 @@ it('creates a new collection definition with correct structure', function (): vo
     ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'test_store')
         ->set('detailData.title', 'Test Store')
         ->set('detailData.titleList', 'Test Stores')
@@ -149,7 +149,7 @@ it('ensures a SetupCollection instance bucket exists after creating a definition
     ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'new_things')
         ->set('detailData.title', 'Thing')
         ->set('detailData.titleList', 'Things')
@@ -177,7 +177,7 @@ it('prevents duplicate filenames', function (): void {
         'fields' => [],
     ]);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'test_duplicate')
         ->set('detailData.title', 'Duplicate')
         ->set('detailData.titleList', 'Duplicates')
@@ -189,7 +189,7 @@ it('validates required fields', function (): void {
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', '')
         ->set('detailData.title', '')
         ->set('detailData.titleList', '')
@@ -205,7 +205,7 @@ it('validates filename format (no dashes allowed)', function (): void {
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'Invalid Name!')
         ->set('detailData.title', 'Test')
         ->set('detailData.titleList', 'Tests')
@@ -217,7 +217,7 @@ it('normalizes filename by lowercasing and stripping yml extension', function ()
     ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'FILM.YML')
         ->set('detailData.title', 'Film')
         ->set('detailData.titleList', 'Films')
@@ -231,7 +231,7 @@ it('normalizes hyphens to underscores in filename', function (): void {
     ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'my-collection')
         ->set('detailData.title', 'My Collection')
         ->set('detailData.titleList', 'My Collections')
@@ -245,7 +245,7 @@ it('adds and removes fields', function (): void {
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->assertSet('fields', [])
         ->call('addField')
         ->assertCount('fields', 1)
@@ -259,7 +259,7 @@ it('stores fields in the collection definition', function (): void {
     ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    Livewire::test('setup-collection-definition-detail')
+    Livewire::test('noerd::setup-collection-definition-detail')
         ->set('detailData.filename', 'test_definition')
         ->set('detailData.title', 'Test Def')
         ->set('detailData.titleList', 'Test Defs')
@@ -283,7 +283,7 @@ it('copies a collection definition with key, title and titleList all suffixed wi
 
     createExpenseCategoriesDefinition($tenant->id);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'expense_categories'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'expense_categories'])
         ->call('copy')
         ->assertHasNoErrors();
 
@@ -315,7 +315,7 @@ it('prevents copying when target definition already exists', function (): void {
         'fields' => [],
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'expense_categories'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'expense_categories'])
         ->call('copy')
         ->assertHasErrors('detailData.filename');
 });
@@ -333,7 +333,7 @@ it('deletes a collection definition', function (): void {
         'fields' => [],
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'test_definition_2'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'test_definition_2'])
         ->call('delete');
 
     expect(SetupCollectionDefinition::find($definition->id))->toBeNull();
@@ -365,7 +365,7 @@ it('deletes associated SetupCollection and entries when deleting a definition', 
         'sort' => 0,
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'test_definition_2'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'test_definition_2'])
         ->call('delete');
 
     expect(SetupCollectionDefinition::where('tenant_id', $tenant->id)->where('filename', 'test_definition_2')->exists())->toBeFalse();
@@ -388,7 +388,7 @@ it('shows rename confirmation when a field name is changed', function (): void {
         ],
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'rename_test'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'rename_test'])
         ->set('fields.0.name', 'headline_one')
         ->call('store')
         ->assertSet('showRenameConfirmation', true)
@@ -423,7 +423,7 @@ it('renames field keys in entry data when confirmed', function (): void {
         'sort' => 0,
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'rename_test'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'rename_test'])
         ->set('fields.0.name', 'headline_one')
         ->call('store')
         ->assertSet('showRenameConfirmation', true)
@@ -464,7 +464,7 @@ it('skips database rename when user declines', function (): void {
         'sort' => 0,
     ]);
 
-    Livewire::test('setup-collection-definition-detail', ['modelId' => 'rename_test'])
+    Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'rename_test'])
         ->set('fields.0.name', 'headline_one')
         ->call('store')
         ->assertSet('showRenameConfirmation', true)

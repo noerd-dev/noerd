@@ -31,8 +31,6 @@ trait NoerdDetail
 
     public array $imageUploads = [];
 
-    public array $recordNavigationIds = [];
-
     /**
      * Get the component name (alias for getName).
      */
@@ -43,173 +41,11 @@ trait NoerdDetail
 
     public function initDetail(): void
     {
-        $this->loadRecordNavigation();
-
         // For detail components with DETAIL_CLASS constant
         if (defined('static::DETAIL_CLASS')) {
             $modelClass = static::DETAIL_CLASS;
             $this->mountDetailComponent(new $modelClass(), $modelClass);
         }
-    }
-
-    /**
-     * Check if record navigation is available.
-     */
-    public function hasRecordNavigation(): bool
-    {
-        if (! $this->modelId) {
-            return false;
-        }
-
-        if (! empty($this->recordNavigationIds)) {
-            return true;
-        }
-
-        return defined('static::DETAIL_CLASS');
-    }
-
-    /**
-     * Navigate to the next or previous record.
-     */
-    public function navigateRecord(string $direction): void
-    {
-        if (! $this->modelId) {
-            return;
-        }
-
-        // Fallback: query model by ID when not opened from a list
-        if (empty($this->recordNavigationIds)) {
-            if (! defined('static::DETAIL_CLASS')) {
-                return;
-            }
-
-            $modelClass = static::DETAIL_CLASS;
-            // Down (next) = older record (lower ID), Up (prev) = newer record (higher ID)
-            $newId = $direction === 'next'
-                ? $modelClass::where('id', '<', $this->modelId)->orderByDesc('id')->value('id')
-                : $modelClass::where('id', '>', $this->modelId)->orderBy('id')->value('id');
-
-            if ($newId) {
-                $this->loadRecord($newId);
-            }
-
-            return;
-        }
-
-        $currentIndex = array_search((int) $this->modelId, $this->recordNavigationIds);
-        if ($currentIndex === false) {
-            return;
-        }
-
-        $newIndex = $direction === 'next' ? $currentIndex + 1 : $currentIndex - 1;
-
-        if ($newIndex < 0 || $newIndex >= count($this->recordNavigationIds)) {
-            return;
-        }
-
-        $this->loadRecord($this->recordNavigationIds[$newIndex]);
-    }
-
-    /**
-     * Load a different record into the current detail component.
-     * Calls mount() to re-initialize all component properties.
-     */
-    public function loadRecord(mixed $id): void
-    {
-        $this->modelId = $id;
-        $this->currentTab = 1;
-        $this->showSuccessIndicator = false;
-        $this->relationTitles = [];
-
-        $this->mount();
-
-        $this->dispatch('record-navigated', id: $id);
-    }
-
-    /**
-     * Get record navigation position info for the UI indicator.
-     */
-    public function getRecordNavigationInfo(): array
-    {
-        if (! $this->modelId) {
-            return ['available' => false];
-        }
-
-        // Fallback mode: query model by ID
-        if (empty($this->recordNavigationIds)) {
-            if (! defined('static::DETAIL_CLASS')) {
-                return ['available' => false];
-            }
-
-            $modelClass = static::DETAIL_CLASS;
-
-            // Up (prev) = newer (higher ID), Down (next) = older (lower ID)
-            return [
-                'available' => true,
-                'hasPrev' => $modelClass::where('id', '>', $this->modelId)->exists(),
-                'hasNext' => $modelClass::where('id', '<', $this->modelId)->exists(),
-                'current' => null,
-                'total' => null,
-            ];
-        }
-
-        $currentIndex = array_search((int) $this->modelId, $this->recordNavigationIds);
-        if ($currentIndex === false) {
-            return ['available' => false];
-        }
-
-        return [
-            'available' => true,
-            'hasPrev' => $currentIndex > 0,
-            'hasNext' => $currentIndex < count($this->recordNavigationIds) - 1,
-            'current' => $currentIndex + 1,
-            'total' => count($this->recordNavigationIds),
-        ];
-    }
-
-    public function openSelectMediaModal(string $fieldName): void
-    {
-        $this->mediaToken = uniqid('media_', true);
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'media-list',
-            arguments: ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $this->mediaToken],
-        );
-    }
-
-    #[On('mediaSelected')]
-    public function mediaSelected(int $mediaId, ?string $fieldName = null, ?string $token = null): void
-    {
-        if ($this->mediaToken === null || $this->mediaToken !== $token) {
-            return;
-        }
-
-        $resolver = app(MediaResolverContract::class);
-        if (! $resolver->exists($mediaId)) {
-            return;
-        }
-
-        $key = $this->resolveImageFieldKey($fieldName);
-        $this->detailData[$key] = $mediaId;
-        $this->mediaToken = null;
-    }
-
-    public function deleteImage(string $fieldName): void
-    {
-        $key = $this->resolveImageFieldKey($fieldName);
-        $this->detailData[$key] = null;
-    }
-
-    public function updatedImageUploads(mixed $value, string $fieldKey): void
-    {
-        $resolver = app(MediaResolverContract::class);
-        $url = $resolver->storeUploadedFile($value);
-
-        if ($url) {
-            $this->detailData[$fieldKey] = $url;
-        }
-
-        unset($this->imageUploads[$fieldKey]);
     }
 
     public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
@@ -335,15 +171,6 @@ trait NoerdDetail
         $provider = $registry->resolve($picklistField);
 
         return $provider ? $provider() : [];
-    }
-
-    /**
-     * Load record navigation IDs from session.
-     */
-    protected function loadRecordNavigation(): void
-    {
-        $listComponent = $this->getListComponent();
-        $this->recordNavigationIds = session("record_navigation.{$listComponent}", []);
     }
 
     protected function resolveImageFieldKey(string $fieldName): string

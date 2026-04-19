@@ -22,7 +22,7 @@ new class extends Component
     {
         $this->dispatch(
             event: 'noerdModal',
-            modalComponent: 'setup-collection-definition-detail',
+            modalComponent: 'noerd::setup-collection-definition-detail',
             source: $this->getComponentName(),
             arguments: ['modelId' => $modelId, 'relations' => $relations],
         );

@@ -14,7 +14,7 @@ new class extends Component {
     public $modelId = null;
 
     public const DETAIL_CLASS = Tenant::class;
-    public const DETAIL_COMPONENT = 'tenant-detail';
+    public const DETAIL_COMPONENT = 'noerd::setup.tenant-detail';
 
     public $logo;
 

@@ -9,19 +9,11 @@
     if (method_exists($__livewire ?? new stdClass, 'delete')) {
         $shortcuts['delete'] = config('noerd.keyboard_shortcuts.delete', 'ctrl+backspace');
     }
-
-    $hasRecordNav = method_exists($__livewire ?? new stdClass, 'hasRecordNavigation')
-        && $__livewire->hasRecordNavigation();
-
-    $recordNavInfo = $hasRecordNav
-        ? $__livewire->getRecordNavigationInfo()
-        : ['available' => false];
 @endphp
 <div x-data="noerdPage({
         currentTab: @if($hasCurrentTab)@entangle('currentTab')@else 1 @endif,
         shortcuts: @js($shortcuts),
         deleteMessage: @js(__('Are you sure you want to delete this entry?')),
-        hasRecordNav: @js($hasRecordNav)
     })"
      class="flex flex-col"
      @if($disableModal ?? false)
@@ -30,10 +22,6 @@
      :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] ' + (isRight ? '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh)]' }}' : '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}') : 'h-full'"
     @endif
 >
-    @if($hasRecordNav && $recordNavInfo['available'] && !($disableModal ?? false) && !$isFullscreen)
-        <x-noerd::record-navigation :recordNavInfo="$recordNavInfo" />
-    @endif
-
     {{$header ?? ''}}
     {{$table ?? ''}}
 

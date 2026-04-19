@@ -100,7 +100,7 @@ new class () extends Component {
                     </svg>
                 </button>
 
-                <livewire:layout.quick-menu/>
+                <livewire:noerd::layout.quick-menu/>
 
                 <div class="ml-auto my-auto flex items-center gap-x-4 shrink-0">
                     @if(auth()->user()->isAdmin())

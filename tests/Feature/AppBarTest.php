@@ -31,7 +31,7 @@ it('renders the app bar for an authenticated user', function (): void {
     $tenant?->tenantApps()->attach($tenantApp->id, ['is_hidden' => false]);
     $this->actingAs($user);
 
-    Livewire::test('layout.app-bar')
+    Livewire::test('noerd::layout.app-bar')
         ->assertSee('AppBar Test App');
 });
 
@@ -50,7 +50,7 @@ it('sets selected app and redirects when opening an app', function (): void {
     $tenant?->tenantApps()->attach($tenantApp->id, ['is_hidden' => false]);
     $this->actingAs($user);
 
-    Livewire::test('layout.app-bar')
+    Livewire::test('noerd::layout.app-bar')
         ->call('openApp', $tenantApp->name, $tenantApp->route)
         ->assertRedirect(route('app-bar-test'));
 

@@ -3,26 +3,26 @@
     <div class="p-8">
         <x-noerd::box>
             <div class="max-w-xl">
-                <livewire:profile.update-profile-information-form/>
+                <livewire:noerd::profile.update-profile-information-form/>
             </div>
         </x-noerd::box>
 
         <x-noerd::box>
             <div class="max-w-xl">
-                <livewire:profile.update-password-form/>
+                <livewire:noerd::profile.update-password-form/>
             </div>
         </x-noerd::box>
 
         <x-noerd::box>
             <div class="max-w-xl">
-                <livewire:profile.update-language-form/>
+                <livewire:noerd::profile.update-language-form/>
             </div>
         </x-noerd::box>
 
         @if(config('noerd.features.multi_tenant'))
             <x-noerd::box>
                 <div class="max-w-xl">
-                    <livewire:profile.tenant-access-display-form/>
+                    <livewire:noerd::profile.tenant-access-display-form/>
                 </div>
             </x-noerd::box>
         @endif
@@ -30,7 +30,7 @@
         {{--
         <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">
             <div class="max-w-xl">
-                <livewire:profile.delete-user-form />
+                <livewire:noerd::profile.delete-user-form />
             </div>
         </div>
         --}}

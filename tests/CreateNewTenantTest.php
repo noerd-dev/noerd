@@ -12,7 +12,7 @@ uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
 $testSettings = [
-    'componentName' => 'setup.create-new-tenant',
+    'componentName' => 'noerd::setup.create-new-tenant',
 ];
 
 it('renders the create-new-tenant component', function () use ($testSettings): void {

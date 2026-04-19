@@ -88,7 +88,8 @@ class RelationFieldDefinition
             return null;
         }
 
-        $entity = Str::singular(Str::before($this->listComponent, '-list'));
+        $listWithoutNamespace = Str::afterLast($this->listComponent, '::');
+        $entity = Str::singular(Str::before($listWithoutNamespace, '-list'));
 
         return Str::camel($entity) . 'Selected';
     }

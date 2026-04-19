@@ -229,13 +229,13 @@ describe('Setup Collections Route', function (): void {
 
 describe('Setup Collections List Component', function (): void {
     it('shows collection entries list', function (): void {
-        Livewire::test('setup-collections-list', ['collectionKey' => 'example'])
+        Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])
             ->assertStatus(200)
             ->assertSee('Beispiele');
     });
 
     it('can open detail modal', function (): void {
-        Livewire::test('setup-collections-list', ['collectionKey' => 'example'])
+        Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])
             ->call('listAction')
             ->assertDispatched('noerdModal');
     });
@@ -243,14 +243,14 @@ describe('Setup Collections List Component', function (): void {
 
 describe('Setup Collection Detail Component', function (): void {
     it('loads collection layout', function (): void {
-        Livewire::test('setup-collection-detail', ['collectionKey' => 'example'])
+        Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'example'])
             ->assertStatus(200)
             ->assertSet('collectionKey', 'example')
             ->assertSet('collectionLayout', fn($layout) => $layout !== null);
     });
 
     it('can save a new entry', function (): void {
-        $component = Livewire::test('setup-collection-detail', ['collectionKey' => 'example'])
+        $component = Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'example'])
             ->set('detailData.title.de', 'Test Titel')
             ->set('detailData.title.en', 'Test Title')
             ->set('detailData.is_active', true)
@@ -349,13 +349,13 @@ describe('SetupFieldTypeConverter', function (): void {
 
 describe('Setup Languages List Component', function (): void {
     it('shows languages list', function (): void {
-        Livewire::test('setup-languages-list')
+        Livewire::test('noerd::setup-languages-list')
             ->assertStatus(200)
             ->assertSee('English');
     });
 
     it('can open detail modal', function (): void {
-        Livewire::test('setup-languages-list')
+        Livewire::test('noerd::setup-languages-list')
             ->call('listAction')
             ->assertDispatched('noerdModal');
     });
@@ -363,7 +363,7 @@ describe('Setup Languages List Component', function (): void {
 
 describe('Setup Language Detail Component', function (): void {
     it('loads for new language', function (): void {
-        Livewire::test('setup-language-detail')
+        Livewire::test('noerd::setup-language-detail')
             ->assertStatus(200)
             ->assertSet('detailData.is_active', true);
     });
@@ -371,14 +371,14 @@ describe('Setup Language Detail Component', function (): void {
     it('loads existing language', function (): void {
         $english = SetupLanguage::where('code', 'en')->first();
 
-        Livewire::withUrlParams(['setupLanguageId' => $english->id])->test('setup-language-detail')
+        Livewire::withUrlParams(['setupLanguageId' => $english->id])->test('noerd::setup-language-detail')
             ->assertStatus(200)
             ->assertSet('detailData.code', 'en')
             ->assertSet('detailData.name', 'English');
     });
 
     it('can save a new language', function (): void {
-        Livewire::test('setup-language-detail')
+        Livewire::test('noerd::setup-language-detail')
             ->set('detailData.code', 'fr')
             ->set('detailData.name', 'Français')
             ->set('detailData.is_active', true)

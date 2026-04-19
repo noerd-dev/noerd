@@ -13,14 +13,14 @@ describe('Image Form Component', function (): void {
     });
 
     it('renders without error when no image is set', function (): void {
-        Livewire::test('image-field-test', [
+        Livewire::test('noerd::image-field-test', [
             'initialModel' => [],
         ])
             ->assertSuccessful();
     });
 
     it('renders without error when image field has a string URL value', function (): void {
-        Livewire::test('image-field-test', [
+        Livewire::test('noerd::image-field-test', [
             'initialModel' => ['image' => 'https://example.com/photo.jpg'],
         ])
             ->assertSuccessful();
@@ -32,7 +32,7 @@ describe('Image Form Component', function (): void {
         $resolver->shouldReceive('getPreviewUrl')->andReturn(null);
         app()->instance(\Noerd\Contracts\MediaResolverContract::class, $resolver);
 
-        Livewire::test('image-field-test', [
+        Livewire::test('noerd::image-field-test', [
             'initialModel' => [],
         ])
             ->assertSee(__('Choose image from media'));

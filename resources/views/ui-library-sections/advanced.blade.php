@@ -53,24 +53,6 @@ fields:
     &lt;/div&gt;
 &#64;endforeach</x-noerd::code-snippet>
 
-    {{-- Record Navigation --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Record Navigation</h3>
-    <p class="text-sm text-gray-500 mb-3">Previous/next record navigation arrows displayed alongside the detail modal.</p>
-    <x-noerd::info-box>Requires the NoerdDetail trait in the Livewire component.</x-noerd::info-box>
-    <x-noerd::code-snippet>&lt;!-- Automatically rendered by x-noerd::page when the component --&gt;
-&lt;!-- implements hasRecordNavigation() and getRecordNavigationInfo() --&gt;
-&lt;!-- The NoerdDetail trait provides these methods. --&gt;
-
-# Navigation info structure:
-$recordNavInfo = [
-    'available' =&gt; true,
-    'hasPrev' =&gt; true,
-    'hasNext' =&gt; true,
-];
-
-# Manual usage
-&lt;x-noerd::record-navigation :recordNavInfo="$recordNavInfo" /&gt;</x-noerd::code-snippet>
-
     {{-- Dropzone --}}
     <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Dropzone</h3>
     <p class="text-sm text-gray-500 mb-3">Drag-and-drop file upload zone with progress indicator, file list, and validation.</p>

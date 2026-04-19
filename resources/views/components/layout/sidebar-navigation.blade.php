@@ -52,14 +52,14 @@ new class extends Component {
                         @if(($block['style'] ?? 'list') === 'buttons')
                             <div class="flex flex-col gap-2">
                                 @foreach($block['navigations'] as $navi)
-                                    <livewire:layout.sidebar-navigation-button wire:key="btn-{{$navi['title']}}"
+                                    <livewire:noerd::layout.sidebar-navigation-button wire:key="btn-{{$navi['title']}}"
                                                                                :navi="$navi"/>
                                 @endforeach
                             </div>
                         @else
                             <ul role="list" class="space-y-1">
                                 @foreach($block['navigations'] as $navi)
-                                    <livewire:layout.sidebar-navigation-element wire:key="{{$navi['title']}}"
+                                    <livewire:noerd::layout.sidebar-navigation-element wire:key="{{$navi['title']}}"
                                                                                 :navi="$navi"/>
                                 @endforeach
                             </ul>
@@ -69,7 +69,7 @@ new class extends Component {
             @endif
             @if(empty($block['navigations']) && isset($block['route']))
                 <ul role="list" class="pb-2">
-                    <livewire:layout.sidebar-navigation-element wire:key="{{$block['title']}}" :navi="$block"/>
+                    <livewire:noerd::layout.sidebar-navigation-element wire:key="{{$block['title']}}" :navi="$block"/>
                 </ul>
             @endif
         @endforeach

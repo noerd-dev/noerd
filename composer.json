@@ -6,7 +6,7 @@
     "license": "MIT",
     "require": {
         "livewire/livewire": "^4.0",
-        "noerd/modal": "^0.2",
+        "noerd/modal": "^0.3",
         "composer/composer": "^2.9",
         "wireui/heroicons": "^2.9"
     },

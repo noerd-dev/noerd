@@ -129,7 +129,7 @@ new class extends Component
         $this->detailData['__mediaToken'] = $token;
         $this->dispatch(
             event: 'noerdModal',
-            modalComponent: 'media-list',
+            modalComponent: 'media::media-list',
             arguments: ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token],
         );
     }
@@ -163,7 +163,7 @@ new class extends Component
             {{ $collectionLayout['title'] ?? __('Entry') }}
 
             <div class="ml-auto" :class="isModal ? 'mr-22' : ''">
-                <livewire:setup-language-switcher/>
+                <livewire:noerd::setup-language-switcher/>
             </div>
         </x-noerd::modal-title>
     </x-slot:header>

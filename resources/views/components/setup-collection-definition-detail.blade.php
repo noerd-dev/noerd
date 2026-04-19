@@ -253,7 +253,7 @@ new class extends Component
         }
 
         $this->dispatch('listRefresh');
-        $this->closeModalProcess('setup-collection-definitions-list');
+        $this->closeModalProcess('noerd::setup-collection-definitions-list');
     }
 
     public function delete(): void
@@ -277,7 +277,7 @@ new class extends Component
 
         $repository->delete($this->modelId);
 
-        $this->closeModalProcess('setup-collection-definitions-list');
+        $this->closeModalProcess('noerd::setup-collection-definitions-list');
     }
 } ?>
 

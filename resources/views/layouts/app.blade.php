@@ -39,13 +39,13 @@
 </head>
 <body class="bg-brand-bg h-full">
 
-<livewire:noerd-modal/> <!-- must be loaded before livewire components -->
+<livewire:noerd-modal::noerd-modal/> <!-- must be loaded before livewire components -->
 
-<livewire:layout.environment-banner />
+<livewire:noerd::layout.environment-banner />
 
 @auth
-    <livewire:layout.impersonation-banner />
-    <livewire:layout.banner />
+    <livewire:noerd::layout.impersonation-banner />
+    <livewire:noerd::layout.banner />
 @endauth
 
 <div class="h-dvh" x-data="{
@@ -71,10 +71,10 @@
         </div>
     </main>
 
-    <livewire:layout.sidebar></livewire:layout.sidebar>
+    <livewire:noerd::layout.sidebar></livewire:noerd::layout.sidebar>
 
     @auth
-        <livewire:layout.top-bar></livewire:layout.top-bar>
+        <livewire:noerd::layout.top-bar></livewire:noerd::layout.top-bar>
     @endauth
 </div>
 

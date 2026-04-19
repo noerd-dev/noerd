@@ -19,7 +19,7 @@ it('sets the impersonating_from session key when logging in as user', function (
 
     $this->actingAs($admin);
 
-    Livewire::test('setup.noerd-users-list')
+    Livewire::test('noerd::setup.noerd-users-list')
         ->call('loginAsUser', $targetUser->id);
 
     expect(session('impersonating_from'))->toBe($admin->id);
@@ -32,7 +32,7 @@ it('shows the impersonation banner when session key exists', function (): void {
     session(['impersonating_from' => $admin->id]);
     $this->actingAs($targetUser);
 
-    $component = Livewire::test('layout.impersonation-banner');
+    $component = Livewire::test('noerd::layout.impersonation-banner');
 
     $component->assertSee($targetUser->name);
 });
@@ -41,7 +41,7 @@ it('does not show the impersonation banner without session key', function (): vo
     $user = NoerdUser::factory()->create(['name' => 'Regular User']);
     $this->actingAs($user);
 
-    Livewire::test('layout.impersonation-banner')
+    Livewire::test('noerd::layout.impersonation-banner')
         ->assertSet('isImpersonating', false)
         ->assertDontSee($user->name);
 });
@@ -53,7 +53,7 @@ it('restores original user when stopping impersonation', function (): void {
     session(['impersonating_from' => $admin->id]);
     $this->actingAs($targetUser);
 
-    Livewire::test('layout.impersonation-banner')
+    Livewire::test('noerd::layout.impersonation-banner')
         ->call('stopImpersonating')
         ->assertRedirect('/');
 
@@ -68,7 +68,7 @@ it('shows the impersonation banner with correct state when session key exists', 
     session(['impersonating_from' => $admin->id]);
     $this->actingAs($targetUser);
 
-    Livewire::test('layout.impersonation-banner')
+    Livewire::test('noerd::layout.impersonation-banner')
         ->assertSet('isImpersonating', true)
         ->assertSet('userName', 'Impersonated User');
 });
@@ -87,7 +87,7 @@ it('clears tenant session when logging in as user', function (): void {
     session(['noerd.selected_tenant_id' => $tenant->id]);
     session(['noerd.selected_app' => 'some-app']);
 
-    $response = Livewire::test('setup.noerd-users-list')
+    $response = Livewire::test('noerd::setup.noerd-users-list')
         ->call('loginAsUser', $targetUser->id)
         ->assertRedirect('/');
 
@@ -104,7 +104,7 @@ it('clears tenant session when stopping impersonation', function (): void {
 
     $this->actingAs($targetUser);
 
-    $response = Livewire::test('layout.impersonation-banner')
+    $response = Livewire::test('noerd::layout.impersonation-banner')
         ->call('stopImpersonating')
         ->assertRedirect('/');
 

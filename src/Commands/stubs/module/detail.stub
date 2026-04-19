@@ -8,8 +8,8 @@ use Noerd\Traits\Noerd;
 new class extends Component {
     use Noerd;
 
-    public const DETAIL_COMPONENT = '{{model}}-detail';
-    public const LIST_COMPONENT = '{{models}}-list';
+    public const DETAIL_COMPONENT = '{{module-name}}::{{model}}-detail';
+    public const LIST_COMPONENT = '{{module-name}}::{{models}}-list';
     public const ID = '{{model}}Id';
 
     #[Url(keep: false, except: '')]

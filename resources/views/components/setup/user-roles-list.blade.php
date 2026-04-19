@@ -8,13 +8,13 @@ use Noerd\Traits\NoerdList;
 new class extends Component {
     use NoerdList;
 
-    public const DETAIL_COMPONENT = 'user-roles-list';
+    public const DETAIL_COMPONENT = 'noerd::user-roles-list';
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatch(
             event: 'noerdModal',
-            modalComponent: 'user-role-detail',
+            modalComponent: 'noerd::user-role-detail',
             source: $this->getComponentName(),
             arguments: ['modelId' => $modelId, 'relations' => $relations],
         );

@@ -23,7 +23,7 @@
         </main>
     </div>
 
-    <livewire:layout.top-bar></livewire:layout.top-bar>
+    <livewire:noerd::layout.top-bar></livewire:noerd::layout.top-bar>
 </div>
 
 </body>

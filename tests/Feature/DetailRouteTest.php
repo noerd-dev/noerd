@@ -34,7 +34,7 @@ beforeEach(function (): void {
 it('loads noerd-user-detail via direct route', function (): void {
     $this->get('/noerd-user/' . $this->user->id)
         ->assertSuccessful()
-        ->assertSeeLivewire('noerd-user-detail');
+        ->assertSeeLivewire('noerd::noerd-user-detail');
 });
 
 it('loads user-role-detail via direct route', function (): void {
@@ -44,7 +44,7 @@ it('loads user-role-detail via direct route', function (): void {
 
     $this->get('/user-role/' . $userRole->id)
         ->assertSuccessful()
-        ->assertSeeLivewire('user-role-detail');
+        ->assertSeeLivewire('noerd::user-role-detail');
 });
 
 it('loads setup-collection-detail via direct route', function (): void {
@@ -55,7 +55,7 @@ it('loads setup-collection-detail via direct route', function (): void {
 
     $this->get('/setup-collection/' . $setupCollection->id)
         ->assertSuccessful()
-        ->assertSeeLivewire('setup-collection-detail');
+        ->assertSeeLivewire('noerd::setup-collection-detail');
 });
 
 it('loads setup-language-detail via direct route', function (): void {
@@ -63,5 +63,5 @@ it('loads setup-language-detail via direct route', function (): void {
 
     $this->get('/setup-language/' . $setupLanguage->id)
         ->assertSuccessful()
-        ->assertSeeLivewire('setup-language-detail');
+        ->assertSeeLivewire('noerd::setup-language-detail');
 });

@@ -52,11 +52,6 @@
          @keydown.window.arrow-down="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{$listId}}++ }"
          @keydown.window.arrow-up="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{$listId}}-- }"
          @keydown.window.enter="if (canHandleListKey()) { $event.preventDefault(); $wire.findListAction(selectedRow{{$listId}}) }"
-         @record-navigated.window="
-            const rowIds = @js(is_array($rows) ? array_column($rows, 'id') : $rows->getCollection()->pluck('id')->values()->toArray());
-            const idx = rowIds.indexOf(parseInt($event.detail.id));
-            if (idx !== -1) selectedRow{{$listId}} = idx;
-         "
     >
 
         @if(!isset($hideHead) || $hideHead !== true)

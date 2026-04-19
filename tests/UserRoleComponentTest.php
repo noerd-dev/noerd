@@ -9,8 +9,8 @@ uses(Tests\TestCase::class);
 uses(RefreshDatabase::class);
 
 $testSettings = [
-    'componentName' => 'user-role-detail',
-    'listName' => 'user-roles-list',
+    'componentName' => 'noerd::user-role-detail',
+    'listName' => 'noerd::user-roles-list',
     'modelId' => 'modelId',
     'urlParam' => 'userRoleId',
 ];
@@ -260,7 +260,7 @@ it('uses correct component constants', function () use ($testSettings): void {
     $component = Livewire::test($testSettings['componentName']);
 
     // Check if constants are correctly defined (via reflection since they're used in the class)
-    expect($testSettings['componentName'])->toBe('user-role-detail');
-    expect($testSettings['listName'])->toBe('user-roles-list');
+    expect($testSettings['componentName'])->toBe('noerd::user-role-detail');
+    expect($testSettings['listName'])->toBe('noerd::user-roles-list');
     expect($testSettings['urlParam'])->toBe('userRoleId');
 });

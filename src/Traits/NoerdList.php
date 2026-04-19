@@ -148,8 +148,6 @@ trait NoerdList
         $listData = $withData['listConfig']['rows'] ?? [];
         $method = $this->listActionMethod;
 
-        $this->storeRecordNavigation($listData);
-
         if (is_array($listData)) {
             $item = $listData[$id] ?? null;
             if ($item) {
@@ -239,25 +237,6 @@ trait NoerdList
             $this->sortAsc = $ascending;
         }
         $this->syncListQueryContext();
-    }
-
-    /**
-     * Store ordered record IDs in session for arrow-key navigation in detail modals.
-     *
-     * @param  LengthAwarePaginator|array  $rows
-     */
-    protected function storeRecordNavigation(mixed $rows): void
-    {
-        if (is_array($rows)) {
-            $ids = array_column($rows, 'id');
-        } elseif (method_exists($rows, 'getCollection')) {
-            $ids = $rows->getCollection()->pluck('id')->toArray();
-        } else {
-            $ids = $rows->pluck('id')->toArray();
-        }
-
-        $listComponent = $this->getListComponent();
-        session(["record_navigation.{$listComponent}" => $ids]);
     }
 
     protected function getAllowedListFilterColumns(): array
@@ -484,8 +463,6 @@ trait NoerdList
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
-        $this->storeRecordNavigation($rows);
-
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);
