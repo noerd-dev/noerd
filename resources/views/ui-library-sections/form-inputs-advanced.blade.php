@@ -55,7 +55,7 @@ public function deleteImage(string $fieldName): void { ... }</x-noerd::code-snip
 # Service provider registration
 $relationFieldRegistry-&gt;register('customerRelation', RelationFieldDefinition::model(
     listComponent: 'customer::customers-list',
-    detailComponent: 'customer::detail',
+    detailComponent: 'customer::customer-detail',
     modelClass: Customer::class,
     titleResolver: 'name',
 ));</x-noerd::code-snippet>
