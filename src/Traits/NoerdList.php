@@ -543,7 +543,7 @@ trait NoerdList
         $type = $column['type'] ?? 'text';
 
         return match ($type) {
-            'bool' => $value ? __('Yes') : __('No'),
+            'bool', 'boolean' => $value ? __('Yes') : __('No'),
             'date' => $value ? Carbon::parse($value)->format('d.m.Y') : '',
             'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
             'currency', 'number' => is_numeric($value)
