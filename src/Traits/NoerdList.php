@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -17,6 +18,7 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
 use Noerd\Services\ListQueryContext;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 trait NoerdList
 {
@@ -61,6 +63,8 @@ trait NoerdList
     public mixed $context = '';
 
     public bool $disableModal = false;
+
+    public bool $enableCsvExport = false;
 
     private static array $schemaColumnCache = [];
 
@@ -491,6 +495,62 @@ trait NoerdList
         }
 
         return StaticConfigHelper::getListConfig($customName ?? $this->getDetailComponent());
+    }
+
+    public function exportCsv(): StreamedResponse
+    {
+        [$query, $columns, $filename] = $this->prepareCsvExport();
+
+        return response()->streamDownload(function () use ($query, $columns): void {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, array_map(
+                fn (array $column): string => __($column['label'] ?? $column['field'] ?? ''),
+                $columns
+            ), ';');
+
+            $query->lazy(200)->each(function ($row) use ($handle, $columns): void {
+                $this->prepareExportRow($row);
+                $line = [];
+                foreach ($columns as $column) {
+                    $line[] = $this->formatCsvValue(
+                        data_get($row, $column['field'] ?? ''),
+                        $column
+                    );
+                }
+                fputcsv($handle, $line, ';');
+            });
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Override in the component to enable CSV export.
+     *
+     * @return array{0: Builder, 1: array, 2: string}
+     */
+    protected function prepareCsvExport(): array
+    {
+        throw new \LogicException('Override prepareCsvExport() to enable CSV export.');
+    }
+
+    protected function prepareExportRow(mixed $row): void {}
+
+    protected function formatCsvValue(mixed $value, array $column): string
+    {
+        $type = $column['type'] ?? 'text';
+
+        return match ($type) {
+            'bool' => $value ? __('Yes') : __('No'),
+            'date' => $value ? Carbon::parse($value)->format('d.m.Y') : '',
+            'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
+            'currency', 'number' => is_numeric($value)
+                ? number_format((float) $value, 2, ',', '.')
+                : (string) ($value ?? ''),
+            default => (string) ($value ?? ''),
+        };
     }
 
     /**

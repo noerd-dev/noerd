@@ -31,28 +31,41 @@
             $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', 's');
         @endphp
 
-        @if(isset($disableSearch) && !$disableSearch)
-            <div @if(empty($actions))  :class="isModal ? 'mr-22' : ''" @endif
-                 class="ml-auto mr-2"
-                 x-data="{ searchFocused: false }"
-                 @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }">
-                <div class="relative">
-                    <x-noerd::text-input
-                        x-ref="searchInput"
-                        @focus="searchFocused = true"
-                        @blur="searchFocused = false"
-                        @keydown.escape="$refs.searchInput.blur()"
-                        placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
-                        class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-8 pr-8"/>
-                    <kbd x-show="!searchFocused"
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="opacity-0"
-                         x-transition:enter-end="opacity-100"
-                         x-transition:leave="transition ease-in duration-75"
-                         x-transition:leave-start="opacity-100"
-                         x-transition:leave-end="opacity-0"
-                         class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">{{ $searchShortcut['badge'] }}</kbd>
-                </div>
+        @php $showCsvExport = $this->enableCsvExport ?? false; @endphp
+
+        @if((isset($disableSearch) && !$disableSearch) || $showCsvExport)
+            <div @if(empty($actions)) :class="isModal ? 'mr-22' : ''" @endif
+                 class="ml-auto mr-2 flex items-center gap-2">
+                @if($showCsvExport)
+                    <x-noerd::button variant="secondary" icon="arrow-down-tray"
+                            class="h-8"
+                            title="{{ __('Export CSV') }}"
+                            wire:click="exportCsv">
+                        CSV
+                    </x-noerd::button>
+                @endif
+                @if(isset($disableSearch) && !$disableSearch)
+                    <div x-data="{ searchFocused: false }"
+                         @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }">
+                        <div class="relative">
+                            <x-noerd::text-input
+                                x-ref="searchInput"
+                                @focus="searchFocused = true"
+                                @blur="searchFocused = false"
+                                @keydown.escape="$refs.searchInput.blur()"
+                                placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
+                                class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-8 pr-8"/>
+                            <kbd x-show="!searchFocused"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="opacity-100"
+                                 x-transition:leave-end="opacity-0"
+                                 class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">{{ $searchShortcut['badge'] }}</kbd>
+                        </div>
+                    </div>
+                @endif
             </div>
         @else
             <div class="ml-auto"></div>

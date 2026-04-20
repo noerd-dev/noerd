@@ -156,7 +156,16 @@
             @elseif($type == 'badge_with_text')
                 <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['badge']) && $value['badge'])
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary">
+                        @php
+                            $badgeVariant = $value['variant'] ?? 'primary';
+                            $badgeClasses = match ($badgeVariant) {
+                                'danger' => 'bg-red-100 text-red-800',
+                                'success' => 'bg-green-100 text-green-800',
+                                'warning' => 'bg-yellow-100 text-yellow-800',
+                                default => 'bg-brand-primary/10 text-brand-primary',
+                            };
+                        @endphp
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $badgeClasses }}">
                             {{ $value['badge'] }}
                         </span>
                     @endif
