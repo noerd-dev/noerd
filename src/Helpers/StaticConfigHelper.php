@@ -13,12 +13,12 @@ class StaticConfigHelper
 
     public static function getComponentFields(string $component): array
     {
-        $component = self::stripComponentNamespace($component);
-        $yamlPath = self::findConfigPath("details/{$component}.yml");
+        $subPath = self::componentToSubPath($component);
+        $yamlPath = self::findConfigPath("details/{$subPath}.yml");
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
-            Log::warning("Config file not found: details/{$component}.yml (app: {$currentApp})");
+            Log::warning("Config file not found: details/{$subPath}.yml (app: {$currentApp})");
 
             return [];
         }
@@ -30,12 +30,12 @@ class StaticConfigHelper
 
     public static function getListConfig(string $tableName): array
     {
-        $tableName = self::stripComponentNamespace($tableName);
-        $yamlPath = self::findConfigPath("lists/{$tableName}.yml");
+        $subPath = self::componentToSubPath($tableName);
+        $yamlPath = self::findConfigPath("lists/{$subPath}.yml");
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
-            Log::warning("Config file not found: lists/{$tableName}.yml (app: {$currentApp})");
+            Log::warning("Config file not found: lists/{$subPath}.yml (app: {$currentApp})");
 
             return [];
         }
@@ -48,6 +48,18 @@ class StaticConfigHelper
     private static function stripComponentNamespace(string $component): string
     {
         return str_contains($component, '::') ? explode('::', $component, 2)[1] : $component;
+    }
+
+    /**
+     * Convert a component name (e.g. "booking-members::stamp-cards.customer-stamp-cards-list")
+     * to a filesystem sub-path relative to lists/ or details/ (e.g. "stamp-cards/customer-stamp-cards-list").
+     * Dots in the component name map to directory separators to support subfolder organization.
+     */
+    private static function componentToSubPath(string $component): string
+    {
+        $name = self::stripComponentNamespace($component);
+
+        return str_replace('.', DIRECTORY_SEPARATOR, $name);
     }
 
     public static function getNavigationStructure(): ?array
