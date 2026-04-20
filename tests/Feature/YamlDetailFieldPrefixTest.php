@@ -23,7 +23,27 @@ it('ensures all YAML detail files use detailData prefix for NoerdDetail componen
     $violations = [];
 
     foreach ($directories as $directory) {
-        $yamlFiles = File::glob($directory . '/**/details/*-detail.yml');
+        if (! is_dir($directory)) {
+            continue;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
+        );
+
+        $yamlFiles = [];
+        foreach ($iterator as $file) {
+            if (! $file->isFile() || $file->getExtension() !== 'yml') {
+                continue;
+            }
+            if (! str_ends_with($file->getFilename(), '-detail.yml')) {
+                continue;
+            }
+            if (! str_contains($file->getPathname(), DIRECTORY_SEPARATOR . 'details' . DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+            $yamlFiles[] = $file->getPathname();
+        }
 
         foreach ($yamlFiles as $yamlFile) {
             $componentName = basename($yamlFile, '.yml');
