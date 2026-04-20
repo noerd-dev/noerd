@@ -128,8 +128,8 @@ class MakeModuleCommand extends Command
             'routes',
             'tests/Traits',
             'tests/Components',
-            "app-contents/{$this->moduleName}/lists",
-            "app-contents/{$this->moduleName}/details",
+            "app-configs/{$this->moduleName}/lists",
+            "app-configs/{$this->moduleName}/details",
         ];
 
         foreach ($directories as $dir) {
@@ -244,21 +244,21 @@ PHP;
         // List YAML
         $listContent = $this->getStub('list-yaml.stub');
         $this->filesystem->put(
-            "{$this->basePath}/app-contents/{$this->moduleName}/lists/{$this->modelNamePlural}-list.yml",
+            "{$this->basePath}/app-configs/{$this->moduleName}/lists/{$this->modelNamePlural}-list.yml",
             $listContent,
         );
 
         // Detail YAML
         $detailContent = $this->getStub('detail-yaml.stub');
         $this->filesystem->put(
-            "{$this->basePath}/app-contents/{$this->moduleName}/details/{$this->modelName}-detail.yml",
+            "{$this->basePath}/app-configs/{$this->moduleName}/details/{$this->modelName}-detail.yml",
             $detailContent,
         );
 
         // Navigation YAML
         $navContent = $this->getStub('navigation.stub');
         $this->filesystem->put(
-            "{$this->basePath}/app-contents/{$this->moduleName}/navigation.yml",
+            "{$this->basePath}/app-configs/{$this->moduleName}/navigation.yml",
             $navContent,
         );
 

@@ -85,7 +85,7 @@ $this->detailData['custom_attributes']['my_key'];
 
 | Directory | Purpose |
 |-----------|---------|
-| `app-contents/` | YAML configurations |
+| `app-configs/` | YAML configurations |
 | `database/migrations/` | Database migrations |
 | `resources/views/components/` | Volt components (⚡ prefix) |
 | `resources/lang/` | Translations (JSON) |

@@ -55,7 +55,7 @@ trait HasModuleInstallation
 
     /**
      * Get the source directory for content files.
-     * Example: base_path('app-modules/business-hours/content')
+     * Example: base_path('app-modules/business-hours/app-configs/business-hours')
      */
     abstract protected function getSourceDir(): string;
 

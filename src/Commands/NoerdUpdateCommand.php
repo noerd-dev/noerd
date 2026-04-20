@@ -14,7 +14,7 @@ class NoerdUpdateCommand extends NoerdInstallCommand
     {
         $this->info('Updating noerd content...');
 
-        $sourceDir = dirname(__DIR__, 2) . '/app-contents/setup';
+        $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
         $targetDir = base_path('app-configs/setup');
 
         if (!is_dir($sourceDir)) {

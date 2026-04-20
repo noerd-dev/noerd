@@ -11,7 +11,6 @@ it('ensures all YAML detail tab arguments only reference $modelId, not component
     $directories = [
         base_path('app-configs'),
         ...glob(base_path('app-modules/*/app-configs'), GLOB_ONLYDIR),
-        ...glob(base_path('app-modules/*/app-contents'), GLOB_ONLYDIR),
     ];
 
     $violations = [];

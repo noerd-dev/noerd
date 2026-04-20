@@ -54,7 +54,7 @@ class NoerdInstallCommand extends Command
 
         $this->newLine();
 
-        $sourceDir = dirname(__DIR__, 2) . '/app-contents/setup';
+        $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
         $targetDir = base_path('app-configs/setup');
 
         if (!is_dir($sourceDir)) {

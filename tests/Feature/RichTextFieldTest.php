@@ -30,6 +30,6 @@ describe('RichText Form Component', function (): void {
         Livewire::test('noerd::rich-text-field-test', [
             'initialModel' => [],
         ])
-            ->assertSee('Content');
+            ->assertSeeHtml('for="model.content"');
     });
 });

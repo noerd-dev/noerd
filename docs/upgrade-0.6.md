@@ -143,7 +143,7 @@ Module translation keys have switched from prefixed German/legacy keys (e.g. `no
 
 ### What Changed
 
-- All YAML lists/details and the navigation file in `app-contents/setup/` now use English text directly.
+- All YAML lists/details and the navigation file in `app-configs/setup/` now use English text directly.
 - `de.json` was rewritten to map English text to German.
 
 ### What You Need to Do

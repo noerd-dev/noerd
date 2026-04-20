@@ -153,7 +153,7 @@ class StaticConfigHelper
             }
         }
 
-        // 3. Fallback: Search module source files (app-contents)
+        // 3. Fallback: Search module source files (app-configs)
         if ($currentApp) {
             $moduleSourcePath = self::getModuleSourcePath($currentApp);
             if ($moduleSourcePath) {
@@ -303,7 +303,7 @@ class StaticConfigHelper
 
     /**
      * Get module source path for a given app-config key.
-     * Maps app-configs/{app-key} -> app-modules/{module}/app-contents/{app-key}
+     * Maps app-configs/{app-key} -> app-modules/{module}/app-configs/{app-key}
      */
     private static function getModuleSourcePath(string $appKey): ?string
     {
@@ -314,14 +314,14 @@ class StaticConfigHelper
         }
 
         $module = $mapping[$appKey];
-        $sourcePath = base_path("app-modules/{$module}/app-contents/{$appKey}");
+        $sourcePath = base_path("app-modules/{$module}/app-configs/{$appKey}");
 
         return is_dir($sourcePath) ? $sourcePath : null;
     }
 
     /**
      * Dynamically discover module-to-app-config mappings.
-     * Scans app-modules/{module}/app-contents/{app-key} directories.
+     * Scans app-modules/{module}/app-configs/{app-key} directories.
      *
      * @return array<string, string> Map of app-key => module-name
      */
@@ -346,18 +346,18 @@ class StaticConfigHelper
                 continue;
             }
 
-            $appContentsPath = $appModulesPath.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR.'app-contents';
-            if (! is_dir($appContentsPath)) {
+            $appConfigsPath = $appModulesPath.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR.'app-configs';
+            if (! is_dir($appConfigsPath)) {
                 continue;
             }
 
-            $appKeys = scandir($appContentsPath);
+            $appKeys = scandir($appConfigsPath);
             foreach ($appKeys as $appKey) {
                 if ($appKey === '.' || $appKey === '..') {
                     continue;
                 }
 
-                $fullPath = $appContentsPath.DIRECTORY_SEPARATOR.$appKey;
+                $fullPath = $appConfigsPath.DIRECTORY_SEPARATOR.$appKey;
                 if (is_dir($fullPath)) {
                     $mappings[$appKey] = $module;
                 }
