@@ -38,6 +38,33 @@ class RelationFieldRegistry
         ));
     }
 
+    /**
+     * @param  array<int, string>  $allowedRelationTypes
+     */
+    public function registerPolymorphic(string $type, array $allowedRelationTypes): void
+    {
+        $this->fieldTypeRegistry->register($type, FieldTypeDefinition::livewire(
+            'noerd-polymorphic-relation-field',
+            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($allowedRelationTypes): array {
+                $fieldName = $field['name'] ?? '';
+                $typeField = $field['typeField'] ?? '';
+
+                return [
+                    'fieldName' => $fieldName,
+                    'typeField' => $typeField,
+                    'label' => $field['label'] ?? '',
+                    'value' => $this->resolveCurrentValue($fieldName, $component, $detailData),
+                    'currentType' => $this->resolveCurrentValue($typeField, $component, $detailData),
+                    'allowedTypes' => array_values(array_filter($allowedRelationTypes, fn(string $t): bool => $this->has($t))),
+                    'required' => $field['required'] ?? false,
+                    'readonly' => $field['readonly'] ?? false,
+                    'modelId' => $modelId,
+                ];
+            },
+            keyResolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): string => $type . '-' . ($field['name'] ?? 'relation') . '-' . ($modelId ?? 'new'),
+        ));
+    }
+
     public function has(string $type): bool
     {
         return isset($this->definitions[$type]);
