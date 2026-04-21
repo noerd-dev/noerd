@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
-use Noerd\Contracts\MediaResolverContract;
 use Noerd\Helpers\StaticConfigHelper;
 
 trait NoerdDetail
@@ -25,11 +24,7 @@ trait NoerdDetail
 
     public array $relationTitles = [];
 
-    public ?string $mediaToken = null;
-
     public array $detailData = [];
-
-    public array $imageUploads = [];
 
     /**
      * Get the component name (alias for getName).
@@ -48,7 +43,7 @@ trait NoerdDetail
         }
     }
 
-    public function closeModalProcess(?string $source = null, ?string $modalKey = null): void
+    public function closeModalProcess(?string $source = null): void
     {
         $this->currentTab = 1;
 

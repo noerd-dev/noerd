@@ -47,15 +47,24 @@
                         }
                     @endphp
                     @if($showTab)
-                        @if(isset($tab['route']))
-                            <x-noerd::tab :route="$tab['route']" :active="request()->routeIs($tab['route'])">
-                                {{ __($tab['label']) }}
-                            </x-noerd::tab>
-                        @elseif(isset($tab['component']))
+                        @if(isset($tab['component']))
                             @php
                                 $tabArguments = isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : [];
+                                $isRoutable = ! empty($tab['routable']);
+                                $tabRoute = $isRoutable ? 'component-page' : null;
+                                $tabRouteParameters = $isRoutable
+                                    ? array_merge(['componentName' => $tab['component']], $tabArguments)
+                                    : [];
                             @endphp
-                            <x-noerd::tab :component="$tab['component']" :arguments="$tabArguments">
+                            <x-noerd::tab
+                                :component="$tab['component']"
+                                :arguments="$tabArguments"
+                                :route="$tabRoute"
+                                :routeParameters="$tabRouteParameters">
+                                {{ __($tab['label']) }}
+                            </x-noerd::tab>
+                        @elseif(isset($tab['route']))
+                            <x-noerd::tab :route="$tab['route']" :active="request()->routeIs($tab['route'])">
                                 {{ __($tab['label']) }}
                             </x-noerd::tab>
                         @else

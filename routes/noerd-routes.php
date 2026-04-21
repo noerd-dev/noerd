@@ -26,6 +26,10 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Route::livewire('system-settings', 'noerd::setup.system-settings-detail')->name('system-settings');
 });
 
+Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
+    Route::livewire('/component-page/{componentName}', 'noerd::generic-component-page')->name('component-page');
+});
+
 Route::group(['middleware' => ['auth', 'web']], function (): void {
     Route::livewire('noerd-home', 'noerd::noerd-home')->name('noerd-home');
 });

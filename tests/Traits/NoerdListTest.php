@@ -40,6 +40,30 @@ it('uses default sort when no setDefaultSort is called', function (): void {
     expect($component->get('sortAsc'))->toBe(false);
 });
 
+it('derives select event name from plain list component', function (): void {
+    $component = new TestableSelectEventPlainComponent();
+    $method = new ReflectionMethod($component, 'getSelectEvent');
+    $method->setAccessible(true);
+
+    expect($method->invoke($component))->toBe('customerSelected');
+});
+
+it('derives select event name from namespaced list component', function (): void {
+    $component = new TestableSelectEventNamespacedComponent();
+    $method = new ReflectionMethod($component, 'getSelectEvent');
+    $method->setAccessible(true);
+
+    expect($method->invoke($component))->toBe('customerSelected');
+});
+
+it('derives select event name from dotted namespaced list component', function (): void {
+    $component = new TestableSelectEventDottedComponent();
+    $method = new ReflectionMethod($component, 'getSelectEvent');
+    $method->setAccessible(true);
+
+    expect($method->invoke($component))->toBe('customerSelected');
+});
+
 /**
  * Test component with descending sort.
  */
@@ -84,6 +108,42 @@ class TestableNoerdListAscComponent extends Component
 class TestableNoerdListDefaultComponent extends Component
 {
     use NoerdList;
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+}
+
+class TestableSelectEventPlainComponent extends Component
+{
+    use NoerdList;
+
+    public const COMPONENT = 'customers-list';
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+}
+
+class TestableSelectEventNamespacedComponent extends Component
+{
+    use NoerdList;
+
+    public const COMPONENT = 'booking-members::customers-list';
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+}
+
+class TestableSelectEventDottedComponent extends Component
+{
+    use NoerdList;
+
+    public const COMPONENT = 'booking-members::customers.customers-list';
 
     public function render(): string
     {

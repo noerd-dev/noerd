@@ -340,6 +340,10 @@ trait NoerdList
             $name = Str::afterLast($name, '::');
         }
 
+        if (str_contains($name, '.')) {
+            $name = Str::afterLast($name, '.');
+        }
+
         $entity = Str::singular(Str::before($name, '-list'));
 
         return Str::camel($entity).'Selected';

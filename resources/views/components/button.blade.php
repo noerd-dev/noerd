@@ -3,6 +3,7 @@
     'size' => 'md',
     'icon' => null,
     'wireTarget' => null,
+    'type' => null,
 ])
 
 @php
@@ -12,9 +13,9 @@
 
     $isIconOnly = $variant === 'icon';
 
-    $type = $variant === 'primary' ? 'submit' : 'button';
+    $type = $type ?? ($variant === 'primary' ? 'submit' : 'button');
 
-    $baseClasses = 'my-auto inline-flex items-center justify-center gap-2 transition focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-25'
+    $baseClasses = 'my-auto inline-flex cursor-pointer items-center justify-center gap-2 transition focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-25'
         . ($variant === 'pill' ? ' rounded-lg' : ' rounded-sm');
 
     $sizeClasses = match ($size) {
