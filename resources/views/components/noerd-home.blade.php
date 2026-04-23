@@ -43,12 +43,12 @@ new class extends Component {
             @foreach($selectedTenant?->tenantApps ?? [] as $tenantApp)
                 <a @if($tenantApp->is_active)
                        wire:click="openApp('{{ $tenantApp->name }}', '{{ $tenantApp->route }}')"
-                   class="cursor-pointer"
                    @else
                        href="#/"
                         @endif
                         @class([
                             'bg-white border border-gray-300 hover:bg-gray-50 w-36 h-36 mr-6 mt-6 flex p-2 py-4 text-sm text-center rounded-lg items-center justify-center',
+                            'cursor-pointer' => $tenantApp->is_active,
                             'opacity-50 cursor-not-allowed' => !$tenantApp->is_active
                         ])>
                     <div class="m-auto">
