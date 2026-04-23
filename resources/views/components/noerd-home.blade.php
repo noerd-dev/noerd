@@ -20,6 +20,12 @@ new class extends Component {
         // TODO also check if user is not anymore assigned to the tenant
     }
 
+    public function openApp(string $appName, string $route): void
+    {
+        TenantHelper::setSelectedApp($appName);
+        $this->redirect(route($route), navigate: true);
+    }
+
 } ?>
 
 <x-noerd::page>
@@ -36,8 +42,8 @@ new class extends Component {
         <div class="flex flex-wrap">
             @foreach($selectedTenant?->tenantApps ?? [] as $tenantApp)
                 <a @if($tenantApp->is_active)
-                       href="{{ route($tenantApp->route) }}"
-                   wire:navigate
+                       wire:click="openApp('{{ $tenantApp->name }}', '{{ $tenantApp->route }}')"
+                   class="cursor-pointer"
                    @else
                        href="#/"
                         @endif
