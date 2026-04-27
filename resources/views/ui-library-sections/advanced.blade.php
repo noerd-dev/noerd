@@ -1,7 +1,7 @@
 <section class="mb-12">
 
     {{-- Markdown --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Markdown</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Markdown</div>
     <p class="text-sm text-gray-500 mb-3">Renders markdown content as HTML with support for bold, italic, links, lists, and code.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::markdown content="**Bold text** and *italic text* with a [link](https://example.com).
@@ -15,7 +15,7 @@
 &lt;x-noerd::markdown :content="$article-&gt;body" class="prose" /&gt;</x-noerd::code-snippet>
 
     {{-- Tabs --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Tabs</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Tabs</div>
     <p class="text-sm text-gray-500 mb-3">Tab container supporting three modes: route-based, component-modal, and simple numbered tabs.</p>
     <x-noerd::info-box>Requires a YAML layout configuration with tabs defined.</x-noerd::info-box>
     <x-noerd::code-snippet language="yaml"># YAML tab definition
@@ -54,7 +54,7 @@ fields:
 &#64;endforeach</x-noerd::code-snippet>
 
     {{-- Dropzone --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Dropzone</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Dropzone</div>
     <p class="text-sm text-gray-500 mb-3">Drag-and-drop file upload zone with progress indicator, file list, and validation.</p>
     <x-noerd::info-box>Requires the WithFileUploads trait in the Livewire component.</x-noerd::info-box>
     <x-noerd::code-snippet>&lt;livewire:noerd::dropzone

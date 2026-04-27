@@ -15,16 +15,16 @@
         </div>
 
         @if($type === 'app_not_assigned')
-            <h1 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="text-xl font-semibold text-gray-900 mb-4">
                 {{ __('App not available') }}
-            </h1>
+            </div>
             <p class="text-gray-600 mb-6">
                 {{ __('The app ":app" is not assigned to this tenant.', ['app' => $appName]) }}
             </p>
         @elseif($type === 'config_not_found')
-            <h1 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="text-xl font-semibold text-gray-900 mb-4">
                 {{ __('Configuration not found') }}
-            </h1>
+            </div>
             <p class="text-gray-600 mb-4">
                 {{ __('The required configuration file was not found:') }}
             </p>

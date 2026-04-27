@@ -32,9 +32,9 @@ new class extends Component {
 
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <div class="text-lg font-medium text-gray-900">
             {{ __('Mandanten-Zugriff') }}
-        </h2>
+        </div>
 
         <p class="mt-1 text-sm text-gray-600">
             {{ __('Overview of your current access rights to tenants and assigned roles.') }}

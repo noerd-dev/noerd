@@ -1,7 +1,7 @@
 <section class="mb-12">
 
     {{-- Toggle --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Toggle</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Toggle</div>
     <p class="text-sm text-gray-500 mb-3">Switch toggle with label and Livewire entangle binding.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::toggl model="demoToggle" label="Enable notifications" click="demoAction" />
@@ -12,7 +12,7 @@
 &lt;!-- The click prop triggers a wire:click action --&gt;</x-noerd::code-snippet>
 
     {{-- Action Message --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Action Message</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Action Message</div>
     <p class="text-sm text-gray-500 mb-3">Transient feedback message that auto-hides after 2 seconds. Triggered by a Livewire event.</p>
     <x-noerd::code-snippet>&lt;x-noerd::action-message on="saved"&gt;
     Successfully saved.
@@ -22,7 +22,7 @@
 $this-&gt;dispatch('saved');</x-noerd::code-snippet>
 
     {{-- Delete/Save Bar --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Delete/Save Bar</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Delete/Save Bar</div>
     <p class="text-sm text-gray-500 mb-3">Footer bar with save and delete buttons, success indicator, and confirmation dialog.</p>
     <x-noerd::info-box>Requires the NoerdDetail trait in the Livewire component.</x-noerd::info-box>
     <x-noerd::code-snippet>&lt;!-- In a page footer slot --&gt;

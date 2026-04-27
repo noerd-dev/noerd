@@ -65,9 +65,9 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
         <div class="mx-auto w-full max-w-sm lg:w-96">
             <div>
                 <x-noerd::application-logo class="h-10 w-auto" />
-                <h2 class="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900">
+                <div class="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900">
                     {{ __('Reset password') }}
-                </h2>
+                </div>
                 <p class="mt-2 text-sm/6 text-gray-500">
                     {{ __('Enter your new password below') }}
                 </p>

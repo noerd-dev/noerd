@@ -1,7 +1,7 @@
 <section class="mb-12">
 
     {{-- Text Input --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Text Input</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Text Input</div>
     <p class="text-sm text-gray-500 mb-3">Basic text input with label, error handling, readonly, and live binding support.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -23,7 +23,7 @@
 &lt;x-noerd::forms.input name="detailData.name" label="Required" :required="true" /&gt;</x-noerd::code-snippet>
 
     {{-- Textarea --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Textarea</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Textarea</div>
     <p class="text-sm text-gray-500 mb-3">Multi-line textarea with configurable rows.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <div class="max-w-md">
@@ -34,7 +34,7 @@
 &lt;x-noerd::forms.input-textarea name="detailData.notes" label="Notes" :readonly="true" :required="true" /&gt;</x-noerd::code-snippet>
 
     {{-- Checkbox --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Checkbox</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Checkbox</div>
     <p class="text-sm text-gray-500 mb-3">Checkbox with label and boolean binding.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::forms.checkbox name="demoCheckbox" label="Active" />
@@ -43,7 +43,7 @@
 &lt;x-noerd::forms.checkbox name="detailData.send_email" label="Send email" :live="true" /&gt;</x-noerd::code-snippet>
 
     {{-- Select --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Select</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Select</div>
     <p class="text-sm text-gray-500 mb-3">Dropdown with options from configuration or a computed property.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <div class="max-w-xs">
@@ -68,7 +68,7 @@
 /&gt;</x-noerd::code-snippet>
 
     {{-- Currency Input --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Currency Input</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Currency Input</div>
     <p class="text-sm text-gray-500 mb-3">Locale-aware currency input with thousand separators and currency symbol.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <div class="max-w-xs">
@@ -79,7 +79,7 @@
 &lt;x-noerd::forms.input-currency name="detailData.total" label="Total" :readonly="true" /&gt;</x-noerd::code-snippet>
 
     {{-- Color Picker --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Color Picker</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Color Picker</div>
     <p class="text-sm text-gray-500 mb-3">Hex color text field combined with a native color picker.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <div class="max-w-xs">

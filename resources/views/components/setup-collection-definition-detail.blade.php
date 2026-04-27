@@ -291,7 +291,7 @@ new class extends Component
     <x-noerd::tab-content :layout="$pageLayout" />
 
     <div class="px-6 py-4">
-        <h3 class="text-sm font-medium text-gray-700 mb-3">{{ __('Fields') }}</h3>
+        <div class="text-sm font-medium text-gray-700 mb-3">{{ __('Fields') }}</div>
 
         @if(count($fields) === 0)
             <p class="text-sm text-gray-500 italic">{{ __('No fields defined yet.') }}</p>
@@ -379,7 +379,7 @@ new class extends Component
         <div class="fixed inset-0 z-50 flex items-center justify-center" x-data x-on:keydown.escape.window="$wire.skipRenameAndSave()">
             <div class="fixed inset-0 bg-gray-800/50" wire:click="skipRenameAndSave"></div>
             <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ __('Fields were renamed') }}</h3>
+                <div class="text-lg font-semibold text-gray-900 mb-2">{{ __('Fields were renamed') }}</div>
                 <p class="text-sm text-gray-600 mb-4">{{ __('Would you like to update existing entries to use the new field names?') }}</p>
                 <ul class="text-sm text-gray-700 mb-4 space-y-1">
                     @foreach($pendingRenames as $oldName => $newName)

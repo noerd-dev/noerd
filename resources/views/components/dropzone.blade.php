@@ -231,7 +231,7 @@ new class extends Component {
     @if($fileCount > 0)
         <div class="mt-4 space-y-2">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-medium text-gray-700">{{ __('Uploaded files') }} ({{ $fileCount }})</h4>
+                <div class="text-sm font-medium text-gray-700">{{ __('Uploaded files') }} ({{ $fileCount }})</div>
                 @if($fileCount > 1)
                     <button
                         wire:click="clearFiles"

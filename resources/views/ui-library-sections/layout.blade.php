@@ -1,7 +1,7 @@
 <section class="mb-12">
 
     {{-- Info Box --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Info Box</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Info Box</div>
     <p class="text-sm text-gray-500 mb-3">Blue informational alert box for helpful messages.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::info-box>This is an informational message. Use it to provide helpful context to the user.</x-noerd::info-box>
@@ -9,7 +9,7 @@
     <x-noerd::code-snippet>&lt;x-noerd::info-box&gt;This is an informational message.&lt;/x-noerd::info-box&gt;</x-noerd::code-snippet>
 
     {{-- Box --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Box</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Box</div>
     <p class="text-sm text-gray-500 mb-3">Container with brand navigation background color.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::box>
@@ -21,7 +21,7 @@
 &lt;/x-noerd::box&gt;</x-noerd::code-snippet>
 
     {{-- Dashboard Card --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Dashboard Card</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Dashboard Card</div>
     <p class="text-sm text-gray-500 mb-3">Card for dashboard displays with icon, title, and value. Can link to external URLs or open modals.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <div class="flex flex-wrap">
@@ -36,7 +36,7 @@
 &lt;x-noerd::dashboard-card heroicon="star" title="Premium" :value="5" background="bg-yellow-50" /&gt;</x-noerd::code-snippet>
 
     {{-- Toolbar --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Toolbar</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Toolbar</div>
     <p class="text-sm text-gray-500 mb-3">Button group with separators, heroicons, wire:click actions, and loading states.</p>
     <div class="border rounded-lg p-6 bg-white mb-2">
         <x-noerd::toolbar :buttons="$this->demoToolbarButtons" />

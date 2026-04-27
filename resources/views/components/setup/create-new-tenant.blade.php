@@ -63,9 +63,9 @@ new class extends Component {
 
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <div class="text-lg font-medium text-gray-900">
             {{ __('Create New Tenant') }}
-        </h2>
+        </div>
 
         <p class="mt-1 text-sm text-gray-600">
             {{ __("A new tenant contains its own master and transactional data, but can be managed with the same users.") }}

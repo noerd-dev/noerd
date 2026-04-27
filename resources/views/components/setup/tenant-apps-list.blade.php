@@ -134,7 +134,7 @@ new class extends Component {
         @endif
 
         <div class="mt-10 mb-6">
-            <h2 class="text-lg font-semibold">{{ __('Available Apps') }}</h2>
+            <div class="text-lg font-semibold">{{ __('Available Apps') }}</div>
         </div>
 
         @if(count($availableApps) > 0)

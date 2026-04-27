@@ -29,9 +29,9 @@ new class extends Component {
 
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <div class="text-lg font-medium text-gray-900">
             {{ __('Set Password') }}
-        </h2>
+        </div>
 
         <p class="mt-1 text-sm text-gray-600">
             {{ __("Overwrites the user's password. Can only be set by administrators.") }}

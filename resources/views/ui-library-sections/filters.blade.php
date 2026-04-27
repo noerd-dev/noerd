@@ -3,7 +3,7 @@
     <x-noerd::info-box>Requires a list component context with listFilters.</x-noerd::info-box>
 
     {{-- Picklist Filter --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Picklist Filter</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Picklist Filter</div>
     <p class="text-sm text-gray-500 mb-3">Dropdown filter with active state styling (dashed border when inactive, solid brand border when active).</p>
     <x-noerd::code-snippet>&lt;x-noerd::filters.picklist
     :filter="[
@@ -18,7 +18,7 @@
 /&gt;</x-noerd::code-snippet>
 
     {{-- Date Dropdown --}}
-    <h3 class="text-sm font-semibold text-gray-700 mt-6 mb-2">Date Dropdown Filter</h3>
+    <div class="text-sm font-semibold text-gray-700 mt-6 mb-2">Date Dropdown Filter</div>
     <p class="text-sm text-gray-500 mb-3">Date range filter with preset options and a custom date picker sub-panel.</p>
     <x-noerd::code-snippet>&lt;x-noerd::filters.date-dropdown
     :filter="[
