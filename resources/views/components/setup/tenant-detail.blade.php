@@ -14,7 +14,7 @@ new class extends Component {
     public $modelId = null;
 
     public const DETAIL_CLASS = Tenant::class;
-    public const DETAIL_COMPONENT = 'noerd::setup.tenant-detail';
+    public const DETAIL_COMPONENT = 'noerd::tenant-detail';
 
     public $logo;
 
@@ -41,7 +41,7 @@ new class extends Component {
         $tenant->address = $this->detailData['address'] ?? null;
         $tenant->zipcode = $this->detailData['zipcode'] ?? null;
         $tenant->city = $this->detailData['city'] ?? null;
-        $tenant->logo = $this->detailData['logo'];
+        $tenant->logo = $this->detailData['logo'] ?? null;
         $tenant->save();
 
         $this->showSuccessIndicator = true;
