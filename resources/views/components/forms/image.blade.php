@@ -40,7 +40,7 @@
             <div style="height: 150px; width: 150px; background: url('{{ $previewUrl }}') 0% 0% / cover;">
                 <x-noerd::button variant="danger" :icon="false"
                                  wire:confirm="{{ __('Really delete image?') }}"
-                                 wire:click="deleteImage('{{ $name }}')"
+                                 wire:click="deleteImage('{{ $resolvedName }}')"
                                  class="m-2">
                     X
                 </x-noerd::button>
@@ -56,7 +56,7 @@
         @if($mediaAvailable)
             <x-noerd::button variant="secondary"
                 type="button"
-                wire:click="openSelectMediaModal('{{ $name }}')"
+                wire:click="openSelectMediaModal('{{ $resolvedName }}')"
             >
                 {{ __('Choose image from media') }}
             </x-noerd::button>
