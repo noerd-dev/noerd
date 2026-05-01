@@ -8,7 +8,7 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('tenants', function (Blueprint $table): void {
-            $table->string('logo')->nullable()->after('email');
+            $table->string('logo')->nullable()->after('name');
         });
     }
 
