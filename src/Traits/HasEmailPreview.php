@@ -10,10 +10,6 @@ use Illuminate\Support\HtmlString;
 
 trait HasEmailPreview
 {
-    public bool $showPreview = false;
-
-    public string $previewEmailHtml = '';
-
     abstract protected function getEmailData(): array;
 
     abstract protected function getEmailViewName(): string;
@@ -47,13 +43,16 @@ trait HasEmailPreview
 
     public function openPreview(): void
     {
-        $this->previewEmailHtml = $this->renderEmailPreview();
-        $this->showPreview = true;
-    }
+        $data = $this->getEmailData();
 
-    public function closePreview(): void
-    {
-        $this->showPreview = false;
+        $this->dispatch('noerdModal',
+            modalComponent: 'noerd::email-preview-modal',
+            arguments: [
+                'emailSubject' => $data['email_subject'] ?? '',
+                'sampleData' => $this->getSampleEmailData(),
+                'previewHtml' => $this->renderEmailPreview(),
+            ],
+        );
     }
 
     public function sendTestEmail(): void
