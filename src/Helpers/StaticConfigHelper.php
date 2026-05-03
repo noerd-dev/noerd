@@ -45,23 +45,6 @@ class StaticConfigHelper
         return Yaml::parse($content ?: '');
     }
 
-    private static function stripComponentNamespace(string $component): string
-    {
-        return str_contains($component, '::') ? explode('::', $component, 2)[1] : $component;
-    }
-
-    /**
-     * Convert a component name (e.g. "booking-members::stamp-cards.customer-stamp-cards-list")
-     * to a filesystem sub-path relative to lists/ or details/ (e.g. "stamp-cards/customer-stamp-cards-list").
-     * Dots in the component name map to directory separators to support subfolder organization.
-     */
-    private static function componentToSubPath(string $component): string
-    {
-        $name = self::stripComponentNamespace($component);
-
-        return str_replace('.', DIRECTORY_SEPARATOR, $name);
-    }
-
     public static function getNavigationStructure(): ?array
     {
         $currentApp = self::getCurrentApp();
@@ -101,6 +84,23 @@ class StaticConfigHelper
     public static function clearModuleSourceCache(): void
     {
         self::$moduleSourceMappingCache = null;
+    }
+
+    private static function stripComponentNamespace(string $component): string
+    {
+        return str_contains($component, '::') ? explode('::', $component, 2)[1] : $component;
+    }
+
+    /**
+     * Convert a component name (e.g. "booking-members::stamp-cards.customer-stamp-cards-list")
+     * to a filesystem sub-path relative to lists/ or details/ (e.g. "stamp-cards/customer-stamp-cards-list").
+     * Dots in the component name map to directory separators to support subfolder organization.
+     */
+    private static function componentToSubPath(string $component): string
+    {
+        $name = self::stripComponentNamespace($component);
+
+        return str_replace('.', DIRECTORY_SEPARATOR, $name);
     }
 
     /**
@@ -144,7 +144,7 @@ class StaticConfigHelper
 
         $allAppFolders = TenantApp::where('is_active', true)
             ->pluck('name')
-            ->map(fn ($name) => mb_strtolower($name))
+            ->map(fn($name) => mb_strtolower($name))
             ->toArray();
 
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
@@ -169,7 +169,7 @@ class StaticConfigHelper
         if ($currentApp) {
             $moduleSourcePath = self::getModuleSourcePath($currentApp);
             if ($moduleSourcePath) {
-                $sourceFallbackPath = $moduleSourcePath.DIRECTORY_SEPARATOR.$subPath;
+                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
                 if (file_exists($sourceFallbackPath)) {
                     return $sourceFallbackPath;
                 }
@@ -184,7 +184,7 @@ class StaticConfigHelper
 
             $moduleSourcePath = self::getModuleSourcePath($folder);
             if ($moduleSourcePath) {
-                $sourceFallbackPath = $moduleSourcePath.DIRECTORY_SEPARATOR.$subPath;
+                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
                 if (file_exists($sourceFallbackPath)) {
                     return $sourceFallbackPath;
                 }
@@ -266,7 +266,7 @@ class StaticConfigHelper
     private static function copyComponentsFromDirectory(string $sourceDir, array $componentMapping, string $userGroup): array
     {
         $results = [];
-        $files = glob($sourceDir.'/*.yml');
+        $files = glob($sourceDir . '/*.yml');
 
         foreach ($files as $file) {
             $componentName = basename($file, '.yml');
@@ -300,7 +300,7 @@ class StaticConfigHelper
     private static function copyComponentToModule(string $sourceFile, string $module, string $componentName): bool
     {
         $targetDir = base_path("app-modules/{$module}/content/components");
-        $targetFile = $targetDir."/{$componentName}.yml";
+        $targetFile = $targetDir . "/{$componentName}.yml";
 
         // Create directory if it doesn't exist
         if (! is_dir($targetDir)) {
@@ -358,7 +358,7 @@ class StaticConfigHelper
                 continue;
             }
 
-            $appConfigsPath = $appModulesPath.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR.'app-configs';
+            $appConfigsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-configs';
             if (! is_dir($appConfigsPath)) {
                 continue;
             }
@@ -369,7 +369,7 @@ class StaticConfigHelper
                     continue;
                 }
 
-                $fullPath = $appConfigsPath.DIRECTORY_SEPARATOR.$appKey;
+                $fullPath = $appConfigsPath . DIRECTORY_SEPARATOR . $appKey;
                 if (is_dir($fullPath)) {
                     $mappings[$appKey] = $module;
                 }

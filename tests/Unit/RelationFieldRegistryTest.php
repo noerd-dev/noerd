@@ -26,8 +26,7 @@ it('registers a relation type and exposes it via field type registry', function 
         'name' => 'detailData.customer_id',
         'label' => 'Customer',
         'required' => true,
-    ], new class
-    {
+    ], new class () {
         public array $detailData = ['customer_id' => 12];
     }, null, 99))->toBe([
         'relationType' => 'customerRelation',
@@ -53,8 +52,7 @@ it('resolves top-level relation values from the parent component', function (): 
 
     $definition = $fieldTypeRegistry->resolve('projectRelation');
 
-    $component = new class
-    {
+    $component = new class () {
         public int $projectId = 44;
     };
 

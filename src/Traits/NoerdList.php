@@ -14,6 +14,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
+use LogicException;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
@@ -226,6 +227,35 @@ trait NoerdList
         $this->syncListQueryContext();
     }
 
+    public function exportCsv(): StreamedResponse
+    {
+        [$query, $columns, $filename] = $this->prepareCsvExport();
+
+        return response()->streamDownload(function () use ($query, $columns): void {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, array_map(
+                fn(array $column): string => __($column['label'] ?? $column['field'] ?? ''),
+                $columns,
+            ), ';');
+
+            $query->lazy(200)->each(function ($row) use ($handle, $columns): void {
+                $this->prepareExportRow($row);
+                $line = [];
+                foreach ($columns as $column) {
+                    $line[] = $this->formatCsvValue(
+                        data_get($row, $column['field'] ?? ''),
+                        $column,
+                    );
+                }
+                fputcsv($handle, $line, ';');
+            });
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     /**
      * Set the default sort field and direction.
      * Call this in mount() to configure initial sorting.
@@ -319,7 +349,7 @@ trait NoerdList
         $entity = Str::before($name, '-detail');
 
         // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity).'-list';
+        return Str::plural($entity) . '-list';
     }
 
     protected function componentName(): string
@@ -346,7 +376,7 @@ trait NoerdList
 
         $entity = Str::singular(Str::before($name, '-list'));
 
-        return Str::camel($entity).'Selected';
+        return Str::camel($entity) . 'Selected';
     }
 
     protected function dispatchSelectionEvents(mixed $modelId = null): void
@@ -381,22 +411,22 @@ trait NoerdList
                 ? $listConfig['searchableColumns']
                 : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
 
-            $table = (new $modelClass)->getTable();
-            $validFields = array_filter($searchableFields, fn ($f) => Schema::hasColumn($table, $f));
+            $table = (new $modelClass())->getTable();
+            $validFields = array_filter($searchableFields, fn($f) => Schema::hasColumn($table, $f));
 
             if (! empty($validFields)) {
                 $search = $this->search;
                 $query->where(function (Builder $q) use ($validFields, $search): void {
                     foreach (array_values($validFields) as $index => $field) {
                         $index === 0
-                            ? $q->where($field, 'like', '%'.$search.'%')
-                            : $q->orWhere($field, 'like', '%'.$search.'%');
+                            ? $q->where($field, 'like', '%' . $search . '%')
+                            : $q->orWhere($field, 'like', '%' . $search . '%');
                     }
                 });
             }
         }
 
-        $table = (new $modelClass)->getTable();
+        $table = (new $modelClass())->getTable();
         $sortField = Schema::hasColumn($table, $this->sortField) ? $this->sortField : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
@@ -501,35 +531,6 @@ trait NoerdList
         return StaticConfigHelper::getListConfig($customName ?? $this->getDetailComponent());
     }
 
-    public function exportCsv(): StreamedResponse
-    {
-        [$query, $columns, $filename] = $this->prepareCsvExport();
-
-        return response()->streamDownload(function () use ($query, $columns): void {
-            $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF");
-
-            fputcsv($handle, array_map(
-                fn (array $column): string => __($column['label'] ?? $column['field'] ?? ''),
-                $columns
-            ), ';');
-
-            $query->lazy(200)->each(function ($row) use ($handle, $columns): void {
-                $this->prepareExportRow($row);
-                $line = [];
-                foreach ($columns as $column) {
-                    $line[] = $this->formatCsvValue(
-                        data_get($row, $column['field'] ?? ''),
-                        $column
-                    );
-                }
-                fputcsv($handle, $line, ';');
-            });
-
-            fclose($handle);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
-    }
-
     /**
      * Override in the component to enable CSV export.
      *
@@ -537,7 +538,7 @@ trait NoerdList
      */
     protected function prepareCsvExport(): array
     {
-        throw new \LogicException('Override prepareCsvExport() to enable CSV export.');
+        throw new LogicException('Override prepareCsvExport() to enable CSV export.');
     }
 
     protected function prepareExportRow(mixed $row): void {}
@@ -566,10 +567,10 @@ trait NoerdList
         $name = $this->getDetailComponent();
         $stripped = Str::afterLast($name, '.');
 
-        $listeners = ['refreshList-'.$name => 'refreshList'];
+        $listeners = ['refreshList-' . $name => 'refreshList'];
 
         if ($name !== $stripped) {
-            $listeners['refreshList-'.$stripped] = 'refreshList';
+            $listeners['refreshList-' . $stripped] = 'refreshList';
         }
 
         return $listeners;

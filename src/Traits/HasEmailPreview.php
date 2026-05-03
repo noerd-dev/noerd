@@ -45,7 +45,8 @@ trait HasEmailPreview
     {
         $data = $this->getEmailData();
 
-        $this->dispatch('noerdModal',
+        $this->dispatch(
+            'noerdModal',
             modalComponent: 'noerd::email-preview-modal',
             arguments: [
                 'emailSubject' => $data['email_subject'] ?? '',

@@ -38,6 +38,47 @@ class RelationFieldDefinition
         );
     }
 
+    public static function normalizeDisplayValue(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return self::normalizeDisplayValue($decoded);
+            }
+
+            return $value;
+        }
+
+        if (is_array($value)) {
+            $selectedLanguage = 'de';
+            if (function_exists('app') && app()->bound('session.store')) {
+                $selectedLanguage = session('selectedLanguage', 'de');
+            }
+
+            if (isset($value[$selectedLanguage]) && is_scalar($value[$selectedLanguage])) {
+                return (string) $value[$selectedLanguage];
+            }
+
+            foreach ($value as $item) {
+                if (is_scalar($item) && $item !== '') {
+                    return (string) $item;
+                }
+            }
+
+            return '';
+        }
+
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        return '';
+    }
+
     public function resolveTitleForValue(mixed $value): string
     {
         if ($value === null || $value === '') {
@@ -92,46 +133,5 @@ class RelationFieldDefinition
         $entity = Str::singular(Str::before($listWithoutNamespace, '-list'));
 
         return Str::camel($entity) . 'Selected';
-    }
-
-    public static function normalizeDisplayValue(mixed $value): string
-    {
-        if ($value === null) {
-            return '';
-        }
-
-        if (is_string($value)) {
-            $decoded = json_decode($value, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return self::normalizeDisplayValue($decoded);
-            }
-
-            return $value;
-        }
-
-        if (is_array($value)) {
-            $selectedLanguage = 'de';
-            if (function_exists('app') && app()->bound('session.store')) {
-                $selectedLanguage = session('selectedLanguage', 'de');
-            }
-
-            if (isset($value[$selectedLanguage]) && is_scalar($value[$selectedLanguage])) {
-                return (string) $value[$selectedLanguage];
-            }
-
-            foreach ($value as $item) {
-                if (is_scalar($item) && $item !== '') {
-                    return (string) $item;
-                }
-            }
-
-            return '';
-        }
-
-        if (is_scalar($value)) {
-            return (string) $value;
-        }
-
-        return '';
     }
 }

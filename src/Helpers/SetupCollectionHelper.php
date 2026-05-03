@@ -98,7 +98,7 @@ class SetupCollectionHelper
     public function resolveAllCollections(): array
     {
         return $this->repository->all()
-            ->map(fn ($definition) => [
+            ->map(fn($definition) => [
                 'key' => $definition->filename,
                 'title' => $definition->title ?: ucfirst($definition->filename),
                 'titleList' => $definition->titleList ?: ucfirst($definition->filename),
