@@ -121,12 +121,6 @@ class StaticConfigHelper
             $allowedFolders[] = mb_strtolower($appName);
         }
 
-        // booking-members is a superset of booking; allow access to booking app-configs
-        if (in_array('booking-members', $allowedFolders, true)
-            && ! in_array('booking', $allowedFolders, true)) {
-            $allowedFolders[] = 'booking';
-        }
-
         return $allowedFolders;
     }
 
