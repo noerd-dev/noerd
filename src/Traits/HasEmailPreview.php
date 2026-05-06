@@ -3,7 +3,7 @@
 namespace Noerd\Traits;
 
 use Exception;
-use Illuminate\Support\Facades\Blade;
+use Illuminate\Mail\Markdown;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\HtmlString;
@@ -95,8 +95,9 @@ trait HasEmailPreview
         $body = str_replace(array_keys($sampleData), array_values($sampleData), $body);
 
         try {
-            return Blade::render(
-                view($this->getEmailViewName())->with(['body' => new HtmlString($body), 'data' => $data])->render(),
+            return (string) app(Markdown::class)->render(
+                $this->getEmailViewName(),
+                ['emailBody' => new HtmlString($body), 'data' => $data],
             );
         } catch (Exception) {
             return nl2br(e($body));
