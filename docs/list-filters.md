@@ -56,9 +56,9 @@ Example: `app-modules/order/src/Traits/YearFilterTrait.php`
 ```php
 <?php
 
-namespace Noerd\Order\Traits;
+namespace Nywerk\Liefertool\Traits;
 
-use Noerd\Order\Models\Order;
+use Nywerk\Liefertool\Models\Order;
 
 trait YearFilterTrait
 {
@@ -121,7 +121,7 @@ To add filters to a list component:
 
 use Livewire\Component;
 use Noerd\Traits\NoerdList;
-use Noerd\Order\Traits\YearFilterTrait;
+use Nywerk\Liefertool\Traits\YearFilterTrait;
 
 new class extends Component {
     use NoerdList;
