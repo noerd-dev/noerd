@@ -41,6 +41,7 @@ new class extends Component {
     <div class="mb-12">
         <div class="flex flex-wrap">
             @foreach($selectedTenant?->tenantApps ?? [] as $tenantApp)
+                @continue($tenantApp->pivot->is_hidden)
                 <a @if($tenantApp->is_active)
                        wire:click="openApp('{{ $tenantApp->name }}', '{{ $tenantApp->route }}')"
                    @else
