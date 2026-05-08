@@ -112,7 +112,7 @@ new class extends Component {
                 @foreach($assignedApps as $app)
                     <div x-sort:item="{{ $app['id'] }}" wire:key="assigned-{{ $app['id'] }}" @class(['bg-gray-100 rounded-lg p-4 flex items-center gap-4', 'opacity-50' => $app['is_hidden']])>
                         <a href="#/" class="cursor-grab active:cursor-grabbing">
-                            <img alt="" width="20" src="/svg/drag.svg">
+                            <x-icon name="bars-3" class="w-5 h-5 text-gray-500"/>
                         </a>
 
                         <div class="flex items-center gap-3 flex-1 min-w-0">
