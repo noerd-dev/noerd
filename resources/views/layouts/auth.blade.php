@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Noerd') }}</title>
+    @if(config('noerd.branding.favicon'))
+        <link rel="icon" href="{{ config('noerd.branding.favicon') }}">
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-white pt-[var(--environment-banner-height,0px)]">
