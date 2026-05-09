@@ -19,10 +19,11 @@
                     @endif
                 @endforeach
                 @if(collect($this->listFilters)->filter()->isNotEmpty())
-                    <button wire:click="clearAllListFilters" type="button"
-                            class="ml-1 mt-0.5 whitespace-nowrap text-xs text-gray-400 hover:text-gray-600 transition-colors">
-                        {{ __('Clear all filters') }}
-                    </button>
+                    <x-noerd::button variant="icon" size="sm" icon="x-mark"
+                                     type="button"
+                                     wire:click="clearAllListFilters"
+                                     :title="__('Clear all filters')"
+                                     class="-ml-3" />
                 @endif
             </div>
         @endif
