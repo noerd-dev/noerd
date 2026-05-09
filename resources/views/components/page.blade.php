@@ -19,7 +19,7 @@
      @if($disableModal ?? false)
          style="margin-left: -32px; margin-right: -32px"
      @else
-     :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] ' + (isRight ? '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh)]' }}' : '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}') : 'h-full'"
+     :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] ' + (isRight ? '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh)]' }}' : '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}') : 'h-[calc(100dvh_-_2.9375rem_-_var(--banner-height,0px)_-_var(--impersonation-banner-height,0px)_-_var(--environment-banner-height,0px))]'"
     @endif
 >
     {{$header ?? ''}}
