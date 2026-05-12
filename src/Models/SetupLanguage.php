@@ -69,16 +69,16 @@ class SetupLanguage extends Model
         if (static::withoutGlobalScopes()->where('tenant_id', $tenantId)->count() === 0) {
             static::create([
                 'tenant_id' => $tenantId,
-                'code' => 'de',
-                'name' => 'Deutsch',
+                'code' => 'en',
+                'name' => 'English',
                 'is_active' => true,
                 'is_default' => true,
                 'sort_order' => 0,
             ]);
             static::create([
                 'tenant_id' => $tenantId,
-                'code' => 'en',
-                'name' => 'English',
+                'code' => 'de',
+                'name' => 'Deutsch',
                 'is_active' => true,
                 'is_default' => false,
                 'sort_order' => 1,
