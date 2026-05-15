@@ -166,7 +166,11 @@ trait NoerdList
         if (! $item) {
             return;
         }
-        $this->{$method}($item->id);
+        $itemId = is_array($item) ? ($item['id'] ?? null) : $item->id;
+        if ($itemId === null) {
+            return;
+        }
+        $this->{$method}($itemId);
     }
 
     /**
