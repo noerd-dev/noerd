@@ -58,6 +58,7 @@ it('restores original user when stopping impersonation', function (): void {
         ->assertRedirect('/');
 
     expect(session('impersonating_from'))->toBeNull();
+    auth()->forgetGuards();
     expect(Auth::id())->toBe($admin->id);
 });
 
@@ -109,5 +110,6 @@ it('clears tenant session when stopping impersonation', function (): void {
         ->assertRedirect('/');
 
     $response->assertSessionMissing('noerd.selected_app');
+    auth()->forgetGuards();
     expect(Auth::id())->toBe($admin->id);
 });
