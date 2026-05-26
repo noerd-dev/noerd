@@ -195,6 +195,16 @@ trait HasModuleInstallation
             return 1;
         }
 
+        // If the module is already installed, run as update instead to prevent
+        // duplicate tenant app entries and overwriting customized navigation.
+        $appKey = $this->deriveAppKey($this->getModuleKey());
+        if (TenantApp::where('name', $appKey)->exists()) {
+            $this->info("{$this->getModuleName()} is already installed. Running update instead...");
+            $this->line('');
+
+            return $this->runModuleUpdate();
+        }
+
         $this->info("Installing {$this->getModuleName()}...");
         $this->line('');
 
