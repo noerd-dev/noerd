@@ -2,6 +2,7 @@
 
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
@@ -58,12 +59,7 @@ new class extends Component
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'noerd::setup-collection-detail',
-            source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relations' => $relations],
-        );
+        Noerd::modal('noerd::setup-collection-detail', ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relations' => $relations]);
     }
 
     public function with(): array

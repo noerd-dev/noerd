@@ -123,15 +123,10 @@ new class extends Component {
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'customer-detail',
-            source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relations' => $relations],
-        );
+        Noerd::modal('customer-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
-    public function with()
+    public function with(): array
     {
         $rows = Customer::paginate($this->perPage);
 
@@ -244,14 +239,11 @@ actions:
 ```php
 public function openImportModal(mixed $modelId = null, array $relations = []): void
 {
-    $this->dispatch(
-        event: 'noerdModal',
-        modalComponent: 'bank-transaction-import',
-        source: $this->getComponentName(),
-        arguments: [],
-    );
+    Noerd::modal('bank-transaction-import');
 }
 ```
+
+Requires the facade import: `use Noerd\Facades\Noerd;`
 
 Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
 

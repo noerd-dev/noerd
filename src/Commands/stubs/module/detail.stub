@@ -2,11 +2,11 @@
 
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Noerd\Traits\NoerdDetail;
 use Noerd\{{ModuleName}}\Models\{{Model}};
-use Noerd\Traits\Noerd;
 
 new class extends Component {
-    use Noerd;
+    use NoerdDetail;
 
     public const DETAIL_COMPONENT = '{{module-name}}::{{model}}-detail';
     public const LIST_COMPONENT = '{{module-name}}::{{models}}-list';

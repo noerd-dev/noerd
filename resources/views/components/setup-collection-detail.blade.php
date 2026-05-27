@@ -5,6 +5,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Contracts\MediaResolverContract;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
@@ -127,11 +128,7 @@ new class extends Component
     {
         $token = uniqid('media_', true);
         $this->detailData['__mediaToken'] = $token;
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'media::media-list',
-            arguments: ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token],
-        );
+        Noerd::modal('media::media-list', ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token]);
     }
 
     #[On('mediaSelected')]

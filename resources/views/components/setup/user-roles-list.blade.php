@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Models\UserRole;
 use Noerd\Traits\NoerdList;
 
@@ -12,12 +13,7 @@ new class extends Component {
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'noerd::user-role-detail',
-            source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relations' => $relations],
-        );
+        Noerd::modal('noerd::user-role-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
     public function with(): array

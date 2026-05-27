@@ -741,12 +741,9 @@ Image selection from the Media library.
 ```php
 public function openSelectMediaModal(string $fieldName): void
 {
-    $this->dispatch('noerdModal', [
-        'modalComponent' => 'media-list',
-        'arguments' => [
-            'context' => $fieldName,
-            'listActionMethod' => 'selectAction'
-        ]
+    Noerd::modal('media-list', [
+        'context' => $fieldName,
+        'listActionMethod' => 'selectAction',
     ]);
 }
 

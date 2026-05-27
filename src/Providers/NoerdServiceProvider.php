@@ -46,6 +46,7 @@ use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\ListQueryContext;
+use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationFieldRegistry;
@@ -64,6 +65,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
+        $this->app->singleton(NoerdManager::class);
         $this->app->singleton(RelationFieldRegistry::class, fn($app) => new RelationFieldRegistry(
             $app->make(FieldTypeRegistry::class),
         ));

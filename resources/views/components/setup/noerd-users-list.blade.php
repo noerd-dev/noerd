@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Traits\NoerdList;
@@ -15,12 +16,7 @@ new class () extends Component {
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'noerd::noerd-user-detail',
-            source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relations' => $relations],
-        );
+        Noerd::modal('noerd::noerd-user-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
     public function loginAsUser($userId)

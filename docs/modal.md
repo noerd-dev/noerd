@@ -129,16 +129,31 @@ $this->closeModalProcess($this->getListComponent());
 
 ### Dispatching Events
 
+The recommended way to open a modal from a Livewire component is via the `Noerd` facade:
+
 ```php
-// Open a modal via Livewire
+use Noerd\Facades\Noerd;
+
+// Open a modal
+Noerd::modal('customer-detail', ['modelId' => 123]);
+
+// Shorthand: a scalar argument is treated as modelId
+Noerd::modal('customer-detail', 123);
+
+// Close the topmost modal
+$this->dispatch('closeTopModal');
+```
+
+The facade automatically sets `source` to the currently rendering Livewire component, so the source list is refreshed when the modal closes.
+
+Internally this dispatches the same `noerdModal` event — direct dispatching still works if you need full control:
+
+```php
 $this->dispatch('noerdModal',
     modalComponent: 'customer-detail',
     arguments: ['modelId' => 123],
     source: 'customers-list'
 );
-
-// Close the topmost modal
-$this->dispatch('closeTopModal');
 ```
 
 ## Modal Stacking

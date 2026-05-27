@@ -43,15 +43,10 @@ new class extends Component {
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'customer-detail',
-            source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relations' => $relations],
-        );
+        Noerd::modal('customer-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
-    public function with()
+    public function with(): array
     {
         $rows = $this->listQuery(Customer::class)->paginate($this->perPage);
 
@@ -119,7 +114,7 @@ $rows = $this->listQuery(BookingType::class)
 For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, use manual search:
 
 ```php
-public function with()
+public function with(): array
 {
     $rows = Menu::query()
         ->when($this->search, function ($query): void {

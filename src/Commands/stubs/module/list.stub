@@ -2,26 +2,22 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
+use Noerd\Traits\NoerdList;
 use Noerd\{{ModuleName}}\Models\{{Model}};
-use Noerd\Traits\Noerd;
 
 new class extends Component {
 
-    use Noerd;
+    use NoerdList;
 
     public const DETAIL_COMPONENT = '{{module-name}}::{{models}}-list';
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            component: '{{module-name}}::{{model}}-detail',
-            source: self::DETAIL_COMPONENT,
-            arguments: ['{{model}}Id' => $modelId, 'relations' => $relations],
-        );
+        Noerd::modal('{{module-name}}::{{model}}-detail', ['{{model}}Id' => $modelId, 'relations' => $relations]);
     }
 
-    public function with()
+    public function with(): array
     {
         $rows = {{Model}}::where('tenant_id', Auth::user()->selected_tenant_id)
             ->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')

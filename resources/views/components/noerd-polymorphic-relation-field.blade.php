@@ -3,6 +3,7 @@
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
 
 new class extends Component
@@ -127,11 +128,7 @@ new class extends Component
             return;
         }
 
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: $detailComponent,
-            arguments: ['modelId' => $this->value],
-        );
+        Noerd::modal($detailComponent, ['modelId' => $this->value]);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
 
 new class extends Component
@@ -86,11 +87,7 @@ new class extends Component
             return;
         }
 
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: $this->detailComponent,
-            arguments: ['modelId' => $this->value],
-        );
+        Noerd::modal($this->detailComponent, ['modelId' => $this->value]);
     }
 
     private function resolveDisplayTitle(): void

@@ -2,6 +2,7 @@
 
 use App\Models\DemoTag;
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Traits\NoerdList;
 
 new class extends Component {
@@ -9,15 +10,10 @@ new class extends Component {
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $this->dispatch(
-            event: 'noerdModal',
-            modalComponent: 'demo-tag-detail',
-            source: $this->getComponentName(),
-            arguments: ['modelId' => $modelId, 'relations' => $relations],
-        );
+        Noerd::modal('demo-tag-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
-    public function with()
+    public function with(): array
     {
         $rows = $this->listQuery(DemoTag::class)->paginate($this->perPage);
 
