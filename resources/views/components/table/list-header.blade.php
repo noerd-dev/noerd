@@ -35,7 +35,7 @@
         @php $showCsvExport = $this->enableCsvExport ?? false; @endphp
 
         @if((isset($disableSearch) && !$disableSearch) || $showCsvExport)
-            <div @if(empty($actions)) :class="isModal ? 'mr-22' : ''" @endif
+            <div @if(empty($actions)) :class="isModal ? modalControlsClass : ''" @endif
                  class="ml-auto mr-2 flex items-center gap-2">
                 @if($showCsvExport)
                     <x-noerd::button variant="secondary" icon="arrow-down-tray"
@@ -72,7 +72,7 @@
             <div class="ml-auto"></div>
         @endif
         @if(!empty($actions))
-            <div :class="isModal ? 'mr-22' : ''" class="flex gap-2">
+            <div :class="isModal ? modalControlsClass : ''" class="flex gap-2">
                 @foreach($actions as $actionIndex => $actionItem)
                     @php
                         $isSecondary = ($actionItem['style'] ?? '') === 'secondary';
