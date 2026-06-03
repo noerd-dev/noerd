@@ -249,6 +249,13 @@ describe('Setup Collection Detail Component', function (): void {
             ->assertSet('collectionLayout', fn($layout) => $layout !== null);
     });
 
+    it('places the language switcher in the modal-aware actions slot so it clears the modal controls', function (): void {
+        Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'example'])
+            ->assertOk()
+            ->assertSeeLivewire('noerd::setup-language-switcher')
+            ->assertSeeHtml("isModal ? modalControlsClass : ''");
+    });
+
     it('can save a new entry', function (): void {
         $component = Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'example'])
             ->set('detailData.title.de', 'Test Titel')

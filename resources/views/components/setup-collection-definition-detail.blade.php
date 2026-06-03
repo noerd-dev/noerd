@@ -353,12 +353,10 @@ new class extends Component
                                 </select>
                             </td>
                             <td class="py-1 last:border-r-0 border-gray-300 border-b text-center">
-                                <button type="button" wire:click="removeField({{ $index }})"
-                                        class="text-red-500 hover:text-red-700 p-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
+                                <x-noerd::button variant="icon"
+                                                 size="sm"
+                                                 icon="x-mark"
+                                                 wire:click="removeField({{ $index }})"/>
                             </td>
                         </tr>
                     @endforeach
@@ -366,13 +364,12 @@ new class extends Component
             </table>
         @endif
 
-        <button type="button" wire:click="addField"
-                class="mt-3 inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
+        <x-noerd::button variant="secondary"
+                         icon="plus"
+                         wire:click="addField"
+                         class="mt-3">
             {{ __('Add field') }}
-        </button>
+        </x-noerd::button>
     </div>
 
     @if($showRenameConfirmation)
@@ -393,14 +390,12 @@ new class extends Component
                     @endforeach
                 </ul>
                 <div class="flex justify-end gap-2">
-                    <button type="button" wire:click="skipRenameAndSave"
-                            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <x-noerd::button variant="secondary" wire:click="skipRenameAndSave">
                         {{ __('No, skip') }}
-                    </button>
-                    <button type="button" wire:click="confirmRenameAndSave"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    </x-noerd::button>
+                    <x-noerd::button variant="primary" wire:click="confirmRenameAndSave">
                         {{ __('Yes, update') }}
-                    </button>
+                    </x-noerd::button>
                 </div>
             </div>
         </div>

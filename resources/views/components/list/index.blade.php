@@ -2,11 +2,15 @@
     'listConfig' => null,
     'relations' => [],
     'summary' => null,
+    'compact' => null,
 ])
 
 @php
     // Auto-fetch listConfig from parent Livewire component if not provided
     $listConfig = $listConfig ?? $this->with()['listConfig'] ?? [];
+
+    // Compact mode hides the list header and the pagination footer (e.g. for embedded lists)
+    $compact = $compact ?? ($this->compact ?? false);
 
     // Extract values from listConfig
     $listId = $listConfig['listId'] ?? '';
@@ -28,7 +32,9 @@
 @endphp
 
 <div>
-    @include('noerd::components.table.list-header')
+    @unless($compact)
+        @include('noerd::components.table.list-header')
+    @endunless
 
     <div x-data="{
         selectedRow{{$listId}}: 0,
@@ -54,7 +60,7 @@
          @keydown.window.enter="if (canHandleListKey()) { $event.preventDefault(); $wire.findListAction(selectedRow{{$listId}}) }"
     >
 
-        @if(!isset($hideHead) || $hideHead !== true)
+        @if((!isset($hideHead) || $hideHead !== true) && !$compact)
             <div>
                 @include('noerd::components.table.title-search', [
                     'title' => $title,
@@ -97,7 +103,7 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    @foreach($rows as $key => $row)
+                                    @forelse($rows as $key => $row)
                                         <tr :key="{{$key}}"
                                             :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
                                             @click="selectedRow{{$listId}} = '{{$key}}'"
@@ -120,7 +126,25 @@
                                                 ])
                                             @endforeach
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        @php($primaryAction = $actions[0] ?? null)
+                                        <tr>
+                                            <td colspan="{{ count($table) }}" class="border-b border-black/10 px-6 py-12 text-center">
+                                                <p class="text-sm text-gray-500">{{ __('No entries yet') }}</p>
+                                                @if($primaryAction)
+                                                    <div class="mt-4 flex justify-center">
+                                                        <x-noerd::button
+                                                            variant="primary"
+                                                            :icon="$primaryAction['heroicon'] ?? 'plus'"
+                                                            class="h-8"
+                                                            wire:click.prevent="{{ $primaryAction['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                                            {{ __($primaryAction['label']) }}
+                                                        </x-noerd::button>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                     </tbody>
                                     @if($summary && $showSummary)
                                         <tfoot>
@@ -146,7 +170,7 @@
                 </div>
             </div>
 
-            @if(isset($rows) && count($rows) > 0 && !is_array($rows))
+            @if(!$compact && isset($rows) && count($rows) > 0 && !is_array($rows))
                 <div>
                     {{ $rows->links('noerd::pagination') }}
                 </div>

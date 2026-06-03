@@ -9,7 +9,7 @@
 <x-noerd::tabs :layout="$layout" :modelId="$modelId" />
 
 {{-- Tab Content Panels --}}
-<div class="grid [&>*]:col-start-1 [&>*]:row-start-1">
+<div class="grid first:pt-6 [&>*]:col-start-1 [&>*]:row-start-1">
 @foreach($tabs as $tab)
     @php
         // Skip tabs with 'component' - they open as modals, not inline content

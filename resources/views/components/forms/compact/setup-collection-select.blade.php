@@ -1,3 +1,4 @@
+{{-- Compact variant of forms.setup-collection-select: label sits to the LEFT of the select. --}}
 @props([
     'field' => null,
     'name' => '',
@@ -21,23 +22,18 @@
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 
-    // Get current locale
     $locale = session('selectedLanguage') ?? 'de';
 
-    // Get collection entries
     $collection = SetupCollection::where('collection_key', $collectionKey)->first();
     $entries = $collection?->entries ?? collect();
 
-    // Get collection config to check if displayField is translatable
     $collectionConfig = SetupCollectionHelper::getCollectionFields(mb_strtolower($collectionKey));
     $fieldConfig = collect($collectionConfig['fields'] ?? [])->firstWhere('name', 'detailData.' . $displayField);
     $isTranslatable = in_array($fieldConfig['type'] ?? '', ['translatableText', 'translatableTextarea']);
 
-    // Build options array
     $options = [['value' => '', 'label' => 'Bitte wählen']];
     foreach ($entries as $entry) {
         $optionLabel = $entry->data[$displayField] ?? '';
-        // Always handle array values (translatable fields) - get locale, fallback to 'de', then any available
         if (is_array($optionLabel)) {
             $optionLabel = $optionLabel[$locale] ?? $optionLabel['de'] ?? reset($optionLabel) ?? '';
         }
@@ -46,20 +42,22 @@
     }
 @endphp
 
-<div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
-    <select
-        @if($live)
-            wire:model.live.debounce="{{ $name }}"
-        @else
-            wire:model="{{ $name }}"
-        @endif
-        class="w-full border rounded-lg block disabled:shadow-none appearance-none text-base sm:text-sm py-1.5 h-9 leading-[1.25rem] ps-3 pe-3 bg-white text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 shadow-xs border-zinc-200 border-b-zinc-300/80 disabled:border-b-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
-        id="{{ $name }}"
-    >
-        @foreach($options as $option)
-            <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
-        @endforeach
-    </select>
-    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
+<div class="flex items-center gap-2">
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" :title="__($label)" class="!pb-0 w-36 shrink-0 truncate"/>
+    <div class="flex-1 min-w-0">
+        <select
+            @if($live)
+                wire:model.live.debounce="{{ $name }}"
+            @else
+                wire:model="{{ $name }}"
+            @endif
+            class="w-full border border-zinc-200 rounded-sm block appearance-none text-base sm:text-sm py-0.5 h-7 ps-2 pe-2 bg-white text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 focus:outline-none focus:ring-1 focus:ring-brand-border"
+            id="{{ $name }}"
+        >
+            @foreach($options as $option)
+                <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+            @endforeach
+        </select>
+        <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
+    </div>
 </div>

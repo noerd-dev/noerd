@@ -247,6 +247,44 @@ Requires the facade import: `use Noerd\Facades\Noerd;`
 
 Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
 
+## Compact Mode (Embedded Lists)
+
+Use **compact mode** when embedding a list inside another component — for example a related list
+rendered below the form of a detail view. In compact mode the list renders only the table and hides:
+
+- the list header (title, search field and action buttons such as "New …")
+- the inline title-search and description
+- the pagination footer (the "Showing 1 to N of N results" row and the per-page select)
+
+`compact` is a public property on the `NoerdList` trait, so it works exactly like `disableModal` —
+just add it as an attribute on the embedded Livewire component.
+
+> **For detail views, don't wire this up by hand.** Use the generic `<x-noerd::detail-lists>`
+> component instead — it renders the heading, the breakout wrappers and the compact list from a
+> `lists` array in the detail YAML. See [Embedded Lists in Detail Views](detail-view.md#embedded-lists).
+
+The low-level flag (used internally by `<x-noerd::detail-lists>`):
+
+```blade
+{{-- mx-8 cancels the disableModal -2rem breakout so the list aligns with the surrounding form --}}
+<div class="mx-8">
+    <livewire:crm::opportunities-list
+        wire:key="account-opportunities-{{ $modelId }}"
+        disableModal
+        compact
+        :accountId="$modelId" />
+</div>
+```
+
+**Notes:**
+
+- `noerd::components.list` reads the flag via `$compact = $compact ?? ($this->compact ?? false);`,
+  so the behaviour is generic — never duplicate it per module.
+- Compact mode also removes pagination, so only the first `perPage` rows are shown. Use it for
+  narrowly-scoped lists (e.g. records that belong to the current detail record).
+- A list embedded with `disableModal` breaks out by `-2rem` (intended for full-page routes); the
+  wrappers re-pad it so it aligns cleanly inside a modal or detail view.
+
 ## Next Steps
 
 Continue with [Create a Detail View](detail-view.md) to build forms for editing records.

@@ -65,6 +65,8 @@ trait NoerdList
 
     public bool $disableModal = false;
 
+    public bool $compact = false;
+
     public bool $enableCsvExport = false;
 
     private static array $schemaColumnCache = [];

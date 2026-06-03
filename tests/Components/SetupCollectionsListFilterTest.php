@@ -82,3 +82,15 @@ it('applies language filter without error', function (): void {
 
     expect($component->get('listFilters')['language'])->toBe('en');
 });
+
+it('renders an empty state with the primary action when there are no entries', function (): void {
+    app()->setLocale('en');
+
+    $html = Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])->html();
+
+    expect($html)
+        // Empty hint shown below the table header (unique to the empty state).
+        ->toContain('No entries yet')
+        // The list's primary action is offered as a create button.
+        ->toContain('listAction(null,');
+});

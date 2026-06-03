@@ -156,12 +156,12 @@ new class extends Component
 
 <x-noerd::page :disableModal="$disableModal">
     <x-slot:header>
-        <x-noerd::modal-title class="flex items-center">
+        <x-noerd::modal-title>
             {{ $collectionLayout['title'] ?? __('Entry') }}
 
-            <div class="ml-auto" :class="isModal ? 'mr-22' : ''">
+            <x-slot:actions>
                 <livewire:noerd::setup-language-switcher/>
-            </div>
+            </x-slot:actions>
         </x-noerd::modal-title>
     </x-slot:header>
 
