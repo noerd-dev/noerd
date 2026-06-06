@@ -37,4 +37,19 @@ describe('Image Form Component', function (): void {
         ])
             ->assertSee(__('Choose image from media'));
     });
+
+    it('reveals hover-only actions with a non-destructive confirmation when an image is set', function (): void {
+        $resolver = Mockery::mock(\Noerd\Contracts\MediaResolverContract::class);
+        $resolver->shouldReceive('isAvailable')->andReturn(true);
+        $resolver->shouldReceive('getPreviewUrl')->andReturn('https://example.com/photo.jpg');
+        app()->instance(\Noerd\Contracts\MediaResolverContract::class, $resolver);
+
+        Livewire::test('noerd::image-field-test', [
+            'initialModel' => ['image' => 5],
+        ])
+            ->assertSee(__('Remove this image? The original file stays in the media library.'))
+            ->assertDontSee(__('Really delete image?'))
+            ->assertSeeHtml('group-hover:opacity-100')
+            ->assertSee(__('Choose image from media'));
+    });
 });

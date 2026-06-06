@@ -3,11 +3,11 @@
 use Livewire\Component;
 
 new class extends Component {
-    public array $model = [];
+    public array $detailData = [];
 
     public function mount(array $initialModel = []): void
     {
-        $this->model = $initialModel;
+        $this->detailData = $initialModel;
     }
 }; ?>
 
@@ -18,11 +18,10 @@ new class extends Component {
                 ['name' => 'image', 'label' => 'Image', 'type' => 'image', 'colspan' => 6],
             ],
         ];
-        $model = $this->model;
     @endphp
 
     @include('noerd::components.detail.block', [
         'fields' => $pageLayout['fields'],
-        'model' => $model,
+        'detailData' => $this->detailData,
     ])
 </div>
