@@ -89,6 +89,7 @@ class MakeModuleCommand extends Command
             $this->createDirectoryStructure();
             $this->createComposerJson();
             $this->createServiceProvider();
+            $this->createInstallCommand();
             $this->createRoutes();
             $this->createModel();
             $this->createMigration();
@@ -103,8 +104,7 @@ class MakeModuleCommand extends Command
             $this->line('');
             $this->warn('Next steps:');
             $this->line("  1. composer update noerd/{$this->moduleName}");
-            $this->line('  2. php artisan migrate');
-            $this->line("  3. php artisan noerd:create-app (Name: {$this->moduleNameStudly}, Route: {$this->moduleName}.index)");
+            $this->line("  2. php artisan noerd:install-{$this->moduleName}");
 
             return 0;
         } catch (Exception $e) {
@@ -152,6 +152,14 @@ class MakeModuleCommand extends Command
         $path = "{$this->basePath}/src/Providers/{$this->moduleNameStudly}ServiceProvider.php";
         $this->filesystem->put($path, $content);
         $this->line('<info>✓ Created:</info> ServiceProvider');
+    }
+
+    private function createInstallCommand(): void
+    {
+        $content = $this->getStub('install-command.stub');
+        $path = "{$this->basePath}/src/Commands/{$this->moduleNameStudly}InstallCommand.php";
+        $this->filesystem->put($path, $content);
+        $this->line('<info>✓ Created:</info> InstallCommand');
     }
 
     private function createRoutes(): void
@@ -281,7 +289,6 @@ PHP;
         $dirs = [
             'database/factories',
             'database/seeders',
-            'src/Commands',
             'tests/Traits',
             'tests/Components',
         ];

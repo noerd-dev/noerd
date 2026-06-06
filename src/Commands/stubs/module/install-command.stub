@@ -1,0 +1,52 @@
+<?php
+
+namespace Noerd\{{ModuleName}}\Commands;
+
+use Illuminate\Console\Command;
+use Noerd\Traits\HasModuleInstallation;
+use Noerd\Traits\RequiresNoerdInstallation;
+
+class {{ModuleName}}InstallCommand extends Command
+{
+    use HasModuleInstallation;
+    use RequiresNoerdInstallation;
+
+    protected $signature = 'noerd:install-{{module-name}} {--force : Overwrite existing files without asking}';
+
+    protected $description = 'Install {{ModuleName}} module content and navigation';
+
+    public function handle(): int
+    {
+        return $this->runModuleInstallation();
+    }
+
+    protected function getModuleName(): string
+    {
+        return '{{ModuleName}}';
+    }
+
+    protected function getModuleKey(): string
+    {
+        return '{{module-name}}';
+    }
+
+    protected function getDefaultAppTitle(): string
+    {
+        return '{{ModuleName}}';
+    }
+
+    protected function getAppIcon(): string
+    {
+        return '{{module-name}}::icons.app';
+    }
+
+    protected function getAppRoute(): string
+    {
+        return '{{module-name}}.index';
+    }
+
+    protected function getSourceDir(): string
+    {
+        return dirname(__DIR__, 2) . '/app-configs/{{module-name}}';
+    }
+}

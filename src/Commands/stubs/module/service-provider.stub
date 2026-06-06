@@ -3,7 +3,7 @@
 namespace Noerd\{{ModuleName}}\Providers;
 
 use Illuminate\Support\ServiceProvider;
-
+use Noerd\{{ModuleName}}\Commands\{{ModuleName}}InstallCommand;
 
 class {{ModuleName}}ServiceProvider extends ServiceProvider
 {
@@ -25,10 +25,10 @@ class {{ModuleName}}ServiceProvider extends ServiceProvider
         // Load routes
         $this->loadRoutesFrom(__DIR__ . '/../../routes/{{module-name}}-routes.php');
 
-        // Register commands (optional)
+        // Register commands
         if ($this->app->runningInConsole()) {
             $this->commands([
-                // Add commands here
+                {{ModuleName}}InstallCommand::class,
             ]);
         }
     }
