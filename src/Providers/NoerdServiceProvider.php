@@ -191,6 +191,13 @@ class NoerdServiceProvider extends ServiceProvider
             'noerd::components.forms.spacer',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
+        $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
+            'noerd::components.forms.icon',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+                'field' => $field,
+                'iconValue' => data_get($component?->detailData ?? $detailData ?? [], \Illuminate\Support\Str::after($field['name'] ?? '', 'detailData.')),
+            ],
+        ));
 
         // Some project-level app-configs reference legal-register even when the
         // module is not installed. Register the type so YAML stays explicit.
