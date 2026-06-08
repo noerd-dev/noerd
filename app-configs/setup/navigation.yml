@@ -12,7 +12,6 @@
           route: tenant-apps
           heroicon: squares-2x2
           superAdmin: true
-          config: noerd.features.multi_tenant
         - title: Users
           route: users
           heroicon: users

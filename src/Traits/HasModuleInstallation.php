@@ -202,7 +202,15 @@ trait HasModuleInstallation
             $this->info("{$this->getModuleName()} is already installed. Running update instead...");
             $this->line('');
 
-            return $this->runModuleUpdate();
+            $updateResult = $this->runModuleUpdate();
+
+            // Tenant assignment must be offered on the update path too, otherwise
+            // re-running install on an existing app would silently skip it.
+            if ($updateResult === 0) {
+                $this->promptAppTenantAssignment($appKey);
+            }
+
+            return $updateResult;
         }
 
         $this->info("Installing {$this->getModuleName()}...");
@@ -274,15 +282,7 @@ trait HasModuleInstallation
 
             // Ask to assign app to tenant (only if a new app was created)
             if ($this->installedAppKey) {
-                $this->line('');
-                if ($this->confirm('Would you like to assign the app to tenants now?', true)) {
-                    $this->assignAppToTenants($this->installedAppKey);
-                }
-
-                $this->line('');
-                $this->comment('Note: On non-local systems (staging/production), tenant assignment');
-                $this->comment('must be done manually after deployment using:');
-                $this->line('  php artisan noerd:assign-apps-to-tenant');
+                $this->promptAppTenantAssignment($this->installedAppKey);
             }
 
             // Ask to run migrations
@@ -297,6 +297,25 @@ trait HasModuleInstallation
 
             return 1;
         }
+    }
+
+    /**
+     * Prompt the user to assign the app to tenants.
+     *
+     * Always offered — both on a fresh install and when the app already exists
+     * (the update path) — so tenant assignment is never silently skipped.
+     */
+    protected function promptAppTenantAssignment(string $appKey): void
+    {
+        $this->line('');
+        if ($this->confirm('Would you like to assign the app to tenants now?', true)) {
+            $this->assignAppToTenants($appKey);
+        }
+
+        $this->line('');
+        $this->comment('Note: On non-local systems (staging/production), tenant assignment');
+        $this->comment('must be done manually after deployment using:');
+        $this->line('  php artisan noerd:assign-apps-to-tenant');
     }
 
     /**
@@ -331,23 +350,38 @@ trait HasModuleInstallation
         $this->line("<comment>App icon:</comment> {$appIcon}");
         $this->line("<comment>Main route:</comment> {$appRoute}");
 
-        // Check if app already exists
-        $existingApp = TenantApp::where('name', $appKey)->first();
-        if ($existingApp) {
-            $this->warn("App '{$appKey}' already exists in the database.");
-            if (! $this->confirm('Do you want to continue anyway?', false)) {
-                return;
-            }
-            $this->installedAppKey = $appKey;
-        } else {
-            // Publish and run migration instead of direct insert
-            $migrationFile = $this->publishMigration();
-            if ($migrationFile) {
-                if ($this->runSpecificMigration($migrationFile)) {
-                    $this->installedAppKey = $appKey;
-                }
-            }
+        // Publish the (idempotent) migration so non-interactive deploys
+        // (php artisan migrate) also register the app.
+        $migrationFile = $this->publishMigration();
+        if ($migrationFile) {
+            $this->runSpecificMigration($migrationFile);
         }
+
+        // Always ensure the row exists — restores it when a previous install
+        // already recorded the migration as run and the row was later deleted
+        // manually (an already-run migration never executes a second time).
+        $this->ensureTenantAppRegistered($appKey);
+    }
+
+    /**
+     * Guarantee the app's tenant_apps row exists. firstOrCreate keyed on `name`
+     * makes this idempotent, so it restores a row that was manually deleted after
+     * the registering migration had already been recorded as run, without ever
+     * inserting a duplicate. Safe to call on every install.
+     */
+    protected function ensureTenantAppRegistered(string $appKey): void
+    {
+        TenantApp::firstOrCreate(
+            ['name' => $appKey],
+            [
+                'title' => $this->appTitle ?? $this->getDefaultAppTitle(),
+                'icon' => $this->getAppIcon(),
+                'route' => $this->getAppRoute(),
+                'is_active' => true,
+            ],
+        );
+
+        $this->installedAppKey = $appKey;
     }
 
     /**

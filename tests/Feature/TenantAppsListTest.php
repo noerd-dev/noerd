@@ -39,6 +39,28 @@ it('renders the tenant-apps page for super admins', function (): void {
         ->assertSeeLivewire('noerd::setup.tenant-apps-list');
 });
 
+it('renders the tenant-apps page in single-tenant mode', function (): void {
+    config(['noerd.features.multi_tenant' => false]);
+
+    $this->actingAs($this->admin);
+
+    $this->get('/tenant-apps')
+        ->assertSuccessful()
+        ->assertSeeLivewire('noerd::setup.tenant-apps-list');
+});
+
+it('manages apps for the single tenant in single-tenant mode', function (): void {
+    config(['noerd.features.multi_tenant' => false]);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test('noerd::setup.tenant-apps-list')
+        ->call('toggleApp', $this->appA->id);
+
+    expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
+        ->toContain($this->appA->id);
+});
+
 it('denies access to regular admins', function (): void {
     $regularAdmin = NoerdUser::factory()->create();
     $regularAdmin->tenants()->attach($this->tenant->id, [

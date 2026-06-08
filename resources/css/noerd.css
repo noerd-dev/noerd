@@ -1,0 +1,12 @@
+/**
+ * Noerd base theme overrides.
+ *
+ * Shipped with the noerd package and imported by every consuming project
+ * (see the @import injected into resources/css/app.css by noerd:install).
+ * Must be imported AFTER `@import 'tailwindcss';` so these values override
+ * Tailwind's defaults.
+ */
+@theme {
+    /* App-wide default text size: text-sm is the de-facto base, 14px -> 13px */
+    --text-sm: 0.8125rem;
+}

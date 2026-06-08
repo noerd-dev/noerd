@@ -244,6 +244,24 @@ class NoerdInstallCommand extends Command
         }
 
         $cssContent = file_get_contents($cssPath);
+        $changed = false;
+
+        $noerdImport = "@import '../../vendor/noerd/noerd/resources/css/noerd.css';";
+
+        // Import the noerd base theme (e.g. --text-sm: 13px) shared by every consumer.
+        // Must sit right after `@import 'tailwindcss';` so it overrides Tailwind defaults.
+        if (!str_contains($cssContent, $noerdImport)) {
+            if (str_contains($cssContent, "@import 'tailwindcss';")) {
+                $cssContent = str_replace(
+                    "@import 'tailwindcss';",
+                    "@import 'tailwindcss';\n" . $noerdImport,
+                    $cssContent
+                );
+            } else {
+                $cssContent = $noerdImport . "\n" . $cssContent;
+            }
+            $changed = true;
+        }
 
         $noerdStyles = "
 @source '../../vendor/noerd/modal/resources/views';
@@ -253,7 +271,12 @@ class NoerdInstallCommand extends Command
 
         // Check if noerd styles are already present
         if (!str_contains($cssContent, '@source \'../../vendor/noerd/noerd/resources/views\';')) {
-            file_put_contents($cssPath, $cssContent . $noerdStyles);
+            $cssContent .= $noerdStyles;
+            $changed = true;
+        }
+
+        if ($changed) {
+            file_put_contents($cssPath, $cssContent);
             $this->line('<info>Updated app.css with noerd styles.</info>');
         } else {
             $this->line('<comment>Noerd styles already present in app.css.</comment>');
