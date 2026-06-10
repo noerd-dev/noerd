@@ -3,8 +3,17 @@
     'relations' => [],
     'summary' => null,
     'compact' => null,
+    'minimal' => null,
 ])
 
+@php
+    // Minimal mode renders a slim, column-restricted widget variant (see list.minimal)
+    $minimal = $minimal ?? ($this->minimal ?? false);
+@endphp
+
+@if($minimal)
+    @include('noerd::components.list.minimal')
+@else
 @php
     // Auto-fetch listConfig from parent Livewire component if not provided
     $listConfig = $listConfig ?? $this->with()['listConfig'] ?? [];
@@ -178,3 +187,4 @@
         @endisset
     </div>
 </div>
+@endif

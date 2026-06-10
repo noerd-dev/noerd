@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Facade;
 use Noerd\Services\NoerdManager;
 
 /**
- * @method static void modal(string $component, mixed $arguments = [], ?string $position = null)
+ * @method static void modal(string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $quickCreate = false)
  *
  * @see \Noerd\Services\NoerdManager
  */

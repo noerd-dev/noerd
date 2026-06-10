@@ -364,30 +364,40 @@ export default {
     }
 
     /**
-     * Set AUTH_MODEL in .env file
+     * Set AUTH_MODEL in the .env and .env.example files
      */
     protected function setAuthModelEnv(): void
     {
-        $envPath = base_path('.env');
+        foreach (['.env', '.env.example'] as $envFile) {
+            $this->addAuthModelToEnvFile($envFile);
+        }
+    }
+
+    /**
+     * Add AUTH_MODEL to a single env file if it is missing
+     */
+    protected function addAuthModelToEnvFile(string $envFile): void
+    {
+        $envPath = base_path($envFile);
 
         if (!file_exists($envPath)) {
-            $this->warn('.env file not found, skipping AUTH_MODEL configuration.');
+            $this->warn("{$envFile} file not found, skipping AUTH_MODEL configuration.");
             return;
         }
 
         $envContent = file_get_contents($envPath);
 
         if (preg_match('/^AUTH_MODEL=/m', $envContent)) {
-            $this->line('<comment>AUTH_MODEL already configured in .env file.</comment>');
+            $this->line("<comment>AUTH_MODEL already configured in {$envFile} file.</comment>");
             return;
         }
 
         $authModelLine = "\nAUTH_MODEL=Noerd\\Models\\NoerdUser\n";
 
         if (file_put_contents($envPath, $envContent . $authModelLine) !== false) {
-            $this->line('<info>Added AUTH_MODEL to .env file.</info>');
+            $this->line("<info>Added AUTH_MODEL to {$envFile} file.</info>");
         } else {
-            $this->warn('Failed to update .env file. Please manually add: AUTH_MODEL=Noerd\\Models\\NoerdUser');
+            $this->warn("Failed to update {$envFile} file. Please manually add: AUTH_MODEL=Noerd\\Models\\NoerdUser");
         }
     }
 

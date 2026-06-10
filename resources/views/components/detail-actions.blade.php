@@ -15,7 +15,7 @@
             <button type="button"
                     wire:click="{{ $action['action'] }}"
                     @if (! empty($action['confirm'])) wire:confirm="{{ __($action['confirm']) }}" @endif
-                    class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-xs hover:bg-gray-100">
+                    class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-xs hover:bg-gray-100">
                 @if (! empty($action['heroicon']))
                     <x-icon name="{{ $action['heroicon'] }}" class="h-4 w-4 text-gray-500"/>
                 @endif

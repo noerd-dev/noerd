@@ -6,6 +6,7 @@
     'picklistField' => '',
     'live' => false,
     'required' => false,
+    'placeholder' => null,
 ])
 
 @php
@@ -14,6 +15,7 @@
     $picklistField = $field['picklistField'] ?? $picklistField;
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
+    $placeholder = $field['placeholder'] ?? $placeholder;
 @endphp
 
 <div class="flex items-center gap-2">
@@ -28,6 +30,9 @@
             class="w-full border border-zinc-200 rounded-sm block appearance-none text-base sm:text-sm py-0.5 h-7 ps-2 pe-2 bg-white text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 focus:outline-none focus:ring-1 focus:ring-brand-border"
             id="{{ $name }}"
         >
+            @if($placeholder)
+                <option value="">{{ __($placeholder) }}</option>
+            @endif
             @foreach($this->resolvePicklistOptions($picklistField) as $key => $value)
                 <option value="{{ $key }}">{{ $value }}</option>
             @endforeach

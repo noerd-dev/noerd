@@ -66,7 +66,11 @@ new class extends Component {
 
         @isset($navi['newComponent'])
             <button x-show="showSidebar"
-                    @click="$modal('{{$navi['newComponent']}}', {{json_encode($arguments ?? [])}})"
+                    @if($navi['quickCreate'] ?? false)
+                        @click="$modal('{{$navi['newComponent']}}', {{ json_encode(array_merge($arguments ?? [], ['modelId' => null, 'quickCreate' => true])) }}, null, null, 'narrow')"
+                    @else
+                        @click="$modal('{{$navi['newComponent']}}', {{json_encode($arguments ?? [])}})"
+                    @endif
                     class="ml-auto my-auto border-gray-300 border  hover:bg-gray-200 flex h-6 px-1.5 text-sm text-center rounded-lg items-center justify-center">
                 <div class="m-auto">
                     <x-noerd::icons.plus class="w-3! h-3!"/>

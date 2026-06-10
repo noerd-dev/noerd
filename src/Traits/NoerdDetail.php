@@ -22,6 +22,8 @@ trait NoerdDetail
 
     public bool $disableModal = false;
 
+    public bool $quickCreate = false;
+
     public array $relationTitles = [];
 
     public array $detailData = [];
@@ -36,10 +38,31 @@ trait NoerdDetail
 
     public function initDetail(): void
     {
-        // For detail components with DETAIL_CLASS constant
+        // For detail components with DETAIL_CLASS constant. Loads the pageLayout first
+        // so the YAML quick-create opt-in below can be read from it.
         if (defined('static::DETAIL_CLASS')) {
             $modelClass = static::DETAIL_CLASS;
             $this->mountDetailComponent(new $modelClass(), $modelClass);
+        }
+
+        // A detail opts into quick-create for new records via the detail YAML
+        // (`quickCreate: true`, carried in pageLayout) or the legacy
+        // `public bool $quickCreateOnNew = true;` property. When opted in and no record
+        // is being edited, quick-create mode is enabled — no list/nav/blade wiring needed.
+        $optIn = ($this->quickCreateOnNew ?? false) || ($this->pageLayout['quickCreate'] ?? false);
+        if (! $this->modelId && $optIn) {
+            $this->quickCreate = true;
+        }
+    }
+
+    /**
+     * Propagate the resolved quick-create mode into the layout so `tab-content`
+     * reads it without the detail blade having to pass a `:quickCreate` prop.
+     */
+    public function renderingNoerdDetail(): void
+    {
+        if (! empty($this->pageLayout)) {
+            $this->pageLayout['quickCreate'] = $this->quickCreate;
         }
     }
 
@@ -59,6 +82,17 @@ trait NoerdDetail
 
         if ($model->wasRecentlyCreated) {
             $this->modelId = $model->id;
+        }
+
+        // A successful quick-create closes the narrow modal and reopens the full
+        // detail of the new record so the remaining fields can be completed.
+        if ($this->quickCreate) {
+            $this->dispatch('closeTopModal');
+            $this->dispatch(
+                event: 'noerdModal',
+                modalComponent: $this->getDetailComponent(),
+                arguments: ['modelId' => $model->id],
+            );
         }
     }
 

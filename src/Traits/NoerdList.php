@@ -67,6 +67,18 @@ trait NoerdList
 
     public bool $compact = false;
 
+    public bool $minimal = false;
+
+    /** @var array<int, string> Field names to render in minimal mode, in order. */
+    public array $minimalColumns = [];
+
+    public int $minimalLimit = 5;
+
+    public ?string $showMoreComponent = null;
+
+    /** @var array<string, mixed> */
+    public array $showMoreArguments = [];
+
     public bool $enableCsvExport = false;
 
     private static array $schemaColumnCache = [];
@@ -230,6 +242,10 @@ trait NoerdList
 
     public function renderingNoerdList(): void
     {
+        if ($this->minimal) {
+            $this->perPage = $this->minimalLimit;
+        }
+
         $this->syncListQueryContext();
     }
 
