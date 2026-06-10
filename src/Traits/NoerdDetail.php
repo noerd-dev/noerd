@@ -53,14 +53,10 @@ trait NoerdDetail
         if (! $this->modelId && $optIn) {
             $this->quickCreate = true;
         }
-    }
 
-    /**
-     * Propagate the resolved quick-create mode into the layout so `tab-content`
-     * reads it without the detail blade having to pass a `:quickCreate` prop.
-     */
-    public function renderingNoerdDetail(): void
-    {
+        // Replace the raw YAML opt-in with the resolved runtime mode so `tab-content`
+        // reads the correct value (false when editing an existing record) without the
+        // detail blade having to pass a `:quickCreate` prop.
         if (! empty($this->pageLayout)) {
             $this->pageLayout['quickCreate'] = $this->quickCreate;
         }
