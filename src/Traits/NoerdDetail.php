@@ -80,15 +80,16 @@ trait NoerdDetail
             $this->modelId = $model->id;
         }
 
-        // A successful quick-create closes the narrow modal and reopens the full
-        // detail of the new record so the remaining fields can be completed.
+        // A successful quick-create reveals the full detail of the new record so
+        // the remaining fields can be completed — without closing and reopening the
+        // modal. The same component instance simply switches out of quick-create
+        // mode (its layout re-renders as the full form) and the panel is widened in
+        // place. No overlay flicker, and the record's url parameter (e.g. taskId) is
+        // kept rather than cleared.
         if ($this->quickCreate) {
-            $this->dispatch('closeTopModal');
-            $this->dispatch(
-                event: 'noerdModal',
-                modalComponent: $this->getDetailComponent(),
-                arguments: ['modelId' => $model->id],
-            );
+            $this->quickCreate = false;
+            $this->pageLayout['quickCreate'] = false;
+            $this->dispatch('resizeTopModal');
         }
     }
 
