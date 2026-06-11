@@ -38,6 +38,25 @@
     $table = $listSettings['columns'] ?? [];
 
     $listAction = $this->listActionMethod ?? 'listAction';
+
+    // Multi-select: a leading checkbox column plus a footer that is either a picker
+    // confirm bar (returnsSelection) or a bulk-action bar (YAML `bulkActions`).
+    // Enabled by the `returnsSelection`/`multiSelect` props (picker) or a top-level
+    // `multiSelect: true` in the list YAML (a normal bulk-action page). Always off in
+    // compact/embedded lists.
+    $returnsSelection = $this->returnsSelection ?? false;
+    $bulkActions = $listSettings['bulkActions'] ?? [];
+    $multiSelect = ! $compact && (($this->multiSelect ?? false) || $returnsSelection || ($listSettings['multiSelect'] ?? false));
+    $selectedRecordIds = $multiSelect ? ($this->selectedRecordIds ?? []) : [];
+    $visibleRowIds = [];
+    $allVisibleSelected = false;
+    if ($multiSelect) {
+        foreach ($rows as $multiSelectRow) {
+            $visibleRowIds[] = (int) ($multiSelectRow['id'] ?? 0);
+        }
+        $visibleRowIds = array_values(array_filter($visibleRowIds));
+        $allVisibleSelected = $visibleRowIds !== [] && array_diff($visibleRowIds, $selectedRecordIds) === [];
+    }
 @endphp
 
 <div>
@@ -99,6 +118,15 @@
                                 <table class="min-w-full border-separate border-spacing-0">
                                     <thead>
                                     <tr>
+                                        @if($multiSelect)
+                                            <th scope="col" class="sticky top-0 z-10 w-10 border-b border-r border-gray-300 bg-brand-navi/75 px-3 py-3.5 backdrop-blur-sm backdrop-filter">
+                                                <input type="checkbox"
+                                                       wire:key="cb-all-{{ $listId }}-{{ $allVisibleSelected ? 1 : 0 }}"
+                                                       wire:click="toggleSelectAllVisible"
+                                                       @checked($allVisibleSelected)
+                                                       class="h-4 w-4 cursor-pointer rounded border-gray-300 text-brand-primary focus:ring-brand-border">
+                                            </th>
+                                        @endif
                                         @foreach($table as $column)
                                             @include('noerd::components.table.table-sort', [
                                                 'width' => $column['_widthPercent'],
@@ -114,10 +142,24 @@
                                     <tbody>
                                     @forelse($rows as $key => $row)
                                         <tr :key="{{$key}}"
+                                            wire:key="row-{{ $listId }}-{{ $row['id'] ?? $key }}"
                                             :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
                                             @click="selectedRow{{$listId}} = '{{$key}}'"
                                             wire:click="findListAction('{{$key}}')"
                                             class="cursor-pointer group hover:bg-brand-bg border border-black/10">
+                                            @if($multiSelect)
+                                                @php $rowChecked = in_array((int) ($row['id'] ?? 0), $selectedRecordIds, true); @endphp
+                                                <td class="w-10 border-b border-r border-gray-300 px-3 py-1 text-center" @click.stop>
+                                                    {{-- The checked state is part of the wire:key so the input is
+                                                         recreated when the selection clears — otherwise a user-toggled
+                                                         checkbox keeps its DOM checked state through the morph. --}}
+                                                    <input type="checkbox"
+                                                           wire:key="cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
+                                                           wire:click.stop="toggleRecordSelection('{{ $row['id'] }}')"
+                                                           @checked($rowChecked)
+                                                           class="h-4 w-4 cursor-pointer rounded border-gray-300 text-brand-primary focus:ring-brand-border">
+                                                </td>
+                                            @endif
                                             @foreach($table as $index => $column)
                                                 @include('noerd::components.table.table-cell', [
                                                     'row' => $key,
@@ -138,7 +180,7 @@
                                     @empty
                                         @php($primaryAction = $actions[0] ?? null)
                                         <tr>
-                                            <td colspan="{{ count($table) }}" class="border-b border-black/10 px-6 py-12 text-center">
+                                            <td colspan="{{ count($table) + ($multiSelect ? 1 : 0) }}" class="border-b border-black/10 px-6 py-12 text-center">
                                                 <p class="text-sm text-gray-500">{{ __('No entries yet') }}</p>
                                                 @if($primaryAction)
                                                     <div class="mt-4 flex justify-center">
@@ -186,5 +228,49 @@
             @endif
         @endisset
     </div>
+
+    @if($multiSelect && $returnsSelection)
+        {{-- Picker mode: hand the selection back to the opener --}}
+        <x-slot:footer>
+            <div class="flex w-full items-center gap-3">
+                <span class="text-sm text-gray-600">{{ count($selectedRecordIds) }} {{ __('selected') }}</span>
+                <div class="ml-auto flex items-center gap-2">
+                    <x-noerd::button variant="secondary" wire:click="$dispatch('closeTopModal')">
+                        {{ __('Cancel') }}
+                    </x-noerd::button>
+                    <x-noerd::button variant="primary" wire:click="confirmRecordSelection">
+                        {{ __('Apply selection') }}
+                    </x-noerd::button>
+                </div>
+            </div>
+        </x-slot:footer>
+    @elseif($multiSelect && ! empty($bulkActions) && count($selectedRecordIds) > 0)
+        {{-- Bulk-action mode: run a YAML-defined action on the current selection --}}
+        <x-slot:footer>
+            <div class="flex w-full items-center gap-3">
+                <span class="text-sm text-gray-600">{{ count($selectedRecordIds) }} {{ __('selected') }}</span>
+                <div class="ml-auto flex items-center gap-2">
+                    @foreach($bulkActions as $bulkAction)
+                        @if(! empty($bulkAction['confirm']))
+                            <x-noerd::button
+                                :variant="($bulkAction['style'] ?? '') ?: 'primary'"
+                                :icon="$bulkAction['heroicon'] ?? null"
+                                wire:click="{{ $bulkAction['action'] }}"
+                                wire:confirm="{{ __($bulkAction['confirm']) }}">
+                                {{ __($bulkAction['label']) }}
+                            </x-noerd::button>
+                        @else
+                            <x-noerd::button
+                                :variant="($bulkAction['style'] ?? '') ?: 'primary'"
+                                :icon="$bulkAction['heroicon'] ?? null"
+                                wire:click="{{ $bulkAction['action'] }}">
+                                {{ __($bulkAction['label']) }}
+                            </x-noerd::button>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        </x-slot:footer>
+    @endif
 </div>
 @endif

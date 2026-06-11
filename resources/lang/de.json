@@ -4,6 +4,7 @@
     "Accounting": "Buchhaltung",
     "Active": "Aktiv",
     "Address": "Anschrift",
+    "Apply selection": "Auswahl übernehmen",
     "Amount": "Betrag",
     "Are you sure you want to delete your account?": "Möchten Sie Ihr Konto wirklich löschen?",
     "Assembly": "Baugruppe",
@@ -389,5 +390,6 @@
     "Billing": "Abrechnung",
 
     "Tasks & Reports": "Aufgaben & Berichte",
-    "Site Assignments": "Standortzuweisung"
+    "Site Assignments": "Standortzuweisung",
+    "selected": "ausgewählt"
 }

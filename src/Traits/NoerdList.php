@@ -67,6 +67,25 @@ trait NoerdList
 
     public bool $compact = false;
 
+    /**
+     * Opt-in multi-select mode: renders a leading checkbox column and a confirm
+     * bar so the list can be opened as a picker that hands a set of ids back to
+     * the opener (see confirmRecordSelection()). Off by default — existing lists
+     * are unaffected.
+     */
+    public bool $multiSelect = false;
+
+    /** @var array<int, int> Ids ticked while the list is in multi-select mode. */
+    public array $selectedRecordIds = [];
+
+    /**
+     * Picker mode: the list was opened to hand a selection back to an opener — it
+     * dispatches recordsSelected on confirm and a row click ticks the row instead
+     * of opening it. When false the list is a normal page whose selection drives
+     * the YAML-defined bulk actions instead.
+     */
+    public bool $returnsSelection = false;
+
     public bool $minimal = false;
 
     /** @var array<int, string> Field names to render in minimal mode, in order. */
@@ -80,6 +99,9 @@ trait NoerdList
     public array $showMoreArguments = [];
 
     public bool $enableCsvExport = false;
+
+    /** The model class behind this list, remembered from the last listQuery() call. */
+    protected ?string $resolvedModelClass = null;
 
     private static array $schemaColumnCache = [];
 
@@ -165,7 +187,8 @@ trait NoerdList
         $this->syncListQueryContext();
         $withData = $this->with();
         $listData = $withData['listConfig']['rows'] ?? [];
-        $method = $this->listActionMethod;
+        // In picker mode a row click (or Enter) ticks the row instead of opening it.
+        $method = $this->returnsSelection ? 'toggleRecordSelection' : $this->listActionMethod;
 
         if (is_array($listData)) {
             $item = $listData[$id] ?? null;
@@ -193,6 +216,99 @@ trait NoerdList
     public function selectAction(mixed $modelId = null, array $relations = []): void
     {
         $this->dispatchSelectionEvents($modelId);
+    }
+
+    /**
+     * Toggle a single row in the multi-select set. Wired as the listActionMethod
+     * in multi-select mode, so a row click (or Enter) toggles it.
+     */
+    public function toggleRecordSelection(int|string $id): void
+    {
+        $id = (int) $id;
+
+        if (in_array($id, $this->selectedRecordIds, true)) {
+            $this->selectedRecordIds = array_values(array_filter(
+                $this->selectedRecordIds,
+                fn (int $selected): bool => $selected !== $id,
+            ));
+
+            return;
+        }
+
+        $this->selectedRecordIds[] = $id;
+    }
+
+    /**
+     * Toggle every row on the current page on/off in one go.
+     */
+    public function toggleSelectAllVisible(): void
+    {
+        $ids = $this->visibleRowIds();
+        if ($ids === []) {
+            return;
+        }
+
+        $allSelected = array_diff($ids, $this->selectedRecordIds) === [];
+
+        $this->selectedRecordIds = $allSelected
+            ? array_values(array_diff($this->selectedRecordIds, $ids))
+            : array_values(array_unique(array_merge($this->selectedRecordIds, $ids)));
+    }
+
+    /**
+     * Hand the selected ids back to the opener and close the picker modal.
+     */
+    public function confirmRecordSelection(): void
+    {
+        $this->dispatch('recordsSelected', ids: $this->selectedRecordIds, context: $this->context);
+        $this->dispatch('closeTopModal');
+    }
+
+    /**
+     * Generic bulk action: delete every selected record. Wire it up from a list's
+     * YAML `bulkActions` (with a `confirm:` for the confirmation prompt) — no
+     * per-list delete method is needed. Deletes go through the tenant-scoped query
+     * and fire model events so observers/auditing still run.
+     */
+    public function deleteSelected(): void
+    {
+        if ($this->selectedRecordIds === []) {
+            return;
+        }
+
+        // Building the list query once populates resolvedModelClass for this request.
+        $this->with();
+
+        if ($this->resolvedModelClass !== null) {
+            $this->resolvedModelClass::query()
+                ->whereIn('id', $this->selectedRecordIds)
+                ->get()
+                ->each(fn ($model) => $model->delete());
+        }
+
+        $this->selectedRecordIds = [];
+        $this->resetPage();
+    }
+
+    /**
+     * Ids of the rows currently rendered (current page).
+     *
+     * @return array<int, int>
+     */
+    public function visibleRowIds(): array
+    {
+        $rows = $this->with()['listConfig']['rows'] ?? null;
+        if ($rows === null) {
+            return [];
+        }
+
+        $collection = is_array($rows) ? collect($rows) : $rows->getCollection();
+
+        return $collection
+            ->map(fn ($row): int => (int) (is_array($row) ? ($row['id'] ?? 0) : $row->id))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     /**
@@ -422,6 +538,8 @@ trait NoerdList
      */
     protected function listQuery(string $modelClass): Builder
     {
+        $this->resolvedModelClass = $modelClass;
+
         $query = $modelClass::query()
             ->withoutGlobalScope(SearchScope::class)
             ->withoutGlobalScope(SortScope::class);

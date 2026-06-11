@@ -34,8 +34,15 @@
 
         @php $showCsvExport = $this->enableCsvExport ?? false; @endphp
 
+        @php
+            // Action buttons are only rendered for non-picker lists. When they are absent
+            // (no actions, or picker/returnsSelection mode), the search must carry the modal
+            // controls offset itself so it doesn't slide under the close/fullscreen buttons.
+            $actionsRendered = !empty($actions) && !($this->returnsSelection ?? false);
+        @endphp
+
         @if((isset($disableSearch) && !$disableSearch) || $showCsvExport)
-            <div @if(empty($actions)) :class="isModal ? modalControlsClass : ''" @endif
+            <div @unless($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
                  class="ml-auto mr-2 flex items-center gap-2">
                 @if($showCsvExport)
                     <x-noerd::button variant="secondary" icon="arrow-down-tray"
@@ -71,7 +78,7 @@
         @else
             <div class="ml-auto"></div>
         @endif
-        @if(!empty($actions))
+        @if(!empty($actions) && !($this->returnsSelection ?? false))
             <div :class="isModal ? modalControlsClass : ''" class="flex gap-2">
                 @foreach($actions as $actionIndex => $actionItem)
                     @php
