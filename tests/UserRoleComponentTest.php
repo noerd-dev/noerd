@@ -30,10 +30,11 @@ it('validates required fields when storing', function () use ($testSettings): vo
 
     $this->actingAs($user);
 
-    Livewire::test($testSettings['componentName'])
-        ->call('store')
-        ->assertHasErrors(['detailData.key'])
-        ->assertHasErrors(['detailData.name']);
+    $component = Livewire::test($testSettings['componentName'])
+        ->set('detailData', [])
+        ->call('store');
+
+    $component->assertHasErrors(requiredLayoutFields($component));
 });
 
 it('successfully creates a new user role', function () use ($testSettings): void {
@@ -46,9 +47,12 @@ it('successfully creates a new user role', function () use ($testSettings): void
     $roleDescription = 'Has full administrative access';
 
     Livewire::test($testSettings['componentName'])
-        ->set('detailData.key', $roleKey)
-        ->set('detailData.name', $roleName)
-        ->set('detailData.description', $roleDescription)
+        ->set('detailData', validDetailPayload(UserRole::class, [
+            'tenant_id' => $user->selected_tenant_id,
+            'key' => $roleKey,
+            'name' => $roleName,
+            'description' => $roleDescription,
+        ]))
         ->call('store')
         ->assertHasNoErrors();
 

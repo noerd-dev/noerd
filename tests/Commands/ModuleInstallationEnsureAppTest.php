@@ -117,6 +117,28 @@ it('registers the tenant app even though the module ships no migration stub', fu
         ->and($app->is_active)->toBeTrue();
 });
 
+it('self-heals the update path when the app is registered but its config dir is missing', function (): void {
+    // The app is already registered (so runModuleInstallation diverts to update),
+    // but its app-configs folder was never published.
+    TenantApp::create([
+        'name' => ENSURE_APP_KEY,
+        'title' => 'Ensure App Fixture',
+        'icon' => 'noerd::icons.app',
+        'route' => ENSURE_APP_MODULE_KEY,
+        'is_active' => true,
+    ]);
+
+    $targetDir = base_path('app-configs/' . ENSURE_APP_MODULE_KEY);
+    expect(File::isDirectory($targetDir))->toBeFalse();
+
+    $this->artisan('noerd:install-ensure-app-fixture', ['--force' => true])
+        ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+        ->assertExitCode(0);
+
+    // The missing config folder is created and the navigation published into it.
+    expect(File::exists($targetDir . '/navigation.yml'))->toBeTrue();
+});
+
 it('restores the tenant app row when it was manually deleted after install', function (): void {
     // First install creates the row.
     runEnsureAppInstall($this);

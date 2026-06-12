@@ -99,11 +99,18 @@ trait HasModuleInstallation
 
         $targetDir = base_path('app-configs/' . $this->getModuleKey());
 
+        // Self-heal: when the app is registered (its tenant_apps row exists) but the
+        // app-configs folder was never published — e.g. the app was added directly via
+        // a migration/seeder, so runModuleInstallation() diverts here — the update would
+        // otherwise dead-end with "Run the install command first" while install keeps
+        // diverting back to update. Create the folder and publish the configs into it.
         if (! is_dir($targetDir)) {
-            $this->error("Target not found: app-configs/{$this->getModuleKey()}/");
-            $this->line('Run the install command first.');
+            if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
+                $this->error("Failed to create target directory: app-configs/{$this->getModuleKey()}/");
 
-            return 1;
+                return 1;
+            }
+            $this->info("Created target directory: app-configs/{$this->getModuleKey()}/");
         }
 
         $this->info("Updating {$this->getModuleName()} configurations...");

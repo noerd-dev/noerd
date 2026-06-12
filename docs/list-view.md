@@ -56,6 +56,8 @@ columns:
 | `actions` | Array of action buttons (see Actions below) |
 | `disableSearch` | Disable the search functionality |
 | `showSummary` | Show or hide the summary row in the table footer (default: `true`) |
+| `multiSelect` | Enable the checkbox column and bulk-action bar on this list page (see Multi-Select & Bulk Actions below) |
+| `bulkActions` | Array of bulk-action buttons shown when one or more rows are selected (see Multi-Select & Bulk Actions below) |
 | `columns` | Array of column definitions |
 
 ## Column Properties
@@ -246,6 +248,134 @@ public function openImportModal(mixed $modelId = null, array $relations = []): v
 Requires the facade import: `use Noerd\Facades\Noerd;`
 
 Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
+
+## Multi-Select & Bulk Actions
+
+Lists support a generic **multi-select** mode: a leading checkbox column plus a footer bar that acts
+on the ticked rows. The selected ids are tracked in the generic `public array $selectedRecordIds`
+property on the `NoerdList` trait — never re-implement this per list. There are two flavours.
+
+### 1. Bulk-action page
+
+Set `multiSelect: true` in the list YAML to show checkboxes on the list page. Row clicks still open
+the detail (only the checkbox ticks a row). When one or more rows are selected, a footer bar renders
+the buttons from the YAML `bulkActions` array.
+
+```yaml
+title: Tasks
+multiSelect: true
+bulkActions:
+  - label: Assign to
+    action: assignSelected            # list-specific method on the component
+    heroicon: user-plus
+    style: secondary
+  - label: Delete
+    action: deleteSelected            # generic NoerdList method — works for any list
+    heroicon: trash
+    style: danger
+    confirm: Delete the selected entries?   # optional: shown via wire:confirm
+columns:
+  - field: title
+    label: Title
+```
+
+**`bulkActions` properties:**
+
+| Property | Description |
+|----------|-------------|
+| `label` | Button text (translation key) |
+| `action` | Livewire method called on the list component (required) |
+| `heroicon` | (optional) Heroicon name for the button icon |
+| `style` | (optional) `secondary` or `danger`. Default is `primary` |
+| `confirm` | (optional) Confirmation prompt (translation key) shown via `wire:confirm` |
+
+**Generic vs. list-specific actions:**
+
+- **`deleteSelected()` lives in `NoerdList`** — it deletes every selected id through the
+  tenant-scoped query (firing model events, so observers/auditing still run). Wire it up purely from
+  YAML; no per-list method is needed.
+- **List-specific actions** are public methods you add to the list component. They read the ticked ids
+  from `$this->selectedRecordIds`. Example — open the task-create modal for the selected records:
+
+  ```php
+  use Noerd\Facades\Noerd;
+
+  public function createTaskForSelected(): void
+  {
+      Noerd::modal('crm::task-create-modal', [
+          'targetType' => 'Account',
+          'selectedIds' => $this->selectedRecordIds,
+      ]);
+  }
+  ```
+
+After a bulk action that should clear the selection (e.g. opening a follow-up modal that finishes the
+job), reset it in a listener so the checkboxes clear:
+
+```php
+use Livewire\Attributes\On;
+
+#[On('tasksAssigned')]
+public function onTasksAssigned(): void
+{
+    $this->selectedRecordIds = [];
+}
+```
+
+### 2. Picker (return a selection to an opener)
+
+Open any list as a modal with `multiSelect` **and** `returnsSelection` to use it as a record picker.
+In picker mode a row click ticks the row, the top "New …" action is hidden, and the footer shows
+**Cancel / Apply selection** instead of the bulk actions.
+
+```php
+Noerd::modal('crm::accounts-list', [
+    'multiSelect' => true,
+    'returnsSelection' => true,
+    'selectedRecordIds' => $this->selectedIds,   // pre-tick the current selection
+    'context' => 'taskRecords',                  // disambiguates the result event
+]);
+```
+
+On confirm the list dispatches `recordsSelected` with `ids` and `context`; the opener listens and
+filters by its `context`:
+
+```php
+#[On('recordsSelected')]
+public function recordsSelected(array $ids, mixed $context = null): void
+{
+    if ($context !== 'taskRecords') {
+        return;
+    }
+
+    $this->selectedIds = array_values(array_map('intval', $ids));
+}
+```
+
+### Generic API on `NoerdList`
+
+| Member | Purpose |
+|--------|---------|
+| `bool $multiSelect` | Enable the checkbox column (prop, or `multiSelect: true` in YAML) |
+| `bool $returnsSelection` | Picker mode — row click ticks, footer is Cancel / Apply selection |
+| `array $selectedRecordIds` | The ticked ids |
+| `toggleRecordSelection($id)` | Toggle one row (wired to the row checkbox and, in picker mode, the row click) |
+| `toggleSelectAllVisible()` | Toggle every row on the current page (the header checkbox) |
+| `confirmRecordSelection()` | Dispatch `recordsSelected` + `closeTopModal` (picker footer) |
+| `deleteSelected()` | Generic bulk delete of the selected records |
+
+**Notes:**
+
+- Multi-select is always **off in compact/embedded lists** — checkboxes only appear on full pages and
+  in pickers, never in a list embedded inside a detail view.
+- The checkbox's checked state is part of its `wire:key`, so the DOM is recreated when the selection
+  changes — this guarantees the checkboxes clear after a bulk action (a plain morph can leave a
+  user-toggled checkbox visually checked).
+- The footer (picker confirm bar vs. bulk-action bar) is decided by `returnsSelection`: when set, the
+  confirm bar wins; otherwise the YAML `bulkActions` render once at least one row is selected.
+- Reference: `app-configs/crm/lists/tasks-list.yml` (bulk `Assign to` + `Delete`),
+  `leads-list`/`accounts-list` (`createTaskForSelected`) for the page flavour;
+  `task-create-modal.blade.php` `openRecordPicker()` for the picker.
 
 ## Compact Mode (Embedded Lists)
 
