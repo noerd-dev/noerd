@@ -51,7 +51,28 @@
                 class="cursor-pointer hover:bg-brand-bg">
                 @foreach($table as $column)
                     <td class="text-{{ $column['align'] ?? 'left' }} border-b border-gray-100 py-1 px-2 first:pl-4 last:pr-4 text-xs whitespace-nowrap text-gray-700">
-                        {{ $formatMinimalValue($row[$column['field']] ?? null, $column['type'] ?? 'text') }}
+                        @php
+                            $cellValue = $row[$column['field']] ?? null;
+                            $isBadge = ($column['type'] ?? 'text') === 'badge';
+                            $badgeLabel = $cellValue;
+                            if ($isBadge) {
+                                foreach (($column['options'] ?? []) as $opt) {
+                                    if (isset($opt['value']) && (string) $opt['value'] === (string) $cellValue) {
+                                        $badgeLabel = $opt['label'] ?? $cellValue;
+                                        break;
+                                    }
+                                }
+                            }
+                        @endphp
+                        @if($isBadge)
+                            @if($cellValue !== null && $cellValue !== '')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-700">
+                                    {{ __($badgeLabel) }}
+                                </span>
+                            @endif
+                        @else
+                            {{ $formatMinimalValue($cellValue, $column['type'] ?? 'text') }}
+                        @endif
                     </td>
                 @endforeach
             </tr>

@@ -153,6 +153,23 @@
                        @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
                        value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}">
+            @elseif($type == 'badge')
+                @php
+                    $badgeLabel = $value;
+                    foreach (($columnConfig['options'] ?? []) as $opt) {
+                        if (isset($opt['value']) && (string) $opt['value'] === (string) $value) {
+                            $badgeLabel = $opt['label'] ?? $value;
+                            break;
+                        }
+                    }
+                @endphp
+                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="cursor-pointer py-0.5 px-1.5">
+                    @if($value !== null && $value !== '')
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            {{ __($badgeLabel) }}
+                        </span>
+                    @endif
+                </div>
             @elseif($type == 'badge_with_text')
                 <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['badge']) && $value['badge'])

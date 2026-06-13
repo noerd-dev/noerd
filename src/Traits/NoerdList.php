@@ -103,6 +103,9 @@ trait NoerdList
     /** The model class behind this list, remembered from the last listQuery() call. */
     protected ?string $resolvedModelClass = null;
 
+    /** @var array<string, array<string, array<int, array{value: mixed, label: string}>>> */
+    protected array $picklistOptionCache = [];
+
     private static array $schemaColumnCache = [];
 
     public function mount(): void
@@ -646,6 +649,7 @@ trait NoerdList
             : $this->getListConfig($config);
 
         $listSettings = $this->applyAutoColumnTypes($listSettings, $rows);
+        $listSettings = $this->applyPicklistBadges($listSettings);
 
         return [
             'listId' => $this->listId,
@@ -655,6 +659,104 @@ trait NoerdList
             'rows' => $rows,
             'listSettings' => $listSettings,
         ];
+    }
+
+    /**
+     * Render columns that mirror a detail picklist (a `type: select` field with
+     * inline options) as translated badges. The option labels are read from the
+     * paired detail YAML — no per-list configuration is needed. A column that
+     * already declares an explicit type or its own options is left untouched, so a
+     * list can still opt in manually with `type: badge` + `options`.
+     */
+    protected function applyPicklistBadges(array $listSettings): array
+    {
+        $optionsByField = $this->picklistOptionsFromDetail();
+        if ($optionsByField === []) {
+            return $listSettings;
+        }
+
+        foreach ($listSettings['columns'] ?? [] as $i => $column) {
+            $field = $column['field'] ?? null;
+            if ($field === null || isset($column['options'])) {
+                continue;
+            }
+
+            $type = $column['type'] ?? null;
+            if ($type !== null && $type !== 'text') {
+                continue;
+            }
+
+            if (isset($optionsByField[$field])) {
+                $listSettings['columns'][$i]['type'] = 'badge';
+                $listSettings['columns'][$i]['options'] = $optionsByField[$field];
+            }
+        }
+
+        return $listSettings;
+    }
+
+    /**
+     * Map of `field => options` for every `type: select` field (with inline
+     * options) declared in this list's paired detail YAML. Memoised per request.
+     *
+     * @return array<string, array<int, array{value: mixed, label: string}>>
+     */
+    protected function picklistOptionsFromDetail(): array
+    {
+        $detailComponent = $this->pairedDetailComponent();
+        if ($detailComponent === null) {
+            return [];
+        }
+
+        if (array_key_exists($detailComponent, $this->picklistOptionCache)) {
+            return $this->picklistOptionCache[$detailComponent];
+        }
+
+        $fields = StaticConfigHelper::tryGetComponentFields($detailComponent)['fields'] ?? [];
+        $map = [];
+        $this->collectSelectOptions($fields, $map);
+
+        return $this->picklistOptionCache[$detailComponent] = $map;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $fields
+     * @param  array<string, array<int, array{value: mixed, label: string}>>  $map
+     */
+    protected function collectSelectOptions(array $fields, array &$map): void
+    {
+        foreach ($fields as $field) {
+            if (($field['type'] ?? null) === 'block') {
+                $this->collectSelectOptions($field['fields'] ?? [], $map);
+
+                continue;
+            }
+
+            if (($field['type'] ?? null) !== 'select' || empty($field['options']) || ! isset($field['name'])) {
+                continue;
+            }
+
+            $key = Str::after($field['name'], 'detailData.');
+            $map[$key] = $field['options'];
+        }
+    }
+
+    /**
+     * The detail component paired with this list by convention
+     * (`{x}-list` → `{x}-detail`, preserving any dotted subfolder), or null when
+     * this component is not a standard list.
+     */
+    protected function pairedDetailComponent(): ?string
+    {
+        $name = Str::afterLast($this->componentName(), '::');
+        $prefix = Str::contains($name, '.') ? Str::beforeLast($name, '.') . '.' : '';
+        $last = Str::afterLast($name, '.');
+
+        if (! Str::endsWith($last, '-list')) {
+            return null;
+        }
+
+        return $prefix . Str::singular(Str::before($last, '-list')) . '-detail';
     }
 
     /**
@@ -694,8 +796,26 @@ trait NoerdList
             'currency', 'number' => is_numeric($value)
                 ? number_format((float) $value, 2, ',', '.')
                 : (string) ($value ?? ''),
+            'badge' => __($this->badgeLabel($value, $column['options'] ?? [])),
             default => (string) ($value ?? ''),
         };
+    }
+
+    /**
+     * Resolve a picklist value to its option label (untranslated); falls back to
+     * the raw value when no option matches.
+     *
+     * @param  array<int, array{value: mixed, label: string}>  $options
+     */
+    protected function badgeLabel(mixed $value, array $options): string
+    {
+        foreach ($options as $option) {
+            if (isset($option['value']) && (string) $option['value'] === (string) $value) {
+                return (string) ($option['label'] ?? $value);
+            }
+        }
+
+        return (string) ($value ?? '');
     }
 
     /**

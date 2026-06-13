@@ -28,6 +28,23 @@ class StaticConfigHelper
         return Yaml::parse($content ?: '');
     }
 
+    /**
+     * Like getComponentFields() but stays silent when the config is missing.
+     * Used by generic list features that probe a paired detail config and must
+     * not spam warnings for lists whose detail name does not match the convention.
+     */
+    public static function tryGetComponentFields(string $component): array
+    {
+        $subPath = self::componentToSubPath($component);
+        $yamlPath = self::findConfigPath("details/{$subPath}.yml");
+
+        if (! $yamlPath) {
+            return [];
+        }
+
+        return Yaml::parse(file_get_contents($yamlPath) ?: '') ?: [];
+    }
+
     public static function getListConfig(string $tableName): array
     {
         $subPath = self::componentToSubPath($tableName);

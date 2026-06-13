@@ -57,10 +57,20 @@
             if (isset($tab['viewExists']) && !View::exists($tab['viewExists'])) {
                 $showTab = false;
             }
+
+            // Reactive client-side visibility for the panel — mirrors field-level showIf.
+            $tabShowIf = '';
+            if (isset($tab['showIf'])) {
+                if (is_string($tab['showIf'])) {
+                    $tabShowIf = 'x-show="$wire.' . $tab['showIf'] . '"';
+                } elseif (is_array($tab['showIf'])) {
+                    $tabShowIf = 'x-show="$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'\"";
+                }
+            }
         @endphp
 
         @if($showTab)
-            <div :class="currentTab === {{ $tab['number'] }} ? 'visible' : 'invisible pointer-events-none'">
+            <div {!! $tabShowIf !!} :class="currentTab === {{ $tab['number'] }} ? 'visible' : 'invisible pointer-events-none'">
                 {{-- Render prepend slot for this tab if it exists (e.g., prependTab1, prependTab2, etc.) --}}
                 @php
                     $prependSlotName = 'prependTab' . $tab['number'];

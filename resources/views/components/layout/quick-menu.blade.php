@@ -34,7 +34,7 @@ new class extends Component {
     }
 } ?>
 
-<div class="flex gap-x-2 overflow-x-auto min-w-0 flex-1">
+<div class="flex items-center gap-x-2 overflow-x-auto min-w-0 flex-1 p-1">
     @foreach($config['buttons'] ?? [] as $button)
         @if(!isset($button['policy']) || $this->canAccess($button['policy']))
             <div class="shrink-0">

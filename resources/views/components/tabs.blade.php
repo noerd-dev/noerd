@@ -45,8 +45,20 @@
                         if (isset($tab['viewExists']) && !View::exists($tab['viewExists'])) {
                             $showTab = false;
                         }
+
+                        // Reactive client-side visibility — mirrors field-level showIf
+                        // (Alpine x-show against a Livewire property).
+                        $tabShowIf = '';
+                        if (isset($tab['showIf'])) {
+                            if (is_string($tab['showIf'])) {
+                                $tabShowIf = 'x-show="$wire.' . $tab['showIf'] . '"';
+                            } elseif (is_array($tab['showIf'])) {
+                                $tabShowIf = 'x-show="$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'\"";
+                            }
+                        }
                     @endphp
                     @if($showTab)
+                        @if($tabShowIf)<div class="inline-flex" {!! $tabShowIf !!}>@endif
                         @if(isset($tab['component']))
                             @php
                                 $tabArguments = isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : [];
@@ -72,6 +84,7 @@
                                 {{ __($tab['label']) }}
                             </x-noerd::tab>
                         @endif
+                        @if($tabShowIf)</div>@endif
                     @endif
                 @endforeach
             </nav>
