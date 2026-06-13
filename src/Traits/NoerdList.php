@@ -809,6 +809,8 @@ trait NoerdList
      */
     protected function badgeLabel(mixed $value, array $options): string
     {
+        $value = $value instanceof \BackedEnum ? $value->value : ($value instanceof \UnitEnum ? $value->name : $value);
+
         foreach ($options as $option) {
             if (isset($option['value']) && (string) $option['value'] === (string) $value) {
                 return (string) ($option['label'] ?? $value);

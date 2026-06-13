@@ -103,6 +103,16 @@ new class () extends Component {
                 <livewire:noerd::layout.quick-menu/>
 
                 <div class="ml-auto my-auto flex items-center gap-x-4 shrink-0">
+                    @if(Route::has('layouts'))
+                        @can('manageLayouts')
+                            <a class="shrink-0" wire:navigate href="{{route('layouts')}}">
+                                <x-noerd::button variant="icon" icon="view-columns" type="button">
+                                    <span class="sr-only">{{ __('Layouts') }}</span>
+                                </x-noerd::button>
+                            </a>
+                        @endcan
+                    @endif
+
                     @if(auth()->user()->isAdmin())
                         <a class="shrink-0" wire:navigate href="{{route('setup')}}">
                             <x-noerd::button variant="icon" icon="cog-6-tooth" type="button">

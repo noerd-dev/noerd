@@ -155,16 +155,17 @@
                        value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}">
             @elseif($type == 'badge')
                 @php
-                    $badgeLabel = $value;
+                    $badgeValue = $value instanceof \BackedEnum ? $value->value : ($value instanceof \UnitEnum ? $value->name : $value);
+                    $badgeLabel = $badgeValue;
                     foreach (($columnConfig['options'] ?? []) as $opt) {
-                        if (isset($opt['value']) && (string) $opt['value'] === (string) $value) {
-                            $badgeLabel = $opt['label'] ?? $value;
+                        if (isset($opt['value']) && (string) $opt['value'] === (string) $badgeValue) {
+                            $badgeLabel = $opt['label'] ?? $badgeValue;
                             break;
                         }
                     }
                 @endphp
                 <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="cursor-pointer py-0.5 px-1.5">
-                    @if($value !== null && $value !== '')
+                    @if($badgeValue !== null && $badgeValue !== '')
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                             {{ __($badgeLabel) }}
                         </span>

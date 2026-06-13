@@ -54,18 +54,19 @@
                         @php
                             $cellValue = $row[$column['field']] ?? null;
                             $isBadge = ($column['type'] ?? 'text') === 'badge';
-                            $badgeLabel = $cellValue;
+                            $badgeValue = $cellValue instanceof \BackedEnum ? $cellValue->value : ($cellValue instanceof \UnitEnum ? $cellValue->name : $cellValue);
+                            $badgeLabel = $badgeValue;
                             if ($isBadge) {
                                 foreach (($column['options'] ?? []) as $opt) {
-                                    if (isset($opt['value']) && (string) $opt['value'] === (string) $cellValue) {
-                                        $badgeLabel = $opt['label'] ?? $cellValue;
+                                    if (isset($opt['value']) && (string) $opt['value'] === (string) $badgeValue) {
+                                        $badgeLabel = $opt['label'] ?? $badgeValue;
                                         break;
                                     }
                                 }
                             }
                         @endphp
                         @if($isBadge)
-                            @if($cellValue !== null && $cellValue !== '')
+                            @if($badgeValue !== null && $badgeValue !== '')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-700">
                                     {{ __($badgeLabel) }}
                                 </span>

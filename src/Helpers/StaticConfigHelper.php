@@ -25,7 +25,7 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return Yaml::parse($content ?: '');
+        return self::applyOverrides('detail', $component, Yaml::parse($content ?: '') ?: []);
     }
 
     /**
@@ -59,7 +59,57 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return Yaml::parse($content ?: '');
+        return self::applyOverrides('list', $tableName, Yaml::parse($content ?: '') ?: []);
+    }
+
+    /**
+     * Apply registered layout overrides (tenant default + per-user) to a parsed
+     * config. No-op by default; the noerd-pro module rebinds the resolver.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private static function applyOverrides(string $viewType, string $component, array $config): array
+    {
+        return app(\Noerd\Contracts\LayoutOverrideResolver::class)
+            ->apply($viewType, $component, $config);
+    }
+
+    /**
+     * Resolve the on-disk path of a list/detail YAML for an EXPLICIT app, bypassing
+     * the session-driven current-app context. Used by tooling (e.g. the noerd-pro
+     * layout editor) that must read the raw, un-overridden config of an arbitrary
+     * app while a different app is selected.
+     */
+    public static function resolveConfigPath(string $app, string $viewType, string $component): ?string
+    {
+        $dir = $viewType === 'detail' ? 'details' : 'lists';
+        $subPath = self::componentToSubPath($component);
+
+        $primaryPath = base_path("app-configs/{$app}/{$dir}/{$subPath}.yml");
+        if (file_exists($primaryPath)) {
+            return $primaryPath;
+        }
+
+        $moduleSource = self::getModuleSourcePath($app);
+        if ($moduleSource) {
+            $sourcePath = $moduleSource . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR . $subPath . '.yml';
+            if (file_exists($sourcePath)) {
+                return $sourcePath;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Public accessor for the module-source directory of an app-config key
+     * (app-modules/{module}/app-configs/{app}). Returns null when no module ships
+     * that app.
+     */
+    public static function moduleSourcePathForApp(string $app): ?string
+    {
+        return self::getModuleSourcePath($app);
     }
 
     public static function getNavigationStructure(): ?array

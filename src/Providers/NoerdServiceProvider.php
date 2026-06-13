@@ -29,6 +29,7 @@ use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUiLibraryCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
+use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\SetupCollectionHelper;
@@ -47,6 +48,7 @@ use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NoerdManager;
+use Noerd\Services\NullLayoutOverrideResolver;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationFieldRegistry;
@@ -63,6 +65,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
 
         $this->app->singleton(ListQueryContext::class);
+        $this->app->singleton(LayoutOverrideResolver::class, NullLayoutOverrideResolver::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(NoerdManager::class);
@@ -126,7 +129,22 @@ class NoerdServiceProvider extends ServiceProvider
         $relationFieldRegistry = $this->app->make(RelationFieldRegistry::class);
         $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
             'noerd::components.forms.input-select',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId): array {
+                $optionsMethod = $field['optionsMethod'] ?? null;
+
+                if ($optionsMethod && $component && method_exists($component, $optionsMethod)) {
+                    $resolved = $component->{$optionsMethod}();
+                    $options = [];
+
+                    foreach ($resolved as $value => $label) {
+                        $options[] = ['value' => $value, 'label' => $label];
+                    }
+
+                    $field['options'] = $options;
+                }
+
+                return ['field' => $field];
+            },
         ));
         $fieldTypeRegistry->register('picklist', FieldTypeDefinition::include(
             'noerd::components.forms.picklist',
