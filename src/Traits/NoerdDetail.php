@@ -36,6 +36,24 @@ trait NoerdDetail
         return $this->getName();
     }
 
+    /**
+     * Livewire trait mount hook (runs for every detail). The active tab is shared
+     * across all details via the `tab` URL param, so a stale tab (e.g. the lead
+     * activity-log tab 2) would otherwise bleed into the next detail. Only keep the
+     * carried-over tab when the previously opened detail was the SAME component type
+     * (e.g. lead → another lead); opening a different model type starts on tab 1.
+     */
+    public function mountNoerdDetail(): void
+    {
+        $component = $this->getName();
+
+        if (session('noerd.lastDetailComponent') !== $component) {
+            $this->currentTab = 1;
+        }
+
+        session(['noerd.lastDetailComponent' => $component]);
+    }
+
     public function initDetail(): void
     {
         // For detail components with DETAIL_CLASS constant. Loads the pageLayout first

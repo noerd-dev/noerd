@@ -2,17 +2,8 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Noerd\Helpers\TenantHelper;
-use Noerd\Models\Tenant;
 
 new class () extends Component {
-    public $selectedTenantId;
-
-    public function mount(): void
-    {
-        $this->selectedTenantId = TenantHelper::getSelectedTenantId() ?? 0;
-    }
-
     public function logout(): void
     {
         Auth::guard('web')->logout();
@@ -21,45 +12,6 @@ new class () extends Component {
         Session::regenerateToken();
 
         $this->redirect('/login');
-    }
-
-    public function changeClient()
-    {
-        $user = Auth::user();
-        $accessToClients = $user->tenants;
-        $accessToClientsIds = $accessToClients->pluck('id')->toArray();
-        if (in_array($this->selectedTenantId, $accessToClientsIds)) {
-            TenantHelper::setSelectedTenantId($this->selectedTenantId);
-
-            $redirectUrl = '/';
-            $referer = request()->header('Referer');
-
-            if ($referer) {
-                $path = parse_url($referer, PHP_URL_PATH);
-                $segments = explode('/', mb_trim($path, '/'));
-                $appPrefix = $segments[0] ?? null;
-
-                if ($appPrefix) {
-                    // System paths that are always accessible
-                    $systemPaths = ['setup', 'profile', 'dashboard', 'no-tenant'];
-
-                    if (in_array($appPrefix, $systemPaths)) {
-                        $redirectUrl = $referer;
-                    } else {
-                        $newTenant = Tenant::find($this->selectedTenantId);
-                        $hasApp = $newTenant?->tenantApps()
-                            ->whereRaw('LOWER(name) = ?', [mb_strtolower($appPrefix)])
-                            ->exists();
-
-                        if ($hasApp) {
-                            $redirectUrl = $referer;
-                        }
-                    }
-                }
-            }
-
-            return $this->redirect($redirectUrl);
-        }
     }
 
     public function openSidebar(): void
@@ -119,15 +71,6 @@ new class () extends Component {
                                 <span class="sr-only">View setup</span>
                             </x-noerd::button>
                         </a>
-                    @endif
-
-                    @if(config('noerd.features.multi_tenant') && auth()->user()->tenants->count() > 1)
-                        <!-- Tenants (nur Desktop) -->
-                        <x-noerd::select-input class="hidden lg:block h-8 w-48! mt-0!" wire:model="selectedTenantId" wire:change="changeClient">
-                            @foreach(auth()->user()->tenants as $client)
-                                <option value="{{$client->id}}">{{$client->name}}</option>
-                            @endforeach
-                        </x-noerd::select-input>
                     @endif
 
                     <!-- Profile dropdown -->

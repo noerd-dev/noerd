@@ -48,6 +48,10 @@
     $bulkActions = $listSettings['bulkActions'] ?? [];
     $multiSelect = ! $compact && (($this->multiSelect ?? false) || $returnsSelection || ($listSettings['multiSelect'] ?? false));
     $selectedRecordIds = $multiSelect ? ($this->selectedRecordIds ?? []) : [];
+
+    // Excel-style row numbers: a leading number column that restarts at 1 per page
+    // ($loop->iteration over the current page's rows). Enabled via the list YAML.
+    $showLineNumbers = ($this->showLineNumbers ?? false) || ($listSettings['showLineNumbers'] ?? false);
     $visibleRowIds = [];
     $allVisibleSelected = false;
     if ($multiSelect) {
@@ -118,13 +122,18 @@
                                 <table class="min-w-full border-separate border-spacing-0">
                                     <thead>
                                     <tr>
+                                        @if($showLineNumbers)
+                                            <th scope="col" class="sticky top-0 z-10 w-12 border-b border-r border-gray-300 bg-brand-navi/75 px-2 py-3.5 backdrop-blur-sm backdrop-filter"></th>
+                                        @endif
                                         @if($multiSelect)
                                             <th scope="col" class="sticky top-0 z-10 w-10 border-b border-r border-gray-300 bg-brand-navi/75 px-3 py-3.5 backdrop-blur-sm backdrop-filter">
-                                                <input type="checkbox"
-                                                       wire:key="cb-all-{{ $listId }}-{{ $allVisibleSelected ? 1 : 0 }}"
-                                                       wire:click="toggleSelectAllVisible"
-                                                       @checked($allVisibleSelected)
-                                                       class="h-4 w-4 cursor-pointer rounded border-gray-300 text-brand-primary focus:ring-brand-border">
+                                                <div class="flex items-center justify-center">
+                                                    <input type="checkbox"
+                                                           wire:key="cb-all-{{ $listId }}-{{ $allVisibleSelected ? 1 : 0 }}"
+                                                           wire:click="toggleSelectAllVisible"
+                                                           @checked($allVisibleSelected)
+                                                           class="block h-4 w-4 cursor-pointer rounded border-gray-300 text-brand-primary focus:ring-brand-border">
+                                                </div>
                                             </th>
                                         @endif
                                         @foreach($table as $column)
@@ -147,17 +156,22 @@
                                             @click="selectedRow{{$listId}} = '{{$key}}'"
                                             wire:click="findListAction('{{$key}}')"
                                             class="cursor-pointer group hover:bg-brand-bg border border-black/10">
+                                            @if($showLineNumbers)
+                                                <td class="w-12 border-b border-r border-gray-300 px-2 py-1 text-right text-xs text-gray-400 select-none">{{ $loop->iteration }}</td>
+                                            @endif
                                             @if($multiSelect)
                                                 @php $rowChecked = in_array((int) ($row['id'] ?? 0), $selectedRecordIds, true); @endphp
                                                 <td class="w-10 border-b border-r border-gray-300 px-3 py-1 text-center" @click.stop>
                                                     {{-- The checked state is part of the wire:key so the input is
                                                          recreated when the selection clears — otherwise a user-toggled
                                                          checkbox keeps its DOM checked state through the morph. --}}
-                                                    <input type="checkbox"
-                                                           wire:key="cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
-                                                           wire:click.stop="toggleRecordSelection('{{ $row['id'] }}')"
-                                                           @checked($rowChecked)
-                                                           class="h-4 w-4 cursor-pointer rounded border-gray-300 text-brand-primary focus:ring-brand-border">
+                                                    <div class="flex items-center justify-center">
+                                                        <input type="checkbox"
+                                                               wire:key="cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
+                                                               wire:click.stop="toggleRecordSelection('{{ $row['id'] }}')"
+                                                               @checked($rowChecked)
+                                                               class="block h-4 w-4 cursor-pointer rounded border-gray-300 text-brand-primary focus:ring-brand-border">
+                                                    </div>
                                                 </td>
                                             @endif
                                             @foreach($table as $index => $column)
@@ -180,7 +194,7 @@
                                     @empty
                                         @php($primaryAction = $actions[0] ?? null)
                                         <tr>
-                                            <td colspan="{{ count($table) + ($multiSelect ? 1 : 0) }}" class="border-b border-black/10 px-6 py-12 text-center">
+                                            <td colspan="{{ count($table) + ($multiSelect ? 1 : 0) + ($showLineNumbers ? 1 : 0) }}" class="border-b border-black/10 px-6 py-12 text-center">
                                                 <p class="text-sm text-gray-500">{{ __('No entries yet') }}</p>
                                                 @if($primaryAction)
                                                     <div class="mt-4 flex justify-center">
@@ -200,6 +214,12 @@
                                     @if($summary && $showSummary)
                                         <tfoot>
                                         <tr class="bg-gray-50 font-semibold">
+                                            @if($showLineNumbers)
+                                                <td class="border-t-2 border-b border-r border-gray-300 py-2 px-2"></td>
+                                            @endif
+                                            @if($multiSelect)
+                                                <td class="border-t-2 border-b border-r border-gray-300 py-2 px-2"></td>
+                                            @endif
                                             @foreach($table as $index => $column)
                                                 <td class="border-t-2 border-b border-r border-gray-300 py-2 px-1.5 first:pl-6 text-sm @if(($column['align'] ?? 'left') === 'right' || in_array($column['type'] ?? 'text', ['currency', 'number'])) text-right @endif">
                                                     @if(isset($summary[$column['field']]))

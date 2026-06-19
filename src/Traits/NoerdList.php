@@ -79,6 +79,13 @@ trait NoerdList
     public array $selectedRecordIds = [];
 
     /**
+     * Opt-in Excel-style row numbers: renders a leading number column that restarts
+     * at 1 on every pagination page. Enabled per list via `showLineNumbers: true` in
+     * the list YAML (or this property as a tag attribute). Off by default.
+     */
+    public bool $showLineNumbers = false;
+
+    /**
      * Picker mode: the list was opened to hand a selection back to an opener — it
      * dispatches recordsSelected on confirm and a row click ticks the row instead
      * of opening it. When false the list is a normal page whose selection drives

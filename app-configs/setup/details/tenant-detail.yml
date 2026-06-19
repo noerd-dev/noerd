@@ -21,11 +21,11 @@ fields:
   - name: detailData.zipcode
     label: ZIP Code
     type: text
-    colspan: 3
+    colspan: 6
   - name: detailData.city
     label: City
     type: text
-    colspan: 3
+    colspan: 6
   - name: logo
     label: Logo
     type: image
