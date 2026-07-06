@@ -64,6 +64,12 @@ class NoerdServiceProvider extends ServiceProvider
         // root config/noerd.php is absent (e.g., module-only test boots).
         $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
 
+        // Register the quick-create exit hook in the register phase: Livewire wires
+        // its ComponentHookRegistry during its own boot(), so a boot()-phase
+        // registration here could land too late. The register phase of all providers
+        // runs before any boot(), and the static call needs no container binding.
+        \Livewire\ComponentHookRegistry::register(\Noerd\Support\QuickCreateExitHook::class);
+
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(LayoutOverrideResolver::class, NullLayoutOverrideResolver::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
