@@ -685,6 +685,60 @@ trait HasModuleInstallation
     }
 
     /**
+     * Ensure a button exists in the global quick-menu config (app-configs/quick-menu.yml).
+     * Rewrites any button still pointing at $legacyComponent to the new component name,
+     * then prepends the button if it is not present yet.
+     *
+     * @param  array{policy: string, component: string}  $button
+     */
+    protected function ensureQuickMenuButton(array $button, ?string $legacyComponent = null): void
+    {
+        $configPath = base_path('app-configs/quick-menu.yml');
+
+        $config = file_exists($configPath)
+            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
+            : [];
+        $buttons = $config['buttons'] ?? [];
+
+        $changed = false;
+        foreach ($buttons as $i => $existing) {
+            if ($legacyComponent !== null && ($existing['component'] ?? null) === $legacyComponent) {
+                $buttons[$i]['component'] = $button['component'];
+                $changed = true;
+            }
+        }
+
+        $present = false;
+        foreach ($buttons as $existing) {
+            if (($existing['policy'] ?? null) === $button['policy']
+                && ($existing['component'] ?? null) === $button['component']) {
+                $present = true;
+                break;
+            }
+        }
+
+        if (! $present) {
+            $buttons = [$button, ...$buttons];
+            $changed = true;
+        }
+
+        if (! $changed) {
+            $this->line('<comment>Quick-menu already contains the button.</comment>');
+
+            return;
+        }
+
+        $dir = dirname($configPath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $config['buttons'] = $buttons;
+        file_put_contents($configPath, Yaml::dump($config, 10, 2));
+        $this->line('<info>Quick-menu config updated:</info> app-configs/quick-menu.yml');
+    }
+
+    /**
      * Ask the user if they want to run migrations.
      */
     protected function askForMigration(): void
