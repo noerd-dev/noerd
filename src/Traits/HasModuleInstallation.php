@@ -686,12 +686,13 @@ trait HasModuleInstallation
 
     /**
      * Ensure a button exists in the global quick-menu config (app-configs/quick-menu.yml).
-     * Rewrites any button still pointing at $legacyComponent to the new component name,
-     * then prepends the button if it is not present yet.
+     * Rewrites any button still pointing at one of the $legacyComponents to the new
+     * component name, then prepends the button if it is not present yet.
      *
      * @param  array{policy: string, component: string}  $button
+     * @param  string[]  $legacyComponents
      */
-    protected function ensureQuickMenuButton(array $button, ?string $legacyComponent = null): void
+    protected function ensureQuickMenuButton(array $button, array $legacyComponents = []): void
     {
         $configPath = base_path('app-configs/quick-menu.yml');
 
@@ -702,7 +703,7 @@ trait HasModuleInstallation
 
         $changed = false;
         foreach ($buttons as $i => $existing) {
-            if ($legacyComponent !== null && ($existing['component'] ?? null) === $legacyComponent) {
+            if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
                 $buttons[$i]['component'] = $button['component'];
                 $changed = true;
             }
