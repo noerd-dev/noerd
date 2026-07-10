@@ -8,6 +8,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Models\Profile;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\SetupLanguage;
 use Noerd\Models\UserRole;
 use Noerd\Traits\NoerdDetail;
 
@@ -22,9 +23,17 @@ new class extends Component {
     public bool $isOwner = false;
     public $selectedTenant;
 
+    public bool $sendPasswordResetMail = true;
+    public string $userLocale = 'en';
+
     public array $tenantAccess = [];
     public array $userRoles = [];
     public array $possibleTenants = [];
+
+    public function localeOptions(): array
+    {
+        return SetupLanguage::getActive()->pluck('name', 'code')->toArray();
+    }
 
     #[Computed]
     public function roles(): array
@@ -69,6 +78,7 @@ new class extends Component {
         $this->initDetail();
 
         $this->selectedTenant = auth()->user()->selectedTenant();
+        $this->userLocale = SetupLanguage::getDefaultCode();
 
         $user = new NoerdUser;
         if ($this->modelId) {
@@ -151,8 +161,12 @@ new class extends Component {
         $this->storeProcess($user);
 
         if ($user->wasRecentlyCreated) {
-            // Send password reset link instead of generated password
-            Password::sendResetLink(['email' => $user->email]);
+            $user->locale = $this->userLocale;
+
+            if ($this->sendPasswordResetMail) {
+                // Send password reset link instead of generated password
+                Password::sendResetLink(['email' => $user->email]);
+            }
 
             $user->save();
         }
@@ -180,9 +194,11 @@ new class extends Component {
     <x-noerd::tab-content :layout="$pageLayout">
         <x-slot:tab1>
             @if(!isset($modelId))
-                <div>
-                    {{ __('The user will receive a link via email to set their password.') }}
-                </div>
+                <x-noerd::checkbox
+                    wire:model="sendPasswordResetMail"
+                    name="sendPasswordResetMail">
+                    {{ __('Send the user an email with a link to set their password.') }}
+                </x-noerd::checkbox>
             @endif
 
             <div class="py-8 pt-4">

@@ -2,6 +2,7 @@
 
 namespace Noerd\Models;
 
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\NoerdUserFactory;
 use Noerd\Helpers\TenantHelper;
 
-class NoerdUser extends Authenticatable
+class NoerdUser extends Authenticatable implements HasLocalePreference
 {
     use HasFactory;
     use Notifiable;
@@ -178,6 +179,11 @@ class NoerdUser extends Authenticatable
     public function setLocaleAttribute(string $value): void
     {
         $this->setting->update(['locale' => $value]);
+    }
+
+    public function preferredLocale(): string
+    {
+        return $this->locale;
     }
 
     public function toArray()

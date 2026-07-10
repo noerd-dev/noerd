@@ -26,7 +26,9 @@ it('renders the user component', function () use ($testSettings): void {
 
     Livewire::test($testSettings['componentName'])
         ->assertStatus(200)
-        ->assertSeeText('Benutzer');
+        ->assertSeeText('Benutzer')
+        ->assertSeeHtml('wire:model="userLocale"')
+        ->assertSeeHtml('<option value="de">');
 });
 
 it('validates required fields when storing', function () use ($testSettings): void {
@@ -444,4 +446,75 @@ it('creates user with hashed password that user cannot login with before reset',
 
     // Verify password is long (hashed passwords are longer than plain text)
     expect(mb_strlen($createdUser->password))->toBeGreaterThan(50);
+});
+
+it('does not send password reset link when the option is disabled', function () use ($testSettings): void {
+    Notification::fake();
+
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $profile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'USER',
+        'name' => 'Standard User',
+    ]);
+
+    $this->actingAs($admin);
+
+    $userEmail = fake()->email;
+
+    Livewire::test($testSettings['componentName'])
+        ->set('detailData.name', fake()->name)
+        ->set('detailData.email', $userEmail)
+        ->set('sendPasswordResetMail', false)
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    expect(NoerdUser::where('email', $userEmail)->first())->not->toBeNull();
+
+    Notification::assertNothingSent();
+});
+
+it('stores the selected locale in the user settings when creating a new user', function () use ($testSettings): void {
+    Notification::fake();
+
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $profile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'USER',
+        'name' => 'Standard User',
+    ]);
+
+    $this->actingAs($admin);
+
+    $userEmail = fake()->email;
+
+    Livewire::test($testSettings['componentName'])
+        ->set('detailData.name', fake()->name)
+        ->set('detailData.email', $userEmail)
+        ->set('userLocale', 'de')
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    $createdUser = NoerdUser::where('email', $userEmail)->first();
+
+    $this->assertDatabaseHas('noerd_user_settings', [
+        'user_id' => $createdUser->id,
+        'locale' => 'de',
+    ]);
+    expect($createdUser->locale)->toBe('de');
+});
+
+it('prefers the user setting locale for notifications', function (): void {
+    $user = NoerdUser::factory()->create();
+    $user->locale = 'de';
+
+    expect($user->fresh()->preferredLocale())->toBe('de');
 });

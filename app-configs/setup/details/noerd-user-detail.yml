@@ -7,3 +7,8 @@ fields:
   - name: detailData.name
     label: Name
     type: text
+  - name: userLocale
+    label: Language
+    type: select
+    optionsMethod: localeOptions
+    showIfNot: modelId

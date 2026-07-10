@@ -2,13 +2,14 @@
     "name": "noerd/noerd",
     "description": "",
     "type": "library",
-    "version": "v0.6.17",
+    "version": "v0.6.18",
     "license": "MIT",
     "require": {
         "livewire/livewire": "^4.0",
         "noerd/modal": "^0.3",
         "composer/composer": "^2.9",
-        "wireui/heroicons": "^2.9"
+        "wireui/heroicons": "^2.9",
+        "symfony/yaml": "^7.1"
     },
     "require-dev": {
         "pestphp/pest": "^4.0"
