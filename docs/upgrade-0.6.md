@@ -193,7 +193,7 @@ The mechanism behind Breaking Change 1 — covered in detail above and in [relat
 
 ### `<x-noerd::code-snippet>` Component
 
-A new component for documentation-style code blocks with syntax highlighting and a copy-to-clipboard button. Used throughout the bundled UI library demo.
+A new component for documentation-style code blocks with syntax highlighting and a copy-to-clipboard button.
 
 ### Currency Feature Flag
 

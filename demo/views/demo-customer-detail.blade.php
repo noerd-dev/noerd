@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\DemoCategory;
 use App\Models\DemoCustomer;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -25,9 +26,16 @@ new class extends Component {
         }
     }
 
+    public function categoryOptions(): array
+    {
+        return ['' => '-'] + DemoCategory::orderBy('name')->pluck('name', 'id')->toArray();
+    }
+
     public function store(): void
     {
         $this->validateFromLayout();
+
+        $this->detailData['demo_category_id'] = ($this->detailData['demo_category_id'] ?? null) ?: null;
 
         $demoCustomer = DemoCustomer::updateOrCreate(
             ['id' => $this->modelId],

@@ -26,7 +26,6 @@ use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
-use Noerd\Commands\NoerdUiLibraryCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Contracts\LayoutOverrideResolver;
@@ -267,7 +266,6 @@ class NoerdServiceProvider extends ServiceProvider
                 CreateAdminCommand::class,
                 CreateTenantCommand::class,
                 NoerdDemoCommand::class,
-                NoerdUiLibraryCommand::class,
                 PublishHomeCommand::class,
                 ImportSetupCollectionDefinitionsCommand::class,
                 ExportSetupCollectionDefinitionsCommand::class,

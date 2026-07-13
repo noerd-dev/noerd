@@ -43,18 +43,6 @@ Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
     Route::view('profile', 'noerd::profile')->name('profile');
 });
 
-Route::prefix('ui-library')->as('ui-library.')->middleware(['auth', 'verified', 'web', 'app-access:UI-LIBRARY'])->group(function (): void {
-    Route::livewire('/dashboard', 'noerd::ui-library-dashboard')->name('dashboard');
-    Route::livewire('/buttons', 'noerd::ui-library-buttons')->name('buttons');
-    Route::livewire('/form-inputs', 'noerd::ui-library-form-inputs')->name('form-inputs');
-    Route::livewire('/form-inputs-advanced', 'noerd::ui-library-form-inputs-advanced')->name('form-inputs-advanced');
-    Route::livewire('/labels-errors', 'noerd::ui-library-labels-errors')->name('labels-errors');
-    Route::livewire('/layout', 'noerd::ui-library-layout')->name('layout');
-    Route::livewire('/actions', 'noerd::ui-library-actions')->name('actions');
-    Route::livewire('/advanced', 'noerd::ui-library-advanced')->name('advanced');
-    Route::livewire('/filters', 'noerd::ui-library-filters')->name('filters');
-});
-
 Route::middleware(['web', 'guest'])->group(function (): void {
     Route::livewire('login', 'noerd::auth.login')->name('login');
     Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('password.request');

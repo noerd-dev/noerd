@@ -9,9 +9,12 @@ use function Laravel\Prompts\confirm;
 
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Traits\RequiresNoerdInstallation;
 
 class NoerdDemoCommand extends Command
 {
+    use RequiresNoerdInstallation;
+
     protected $signature = 'noerd:demo {--force : Overwrite existing files}';
 
     protected $description = 'Install demo data (models, migrations, views, configs, routes) directly into the project';
@@ -20,6 +23,10 @@ class NoerdDemoCommand extends Command
 
     public function handle(): int
     {
+        if (! $this->ensureNoerdInstalled()) {
+            return self::FAILURE;
+        }
+
         $this->demoDir = dirname(__DIR__, 2) . '/demo';
 
         $this->info('Installing noerd demo data...');
