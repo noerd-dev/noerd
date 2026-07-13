@@ -10,6 +10,11 @@ fields:
     label: Company
     type: text
     colspan: 6
+  - name: detailData.demo_category_id
+    label: Category
+    type: select
+    optionsMethod: categoryOptions
+    colspan: 6
   - name: detailData.email
     label: Email
     type: email

@@ -22,8 +22,6 @@ class NoerdInstallCommand extends Command
 
     private bool $shouldInstallDemo = false;
 
-    private bool $shouldInstallUiLibrary = false;
-
     public function handle()
     {
         $this->info('Installing noerd content...');
@@ -39,17 +37,6 @@ class NoerdInstallCommand extends Command
 
         if (! $this->shouldInstallDemo) {
             $this->line('<comment>Demo app will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
-        }
-
-        // Ask independently whether to install UI Library
-        $this->shouldInstallUiLibrary = confirm(
-            label: 'Would you like to install the UI Library?',
-            default: true,
-            hint: 'Interactive showcase of all UI components',
-        );
-
-        if (! $this->shouldInstallUiLibrary) {
-            $this->line('<comment>UI Library will NOT be installed. You can run it later with: php artisan noerd:ui-library</comment>');
         }
 
         $this->newLine();
@@ -99,11 +86,6 @@ class NoerdInstallCommand extends Command
             // Install demo data only if the user confirmed at the start.
             if ($this->shouldInstallDemo) {
                 $this->call('noerd:demo', ['--force' => $this->option('force')]);
-            }
-
-            // Install UI Library only if the user confirmed at the start.
-            if ($this->shouldInstallUiLibrary) {
-                $this->call('noerd:ui-library', ['--force' => $this->option('force')]);
             }
 
             $this->info('Noerd content successfully installed!');
