@@ -3,6 +3,7 @@
 namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Symfony\Component\Yaml\Yaml;
@@ -201,14 +202,32 @@ class StaticConfigHelper
      */
     private static function findConfigPath(string $subPath): ?string
     {
+        foreach (self::configSearchRoots() as $root) {
+            $path = $root . DIRECTORY_SEPARATOR . $subPath;
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Ordered base directories that findConfigPath() searches: current app
+     * app-configs, other allowed apps' app-configs, current app's module source,
+     * other allowed apps' module sources. Discovery features (getListViews) walk
+     * the same roots so loading and discovery can never diverge.
+     *
+     * @return array<int, string>
+     */
+    private static function configSearchRoots(): array
+    {
         $currentApp = self::getCurrentApp();
+        $roots = [];
 
         // 1. First check current app
         if ($currentApp) {
-            $primaryPath = base_path("app-configs/{$currentApp}/{$subPath}");
-            if (file_exists($primaryPath)) {
-                return $primaryPath;
-            }
+            $roots[] = base_path("app-configs/{$currentApp}");
         }
 
         // 2. Fallback: Search all allowed app folders
@@ -222,29 +241,18 @@ class StaticConfigHelper
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
 
         foreach ($searchFolders as $folder) {
-            if (! in_array($folder, $allowedFolders)) {
+            if (! in_array($folder, $allowedFolders) || $folder === $currentApp) {
                 continue;
             }
 
-            if ($folder === $currentApp) {
-                continue;
-            }
-
-            $fallbackPath = base_path("app-configs/{$folder}/{$subPath}");
-            if (file_exists($fallbackPath)) {
-
-                return $fallbackPath;
-            }
+            $roots[] = base_path("app-configs/{$folder}");
         }
 
         // 3. Fallback: Search module source files (app-configs)
         if ($currentApp) {
             $moduleSourcePath = self::getModuleSourcePath($currentApp);
             if ($moduleSourcePath) {
-                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
-                if (file_exists($sourceFallbackPath)) {
-                    return $sourceFallbackPath;
-                }
+                $roots[] = $moduleSourcePath;
             }
         }
 
@@ -256,14 +264,63 @@ class StaticConfigHelper
 
             $moduleSourcePath = self::getModuleSourcePath($folder);
             if ($moduleSourcePath) {
-                $sourceFallbackPath = $moduleSourcePath . DIRECTORY_SEPARATOR . $subPath;
-                if (file_exists($sourceFallbackPath)) {
-                    return $sourceFallbackPath;
-                }
+                $roots[] = $moduleSourcePath;
             }
         }
 
-        return null;
+        return array_values(array_unique($roots));
+    }
+
+    /**
+     * Discover all views of a list config: the base YAML (key 'default') plus any
+     * "{name}--{key}.yml" sibling variants in every directory findConfigPath()
+     * searches. A file found in an earlier root shadows a same-key file in a later
+     * root (project app-configs win over module sources) — the same shadowing that
+     * findConfigPath() applies to the base file.
+     *
+     * @return array<string, string> Map of view key => view title, 'default' first
+     */
+    public static function getListViews(string $component): array
+    {
+        $subPath = self::componentToSubPath($component);
+
+        $paths = [];
+        foreach (self::configSearchRoots() as $root) {
+            $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
+            if (! isset($paths['default']) && file_exists($basePath)) {
+                $paths['default'] = $basePath;
+            }
+
+            $variantPaths = glob($root . DIRECTORY_SEPARATOR . "lists/{$subPath}--*.yml") ?: [];
+            foreach ($variantPaths as $variantPath) {
+                $key = Str::afterLast(basename($variantPath, '.yml'), '--');
+                if ($key === '' || isset($paths[$key])) {
+                    continue;
+                }
+                $paths[$key] = $variantPath;
+            }
+        }
+
+        $views = [];
+        foreach ($paths as $key => $path) {
+            try {
+                $config = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+            } catch (\Throwable) {
+                // An unparseable variant is dropped; the base view must survive
+                // so the list keeps rendering with its config's own error handling.
+                if ($key !== 'default') {
+                    continue;
+                }
+                $config = [];
+            }
+            $views[$key] = (string) ($config['title'] ?? $key);
+        }
+
+        $defaultView = array_key_exists('default', $views) ? ['default' => $views['default']] : [];
+        unset($views['default']);
+        ksort($views);
+
+        return $defaultView + $views;
     }
 
     /**

@@ -1,11 +1,40 @@
 <x-slot:header>
     <x-noerd::modal-title>
         <div class="pb-3 lg:pb-0">
-            {{$title}}
-            @if(isset($rows) && ! is_array($rows))
-                <span class="font-light">
-                    ({{ $rows->total() }})
-                </span>
+            @if(count($listViews ?? []) > 1)
+                {{-- List-view switcher: pick one of several YAML views for this list --}}
+                <div x-data="{ open: false }" class="relative">
+                    <button type="button"
+                            x-on:click="open = ! open" x-on:click.outside="open = false"
+                            class="flex items-center gap-1 rounded focus:outline-hidden"
+                            :aria-expanded="open" aria-haspopup="true"
+                            title="{{ __('Switch list view') }}">
+                        {{ $title }}
+                        @if(isset($rows) && ! is_array($rows))
+                            <span class="font-light">({{ $rows->total() }})</span>
+                        @endif
+                        <x-noerd::icons.chevron-down class="my-auto text-gray-500" />
+                    </button>
+                    <div x-show="open" x-transition x-cloak
+                         class="absolute left-0 z-90 mt-2 w-56 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
+                         role="menu" aria-orientation="vertical">
+                        @foreach($listViews as $viewKey => $viewTitle)
+                            <button type="button" role="menuitem"
+                                    wire:click="switchListView('{{ $viewKey }}')"
+                                    x-on:click="open = false"
+                                    class="block w-full px-4 py-2 text-left text-sm {{ $viewKey === $activeListView ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }} hover:bg-gray-50">
+                                {{ __($viewTitle) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                {{$title}}
+                @if(isset($rows) && ! is_array($rows))
+                    <span class="font-light">
+                        ({{ $rows->total() }})
+                    </span>
+                @endif
             @endif
         </div>
 

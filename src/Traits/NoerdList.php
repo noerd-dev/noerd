@@ -54,6 +54,12 @@ trait NoerdList
 
     public ?string $selectListConfig = null;
 
+    /**
+     * Active alternate list view key (the "--{key}" YAML suffix); null renders the
+     * base YAML. Persisted per component in session ('listView.{component}').
+     */
+    public ?string $listView = null;
+
     public string $listId = '';
 
     #[Url]
@@ -131,6 +137,41 @@ trait NoerdList
             $this->sortField = $savedSort['field'];
             $this->sortAsc = $savedSort['asc'];
         }
+
+        $savedView = session("listView.{$this->componentName()}");
+        if ($savedView && $savedView !== 'default'
+            && array_key_exists($savedView, $this->availableListViews)) {
+            $this->listView = $savedView;
+        }
+    }
+
+    /**
+     * All views available for this list: 'default' plus every "--{key}" sibling
+     * YAML of the base config. Memoised per request (discovery globs directories).
+     *
+     * @return array<string, string> Map of view key => view title
+     */
+    #[Computed]
+    public function availableListViews(): array
+    {
+        return StaticConfigHelper::getListViews($this->getDetailComponent());
+    }
+
+    /**
+     * Switch the active list view and remember it per component in the session.
+     * Unknown keys are ignored (e.g. a stale dropdown after a view YAML was removed).
+     */
+    public function switchListView(string $key): void
+    {
+        if (! array_key_exists($key, $this->availableListViews)) {
+            return;
+        }
+
+        $this->listView = $key === 'default' ? null : $key;
+        session(["listView.{$this->componentName()}" => $key]);
+        $this->selectedRecordIds = [];
+        $this->resetPage();
+        $this->syncListQueryContext();
     }
 
     public function updatedPerPage(): void
@@ -777,7 +818,20 @@ trait NoerdList
             return StaticConfigHelper::getListConfig($this->selectListConfig);
         }
 
-        return StaticConfigHelper::getListConfig($customName ?? $this->getDetailComponent());
+        $name = $customName ?? $this->getDetailComponent();
+
+        // An active alternate view only applies to this component's own config,
+        // never to an explicitly requested custom config.
+        if ($customName === null && $this->listView !== null) {
+            $config = StaticConfigHelper::getListConfig("{$name}--{$this->listView}");
+            if ($config !== []) {
+                return $config;
+            }
+            // The view's YAML disappeared mid-session — fall back to the default view.
+            $this->listView = null;
+        }
+
+        return StaticConfigHelper::getListConfig($name);
     }
 
     /**

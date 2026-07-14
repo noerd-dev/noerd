@@ -45,6 +45,15 @@
     // `multiSelect: true` in the list YAML (a normal bulk-action page). Always off in
     // compact/embedded lists.
     $returnsSelection = $this->returnsSelection ?? false;
+
+    // List-view switcher: only on full list pages — never compact/embedded lists or pickers
+    $listViews = (! $compact && ! $returnsSelection
+            && ($this->selectListConfig ?? null) === null
+            && ($this->listActionMethod ?? 'listAction') !== 'selectAction')
+        ? $this->availableListViews
+        : [];
+    $activeListView = $this->listView ?? 'default';
+
     $bulkActions = $listSettings['bulkActions'] ?? [];
     $multiSelect = ! $compact && (($this->multiSelect ?? false) || $returnsSelection || ($listSettings['multiSelect'] ?? false));
     $selectedRecordIds = $multiSelect ? ($this->selectedRecordIds ?? []) : [];

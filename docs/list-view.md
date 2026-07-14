@@ -415,6 +415,50 @@ The low-level flag (used internally by `<x-noerd::detail-lists>`):
 - A list embedded with `disableModal` breaks out by `-2rem` (intended for full-page routes); the
   wrappers re-pad it so it aligns cleanly inside a modal or detail view.
 
+## Multiple List Views (View Switcher)
+
+A list can ship **multiple YAML views** — alternate configurations of the same list (different
+columns, title, actions). When at least two views exist, the list title turns into a dropdown
+button (title + record count + chevron) that lets the user switch the active view, similar to
+Salesforce list views.
+
+**Naming convention** — sibling files in the same `lists/` folder, suffixed with `--{key}`:
+
+```bash
+app-configs/customer/lists/
+├── customers-list.yml          # the default view
+├── customers-list--vip.yml     # view "VIP Customers"
+└── customers-list--inactive.yml
+```
+
+- The view key is the suffix after `--` (e.g. `vip`); `--` is therefore reserved as the view
+  separator and must not appear in list names themselves.
+- Each view file is a **complete standalone list config** (title, columns, actions, …) — nothing is
+  merged from the base file.
+- The dropdown label is the view file's `title` (translated via `__()`); the base file is always the
+  first entry.
+- Views may be **project-only**: a `customers-list--vip.yml` in the project's `app-configs/` without
+  a module copy is fine. Discovery searches the same locations as the base config; a project file
+  shadows a module-source file with the same view key.
+
+**Behaviour:**
+
+- The switcher only renders when ≥2 views exist, and never in compact/embedded lists or pickers.
+- The selected view is remembered per list in the session (`listView.{component}`), like the sort
+  state. If the view's YAML is removed, the list silently falls back to the default view.
+- Because the whole config is swapped, the view's own `searchableColumns`, `actions`,
+  `notSortableColumns` and column types all apply automatically. Layout overrides (noerd-plus) key
+  per view file (e.g. `customers-list--vip`).
+
+**Generic API:**
+
+| Member | Purpose |
+|--------|---------|
+| `?string $listView` | Active view key (`null` = base YAML) on the `NoerdList` trait |
+| `switchListView(string $key)` | Switch and persist the active view (`'default'` = base YAML) |
+| `availableListViews` (computed) | `['default' => title, '{key}' => title, …]` for this list |
+| `StaticConfigHelper::getListViews($component)` | The underlying discovery helper |
+
 ## Next Steps
 
 Continue with [Create a Detail View](detail-view.md) to build forms for editing records.
