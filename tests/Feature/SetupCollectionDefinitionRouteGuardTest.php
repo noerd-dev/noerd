@@ -12,7 +12,7 @@ it('returns 404 for /setup-collection-definitions in yaml mode', function (): vo
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    $response = $this->get('/setup-collection-definitions');
+    $response = $this->get('/setup/collection-definitions');
     $response->assertNotFound();
 });
 
@@ -23,6 +23,6 @@ it('returns 200 for /setup-collection-definitions in database mode', function ()
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    $response = $this->get('/setup-collection-definitions');
+    $response = $this->get('/setup/collection-definitions');
     $response->assertOk();
 });

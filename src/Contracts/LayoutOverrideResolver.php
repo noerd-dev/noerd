@@ -6,10 +6,10 @@ namespace Noerd\Contracts;
  * Applies user/tenant layout overrides to a freshly parsed YAML config.
  *
  * Consulted by StaticConfigHelper right after Yaml::parse() for every list and
- * detail config. The core binding is a no-op (NullLayoutOverrideResolver); the
- * noerd-pro module rebinds it to inject DB-backed tenant-default and per-user
- * overrides. Keeping this as a container-resolved contract means noerd core never
- * references the Pro module.
+ * detail config. The core binding is a no-op (NullLayoutOverrideResolver); an
+ * optional module may rebind this contract to inject overrides of its own.
+ * Resolving it through the container means the core never needs to know about
+ * any such module.
  */
 interface LayoutOverrideResolver
 {

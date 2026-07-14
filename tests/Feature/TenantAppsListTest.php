@@ -34,7 +34,7 @@ beforeEach(function (): void {
 it('renders the tenant-apps page for super admins', function (): void {
     $this->actingAs($this->admin);
 
-    $this->get('/tenant-apps')
+    $this->get('/setup/tenant-apps')
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::setup.tenant-apps-list');
 });
@@ -44,7 +44,7 @@ it('renders the tenant-apps page in single-tenant mode', function (): void {
 
     $this->actingAs($this->admin);
 
-    $this->get('/tenant-apps')
+    $this->get('/setup/tenant-apps')
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::setup.tenant-apps-list');
 });
@@ -82,7 +82,7 @@ it('denies access to non-admin users', function (): void {
 
     $this->actingAs($nonAdmin);
 
-    $this->get('/tenant-apps')
+    $this->get('/setup/tenant-apps')
         ->assertUnauthorized();
 });
 

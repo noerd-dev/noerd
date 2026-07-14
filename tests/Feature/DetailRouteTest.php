@@ -32,7 +32,7 @@ beforeEach(function (): void {
 });
 
 it('loads noerd-user-detail via direct route', function (): void {
-    $this->get('/noerd-user/' . $this->user->id)
+    $this->get('/setup/noerd-user/' . $this->user->id)
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::noerd-user-detail');
 });
@@ -42,7 +42,7 @@ it('loads user-role-detail via direct route', function (): void {
         'tenant_id' => $this->tenant->id,
     ]);
 
-    $this->get('/user-role/' . $userRole->id)
+    $this->get('/setup/user-role/' . $userRole->id)
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::user-role-detail');
 });
@@ -53,7 +53,7 @@ it('loads setup-collection-detail via direct route', function (): void {
         'collection_key' => 'test-collection',
     ]);
 
-    $this->get('/setup-collection/' . $setupCollection->id)
+    $this->get('/setup/collection/' . $setupCollection->id)
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::setup-collection-detail');
 });
@@ -61,7 +61,7 @@ it('loads setup-collection-detail via direct route', function (): void {
 it('loads setup-language-detail via direct route', function (): void {
     $setupLanguage = SetupLanguage::where('code', 'en')->first();
 
-    $this->get('/setup-language/' . $setupLanguage->id)
+    $this->get('/setup/language/' . $setupLanguage->id)
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::setup-language-detail');
 });

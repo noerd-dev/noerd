@@ -3,8 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Noerd\Controllers\DashboardController;
 
-Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
-    Route::livewire('setup', 'noerd::setup.noerd-users-list')->name('setup');
+// Every setup page lives under /setup. Route NAMES are the public contract
+// (navigation.yml `route:` keys, tenant_apps.route, route() calls) and stay
+// unprefixed — only the URLs carry the prefix, so the redundant `setup-` in
+// paths like `setup-collections` is dropped in favour of the group prefix.
+Route::group(['prefix' => 'setup', 'middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
+    Route::livewire('/', 'noerd::setup.noerd-users-list')->name('setup');
     Route::livewire('tenant-apps', 'noerd::setup.tenant-apps-list')->name('tenant-apps');
     Route::livewire('users', 'noerd::setup.noerd-users-list')->name('users');
     Route::livewire('noerd-user/{modelId}', 'noerd::noerd-user-detail')->name('noerd-user.detail');
@@ -13,16 +17,16 @@ Route::group(['middleware' => ['auth', 'verified', 'setup', 'web']], function ()
     Route::livewire('tenant', 'noerd::setup.tenant-detail')->name('tenant');
     Route::livewire('create-tenant', 'noerd::setup.create-tenant')->name('create-tenant');
     Route::livewire('models', 'noerd::models-list')->name('models');
-    Route::livewire('setup-collections', 'noerd::setup-collections-list')->name('setup-collections');
-    Route::livewire('setup-collection/{modelId}', 'noerd::setup-collection-detail')->name('setup-collection.detail');
-    Route::livewire('setup-collection-definitions', 'noerd::setup-collection-definitions-list')
+    Route::livewire('collections', 'noerd::setup-collections-list')->name('setup-collections');
+    Route::livewire('collection/{modelId}', 'noerd::setup-collection-detail')->name('setup-collection.detail');
+    Route::livewire('collection-definitions', 'noerd::setup-collection-definitions-list')
         ->middleware('setup.collections.ui')
         ->name('setup-collection-definitions');
-    Route::livewire('setup-collection-definition/{modelId}', 'noerd::setup-collection-definition-detail')
+    Route::livewire('collection-definition/{modelId}', 'noerd::setup-collection-definition-detail')
         ->middleware('setup.collections.ui')
         ->name('setup-collection-definition.detail');
-    Route::livewire('setup-languages', 'noerd::setup-languages-list')->name('setup-languages');
-    Route::livewire('setup-language/{modelId}', 'noerd::setup-language-detail')->name('setup-language.detail');
+    Route::livewire('languages', 'noerd::setup-languages-list')->name('setup-languages');
+    Route::livewire('language/{modelId}', 'noerd::setup-language-detail')->name('setup-language.detail');
     Route::livewire('system-settings', 'noerd::setup.system-settings-detail')->name('system-settings');
 });
 

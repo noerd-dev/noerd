@@ -221,7 +221,7 @@ describe('SetupCollectionEntry Model', function (): void {
 
 describe('Setup Collections Route', function (): void {
     it('can access setup-collections route', function (): void {
-        $response = $this->get('/setup-collections?key=example');
+        $response = $this->get('/setup/collections?key=example');
 
         $response->assertStatus(200);
     });
