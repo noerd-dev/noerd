@@ -2,24 +2,20 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Symfony\Component\Yaml\Yaml;
+use Noerd\Services\TopBarRegistry;
 
 new class () extends Component {
     /**
-     * Icon links contributed by optional modules, declared in app-configs/top-bar.yml.
-     * Each item: route (required), heroicon, label.
+     * Livewire components contributed by optional modules. Each one decides for
+     * itself whether it renders anything.
      *
-     * @var array<int, array<string, string>>
+     * @var array<int, string>
      */
-    public array $topBarItems = [];
+    public array $topBarComponents = [];
 
     public function mount(): void
     {
-        $path = base_path('app-configs/top-bar.yml');
-
-        $this->topBarItems = file_exists($path)
-            ? (Yaml::parse(file_get_contents($path) ?: '')['items'] ?? [])
-            : [];
+        $this->topBarComponents = app(TopBarRegistry::class)->all();
     }
 
     public function logout(): void
@@ -73,16 +69,8 @@ new class () extends Component {
                 <livewire:noerd::layout.quick-menu/>
 
                 <div class="ml-auto my-auto flex items-center gap-x-4 shrink-0">
-                    {{-- Route::has() is load-bearing: uninstalling a module leaves its entry
-                         behind in top-bar.yml, and route() would then take down every page. --}}
-                    @foreach($topBarItems as $item)
-                        @if(Route::has($item['route'] ?? ''))
-                            <a class="shrink-0" wire:navigate href="{{ route($item['route']) }}">
-                                <x-noerd::button variant="icon" :icon="$item['heroicon'] ?? 'squares-2x2'" type="button">
-                                    <span class="sr-only">{{ __($item['label'] ?? $item['route']) }}</span>
-                                </x-noerd::button>
-                            </a>
-                        @endif
+                    @foreach($topBarComponents as $topBarComponent)
+                        <livewire:dynamic-component :component="$topBarComponent" :key="$topBarComponent" />
                     @endforeach
 
                     @if(auth()->user()->isAdmin())

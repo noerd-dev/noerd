@@ -740,41 +740,6 @@ trait HasModuleInstallation
     }
 
     /**
-     * Ensure an icon link exists in the global top-bar config (app-configs/top-bar.yml),
-     * rendered right of the quick-menu. Matches on `route`, so calling this repeatedly
-     * never duplicates the item. Like the quick-menu config, the file is created on
-     * demand rather than published by noerd:install.
-     *
-     * @param  array{route: string, heroicon?: string, label?: string}  $item
-     */
-    protected function ensureTopBarItem(array $item): void
-    {
-        $configPath = base_path('app-configs/top-bar.yml');
-
-        $config = file_exists($configPath)
-            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
-            : [];
-        $items = $config['items'] ?? [];
-
-        foreach ($items as $existing) {
-            if (($existing['route'] ?? null) === $item['route']) {
-                $this->line('<comment>Top-bar already contains the item.</comment>');
-
-                return;
-            }
-        }
-
-        $dir = dirname($configPath);
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $config['items'] = [...$items, $item];
-        file_put_contents($configPath, Yaml::dump($config, 10, 2));
-        $this->line('<info>Top-bar config updated:</info> app-configs/top-bar.yml');
-    }
-
-    /**
      * Ensure a navigation entry exists in a block of the project's setup navigation
      * (app-configs/setup/navigation.yml). Matches on the entry's `route`, so calling
      * this repeatedly never duplicates the entry. Creates the named block if absent.

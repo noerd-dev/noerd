@@ -25,7 +25,7 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return self::applyOverrides('detail', $component, Yaml::parse($content ?: '') ?: []);
+        return self::applyOverrides('detail', self::stripComponentNamespace($component), Yaml::parse($content ?: '') ?: []);
     }
 
     /**
@@ -59,12 +59,18 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return self::applyOverrides('list', $tableName, Yaml::parse($content ?: '') ?: []);
+        return self::applyOverrides('list', self::stripComponentNamespace($tableName), Yaml::parse($content ?: '') ?: []);
     }
 
     /**
      * Apply registered layout overrides to a parsed config.
      * No-op by default; a module may rebind the resolver.
+     *
+     * $component must be the canonical key — the config's identity, namespace
+     * stripped, as componentToSubPath() derives the file path from. Callers may hand
+     * getListConfig()/getComponentFields() a namespaced livewire name instead
+     * ('customer::customers-list'), which would key an override off the calling
+     * component rather than off the config it renders.
      *
      * @param  array<string, mixed>  $config
      * @return array<string, mixed>
