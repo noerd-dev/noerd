@@ -1,0 +1,134 @@
+name: CI - noerd Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ "**" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HOST_REPO: nywerk/noerd.framework
+  HOST_BRANCH: master
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -ppassword -h 127.0.0.1"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=3
+          --tmpfs /var/lib/mysql:rw,noexec,nosuid,size=1024m
+
+    env:
+      APP_ENV: testing
+      APP_DEBUG: false
+      CACHE_DRIVER: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      BROADCAST_DRIVER: log
+      MAIL_MAILER: log
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: testing
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      DB_DATABASE_LEGAL_REGISTER: testing_legal
+      TELESCOPE_ENABLED: false
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: error
+
+    steps:
+      - name: Setup SSH agent for private repos & submodules
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CI_SSH_KEY }}
+
+      - name: Add github.com to known_hosts & force SSH
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
+
+      - name: Clone framework host (with submodules)
+        run: |
+          git clone --depth 1 --branch "$HOST_BRANCH" \
+            --recurse-submodules --shallow-submodules \
+            "git@github.com:${HOST_REPO}.git" .
+
+      - name: Overlay noerd module under test
+        run: rm -rf app-modules/noerd && mkdir -p app-modules/noerd
+
+      - name: Checkout noerd commit under test
+        uses: actions/checkout@v4
+        with:
+          path: app-modules/noerd
+          fetch-depth: 1
+          submodules: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: imagick, gd, pdo_mysql, mbstring, zip, exif, pcntl, bcmath
+          tools: composer:v2
+          coverage: none
+          ini-values: memory_limit=2048M, max_execution_time=120
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Copy environment
+        run: if [ ! -f .env ]; then cp .env.example .env; fi
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Clear caches
+        run: php artisan optimize:clear
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..15}; do
+            if MYSQL_PWD=password mysqladmin ping -h 127.0.0.1 -uroot --silent; then
+              echo "MySQL is up"; break; fi; sleep 1; done
+
+      - name: Configure MySQL for parallel testing
+        run: |
+          MYSQL_PWD=password mysql -h 127.0.0.1 -P 3306 -uroot -e "
+            GRANT ALL PRIVILEGES ON \`testing_%\`.* TO 'root'@'%';
+            GRANT ALL PRIVILEGES ON \`testing_legal_%\`.* TO 'root'@'%';
+            FLUSH PRIVILEGES;
+          "
+
+      - name: Prepare database (migrate + legal-register dump)
+        run: |
+          php artisan migrate --force
+          MYSQL_PWD=password mysql -h 127.0.0.1 -P 3306 -uroot -e "CREATE DATABASE IF NOT EXISTS testing_legal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          MYSQL_PWD=password mysql -h 127.0.0.1 -P 3306 -uroot testing_legal < database/dumps/legal_register.sql
+
+      - name: Run noerd tests only
+        run: vendor/bin/pest app-modules/noerd/tests --parallel --processes=4 --colors=always --compact
