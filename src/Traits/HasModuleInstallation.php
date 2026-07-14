@@ -740,6 +740,91 @@ trait HasModuleInstallation
     }
 
     /**
+     * Ensure an icon link exists in the global top-bar config (app-configs/top-bar.yml),
+     * rendered right of the quick-menu. Matches on `route`, so calling this repeatedly
+     * never duplicates the item. Like the quick-menu config, the file is created on
+     * demand rather than published by noerd:install.
+     *
+     * @param  array{route: string, heroicon?: string, label?: string}  $item
+     */
+    protected function ensureTopBarItem(array $item): void
+    {
+        $configPath = base_path('app-configs/top-bar.yml');
+
+        $config = file_exists($configPath)
+            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
+            : [];
+        $items = $config['items'] ?? [];
+
+        foreach ($items as $existing) {
+            if (($existing['route'] ?? null) === $item['route']) {
+                $this->line('<comment>Top-bar already contains the item.</comment>');
+
+                return;
+            }
+        }
+
+        $dir = dirname($configPath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $config['items'] = [...$items, $item];
+        file_put_contents($configPath, Yaml::dump($config, 10, 2));
+        $this->line('<info>Top-bar config updated:</info> app-configs/top-bar.yml');
+    }
+
+    /**
+     * Ensure a navigation entry exists in a block of the project's setup navigation
+     * (app-configs/setup/navigation.yml). Matches on the entry's `route`, so calling
+     * this repeatedly never duplicates the entry. Creates the named block if absent.
+     *
+     * Only the project copy is written — never the module's install template
+     * (app-modules/noerd/app-configs/setup/navigation.yml). The sidebar resolves
+     * `route:` keys through an unguarded route() call, so shipping an entry in the
+     * template would break every installation that lacks the route's module.
+     *
+     * @param  array{title: string, route: string, heroicon?: string}  $entry
+     */
+    protected function ensureSetupNavigation(string $blockTitle, array $entry): void
+    {
+        $configPath = base_path('app-configs/setup/navigation.yml');
+
+        if (! file_exists($configPath)) {
+            $this->warn('app-configs/setup/navigation.yml not found; navigation entry was not added.');
+
+            return;
+        }
+
+        $navigation = Yaml::parse(file_get_contents($configPath) ?: '') ?? [];
+
+        $blockIndex = null;
+        foreach ($navigation[0]['block_menus'] ?? [] as $i => $block) {
+            if (($block['title'] ?? null) === $blockTitle) {
+                $blockIndex = $i;
+                break;
+            }
+        }
+
+        if ($blockIndex === null) {
+            $navigation[0]['block_menus'][] = ['title' => $blockTitle, 'navigations' => []];
+            $blockIndex = array_key_last($navigation[0]['block_menus']);
+        }
+
+        foreach ($navigation[0]['block_menus'][$blockIndex]['navigations'] ?? [] as $existing) {
+            if (($existing['route'] ?? null) === $entry['route']) {
+                $this->line("<comment>Setup navigation already contains:</comment> {$entry['title']}");
+
+                return;
+            }
+        }
+
+        $navigation[0]['block_menus'][$blockIndex]['navigations'][] = $entry;
+        file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
+        $this->line("<info>Setup navigation updated:</info> {$blockTitle} → {$entry['title']}");
+    }
+
+    /**
      * Ask the user if they want to run migrations.
      */
     protected function askForMigration(): void

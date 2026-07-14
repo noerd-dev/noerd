@@ -42,7 +42,7 @@ it('renders the list component and shows existing definitions', function (): voi
     ['user' => $user] = $this->createUserWithSetupAccess();
     $this->actingAs($user);
 
-    $response = $this->get('/setup-collection-definitions');
+    $response = $this->get('/setup/collection-definitions');
     $response->assertOk();
 
     Livewire::test('noerd::setup-collection-definitions-list')

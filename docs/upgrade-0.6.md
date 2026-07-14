@@ -203,7 +203,7 @@ A new component for documentation-style code blocks with syntax highlighting and
 
 After upgrading:
 
-1. Visit `/system-settings` — confirm the page loads under the new route.
+1. Visit `/setup/system-settings` — confirm the page loads under the new route.
 2. Open any detail view that uses a relation field (e.g. customer or product) and confirm the picker opens, the title displays, and selection still works.
 3. In a multi-tenant install, switch tenants and check that each tenant has its own language list under Setup → Languages.
 4. Run the noerd test suite:

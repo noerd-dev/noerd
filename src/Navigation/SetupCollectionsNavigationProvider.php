@@ -18,6 +18,10 @@ class SetupCollectionsNavigationProvider implements DynamicNavigationProviderCon
     }
 
     /**
+     * The route takes its key from the query string rather than a route param, so
+     * route() is given the key as an extra param and appends it as a query string.
+     * Going through route() keeps this off the hardcoded-path list.
+     *
      * @return array<int, array{title: string, link: string, heroicon: string}>
      */
     public function items(): array
@@ -25,7 +29,7 @@ class SetupCollectionsNavigationProvider implements DynamicNavigationProviderCon
         return $this->repository->all()
             ->map(fn(SetupCollectionDefinitionData $d) => [
                 'title' => $d->titleList,
-                'link' => "/setup-collections?key={$d->filename}",
+                'link' => route('setup-collections', ['key' => $d->filename], absolute: false),
                 'heroicon' => 'archive-box',
             ])
             ->values()

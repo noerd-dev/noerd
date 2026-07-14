@@ -63,8 +63,8 @@ class StaticConfigHelper
     }
 
     /**
-     * Apply registered layout overrides (tenant default + per-user) to a parsed
-     * config. No-op by default; the noerd-pro module rebinds the resolver.
+     * Apply registered layout overrides to a parsed config.
+     * No-op by default; a module may rebind the resolver.
      *
      * @param  array<string, mixed>  $config
      * @return array<string, mixed>
@@ -77,9 +77,8 @@ class StaticConfigHelper
 
     /**
      * Resolve the on-disk path of a list/detail YAML for an EXPLICIT app, bypassing
-     * the session-driven current-app context. Used by tooling (e.g. the noerd-pro
-     * layout editor) that must read the raw, un-overridden config of an arbitrary
-     * app while a different app is selected.
+     * the session-driven current-app context. Used by tooling that must read the raw,
+     * un-overridden config of an arbitrary app while a different app is selected.
      */
     public static function resolveConfigPath(string $app, string $viewType, string $component): ?string
     {

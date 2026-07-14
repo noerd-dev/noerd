@@ -2,8 +2,26 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Symfony\Component\Yaml\Yaml;
 
 new class () extends Component {
+    /**
+     * Icon links contributed by optional modules, declared in app-configs/top-bar.yml.
+     * Each item: route (required), heroicon, label.
+     *
+     * @var array<int, array<string, string>>
+     */
+    public array $topBarItems = [];
+
+    public function mount(): void
+    {
+        $path = base_path('app-configs/top-bar.yml');
+
+        $this->topBarItems = file_exists($path)
+            ? (Yaml::parse(file_get_contents($path) ?: '')['items'] ?? [])
+            : [];
+    }
+
     public function logout(): void
     {
         Auth::guard('web')->logout();
@@ -55,15 +73,17 @@ new class () extends Component {
                 <livewire:noerd::layout.quick-menu/>
 
                 <div class="ml-auto my-auto flex items-center gap-x-4 shrink-0">
-                    @if(Route::has('layouts'))
-                        @can('manageLayouts')
-                            <a class="shrink-0" wire:navigate href="{{route('layouts')}}">
-                                <x-noerd::button variant="icon" icon="view-columns" type="button">
-                                    <span class="sr-only">{{ __('Layouts') }}</span>
+                    {{-- Route::has() is load-bearing: uninstalling a module leaves its entry
+                         behind in top-bar.yml, and route() would then take down every page. --}}
+                    @foreach($topBarItems as $item)
+                        @if(Route::has($item['route'] ?? ''))
+                            <a class="shrink-0" wire:navigate href="{{ route($item['route']) }}">
+                                <x-noerd::button variant="icon" :icon="$item['heroicon'] ?? 'squares-2x2'" type="button">
+                                    <span class="sr-only">{{ __($item['label'] ?? $item['route']) }}</span>
                                 </x-noerd::button>
                             </a>
-                        @endcan
-                    @endif
+                        @endif
+                    @endforeach
 
                     @if(auth()->user()->isAdmin())
                         <a class="shrink-0" wire:navigate href="{{route('setup')}}">
