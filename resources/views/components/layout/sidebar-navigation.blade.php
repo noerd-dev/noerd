@@ -17,7 +17,7 @@ new class extends Component {
 } ?>
 
 <div :class="showSidebar ? 'pl-6 pr-5' : 'pl-3 pr-3'" style="scrollbar-gutter: stable;"
-     class="flex grow flex-col gap-y-3 pt-6 overflow-y-auto pb-4 border-gray-300">
+     class="noerd-scrollbar flex grow flex-col gap-y-3 pt-6 overflow-y-auto pb-4 border-gray-300">
 
     <div>
 

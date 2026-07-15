@@ -10,3 +10,34 @@
     /* App-wide default text size: text-sm is the de-facto base, 14px -> 13px */
     --text-sm: 0.8125rem;
 }
+
+/*
+ * Thin scrollbar for in-app scroll areas (topbar quick menu, sidebar navigation).
+ * WebKit/Blink get a custom 6px scrollbar; Firefox falls back to the standard
+ * thin scrollbar (the @supports guard keeps `scrollbar-width` away from Blink,
+ * where it would disable the ::-webkit-scrollbar styling).
+ */
+.noerd-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.noerd-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.noerd-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-300, #d1d5db);
+    border-radius: 9999px;
+}
+
+.noerd-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-gray-400, #9ca3af);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .noerd-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-gray-300, #d1d5db) transparent;
+    }
+}

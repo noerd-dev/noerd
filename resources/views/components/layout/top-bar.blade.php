@@ -68,7 +68,9 @@ new class () extends Component {
 
                 <livewire:noerd::layout.quick-menu/>
 
-                <div class="ml-auto my-auto flex items-center gap-x-4 shrink-0">
+                {{-- pl-4 matches gap-x-4 so the gap between the scrolling quick menu and the first
+     icon equals the spacing between the icons themselves --}}
+                <div class="ml-auto my-auto flex items-center gap-x-4 pl-4 shrink-0">
                     @foreach($topBarComponents as $topBarComponent)
                         <livewire:dynamic-component :component="$topBarComponent" :key="$topBarComponent" />
                     @endforeach
