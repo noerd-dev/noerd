@@ -155,6 +155,15 @@ trait NoerdList
             && array_key_exists($savedView, $this->availableListViews)) {
             $this->listView = $savedView;
         }
+
+        // The base view can be hidden from this user (a role-restricted
+        // 'default'): fall to the first view they are allowed to see. When
+        // every view is filtered away, the base stays — fail open.
+        if ($this->listView === null
+            && $this->availableListViews !== []
+            && ! array_key_exists('default', $this->availableListViews)) {
+            $this->listView = array_key_first($this->availableListViews);
+        }
     }
 
     /**

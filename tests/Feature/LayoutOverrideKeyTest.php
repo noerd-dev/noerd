@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Contracts\LayoutOverrideResolver;
+use Noerd\Customer\Models\Customer;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 /** Records the (viewType, component) pairs and the model classes the helper hands the resolver. */
 class RecordingLayoutOverrideResolver implements LayoutOverrideResolver
@@ -22,10 +24,20 @@ class RecordingLayoutOverrideResolver implements LayoutOverrideResolver
 
     public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
-        static::$seen[] = $viewType . '|' . $component;
+        static::$seen[] = $viewType.'|'.$component;
         static::$seenModels[] = $modelClass;
 
         return $config;
+    }
+
+    public function filterListViews(string $component, array $views): array
+    {
+        return $views;
+    }
+
+    public function listViews(string $component): array
+    {
+        return [];
     }
 }
 
@@ -72,15 +84,15 @@ it('leaves an already-canonical component untouched', function (): void {
  * resolver key off the object rather than the component. It has to reach the resolver intact.
  */
 it('hands the resolver the model class a detail was mounted with', function (): void {
-    StaticConfigHelper::getComponentFields('customer::customer-detail', \Noerd\Customer\Models\Customer::class);
+    StaticConfigHelper::getComponentFields('customer::customer-detail', Customer::class);
 
-    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(\Noerd\Customer\Models\Customer::class);
+    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(Customer::class);
 });
 
 it('hands the resolver the model class a list was resolved with', function (): void {
-    StaticConfigHelper::getListConfig('customer::customers-list', \Noerd\Customer\Models\Customer::class);
+    StaticConfigHelper::getListConfig('customer::customers-list', Customer::class);
 
-    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(\Noerd\Customer\Models\Customer::class);
+    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(Customer::class);
 });
 
 /** Callers that resolve a config out of context have no model — that must stay legal, not fatal. */

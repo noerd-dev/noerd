@@ -15,4 +15,14 @@ final class NullLayoutOverrideResolver implements LayoutOverrideResolver
     {
         return $config;
     }
+
+    public function listViews(string $component): array
+    {
+        return [];
+    }
+
+    public function filterListViews(string $component, array $views): array
+    {
+        return $views;
+    }
 }

@@ -6,11 +6,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Traits\NoerdList;
+use Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 /**
  * The discovery walks the real config search roots, so the tests write uniquely
@@ -129,6 +131,124 @@ it('keeps the paired detail component free of the view suffix', function (): voi
     $paired = new ReflectionMethod($component->instance(), 'pairedDetailComponent');
 
     expect($paired->invoke($component->instance()))->toBe('zz-view-test-detail');
+});
+
+it('merges resolver-defined views into the discovery, files winning on key collision', function (): void {
+    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver
+    {
+        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+        {
+            return $config;
+        }
+
+        public function filterListViews(string $component, array $views): array
+        {
+            return $views;
+        }
+
+        public function listViews(string $component): array
+        {
+            return $component === 'zz-view-test-list'
+                ? ['db' => 'DB View', 'vip' => 'Must Not Shadow The File', 'default' => 'Must Not Shadow Either']
+                : [];
+        }
+    });
+
+    expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
+        'default' => 'Base View',
+        'active' => 'Active View',
+        'db' => 'DB View',
+        'vip' => 'VIP View',
+    ]);
+});
+
+it('materializes a resolver-defined view as the base config plus its override', function (): void {
+    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver
+    {
+        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+        {
+            if ($component === 'zz-view-test-list--db') {
+                $config['title'] = 'DB View';
+                $config['columns'] = [['field' => 'id', 'label' => 'Id']];
+            }
+
+            return $config;
+        }
+
+        public function filterListViews(string $component, array $views): array
+        {
+            return $views;
+        }
+
+        public function listViews(string $component): array
+        {
+            return $component === 'zz-view-test-list' ? ['db' => 'DB View'] : [];
+        }
+    });
+
+    $config = StaticConfigHelper::getListConfig('zz-view-test-list--db');
+
+    // Base YAML keys survive, the override shaped title and columns.
+    expect($config['title'])->toBe('DB View')
+        ->and(array_column($config['columns'], 'field'))->toBe(['id']);
+
+    // A missing base still yields an empty config.
+    expect(StaticConfigHelper::getListConfig('zz-does-not-exist-list--db'))->toBe([]);
+});
+
+it('activates the first allowed view when the resolver hides the default', function (): void {
+    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver
+    {
+        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+        {
+            return $config;
+        }
+
+        public function listViews(string $component): array
+        {
+            return [];
+        }
+
+        public function filterListViews(string $component, array $views): array
+        {
+            unset($views['default']);
+
+            return $views;
+        }
+    });
+
+    $component = Livewire::test(TestableListViewComponent::class);
+
+    expect($component->get('listView'))->toBe('active')
+        ->and($component->instance()->availableListViews)->not->toHaveKey('default');
+});
+
+it('keeps the base view when the resolver hides every view', function (): void {
+    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver
+    {
+        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+        {
+            return $config;
+        }
+
+        public function listViews(string $component): array
+        {
+            return [];
+        }
+
+        public function filterListViews(string $component, array $views): array
+        {
+            return [];
+        }
+    });
+
+    $component = Livewire::test(TestableListViewComponent::class);
+
+    expect($component->get('listView'))->toBeNull();
+
+    $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+    expect($config->invoke($component->instance())['title'])->toBe('Base View');
 });
 
 it('renders the view switcher only when multiple views exist', function (): void {
