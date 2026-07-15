@@ -4,6 +4,7 @@ namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Symfony\Component\Yaml\Yaml;
@@ -61,10 +62,20 @@ class StaticConfigHelper
         $yamlPath = self::findConfigPath("lists/{$subPath}.yml");
 
         if (! $yamlPath) {
-            $currentApp = self::getCurrentApp();
-            Log::warning("Config file not found: lists/{$subPath}.yml (app: {$currentApp})");
+            // A "{name}--{key}" view without a YAML file of its own is a
+            // resolver-defined view: it materializes as the base config with the
+            // override for the full suffixed name applied on top.
+            if (str_contains($tableName, '--')) {
+                $baseSubPath = Str::before($subPath, '--');
+                $yamlPath = self::findConfigPath("lists/{$baseSubPath}.yml");
+            }
 
-            return [];
+            if (! $yamlPath) {
+                $currentApp = self::getCurrentApp();
+                Log::warning("Config file not found: lists/{$subPath}.yml (app: {$currentApp})");
+
+                return [];
+            }
         }
 
         $content = file_get_contents($yamlPath);
@@ -89,7 +100,7 @@ class StaticConfigHelper
 
         $moduleSource = self::getModuleSourcePath($app);
         if ($moduleSource) {
-            $sourcePath = $moduleSource . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR . $subPath . '.yml';
+            $sourcePath = $moduleSource.DIRECTORY_SEPARATOR.$dir.DIRECTORY_SEPARATOR.$subPath.'.yml';
             if (file_exists($sourcePath)) {
                 return $sourcePath;
             }
@@ -154,7 +165,9 @@ class StaticConfigHelper
      * "{name}--{key}.yml" sibling variants in every directory findConfigPath()
      * searches. A file found in an earlier root shadows a same-key file in a later
      * root (project app-configs win over module sources) — the same shadowing that
-     * findConfigPath() applies to the base file.
+     * findConfigPath() applies to the base file. Views the override resolver
+     * defines in its own storage (no YAML file) are merged in last, so a file
+     * view always wins a key collision.
      *
      * @return array<string, string> Map of view key => view title, 'default' first
      */
@@ -164,12 +177,12 @@ class StaticConfigHelper
 
         $paths = [];
         foreach (self::configSearchRoots() as $root) {
-            $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
+            $basePath = $root.DIRECTORY_SEPARATOR."lists/{$subPath}.yml";
             if (! isset($paths['default']) && file_exists($basePath)) {
                 $paths['default'] = $basePath;
             }
 
-            $variantPaths = glob($root . DIRECTORY_SEPARATOR . "lists/{$subPath}--*.yml") ?: [];
+            $variantPaths = glob($root.DIRECTORY_SEPARATOR."lists/{$subPath}--*.yml") ?: [];
             foreach ($variantPaths as $variantPath) {
                 $key = Str::afterLast(basename($variantPath, '.yml'), '--');
                 if ($key === '' || isset($paths[$key])) {
@@ -194,11 +207,18 @@ class StaticConfigHelper
             $views[$key] = (string) ($config['title'] ?? $key);
         }
 
+        $resolver = app(LayoutOverrideResolver::class);
+        $resolverViews = $resolver->listViews(self::stripComponentNamespace($component));
+        unset($resolverViews['default']);
+        $views += $resolverViews;
+
         $defaultView = array_key_exists('default', $views) ? ['default' => $views['default']] : [];
         unset($views['default']);
         ksort($views);
 
-        return $defaultView + $views;
+        // Last word goes to the resolver: it may hide views (incl. 'default')
+        // the current user is not allowed to see.
+        return $resolver->filterListViews(self::stripComponentNamespace($component), $defaultView + $views);
     }
 
     /**
@@ -217,7 +237,7 @@ class StaticConfigHelper
      */
     private static function applyOverrides(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
-        return app(\Noerd\Contracts\LayoutOverrideResolver::class)
+        return app(LayoutOverrideResolver::class)
             ->apply($viewType, $component, $config, $modelClass);
     }
 
@@ -265,7 +285,7 @@ class StaticConfigHelper
     private static function findConfigPath(string $subPath): ?string
     {
         foreach (self::configSearchRoots() as $root) {
-            $path = $root . DIRECTORY_SEPARATOR . $subPath;
+            $path = $root.DIRECTORY_SEPARATOR.$subPath;
             if (file_exists($path)) {
                 return $path;
             }
@@ -297,7 +317,7 @@ class StaticConfigHelper
 
         $allAppFolders = TenantApp::where('is_active', true)
             ->pluck('name')
-            ->map(fn($name) => mb_strtolower($name))
+            ->map(fn ($name) => mb_strtolower($name))
             ->toArray();
 
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
@@ -405,7 +425,7 @@ class StaticConfigHelper
     private static function copyComponentsFromDirectory(string $sourceDir, array $componentMapping, string $userGroup): array
     {
         $results = [];
-        $files = glob($sourceDir . '/*.yml');
+        $files = glob($sourceDir.'/*.yml');
 
         foreach ($files as $file) {
             $componentName = basename($file, '.yml');
@@ -439,7 +459,7 @@ class StaticConfigHelper
     private static function copyComponentToModule(string $sourceFile, string $module, string $componentName): bool
     {
         $targetDir = base_path("app-modules/{$module}/content/components");
-        $targetFile = $targetDir . "/{$componentName}.yml";
+        $targetFile = $targetDir."/{$componentName}.yml";
 
         // Create directory if it doesn't exist
         if (! is_dir($targetDir)) {
@@ -497,7 +517,7 @@ class StaticConfigHelper
                 continue;
             }
 
-            $appConfigsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-configs';
+            $appConfigsPath = $appModulesPath.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR.'app-configs';
             if (! is_dir($appConfigsPath)) {
                 continue;
             }
@@ -508,7 +528,7 @@ class StaticConfigHelper
                     continue;
                 }
 
-                $fullPath = $appConfigsPath . DIRECTORY_SEPARATOR . $appKey;
+                $fullPath = $appConfigsPath.DIRECTORY_SEPARATOR.$appKey;
                 if (is_dir($fullPath)) {
                     $mappings[$appKey] = $module;
                 }

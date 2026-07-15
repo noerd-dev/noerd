@@ -171,6 +171,24 @@
                         </span>
                     @endif
                 </div>
+            @elseif($type == 'relationBadge')
+                @php
+                    $relationTitle = app(\Noerd\Services\RelationTitleResolver::class)->title($columnValue, $value);
+                @endphp
+                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="flex items-center cursor-pointer px-1.5">
+                    @if($relationTitle !== null && $relationTitle !== '')
+                        <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium leading-tight bg-gray-100 text-gray-700">
+                            {{ $relationTitle }}
+                        </span>
+                    @endif
+                </div>
+            @elseif($type == 'customAttribute')
+                @php
+                    $customAttributeValue = \Noerd\Support\RelationFieldDefinition::normalizeDisplayValue(data_get($rowData, $columnValue));
+                @endphp
+                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="flex items-center cursor-pointer">
+                    <span class="w-full text-sm py-0.5 px-1.5">{{ $customAttributeValue }}</span>
+                </div>
             @elseif($type == 'badge_with_text')
                 <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
                     @if(is_array($value) && isset($value['badge']) && $value['badge'])

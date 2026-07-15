@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenant;
 use Noerd\Commands\CreateAdminCommand;
@@ -44,7 +46,6 @@ use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\DynamicNavigationRegistry;
-use Noerd\Services\TopBarRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NoerdManager;
@@ -52,9 +53,13 @@ use Noerd\Services\NullLayoutOverrideResolver;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationFieldRegistry;
+use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeService;
+use Noerd\Services\TopBarRegistry;
 use Noerd\Support\FieldTypeDefinition;
+use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
+use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {
@@ -62,13 +67,13 @@ class NoerdServiceProvider extends ServiceProvider
     {
         // Merge module defaults so noerd.* keys resolve even when the project
         // root config/noerd.php is absent (e.g., module-only test boots).
-        $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
+        $this->mergeConfigFrom(__DIR__.'/../../config/noerd.php', 'noerd');
 
         // Register the quick-create exit hook in the register phase: Livewire wires
         // its ComponentHookRegistry during its own boot(), so a boot()-phase
         // registration here could land too late. The register phase of all providers
         // runs before any boot(), and the static call needs no container binding.
-        \Livewire\ComponentHookRegistry::register(\Noerd\Support\QuickCreateExitHook::class);
+        ComponentHookRegistry::register(QuickCreateExitHook::class);
 
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(LayoutOverrideResolver::class, NullLayoutOverrideResolver::class);
@@ -76,9 +81,11 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(NoerdManager::class);
-        $this->app->singleton(RelationFieldRegistry::class, fn($app) => new RelationFieldRegistry(
+        $this->app->singleton(RelationFieldRegistry::class, fn ($app) => new RelationFieldRegistry(
             $app->make(FieldTypeRegistry::class),
         ));
+        // Singleton so the per-request FK-title lookups are memoized.
+        $this->app->singleton(RelationTitleResolver::class);
         $this->app->singleton(PicklistRegistry::class);
         $this->app->singleton(ThemeService::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
@@ -88,7 +95,7 @@ class NoerdServiceProvider extends ServiceProvider
             $mode = config('noerd.collections.mode', 'yaml');
 
             return match ($mode) {
-                'database' => new DatabaseSetupCollectionDefinitionRepository(),
+                'database' => new DatabaseSetupCollectionDefinitionRepository,
                 default => new YamlSetupCollectionDefinitionRepository(
                     base_path(config('noerd.collections.setup_yaml_path', 'app-configs/setup/collections')),
                 ),
@@ -97,21 +104,21 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register SetupCollectionHelper as singleton so static proxies resolve
         // the container-bound repository and tests can replace it.
-        $this->app->singleton(SetupCollectionHelper::class, fn($app) => new SetupCollectionHelper(
+        $this->app->singleton(SetupCollectionHelper::class, fn ($app) => new SetupCollectionHelper(
             $app->make(SetupCollectionDefinitionRepositoryContract::class),
         ));
     }
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
-        Blade::component('app-layout', \Noerd\View\Components\AppLayout::class);
-        Livewire::addNamespace('noerd', viewPath: __DIR__ . '/../../resources/views/components');
-        Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
-        $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
-        $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/noerd-routes.php');
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'noerd');
+        Blade::component('app-layout', AppLayout::class);
+        Livewire::addNamespace('noerd', viewPath: __DIR__.'/../../resources/views/components');
+        Livewire::addLocation(viewPath: __DIR__.'/../../resources/views/components');
+        $this->loadTranslationsFrom(__DIR__.'/../../resources/lang', 'noerd');
+        $this->loadJsonTranslationsFrom(__DIR__.'/../../resources/lang');
+        $this->loadRoutesFrom(__DIR__.'/../../routes/noerd-routes.php');
 
         // Register event listeners
         Event::listen(Login::class, InitializeTenantSession::class);
@@ -155,72 +162,72 @@ class NoerdServiceProvider extends ServiceProvider
         ));
         $fieldTypeRegistry->register('picklist', FieldTypeDefinition::include(
             'noerd::components.forms.picklist',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('setupCollectionSelect', FieldTypeDefinition::include(
             'noerd::components.forms.setup-collection-select',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('belongsToMany', FieldTypeDefinition::include(
             'noerd::components.forms.belongs-to-many',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('checkbox', FieldTypeDefinition::include(
             'noerd::components.forms.checkbox',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('image', FieldTypeDefinition::include(
             'noerd::components.forms.image',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
                 'field' => $field,
                 'detailData' => $detailData,
             ],
         ));
         $fieldTypeRegistry->register('richText', FieldTypeDefinition::include(
             'noerd::components.forms.rich-text',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('translatableRichText', FieldTypeDefinition::include(
             'noerd::components.forms.translatable-rich-text',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('translatableText', FieldTypeDefinition::include(
             'noerd::components.forms.translatable-text',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('translatableTextarea', FieldTypeDefinition::include(
             'noerd::components.forms.translatable-textarea',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('button', FieldTypeDefinition::include(
             'noerd::components.forms.button',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('colorHex', FieldTypeDefinition::include(
             'noerd::components.forms.color-hex',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('currency', FieldTypeDefinition::include(
             'noerd::components.forms.input-currency',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('textarea', FieldTypeDefinition::include(
             'noerd::components.forms.input-textarea',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('file', FieldTypeDefinition::include(
             'noerd::components.forms.file',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('spacer', FieldTypeDefinition::include(
             'noerd::components.forms.spacer',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
         $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
             'noerd::components.forms.icon',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+            resolver: fn (array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
                 'field' => $field,
-                'iconValue' => data_get($component?->detailData ?? $detailData ?? [], \Illuminate\Support\Str::after($field['name'] ?? '', 'detailData.')),
+                'iconValue' => data_get($component?->detailData ?? $detailData ?? [], Str::after($field['name'] ?? '', 'detailData.')),
             ],
         ));
 
@@ -239,8 +246,8 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Publish public assets (fonts + built Vite assets)
         $this->publishes([
-            __DIR__ . '/../../public' => public_path('vendor/noerd'),
-            __DIR__ . '/../../dist/build' => public_path('vendor/noerd'),
+            __DIR__.'/../../public' => public_path('vendor/noerd'),
+            __DIR__.'/../../dist/build' => public_path('vendor/noerd'),
         ], 'noerd-assets');
 
         // Auto-publish fonts if not exists (for development convenience)
@@ -281,7 +288,7 @@ class NoerdServiceProvider extends ServiceProvider
     private function publishFontsIfNotExists(): void
     {
         $targetPath = public_path('vendor/noerd/fonts');
-        $sourcePath = __DIR__ . '/../../public/fonts';
+        $sourcePath = __DIR__.'/../../public/fonts';
 
         if (! File::exists($targetPath) && File::exists($sourcePath)) {
             File::ensureDirectoryExists(dirname($targetPath));
@@ -295,7 +302,7 @@ class NoerdServiceProvider extends ServiceProvider
     private function publishBuiltAssetsIfNotExist(): void
     {
         $targetPath = public_path('vendor/noerd/manifest.json');
-        $sourcePath = __DIR__ . '/../../dist/build/manifest.json';
+        $sourcePath = __DIR__.'/../../dist/build/manifest.json';
 
         if (! File::exists($sourcePath)) {
             return;
@@ -306,7 +313,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         if ($shouldPublish) {
             File::ensureDirectoryExists(public_path('vendor/noerd'));
-            File::copyDirectory(__DIR__ . '/../../dist/build', public_path('vendor/noerd'));
+            File::copyDirectory(__DIR__.'/../../dist/build', public_path('vendor/noerd'));
         }
     }
 }
