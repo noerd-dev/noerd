@@ -11,15 +11,19 @@ use Noerd\Models\Tenant;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
-/** Records the (viewType, component) pairs the helper hands the resolver. */
+/** Records the (viewType, component) pairs and the model classes the helper hands the resolver. */
 class RecordingLayoutOverrideResolver implements LayoutOverrideResolver
 {
     /** @var array<int, string> */
     public static array $seen = [];
 
-    public function apply(string $viewType, string $component, array $config): array
+    /** @var array<int, string|null> */
+    public static array $seenModels = [];
+
+    public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
         static::$seen[] = $viewType . '|' . $component;
+        static::$seenModels[] = $modelClass;
 
         return $config;
     }
@@ -27,6 +31,7 @@ class RecordingLayoutOverrideResolver implements LayoutOverrideResolver
 
 beforeEach(function (): void {
     RecordingLayoutOverrideResolver::$seen = [];
+    RecordingLayoutOverrideResolver::$seenModels = [];
     app()->singleton(LayoutOverrideResolver::class, RecordingLayoutOverrideResolver::class);
 
     $user = NoerdUser::factory()->create(['super_admin' => true]);
@@ -60,6 +65,29 @@ it('leaves an already-canonical component untouched', function (): void {
     StaticConfigHelper::getListConfig('customers-list');
 
     expect(RecordingLayoutOverrideResolver::$seen)->toContain('list|customers-list');
+});
+
+/**
+ * Config YAML almost never declares a `model:` key, so the model class is the only thing that lets a
+ * resolver key off the object rather than the component. It has to reach the resolver intact.
+ */
+it('hands the resolver the model class a detail was mounted with', function (): void {
+    StaticConfigHelper::getComponentFields('customer::customer-detail', \Noerd\Customer\Models\Customer::class);
+
+    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(\Noerd\Customer\Models\Customer::class);
+});
+
+it('hands the resolver the model class a list was resolved with', function (): void {
+    StaticConfigHelper::getListConfig('customer::customers-list', \Noerd\Customer\Models\Customer::class);
+
+    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(\Noerd\Customer\Models\Customer::class);
+});
+
+/** Callers that resolve a config out of context have no model — that must stay legal, not fatal. */
+it('passes null when the caller has no model', function (): void {
+    StaticConfigHelper::getComponentFields('customer::customer-detail');
+
+    expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(null);
 });
 
 /** Sub-folder configs keep their dots — that is the hub's key format too. */

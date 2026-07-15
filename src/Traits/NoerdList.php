@@ -2,6 +2,7 @@
 
 namespace Noerd\Traits;
 
+use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -20,6 +21,7 @@ use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
 use Noerd\Services\ListQueryContext;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use UnitEnum;
 
 trait NoerdList
 {
@@ -121,6 +123,16 @@ trait NoerdList
 
     private static array $schemaColumnCache = [];
 
+    /**
+     * Whether a column field addresses a nested path rather than a real DB column — e.g. a custom
+     * attribute (`custom_attributes.sap_number`) or a relation (`customer.name`). Such fields resolve at
+     * render time via data_get(); the database cannot sort or search on them.
+     */
+    public static function isDottedField(string $field): bool
+    {
+        return str_contains($field, '.');
+    }
+
     public function mount(): void
     {
         $this->mountList();
@@ -197,6 +209,13 @@ trait NoerdList
 
     public function sortBy(string $field): void
     {
+        // A dotted field is not a real column (e.g. `custom_attributes.sap_number`, `customer.name`), so
+        // the query could not order by it — listQuery() would silently fall back to `id`. Refuse it here
+        // rather than let the header appear to sort and do nothing.
+        if (self::isDottedField($field)) {
+            return;
+        }
+
         $listConfig = $this->getListConfig();
         $notSortable = $listConfig['notSortableColumns'] ?? [];
         if (in_array($field, $notSortable)) {
@@ -280,7 +299,7 @@ trait NoerdList
         if (in_array($id, $this->selectedRecordIds, true)) {
             $this->selectedRecordIds = array_values(array_filter(
                 $this->selectedRecordIds,
-                fn (int $selected): bool => $selected !== $id,
+                fn(int $selected): bool => $selected !== $id,
             ));
 
             return;
@@ -334,7 +353,7 @@ trait NoerdList
             $this->resolvedModelClass::query()
                 ->whereIn('id', $this->selectedRecordIds)
                 ->get()
-                ->each(fn ($model) => $model->delete());
+                ->each(fn($model) => $model->delete());
         }
 
         $this->selectedRecordIds = [];
@@ -356,7 +375,7 @@ trait NoerdList
         $collection = is_array($rows) ? collect($rows) : $rows->getCollection();
 
         return $collection
-            ->map(fn ($row): int => (int) (is_array($row) ? ($row['id'] ?? 0) : $row->id))
+            ->map(fn($row): int => (int) (is_array($row) ? ($row['id'] ?? 0) : $row->id))
             ->filter()
             ->values()
             ->all();
@@ -814,8 +833,13 @@ trait NoerdList
      */
     protected function getListConfig(?string $customName = null): array
     {
+        // List YAML almost never declares a `model:` key, so the resolved model class is handed to the
+        // config layer explicitly. It is populated by listQuery(); calls that run before it (e.g. the
+        // sortable-column check) simply pass null and resolve the plain YAML.
+        $modelClass = $this->resolvedModelClass;
+
         if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
-            return StaticConfigHelper::getListConfig($this->selectListConfig);
+            return StaticConfigHelper::getListConfig($this->selectListConfig, $modelClass);
         }
 
         $name = $customName ?? $this->getDetailComponent();
@@ -823,7 +847,7 @@ trait NoerdList
         // An active alternate view only applies to this component's own config,
         // never to an explicitly requested custom config.
         if ($customName === null && $this->listView !== null) {
-            $config = StaticConfigHelper::getListConfig("{$name}--{$this->listView}");
+            $config = StaticConfigHelper::getListConfig("{$name}--{$this->listView}", $modelClass);
             if ($config !== []) {
                 return $config;
             }
@@ -831,7 +855,7 @@ trait NoerdList
             $this->listView = null;
         }
 
-        return StaticConfigHelper::getListConfig($name);
+        return StaticConfigHelper::getListConfig($name, $modelClass);
     }
 
     /**
@@ -870,7 +894,7 @@ trait NoerdList
      */
     protected function badgeLabel(mixed $value, array $options): string
     {
-        $value = $value instanceof \BackedEnum ? $value->value : ($value instanceof \UnitEnum ? $value->name : $value);
+        $value = $value instanceof BackedEnum ? $value->value : ($value instanceof UnitEnum ? $value->name : $value);
 
         foreach ($options as $option) {
             if (isset($option['value']) && (string) $option['value'] === (string) $value) {

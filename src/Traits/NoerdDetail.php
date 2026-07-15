@@ -286,11 +286,18 @@ trait NoerdDetail
             }
         }
 
-        $pageLayout = StaticConfigHelper::getComponentFields($this->getDetailComponent());
+        $pageLayout = StaticConfigHelper::getComponentFields($this->getDetailComponent(), $modelClass);
         $this->pageLayout = $pageLayout;
         $this->detailData = collect($model->toArray())
             ->except(['created_at', 'updated_at'])
             ->toArray();
+
+        // A field bound to a nested path (e.g. `detailData.custom_attributes.sap_number`) needs its
+        // parent key to exist as an array before wire:model can bind into it. A new record — or one
+        // whose JSON column is still null — would otherwise bind against null.
+        if (array_key_exists('custom_attributes', $this->detailData) && ! is_array($this->detailData['custom_attributes'])) {
+            $this->detailData['custom_attributes'] = [];
+        }
     }
 
     /**

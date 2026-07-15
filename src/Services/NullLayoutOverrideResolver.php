@@ -11,7 +11,7 @@ use Noerd\Contracts\LayoutOverrideResolver;
  */
 final class NullLayoutOverrideResolver implements LayoutOverrideResolver
 {
-    public function apply(string $viewType, string $component, array $config): array
+    public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
         return $config;
     }

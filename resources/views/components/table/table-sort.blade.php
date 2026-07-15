@@ -3,7 +3,9 @@
     <div class="flex items-center top-5 whitespace-nowrap">
         @if($field !== 'action')
             @php
-                $isSortable = !in_array($field, $notSortableColumns ?? []);
+                // A dotted field resolves out of a JSON column or a relation, not a real DB column, so the
+                // query cannot order by it — never offer a sort that would silently do nothing.
+                $isSortable = !in_array($field, $notSortableColumns ?? []) && !str_contains($field, '.');
             @endphp
             @if($isSortable)
                 <button type="button" class="text-black @if($align === 'right') ml-auto pr-2 @endif" wire:click="sortBy('{{$field}}')">

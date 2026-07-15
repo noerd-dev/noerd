@@ -7,12 +7,17 @@ use Illuminate\Support\Str;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 
 class StaticConfigHelper
 {
     private static ?array $moduleSourceMappingCache = null;
 
-    public static function getComponentFields(string $component): array
+    /**
+     * @param  class-string|null  $modelClass  the model the detail renders, when known — forwarded to the
+     *                                         override resolver, which cannot read it off the YAML.
+     */
+    public static function getComponentFields(string $component, ?string $modelClass = null): array
     {
         $subPath = self::componentToSubPath($component);
         $yamlPath = self::findConfigPath("details/{$subPath}.yml");
@@ -26,7 +31,7 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return self::applyOverrides('detail', self::stripComponentNamespace($component), Yaml::parse($content ?: '') ?: []);
+        return self::applyOverrides('detail', self::stripComponentNamespace($component), Yaml::parse($content ?: '') ?: [], $modelClass);
     }
 
     /**
@@ -46,7 +51,11 @@ class StaticConfigHelper
         return Yaml::parse(file_get_contents($yamlPath) ?: '') ?: [];
     }
 
-    public static function getListConfig(string $tableName): array
+    /**
+     * @param  class-string|null  $modelClass  the model the list renders, when known — forwarded to the
+     *                                         override resolver, which cannot read it off the YAML.
+     */
+    public static function getListConfig(string $tableName, ?string $modelClass = null): array
     {
         $subPath = self::componentToSubPath($tableName);
         $yamlPath = self::findConfigPath("lists/{$subPath}.yml");
@@ -60,26 +69,7 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return self::applyOverrides('list', self::stripComponentNamespace($tableName), Yaml::parse($content ?: '') ?: []);
-    }
-
-    /**
-     * Apply registered layout overrides to a parsed config.
-     * No-op by default; a module may rebind the resolver.
-     *
-     * $component must be the canonical key — the config's identity, namespace
-     * stripped, as componentToSubPath() derives the file path from. Callers may hand
-     * getListConfig()/getComponentFields() a namespaced livewire name instead
-     * ('customer::customers-list'), which would key an override off the calling
-     * component rather than off the config it renders.
-     *
-     * @param  array<string, mixed>  $config
-     * @return array<string, mixed>
-     */
-    private static function applyOverrides(string $viewType, string $component, array $config): array
-    {
-        return app(\Noerd\Contracts\LayoutOverrideResolver::class)
-            ->apply($viewType, $component, $config);
+        return self::applyOverrides('list', self::stripComponentNamespace($tableName), Yaml::parse($content ?: '') ?: [], $modelClass);
     }
 
     /**
@@ -157,6 +147,78 @@ class StaticConfigHelper
     public static function clearModuleSourceCache(): void
     {
         self::$moduleSourceMappingCache = null;
+    }
+
+    /**
+     * Discover all views of a list config: the base YAML (key 'default') plus any
+     * "{name}--{key}.yml" sibling variants in every directory findConfigPath()
+     * searches. A file found in an earlier root shadows a same-key file in a later
+     * root (project app-configs win over module sources) — the same shadowing that
+     * findConfigPath() applies to the base file.
+     *
+     * @return array<string, string> Map of view key => view title, 'default' first
+     */
+    public static function getListViews(string $component): array
+    {
+        $subPath = self::componentToSubPath($component);
+
+        $paths = [];
+        foreach (self::configSearchRoots() as $root) {
+            $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
+            if (! isset($paths['default']) && file_exists($basePath)) {
+                $paths['default'] = $basePath;
+            }
+
+            $variantPaths = glob($root . DIRECTORY_SEPARATOR . "lists/{$subPath}--*.yml") ?: [];
+            foreach ($variantPaths as $variantPath) {
+                $key = Str::afterLast(basename($variantPath, '.yml'), '--');
+                if ($key === '' || isset($paths[$key])) {
+                    continue;
+                }
+                $paths[$key] = $variantPath;
+            }
+        }
+
+        $views = [];
+        foreach ($paths as $key => $path) {
+            try {
+                $config = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+            } catch (Throwable) {
+                // An unparseable variant is dropped; the base view must survive
+                // so the list keeps rendering with its config's own error handling.
+                if ($key !== 'default') {
+                    continue;
+                }
+                $config = [];
+            }
+            $views[$key] = (string) ($config['title'] ?? $key);
+        }
+
+        $defaultView = array_key_exists('default', $views) ? ['default' => $views['default']] : [];
+        unset($views['default']);
+        ksort($views);
+
+        return $defaultView + $views;
+    }
+
+    /**
+     * Apply registered layout overrides to a parsed config.
+     * No-op by default; a module may rebind the resolver.
+     *
+     * $component must be the canonical key — the config's identity, namespace
+     * stripped, as componentToSubPath() derives the file path from. Callers may hand
+     * getListConfig()/getComponentFields() a namespaced livewire name instead
+     * ('customer::customers-list'), which would key an override off the calling
+     * component rather than off the config it renders.
+     *
+     * @param  array<string, mixed>  $config
+     * @param  class-string|null  $modelClass
+     * @return array<string, mixed>
+     */
+    private static function applyOverrides(string $viewType, string $component, array $config, ?string $modelClass = null): array
+    {
+        return app(\Noerd\Contracts\LayoutOverrideResolver::class)
+            ->apply($viewType, $component, $config, $modelClass);
     }
 
     private static function stripComponentNamespace(string $component): string
@@ -269,58 +331,6 @@ class StaticConfigHelper
         }
 
         return array_values(array_unique($roots));
-    }
-
-    /**
-     * Discover all views of a list config: the base YAML (key 'default') plus any
-     * "{name}--{key}.yml" sibling variants in every directory findConfigPath()
-     * searches. A file found in an earlier root shadows a same-key file in a later
-     * root (project app-configs win over module sources) — the same shadowing that
-     * findConfigPath() applies to the base file.
-     *
-     * @return array<string, string> Map of view key => view title, 'default' first
-     */
-    public static function getListViews(string $component): array
-    {
-        $subPath = self::componentToSubPath($component);
-
-        $paths = [];
-        foreach (self::configSearchRoots() as $root) {
-            $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
-            if (! isset($paths['default']) && file_exists($basePath)) {
-                $paths['default'] = $basePath;
-            }
-
-            $variantPaths = glob($root . DIRECTORY_SEPARATOR . "lists/{$subPath}--*.yml") ?: [];
-            foreach ($variantPaths as $variantPath) {
-                $key = Str::afterLast(basename($variantPath, '.yml'), '--');
-                if ($key === '' || isset($paths[$key])) {
-                    continue;
-                }
-                $paths[$key] = $variantPath;
-            }
-        }
-
-        $views = [];
-        foreach ($paths as $key => $path) {
-            try {
-                $config = Yaml::parse(file_get_contents($path) ?: '') ?: [];
-            } catch (\Throwable) {
-                // An unparseable variant is dropped; the base view must survive
-                // so the list keeps rendering with its config's own error handling.
-                if ($key !== 'default') {
-                    continue;
-                }
-                $config = [];
-            }
-            $views[$key] = (string) ($config['title'] ?? $key);
-        }
-
-        $defaultView = array_key_exists('default', $views) ? ['default' => $views['default']] : [];
-        unset($views['default']);
-        ksort($views);
-
-        return $defaultView + $views;
     }
 
     /**
