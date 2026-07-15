@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Customer\Models\Customer;
 use Noerd\Helpers\StaticConfigHelper;
@@ -104,11 +105,20 @@ it('passes null when the caller has no model', function (): void {
 
 /** Sub-folder configs keep their dots — that is the hub's key format too. */
 it('keeps dotted sub-paths in the canonical key', function (): void {
-    // The config lives at booking-members/lists/stamp-cards/customer-stamp-cards-list.yml
-    TenantHelper::setSelectedApp('BOOKING-MEMBERS');
+    // A fixture config in a sub-folder of the always-searchable setup app, so the dotted-key
+    // behaviour is tested without depending on any module shipping a sub-folder config.
+    TenantHelper::setSelectedApp('SETUP');
 
-    StaticConfigHelper::getListConfig('booking-members::stamp-cards.customer-stamp-cards-list');
+    $fixtureDir = base_path('app-configs/setup/lists/zz-fixture');
+    File::ensureDirectoryExists($fixtureDir);
+    File::put($fixtureDir.'/zz-dotted-list.yml', "title: Fixture\ncolumns: []\n");
 
-    expect(RecordingLayoutOverrideResolver::$seen)
-        ->toContain('list|stamp-cards.customer-stamp-cards-list');
+    try {
+        StaticConfigHelper::getListConfig('noerd::zz-fixture.zz-dotted-list');
+
+        expect(RecordingLayoutOverrideResolver::$seen)
+            ->toContain('list|zz-fixture.zz-dotted-list');
+    } finally {
+        File::deleteDirectory($fixtureDir);
+    }
 });
