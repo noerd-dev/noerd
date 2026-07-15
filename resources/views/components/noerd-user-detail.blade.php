@@ -264,7 +264,7 @@ new class extends Component {
             @isset($modelId)
                 <x-noerd::box>
                     <div class="max-w-xl">
-                        <livewire:noerd::setup.user-update-password :userId="$modelId"/>
+                        <livewire:noerd::user-update-password :userId="$modelId"/>
                     </div>
                 </x-noerd::box>
             @endisset

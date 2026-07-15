@@ -19,7 +19,7 @@ it('sets the impersonating_from session key when logging in as user', function (
 
     $this->actingAs($admin);
 
-    Livewire::test('noerd::setup.noerd-users-list')
+    Livewire::test('noerd::noerd-users-list')
         ->call('loginAsUser', $targetUser->id);
 
     expect(session('impersonating_from'))->toBe($admin->id);
@@ -88,7 +88,7 @@ it('clears tenant session when logging in as user', function (): void {
     session(['noerd.selected_tenant_id' => $tenant->id]);
     session(['noerd.selected_app' => 'some-app']);
 
-    $response = Livewire::test('noerd::setup.noerd-users-list')
+    $response = Livewire::test('noerd::noerd-users-list')
         ->call('loginAsUser', $targetUser->id)
         ->assertRedirect('/');
 

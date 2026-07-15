@@ -255,12 +255,12 @@ it('renders the view switcher only when multiple views exist', function (): void
     $user = NoerdUser::factory()->adminUser()->withExampleTenant()->withSelectedApp('setup')->create();
     $this->actingAs($user);
 
-    Livewire::test('noerd::setup.user-roles-list')
+    Livewire::test('noerd::user-roles-list')
         ->assertDontSee('switchListView');
 
     ($this->writeFixture)($this->fixtureDir, 'user-roles-list--test.yml', 'title: Test View');
 
-    Livewire::test('noerd::setup.user-roles-list')
+    Livewire::test('noerd::user-roles-list')
         ->assertSee('switchListView')
         ->assertSee('Test View');
 });

@@ -36,7 +36,7 @@ it('renders the tenant-apps page for super admins', function (): void {
 
     $this->get('/setup/tenant-apps')
         ->assertSuccessful()
-        ->assertSeeLivewire('noerd::setup.tenant-apps-list');
+        ->assertSeeLivewire('noerd::tenant-apps-list');
 });
 
 it('renders the tenant-apps page in single-tenant mode', function (): void {
@@ -46,7 +46,7 @@ it('renders the tenant-apps page in single-tenant mode', function (): void {
 
     $this->get('/setup/tenant-apps')
         ->assertSuccessful()
-        ->assertSeeLivewire('noerd::setup.tenant-apps-list');
+        ->assertSeeLivewire('noerd::tenant-apps-list');
 });
 
 it('manages apps for the single tenant in single-tenant mode', function (): void {
@@ -54,7 +54,7 @@ it('manages apps for the single tenant in single-tenant mode', function (): void
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->call('toggleApp', $this->appA->id);
 
     expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
@@ -73,7 +73,7 @@ it('denies access to regular admins', function (): void {
 
     $this->actingAs($regularAdmin);
 
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->assertForbidden();
 });
 
@@ -91,7 +91,7 @@ it('shows assigned and available apps', function (): void {
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->assertSee('App A')
         ->assertSee('App B')
         ->assertSee('App C');
@@ -100,7 +100,7 @@ it('shows assigned and available apps', function (): void {
 it('toggleApp attaches an unassigned app', function (): void {
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->call('toggleApp', $this->appA->id);
 
     expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
@@ -112,7 +112,7 @@ it('toggleApp detaches an assigned app', function (): void {
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->call('toggleApp', $this->appA->id);
 
     expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
@@ -125,7 +125,7 @@ it('toggleApp sets correct sort_order when adding', function (): void {
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->call('toggleApp', $this->appC->id);
 
     $pivot = $this->tenant->tenantApps()->where('tenant_apps.id', $this->appC->id)->first()->pivot;
@@ -140,7 +140,7 @@ it('appSort updates sort_order correctly', function (): void {
     $this->actingAs($this->admin);
 
     // Move App C from position 2 to position 0
-    Livewire::test('noerd::setup.tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-list')
         ->call('appSort', $this->appC->id, 0);
 
     $apps = $this->tenant->tenantApps()->get();
@@ -154,7 +154,7 @@ it('moves assigned apps between sections on toggle', function (): void {
 
     $this->actingAs($this->admin);
 
-    $component = Livewire::test('noerd::setup.tenant-apps-list');
+    $component = Livewire::test('noerd::tenant-apps-list');
 
     $assignedBefore = count($component->get('assignedApps'));
     $availableBefore = count($component->get('availableApps'));
