@@ -19,6 +19,7 @@ use LogicException;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
+use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\ListQueryContext;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
@@ -58,9 +59,28 @@ trait NoerdList
 
     /**
      * Active alternate list view key (the "--{key}" YAML suffix); null renders the
-     * base YAML. Persisted per component in session ('listView.{component}').
+     * base YAML. Persisted per component in session ('listView.{component}') — as a
+     * composite '{app}::{key}' when the view belongs to another app.
      */
     public ?string $listView = null;
+
+    /**
+     * Source-app folder (lowercase) of the active list view when it belongs to an
+     * app other than the session's current one; null = current app. The session
+     * app itself is never changed by switching views.
+     */
+    public ?string $listViewApp = null;
+
+    /**
+     * URL representation of the active list view (?view=…) so a shared link opens
+     * the same view. Carries the dropdown key — plain ('vip'), composite with
+     * '--' as the app separator ('gastro--vip', keeps '%3A%3A' out of the URL)
+     * or 'default' for the standard view; null only on single-view and embedded
+     * lists (param omitted). On mount the URL takes precedence over the
+     * session-saved view.
+     */
+    #[Url(as: 'view')]
+    public ?string $listViewParam = null;
 
     public string $listId = '';
 
@@ -68,6 +88,17 @@ trait NoerdList
     public ?string $filter = null;
 
     public array $listFilters = [];
+
+    /**
+     * Excel-style per-column header filters: raw user input keyed by column field,
+     * e.g. ['price' => '>=10', 'is_active' => '1', 'status' => 'open']. Applied by
+     * listQuery() and persisted per component in session ('listColumnFilters.{component}').
+     * Mirrored into the URL (?cf[price]=>=10) so a shared link reproduces the exact
+     * view; on mount the URL wins over the session state. The initial-load URL write
+     * happens in the list Blade (url-sync script) — Livewire only syncs on updates.
+     */
+    #[Url(as: 'cf')]
+    public array $listColumnFilters = [];
 
     public mixed $context = '';
 
@@ -118,8 +149,19 @@ trait NoerdList
     /** The model class behind this list, remembered from the last listQuery() call. */
     protected ?string $resolvedModelClass = null;
 
+    /**
+     * Custom list-config name handed to listQuery(), for lists whose YAML does not
+     * follow the component-name convention (e.g. 'accounting-customers-list').
+     * Search, column filters and the filterable-column whitelist all resolve
+     * through it; null = the component's own config.
+     */
+    protected ?string $listQueryConfigName = null;
+
     /** @var array<string, array<string, array<int, array{value: mixed, label: string}>>> */
     protected array $picklistOptionCache = [];
+
+    /** @var array<int, string>|null Request cache for filterableColumnFields(). */
+    protected ?array $filterableColumnCache = null;
 
     private static array $schemaColumnCache = [];
 
@@ -144,6 +186,20 @@ trait NoerdList
         $this->perPage = session('listPerPage', 50);
         $this->loadListFilters();
 
+        // Column filters: a ?cf[...] URL param (shared link) wins over the session
+        // state and is persisted. Embedded lists (compact/picker) never apply it —
+        // the param addresses the page-level list, but Livewire hydrates it on
+        // nested lists too.
+        $urlColumnFilters = (! $this->compact && ! $this->returnsSelection)
+            ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && trim($value) !== '')
+            : [];
+        if ($urlColumnFilters !== []) {
+            $this->listColumnFilters = $urlColumnFilters;
+            session(["listColumnFilters.{$this->componentName()}" => $urlColumnFilters]);
+        } else {
+            $this->listColumnFilters = session("listColumnFilters.{$this->componentName()}", []);
+        }
+
         $savedSort = session("listSort.{$this->componentName()}");
         if ($savedSort) {
             $this->sortField = $savedSort['field'];
@@ -151,26 +207,80 @@ trait NoerdList
         }
 
         $savedView = session("listView.{$this->componentName()}");
-        if ($savedView && $savedView !== 'default'
-            && array_key_exists($savedView, $this->availableListViews)) {
-            $this->listView = $savedView;
+
+        // A ?view= URL param (shared link) wins over the session-saved view.
+        // Embedded lists (compact/picker) never apply it — the param addresses
+        // the page-level list, but Livewire hydrates it on nested lists too.
+        $urlView = (! $this->compact && ! $this->returnsSelection) ? $this->listViewParam : null;
+        if ($urlView !== null && $urlView !== '') {
+            // The URL carries '--' instead of '::' as the app separator (no
+            // '%3A%3A' noise); decode it back to the composite key. A hand-typed
+            // legacy '::' still parses as-is.
+            if (! str_contains($urlView, '::') && str_contains($urlView, '--')) {
+                $urlView = Str::replaceFirst('--', '::', $urlView);
+            }
+            [$urlApp, $urlKey] = StaticConfigHelper::parseListViewKey($urlView);
+            if ($urlApp !== null && $urlApp === StaticConfigHelper::getCurrentApp()) {
+                $urlView = $urlKey;
+            }
+            if ($urlView === 'default' || array_key_exists($urlView, $this->availableListViews)) {
+                $savedView = $urlView;
+                session(["listView.{$this->componentName()}" => $urlView]);
+            }
+        }
+
+        if ($savedView) {
+            // A composite key whose app has become the current app collapses to
+            // its plain form (selected elsewhere, reopened inside that app).
+            [$savedApp, $savedKey] = StaticConfigHelper::parseListViewKey($savedView);
+            if ($savedApp !== null && $savedApp === StaticConfigHelper::getCurrentApp()) {
+                $savedView = $savedKey;
+            }
+            if ($savedView !== 'default' && array_key_exists($savedView, $this->availableListViews)) {
+                $this->applyListViewKey($savedView);
+            }
         }
 
         // The base view can be hidden from this user (a role-restricted
-        // 'default'): fall to the first view they are allowed to see. When
-        // every view is filtered away, the base stays — fail open.
-        if ($this->listView === null
+        // 'default') or exist only in another allowed app: fall to the first
+        // view they are allowed to see. When every view is filtered away, the
+        // base stays — fail open.
+        if ($this->listView === null && $this->listViewApp === null
             && $this->availableListViews !== []
             && ! array_key_exists('default', $this->availableListViews)) {
-            $this->listView = array_key_first($this->availableListViews);
+            $this->applyListViewKey(array_key_first($this->availableListViews));
         }
+
+        $this->syncListViewParam();
     }
 
     /**
-     * All views available for this list: 'default' plus every "--{key}" sibling
-     * YAML of the base config. Memoised per request (discovery globs directories).
+     * Mirror the resolved view state into the ?view= URL param — including
+     * 'default', so a shared link pins the standard view too. Composite keys are
+     * written with '--' instead of '::' so the URL stays free of '%3A%3A'
+     * encoding. The param stays null on single-view lists (no switcher, nothing
+     * to share) and always null on embedded lists, which must never write the
+     * page-level param.
+     */
+    private function syncListViewParam(): void
+    {
+        if ($this->compact || $this->returnsSelection || count($this->availableListViews) < 2) {
+            $this->listViewParam = null;
+
+            return;
+        }
+
+        $activeKey = StaticConfigHelper::composeListViewKey($this->listViewApp, $this->listView);
+        $this->listViewParam = str_replace('::', '--', $activeKey);
+    }
+
+    /**
+     * All views available for this list across every allowed app: per app the
+     * base config ('default') plus every "--{key}" sibling YAML. Current-app
+     * entries carry plain keys, other apps' entries composite '{app}::{key}'
+     * keys. Memoised per request (discovery globs directories).
      *
-     * @return array<string, string> Map of view key => view title
+     * @return array<string, array{key: string, app: string, appLabel: string, title: string}>
      */
     #[Computed]
     public function availableListViews(): array
@@ -188,11 +298,23 @@ trait NoerdList
             return;
         }
 
-        $this->listView = $key === 'default' ? null : $key;
+        $this->applyListViewKey($key);
         session(["listView.{$this->componentName()}" => $key]);
+        $this->syncListViewParam();
         $this->selectedRecordIds = [];
         $this->resetPage();
         $this->syncListQueryContext();
+    }
+
+    /**
+     * Set the active view state ($listViewApp + $listView) from a dropdown key —
+     * plain ('vip') or composite ('gastro::vip').
+     */
+    private function applyListViewKey(string $key): void
+    {
+        [$app, $viewKey] = StaticConfigHelper::parseListViewKey($key);
+        $this->listViewApp = $app;
+        $this->listView = $viewKey === 'default' ? null : $viewKey;
     }
 
     public function updatedPerPage(): void
@@ -259,6 +381,34 @@ trait NoerdList
     {
         $this->listFilters = [];
         session(['listFilters' => []]);
+
+        $this->listColumnFilters = [];
+        session()->forget("listColumnFilters.{$this->componentName()}");
+        $this->resetPage();
+    }
+
+    /**
+     * Set or replace the Excel-style header filter of one column. An empty value
+     * clears it. The raw expression is stored as typed ('>=10', 'rot'); parsing
+     * happens at query time.
+     */
+    public function setColumnFilter(string $field, ?string $value): void
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            unset($this->listColumnFilters[$field]);
+        } else {
+            $this->listColumnFilters[$field] = $value;
+        }
+
+        session(["listColumnFilters.{$this->componentName()}" => $this->listColumnFilters]);
+        $this->resetPage();
+    }
+
+    public function clearColumnFilter(string $field): void
+    {
+        $this->setColumnFilter($field, null);
     }
 
     public function findListAction(int|string $id): void
@@ -613,17 +763,21 @@ trait NoerdList
     }
 
     /**
-     * Build a query with search and sort applied based on YAML columns.
+     * Build a query with search, sort and column filters applied based on YAML
+     * columns. Pass $configName when the list renders a custom YAML config
+     * (the same name handed to buildList()).
      */
-    protected function listQuery(string $modelClass): Builder
+    protected function listQuery(string $modelClass, ?string $configName = null): Builder
     {
         $this->resolvedModelClass = $modelClass;
+        $this->listQueryConfigName = $configName;
+        $this->filterableColumnCache = null;
 
         $query = $modelClass::query()
             ->withoutGlobalScope(SearchScope::class)
             ->withoutGlobalScope(SortScope::class);
 
-        $listConfig = $this->getListConfig();
+        $listConfig = $this->getListConfig($configName);
 
         if (! empty($this->search)) {
             $searchableFields = ! empty($listConfig['searchableColumns'])
@@ -645,6 +799,8 @@ trait NoerdList
             }
         }
 
+        $this->applyColumnFilters($query, $modelClass);
+
         $table = (new $modelClass())->getTable();
         $sortField = Schema::hasColumn($table, $this->sortField) ? $this->sortField : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
@@ -653,26 +809,92 @@ trait NoerdList
     }
 
     /**
+     * Fields the user may filter on via the header funnel: every YAML column that
+     * is not dotted, not 'action', and a real column on the resolved model's
+     * table — the same rule as sorting. Empty until listQuery() has resolved the
+     * model class, so lists with fully custom queries get no funnels.
+     *
+     * @return array<int, string>
+     */
+    protected function filterableColumnFields(): array
+    {
+        if ($this->resolvedModelClass === null) {
+            return [];
+        }
+
+        if ($this->filterableColumnCache !== null) {
+            return $this->filterableColumnCache;
+        }
+
+        $table = (new $this->resolvedModelClass())->getTable();
+
+        return $this->filterableColumnCache = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->pluck('field')
+            ->filter(fn($field): bool => is_string($field)
+                && $field !== 'action'
+                && ! self::isDottedField($field)
+                && Schema::hasColumn($table, $field))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Apply every active Excel-style column filter (AND-combined, stacking with
+     * search and the header listFilters). Skipped for compact/minimal embedded
+     * lists, which render no filter UI — a session-stored filter must not
+     * invisibly hide their rows.
+     */
+    protected function applyColumnFilters(Builder $query, string $modelClass): void
+    {
+        if ($this->listColumnFilters === [] || $this->compact || $this->minimal) {
+            return;
+        }
+
+        $allowed = $this->filterableColumnFields();
+        if ($allowed === []) {
+            return;
+        }
+
+        $table = (new $modelClass())->getTable();
+        $schemaTypes = $this->schemaColumnTypeMap($table);
+        $yamlTypes = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->filter(fn($column): bool => isset($column['field'], $column['type']))
+            ->pluck('type', 'field')
+            ->toArray();
+        $picklistFields = array_keys($this->picklistOptionsFromDetail());
+
+        foreach ($this->listColumnFilters as $field => $raw) {
+            if (! in_array($field, $allowed, true) || ! is_string($raw) || trim($raw) === '') {
+                continue;
+            }
+
+            // Same type resolution as the rendered header cell: explicit YAML type,
+            // else a detail-picklist column counts as badge, else the schema type.
+            $type = $yamlTypes[$field] ?? null;
+            if (($type === null || $type === 'text') && in_array($field, $picklistFields, true)) {
+                $type = 'badge';
+            }
+            $type ??= $schemaTypes[$field] ?? 'text';
+
+            ColumnFilterParser::apply($query, $field, $type, $raw);
+        }
+    }
+
+    /**
      * Auto-detect column types from database schema for columns without explicit type in YAML.
      */
     protected function applyAutoColumnTypes(array $listSettings, mixed $rows): array
     {
-        $model = $this->resolveModelFromRows($rows);
+        // With zero rows (e.g. a column filter matching nothing) no model instance can
+        // be pulled from the result set — fall back to the class listQuery() resolved,
+        // so bool/date columns keep their type and the filter popover keeps its UI.
+        $model = $this->resolveModelFromRows($rows)
+            ?? ($this->resolvedModelClass !== null ? new $this->resolvedModelClass() : null);
         if (! $model) {
             return $listSettings;
         }
 
-        $table = $model->getTable();
-        $schemaColumns = self::$schemaColumnCache[$table]
-            ??= Schema::getColumns($table);
-
-        $columnTypeMap = [];
-        foreach ($schemaColumns as $col) {
-            $normalized = mb_strtolower(preg_replace('/\(.*\)/', '', $col['type_name']));
-            if (isset(self::COLUMN_TYPE_MAP[$normalized])) {
-                $columnTypeMap[$col['name']] = self::COLUMN_TYPE_MAP[$normalized];
-            }
-        }
+        $columnTypeMap = $this->schemaColumnTypeMap($model->getTable());
 
         foreach ($listSettings['columns'] ?? [] as $i => $column) {
             if (isset($column['type'])) {
@@ -696,6 +918,28 @@ trait NoerdList
         }
 
         return $listSettings;
+    }
+
+    /**
+     * Map of column name => noerd column type for the given table, derived from
+     * the DB schema. Shared by auto column typing and the column filters.
+     *
+     * @return array<string, string>
+     */
+    protected function schemaColumnTypeMap(string $table): array
+    {
+        $schemaColumns = self::$schemaColumnCache[$table]
+            ??= Schema::getColumns($table);
+
+        $columnTypeMap = [];
+        foreach ($schemaColumns as $col) {
+            $normalized = mb_strtolower(preg_replace('/\(.*\)/', '', $col['type_name']));
+            if (isset(self::COLUMN_TYPE_MAP[$normalized])) {
+                $columnTypeMap[$col['name']] = self::COLUMN_TYPE_MAP[$normalized];
+            }
+        }
+
+        return $columnTypeMap;
     }
 
     protected function resolveModelFromRows(mixed $rows): ?Model
@@ -734,6 +978,8 @@ trait NoerdList
             'notSortableColumns' => $listSettings['notSortableColumns'] ?? [],
             'rows' => $rows,
             'listSettings' => $listSettings,
+            'listColumnFilters' => $this->listColumnFilters,
+            'filterableColumns' => $this->filterableColumnFields(),
         ];
     }
 
@@ -854,14 +1100,20 @@ trait NoerdList
         $name = $customName ?? $this->getDetailComponent();
 
         // An active alternate view only applies to this component's own config,
-        // never to an explicitly requested custom config.
-        if ($customName === null && $this->listView !== null) {
-            $config = StaticConfigHelper::getListConfig("{$name}--{$this->listView}", $modelClass);
+        // never to an explicitly requested custom config. A view from another
+        // app resolves via explicit-app lookup; the session app stays untouched.
+        if ($customName === null && ($this->listView !== null || $this->listViewApp !== null)) {
+            $viewName = $this->listView !== null ? "{$name}--{$this->listView}" : $name;
+            $config = $this->listViewApp !== null
+                ? StaticConfigHelper::getListConfigForApp($this->listViewApp, $viewName, $modelClass)
+                : StaticConfigHelper::getListConfig($viewName, $modelClass);
             if ($config !== []) {
                 return $config;
             }
             // The view's YAML disappeared mid-session — fall back to the default view.
             $this->listView = null;
+            $this->listViewApp = null;
+            $this->syncListViewParam();
         }
 
         return StaticConfigHelper::getListConfig($name, $modelClass);

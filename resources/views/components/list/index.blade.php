@@ -52,7 +52,7 @@
             && ($this->listActionMethod ?? 'listAction') !== 'selectAction')
         ? $this->availableListViews
         : [];
-    $activeListView = $this->listView ?? 'default';
+    $activeListView = \Noerd\Helpers\StaticConfigHelper::composeListViewKey($this->listViewApp ?? null, $this->listView ?? null);
 
     $bulkActions = $listSettings['bulkActions'] ?? [];
     $multiSelect = ! $compact && (($this->multiSelect ?? false) || $returnsSelection || ($listSettings['multiSelect'] ?? false));
@@ -76,6 +76,35 @@
     @unless($compact)
         @include('noerd::components.table.list-header')
     @endunless
+
+    @if(! $compact && ! $returnsSelection)
+        {{-- Mirror the canonical list state (active view + column filters) into the
+             URL on initial load so a shared link reproduces the exact view. Livewire's
+             #[Url] bindings only write on updates, never on page load. Runs once per
+             load (morphs never re-execute script tags) and only for the page-level
+             list — modal lists must not rewrite the page URL. --}}
+        <script id="list-url-sync-{{ $listId }}">
+            (() => {
+                const marker = document.getElementById(@json('list-url-sync-' . $listId));
+                if (! marker || marker.closest('#modal') || marker.closest('[modal]')) {
+                    return;
+                }
+                const url = new URL(window.location.href);
+                const view = @json($this->listViewParam ?? null);
+                if (view) {
+                    url.searchParams.set('view', view);
+                }
+                [...url.searchParams.keys()]
+                    .filter((key) => key.startsWith('cf['))
+                    .forEach((key) => url.searchParams.delete(key));
+                Object.entries(@json($this->listColumnFilters ?? []))
+                    .forEach(([key, value]) => url.searchParams.set('cf[' + key + ']', value));
+                if (url.toString() !== window.location.href) {
+                    history.replaceState(history.state, '', url.toString());
+                }
+            })();
+        </script>
+    @endif
 
     <div x-data="{
         selectedRow{{$listId}}: 0,
@@ -153,6 +182,10 @@
                                                 'align' => $column['align'] ?? 'left',
                                                 'minWidth' => $column['minWidth'] ?? null,
                                                 'notSortableColumns' => $notSortableColumns,
+                                                'type' => $column['type'] ?? 'text',
+                                                'options' => $column['options'] ?? [],
+                                                'filterable' => ! $compact && in_array($column['field'], $listConfig['filterableColumns'] ?? [], true),
+                                                'filterValue' => (string) ($listConfig['listColumnFilters'][$column['field']] ?? ''),
                                             ])
                                         @endforeach
                                     </tr>

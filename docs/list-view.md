@@ -16,6 +16,12 @@ Livewire Component:
 app-modules/{module}/resources/views/components/{name}-list.blade.php
 ```
 
+List YAML files always live DIRECTLY in `lists/` — never in subfolders. A nested Livewire
+component name (dots from a blade subfolder, e.g. `booking::bookings.types-list`) still
+resolves its config by the flat file name (`lists/types-list.yml`); the subfolder segments
+are ignored for lists. Layout overrides key off the same flat name. (Detail YAMLs keep
+their dot-to-subfolder mapping.)
+
 ## Example YAML Configuration
 
 Example: `app-configs/accounting/lists/customers-list.yml`
@@ -130,7 +136,10 @@ new class extends Component {
 
     public function with(): array
     {
-        $rows = Customer::paginate($this->perPage);
+        // Always build the query via listQuery(): it applies search, sort and the
+        // Excel-style column filters from the YAML config. A manually built query
+        // gets none of these (and shows no filter funnels in the header).
+        $rows = $this->listQuery(Customer::class)->paginate($this->perPage);
 
         return [
             'listConfig' => $this->buildList($rows),
@@ -435,29 +444,56 @@ app-configs/customer/lists/
   separator and must not appear in list names themselves.
 - Each view file is a **complete standalone list config** (title, columns, actions, …) — nothing is
   merged from the base file.
-- The dropdown label is the view file's `title` (translated via `__()`); the base file is always the
-  first entry.
 - Views may be **project-only**: a `customers-list--vip.yml` in the project's `app-configs/` without
-  a module copy is fine. Discovery searches the same locations as the base config; a project file
-  shadows a module-source file with the same view key.
+  a module copy is fine. Within one app a project file shadows a module-source file with the same
+  view key.
+
+**Cross-app enumeration** — the dropdown lists the views of EVERY app allowed for the tenant, not
+just the session's current app. A list name that exists in several apps (e.g. `customers-list` in
+`delivery` and `customer`) yields one entry per app, each labelled with its source app rendered
+with reduced opacity — e.g. "Kunden (Delivery)":
+
+- Every entry shows its source app label (the `TenantApp` title; `Setup` for the setup folder).
+- Current-app entries use plain view keys (`default`, `vip`); other apps' entries use composite
+  `{app}::{key}` keys (`delivery::default`, `delivery::vip`). `::` is therefore reserved and cannot
+  appear in view keys.
+- Selecting another app's view renders that app's YAML via explicit-app resolution
+  (`StaticConfigHelper::getListConfigForApp()`); the session's selected app is NOT changed.
+- Ordering: current app first, then the other allowed apps; `default` leads each app group,
+  remaining variants alphabetical.
+- The dropdown label is the view file's `title` (translated via `__()`).
 
 **Behaviour:**
 
-- The switcher only renders when ≥2 views exist, and never in compact/embedded lists or pickers.
-- The selected view is remembered per list in the session (`listView.{component}`), like the sort
-  state. If the view's YAML is removed, the list silently falls back to the default view.
+- The switcher only renders when ≥2 entries exist (across all apps), and never in compact/embedded
+  lists or pickers.
+- The selected view is remembered per list in the session (`listView.{component}`) — as the
+  composite `{app}::{key}` when it belongs to another app. If the view's YAML is removed, the list
+  silently falls back to the default view.
+- The active view is also reflected in the URL as `?view={key}` (plain `vip`, composite
+  `{app}--vip` — `--` instead of `::` keeps `%3A%3A` encoding out of the URL — or `default` for
+  the standard view), so a shared link opens the same view — the default view included. On page
+  load the URL param takes precedence over the session-saved view (and is persisted to the session,
+  in `::` form); an unknown key falls back to the session/default. Single-view lists never carry
+  the param; embedded compact lists and pickers never read or write it.
 - Because the whole config is swapped, the view's own `searchableColumns`, `actions`,
   `notSortableColumns` and column types all apply automatically. Layout overrides (noerd-plus) key
-  per view file (e.g. `customers-list--vip`).
+  per view file (e.g. `customers-list--vip`), app-agnostic — a role restriction on `vip` also hides
+  every other app's `{app}::vip` entry.
 
 **Generic API:**
 
 | Member | Purpose |
 |--------|---------|
-| `?string $listView` | Active view key (`null` = base YAML) on the `NoerdList` trait |
-| `switchListView(string $key)` | Switch and persist the active view (`'default'` = base YAML) |
-| `availableListViews` (computed) | `['default' => title, '{key}' => title, …]` for this list |
-| `StaticConfigHelper::getListViews($component)` | The underlying discovery helper |
+| `?string $listView` | Active plain view key (`null` = base YAML) on the `NoerdList` trait |
+| `?string $listViewApp` | Source-app folder of the active view (`null` = current app) |
+| `?string $listViewParam` | URL-bound (`#[Url(as: 'view')]`) key of the active view incl. `'default'`; composite keys use `--` (`gastro--vip`); `null` = single-view/embedded list |
+| `switchListView(string $key)` | Switch and persist the active view (`'default'` = base YAML; accepts composite keys) |
+| `availableListViews` (computed) | `['{viewKey}' => ['key' => …, 'app' => …, 'appLabel' => …, 'title' => …], …]` |
+| `StaticConfigHelper::getListViews($component)` | The underlying cross-app discovery helper |
+| `StaticConfigHelper::getListConfigForApp($app, $name)` | Load a list config for an explicit app |
+| `StaticConfigHelper::parseListViewKey($key)` | `[appFolder\|null, plainKey]` from a dropdown key |
+| `StaticConfigHelper::composeListViewKey($app, $key)` | Inverse of `parseListViewKey()` |
 
 ## Next Steps
 

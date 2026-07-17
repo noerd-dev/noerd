@@ -18,12 +18,13 @@
                     <div x-show="open" x-transition x-cloak
                          class="absolute left-0 z-90 mt-2 w-56 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                          role="menu" aria-orientation="vertical">
-                        @foreach($listViews as $viewKey => $viewTitle)
+                        @foreach($listViews as $viewKey => $view)
                             <button type="button" role="menuitem"
                                     wire:click="switchListView('{{ $viewKey }}')"
                                     x-on:click="open = false"
                                     class="block w-full px-4 py-2 text-left text-sm {{ $viewKey === $activeListView ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }} hover:bg-gray-50">
-                                {{ __($viewTitle) }}
+                                {{ __($view['title']) }}
+                                <span class="opacity-50">({{ $view['appLabel'] }})</span>
                             </button>
                         @endforeach
                     </div>
@@ -38,7 +39,10 @@
             @endif
         </div>
 
-        @if($this->tableFilters())
+        @php
+            $columnFiltersActive = collect($this->listColumnFilters ?? [])->filter()->isNotEmpty();
+        @endphp
+        @if($this->tableFilters() || $columnFiltersActive)
             <div class="flex items-center ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
                     @if(in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
@@ -47,7 +51,7 @@
                         <x-noerd::filters.picklist :filter="$tableFilter" :value="$this->listFilters[$tableFilter['column']] ?? ''" />
                     @endif
                 @endforeach
-                @if(collect($this->listFilters)->filter()->isNotEmpty())
+                @if(collect($this->listFilters)->filter()->isNotEmpty() || $columnFiltersActive)
                     <x-noerd::button variant="icon" size="sm" icon="x-mark"
                                      type="button"
                                      wire:click="clearAllListFilters"
@@ -107,6 +111,15 @@
         @else
             <div class="ml-auto"></div>
         @endif
+        @unless($this->returnsSelection ?? false)
+            @foreach(app(\Noerd\Services\HeaderActionsRegistry::class)->all() as $headerActionView)
+                @include($headerActionView, [
+                    'component' => $this->getComponentName(),
+                    'viewType' => 'list',
+                    'actionsRendered' => $actionsRendered,
+                ])
+            @endforeach
+        @endunless
         @if(!empty($actions) && !($this->returnsSelection ?? false))
             <div :class="isModal ? modalControlsClass : ''" class="flex gap-2">
                 @foreach($actions as $actionIndex => $actionItem)

@@ -58,7 +58,7 @@ class StaticConfigHelper
      */
     public static function getListConfig(string $tableName, ?string $modelClass = null): array
     {
-        $subPath = self::componentToSubPath($tableName);
+        $subPath = self::componentToListName($tableName);
         $yamlPath = self::findConfigPath("lists/{$subPath}.yml");
 
         if (! $yamlPath) {
@@ -80,7 +80,38 @@ class StaticConfigHelper
 
         $content = file_get_contents($yamlPath);
 
-        return self::applyOverrides('list', self::stripComponentNamespace($tableName), Yaml::parse($content ?: '') ?: [], $modelClass);
+        return self::applyOverrides('list', self::componentToListName($tableName), Yaml::parse($content ?: '') ?: [], $modelClass);
+    }
+
+    /**
+     * Like getListConfig() but resolves the YAML for an EXPLICIT app instead of the
+     * session-driven current app. Backs list views selected from another app: the
+     * session app stays unchanged while the list renders the foreign app's config.
+     * Overrides still apply with the app-agnostic component key, matching getListConfig().
+     *
+     * @param  class-string|null  $modelClass
+     */
+    public static function getListConfigForApp(string $app, string $tableName, ?string $modelClass = null): array
+    {
+        $yamlPath = self::resolveConfigPath($app, 'list', $tableName);
+
+        // A "{name}--{key}" view without a YAML file of its own is a
+        // resolver-defined view: it materializes as the base config with the
+        // override for the full suffixed name applied on top.
+        if (! $yamlPath && str_contains($tableName, '--')) {
+            $yamlPath = self::resolveConfigPath($app, 'list', Str::before($tableName, '--'));
+        }
+
+        if (! $yamlPath) {
+            $subPath = self::componentToListName($tableName);
+            Log::warning("Config file not found: lists/{$subPath}.yml (app: {$app})");
+
+            return [];
+        }
+
+        $content = file_get_contents($yamlPath);
+
+        return self::applyOverrides('list', self::componentToListName($tableName), Yaml::parse($content ?: '') ?: [], $modelClass);
     }
 
     /**
@@ -91,7 +122,9 @@ class StaticConfigHelper
     public static function resolveConfigPath(string $app, string $viewType, string $component): ?string
     {
         $dir = $viewType === 'detail' ? 'details' : 'lists';
-        $subPath = self::componentToSubPath($component);
+        $subPath = $viewType === 'detail'
+            ? self::componentToSubPath($component)
+            : self::componentToListName($component);
 
         $primaryPath = base_path("app-configs/{$app}/{$dir}/{$subPath}.yml");
         if (file_exists($primaryPath)) {
@@ -161,64 +194,149 @@ class StaticConfigHelper
     }
 
     /**
-     * Discover all views of a list config: the base YAML (key 'default') plus any
-     * "{name}--{key}.yml" sibling variants in every directory findConfigPath()
-     * searches. A file found in an earlier root shadows a same-key file in a later
-     * root (project app-configs win over module sources) — the same shadowing that
-     * findConfigPath() applies to the base file. Views the override resolver
-     * defines in its own storage (no YAML file) are merged in last, so a file
-     * view always wins a key collision.
+     * Discover all views of a list config across EVERY allowed app: per app the base
+     * YAML (key 'default') plus any "{name}--{key}.yml" sibling variants. Within one
+     * app the project app-configs shadow the module source; different apps never
+     * shadow each other — each contributes its own entries. Current-app entries use
+     * plain keys ('default', 'vip'); other apps' entries use composite keys
+     * ('{app}::{key}'). Views the override resolver defines in its own storage (no
+     * YAML file) are merged into the current-app group, a file view winning a key
+     * collision.
      *
-     * @return array<string, string> Map of view key => view title, 'default' first
+     * Ordering: current app first, then the other allowed apps; 'default' leads each
+     * app group, remaining variants alphabetical.
+     *
+     * @return array<string, array{key: string, app: string, appLabel: string, title: string}>
      */
     public static function getListViews(string $component): array
     {
-        $subPath = self::componentToSubPath($component);
+        $subPath = self::componentToListName($component);
+        $currentApp = self::getCurrentApp();
 
-        $paths = [];
-        foreach (self::configSearchRoots() as $root) {
-            $basePath = $root.DIRECTORY_SEPARATOR."lists/{$subPath}.yml";
-            if (! isset($paths['default']) && file_exists($basePath)) {
-                $paths['default'] = $basePath;
-            }
-
-            $variantPaths = glob($root.DIRECTORY_SEPARATOR."lists/{$subPath}--*.yml") ?: [];
-            foreach ($variantPaths as $variantPath) {
-                $key = Str::afterLast(basename($variantPath, '.yml'), '--');
-                if ($key === '' || isset($paths[$key])) {
-                    continue;
-                }
-                $paths[$key] = $variantPath;
+        $apps = $currentApp ? [$currentApp] : [];
+        foreach (self::getAllowedAppFolders() as $folder) {
+            if ($folder !== $currentApp) {
+                $apps[] = $folder;
             }
         }
 
-        $views = [];
-        foreach ($paths as $key => $path) {
-            try {
-                $config = Yaml::parse(file_get_contents($path) ?: '') ?: [];
-            } catch (Throwable) {
-                // An unparseable variant is dropped; the base view must survive
-                // so the list keeps rendering with its config's own error handling.
-                if ($key !== 'default') {
-                    continue;
-                }
-                $config = [];
-            }
-            $views[$key] = (string) ($config['title'] ?? $key);
-        }
+        // Without a session app the first searched folder used to win — keep its
+        // entries on plain keys so the base view stays addressable as 'default'.
+        $plainApp = $currentApp ?? ($apps[0] ?? null);
 
         $resolver = app(LayoutOverrideResolver::class);
-        $resolverViews = $resolver->listViews(self::stripComponentNamespace($component));
-        unset($resolverViews['default']);
-        $views += $resolverViews;
+        $appLabels = self::appLabels();
 
-        $defaultView = array_key_exists('default', $views) ? ['default' => $views['default']] : [];
-        unset($views['default']);
-        ksort($views);
+        $views = [];
+        foreach ($apps as $app) {
+            $roots = array_filter([
+                base_path("app-configs/{$app}"),
+                self::getModuleSourcePath($app),
+            ]);
+
+            $paths = [];
+            foreach ($roots as $root) {
+                $basePath = $root.DIRECTORY_SEPARATOR."lists/{$subPath}.yml";
+                if (! isset($paths['default']) && file_exists($basePath)) {
+                    $paths['default'] = $basePath;
+                }
+
+                $variantPaths = glob($root.DIRECTORY_SEPARATOR."lists/{$subPath}--*.yml") ?: [];
+                foreach ($variantPaths as $variantPath) {
+                    $key = Str::afterLast(basename($variantPath, '.yml'), '--');
+                    if ($key === '' || isset($paths[$key])) {
+                        continue;
+                    }
+                    $paths[$key] = $variantPath;
+                }
+            }
+
+            $appViews = [];
+            foreach ($paths as $key => $path) {
+                try {
+                    $config = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+                } catch (Throwable) {
+                    // An unparseable variant is dropped; the base view must survive
+                    // so the list keeps rendering with its config's own error handling.
+                    if ($key !== 'default') {
+                        continue;
+                    }
+                    $config = [];
+                }
+                $appViews[$key] = (string) ($config['title'] ?? $key);
+            }
+
+            if ($app === $plainApp) {
+                $resolverViews = $resolver->listViews(self::componentToListName($component));
+                unset($resolverViews['default']);
+                $appViews += $resolverViews;
+            }
+
+            $defaultView = array_key_exists('default', $appViews) ? ['default' => $appViews['default']] : [];
+            unset($appViews['default']);
+            ksort($appViews);
+
+            foreach ($defaultView + $appViews as $key => $title) {
+                $views[self::composeListViewKey($app === $plainApp ? null : $app, $key)] = [
+                    'key' => $key,
+                    'app' => $app,
+                    'appLabel' => $appLabels[$app] ?? Str::ucfirst($app),
+                    'title' => $title,
+                ];
+            }
+        }
 
         // Last word goes to the resolver: it may hide views (incl. 'default')
         // the current user is not allowed to see.
-        return $resolver->filterListViews(self::stripComponentNamespace($component), $defaultView + $views);
+        return $resolver->filterListViews(self::componentToListName($component), $views);
+    }
+
+    /**
+     * Split a list-view key into its source app and plain view key. Plain keys
+     * ('default', 'vip') belong to the current app and yield a null app; composite
+     * keys ('gastro::vip') name the app folder explicitly.
+     *
+     * @return array{0: ?string, 1: string} [appFolder|null, plainKey]
+     */
+    public static function parseListViewKey(string $key): array
+    {
+        if (! str_contains($key, '::')) {
+            return [null, $key];
+        }
+
+        [$app, $viewKey] = explode('::', $key, 2);
+
+        return [$app, $viewKey === '' ? 'default' : $viewKey];
+    }
+
+    /**
+     * Inverse of parseListViewKey(): null app => plain key, null view key => 'default'.
+     */
+    public static function composeListViewKey(?string $app, ?string $viewKey): string
+    {
+        $viewKey = $viewKey === null || $viewKey === '' ? 'default' : $viewKey;
+
+        return $app === null ? $viewKey : "{$app}::{$viewKey}";
+    }
+
+    /**
+     * Display labels for the allowed app folders: folder (lowercase) => TenantApp title.
+     * Folders without a TenantApp row (e.g. 'setup') fall back in getListViews().
+     *
+     * @return array<string, string>
+     */
+    private static function appLabels(): array
+    {
+        $labels = ['setup' => __('Setup')];
+
+        $tenant = TenantHelper::getSelectedTenant();
+        if ($tenant) {
+            foreach ($tenant->tenantApps()->pluck('title', 'name') as $name => $title) {
+                $labels[mb_strtolower((string) $name)] = (string) $title;
+            }
+        }
+
+        return $labels;
     }
 
     /**
@@ -247,15 +365,28 @@ class StaticConfigHelper
     }
 
     /**
-     * Convert a component name (e.g. "booking-members::stamp-cards.customer-stamp-cards-list")
-     * to a filesystem sub-path relative to lists/ or details/ (e.g. "stamp-cards/customer-stamp-cards-list").
-     * Dots in the component name map to directory separators to support subfolder organization.
+     * Convert a component name (e.g. "booking::bookings.booking-detail") to a
+     * filesystem sub-path relative to details/ (e.g. "bookings/booking-detail").
+     * Dots in the component name map to directory separators to support subfolder
+     * organization — DETAILS ONLY; list configs always resolve flat, see
+     * componentToListName().
      */
     private static function componentToSubPath(string $component): string
     {
         $name = self::stripComponentNamespace($component);
 
         return str_replace('.', DIRECTORY_SEPARATOR, $name);
+    }
+
+    /**
+     * Convert a component name to its flat list YAML name. List configs always
+     * live directly in lists/ (never in subfolders), so the subfolder segments of
+     * a nested component name are dropped:
+     * "booking-members::stamp-cards.customer-stamp-cards-list" → "customer-stamp-cards-list".
+     */
+    private static function componentToListName(string $component): string
+    {
+        return Str::afterLast(self::stripComponentNamespace($component), '.');
     }
 
     /**

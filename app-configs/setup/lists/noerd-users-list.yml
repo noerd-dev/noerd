@@ -1,4 +1,7 @@
 title: Users
+searchableColumns:
+  - name
+  - email
 actions:
   - label: New User
     action: listAction

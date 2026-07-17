@@ -393,5 +393,14 @@
 
     "Tasks & Reports": "Aufgaben & Berichte",
     "Site Assignments": "Standortzuweisung",
-    "selected": "ausgewählt"
+    "selected": "ausgewählt",
+
+    "Filter": "Filtern",
+    "Clear filter": "Filter löschen",
+    "All": "Alle",
+    "Yes": "Ja",
+    "No": "Nein",
+    "e.g. >0 or <=10": "z. B. >0 oder <=10",
+    "e.g. >=2026-01-01": "z. B. >=2026-01-01",
+    "e.g. =value or text": "z. B. =Wert oder Text"
 }

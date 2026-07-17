@@ -292,9 +292,27 @@ trait NoerdDetail
             ->except(['created_at', 'updated_at'])
             ->toArray();
 
-        // A field bound to a nested path (e.g. `detailData.custom_attributes.sap_number`) needs its
-        // parent key to exist as an array before wire:model can bind into it. A new record — or one
-        // whose JSON column is still null — would otherwise bind against null.
+        $this->ensureCustomAttributesArray();
+    }
+
+    /**
+     * Livewire trait rendering hook. Components may overwrite $detailData in their own
+     * mount() (e.g. `$this->detailData = $model->toArray()`), which would undo the
+     * normalization done in mountDetailComponent() — so it is re-applied before every render.
+     */
+    public function renderingNoerdDetail(): void
+    {
+        $this->ensureCustomAttributesArray();
+    }
+
+    /**
+     * A field bound to a nested path (e.g. `detailData.custom_attributes.sap_number`) needs its
+     * parent key to exist as an array before wire:model can bind into it. A new record — or one
+     * whose JSON column is still null — would otherwise bind against null and the browser-side
+     * update would be lost silently.
+     */
+    protected function ensureCustomAttributesArray(): void
+    {
         if (array_key_exists('custom_attributes', $this->detailData) && ! is_array($this->detailData['custom_attributes'])) {
             $this->detailData['custom_attributes'] = [];
         }

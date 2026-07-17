@@ -41,3 +41,20 @@
         scrollbar-color: var(--color-gray-300, #d1d5db) transparent;
     }
 }
+
+/*
+ * With `overflow: scroll` a custom-styled WebKit scrollbar draws its thumb at full
+ * length even when there is nothing to scroll. `noerd-scrollbar-idle` hides the
+ * thumb in that state while the track stays reserved, so the layout never shifts
+ * when scrolling becomes possible (toggled via ResizeObserver, see quick-menu).
+ */
+.noerd-scrollbar.noerd-scrollbar-idle::-webkit-scrollbar-thumb,
+.noerd-scrollbar.noerd-scrollbar-idle::-webkit-scrollbar-thumb:hover {
+    background-color: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .noerd-scrollbar.noerd-scrollbar-idle {
+        scrollbar-color: transparent transparent;
+    }
+}

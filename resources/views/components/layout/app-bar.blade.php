@@ -14,7 +14,7 @@ new class extends Component {
 
 <div>
     @auth
-        <div x-show="showSidebar && showAppbar"
+        <div x-show="showAppbar && (window.innerWidth >= 1024 || showSidebar)"
              x-transition
              @class([
                 'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
@@ -63,7 +63,7 @@ new class extends Component {
                                     border-l-2"/>
                             @endif
                         </div>
-                        <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
+                        <div class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
                     </a>
                 @endforeach
             </div>
@@ -75,7 +75,7 @@ new class extends Component {
                 ->get();
         @endphp
         @if($publicApps->count() > 1)
-            <div x-show="showSidebar && showAppbar"
+            <div x-show="showAppbar && (window.innerWidth >= 1024 || showSidebar)"
                  x-transition
                  @class([
                     'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
@@ -92,7 +92,7 @@ new class extends Component {
                                         class="stroke-black border-transparent hover:border-gray-500! border-l-2"/>
                                 @endif
                             </div>
-                            <div x-show="showSidebar" class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
+                            <div class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
                         </a>
                     @endforeach
                 </div>

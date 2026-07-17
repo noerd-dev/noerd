@@ -103,22 +103,24 @@ it('passes null when the caller has no model', function (): void {
     expect(RecordingLayoutOverrideResolver::$seenModels)->toContain(null);
 });
 
-/** Sub-folder configs keep their dots — that is the hub's key format too. */
-it('keeps dotted sub-paths in the canonical key', function (): void {
-    // A fixture config in a sub-folder of the always-searchable setup app, so the dotted-key
-    // behaviour is tested without depending on any module shipping a sub-folder config.
+/**
+ * List configs always live flat in lists/ — a nested component name (dots from the
+ * blade sub-folder) must resolve the flat YAML and key its override by the flat
+ * name, so every caller of the same config shares one override.
+ */
+it('flattens dotted component names to the flat list key', function (): void {
     TenantHelper::setSelectedApp('SETUP');
 
-    $fixtureDir = base_path('app-configs/setup/lists/zz-fixture');
-    File::ensureDirectoryExists($fixtureDir);
-    File::put($fixtureDir.'/zz-dotted-list.yml', "title: Fixture\ncolumns: []\n");
+    $fixturePath = base_path('app-configs/setup/lists/zz-dotted-list.yml');
+    File::put($fixturePath, "title: Fixture\ncolumns: []\n");
 
     try {
         StaticConfigHelper::getListConfig('noerd::zz-fixture.zz-dotted-list');
 
         expect(RecordingLayoutOverrideResolver::$seen)
-            ->toContain('list|zz-fixture.zz-dotted-list');
+            ->toContain('list|zz-dotted-list')
+            ->not->toContain('list|zz-fixture.zz-dotted-list');
     } finally {
-        File::deleteDirectory($fixtureDir);
+        File::delete($fixturePath);
     }
 });

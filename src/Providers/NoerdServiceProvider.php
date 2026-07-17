@@ -47,6 +47,7 @@ use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
+use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullLayoutOverrideResolver;
@@ -79,6 +80,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(LayoutOverrideResolver::class, NullLayoutOverrideResolver::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(TopBarRegistry::class);
+        $this->app->singleton(HeaderActionsRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(NoerdManager::class);
         $this->app->singleton(RelationFieldRegistry::class, fn ($app) => new RelationFieldRegistry(

@@ -2,6 +2,51 @@
 
 Lists can be filtered using dropdown filters (`tableFilters`). Dropdown filters allow users to narrow results by selecting a value (e.g. year, language).
 
+In addition, every list gets Excel-style **column filters** automatically — see [Column Filters](#column-filters-excel-style) below.
+
+## Column Filters (Excel-style)
+
+Every filterable column shows a funnel icon in its header (revealed on header hover, always visible while active). Clicking it opens a popover where the user types a filter expression; the filter is applied on Enter or via the Apply button. This is a single generic feature in `NoerdList` + the list views — no per-list configuration or per-module duplication.
+
+### Operator syntax
+
+A filter expression may start with a comparison operator: `>=`, `<=`, `>`, `<`, `=`, `!=` (`<>` is accepted as `!=`). Without an operator the default depends on the column type:
+
+| Column type | Popover UI | With operator | Without operator |
+|-------------|-----------|---------------|------------------|
+| `text` (default) | Text input | `=rot` exact, `!=rot` not equal, `>m` string comparison | `rot` → `LIKE %rot%` (wildcards in the value are escaped) |
+| `number`, `currency` | Text input | `>0`, `<=10`, `!=5` (comma decimals accepted: `>=2,5`) | Exact match |
+| `date`, `datetime` | Text input | `>=2026-01-01` (also German format `17.07.2026`) | That exact day (`whereDate =`) |
+| `bool` | All / Yes / No buttons | — | — |
+| `badge`/`select` (with `options`) | All + one button per option | — | Exact match on the option value |
+
+Invalid input (non-numeric value on a number column, unparseable date, operator without value) is silently ignored — the filter is a no-op, never an error.
+
+### Which columns are filterable
+
+A column is filterable when it is declared in the list YAML `columns`, is not `action`, is not a dotted field (`relation.name`, `custom_attributes.x`), and exists as a real column on the model's table — the same rule as sorting. Lists that build a fully custom query (never calling `listQuery()`) show no funnels and apply no column filters.
+
+### Behavior
+
+- Multiple column filters combine with AND — and stack with the search field and the header `listFilters`
+- Setting or clearing a filter resets pagination to page 1
+- Filters persist per component in the session (`listColumnFilters.{component}`), like sorting
+- Filters are mirrored into the URL as `?cf[column]=expression` — a shared link reproduces the exact
+  view. On mount the URL wins over the session state. The active list view (`?view=`, including
+  `default`) and the filters are written into the URL on initial page load by the url-sync script in
+  the list Blade (Livewire `#[Url]` bindings only write on updates); afterwards Livewire keeps them in
+  sync. Only the page-level list writes the URL — modal, compact and picker lists never do
+- Compact/embedded and minimal lists render no funnels and never apply column filters (a session filter must not invisibly hide rows of an embedded widget)
+- The header "Clear all filters" button (`clearAllListFilters()`) clears the column filters too; each popover also offers a per-column clear
+- CSV export respects active column filters when the export query builds on `listQuery()`
+
+### Architecture
+
+- Expression parsing + query application: `Noerd\Services\ColumnFilterParser` (fixed operator set, values only ever bound as parameters — user input never reaches SQL text)
+- State + whitelist: `NoerdList::$listColumnFilters`, `setColumnFilter()`, `clearColumnFilter()`, `filterableColumnFields()`, `applyColumnFilters()` (hooked inside `listQuery()`)
+- Header UI: `noerd::components.table.column-filter`, included from `table-sort.blade.php`
+- Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Traits/NoerdListColumnFilterTest.php`
+
 ## How Filters Work
 
 1. A component defines filter options via `tableFilters()` (computed property)

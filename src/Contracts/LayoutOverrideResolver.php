@@ -41,12 +41,16 @@ interface LayoutOverrideResolver
     /**
      * Drop the views the CURRENT user may not see (e.g. role restrictions the
      * resolver stores). Called by StaticConfigHelper::getListViews() as the
-     * final step, on the complete map including 'default'. Return the map
-     * unchanged when there are no restrictions.
+     * final step, on the complete cross-app map including 'default'. Map keys
+     * are plain view keys for the current app ('default', 'vip') and composite
+     * '{app}::{key}' keys for other apps' entries; restrictions are stored
+     * app-agnostic, so an implementation must match on the plain-key part
+     * (each entry's 'key'). Return the map unchanged when there are no
+     * restrictions.
      *
      * @param  string  $component  canonical key, namespace stripped
-     * @param  array<string, string>  $views  view key => view title
-     * @return array<string, string>
+     * @param  array<string, array{key: string, app: string, appLabel: string, title: string}>  $views
+     * @return array<string, array{key: string, app: string, appLabel: string, title: string}>
      */
     public function filterListViews(string $component, array $views): array;
 }

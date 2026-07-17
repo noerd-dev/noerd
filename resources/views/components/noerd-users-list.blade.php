@@ -14,6 +14,12 @@ new class () extends Component {
 
     public const DETAIL_COMPONENT = 'noerd::noerd-users-list';
 
+    public function mount(): void
+    {
+        $this->mountList();
+        $this->setDefaultSort('name', true);
+    }
+
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
         Noerd::modal('noerd::noerd-user-detail', ['modelId' => $modelId, 'relations' => $relations]);
@@ -47,20 +53,14 @@ new class () extends Component {
     {
         $tenants = Auth::user()->adminTenants();
 
-        $rows = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
-            if (! empty($this->listFilters['tenant_id'])) {
-                $relationQuery->where('tenant_id', $this->listFilters['tenant_id']);
-            } else {
-                $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
-            }
-        })
-            ->when($this->search, function ($query): void {
-                $query->where(function ($query): void {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
+        $rows = $this->listQuery(NoerdUser::class)
+            ->whereHas('tenants', function ($relationQuery) use ($tenants): void {
+                if (! empty($this->listFilters['tenant_id'])) {
+                    $relationQuery->where('tenant_id', $this->listFilters['tenant_id']);
+                } else {
+                    $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
+                }
             })
-            ->orderBy('name')
             ->with(['roles', 'tenants'])
             ->paginate($this->perPage);
 

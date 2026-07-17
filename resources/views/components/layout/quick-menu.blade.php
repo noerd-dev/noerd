@@ -55,8 +55,17 @@ new class extends Component {
 
     {{-- overflow-x-scroll (not auto) keeps the 6px scrollbar track permanently reserved and the
          -mb-[6px] cancels it out of the layout, so the buttons stay vertically centered and never
-         shift when the scrollbar appears — it renders in the topbar's bottom padding instead. --}}
-    <div class="noerd-scrollbar flex items-center gap-x-2 overflow-x-scroll -mb-[6px] min-w-0 flex-1 p-1">
+         shift when the scrollbar appears — it renders in the topbar's bottom padding instead.
+         noerd-scrollbar-idle hides the thumb while nothing overflows (a custom WebKit scrollbar
+         would otherwise draw it at full length); the ResizeObserver keeps the class in sync when
+         the container or a button changes size. --}}
+    <div class="noerd-scrollbar noerd-scrollbar-idle flex items-center gap-x-2 overflow-x-scroll -mb-[6px] min-w-0 flex-1 p-1"
+         x-data
+         x-init="const sync = () => $el.classList.toggle('noerd-scrollbar-idle', $el.scrollWidth <= $el.clientWidth);
+                 sync();
+                 const observer = new ResizeObserver(sync);
+                 observer.observe($el);
+                 Array.from($el.children).forEach((child) => observer.observe(child))">
         @foreach($config['buttons'] ?? [] as $button)
             @if(!isset($button['policy']) || $this->canAccess($button['policy']))
                 <div class="shrink-0">

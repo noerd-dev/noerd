@@ -11,6 +11,12 @@ new class extends Component {
 
     public const DETAIL_COMPONENT = 'noerd::user-roles-list';
 
+    public function mount(): void
+    {
+        $this->mountList();
+        $this->setDefaultSort('name', true);
+    }
+
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
         Noerd::modal('noerd::user-role-detail', ['modelId' => $modelId, 'relations' => $relations]);
@@ -18,8 +24,8 @@ new class extends Component {
 
     public function with(): array
     {
-        $rows = UserRole::where('tenant_id', auth()->user()->selected_tenant_id)
-            ->orderBy('name')
+        $rows = $this->listQuery(UserRole::class)
+            ->where('tenant_id', auth()->user()->selected_tenant_id)
             ->paginate($this->perPage);
 
         return [
