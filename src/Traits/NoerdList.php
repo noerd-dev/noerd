@@ -23,6 +23,7 @@ use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\ListQueryContext;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
+use Noerd\Facades\Noerd;
 
 trait NoerdList
 {
@@ -190,7 +191,7 @@ trait NoerdList
         // state and is persisted. Embedded lists (compact/picker) never apply it —
         // the param addresses the page-level list, but Livewire hydrates it on
         // nested lists too.
-        $urlColumnFilters = (! $this->compact && ! $this->returnsSelection)
+        $urlColumnFilters = (!$this->compact && !$this->returnsSelection)
             ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && trim($value) !== '')
             : [];
         if ($urlColumnFilters !== []) {
@@ -211,12 +212,12 @@ trait NoerdList
         // A ?view= URL param (shared link) wins over the session-saved view.
         // Embedded lists (compact/picker) never apply it — the param addresses
         // the page-level list, but Livewire hydrates it on nested lists too.
-        $urlView = (! $this->compact && ! $this->returnsSelection) ? $this->listViewParam : null;
+        $urlView = (!$this->compact && !$this->returnsSelection) ? $this->listViewParam : null;
         if ($urlView !== null && $urlView !== '') {
             // The URL carries '--' instead of '::' as the app separator (no
             // '%3A%3A' noise); decode it back to the composite key. A hand-typed
             // legacy '::' still parses as-is.
-            if (! str_contains($urlView, '::') && str_contains($urlView, '--')) {
+            if (!str_contains($urlView, '::') && str_contains($urlView, '--')) {
                 $urlView = Str::replaceFirst('--', '::', $urlView);
             }
             [$urlApp, $urlKey] = StaticConfigHelper::parseListViewKey($urlView);
@@ -247,7 +248,7 @@ trait NoerdList
         // base stays — fail open.
         if ($this->listView === null && $this->listViewApp === null
             && $this->availableListViews !== []
-            && ! array_key_exists('default', $this->availableListViews)) {
+            && !array_key_exists('default', $this->availableListViews)) {
             $this->applyListViewKey(array_key_first($this->availableListViews));
         }
 
@@ -285,7 +286,47 @@ trait NoerdList
     #[Computed]
     public function availableListViews(): array
     {
-        return StaticConfigHelper::getListViews($this->getDetailComponent());
+        return StaticConfigHelper::getListViews($this->getListComponent());
+    }
+
+    public function listAction(mixed $modelId = null, array $relations = []): void
+    {
+        Noerd::modal($this->detailComponent, ['modelId' => $modelId, 'relations' => $relations]);
+    }
+
+    public function listData(): array
+    {
+        $rows = $this->listQuery($this->listModel)->paginate($this->perPage);
+
+        return $this->buildList($rows);
+    }
+
+    /**
+     * The list config regardless of the component's style: lists declaring
+     * $listModel build it via listData(), lists with a custom with() already
+     * return it as view data. Lets generic trait features (row click, select-all,
+     * bulk delete) work for both without assuming one style.
+     *
+     * @return array<string, mixed>
+     */
+    protected function resolvedListConfig(): array
+    {
+        if (property_exists($this, 'listModel') && $this->listModel) {
+            return $this->listData();
+        }
+
+        return method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
+    }
+
+    public function rendering()
+    {
+        if ((int)request()->customerId) {
+            $this->listAction(request()->customerId);
+        }
+
+        if (request()->create) {
+            $this->listAction();
+        }
     }
 
     /**
@@ -294,7 +335,7 @@ trait NoerdList
      */
     public function switchListView(string $key): void
     {
-        if (! array_key_exists($key, $this->availableListViews)) {
+        if (!array_key_exists($key, $this->availableListViews)) {
             return;
         }
 
@@ -354,7 +395,7 @@ trait NoerdList
         }
 
         if ($this->sortField === $field) {
-            $this->sortAsc = ! $this->sortAsc;
+            $this->sortAsc = !$this->sortAsc;
         } else {
             $this->sortAsc = true;
         }
@@ -394,7 +435,7 @@ trait NoerdList
      */
     public function setColumnFilter(string $field, ?string $value): void
     {
-        $value = trim((string) $value);
+        $value = trim((string)$value);
 
         if ($value === '') {
             unset($this->listColumnFilters[$field]);
@@ -414,8 +455,8 @@ trait NoerdList
     public function findListAction(int|string $id): void
     {
         $this->syncListQueryContext();
-        $withData = $this->with();
-        $listData = $withData['listConfig']['rows'] ?? [];
+
+        $listData = $this->resolvedListConfig()['rows'] ?? [];
         // In picker mode a row click (or Enter) ticks the row instead of opening it.
         $method = $this->returnsSelection ? 'toggleRecordSelection' : $this->listActionMethod;
 
@@ -429,7 +470,7 @@ trait NoerdList
         }
 
         $item = $listData->getCollection()->get($id);
-        if (! $item) {
+        if (!$item) {
             return;
         }
         $itemId = is_array($item) ? ($item['id'] ?? null) : $item->id;
@@ -453,7 +494,7 @@ trait NoerdList
      */
     public function toggleRecordSelection(int|string $id): void
     {
-        $id = (int) $id;
+        $id = (int)$id;
 
         if (in_array($id, $this->selectedRecordIds, true)) {
             $this->selectedRecordIds = array_values(array_filter(
@@ -506,7 +547,7 @@ trait NoerdList
         }
 
         // Building the list query once populates resolvedModelClass for this request.
-        $this->with();
+        $this->resolvedListConfig();
 
         if ($this->resolvedModelClass !== null) {
             $this->resolvedModelClass::query()
@@ -526,7 +567,7 @@ trait NoerdList
      */
     public function visibleRowIds(): array
     {
-        $rows = $this->with()['listConfig']['rows'] ?? null;
+        $rows = $this->resolvedListConfig()['rows'] ?? null;
         if ($rows === null) {
             return [];
         }
@@ -534,7 +575,7 @@ trait NoerdList
         $collection = is_array($rows) ? collect($rows) : $rows->getCollection();
 
         return $collection
-            ->map(fn($row): int => (int) (is_array($row) ? ($row['id'] ?? 0) : $row->id))
+            ->map(fn($row): int => (int)(is_array($row) ? ($row['id'] ?? 0) : $row->id))
             ->filter()
             ->values()
             ->all();
@@ -548,7 +589,9 @@ trait NoerdList
         return $this->getName();
     }
 
-    public function updateRow(): void {}
+    public function updateRow(): void
+    {
+    }
 
     #[Computed]
     public function tableFilters(): array
@@ -566,7 +609,9 @@ trait NoerdList
         return $filters;
     }
 
-    public function states(): void {}
+    public function states(): void
+    {
+    }
 
     public function listFilters(): array
     {
@@ -578,7 +623,9 @@ trait NoerdList
         return [];
     }
 
-    public function filters(): void {}
+    public function filters(): void
+    {
+    }
 
     public function refreshList(): void
     {
@@ -642,7 +689,7 @@ trait NoerdList
 
     protected function getAllowedListFilterColumns(): array
     {
-        if (defined('static::ALLOWED_TABLE_FILTERS') && ! empty(static::ALLOWED_TABLE_FILTERS)) {
+        if (defined('static::ALLOWED_TABLE_FILTERS') && !empty(static::ALLOWED_TABLE_FILTERS)) {
             return static::ALLOWED_TABLE_FILTERS;
         }
 
@@ -651,7 +698,7 @@ trait NoerdList
 
     protected function applyListFilters($query): void
     {
-        if (! $this->listFilters) {
+        if (!$this->listFilters) {
             return;
         }
 
@@ -659,7 +706,7 @@ trait NoerdList
         $filterTypes = collect($this->tableFilters())->pluck('type', 'column')->toArray();
 
         foreach ($this->listFilters as $key => $value) {
-            if (! in_array($key, $allowed) || ! $value) {
+            if (!in_array($key, $allowed) || !$value) {
                 continue;
             }
 
@@ -685,39 +732,15 @@ trait NoerdList
      * Get the detail component name.
      * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
      */
-    protected function getDetailComponent(): string
+    protected function getListComponent(): string
     {
+
         if (defined('static::DETAIL_COMPONENT')) {
             return static::DETAIL_COMPONENT;
         }
-
         return $this->getName();
     }
 
-    /**
-     * Get the list component name.
-     * Uses LIST_COMPONENT constant if defined, otherwise derives from detail component name.
-     * 'customer-detail' → 'customers-list'
-     */
-    protected function getListComponent(): string
-    {
-        if (defined('static::LIST_COMPONENT')) {
-            return static::LIST_COMPONENT;
-        }
-
-        $name = $this->getName();
-
-        // If this is already a list component, return as-is
-        if (Str::endsWith($name, '-list')) {
-            return $name;
-        }
-
-        // Extract entity: 'customer-detail' → 'customer'
-        $entity = Str::before($name, '-detail');
-
-        // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity) . '-list';
-    }
 
     protected function componentName(): string
     {
@@ -779,15 +802,15 @@ trait NoerdList
 
         $listConfig = $this->getListConfig($configName);
 
-        if (! empty($this->search)) {
-            $searchableFields = ! empty($listConfig['searchableColumns'])
+        if (!empty($this->search)) {
+            $searchableFields = !empty($listConfig['searchableColumns'])
                 ? $listConfig['searchableColumns']
                 : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
 
             $table = (new $modelClass())->getTable();
             $validFields = array_filter($searchableFields, fn($f) => Schema::hasColumn($table, $f));
 
-            if (! empty($validFields)) {
+            if (!empty($validFields)) {
                 $search = $this->search;
                 $query->where(function (Builder $q) use ($validFields, $search): void {
                     foreach (array_values($validFields) as $index => $field) {
@@ -832,7 +855,7 @@ trait NoerdList
             ->pluck('field')
             ->filter(fn($field): bool => is_string($field)
                 && $field !== 'action'
-                && ! self::isDottedField($field)
+                && !self::isDottedField($field)
                 && Schema::hasColumn($table, $field))
             ->values()
             ->all();
@@ -864,7 +887,7 @@ trait NoerdList
         $picklistFields = array_keys($this->picklistOptionsFromDetail());
 
         foreach ($this->listColumnFilters as $field => $raw) {
-            if (! in_array($field, $allowed, true) || ! is_string($raw) || trim($raw) === '') {
+            if (!in_array($field, $allowed, true) || !is_string($raw) || trim($raw) === '') {
                 continue;
             }
 
@@ -890,7 +913,7 @@ trait NoerdList
         // so bool/date columns keep their type and the filter popover keeps its UI.
         $model = $this->resolveModelFromRows($rows)
             ?? ($this->resolvedModelClass !== null ? new $this->resolvedModelClass() : null);
-        if (! $model) {
+        if (!$model) {
             return $listSettings;
         }
 
@@ -960,10 +983,11 @@ trait NoerdList
      * Build complete list configuration including rows and table state.
      * Returns all data needed for the list.index DETAIL_COMPONENT.
      *
-     * @param  LengthAwarePaginator|array  $rows
+     * @param LengthAwarePaginator|array $rows
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
+
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);
@@ -1042,8 +1066,8 @@ trait NoerdList
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $fields
-     * @param  array<string, array<int, array{value: mixed, label: string}>>  $map
+     * @param array<int, array<string, mixed>> $fields
+     * @param array<string, array<int, array{value: mixed, label: string}>> $map
      */
     protected function collectSelectOptions(array $fields, array &$map): void
     {
@@ -1054,7 +1078,7 @@ trait NoerdList
                 continue;
             }
 
-            if (($field['type'] ?? null) !== 'select' || empty($field['options']) || ! isset($field['name'])) {
+            if (($field['type'] ?? null) !== 'select' || empty($field['options']) || !isset($field['name'])) {
                 continue;
             }
 
@@ -1074,7 +1098,7 @@ trait NoerdList
         $prefix = Str::contains($name, '.') ? Str::beforeLast($name, '.') . '.' : '';
         $last = Str::afterLast($name, '.');
 
-        if (! Str::endsWith($last, '-list')) {
+        if (!Str::endsWith($last, '-list')) {
             return null;
         }
 
@@ -1088,16 +1112,10 @@ trait NoerdList
      */
     protected function getListConfig(?string $customName = null): array
     {
-        // List YAML almost never declares a `model:` key, so the resolved model class is handed to the
-        // config layer explicitly. It is populated by listQuery(); calls that run before it (e.g. the
-        // sortable-column check) simply pass null and resolve the plain YAML.
-        $modelClass = $this->resolvedModelClass;
-
         if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
-            return StaticConfigHelper::getListConfig($this->selectListConfig, $modelClass);
+            return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
         }
-
-        $name = $customName ?? $this->getDetailComponent();
+        $name = $customName ?? $this->getListComponent();
 
         // An active alternate view only applies to this component's own config,
         // never to an explicitly requested custom config. A view from another
@@ -1105,8 +1123,8 @@ trait NoerdList
         if ($customName === null && ($this->listView !== null || $this->listViewApp !== null)) {
             $viewName = $this->listView !== null ? "{$name}--{$this->listView}" : $name;
             $config = $this->listViewApp !== null
-                ? StaticConfigHelper::getListConfigForApp($this->listViewApp, $viewName, $modelClass)
-                : StaticConfigHelper::getListConfig($viewName, $modelClass);
+                ? StaticConfigHelper::getListConfigForApp($this->listViewApp, $viewName, $this->listModel ?? null)
+                : StaticConfigHelper::getListConfig($viewName, $this->listModel ?? null);
             if ($config !== []) {
                 return $config;
             }
@@ -1116,7 +1134,7 @@ trait NoerdList
             $this->syncListViewParam();
         }
 
-        return StaticConfigHelper::getListConfig($name, $modelClass);
+        return StaticConfigHelper::getListConfig($name, $this->listModel ?? null);
     }
 
     /**
@@ -1129,7 +1147,9 @@ trait NoerdList
         throw new LogicException('Override prepareCsvExport() to enable CSV export.');
     }
 
-    protected function prepareExportRow(mixed $row): void {}
+    protected function prepareExportRow(mixed $row): void
+    {
+    }
 
     protected function formatCsvValue(mixed $value, array $column): string
     {
@@ -1140,10 +1160,10 @@ trait NoerdList
             'date' => $value ? Carbon::parse($value)->format('d.m.Y') : '',
             'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
             'currency', 'number' => is_numeric($value)
-                ? number_format((float) $value, 2, ',', '.')
-                : (string) ($value ?? ''),
+                ? number_format((float)$value, 2, ',', '.')
+                : (string)($value ?? ''),
             'badge' => __($this->badgeLabel($value, $column['options'] ?? [])),
-            default => (string) ($value ?? ''),
+            default => (string)($value ?? ''),
         };
     }
 
@@ -1151,19 +1171,19 @@ trait NoerdList
      * Resolve a picklist value to its option label (untranslated); falls back to
      * the raw value when no option matches.
      *
-     * @param  array<int, array{value: mixed, label: string}>  $options
+     * @param array<int, array{value: mixed, label: string}> $options
      */
     protected function badgeLabel(mixed $value, array $options): string
     {
         $value = $value instanceof BackedEnum ? $value->value : ($value instanceof UnitEnum ? $value->name : $value);
 
         foreach ($options as $option) {
-            if (isset($option['value']) && (string) $option['value'] === (string) $value) {
-                return (string) ($option['label'] ?? $value);
+            if (isset($option['value']) && (string)$option['value'] === (string)$value) {
+                return (string)($option['label'] ?? $value);
             }
         }
 
-        return (string) ($value ?? '');
+        return (string)($value ?? '');
     }
 
     /**
@@ -1172,7 +1192,7 @@ trait NoerdList
      */
     protected function getListeners(): array
     {
-        $name = $this->getDetailComponent();
+        $name = $this->getListComponent();
         $stripped = Str::afterLast($name, '.');
 
         $listeners = ['refreshList-' . $name => 'refreshList'];

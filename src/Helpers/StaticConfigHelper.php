@@ -131,8 +131,7 @@ class StaticConfigHelper
             return $primaryPath;
         }
 
-        $moduleSource = self::getModuleSourcePath($app);
-        if ($moduleSource) {
+        foreach (self::getModuleSourcePaths($app) as $moduleSource) {
             $sourcePath = $moduleSource.DIRECTORY_SEPARATOR.$dir.DIRECTORY_SEPARATOR.$subPath.'.yml';
             if (file_exists($sourcePath)) {
                 return $sourcePath;
@@ -145,11 +144,22 @@ class StaticConfigHelper
     /**
      * Public accessor for the module-source directory of an app-config key
      * (app-modules/{module}/app-configs/{app}). Returns null when no module ships
-     * that app.
+     * that app; when several modules do, the first in module scandir order.
      */
     public static function moduleSourcePathForApp(string $app): ?string
     {
         return self::getModuleSourcePath($app);
+    }
+
+    /**
+     * All module-source directories of an app-config key — several modules may
+     * ship configs for the same app folder (e.g. `setup`).
+     *
+     * @return array<int, string>
+     */
+    public static function moduleSourcePathsForApp(string $app): array
+    {
+        return self::getModuleSourcePaths($app);
     }
 
     public static function getNavigationStructure(): ?array
@@ -229,10 +239,10 @@ class StaticConfigHelper
 
         $views = [];
         foreach ($apps as $app) {
-            $roots = array_filter([
+            $roots = [
                 base_path("app-configs/{$app}"),
-                self::getModuleSourcePath($app),
-            ]);
+                ...self::getModuleSourcePaths($app),
+            ];
 
             $paths = [];
             foreach ($roots as $root) {
@@ -390,6 +400,27 @@ class StaticConfigHelper
     }
 
     /**
+     * Derive the flat list component/YAML name from a model class:
+     * Customer::class → "customers-list", ProductGroup::class → "product-groups-list".
+     * Inverse of the componentToListName() naming convention — it only holds for
+     * models whose list follows that convention, which is why callers hide their
+     * feature instead of guessing when no model is declared.
+     */
+    public static function modelToListComponent(string $modelClass): string
+    {
+        return Str::plural(Str::kebab(class_basename($modelClass))).'-list';
+    }
+
+    /**
+     * Derive the detail component/YAML name from a model class:
+     * Customer::class → "customer-detail".
+     */
+    public static function modelToDetailComponent(string $modelClass): string
+    {
+        return Str::kebab(class_basename($modelClass)).'-detail';
+    }
+
+    /**
      * Get allowed app folders for the current tenant.
      * Convention: folder name = strtolower(TenantApp.name)
      */
@@ -463,8 +494,7 @@ class StaticConfigHelper
 
         // 3. Fallback: Search module source files (app-configs)
         if ($currentApp) {
-            $moduleSourcePath = self::getModuleSourcePath($currentApp);
-            if ($moduleSourcePath) {
+            foreach (self::getModuleSourcePaths($currentApp) as $moduleSourcePath) {
                 $roots[] = $moduleSourcePath;
             }
         }
@@ -475,8 +505,7 @@ class StaticConfigHelper
                 continue;
             }
 
-            $moduleSourcePath = self::getModuleSourcePath($folder);
-            if ($moduleSourcePath) {
+            foreach (self::getModuleSourcePaths($folder) as $moduleSourcePath) {
                 $roots[] = $moduleSourcePath;
             }
         }
@@ -604,28 +633,42 @@ class StaticConfigHelper
     }
 
     /**
-     * Get module source path for a given app-config key.
+     * Get the first module source path for a given app-config key.
      * Maps app-configs/{app-key} -> app-modules/{module}/app-configs/{app-key}
      */
     private static function getModuleSourcePath(string $appKey): ?string
     {
+        return self::getModuleSourcePaths($appKey)[0] ?? null;
+    }
+
+    /**
+     * All module source paths for a given app-config key. Several modules may ship
+     * configs for the SAME app folder (e.g. noerd, accounting and noerd-plus all
+     * contribute to `setup`), so every existing directory is returned — in module
+     * scandir order, for deterministic shadowing.
+     *
+     * @return array<int, string>
+     */
+    private static function getModuleSourcePaths(string $appKey): array
+    {
         $mapping = self::getModuleSourceMapping();
 
-        if (! isset($mapping[$appKey])) {
-            return null;
+        $paths = [];
+        foreach ($mapping[$appKey] ?? [] as $module) {
+            $sourcePath = base_path("app-modules/{$module}/app-configs/{$appKey}");
+            if (is_dir($sourcePath)) {
+                $paths[] = $sourcePath;
+            }
         }
 
-        $module = $mapping[$appKey];
-        $sourcePath = base_path("app-modules/{$module}/app-configs/{$appKey}");
-
-        return is_dir($sourcePath) ? $sourcePath : null;
+        return $paths;
     }
 
     /**
      * Dynamically discover module-to-app-config mappings.
      * Scans app-modules/{module}/app-configs/{app-key} directories.
      *
-     * @return array<string, string> Map of app-key => module-name
+     * @return array<string, array<int, string>> Map of app-key => module names
      */
     private static function getModuleSourceMapping(): array
     {
@@ -661,7 +704,7 @@ class StaticConfigHelper
 
                 $fullPath = $appConfigsPath.DIRECTORY_SEPARATOR.$appKey;
                 if (is_dir($fullPath)) {
-                    $mappings[$appKey] = $module;
+                    $mappings[$appKey][] = $module;
                 }
             }
         }

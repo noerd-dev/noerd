@@ -15,9 +15,13 @@
     @include('noerd::components.list.minimal')
 @else
 @php
-    // Auto-fetch listConfig from parent Livewire component if not provided
-    $listConfig = $listConfig ?? $this->with()['listConfig'] ?? [];
-
+    // Auto-fetch listConfig from parent Livewire component if not provided: a
+    // component with its own with() keeps its custom query; the slim syntax
+    // (only $listModel declared) gets the generic trait query via listData().
+    $listConfig = $listConfig
+        ?? (method_exists($this, 'with') ? ($this->with()['listConfig'] ?? null) : null)
+        ?? (isset($this->listModel) ? $this->listData() : null)
+        ?? [];
     // Compact mode hides the list header and the pagination footer (e.g. for embedded lists)
     $compact = $compact ?? ($this->compact ?? false);
 

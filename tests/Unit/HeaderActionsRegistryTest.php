@@ -2,18 +2,41 @@
 
 use Noerd\Services\HeaderActionsRegistry;
 
-it('starts empty so the core renders no module partials of its own', function (): void {
-    expect((new HeaderActionsRegistry())->all())->toBe([]);
-});
-
-it('returns registered views in registration order', function (): void {
+it('starts empty so the core renders no module actions of its own', function (): void {
     $registry = new HeaderActionsRegistry();
 
-    $registry->register('some-module::partials.first');
-    $registry->register('other-module::partials.second');
+    expect($registry->listActions())->toBe([])
+        ->and($registry->detailActions())->toBe([]);
+});
 
-    expect($registry->all())->toBe([
-        'some-module::partials.first',
-        'other-module::partials.second',
+it('keeps list and detail registrations in separate slots', function (): void {
+    $registry = new HeaderActionsRegistry();
+
+    $registry->registerListAction('some-module::list-action');
+    $registry->registerDetailAction('other-module::detail-action');
+
+    expect($registry->listActions())->toBe(['some-module::list-action'])
+        ->and($registry->detailActions())->toBe(['other-module::detail-action']);
+});
+
+it('returns registered actions in registration order', function (): void {
+    $registry = new HeaderActionsRegistry();
+
+    $registry->registerListAction('some-module::first');
+    $registry->registerListAction('other-module::second');
+
+    expect($registry->listActions())->toBe([
+        'some-module::first',
+        'other-module::second',
     ]);
+});
+
+it('lists a universal action in both slots when registered twice', function (): void {
+    $registry = new HeaderActionsRegistry();
+
+    $registry->registerListAction('some-module::universal-action');
+    $registry->registerDetailAction('some-module::universal-action');
+
+    expect($registry->listActions())->toBe(['some-module::universal-action'])
+        ->and($registry->detailActions())->toBe(['some-module::universal-action']);
 });

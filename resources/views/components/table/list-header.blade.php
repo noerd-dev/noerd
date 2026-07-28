@@ -13,7 +13,7 @@
                         @if(isset($rows) && ! is_array($rows))
                             <span class="font-light">({{ $rows->total() }})</span>
                         @endif
-                        <x-noerd::icons.chevron-down class="my-auto text-gray-500" />
+                        <x-noerd::icons.chevron-down class="my-auto text-gray-500"/>
                     </button>
                     <div x-show="open" x-transition x-cloak
                          class="absolute left-0 z-90 mt-2 w-56 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
@@ -46,9 +46,11 @@
             <div class="flex items-center ml-4">
                 @foreach($this->tableFilters() as $tableFilter)
                     @if(in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
-                        <x-noerd::filters.date-dropdown :filter="$tableFilter" :value="$this->listFilters[$tableFilter['column']] ?? ''" />
+                        <x-noerd::filters.date-dropdown :filter="$tableFilter"
+                                                        :value="$this->listFilters[$tableFilter['column']] ?? ''"/>
                     @else
-                        <x-noerd::filters.picklist :filter="$tableFilter" :value="$this->listFilters[$tableFilter['column']] ?? ''" />
+                        <x-noerd::filters.picklist :filter="$tableFilter"
+                                                   :value="$this->listFilters[$tableFilter['column']] ?? ''"/>
                     @endif
                 @endforeach
                 @if(collect($this->listFilters)->filter()->isNotEmpty() || $columnFiltersActive)
@@ -56,7 +58,7 @@
                                      type="button"
                                      wire:click="clearAllListFilters"
                                      :title="__('Clear all filters')"
-                                     class="-ml-3" />
+                                     class="-ml-3"/>
                 @endif
             </div>
         @endif
@@ -76,12 +78,12 @@
 
         @if((isset($disableSearch) && !$disableSearch) || $showCsvExport)
             <div @unless($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
-                 class="ml-auto mr-2 flex items-center gap-2">
+            class="ml-auto mr-2 flex items-center gap-2">
                 @if($showCsvExport)
                     <x-noerd::button variant="secondary" icon="arrow-down-tray"
-                            class="h-8"
-                            title="{{ __('Export CSV') }}"
-                            wire:click="exportCsv">
+                                     class="h-8"
+                                     title="{{ __('Export CSV') }}"
+                                     wire:click="exportCsv">
                         CSV
                     </x-noerd::button>
                 @endif
@@ -112,13 +114,27 @@
             <div class="ml-auto"></div>
         @endif
         @unless($this->returnsSelection ?? false)
-            @foreach(app(\Noerd\Services\HeaderActionsRegistry::class)->all() as $headerActionView)
-                @include($headerActionView, [
-                    'component' => $this->getComponentName(),
-                    'viewType' => 'list',
-                    'actionsRendered' => $actionsRendered,
-                ])
-            @endforeach
+            @php
+                $listHeaderActions = app(\Noerd\Services\HeaderActionsRegistry::class)->listActions();
+            @endphp
+            @if($listHeaderActions !== [])
+                {{-- Collapses when every action hid itself: the children are
+                     server-rendered before Alpine initializes, so probing for a
+                     button is reliable. Without this an empty wrapper would still
+                     carry its mr-2/modalControlsClass margins. --}}
+                <div x-data="{ hasActions: false }"
+                     x-init="hasActions = $el.querySelector('button') !== null"
+                     x-show="hasActions" x-cloak
+                     @unless($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
+                     class="flex shrink-0 items-center gap-1 mr-2">
+                    @foreach($listHeaderActions as $listHeaderAction)
+                        @livewire($listHeaderAction, [
+                            'model' => $this->listModel ?? null,
+                            'component' => $this->getComponentName(),
+                        ], key('list-header-action-'.$listHeaderAction))
+                    @endforeach
+                </div>
+            @endif
         @endunless
         @if(!empty($actions) && !($this->returnsSelection ?? false))
             <div :class="isModal ? modalControlsClass : ''" class="flex gap-2">
@@ -133,28 +149,29 @@
                             : null;
                     @endphp
                     @if($hasShortcut)
-                        <div x-data @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }">
-                    @else
-                        <div>
-                    @endif
-                        <x-noerd::button
-                            :variant="$isSecondary ? 'secondary' : 'primary'"
-                            :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
-                            x-ref="actionBtn{{ $actionIndex }}"
-                            class="relative h-8"
-                            wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                            {{ __($actionItem['label']) }}
-                            @if($hasShortcut)
-                                <kbd @class([
+                        <div x-data
+                             @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }">
+                            @else
+                                <div>
+                                    @endif
+                                    <x-noerd::button
+                                        :variant="$isSecondary ? 'secondary' : 'primary'"
+                                        :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
+                                        x-ref="actionBtn{{ $actionIndex }}"
+                                        class="relative h-8"
+                                        wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
+                                        {{ __($actionItem['label']) }}
+                                        @if($hasShortcut)
+                                            <kbd @class([
                                     'ml-2 rounded px-1 py-0.5 text-xs',
                                     'border border-gray-300 bg-gray-100 text-gray-500' => $isSecondary,
                                     'border border-white/30 bg-white/20 text-brand-primary-text' => !$isSecondary,
                                 ])>{{ $shortcut['badge'] }}</kbd>
-                            @endif
-                        </x-noerd::button>
-                    </div>
-                @endforeach
-            </div>
+                                        @endif
+                                    </x-noerd::button>
+                                </div>
+                                @endforeach
+                        </div>
         @endif
     </x-noerd::modal-title>
 </x-slot:header>

@@ -3,31 +3,50 @@
 namespace Noerd\Services;
 
 /**
- * Blade partials contributed to the list and detail headers by optional modules,
- * which register themselves from their service provider's boot(). Each partial is
- * @include'd with a `component` (the Livewire alias, e.g. `customer::customers-list`)
- * and a `viewType` (`list`|`detail`) context and decides for itself whether it
- * renders anything.
+ * Livewire components contributed to the list and detail headers by optional
+ * modules, which register themselves from their service provider's boot().
+ * Entries are Livewire component names (e.g. `plus::list-header-action-layout-manager`).
  *
- * Plain views rather than Livewire components on purpose: the headers re-render on
- * every Livewire update of their component (e.g. each search keystroke), and an
- * include is re-evaluated with them — no nested component lifecycle, no keys, no
- * per-list component overhead. Registration-based rather than config-based for the
- * same reason as the TopBarRegistry: a registration ceases to exist with its module.
+ * List and detail slots are separate registries: an action usable in both
+ * contexts registers twice. Each action is mounted with a `model` (the host's
+ * $listModel/$detailModel, null when undeclared) and a `component` (the host's
+ * Livewire alias) and decides for itself whether it renders anything — a hidden
+ * action renders an empty collapsing root.
+ *
+ * The headers re-render on every Livewire update of their component (e.g. each
+ * search keystroke), but the action components are mounted with stable keys and
+ * mount-only params, so subsequent parent renders emit a memo placeholder and
+ * morph leaves the child DOM untouched — gating runs once per page lifecycle.
+ * Registration-based rather than config-based for the same reason as the
+ * TopBarRegistry: a registration ceases to exist with its module.
  */
 class HeaderActionsRegistry
 {
     /** @var array<int, string> */
-    private array $views = [];
+    private array $listActions = [];
 
-    public function register(string $view): void
+    /** @var array<int, string> */
+    private array $detailActions = [];
+
+    public function registerListAction(string $component): void
     {
-        $this->views[] = $view;
+        $this->listActions[] = $component;
+    }
+
+    public function registerDetailAction(string $component): void
+    {
+        $this->detailActions[] = $component;
     }
 
     /** @return array<int, string> */
-    public function all(): array
+    public function listActions(): array
     {
-        return $this->views;
+        return $this->listActions;
+    }
+
+    /** @return array<int, string> */
+    public function detailActions(): array
+    {
+        return $this->detailActions;
     }
 }
