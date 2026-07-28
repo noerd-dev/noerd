@@ -310,6 +310,18 @@ it('discovers other allowed apps views with composite keys, app labels and curre
     ]);
 });
 
+it('anchors the plain-key group to an explicitly passed primary app', function (): void {
+    ($this->setUpOtherApp)();
+
+    $views = StaticConfigHelper::getListViews('zz-view-test-list', 'zzotherapp');
+
+    expect(array_key_first($views))->toBe('default')
+        ->and($views['default'])->toMatchArray(['app' => 'zzotherapp', 'title' => 'Other Base'])
+        ->and($views['vip'])->toMatchArray(['app' => 'zzotherapp', 'title' => 'Other VIP'])
+        ->and($views)->toHaveKeys(['setup::default', 'setup::active', 'setup::vip'])
+        ->and(session('noerd.selected_app'))->toBe('SETUP');
+});
+
 it('switches to another apps view and loads its config without changing the session app', function (): void {
     ($this->setUpOtherApp)();
 

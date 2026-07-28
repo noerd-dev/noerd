@@ -216,12 +216,15 @@ class StaticConfigHelper
      * Ordering: current app first, then the other allowed apps; 'default' leads each
      * app group, remaining variants alphabetical.
      *
+     * $primaryApp anchors the plain-key group (the "current app" semantics) explicitly —
+     * callers like the layout editor may act on an app other than the session app.
+     *
      * @return array<string, array{key: string, app: string, appLabel: string, title: string}>
      */
-    public static function getListViews(string $component): array
+    public static function getListViews(string $component, ?string $primaryApp = null): array
     {
         $subPath = self::componentToListName($component);
-        $currentApp = self::getCurrentApp();
+        $currentApp = $primaryApp !== null ? mb_strtolower($primaryApp) : self::getCurrentApp();
 
         $apps = $currentApp ? [$currentApp] : [];
         foreach (self::getAllowedAppFolders() as $folder) {
