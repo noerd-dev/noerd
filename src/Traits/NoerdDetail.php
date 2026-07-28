@@ -45,6 +45,12 @@ trait NoerdDetail
      */
     public function mountNoerdDetail(): void
     {
+        // Embedded children (a detail rendered inside a hosting page component) own no
+        // tabs — leave the tab session/URL state to the hosting page.
+        if (property_exists($this, 'embedded') && $this->embedded) {
+            return;
+        }
+
         $component = $this->getName();
 
         if (session('noerd.lastDetailComponent') !== $component) {
