@@ -1,6 +1,7 @@
 @php
     $isFullscreen = session('modal_fullscreen', false);
     $hasCurrentTab = property_exists($__livewire ?? new stdClass, 'currentTab');
+    $disableModal = $disableModal ?? (($__livewire ?? null)?->disableModal ?? false);
 
     $shortcuts = [];
     if (method_exists($__livewire ?? new stdClass, 'store')) {
@@ -16,7 +17,7 @@
         deleteMessage: @js(__('Are you sure you want to delete this entry?')),
     })"
      class="flex flex-col"
-     @if($disableModal ?? false)
+     @if($disableModal)
          style="margin-left: -32px; margin-right: -32px"
      @else
      :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] ' + (isRight ? '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh)]' }}' : '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}') : 'h-[calc(100dvh_-_2.9375rem_-_var(--banner-height,0px)_-_var(--impersonation-banner-height,0px)_-_var(--environment-banner-height,0px))]'"
@@ -25,7 +26,7 @@
     {{$header ?? ''}}
     {{$table ?? ''}}
 
-    <div class="flex-1 p-6 pb-0 overflow-y-auto" @if($disableModal ?? false) class="!p-0" @else class="p-6"
+    <div class="flex-1 p-6 pb-0 overflow-y-auto" @if($disableModal) class="!p-0" @else class="p-6"
          @endif :class="isModal ? 'flex-1 p-6 pt-0! overflow-y-auto' : 'h-full pt-0!'">
         {{ $slot }}
     </div>

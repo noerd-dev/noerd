@@ -214,7 +214,7 @@ new class extends Component
     }
 } ?>
 
-<x-noerd::page :disableModal="$disableModal">
+<x-noerd::page>
     @if($collectionKey)
         <x-noerd::list />
     @else

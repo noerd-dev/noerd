@@ -158,7 +158,7 @@ new class extends Component {
     }
 }; ?>
 
-<x-noerd::page :disableModal="$disableModal">
+<x-noerd::page>
 
     <x-noerd::list />
 
@@ -423,6 +423,10 @@ The low-level flag (used internally by `<x-noerd::detail-lists>`):
   narrowly-scoped lists (e.g. records that belong to the current detail record).
 - A list embedded with `disableModal` breaks out by `-2rem` (intended for full-page routes); the
   wrappers re-pad it so it aligns cleanly inside a modal or detail view.
+- `disableModal` never needs to be passed to `<x-noerd::page>` in the component's own view —
+  the page component reads the flag from the Livewire component automatically
+  (`$disableModal = $disableModal ?? (($__livewire ?? null)?->disableModal ?? false);`). An explicit
+  `:disableModal="true"` attribute still overrides the property.
 
 ## Multiple List Views (View Switcher)
 

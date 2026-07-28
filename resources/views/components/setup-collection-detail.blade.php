@@ -154,7 +154,7 @@ new class extends Component
 
 } ?>
 
-<x-noerd::page :disableModal="$disableModal">
+<x-noerd::page>
     <x-slot:header>
         <x-noerd::modal-title>
             {{ $collectionLayout['title'] ?? __('Entry') }}

@@ -35,7 +35,7 @@ new class extends Component {
     }
 } ?>
 
-<x-noerd::page :disableModal="$disableModal">
+<x-noerd::page>
     <div>
         @include('noerd::components.table.table-build', ['listSettings' => $listConfig])
     </div>
