@@ -9,22 +9,10 @@ use Noerd\Traits\NoerdDetail;
 new class extends Component {
     use NoerdDetail;
 
-    public const DETAIL_CLASS = DemoCustomer::class;
+    public $detailModel = DemoCustomer::class;
 
     #[Url(as: 'demoCustomerId', keep: false, except: '')]
     public $modelId = null;
-
-    public function mount(): void
-    {
-        $this->initDetail();
-
-        if ($this->modelId) {
-            $demoCustomer = DemoCustomer::find($this->modelId);
-            if ($demoCustomer) {
-                $this->detailData = $demoCustomer->toArray();
-            }
-        }
-    }
 
     public function categoryOptions(): array
     {
@@ -49,11 +37,6 @@ new class extends Component {
         }
     }
 
-    public function delete(): void
-    {
-        DemoCustomer::find($this->modelId)?->delete();
-        $this->closeModalProcess($this->getListComponent());
-    }
 };
 ?>
 

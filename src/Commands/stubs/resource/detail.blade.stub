@@ -8,41 +8,10 @@ use {{ModelClass}};
 new class extends Component {
     use NoerdDetail;
 
-    public const DETAIL_CLASS = {{ModelBaseName}}::class;
+    public $detailModel = {{ModelBaseName}}::class;
 
     #[Url(as: '{{entity}}Id', keep: false, except: '')]
     public $modelId = null;
-
-    public function mount(): void
-    {
-        $this->initDetail();
-
-        if ($this->modelId) {
-            ${{entityCamel}} = {{ModelBaseName}}::find($this->modelId);
-            if (${{entityCamel}}) {
-                $this->detailData = ${{entityCamel}}->toArray();
-            }
-        }
-    }
-
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        ${{entityCamel}} = {{ModelBaseName}}::updateOrCreate(
-            ['id' => $this->modelId],
-            $this->detailData,
-        );
-
-        $this->storeProcess(${{entityCamel}});
-    }
-
-    public function delete(): void
-    {
-        ${{entityCamel}} = {{ModelBaseName}}::find($this->modelId);
-        ${{entityCamel}}->delete();
-        $this->closeModalProcess($this->getListComponent());
-    }
 }; ?>
 
 <x-noerd::page>

@@ -23,7 +23,7 @@ new class extends Component
     #[Url(as: 'setupCollectionId', keep: false, except: '')]
     public $modelId = null;
 
-    // Note: This component does NOT use DETAIL_CLASS because it uses custom layout from collectionLayout
+    // Note: This component does NOT declare $detailModel because it uses custom layout from collectionLayout
     // instead of the standard YAML config system
 
     public array $detailData = [];

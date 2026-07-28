@@ -68,8 +68,6 @@ new class extends Component {
 new class extends Component {
     use NoerdDetail;
 
-    public const DETAIL_CLASS = Customer::class;
-
     public $detailModel = Customer::class;
 };
 ```

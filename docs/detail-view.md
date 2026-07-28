@@ -300,45 +300,34 @@ Each footer component receives `modelId` as a prop and is rendered via `<livewir
 
 ## Livewire Component
 
-Example: `customer-detail.blade.php`
+A detail component declares its model as `public $detailModel` — everything else (mounting,
+`store()`, `delete()`) comes from the `NoerdDetail` trait.
+
+Example: `supplier-detail.blade.php`
 
 ```php
 <?php
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
-use Noerd\Customer\Models\Customer;
+use Noerd\Accounting\Models\Supplier;
 
 new class extends Component {
     use NoerdDetail;
 
-    public const DETAIL_CLASS = Customer::class;
+    public $detailModel = Supplier::class;
 
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        $customer = Customer::updateOrCreate(['id' => $this->modelId], $this->detailData);
-
-        $this->showSuccessIndicator = true;
-
-        if ($customer->wasRecentlyCreated) {
-            $this->modelId = $customer->id;
-        }
-    }
-
-    public function delete(): void
-    {
-        $customer = Customer::find($this->modelId);
-        $customer->delete();
-        $this->closeModalProcess($this->getListComponent());
-    }
+    #[Url(as: 'supplierId', keep: false, except: '')]
+    public $modelId = null;
 }; ?>
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>Kunde</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Supplier') }}</x-noerd::modal-title>
     </x-slot:header>
+
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
 
     <x-slot:footer>
         <x-noerd::delete-save-bar :showDelete="isset($modelId)"
@@ -348,12 +337,41 @@ new class extends Component {
 </x-noerd::page>
 ```
 
+The trait defaults hydrate `$detailData` from `$detailModel` on mount, validate via
+`validateFromLayout()`, persist with `updateOrCreate(['id' => $modelId], $detailData)` on
+`store()`, and delete + close the modal on `delete()`.
+
+### Custom Store / Delete Logic
+
+Only when the persistence deviates from the default, override `store()` and/or `delete()` —
+always ending with the generic helpers `storeProcess($model)` / `closeModalProcess()`:
+
+```php
+new class extends Component {
+    use NoerdDetail;
+
+    public $detailModel = Customer::class;
+
+    public function store(): void
+    {
+        $this->validateFromLayout();
+
+        $customer = CustomerService::save($this->modelId, $this->detailData);
+
+        $this->storeProcess($customer);
+    }
+};
+```
+
+The same applies to `mount()`: override it only for extra logic (e.g. `setPreselect()`, defaults
+for new records, relation titles) and call `$this->initDetail()` first.
+
 ## Key Concepts
 
 - **Trait:** `NoerdDetail` provides `$detailData`, `$modelId`, `$pageLayout`, and helper methods
-- **Constant:** Only `DETAIL_CLASS = Model::class` is required
+- **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions (layout/object manager)
 - **Properties:** `$detailData` (array) for form binding, `$modelId` (from trait) for the record ID
-- **mount():** Handled by the trait automatically - no need to define it
+- **mount() / store() / delete():** Provided by the trait — only override for custom behavior
 - **validateFromLayout():** Validates against YAML-defined rules
 - **$this->getListComponent():** Automatically determines the associated list component
 - The Eloquent model is **never** stored as a component property

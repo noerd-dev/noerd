@@ -8,22 +8,10 @@ use Noerd\Traits\NoerdDetail;
 new class extends Component {
     use NoerdDetail;
 
-    public const DETAIL_CLASS = DemoCategory::class;
+    public $detailModel = DemoCategory::class;
 
     #[Url(as: 'demoCategoryId', keep: false, except: '')]
     public $modelId = null;
-
-    public function mount(): void
-    {
-        $this->initDetail();
-
-        if ($this->modelId) {
-            $demoCategory = DemoCategory::find($this->modelId);
-            if ($demoCategory) {
-                $this->detailData = $demoCategory->toArray();
-            }
-        }
-    }
 
     public function store(): void
     {
@@ -37,11 +25,6 @@ new class extends Component {
         $this->storeProcess($demoCategory);
     }
 
-    public function delete(): void
-    {
-        DemoCategory::find($this->modelId)?->delete();
-        $this->closeModalProcess($this->getListComponent());
-    }
 }; ?>
 
 <x-noerd::page>

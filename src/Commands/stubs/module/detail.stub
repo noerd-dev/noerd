@@ -8,40 +8,10 @@ use Noerd\{{ModuleName}}\Models\{{Model}};
 new class extends Component {
     use NoerdDetail;
 
-    public const DETAIL_COMPONENT = '{{module-name}}::{{model}}-detail';
-    public const LIST_COMPONENT = '{{module-name}}::{{models}}-list';
-    public const ID = '{{model}}Id';
+    public $detailModel = {{Model}}::class;
 
-    #[Url(keep: false, except: '')]
-    public ${{model}}Id = null;
-
-    public array ${{model}};
-
-    public function mount({{Model}} $model): void
-    {
-        if ($this->{{model}}Id) {
-            $model = {{Model}}::find($this->{{model}}Id);
-        }
-
-        $this->mountModalProcess(self::DETAIL_COMPONENT, $model);
-        $this->{{model}} = $model->toArray();
-    }
-
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        ${{model}} = {{Model}}::updateOrCreate(['id' => $this->{{model}}Id], $this->{{model}});
-
-        $this->storeProcess(${{model}});
-    }
-
-    public function delete(): void
-    {
-        ${{model}} = {{Model}}::find($this->{{model}}Id);
-        ${{model}}->delete();
-        $this->closeModalProcess(self::LIST_COMPONENT);
-    }
+    #[Url(as: '{{model}}Id', keep: false, except: '')]
+    public $modelId = null;
 }; ?>
 
 <x-noerd::page>
@@ -49,9 +19,9 @@ new class extends Component {
         <x-noerd::modal-title>{{Model}}</x-noerd::modal-title>
     </x-slot:header>
 
-    <x-noerd::tab-content :layout="$pageLayout" :modelId="${{model}}Id" />
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset(${{model}}Id)"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
     </x-slot:footer>
 </x-noerd::page>

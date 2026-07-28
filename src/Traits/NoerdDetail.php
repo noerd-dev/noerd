@@ -60,12 +60,17 @@ trait NoerdDetail
         session(['noerd.lastDetailComponent' => $component]);
     }
 
+    public function mount(): void
+    {
+        $this->initDetail();
+    }
+
     public function initDetail(): void
     {
-        // For detail components with DETAIL_CLASS constant. Loads the pageLayout first
+        // For detail components declaring $detailModel. Loads the pageLayout first
         // so the YAML quick-create opt-in below can be read from it.
-        if (defined('static::DETAIL_CLASS')) {
-            $modelClass = static::DETAIL_CLASS;
+        if (isset($this->detailModel)) {
+            $modelClass = $this->detailModel;
             $this->mountDetailComponent(new $modelClass(), $modelClass);
         }
 
@@ -94,6 +99,24 @@ trait NoerdDetail
         if ($source) {
             $this->dispatch('refreshList-' . Str::afterLast($source, '.'));
         }
+    }
+
+    public function store(): void
+    {
+        $this->validateFromLayout();
+
+        $modelClass = $this->detailModel;
+        $model = $modelClass::updateOrCreate(['id' => $this->modelId], $this->detailData);
+
+        $this->storeProcess($model);
+    }
+
+    public function delete(): void
+    {
+        $modelClass = $this->detailModel;
+        $modelClass::find($this->modelId)?->delete();
+
+        $this->closeModalProcess($this->getListComponent());
     }
 
     public function storeProcess($model): void
@@ -223,6 +246,16 @@ trait NoerdDetail
         return $provider ? $provider() : [];
     }
 
+    /**
+     * Livewire trait rendering hook. Components may overwrite $detailData in their own
+     * mount() (e.g. `$this->detailData = $model->toArray()`), which would undo the
+     * normalization done in mountDetailComponent() — so it is re-applied before every render.
+     */
+    public function renderingNoerdDetail(): void
+    {
+        $this->ensureCustomAttributesArray();
+    }
+
     protected function resolveImageFieldKey(string $fieldName): string
     {
         return str_replace('detailData.', '', $fieldName);
@@ -298,16 +331,6 @@ trait NoerdDetail
             ->except(['created_at', 'updated_at'])
             ->toArray();
 
-        $this->ensureCustomAttributesArray();
-    }
-
-    /**
-     * Livewire trait rendering hook. Components may overwrite $detailData in their own
-     * mount() (e.g. `$this->detailData = $model->toArray()`), which would undo the
-     * normalization done in mountDetailComponent() — so it is re-applied before every render.
-     */
-    public function renderingNoerdDetail(): void
-    {
         $this->ensureCustomAttributesArray();
     }
 

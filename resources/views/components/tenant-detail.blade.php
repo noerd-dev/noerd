@@ -13,7 +13,7 @@ new class extends Component {
     #[Url(as: 'tenantId', keep: false, except: '')]
     public $modelId = null;
 
-    public const DETAIL_CLASS = Tenant::class;
+    public $detailModel = Tenant::class;
     public const DETAIL_COMPONENT = 'noerd::tenant-detail';
 
     public $logo;

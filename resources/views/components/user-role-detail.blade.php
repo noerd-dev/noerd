@@ -11,7 +11,7 @@ new class extends Component {
     #[Url(as: 'userRoleId', keep: false, except: '')]
     public $modelId = null;
 
-    public const DETAIL_CLASS = UserRole::class;
+    public $detailModel = UserRole::class;
 
     public bool $hasUsers = false;
 
@@ -26,15 +26,6 @@ new class extends Component {
         }
 
         $this->detailData = $userRole->toArray();
-    }
-
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        $userRole = UserRole::updateOrCreate(['id' => $this->modelId], $this->detailData);
-
-        $this->storeProcess($userRole);
     }
 
     public function delete(): void

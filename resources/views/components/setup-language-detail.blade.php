@@ -12,7 +12,7 @@ new class extends Component
     #[Url(as: 'setupLanguageId', keep: false, except: '')]
     public $modelId = null;
 
-    public const DETAIL_CLASS = SetupLanguage::class;
+    public $detailModel = SetupLanguage::class;
 
     public function mount(): void
     {
@@ -31,18 +31,6 @@ new class extends Component
             $this->detailData['is_default'] = false;
             $this->detailData['sort_order'] = SetupLanguage::max('sort_order') + 1;
         }
-    }
-
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        $language = SetupLanguage::updateOrCreate(
-            ['id' => $this->modelId],
-            $this->detailData
-        );
-
-        $this->storeProcess($language);
     }
 
     public function delete(): void

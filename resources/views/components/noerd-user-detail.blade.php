@@ -18,7 +18,7 @@ new class extends Component {
     #[Url(as: 'userId', keep: false, except: '')]
     public $modelId = null;
 
-    public const DETAIL_CLASS = NoerdUser::class;
+    public $detailModel = NoerdUser::class;
 
     public bool $isOwner = false;
     public $selectedTenant;

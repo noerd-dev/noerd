@@ -46,10 +46,10 @@ it('does not mount list actions in a picker list', function (): void {
 it('mounts a registered detail action in the detail header', function (): void {
     app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
 
-    // noerd-user-detail declares no $detailModel, so the action receives model=null.
+    // noerd-user-detail declares $detailModel, so the action receives the model class.
     Livewire::test('noerd::noerd-user-detail')
         ->assertOk()
-        ->assertSee('HA-PROBE:noerd::noerd-user-detail/no-model');
+        ->assertSee('HA-PROBE:noerd::noerd-user-detail/' . NoerdUser::class);
 });
 
 it('does not mount a detail action in a list header', function (): void {

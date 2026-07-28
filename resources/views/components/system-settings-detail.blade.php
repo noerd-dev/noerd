@@ -9,7 +9,7 @@ use Noerd\Traits\NoerdDetail;
 new class () extends Component {
     use NoerdDetail;
 
-    public const DETAIL_CLASS = NoerdSettings::class;
+    public $detailModel = NoerdSettings::class;
 
     #[Locked]
     public $clientId = null;
