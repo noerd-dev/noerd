@@ -2,25 +2,13 @@
 
 use App\Models\DemoCategory;
 use Livewire\Component;
-use Noerd\Facades\Noerd;
 use Noerd\Traits\NoerdList;
 
 new class extends Component {
     use NoerdList;
 
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('demo-category-detail', ['modelId' => $modelId, 'relations' => $relations]);
-    }
-
-    public function with(): array
-    {
-        $rows = $this->listQuery(DemoCategory::class)->paginate($this->perPage);
-
-        return [
-            'listConfig' => $this->buildList($rows),
-        ];
-    }
+    public $listModel = DemoCategory::class;
+    public $detailComponent = 'demo-category-detail';
 
     public function rendering()
     {

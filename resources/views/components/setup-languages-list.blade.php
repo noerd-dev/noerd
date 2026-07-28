@@ -1,13 +1,15 @@
 <?php
 
 use Livewire\Component;
-use Noerd\Facades\Noerd;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdList;
 
 new class extends Component
 {
     use NoerdList;
+
+    public $listModel = SetupLanguage::class;
+    public $detailComponent = 'noerd::setup-language-detail';
 
     public function mount(): void
     {
@@ -21,12 +23,7 @@ new class extends Component
         }
     }
 
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('noerd::setup-language-detail', ['modelId' => $modelId, 'relations' => $relations]);
-    }
-
-    public function with(): array
+    public function listData(): array
     {
         // Custom sort order: is_default desc, sort_order, name
         $rows = SetupLanguage::query()
@@ -39,9 +36,7 @@ new class extends Component
             ->orderBy('name')
             ->paginate($this->perPage);
 
-        return [
-            'listConfig' => $this->buildList($rows),
-        ];
+        return $this->buildList($rows);
     }
 } ?>
 

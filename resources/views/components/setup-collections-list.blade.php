@@ -15,6 +15,9 @@ new class extends Component
     use NoerdList;
     use SetupLanguageFilterTrait;
 
+    public $listModel = SetupCollectionEntry::class;
+    public $detailComponent = 'noerd::setup-collection-detail';
+
     public string|int|null $collectionKey = null;
 
     public ?array $collectionLayout = null;
@@ -62,17 +65,15 @@ new class extends Component
         Noerd::modal('noerd::setup-collection-detail', ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relations' => $relations]);
     }
 
-    public function with(): array
+    public function listData(): array
     {
         if (! $this->collectionKey) {
-            return [
-                'listConfig' => $this->buildList(collect([]), [
-                    'title' => __('Collections'),
-                    'actions' => [['label' => __('New Entry'), 'action' => 'listAction']],
-                    'disableSearch' => false,
-                    'columns' => [],
-                ]),
-            ];
+            return $this->buildList(collect([]), [
+                'title' => __('Collections'),
+                'actions' => [['label' => __('New Entry'), 'action' => 'listAction']],
+                'disableSearch' => false,
+                'columns' => [],
+            ]);
         }
 
         // Get or create the parent collection
@@ -187,14 +188,12 @@ new class extends Component
         $columns[] = ['field' => 'sort', 'label' => __('Sort Order'), 'width' => 0.5];
         $columns[] = ['field' => 'updated_at', 'label' => __('Last Modified')];
 
-        return [
-            'listConfig' => $this->buildList($rows, [
-                'title' => $collectionTitle,
-                'actions' => [['label' => $actionLabel, 'action' => 'listAction']],
-                'disableSearch' => false,
-                'columns' => $columns,
-            ]),
-        ];
+        return $this->buildList($rows, [
+            'title' => $collectionTitle,
+            'actions' => [['label' => $actionLabel, 'action' => 'listAction']],
+            'disableSearch' => false,
+            'columns' => $columns,
+        ]);
     }
 
     public function rendering(): void

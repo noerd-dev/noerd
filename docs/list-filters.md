@@ -192,7 +192,7 @@ public function tableFilters(): array
 
 ## Filter Preselection
 
-You can derive filter values in the `with()` method and pass them directly to the query. This is useful when the dropdown value needs to be transformed (e.g. a year selection into a date range).
+You can derive filter values in the query-building method and pass them directly to the query. This is useful when the dropdown value needs to be transformed (e.g. a year selection into a date range). For model-backed lists this happens in a `listData()` override; the example below is a repository-backed list (no `$listModel`), which keeps its query in `with()`.
 
 Example from `orders-list`: When a year is selected in the dropdown, the date range is derived and passed directly to the repository. If no year is selected, the current year is used as default.
 

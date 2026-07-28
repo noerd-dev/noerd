@@ -41,20 +41,10 @@ use Noerd\Customer\Models\Customer;
 new class extends Component {
     use NoerdList;
 
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('customer-detail', ['modelId' => $modelId, 'relations' => $relations]);
-    }
-
-    public function with(): array
-    {
-        $rows = $this->listQuery(Customer::class)->paginate($this->perPage);
-
-        return [
-            'listConfig' => $this->buildList($rows),
-        ];
-    }
-}; ?>
+    public $listModel = Customer::class;
+    public $detailComponent = 'customer::customer-detail';
+};
+?>
 
 <x-noerd::page>
     <x-noerd::list />
@@ -101,20 +91,25 @@ Filtered and sorted results returned
 
 ## Eager Loading
 
-To add eager loading, chain `->with()` on the query:
+To add eager loading, override `listData()` and chain `->with()` on the query:
 
 ```php
-$rows = $this->listQuery(BookingType::class)
-    ->with(['staff', 'slots'])
-    ->paginate($this->perPage);
+public function listData(): array
+{
+    $rows = $this->listQuery($this->listModel)
+        ->with(['staff', 'slots'])
+        ->paginate($this->perPage);
+
+    return $this->buildList($rows);
+}
 ```
 
 ## Manual Search (Fallback)
 
-For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, use manual search:
+For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, use manual search inside a `listData()` override:
 
 ```php
-public function with(): array
+public function listData(): array
 {
     $rows = Menu::query()
         ->when($this->search, function ($query): void {
@@ -125,9 +120,7 @@ public function with(): array
         ->orderBy('sort')
         ->paginate($this->perPage);
 
-    return [
-        'listConfig' => $this->buildList($rows),
-    ];
+    return $this->buildList($rows);
 }
 ```
 

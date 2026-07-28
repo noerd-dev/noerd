@@ -117,6 +117,10 @@ columns:
 
 ## Livewire Component
 
+A list component declares its model as `public $listModel` and its detail component as
+`public $detailComponent` — everything else (query, modal opening, mounting, request
+handling) comes from the `NoerdList` trait.
+
 Example: `customers-list.blade.php`
 
 ```php
@@ -129,50 +133,87 @@ use Noerd\Customer\Models\Customer;
 new class extends Component {
     use NoerdList;
 
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('customer-detail', ['modelId' => $modelId, 'relations' => $relations]);
-    }
-
-    public function with(): array
-    {
-        // Always build the query via listQuery(): it applies search, sort and the
-        // Excel-style column filters from the YAML config. A manually built query
-        // gets none of these (and shows no filter funnels in the header).
-        $rows = $this->listQuery(Customer::class)->paginate($this->perPage);
-
-        return [
-            'listConfig' => $this->buildList($rows),
-        ];
-    }
-
-    public function rendering()
-    {
-        if ((int) request()->id) {
-            $this->listAction(request()->id);
-        }
-
-        if (request()->create) {
-            $this->listAction();
-        }
-    }
-}; ?>
+    public $listModel = Customer::class;
+    public $detailComponent = 'customer::customer-detail';
+};
+?>
 
 <x-noerd::page>
-
-    <x-noerd::list />
-
+    <x-noerd::list/>
 </x-noerd::page>
+```
+
+The trait defaults build the query via `listQuery($this->listModel)` (which applies search,
+sort and the Excel-style column filters from the YAML config) and open `$detailComponent`
+as a modal on row click.
+
+### Custom Query Logic
+
+When the list needs its own query (eager loads, extra wheres, row transformations),
+override `listData()` — keep `$listModel` declared and still build the query via
+`listQuery($this->listModel)`. Example: `products-list.blade.php`
+
+```php
+new class extends Component {
+    use NoerdList;
+
+    public $listModel = Product::class;
+    public $detailComponent = 'product::product-page';
+
+    public function listData(): array
+    {
+        $rows = $this->listQuery($this->listModel)
+            ->whereDoesntHave('products', fn($query) => $query->withoutGlobalScopes())
+            ->with('groups')
+            ->paginate($this->perPage);
+
+        foreach ($rows as $row) {
+            $row->price_preview = $row->getPriceWording() . number_format($row->getGrossPrice(), 2, ',', '.');
+        }
+
+        return $this->buildList($rows);
+    }
+}; ?>
+```
+
+Never leave a custom query in `with()` once `$listModel` is declared: the generic trait
+features (row click, select-all, bulk delete) resolve the list via `listData()` and would
+operate on the wrong rows. Extra view data (e.g. a footer summary) stays in a slim `with()`
+that returns only the extra keys — share the query between `listData()` and `with()` via a
+private helper method:
+
+```php
+private function filteredQuery(): Builder
+{
+    return $this->listQuery($this->listModel)
+        ->when($this->customerId, fn ($query) => $query->where('customer_id', $this->customerId));
+}
+
+public function listData(): array
+{
+    return $this->buildList($this->filteredQuery()->paginate($this->perPage));
+}
+
+public function with(): array
+{
+    return [
+        'summary' => [
+            'name' => __('Total'),
+            'total_gross' => $this->filteredQuery()->toBase()->sum('total_gross'),
+        ],
+    ];
+}
 ```
 
 ## Key Concepts
 
 - **Trait:** `NoerdList` provides all necessary properties and methods
-- **No constants needed:** The trait handles component identification
-- **listAction():** Dispatches modal events to open detail views with `['modelId' => $modelId]`
-- **$this->getComponentName():** Returns the current component name for the `source` parameter
+- **$listModel:** The Eloquent model backing the list — required for the trait defaults and the header actions (layout/object manager)
+- **$detailComponent:** The detail component opened by the trait's `listAction()`
+- **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`
+- **listAction():** Trait default opens `$detailComponent` as a modal with `['modelId' => $modelId]`; only override it for custom behavior (extra modal arguments, no modal, …)
 - **buildList():** Generates the list configuration from the YAML
-- **request()->id:** URL parameter for direct access to a specific record
+- **request()->customerId / request()->create:** Handled by the trait's `rendering()`; override `rendering()` when the list uses its own URL parameter (e.g. `invoiceId`)
 - **`<x-noerd::list />`:** Renders the table
 
 ## Default Sorting

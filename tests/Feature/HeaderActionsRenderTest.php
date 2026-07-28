@@ -15,16 +15,16 @@ beforeEach(function (): void {
     // Installed modules register themselves at boot, so start from a clean registry:
     // these tests are about the core's header slots, not about whoever is installed.
     app()->instance(HeaderActionsRegistry::class, new HeaderActionsRegistry());
-    Livewire::addNamespace('header-actions-test', viewPath: __DIR__.'/fixtures/header-actions');
+    Livewire::addNamespace('header-actions-test', viewPath: __DIR__ . '/fixtures/header-actions');
 });
 
 it('mounts a registered list action in the list header with the component name', function (): void {
     app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
 
-    // noerd-users-list declares no $listModel, so the action receives model=null.
+    // noerd-users-list declares $listModel, so the action receives the model class.
     Livewire::test('noerd::noerd-users-list')
         ->assertOk()
-        ->assertSee('HA-PROBE:noerd::noerd-users-list/no-model');
+        ->assertSee('HA-PROBE:noerd::noerd-users-list/' . NoerdUser::class);
 });
 
 it('does not mount list actions in a compact list, whose header is not rendered', function (): void {

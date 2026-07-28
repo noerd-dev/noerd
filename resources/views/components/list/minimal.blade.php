@@ -1,6 +1,10 @@
 @php
     // Self-contained, like list/index.blade.php: pull the config straight from the component.
-    $listConfig = $this->with()['listConfig'] ?? [];
+    // A component with its own with() keeps its custom query; the slim syntax
+    // (only $listModel declared) gets the generic trait query via listData().
+    $listConfig = (method_exists($this, 'with') ? ($this->with()['listConfig'] ?? null) : null)
+        ?? (isset($this->listModel) ? $this->listData() : null)
+        ?? [];
 
     $listId = $listConfig['listId'] ?? '';
     $rows = $listConfig['rows'] ?? [];

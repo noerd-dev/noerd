@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Noerd\Facades\Noerd;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Traits\NoerdList;
@@ -14,15 +13,13 @@ new class () extends Component {
 
     public const DETAIL_COMPONENT = 'noerd::noerd-users-list';
 
+    public $listModel = NoerdUser::class;
+    public $detailComponent = 'noerd::noerd-user-detail';
+
     public function mount(): void
     {
         $this->mountList();
         $this->setDefaultSort('name', true);
-    }
-
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('noerd::noerd-user-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
     public function loginAsUser($userId)
@@ -49,11 +46,11 @@ new class () extends Component {
         return redirect('/');
     }
 
-    public function with(): array
+    public function listData(): array
     {
         $tenants = Auth::user()->adminTenants();
 
-        $rows = $this->listQuery(NoerdUser::class)
+        $rows = $this->listQuery($this->listModel)
             ->whereHas('tenants', function ($relationQuery) use ($tenants): void {
                 if (! empty($this->listFilters['tenant_id'])) {
                     $relationQuery->where('tenant_id', $this->listFilters['tenant_id']);
@@ -64,9 +61,7 @@ new class () extends Component {
             ->with(['roles', 'tenants'])
             ->paginate($this->perPage);
 
-        return [
-            'listConfig' => $this->buildList($rows),
-        ];
+        return $this->buildList($rows);
     }
 
     public function rendering(): void
