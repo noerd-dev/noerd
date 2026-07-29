@@ -35,7 +35,8 @@ Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {
-    Route::livewire('noerd-home', 'noerd::noerd-home')->name('noerd-home');
+    Route::livewire('noerd-apps', 'noerd::noerd-apps')->name('noerd-apps');
+    Route::redirect('noerd-home', 'noerd-apps');
 });
 
 Route::group(['middleware' => ['auth', 'web']], function (): void {

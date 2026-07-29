@@ -90,7 +90,7 @@ class NoerdInstallCommand extends Command
 
             $this->info('Noerd content successfully installed!');
             $this->newLine();
-            $this->line('Visit your application at: <info>' . url('/noerd-home') . '</info>');
+            $this->line('Visit your application at: <info>' . url('/noerd-apps') . '</info>');
 
             return 0;
         } catch (Exception $e) {

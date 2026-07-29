@@ -11,7 +11,7 @@ class DashboardController
         $route = auth()->user()->selectedTenant()?->tenantApps->first()?->route;
 
         if (!$route) {
-            $route = 'noerd-home';
+            $route = 'noerd-apps';
         }
 
         return redirect()->route($route);

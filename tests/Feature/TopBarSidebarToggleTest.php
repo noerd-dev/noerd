@@ -59,6 +59,14 @@ it('shows the app bar again without touching the navigation', function (): void 
         ->and(session('hide_sidebar'))->toBeTrue();
 });
 
+it('opens home via the sidebar home shortcut', function (): void {
+    Livewire::test('noerd::layout.sidebar')
+        ->call('openHome')
+        ->assertRedirect(route('noerd-apps'));
+
+    expect(session('noerd.selected_app'))->toBe('noerd-apps');
+});
+
 it('toggles the app bar session state via the sidebar button', function (): void {
     Livewire::test('noerd::layout.sidebar')
         ->call('toggleAppbar')

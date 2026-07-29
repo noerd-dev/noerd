@@ -44,7 +44,7 @@ If you skip any of these steps, you can run them later with the respective [Arti
 
 ## Verification
 
-You should now have access to `/noerd-home` with your created user. If you installed the demo data, you will see a working Demo Customers app with a list and detail view — ready to explore and use as a reference for building your own apps.
+You should now have access to `/noerd-apps` with your created user. If you installed the demo data, you will see a working Demo Customers app with a list and detail view — ready to explore and use as a reference for building your own apps.
 
 ## Next Steps
 

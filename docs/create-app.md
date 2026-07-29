@@ -20,7 +20,7 @@ Within that command, you can assign that app to one or more tenants. You can als
 php artisan noerd:assign-apps-to-tenant
 ```
 
-If you visit /noerd-home again, you should now see your created app in the sidebar.
+If you visit /noerd-apps again, you should now see your created app in the sidebar.
 
 ## Next Steps
 
