@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
-use Tests\TestCase;
+use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

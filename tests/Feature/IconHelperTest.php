@@ -1,7 +1,7 @@
 <?php
 
 use Noerd\Helpers\IconHelper;
-use Tests\TestCase;
+use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
 

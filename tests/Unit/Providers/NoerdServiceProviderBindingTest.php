@@ -3,8 +3,9 @@
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('resolves YamlSetupCollectionDefinitionRepository when mode is yaml', function (): void {
     config(['noerd.collections.mode' => 'yaml']);

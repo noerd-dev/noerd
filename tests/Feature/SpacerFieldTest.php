@@ -3,8 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\NoerdUser;
 use Noerd\Services\FieldTypeRegistry;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('registers the spacer field type as an empty include', function (): void {
     $registry = app(FieldTypeRegistry::class);

@@ -8,8 +8,9 @@ use Noerd\Exceptions\NoerdException;
 use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->middleware = new PublicAppMiddleware();

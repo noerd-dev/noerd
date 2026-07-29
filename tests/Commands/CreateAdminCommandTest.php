@@ -3,8 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 it('fails when no tenants exist', function (): void {

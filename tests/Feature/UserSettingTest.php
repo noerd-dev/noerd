@@ -3,14 +3,16 @@
 declare(strict_types=1);
 
 use Illuminate\Auth\Events\Login;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\UserSetting;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 describe('UserSetting Model', function (): void {
     it('auto-creates user setting when accessing setting attribute', function (): void {
@@ -56,7 +58,7 @@ describe('UserSetting Model', function (): void {
     it('has userSetting relationship on User model', function (): void {
         $user = NoerdUser::factory()->create();
 
-        expect($user->userSetting())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasOne::class);
+        expect($user->userSetting())->toBeInstanceOf(HasOne::class);
     });
 });
 

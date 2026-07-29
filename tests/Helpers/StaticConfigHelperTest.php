@@ -4,8 +4,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('returns empty array and logs warning for non-existing table config', function (): void {
     Log::shouldReceive('warning')

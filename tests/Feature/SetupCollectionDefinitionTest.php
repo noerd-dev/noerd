@@ -7,9 +7,10 @@ use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionDefinition;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
+use Noerd\Tests\TestCase;
 use Noerd\Tests\Traits\CreatesSetupUser;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(CreatesSetupUser::class);
 
 beforeEach(function (): void {

@@ -6,8 +6,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('sets the impersonating_from session key when logging in as user', function (): void {
     $admin = NoerdUser::factory()->adminUser()->create();

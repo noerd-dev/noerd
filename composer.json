@@ -12,6 +12,7 @@
         "symfony/yaml": "^7.1 || ^8.0"
     },
     "require-dev": {
+        "orchestra/testbench": "^10.6",
         "pestphp/pest": "^4.0"
     },
     "autoload": {
@@ -24,6 +25,11 @@
         "files": [
             "tests/helpers.php"
         ]
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     },
     "minimum-stability": "stable",
     "extra": {

@@ -2,8 +2,9 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 it('successfully creates a app with all parameters', function (): void {

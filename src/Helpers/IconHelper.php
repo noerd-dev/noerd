@@ -2,6 +2,9 @@
 
 namespace Noerd\Helpers;
 
+use ReflectionClass;
+use WireUi\Heroicons\HeroiconsServiceProvider;
+
 class IconHelper
 {
     /**
@@ -20,7 +23,11 @@ class IconHelper
             return self::$heroicons;
         }
 
-        $directory = base_path('vendor/wireui/heroicons/src/views/components/outline');
+        // Resolved from the installed package itself, not base_path(): the
+        // vendor directory is not inside base_path() when this module runs
+        // against the testbench skeleton or a non-standard install.
+        $packageSrc = dirname((new ReflectionClass(HeroiconsServiceProvider::class))->getFileName());
+        $directory = $packageSrc . '/views/components/outline';
 
         $names = array_map(
             static fn(string $file): string => basename($file, '.blade.php'),

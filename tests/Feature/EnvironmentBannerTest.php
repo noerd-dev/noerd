@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use Livewire\Livewire;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('shows blue Local banner when env is local', function (): void {
     app()->detectEnvironment(fn() => 'local');

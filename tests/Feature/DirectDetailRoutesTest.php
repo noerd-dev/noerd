@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('has direct route for noerd-user-detail', function (): void {
     expect(Route::has('noerd-user.detail'))->toBeTrue();

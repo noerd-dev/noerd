@@ -1,8 +1,9 @@
 <?php
 
+use Noerd\Tests\TestCase;
 use Noerd\Tests\Traits\CreatesSetupUser;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(CreatesSetupUser::class);
 
 it('returns 404 for /setup-collection-definitions in yaml mode', function (): void {

@@ -6,9 +6,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Services\ListQueryContext;
+use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('sets default sort field and direction via setDefaultSort', function (): void {
     $component = Livewire::test(TestableNoerdListComponent::class);

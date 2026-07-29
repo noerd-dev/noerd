@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     if (! Route::has('app-bar-test')) {

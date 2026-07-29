@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 /**
  * A minimal detail component that uses NoerdDetail but — like the 45 components

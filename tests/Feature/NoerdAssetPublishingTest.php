@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 describe('Noerd Asset Publishing', function (): void {
     it('uses a cloned vite instance in assets.blade.php', function (): void {
@@ -22,6 +23,10 @@ describe('Noerd Asset Publishing', function (): void {
     });
 
     it('does not have noerd entries in main vite.config.js', function (): void {
+        if (! file_exists(base_path('vite.config.js'))) {
+            $this->markTestSkipped('Host vite.config.js not present in standalone runs.');
+        }
+
         $viteConfig = file_get_contents(base_path('vite.config.js'));
 
         expect($viteConfig)->not->toContain('app-modules/noerd/resources/js/noerd.js');

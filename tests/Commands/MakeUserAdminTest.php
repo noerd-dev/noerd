@@ -4,8 +4,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 it('successfully makes a user admin', function (): void {
@@ -19,7 +20,7 @@ it('successfully makes a user admin', function (): void {
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput("Processing user: {$user->name} ({$user->email})")
-        ->expectsOutput("User has access to 1 tenant(s).")
+        ->expectsOutput('User has access to 1 tenant(s).')
         ->expectsOutput("Processing tenant: {$tenant->name}")
         ->expectsOutput("  ✓ Created ADMIN profile for tenant: {$tenant->name}")
         ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant->name}")
@@ -70,11 +71,11 @@ it('handles user with multiple tenants', function (): void {
 
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput("User has access to 2 tenant(s).")
+        ->expectsOutput('User has access to 2 tenant(s).')
         ->expectsOutput("Processing tenant: {$tenant1->name}")
         ->expectsOutput("Processing tenant: {$tenant2->name}")
-        ->expectsOutput("- ADMIN profiles created: 2")
-        ->expectsOutput("- ADMIN access granted: 2")
+        ->expectsOutput('- ADMIN profiles created: 2')
+        ->expectsOutput('- ADMIN access granted: 2')
         ->assertExitCode(0);
 
     // Verify user is now admin
@@ -132,8 +133,8 @@ it('handles existing admin profile correctly', function (): void {
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput("  - ADMIN profile already exists for tenant: {$tenant->name}")
         ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant->name}")
-        ->expectsOutput("- ADMIN profiles created: 0")
-        ->expectsOutput("- ADMIN access granted: 1")
+        ->expectsOutput('- ADMIN profiles created: 0')
+        ->expectsOutput('- ADMIN access granted: 1')
         ->assertExitCode(0);
 
     // Verify user is now admin

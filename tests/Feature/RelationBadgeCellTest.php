@@ -1,15 +1,38 @@
 <?php
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Noerd\Customer\Models\Customer;
-use Noerd\Helpers\TenantHelper;
+use Illuminate\Support\Facades\Schema;
 use Noerd\Models\NoerdUser;
-use Tests\TestCase;
+use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
+class BadgeCellFixtureGadget extends Model
+{
+    protected $table = 'gadgets';
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'custom_attributes' => 'array',
+    ];
+}
+
 beforeEach(function (): void {
     $this->actingAs(NoerdUser::factory()->withExampleTenant()->create());
+
+    Schema::create('gadgets', function (Blueprint $blueprint): void {
+        $blueprint->id();
+        $blueprint->string('name')->nullable();
+        $blueprint->json('custom_attributes')->nullable();
+        $blueprint->timestamps();
+    });
+});
+
+afterEach(function (): void {
+    Schema::dropIfExists('gadgets');
 });
 
 /**
@@ -34,15 +57,12 @@ function renderTableCell(array $overrides = []): string
 }
 
 it('renders a relation badge with the related record title', function (): void {
-    $customer = Customer::factory()->create([
-        'tenant_id' => TenantHelper::getSelectedTenantId(),
-        'name' => 'Erika Musterfrau',
-    ]);
+    $gadget = BadgeCellFixtureGadget::create(['name' => 'Erika Musterfrau']);
 
     $html = renderTableCell([
         'type' => 'relationBadge',
-        'columnValue' => 'customer_id',
-        'value' => $customer->id,
+        'columnValue' => 'gadget_id',
+        'value' => $gadget->id,
     ]);
 
     expect($html)->toContain('rounded-full')
@@ -52,7 +72,7 @@ it('renders a relation badge with the related record title', function (): void {
 it('renders an empty cell for an empty foreign key', function (): void {
     $html = renderTableCell([
         'type' => 'relationBadge',
-        'columnValue' => 'customer_id',
+        'columnValue' => 'gadget_id',
         'value' => null,
     ]);
 
@@ -61,8 +81,7 @@ it('renders an empty cell for an empty foreign key', function (): void {
 });
 
 it('renders a custom attribute cell by traversing the json column', function (): void {
-    $customer = Customer::factory()->create([
-        'tenant_id' => TenantHelper::getSelectedTenantId(),
+    $gadget = BadgeCellFixtureGadget::create([
         'custom_attributes' => ['plz_zone' => 'Zone Nord'],
     ]);
 
@@ -70,7 +89,7 @@ it('renders a custom attribute cell by traversing the json column', function ():
         'type' => 'customAttribute',
         'columnValue' => 'custom_attributes.plz_zone',
         'value' => '',
-        'rowData' => $customer,
+        'rowData' => $gadget,
     ]);
 
     expect($html)->toContain('Zone Nord');

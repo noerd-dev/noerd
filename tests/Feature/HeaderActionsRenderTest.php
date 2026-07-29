@@ -6,8 +6,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
 use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());

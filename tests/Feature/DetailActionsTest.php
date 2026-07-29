@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Blade;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 if (! function_exists('renderDetailActions')) {
     function renderDetailActions(array $actions, mixed $modelId = null): string

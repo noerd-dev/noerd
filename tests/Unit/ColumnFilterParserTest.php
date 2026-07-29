@@ -5,8 +5,9 @@ declare(strict_types=1);
 use Illuminate\Database\Eloquent\Builder;
 use Noerd\Models\Tenant;
 use Noerd\Services\ColumnFilterParser;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 function filterQuery(): Builder
 {

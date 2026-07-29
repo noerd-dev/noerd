@@ -1,8 +1,9 @@
 <?php
 
 use Noerd\Helpers\KeyboardShortcutHelper;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('provides default keyboard shortcuts via module config', function (): void {
     expect(config('noerd.keyboard_shortcuts'))->toBe([
@@ -19,7 +20,7 @@ it('returns correct JS and badge for simple key shortcut', function (): void {
     $result = KeyboardShortcutHelper::parse('search_focus', 's');
 
     expect($result)->toHaveKeys(['js', 'badge'])
-        ->and($result['js'])->toContain("e.key.toLowerCase() === \"s\"")
+        ->and($result['js'])->toContain('e.key.toLowerCase() === "s"')
         ->and($result['js'])->toContain('INPUT')
         ->and($result['badge'])->toBe('s');
 });
@@ -29,7 +30,7 @@ it('returns correct JS and badge for modifier key shortcut', function (): void {
 
     $result = KeyboardShortcutHelper::parse('save', 'ctrl+enter');
 
-    expect($result['js'])->toContain("e.key.toLowerCase() === \"enter\"")
+    expect($result['js'])->toContain('e.key.toLowerCase() === "enter"')
         ->and($result['js'])->toContain('e.ctrlKey || e.metaKey')
         ->and($result['js'])->not->toContain('INPUT');
 });
@@ -55,7 +56,7 @@ it('generates JS expression via toJs method', function (): void {
 
     $js = KeyboardShortcutHelper::toJs('new_entry', 'n');
 
-    expect($js)->toContain("e.key.toLowerCase() === \"n\"")
+    expect($js)->toContain('e.key.toLowerCase() === "n"')
         ->and($js)->toContain('INPUT');
 });
 

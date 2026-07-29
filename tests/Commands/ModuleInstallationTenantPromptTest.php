@@ -7,11 +7,12 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 use Noerd\Traits\HasModuleInstallation;
 use Noerd\Traits\RequiresNoerdInstallation;
 use Symfony\Component\Yaml\Yaml;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 const FIXTURE_MODULE_KEY = 'tenant-prompt-fixture';

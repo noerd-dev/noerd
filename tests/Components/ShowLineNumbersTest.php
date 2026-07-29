@@ -5,9 +5,10 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 $rows = [
     ['id' => 1, 'name' => 'Alice'],

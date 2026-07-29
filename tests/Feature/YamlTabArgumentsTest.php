@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
+use Noerd\Tests\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('ensures all YAML detail tab arguments only reference $modelId, not component-specific property names', function (): void {
     $directories = [

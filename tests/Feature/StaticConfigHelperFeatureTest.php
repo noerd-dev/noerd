@@ -10,8 +10,9 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Services\DynamicNavigationRegistry;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create test collections directory and files
@@ -21,7 +22,7 @@ beforeEach(function (): void {
     // Create test collection files
     File::put($collectionsPath . '/test-projects.yml', "title: Project\ntitleList: Test Projekte\nkey: PROJECTS");
     File::put($collectionsPath . '/test-customers.yml', "title: Customer\ntitleList: Test Kunden\nkey: CUSTOMERS");
-    File::put($collectionsPath . '/invalid.yml', "invalid: yaml: content:");
+    File::put($collectionsPath . '/invalid.yml', 'invalid: yaml: content:');
 });
 
 afterEach(function (): void {

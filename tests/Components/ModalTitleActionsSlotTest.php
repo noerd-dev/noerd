@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Blade;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('renders the actions slot with modal-aware spacing in the header', function (): void {
     $html = Blade::render(<<<'BLADE'

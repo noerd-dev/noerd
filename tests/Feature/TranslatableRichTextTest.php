@@ -2,8 +2,9 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\NoerdUser;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 describe('TranslatableRichText Component', function (): void {
 

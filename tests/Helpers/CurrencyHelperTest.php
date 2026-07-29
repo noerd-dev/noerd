@@ -1,8 +1,9 @@
 <?php
 
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 it('formats currency with default config (German/Euro)', function (): void {
     config()->set('noerd.currency', [

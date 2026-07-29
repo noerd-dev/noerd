@@ -12,8 +12,8 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
-use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

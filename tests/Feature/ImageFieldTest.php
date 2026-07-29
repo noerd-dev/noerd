@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Noerd\Contracts\MediaResolverContract;
 use Noerd\Models\NoerdUser;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 describe('Image Form Component', function (): void {
 
@@ -27,10 +29,10 @@ describe('Image Form Component', function (): void {
     });
 
     it('shows choose image from media button', function (): void {
-        $resolver = Mockery::mock(\Noerd\Contracts\MediaResolverContract::class);
+        $resolver = Mockery::mock(MediaResolverContract::class);
         $resolver->shouldReceive('isAvailable')->andReturn(true);
         $resolver->shouldReceive('getPreviewUrl')->andReturn(null);
-        app()->instance(\Noerd\Contracts\MediaResolverContract::class, $resolver);
+        app()->instance(MediaResolverContract::class, $resolver);
 
         Livewire::test('noerd::image-field-test', [
             'initialModel' => [],
@@ -39,10 +41,10 @@ describe('Image Form Component', function (): void {
     });
 
     it('reveals hover-only actions with a non-destructive confirmation when an image is set', function (): void {
-        $resolver = Mockery::mock(\Noerd\Contracts\MediaResolverContract::class);
+        $resolver = Mockery::mock(MediaResolverContract::class);
         $resolver->shouldReceive('isAvailable')->andReturn(true);
         $resolver->shouldReceive('getPreviewUrl')->andReturn('https://example.com/photo.jpg');
-        app()->instance(\Noerd\Contracts\MediaResolverContract::class, $resolver);
+        app()->instance(MediaResolverContract::class, $resolver);
 
         Livewire::test('noerd::image-field-test', [
             'initialModel' => ['image' => 5],

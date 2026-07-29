@@ -5,10 +5,13 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Tenant;
+use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 function filterListIds(mixed $component): array
 {
@@ -224,10 +227,10 @@ it('ignores url column filters on compact embedded lists', function (): void {
 });
 
 it('renders funnel buttons only for filterable columns', function (): void {
-    $tenant = Noerd\Models\Tenant::factory()->create();
+    $tenant = Tenant::factory()->create();
     $user = NoerdUser::factory()->create();
-    Noerd\Helpers\TenantHelper::setSelectedTenantId($tenant->id);
-    Noerd\Helpers\TenantHelper::setSelectedApp('SETUP');
+    TenantHelper::setSelectedTenantId($tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
     test()->actingAs($user);
 
     $html = Livewire::test(TestableColumnFilterRenderComponent::class)->html();
@@ -238,10 +241,10 @@ it('renders funnel buttons only for filterable columns', function (): void {
 });
 
 it('renders no funnel buttons in compact mode', function (): void {
-    $tenant = Noerd\Models\Tenant::factory()->create();
+    $tenant = Tenant::factory()->create();
     $user = NoerdUser::factory()->create();
-    Noerd\Helpers\TenantHelper::setSelectedTenantId($tenant->id);
-    Noerd\Helpers\TenantHelper::setSelectedApp('SETUP');
+    TenantHelper::setSelectedTenantId($tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
     test()->actingAs($user);
 
     $html = Livewire::test(TestableColumnFilterRenderComponent::class, ['compact' => true])->html();

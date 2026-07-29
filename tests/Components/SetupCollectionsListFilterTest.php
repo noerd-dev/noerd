@@ -8,8 +8,9 @@ use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create a tenant and user for testing

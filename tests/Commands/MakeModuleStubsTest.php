@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+use Illuminate\Console\OutputStyle;
 use Illuminate\Support\Facades\File;
 use Noerd\Commands\MakeModuleCommand;
-use Tests\TestCase;
+use Noerd\Tests\TestCase;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\NullOutput;
 
 uses(TestCase::class);
 
@@ -19,9 +22,9 @@ beforeEach(function (): void {
     File::deleteDirectory($this->basePath);
 
     $this->command = app(MakeModuleCommand::class);
-    $this->command->setOutput(new Illuminate\Console\OutputStyle(
-        new Symfony\Component\Console\Input\ArrayInput([]),
-        new Symfony\Component\Console\Output\NullOutput(),
+    $this->command->setOutput(new OutputStyle(
+        new ArrayInput([]),
+        new NullOutput(),
     ));
 
     foreach ([
@@ -51,7 +54,7 @@ it('generates a slim list component', function (): void {
     $content = ($this->renderStub)('list.stub');
 
     expect($content)
-        ->toContain("public \$listModel = Widget::class;")
+        ->toContain('public $listModel = Widget::class;')
         ->toContain("public \$detailComponent = 'zz-widget::widget-detail';")
         ->toContain('<x-noerd::list/>')
         ->not->toContain('function listAction')

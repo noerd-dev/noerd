@@ -3,8 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {

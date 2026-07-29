@@ -3,8 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 it('creates a new tenant with command options', function (): void {
@@ -80,6 +81,6 @@ it('outputs tenant ID and UUID after creation', function (): void {
         ->assertExitCode(0);
 
     // Verify tenant has UUID set
-    $tenant = \Noerd\Models\Tenant::where('name', 'ID Test Tenant')->first();
+    $tenant = Tenant::where('name', 'ID Test Tenant')->first();
     expect($tenant->uuid)->not->toBeNull();
 });

@@ -5,8 +5,9 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('returns tenant apps ordered by sort_order', function (): void {
     $tenant = Tenant::factory()->create();

@@ -2,11 +2,13 @@
 
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionDefinition;
+use Noerd\Models\Tenant;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
+use Noerd\Tests\TestCase;
 use Noerd\Tests\Traits\CreatesSetupUser;
 use Symfony\Component\Yaml\Yaml;
 
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 uses(CreatesSetupUser::class);
 
 beforeEach(function (): void {
@@ -53,7 +55,7 @@ it('imports a YAML definition into the database for a specific tenant', function
 
 it('imports for every tenant with --all-tenants', function (): void {
     ['tenant' => $tenantA] = $this->createUserWithSetupAccess();
-    $tenantB = \Noerd\Models\Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
 
     file_put_contents($this->absoluteYamlPath . '/expense_categories.yml', Yaml::dump([
         'title' => 'Ausgabenkategorie',
