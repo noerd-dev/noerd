@@ -99,7 +99,7 @@ describe('NoerdSettings component', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->assertSet('settingsData.currency', 'EUR');
     });
 
@@ -107,7 +107,7 @@ describe('NoerdSettings component', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->set('settingsData.currency', 'USD')
             ->call('store');
 
@@ -126,7 +126,7 @@ describe('NoerdSettings component', function (): void {
         ]);
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->assertSet('settingsData.currency', 'GBP');
     });
 
@@ -134,7 +134,7 @@ describe('NoerdSettings component', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->set('settingsData.currency', 'INVALID')
             ->call('store')
             ->assertHasErrors(['settingsData.currency']);
@@ -147,7 +147,7 @@ describe('Currency feature flag', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->assertSee(__('Currency'));
     });
 
@@ -156,7 +156,7 @@ describe('Currency feature flag', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->assertDontSee(__('Currency'));
     });
 
@@ -165,7 +165,7 @@ describe('Currency feature flag', function (): void {
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
-            ->test('noerd::system-settings-detail')
+            ->test('noerd::system-settings-page')
             ->set('settingsData.currency', 'USD')
             ->call('store');
 
