@@ -177,3 +177,15 @@ Example flow:
 - State persists via session (`modal_fullscreen`)
 - Applies to all modals during the session
 
+The toggle is applied **client-side** via the Alpine store `$store.app.modalFullscreen`; the
+Livewire call only persists the preference and calls `skipRender()`. Both modal states share the
+same anchor (top-aligned, `mt-14`) and differ only in `max-width`, `max-height` and
+`border-radius` — all animatable — so switching glides instead of jumping. Consequently:
+
+- Never bake the fullscreen state into server-rendered classes. Bind it with Alpine (`:class`)
+  instead, otherwise the layout snaps once more when the response arrives
+- A component with `public bool $forceModalFullscreen = true;` neither reads nor writes the shared
+  preference — its panel renders the fullscreen geometry unconditionally
+- `x-noerd::page` reads the flag from the panel scope (`modalFullscreen`), so its `max-height`
+  animates in lockstep with the panel
+

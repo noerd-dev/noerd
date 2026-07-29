@@ -1,5 +1,4 @@
 @php
-    $isFullscreen = session('modal_fullscreen', false);
     $hasCurrentTab = property_exists($__livewire ?? new stdClass, 'currentTab');
     $disableModal = $disableModal ?? (($__livewire ?? null)?->disableModal ?? false);
 
@@ -20,7 +19,7 @@
      @if($disableModal)
          style="margin-left: -32px; margin-right: -32px"
      @else
-     :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] ' + (isRight ? '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh)]' }}' : '{{ $isFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100vh-112px)]' }}') : 'h-[calc(100dvh_-_2.9375rem_-_var(--banner-height,0px)_-_var(--impersonation-banner-height,0px)_-_var(--environment-banner-height,0px))]'"
+     :class="isModal ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] transition-[max-height] duration-200 ease-out ' + (isRight ? 'sm:max-h-[calc(100dvh)]' : (modalFullscreen ? 'sm:max-h-[calc(100dvh-3.5rem)]' : 'sm:max-h-[calc(100dvh-7rem)]')) : 'h-[calc(100dvh_-_2.9375rem_-_var(--banner-height,0px)_-_var(--impersonation-banner-height,0px)_-_var(--environment-banner-height,0px))]'"
     @endif
 >
     {{$header ?? ''}}
