@@ -17,7 +17,7 @@ new class extends Component {
         <div x-show="showAppbar && (isDesktop || showSidebar)"
              x-transition
              @class([
-                'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
+                'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-0 lg:top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
             ])
              :style="'width: var(--sidebar-apps-width)'"
         >
@@ -78,7 +78,7 @@ new class extends Component {
             <div x-show="showAppbar && (isDesktop || showSidebar)"
                  x-transition
                  @class([
-                    'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
+                    'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-0 lg:top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
                 ])
                  :style="'width: var(--sidebar-apps-width)'"
             >

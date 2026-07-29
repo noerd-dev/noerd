@@ -22,6 +22,13 @@ trait NoerdDetail
 
     public bool $disableModal = false;
 
+    /**
+     * Set when the detail is rendered inside a hosting page component (e.g.
+     * account-page embeds account-detail). The x-noerd::page chrome (header,
+     * footer, scroll wrapper) is skipped automatically — the hosting page owns it.
+     */
+    public bool $embedded = false;
+
     public bool $quickCreate = false;
 
     public array $relationTitles = [];
@@ -47,7 +54,7 @@ trait NoerdDetail
     {
         // Embedded children (a detail rendered inside a hosting page component) own no
         // tabs — leave the tab session/URL state to the hosting page.
-        if (property_exists($this, 'embedded') && $this->embedded) {
+        if ($this->embedded) {
             return;
         }
 
