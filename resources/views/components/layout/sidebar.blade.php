@@ -76,7 +76,9 @@ new class extends Component {
 
                 <!-- Toggle Appbar Button -->
                 <div class="border-gray-200 border-t">
-                    <button @click="showAppbar = !showAppbar; $wire.toggleAppbar()"
+                    {{-- Only appbar toggle. Persists on desktop only — on mobile the appbar is
+                         transient and hidden again after every navigation --}}
+                    <button @click="showAppbar = !showAppbar; if (isDesktop) { $wire.toggleAppbar() }"
                             class="mt-auto p-3 text-gray-400 hover:text-gray-600 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                              stroke="currentColor"

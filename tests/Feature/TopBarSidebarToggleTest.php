@@ -19,31 +19,56 @@ beforeEach(function (): void {
     $this->actingAs($user);
 });
 
-it('hides only the navigation on the first toggle step', function (): void {
+it('hides only the navigation without touching the app bar', function (): void {
     Livewire::test('noerd::layout.top-bar')
-        ->call('setSidebarState', false, true)
+        ->call('setSidebarVisibility', false)
         ->assertOk();
 
     expect(session('hide_sidebar'))->toBeTrue()
         ->and(session()->has('hide_appbar'))->toBeFalse();
 });
 
-it('hides the app bar as well on the second toggle step', function (): void {
-    Livewire::test('noerd::layout.top-bar')
-        ->call('setSidebarState', false, false)
-        ->assertOk();
-
-    expect(session('hide_sidebar'))->toBeTrue()
-        ->and(session('hide_appbar'))->toBeTrue();
-});
-
-it('shows navigation and app bar again on the third toggle step', function (): void {
+it('shows the navigation again without touching the app bar', function (): void {
     session(['hide_sidebar' => true, 'hide_appbar' => true]);
 
     Livewire::test('noerd::layout.top-bar')
-        ->call('setSidebarState', true, true)
+        ->call('setSidebarVisibility', true)
         ->assertOk();
 
     expect(session()->has('hide_sidebar'))->toBeFalse()
-        ->and(session()->has('hide_appbar'))->toBeFalse();
+        ->and(session('hide_appbar'))->toBeTrue();
+});
+
+it('hides the app bar without touching the navigation', function (): void {
+    Livewire::test('noerd::layout.top-bar')
+        ->call('setAppbarVisibility', false)
+        ->assertOk();
+
+    expect(session('hide_appbar'))->toBeTrue()
+        ->and(session()->has('hide_sidebar'))->toBeFalse();
+});
+
+it('shows the app bar again without touching the navigation', function (): void {
+    session(['hide_sidebar' => true, 'hide_appbar' => true]);
+
+    Livewire::test('noerd::layout.top-bar')
+        ->call('setAppbarVisibility', true)
+        ->assertOk();
+
+    expect(session()->has('hide_appbar'))->toBeFalse()
+        ->and(session('hide_sidebar'))->toBeTrue();
+});
+
+it('toggles the app bar session state via the sidebar button', function (): void {
+    Livewire::test('noerd::layout.sidebar')
+        ->call('toggleAppbar')
+        ->assertOk();
+
+    expect(session('hide_appbar'))->toBeTrue();
+
+    Livewire::test('noerd::layout.sidebar')
+        ->call('toggleAppbar')
+        ->assertOk();
+
+    expect(session()->has('hide_appbar'))->toBeFalse();
 });

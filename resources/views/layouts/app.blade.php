@@ -56,17 +56,35 @@
            isModal: false,
            selectedRow: 0,
            activeList: '',
-           showSidebar: '{{$showSidebar}}',
-           showAppbar: {{ session('hide_appbar') ? 'false' : 'true' }},
-           }">
+           isDesktop: window.innerWidth >= 1024,
+           desktopSidebar: {{ $showSidebar ? 'true' : 'false' }},
+           desktopAppbar: {{ session('hide_appbar') ? 'false' : 'true' }},
+           showSidebar: window.innerWidth >= 1024 ? {{ $showSidebar ? 'true' : 'false' }} : false,
+           showAppbar: window.innerWidth >= 1024 ? {{ session('hide_appbar') ? 'false' : 'true' }} : false,
+           handleResize() {
+               const desktop = window.innerWidth >= 1024;
+               if (desktop === this.isDesktop) return;
+               this.isDesktop = desktop;
+               if (desktop) {
+                   this.showSidebar = this.desktopSidebar;
+                   this.showAppbar = this.desktopAppbar;
+               } else {
+                   this.desktopSidebar = this.showSidebar;
+                   this.desktopAppbar = this.showAppbar;
+                   this.showSidebar = false;
+                   this.showAppbar = false;
+               }
+           },
+           }"
+     @resize.window="handleResize()">
 
     @inject('navigation', 'Noerd\Services\NavigationService')
 
     <main class="h-full"
           @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-              :style="window.innerWidth >= 1024 ? (showSidebar ? (showAppbar ? 'padding-left: var(--sidebar-total-width)' : 'padding-left: var(--sidebar-nav-width)') : (showAppbar ? 'padding-left: var(--sidebar-apps-width)' : '')) : ''"
+              :style="isDesktop ? (showSidebar ? (showAppbar ? 'padding-left: var(--sidebar-total-width)' : 'padding-left: var(--sidebar-nav-width)') : (showAppbar ? 'padding-left: var(--sidebar-apps-width)' : '')) : ''"
           @else
-              :style="window.innerWidth >= 1024 && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
+              :style="isDesktop && showAppbar ? 'padding-left: var(--sidebar-apps-width)' : ''"
         @endif
     >
         <div class="bg-white min-h-full @auth pt-[calc(2.9375rem+var(--banner-height,0px)+var(--impersonation-banner-height,0px)+var(--environment-banner-height,0px))] @else pt-[var(--environment-banner-height,0px)] @endauth">

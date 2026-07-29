@@ -28,9 +28,13 @@ new class () extends Component {
         $this->redirect('/login');
     }
 
-    public function setSidebarState(bool $showSidebar, bool $showAppbar): void
+    public function setSidebarVisibility(bool $showSidebar): void
     {
         $showSidebar ? session()->forget('hide_sidebar') : session(['hide_sidebar' => true]);
+    }
+
+    public function setAppbarVisibility(bool $showAppbar): void
+    {
         $showAppbar ? session()->forget('hide_appbar') : session(['hide_appbar' => true]);
     }
 } ?>
@@ -39,9 +43,9 @@ new class () extends Component {
 
 <div
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-            :style="window.innerWidth >= 1024 ? (showSidebar ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : (showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : '')) : ''"
+            :style="isDesktop ? (showSidebar ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : (showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : '')) : ''"
         @else
-            :style="window.innerWidth >= 1024 && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
+            :style="isDesktop && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
         @endif
         @class([
         'fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] left-0 w-full bg-brand-topbar z-40',
@@ -50,12 +54,15 @@ new class () extends Component {
         <div class="flex py-2 gap-x-4 px-6 w-full">
             <div class=" flex border-gray-300 w-full py-1">
 
-                {{-- Desktop cycle: 1st click hides only the navigation, 2nd click also hides the app bar, 3rd click shows both again --}}
+                {{-- Toggles ONLY the navigation. The app bar is toggled exclusively via the button
+                     at the bottom of the navigation. On mobile the toggle is transient (no session),
+                     so the navigation is hidden again after every page change. --}}
                 <button
                     @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
-                        @click="if (window.innerWidth < 1024) { showSidebar = ! showSidebar } else if (showSidebar) { showSidebar = false; $wire.setSidebarState(false, showAppbar) } else if (showAppbar) { showAppbar = false; $wire.setSidebarState(false, false) } else { showSidebar = true; showAppbar = true; $wire.setSidebarState(true, true) }"
+                        @click="showSidebar = ! showSidebar; if (isDesktop) { $wire.setSidebarVisibility(showSidebar) }"
                     @else
-                        @click="if (window.innerWidth < 1024) { showSidebar = ! showSidebar } else { showAppbar = ! showAppbar; $wire.setSidebarState(showSidebar, showAppbar) }"
+                        {{-- No navigation: the button is the only way to reach the app bar --}}
+                        @click="if (! isDesktop) { showSidebar = ! showSidebar; showAppbar = showSidebar } else { showAppbar = ! showAppbar; $wire.setAppbarVisibility(showAppbar) }"
                     @endif
                     type="button"
                         class="my-auto mr-6 shrink-0 text-gray-600 hover:text-gray-500">

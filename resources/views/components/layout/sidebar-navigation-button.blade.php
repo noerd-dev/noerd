@@ -16,7 +16,7 @@ new class extends Component {
 
 <div>
     @isset($navi['component'])
-        <a @click="$modal('{{$navi['component']}}', {{json_encode($arguments ?? [])}}); if(window.innerWidth < 1024) showSidebar = false"
+        <a @click="$modal('{{$navi['component']}}', {{json_encode($arguments ?? [])}}); if(! isDesktop) showSidebar = false"
            class="{{ $activeClass }} flex cursor-pointer items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
@@ -33,7 +33,7 @@ new class extends Component {
     @isset($navi['link'])
         @if(!isset($navi['component']))
             <a wire:navigate href="{{ $navi['link'] }}" @isset($navi['external']) target="_blank" @endisset
-               @click="if(window.innerWidth < 1024) showSidebar = false"
+               @click="if(! isDesktop) showSidebar = false"
                class="{{ $activeClass }} flex items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
                 @isset($navi['icon'])
                     <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
@@ -51,7 +51,7 @@ new class extends Component {
         @endif
     @elseif(!isset($navi['component']))
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
-           @click="if(window.innerWidth < 1024) showSidebar = false"
+           @click="if(! isDesktop) showSidebar = false"
            class="{{ $activeClass }} flex items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>

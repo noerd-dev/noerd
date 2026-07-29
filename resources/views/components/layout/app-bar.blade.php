@@ -14,7 +14,7 @@ new class extends Component {
 
 <div>
     @auth
-        <div x-show="showAppbar && (window.innerWidth >= 1024 || showSidebar)"
+        <div x-show="showAppbar && (isDesktop || showSidebar)"
              x-transition
              @class([
                 'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
@@ -75,7 +75,7 @@ new class extends Component {
                 ->get();
         @endphp
         @if($publicApps->count() > 1)
-            <div x-show="showAppbar && (window.innerWidth >= 1024 || showSidebar)"
+            <div x-show="showAppbar && (isDesktop || showSidebar)"
                  x-transition
                  @class([
                     'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
