@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 use Livewire\ComponentHook;
-use Noerd\Traits\NoerdDetail;
+use Noerd\Traits\NoerdPage;
 
 /**
  * Makes the quick-create exit a framework default for every detail component,
@@ -32,7 +32,7 @@ class QuickCreateExitHook extends ComponentHook
         return function ($return): void {
             $component = $this->component;
 
-            if (! in_array(NoerdDetail::class, class_uses_recursive($component), true)) {
+            if (! in_array(NoerdPage::class, class_uses_recursive($component), true)) {
                 return;
             }
 

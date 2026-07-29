@@ -285,8 +285,10 @@ trait NoerdList
 
     public function rendering(): void
     {
-        if ((int) request()->customerId) {
-            $this->listAction(request()->customerId);
+        $deepLinkId = request()->query($this->getDeepLinkParam());
+
+        if ((int) $deepLinkId) {
+            $this->listAction((int) $deepLinkId);
         }
 
         if (request()->create) {
@@ -744,6 +746,25 @@ trait NoerdList
      */
     protected function getSelectEvent(): string
     {
+        return Str::camel($this->getListEntity()) . 'Selected';
+    }
+
+    /**
+     * Get the URL query parameter that deep-links a record of this list.
+     * Derives from COMPONENT: 'products-list' -> 'productId'
+     */
+    protected function getDeepLinkParam(): string
+    {
+        return Str::camel($this->getListEntity()) . 'Id';
+    }
+
+    /**
+     * Get the singular entity name of this list.
+     * Derives from COMPONENT: 'customers-list' -> 'customer'
+     * Strips any Livewire namespace prefix: 'booking-members::customers-list' -> 'customer'
+     */
+    protected function getListEntity(): string
+    {
         $name = $this->componentName();
 
         if (str_contains($name, '::')) {
@@ -754,9 +775,7 @@ trait NoerdList
             $name = Str::afterLast($name, '.');
         }
 
-        $entity = Str::singular(Str::before($name, '-list'));
-
-        return Str::camel($entity) . 'Selected';
+        return Str::singular(Str::before($name, '-list'));
     }
 
     protected function dispatchSelectionEvents(mixed $modelId = null): void

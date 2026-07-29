@@ -131,6 +131,13 @@ trait HasModuleInstallation
                 $this->copyDirectoryContents($detailsSource, $detailsTarget);
             }
 
+            // Copy pages
+            $pagesSource = $sourceDir . DIRECTORY_SEPARATOR . 'pages';
+            $pagesTarget = $targetDir . DIRECTORY_SEPARATOR . 'pages';
+            if (is_dir($pagesSource)) {
+                $this->copyDirectoryContents($pagesSource, $pagesTarget);
+            }
+
             // Copy additional subdirectories
             foreach ($this->getAdditionalSubdirectories() as $subdir) {
                 $additionalSource = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
@@ -267,6 +274,13 @@ trait HasModuleInstallation
             $detailsTarget = $targetDir . DIRECTORY_SEPARATOR . 'details';
             if (is_dir($detailsSource)) {
                 $this->copyDirectoryContents($detailsSource, $detailsTarget);
+            }
+
+            // Copy pages
+            $pagesSource = $sourceDir . DIRECTORY_SEPARATOR . 'pages';
+            $pagesTarget = $targetDir . DIRECTORY_SEPARATOR . 'pages';
+            if (is_dir($pagesSource)) {
+                $this->copyDirectoryContents($pagesSource, $pagesTarget);
             }
 
             // Copy additional subdirectories (e.g., collections, forms for CMS)

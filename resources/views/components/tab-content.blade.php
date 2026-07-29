@@ -98,6 +98,12 @@
                 @if(isset($$slotName))
                     {{ $$slotName }}
                 @endif
+
+                {{-- The default slot is tab-1 content — a single-tab detail can pass
+                     its extra markup directly without an explicit tab1 slot. --}}
+                @if($tab['number'] === 1)
+                    {{ $slot }}
+                @endif
             </x-noerd::tab-panel>
         @endif
     @endforeach

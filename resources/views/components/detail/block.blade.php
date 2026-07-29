@@ -29,33 +29,49 @@
     };
 
     $fieldTypeRegistry = app(\Noerd\Services\FieldTypeRegistry::class);
-    $compact = $compact ?? false;
+    $detailViewRegistry = app(\Noerd\Services\DetailViewRegistry::class);
+
+    // Legacy boolean `compact` maps to view 'compact'; an explicit `view` wins.
+    $view = $view ?? (($compact ?? false) ? 'compact' : 'default');
+    $viewDefinition = $detailViewRegistry->get($view);
+    $view = $viewDefinition->name;
+    $numberedRowIndex = 0;
 @endphp
 <div>
     @if(isset($title) || isset($description))
         @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
     @endif
-    <div @if($compact) data-compact="true" @endif class="grid {{ $compact ? 'py-3 pt-1 gap-x-6 gap-y-1.5' : 'py-8 pt-4 gap-6' }} grid-cols-1 sm:grid-cols-{{$cols ?? '12'}}">
+    <div @if($view !== 'default') data-view="{{ $view }}" @endif @if($view === 'compact') data-compact="true" @endif class="grid {{ $viewDefinition->gridClasses }} grid-cols-1 sm:grid-cols-{{$cols ?? '12'}}">
         @foreach($fields ?? [] as $field)
             @if(isset($field['show']) && !$field['show'])
             @elseif(isset($field['viewExists']) && !\Illuminate\Support\Facades\View::exists($field['viewExists']))
             @elseif($field['type'] === 'block')
                 {{-- Nested block with its own title and fields --}}
-                <div class="col-span-1 sm:col-span-{{$field['colspan'] ?? '12'}}" {!! $getShowIfDirective($field) !!}>
+                <div class="{{ $viewDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '12') }}" {!! $getShowIfDirective($field) !!}>
                     @include('noerd::components.detail.block', [
                         'title' => $field['title'] ?? null,
                         'description' => $field['description'] ?? null,
                         'fields' => $field['fields'] ?? [],
                         'cols' => $field['cols'] ?? $cols ?? '12',
                         'modelId' => $modelId ?? null,
-                        'compact' => $field['compact'] ?? $compact,
+                        'view' => $field['view'] ?? (isset($field['compact']) ? ($field['compact'] ? 'compact' : 'default') : $view),
                     ])
                 </div>
             @else
-                <div class="col-span-1 sm:col-span-{{$field['colspan'] ?? '3'}}" {!! $getShowIfDirective($field) !!}>
+                @php
+                    $fieldView = $field['view']
+                        ?? (isset($field['compact']) ? ($field['compact'] ? 'compact' : 'default') : $view);
+                    $fieldViewDefinition = $detailViewRegistry->get($fieldView);
+                    $fieldView = $fieldViewDefinition->name;
+                    $field['view'] = $fieldView;
+                    $field['compact'] = $fieldView === 'compact';
+                    if ($fieldViewDefinition->numbersRows) {
+                        $numberedRowIndex++;
+                        $field['number'] ??= $numberedRowIndex;
+                    }
+                @endphp
+                <div class="{{ $fieldViewDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}" {!! $getShowIfDirective($field) !!}>
                     @php
-                        $field['compact'] ??= $compact;
-                        $fieldCompact = (bool) ($field['compact'] ?? false);
                         $fieldTypeDefinition = $fieldTypeRegistry->resolve($field['type'] ?? '');
                         $resolvedRendererProps = $fieldTypeDefinition?->resolveProps(
                             $field,
@@ -70,20 +86,27 @@
                             $modelId ?? null,
                         );
 
-                        // In compact mode, prefer a parallel compact variant of the renderer if one exists.
-                        // Includes live in forms/compact/, livewire components use a "-compact" suffix.
-                        // When no compact variant exists, the original element renders unchanged.
+                        // For non-default views, prefer a parallel variant of the renderer if one exists.
+                        // Includes live in forms/{view}/, livewire components use a "-{view}" suffix.
+                        // When no variant exists, the original element renders unchanged.
                         $rendererTarget = $fieldTypeDefinition?->target;
-                        if ($fieldCompact && $rendererTarget) {
+                        if ($fieldView !== 'default' && $rendererTarget) {
                             if ($fieldTypeDefinition->kind === 'include') {
-                                $compactTarget = \Illuminate\Support\Str::replaceFirst('.forms.', '.forms.compact.', $rendererTarget);
-                                if ($compactTarget !== $rendererTarget && \Illuminate\Support\Facades\View::exists($compactTarget)) {
-                                    $rendererTarget = $compactTarget;
+                                $variantTarget = \Illuminate\Support\Str::replaceFirst('.forms.', '.forms.' . $fieldView . '.', $rendererTarget);
+                                if ($variantTarget !== $rendererTarget && \Illuminate\Support\Facades\View::exists($variantTarget)) {
+                                    $rendererTarget = $variantTarget;
                                 }
                             } elseif ($fieldTypeDefinition->kind === 'livewire') {
-                                $compactTarget = $rendererTarget . '-compact';
-                                if (\Illuminate\Support\Facades\View::exists('noerd::components.' . $compactTarget)) {
-                                    $rendererTarget = $compactTarget;
+                                $variantNamespace = 'noerd';
+                                $variantComponentName = $rendererTarget;
+                                if (str_contains($rendererTarget, '::')) {
+                                    [$variantNamespace, $variantComponentName] = explode('::', $rendererTarget, 2);
+                                }
+                                $variantName = $variantComponentName . '-' . $fieldView;
+                                if (\Illuminate\Support\Facades\View::exists($variantNamespace . '::components.' . $variantName)) {
+                                    $rendererTarget = str_contains($fieldTypeDefinition->target, '::')
+                                        ? $variantNamespace . '::' . $variantName
+                                        : $variantName;
                                 }
                             }
                         }
@@ -103,8 +126,8 @@
                             $looksLikeRelation = $fieldType === 'relation' || \Illuminate\Support\Str::endsWith($fieldType, 'Relation');
 
                             $fallbackTarget = 'noerd::components.forms.input';
-                            if ($fieldCompact && \Illuminate\Support\Facades\View::exists('noerd::components.forms.compact.input')) {
-                                $fallbackTarget = 'noerd::components.forms.compact.input';
+                            if ($fieldView !== 'default' && \Illuminate\Support\Facades\View::exists('noerd::components.forms.' . $fieldView . '.input')) {
+                                $fallbackTarget = 'noerd::components.forms.' . $fieldView . '.input';
                             }
                         @endphp
 

@@ -5,67 +5,21 @@ namespace Noerd\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
 use Noerd\Helpers\StaticConfigHelper;
 
+/**
+ * Trait for `*-detail` components: the model form on top of the NoerdPage base.
+ * A detail loads its MANDATORY detail YAML (details/{name}.yml), binds the record
+ * into $detailData and persists it via store(). All page chrome (tabs, modal
+ * lifecycle, quick-create, list interplay) comes from the composed NoerdPage.
+ */
 trait NoerdDetail
 {
-    public bool $showSuccessIndicator = false;
-
-    #[Url(as: 'id', keep: false, except: '')]
-    public $modelId = null;
-
-    #[Url(as: 'tab', keep: false, except: 1)]
-    public int $currentTab = 1;
-
-    public array $pageLayout = [];
-
-    public bool $disableModal = false;
-
-    /**
-     * Set when the detail is rendered inside a hosting page component (e.g.
-     * account-page embeds account-detail). The x-noerd::page chrome (header,
-     * footer, scroll wrapper) is skipped automatically — the hosting page owns it.
-     */
-    public bool $embedded = false;
-
-    public bool $quickCreate = false;
+    use NoerdPage {
+        NoerdPage::getListeners as protected pageGetListeners;
+    }
 
     public array $relationTitles = [];
-
-    public array $detailData = [];
-
-    /**
-     * Get the component name (alias for getName).
-     */
-    public function getComponentName(): string
-    {
-        return $this->getName();
-    }
-
-    /**
-     * Livewire trait mount hook (runs for every detail). The active tab is shared
-     * across all details via the `tab` URL param, so a stale tab (e.g. the lead
-     * activity-log tab 2) would otherwise bleed into the next detail. Only keep the
-     * carried-over tab when the previously opened detail was the SAME component type
-     * (e.g. lead → another lead); opening a different model type starts on tab 1.
-     */
-    public function mountNoerdDetail(): void
-    {
-        // Embedded children (a detail rendered inside a hosting page component) own no
-        // tabs — leave the tab session/URL state to the hosting page.
-        if ($this->embedded) {
-            return;
-        }
-
-        $component = $this->getName();
-
-        if (session('noerd.lastDetailComponent') !== $component) {
-            $this->currentTab = 1;
-        }
-
-        session(['noerd.lastDetailComponent' => $component]);
-    }
 
     public function mount(): void
     {
@@ -81,31 +35,7 @@ trait NoerdDetail
             $this->mountDetailComponent(new $modelClass(), $modelClass);
         }
 
-        // A detail opts into quick-create for new records via the detail YAML
-        // (`quickCreate: true`, carried in pageLayout) or the legacy
-        // `public bool $quickCreateOnNew = true;` property. When opted in and no record
-        // is being edited, quick-create mode is enabled — no list/nav/blade wiring needed.
-        $optIn = ($this->quickCreateOnNew ?? false) || ($this->pageLayout['quickCreate'] ?? false);
-        if (! $this->modelId && $optIn) {
-            $this->quickCreate = true;
-        }
-
-        // Replace the raw YAML opt-in with the resolved runtime mode so `tab-content`
-        // reads the correct value (false when editing an existing record) without the
-        // detail blade having to pass a `:quickCreate` prop.
-        if (! empty($this->pageLayout)) {
-            $this->pageLayout['quickCreate'] = $this->quickCreate;
-        }
-    }
-
-    public function closeModalProcess(?string $source = null): void
-    {
-        $this->currentTab = 1;
-
-        $this->dispatch('closeTopModal');
-        if ($source) {
-            $this->dispatch('refreshList-' . Str::afterLast($source, '.'));
-        }
+        $this->resolveQuickCreate();
     }
 
     public function store(): void
@@ -115,36 +45,29 @@ trait NoerdDetail
         $modelClass = $this->detailModel;
         $model = $modelClass::updateOrCreate(['id' => $this->modelId], $this->detailData);
 
+        $this->finishStore($model);
+    }
+
+    /**
+     * Shared store tail for details: run the post-store chrome and report the
+     * persisted record to a hosting page (`detailStored-{name}`). Standalone the
+     * event simply has no listener. Custom store() overrides end with this call.
+     */
+    public function finishStore(Model $model): void
+    {
         $this->storeProcess($model);
+
+        $this->dispatch('detailStored-' . $this->getName(), modelId: $model->id);
     }
 
-    public function delete(): void
+    /**
+     * Livewire updated hook: an embedded detail mirrors its form state to the
+     * hosting page (`detailDataUpdated-{name}`), e.g. for a live preview.
+     * Components overriding this hook keep the sync via syncEmbeddedDetailData().
+     */
+    public function updatedDetailData(): void
     {
-        $modelClass = $this->detailModel;
-        $modelClass::find($this->modelId)?->delete();
-
-        $this->closeModalProcess($this->getListComponent());
-    }
-
-    public function storeProcess($model): void
-    {
-        $this->showSuccessIndicator = true;
-
-        if ($model->wasRecentlyCreated) {
-            $this->modelId = $model->id;
-        }
-
-        // A successful quick-create reveals the full detail of the new record so
-        // the remaining fields can be completed — without closing and reopening the
-        // modal. The same component instance simply switches out of quick-create
-        // mode (its layout re-renders as the full form) and the panel is widened in
-        // place. No overlay flicker, and the record's url parameter (e.g. taskId) is
-        // kept rather than cleared.
-        if ($this->quickCreate) {
-            $this->quickCreate = false;
-            $this->pageLayout['quickCreate'] = false;
-            $this->dispatch('resizeTopModal');
-        }
+        $this->syncEmbeddedDetailData();
     }
 
     /**
@@ -209,38 +132,6 @@ trait NoerdDetail
         }
     }
 
-    public function openRelationDetail(string $detailComponent, string $fieldName): void
-    {
-        $key = str_replace('detailData.', '', $fieldName);
-        $id = data_get($this->detailData, $key);
-
-        if (! $id) {
-            $lastKey = last(explode('.', $key));
-            $camelKey = Str::camel($lastKey);
-            if (property_exists($this, $camelKey)) {
-                $id = $this->{$camelKey};
-            }
-        }
-
-        if ($id) {
-            $this->dispatch(
-                event: 'noerdModal',
-                modalComponent: $detailComponent,
-                arguments: ['modelId' => $id],
-            );
-        }
-    }
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
-    }
-
-    public function callAMethod(callable $callback)
-    {
-        return call_user_func($callback);
-    }
-
     public function resolvePicklistOptions(string $picklistField): array
     {
         if (method_exists($this, $picklistField)) {
@@ -269,79 +160,40 @@ trait NoerdDetail
     }
 
     /**
-     * Get the detail component name.
-     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     * Dispatch the embedded form-state sync to the hosting page. Kept separate so
+     * components with their own updatedDetailData() hook can still trigger it.
      */
-    protected function getDetailComponent(): string
+    protected function syncEmbeddedDetailData(): void
     {
-        if (defined('static::DETAIL_COMPONENT')) {
-            return static::DETAIL_COMPONENT;
+        if ($this->embedded) {
+            $this->dispatch('detailDataUpdated-' . $this->getName(), detailData: $this->syncPayload());
         }
-
-        return $this->getName();
     }
 
     /**
-     * Get the list component name.
-     * Uses LIST_COMPONENT constant if defined, otherwise derives from detail component name.
-     * 'customer-detail' → 'customers-list'
+     * The payload mirrored to a hosting page on form updates. Defaults to the full
+     * $detailData; components override this to filter out non-scalar state
+     * (relations, uploads) the page must not merge back.
      */
-    protected function getListComponent(): string
+    protected function syncPayload(): array
     {
-        if (defined('static::LIST_COMPONENT')) {
-            return static::LIST_COMPONENT;
-        }
-
-        $name = $this->getName();
-
-        // If this is already a list component, return as-is
-        if (Str::endsWith($name, '-list')) {
-            return $name;
-        }
-
-        // Extract entity: 'customer-detail' → 'customer'
-        $entity = Str::before($name, '-detail');
-
-        // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity) . '-list';
-    }
-
-    /**
-     * Get the model data property name.
-     * 'customer-detail' → 'customerData'
-     */
-    protected function getModelDataProperty(): string
-    {
-        $entity = Str::before($this->getDetailComponent(), '-detail');
-
-        return Str::camel($entity) . 'Data';
+        return $this->detailData;
     }
 
     protected function mountDetailComponent(Model $model, string $modelClass): void
     {
-        $idProperty = 'modelId';
-
-        // Load by ID if property is set
-        if (property_exists($this, $idProperty) && $this->{$idProperty}) {
-            $model = $modelClass::find($this->{$idProperty});
-
-            if (!$model) {
-                $this->{$idProperty} = null;
-                $this->dispatch('closeTopModal');
-                return;
-            }
+        if (! $this->loadDetailModel($model, $modelClass)) {
+            return;
         }
 
         // Hand-built page components (`*-page`) ship no detail YAML — they define
-        // their layout in the component itself. Only a DETAIL_COMPONENT constant
-        // (e.g. product-page → product-detail) opts a page back into a YAML lookup.
+        // their layout in the component itself (legacy pages still on NoerdDetail;
+        // new pages use the NoerdPage trait and pages/{name}.yml instead). Only a
+        // DETAIL_COMPONENT constant pointing at a `*-detail` opts back into YAML.
         $detailComponent = $this->getDetailComponent();
         if (! Str::endsWith($detailComponent, '-page')) {
             $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
         }
-        $this->detailData = collect($model->toArray())
-            ->except(['created_at', 'updated_at'])
-            ->toArray();
 
         $this->ensureCustomAttributesArray();
     }
@@ -387,39 +239,14 @@ trait NoerdDetail
         }
     }
 
-    protected function setPreselect(string $key, mixed $value): void
-    {
-        $filters = session('listFilters', []);
-        $filters[$key] = $value;
-        session(['listFilters' => $filters]);
-    }
-
-    protected function preselect(string $key, bool $onlyNew = true): void
-    {
-        if ($onlyNew) {
-            if ($this->modelId) {
-                return;
-            }
-            if (property_exists($this, 'relations') && ($this->relations[$key] ?? null)) {
-                return;
-            }
-        }
-
-        $filters = session('listFilters', []);
-        if (! empty($filters[$key])) {
-            $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
-            $this->{$method}($filters[$key]);
-        }
-    }
-
     /**
-     * Get the event listeners for the component.
-     * Dynamically registers the refreshList listener based on detail component name.
+     * Get the event listeners for the component: the NoerdPage set plus the store
+     * trigger a hosting page dispatches (`storeDetail-{name}`).
      */
     protected function getListeners(): array
     {
-        return [
-            'refreshList-' . $this->getDetailComponent() => 'refreshList',
+        return $this->pageGetListeners() + [
+            'storeDetail-' . $this->getName() => 'store',
         ];
     }
 }

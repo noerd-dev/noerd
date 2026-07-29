@@ -62,11 +62,16 @@ fields:
 |----------|-------------|
 | `title` | Page title (translation key) |
 | `description` | Optional description text |
+| `view` | Layout view for the form: `default`, `compact`, `numbered` (see [Layout Views](#layout-views)) |
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
 | `actions` | Array of action button definitions rendered above the form (see [Detail Actions](#detail-actions)) |
-| `relations` | Array of relation tile definitions rendered as a Relation Box above the form (see [Relation Box](#relation-box)) |
 | `footerComponents` | Array of Livewire components rendered in the footer bar |
+
+> **Note:** `relations:` (Relation Box) and `widgets:` are PAGE concerns — they live in the
+> optional page YAML (`pages/{entity}-page.yml`), not in a detail YAML. See [Page View](page-view.md).
+> A detail YAML contains only the form: `title`, `description`, `view`, `quickCreate`, `fields`
+> (and form-level `tabs`).
 
 ## Tab Properties
 
@@ -88,6 +93,77 @@ fields:
 | `required` | Mark field as required |
 | `colspan` | Grid column span (1-12) |
 | `tab` | Tab number (defaults to 1) |
+| `view` | Per-field layout view override (see [Layout Views](#layout-views)) |
+| `number` | Explicit row number in the `numbered` view (defaults to auto-increment) |
+
+## Layout Views
+
+A detail form renders in one of several **views**, selected by the top-level `view:` key in the
+detail YAML. Built-in views:
+
+| View | Layout |
+|------|--------|
+| `default` | Label on top of the input (also used when `view` is absent or unknown) |
+| `compact` | Label to the LEFT of the input with tighter vertical spacing |
+| `numbered` | Form rows like the German ELSTER tax UI: one field per full-width row (colspan is ignored), light gray row background, leading row number, right-aligned label, input on the right |
+
+```yaml
+title: Account
+view: compact
+fields:
+  - name: detailData.name
+    label: Name
+    type: text
+    colspan: 6
+  - name: detailData.notes
+    label: Notes
+    type: textarea
+    colspan: 12
+    view: default   # per-field override
+```
+
+The view is inherited by nested `type: block` fields; a single field (or nested block) may override
+it with its own `view:` key.
+
+**Numbered view:** rows are numbered automatically per block (nested blocks restart at 1). A field
+may pin its number with an explicit `number:` key — numbers may repeat, like on tax forms. The
+shared row chrome (gray row, number cell, right-aligned label) lives in
+`<x-noerd::detail.numbered-row>`; the per-field partials in `forms/numbered/` only provide the bare
+control.
+
+**Backward compatibility:** the legacy boolean `compact: true` is still accepted and maps to
+`view: compact`; an explicit `view:` wins. Use `view:` in all new YAML.
+
+### Registering a New View
+
+Views are `DetailViewDefinition` objects held by the `DetailViewRegistry` singleton. The built-ins
+are registered in `NoerdServiceProvider::boot()`; any module can add (or override) a view in its
+own service provider:
+
+```php
+use Noerd\Services\DetailViewRegistry;
+use Noerd\Support\DetailViewDefinition;
+
+app(DetailViewRegistry::class)->register(new DetailViewDefinition(
+    name: 'table',
+    gridClasses: 'py-2 gap-0',       // spacing classes on the grid wrapper
+    fullWidthRows: true,             // ignore per-field colspan
+    numbersRows: false,              // no auto row numbering
+    spacerClass: 'h-9',              // height of the `spacer` field type
+));
+```
+
+Field elements resolve per convention — no block changes needed:
+
+- `include` field types: `forms/{view}/<name>.blade.php` next to the original
+  (e.g. `forms/table/input-select.blade.php`); the generic input fallback is `forms/{view}/input.blade.php`
+- `livewire` field types: a `<name>-{view}` view alongside the component, namespace-aware
+  (`mod::name` resolves `mod::components.name-{view}`)
+- If no variant exists for a field type, the original element renders unchanged (graceful fallback)
+
+Unknown view names silently fall back to `default` — a YAML typo never breaks a detail page. The
+grid wrapper emits `data-view="{view}"` for non-default views (plus the legacy
+`data-compact="true"` for compact).
 
 ## Detail Actions
 
@@ -140,6 +216,10 @@ public function transferToAccount(): void
 ## Relation Box
 
 A Relation Box renders a grid of clickable tiles (6 per row), each showing a heroicon, a label and the related record count, e.g. `Contacts (5)`. Clicking a tile opens the related list component as a modal, filtered by the current record. Use it instead of relation tabs when you want an overview of all relations at a glance.
+
+> The `relations:` array is declared in the PAGE YAML (`pages/{entity}-page.yml`) and the
+> component is placed in the `*-page` blade — see [Page View](page-view.md). The component
+> reference below applies unchanged.
 
 It is rendered via the generic `<x-noerd::detail-relations>` component, a thin wrapper around the `<livewire:noerd::relation-box>` Livewire component. The box only renders when `modelId`, a non-empty `relations` array and `modelClass` are all present, and refreshes its counts automatically when a list modal closes (`#[On('closeTopModal')]`).
 

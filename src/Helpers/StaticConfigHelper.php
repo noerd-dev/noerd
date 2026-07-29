@@ -75,6 +75,27 @@ class StaticConfigHelper
     }
 
     /**
+     * Resolve the OPTIONAL page YAML of a `*-page` component (pages/{name}.yml).
+     * Unlike detail configs, a missing page YAML is a normal state — hand-built
+     * pages define their layout in the component itself — so this stays silent
+     * (no warning) and simply returns an empty array.
+     *
+     * @param  class-string|null  $modelClass  the model the page renders, when known — forwarded to the
+     *                                         override resolver, which cannot read it off the YAML.
+     */
+    public static function getPageFields(string $component, ?string $modelClass = null): array
+    {
+        $subPath = self::componentToSubPath($component);
+        $yamlPath = self::findConfigPath("pages/{$subPath}.yml");
+
+        if (! $yamlPath) {
+            return [];
+        }
+
+        return self::applyOverrides('page', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass);
+    }
+
+    /**
      * @param  class-string|null  $modelClass  the model the list renders, when known — forwarded to the
      *                                         override resolver, which cannot read it off the YAML.
      */
@@ -139,10 +160,14 @@ class StaticConfigHelper
      */
     public static function resolveConfigPath(string $app, string $viewType, string $component): ?string
     {
-        $dir = $viewType === 'detail' ? 'details' : 'lists';
-        $subPath = $viewType === 'detail'
-            ? self::componentToSubPath($component)
-            : self::componentToListName($component);
+        $dir = match ($viewType) {
+            'detail' => 'details',
+            'page' => 'pages',
+            default => 'lists',
+        };
+        $subPath = $viewType === 'list'
+            ? self::componentToListName($component)
+            : self::componentToSubPath($component);
 
         $primaryPath = base_path("app-configs/{$app}/{$dir}/{$subPath}.yml");
         if (file_exists($primaryPath)) {

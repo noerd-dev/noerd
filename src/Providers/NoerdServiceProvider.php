@@ -47,6 +47,7 @@ use Noerd\Models\TenantApp;
 use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
+use Noerd\Services\DetailViewRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
@@ -59,6 +60,7 @@ use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeService;
 use Noerd\Services\TopBarRegistry;
+use Noerd\Support\DetailViewDefinition;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
@@ -84,6 +86,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(HeaderActionsRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
+        $this->app->singleton(DetailViewRegistry::class);
         $this->app->singleton(NoerdManager::class);
         $this->app->singleton(RelationFieldRegistry::class, fn($app) => new RelationFieldRegistry(
             $app->make(FieldTypeRegistry::class),
@@ -152,6 +155,24 @@ class NoerdServiceProvider extends ServiceProvider
         // Register the Setup collections dynamic navigation provider.
         $registry = $this->app->make(DynamicNavigationRegistry::class);
         $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
+
+        $detailViewRegistry = $this->app->make(DetailViewRegistry::class);
+        $detailViewRegistry->register(new DetailViewDefinition(
+            name: 'default',
+            gridClasses: 'py-8 pt-4 gap-6',
+        ));
+        $detailViewRegistry->register(new DetailViewDefinition(
+            name: 'compact',
+            gridClasses: 'py-3 pt-1 gap-x-6 gap-y-1.5',
+            spacerClass: 'h-7',
+        ));
+        $detailViewRegistry->register(new DetailViewDefinition(
+            name: 'numbered',
+            gridClasses: 'py-3 pt-1 gap-y-1',
+            fullWidthRows: true,
+            numbersRows: true,
+            spacerClass: 'h-9',
+        ));
 
         $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
         $relationFieldRegistry = $this->app->make(RelationFieldRegistry::class);
