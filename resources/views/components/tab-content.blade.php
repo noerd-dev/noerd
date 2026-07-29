@@ -38,7 +38,7 @@
     <x-noerd::tabs :layout="$layout" :modelId="$modelId" />
 
     {{-- Tab Content Panels --}}
-    <div class="grid first:pt-6 [&>*]:col-start-1 [&>*]:row-start-1">
+    <x-noerd::tab-panels>
     @foreach($tabs as $tab)
         @php
             // Skip tabs with 'component' - they open as modals, not inline content
@@ -59,18 +59,18 @@
             }
 
             // Reactive client-side visibility for the panel — mirrors field-level showIf.
-            $tabShowIf = '';
+            $tabShowIf = null;
             if (isset($tab['showIf'])) {
                 if (is_string($tab['showIf'])) {
-                    $tabShowIf = 'x-show="$wire.' . $tab['showIf'] . '"';
+                    $tabShowIf = '$wire.' . $tab['showIf'];
                 } elseif (is_array($tab['showIf'])) {
-                    $tabShowIf = 'x-show="$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'\"";
+                    $tabShowIf = '$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'";
                 }
             }
         @endphp
 
         @if($showTab)
-            <div {!! $tabShowIf !!} :class="currentTab === {{ $tab['number'] }} ? 'visible' : 'invisible pointer-events-none'">
+            <x-noerd::tab-panel :number="$tab['number']" :show="$tabShowIf">
                 {{-- Render prepend slot for this tab if it exists (e.g., prependTab1, prependTab2, etc.) --}}
                 @php
                     $prependSlotName = 'prependTab' . $tab['number'];
@@ -98,8 +98,8 @@
                 @if(isset($$slotName))
                     {{ $$slotName }}
                 @endif
-            </div>
+            </x-noerd::tab-panel>
         @endif
     @endforeach
-    </div>
+    </x-noerd::tab-panels>
 @endif

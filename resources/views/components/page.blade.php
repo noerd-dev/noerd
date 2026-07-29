@@ -26,8 +26,7 @@
     {{$header ?? ''}}
     {{$table ?? ''}}
 
-    <div class="flex-1 p-6 pb-0 overflow-y-auto" @if($disableModal) class="!p-0" @else class="p-6"
-         @endif :class="isModal ? 'flex-1 p-6 pt-0! overflow-y-auto' : 'h-full pt-0!'">
+    <div class="flex-1 min-h-0 px-6 overflow-y-auto{{ $hasCurrentTab ? ' flex flex-col' : '' }}">
         {{ $slot }}
     </div>
 

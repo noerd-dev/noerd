@@ -29,7 +29,7 @@
 @endphp
 
 @if($layout && isset($layout['tabs']) && count($layout['tabs']) > 0)
-    <div class="pb-6 first:pt-6 w-full">
+    <div class="shrink-0 pb-6 first:pt-6 w-full">
         <div class="border-b border-gray-300 flex w-full">
             <nav class="inline-block" aria-label="Tabs">
                 @foreach($layout['tabs'] as $tab)
@@ -91,7 +91,7 @@
         </div>
     </div>
 @elseif(!$slot->isEmpty())
-    <div class="pb-6 first:pt-6 w-full">
+    <div class="shrink-0 pb-6 first:pt-6 w-full">
         <div class="border-b border-gray-300 flex w-full">
             <nav class="inline-block" aria-label="Tabs">
                 {{ $slot }}

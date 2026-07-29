@@ -325,8 +325,13 @@ trait NoerdDetail
             }
         }
 
-        $pageLayout = StaticConfigHelper::getComponentFields($this->getDetailComponent(), $modelClass);
-        $this->pageLayout = $pageLayout;
+        // Hand-built page components (`*-page`) ship no detail YAML — they define
+        // their layout in the component itself. Only a DETAIL_COMPONENT constant
+        // (e.g. product-page → product-detail) opts a page back into a YAML lookup.
+        $detailComponent = $this->getDetailComponent();
+        if (! Str::endsWith($detailComponent, '-page')) {
+            $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
+        }
         $this->detailData = collect($model->toArray())
             ->except(['created_at', 'updated_at'])
             ->toArray();
