@@ -34,6 +34,7 @@ use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
@@ -42,6 +43,7 @@ use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
@@ -109,6 +111,11 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(SetupCollectionHelper::class, fn ($app) => new SetupCollectionHelper(
             $app->make(SetupCollectionDefinitionRepositoryContract::class),
         ));
+
+        // StaticConfigHelper's memos are PHP statics, which outlive the app
+        // instance inside one Pest process — flush them whenever a fresh app
+        // boots (a per-request no-op under FPM, where statics die anyway).
+        $this->app->booted(fn () => StaticConfigHelper::flushRuntimeCaches());
     }
 
     public function boot(): void
@@ -129,6 +136,11 @@ class NoerdServiceProvider extends ServiceProvider
         Tenant::created(function (Tenant $tenant): void {
             SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
         });
+
+        // The config search roots memoise the active/allowed app folders — a
+        // TenantApp mutation (install commands, setup screens) invalidates them.
+        TenantApp::saved(fn () => StaticConfigHelper::flushRuntimeCaches());
+        TenantApp::deleted(fn () => StaticConfigHelper::flushRuntimeCaches());
 
         $router = $this->app['router'];
         $router->aliasMiddleware('setup', SetupMiddleware::class);

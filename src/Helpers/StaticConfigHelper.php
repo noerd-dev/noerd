@@ -15,6 +15,56 @@ class StaticConfigHelper
     private static ?array $moduleSourceMappingCache = null;
 
     /**
+     * Request-scope memo for the DB-backed lookups (allowed app folders, active
+     * apps, search roots, resolved config paths, list-view discovery). Every
+     * config lookup used to re-run 3-4 tenant/tenant_apps queries; within one
+     * request the answers cannot change, so they are computed once. Keys embed
+     * the selected tenant id and current app, so a mid-request tenant/app switch
+     * misses the memo naturally. Never persisted — the results are session- and
+     * user-dependent.
+     */
+    private static array $runtimeCache = [];
+
+    /** @var array<string, array{0: int, 1: array}> parsed YAML per path, guarded by mtime */
+    private static array $yamlCache = [];
+
+    /**
+     * Drop every request-scope memo. Wired to app boot (fresh per test in one
+     * Pest process; a no-op per FPM request) and to TenantApp mutations.
+     */
+    public static function flushRuntimeCaches(): void
+    {
+        self::$runtimeCache = [];
+        self::$yamlCache = [];
+    }
+
+    /**
+     * Parse a YAML file through the mtime-guarded cache: an edited file (dev,
+     * test fixtures) is re-parsed, an unchanged one is parsed once per process.
+     */
+    private static function parseYamlFile(string $path): array
+    {
+        $mtime = @filemtime($path) ?: 0;
+        $entry = self::$yamlCache[$path] ?? null;
+        if ($entry !== null && $entry[0] === $mtime) {
+            return $entry[1];
+        }
+
+        $parsed = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+        self::$yamlCache[$path] = [$mtime, $parsed];
+
+        return $parsed;
+    }
+
+    /**
+     * The memo key prefix shared by every context-dependent entry.
+     */
+    private static function runtimeContextKey(): string
+    {
+        return (TenantHelper::getSelectedTenantId() ?? 0).'|'.(self::getCurrentApp() ?? '');
+    }
+
+    /**
      * @param  class-string|null  $modelClass  the model the detail renders, when known — forwarded to the
      *                                         override resolver, which cannot read it off the YAML.
      */
@@ -30,9 +80,7 @@ class StaticConfigHelper
             return [];
         }
 
-        $content = file_get_contents($yamlPath);
-
-        return self::applyOverrides('detail', self::stripComponentNamespace($component), Yaml::parse($content ?: '') ?: [], $modelClass);
+        return self::applyOverrides('detail', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass);
     }
 
     /**
@@ -49,7 +97,7 @@ class StaticConfigHelper
             return [];
         }
 
-        return Yaml::parse(file_get_contents($yamlPath) ?: '') ?: [];
+        return self::parseYamlFile($yamlPath);
     }
 
     /**
@@ -78,9 +126,7 @@ class StaticConfigHelper
             }
         }
 
-        $content = file_get_contents($yamlPath);
-
-        return self::applyOverrides('list', self::componentToListName($tableName), Yaml::parse($content ?: '') ?: [], $modelClass);
+        return self::applyOverrides('list', self::componentToListName($tableName), self::parseYamlFile($yamlPath), $modelClass);
     }
 
     /**
@@ -109,9 +155,7 @@ class StaticConfigHelper
             return [];
         }
 
-        $content = file_get_contents($yamlPath);
-
-        return self::applyOverrides('list', self::componentToListName($tableName), Yaml::parse($content ?: '') ?: [], $modelClass);
+        return self::applyOverrides('list', self::componentToListName($tableName), self::parseYamlFile($yamlPath), $modelClass);
     }
 
     /**
@@ -176,8 +220,7 @@ class StaticConfigHelper
             return null;
         }
 
-        $content = file_get_contents($yamlPath);
-        $navigationStructure = Yaml::parse($content ?: '');
+        $navigationStructure = self::parseYamlFile($yamlPath);
 
         // Process dynamic navigation blocks
         if ($navigationStructure) {
@@ -223,6 +266,9 @@ class StaticConfigHelper
      */
     public static function getListViews(string $component, ?string $primaryApp = null): array
     {
+        // The result itself is deliberately NOT memoised — discovery must see
+        // variant YAMLs created mid-process. The expensive ingredients are:
+        // getAllowedAppFolders(), appLabels() and parseYamlFile() are memoised.
         $subPath = self::componentToListName($component);
         $currentApp = $primaryApp !== null ? mb_strtolower($primaryApp) : self::getCurrentApp();
 
@@ -267,7 +313,7 @@ class StaticConfigHelper
             $appViews = [];
             foreach ($paths as $key => $path) {
                 try {
-                    $config = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+                    $config = self::parseYamlFile($path);
                 } catch (Throwable) {
                     // An unparseable variant is dropped; the base view must survive
                     // so the list keeps rendering with its config's own error handling.
@@ -340,16 +386,20 @@ class StaticConfigHelper
      */
     private static function appLabels(): array
     {
-        $labels = ['setup' => __('Setup')];
+        $cacheKey = 'appLabels.'.(TenantHelper::getSelectedTenantId() ?? 0);
 
-        $tenant = TenantHelper::getSelectedTenant();
-        if ($tenant) {
-            foreach ($tenant->tenantApps()->pluck('title', 'name') as $name => $title) {
-                $labels[mb_strtolower((string) $name)] = (string) $title;
+        return self::$runtimeCache[$cacheKey] ??= (function (): array {
+            $labels = ['setup' => __('Setup')];
+
+            $tenant = TenantHelper::getSelectedTenant();
+            if ($tenant) {
+                foreach ($tenant->tenantApps()->pluck('title', 'name') as $name => $title) {
+                    $labels[mb_strtolower((string) $name)] = (string) $title;
+                }
             }
-        }
 
-        return $labels;
+            return $labels;
+        })();
     }
 
     /**
@@ -429,19 +479,23 @@ class StaticConfigHelper
      */
     private static function getAllowedAppFolders(): array
     {
-        $tenant = TenantHelper::getSelectedTenant();
-        if (! $tenant) {
-            return ['setup'];
-        }
+        $cacheKey = 'allowedFolders.'.(TenantHelper::getSelectedTenantId() ?? 0);
 
-        $tenantAppNames = $tenant->tenantApps()->pluck('name')->toArray();
+        return self::$runtimeCache[$cacheKey] ??= (function (): array {
+            $tenant = TenantHelper::getSelectedTenant();
+            if (! $tenant) {
+                return ['setup'];
+            }
 
-        $allowedFolders = ['setup'];
-        foreach ($tenantAppNames as $appName) {
-            $allowedFolders[] = mb_strtolower($appName);
-        }
+            $tenantAppNames = $tenant->tenantApps()->pluck('name')->toArray();
 
-        return $allowedFolders;
+            $allowedFolders = ['setup'];
+            foreach ($tenantAppNames as $appName) {
+                $allowedFolders[] = mb_strtolower($appName);
+            }
+
+            return $allowedFolders;
+        })();
     }
 
     /**
@@ -449,10 +503,18 @@ class StaticConfigHelper
      */
     private static function findConfigPath(string $subPath): ?string
     {
+        // Only HITS are memoised — a config created mid-process (dev, test
+        // fixtures, install commands) must be found on the next lookup.
+        $cacheKey = 'configPath.'.self::runtimeContextKey().'.'.$subPath;
+        $cached = self::$runtimeCache[$cacheKey] ?? null;
+        if ($cached !== null && file_exists($cached)) {
+            return $cached;
+        }
+
         foreach (self::configSearchRoots() as $root) {
             $path = $root.DIRECTORY_SEPARATOR.$subPath;
             if (file_exists($path)) {
-                return $path;
+                return self::$runtimeCache[$cacheKey] = $path;
             }
         }
 
@@ -469,6 +531,11 @@ class StaticConfigHelper
      */
     private static function configSearchRoots(): array
     {
+        $cacheKey = 'searchRoots.'.self::runtimeContextKey();
+        if (isset(self::$runtimeCache[$cacheKey])) {
+            return self::$runtimeCache[$cacheKey];
+        }
+
         $currentApp = self::getCurrentApp();
         $roots = [];
 
@@ -480,7 +547,7 @@ class StaticConfigHelper
         // 2. Fallback: Search all allowed app folders
         $allowedFolders = self::getAllowedAppFolders();
 
-        $allAppFolders = TenantApp::where('is_active', true)
+        $allAppFolders = self::$runtimeCache['activeAppFolders'] ??= TenantApp::where('is_active', true)
             ->pluck('name')
             ->map(fn ($name) => mb_strtolower($name))
             ->toArray();
@@ -513,7 +580,7 @@ class StaticConfigHelper
             }
         }
 
-        return array_values(array_unique($roots));
+        return self::$runtimeCache[$cacheKey] = array_values(array_unique($roots));
     }
 
     /**

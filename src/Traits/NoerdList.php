@@ -452,32 +452,62 @@ trait NoerdList
         $this->setColumnFilter($field, null);
     }
 
+    /**
+     * Open a row by its POSITION in the current page — the keyboard path only
+     * (arrow keys track a positional index, Enter submits it). Resolving the
+     * position costs a full listData() round; mouse clicks know the model id
+     * and go straight to openListRow().
+     */
     public function findListAction(int|string $id): void
     {
         $this->syncListQueryContext();
 
         $listData = $this->resolvedListConfig()['rows'] ?? [];
-        // In picker mode a row click (or Enter) ticks the row instead of opening it.
-        $method = $this->returnsSelection ? 'toggleRecordSelection' : $this->listActionMethod;
 
-        if (is_array($listData)) {
-            $item = $listData[$id] ?? null;
-            if ($item) {
-                $this->{$method}($item['id']);
-            }
-
-            return;
-        }
-
-        $item = $listData->getCollection()->get($id);
+        $item = is_array($listData) ? ($listData[$id] ?? null) : $listData->getCollection()->get($id);
         if (!$item) {
             return;
         }
+
         $itemId = is_array($item) ? ($item['id'] ?? null) : $item->id;
         if ($itemId === null) {
             return;
         }
-        $this->{$method}($itemId);
+
+        $this->openListRow($itemId);
+    }
+
+    /**
+     * Open a row by its model id — the wire:click target for row and cell
+     * clicks. In picker mode the click ticks the row instead. The re-render is
+     * skipped when the action is the trait's own dispatch-only listAction: the
+     * response would re-send the unchanged list HTML just to fire the modal
+     * event, and the row highlight is Alpine state that survives without it.
+     */
+    public function openListRow(int|string $modelId): void
+    {
+        if ($this->returnsSelection) {
+            $this->toggleRecordSelection($modelId);
+
+            return;
+        }
+
+        $this->{$this->listActionMethod}($modelId);
+
+        if ($this->listActionMethod === 'listAction' && $this->usesTraitListAction()) {
+            $this->skipRender();
+        }
+    }
+
+    /**
+     * Whether listAction() is the trait's own implementation. An overriding
+     * component may mutate state its view shows, so only the trait's
+     * dispatch-only version is safe to leave unrendered.
+     */
+    private function usesTraitListAction(): bool
+    {
+        return (new \ReflectionMethod($this, 'listAction'))->getFileName()
+            === (new \ReflectionClass(NoerdList::class))->getFileName();
     }
 
     /**

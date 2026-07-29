@@ -200,7 +200,7 @@
                                             wire:key="row-{{ $listId }}-{{ $row['id'] ?? $key }}"
                                             :class="{'bg-gray-100!': selectedRow{{$listId}} == {{$key}} }"
                                             @click="selectedRow{{$listId}} = '{{$key}}'"
-                                            wire:click="findListAction('{{$key}}')"
+                                            wire:click="openListRow('{{ $row['id'] ?? '' }}')"
                                             class="cursor-pointer group hover:bg-brand-bg border border-black/10">
                                             @if($showLineNumbers)
                                                 <td class="w-12 border-b border-r border-gray-300 px-2 py-1 text-right text-xs text-gray-400 select-none">{{ $loop->iteration }}</td>
@@ -230,7 +230,7 @@
                                                     'id' => $row['id'],
                                                     'columnValue' => $column['field'],
                                                     'type' => $column['type'] ?? 'text',
-                                                    'action' => $column['action'] ?? $listAction,
+                                                    'action' => $column['action'] ?? 'openListRow',
                                                     'actions' => $column['actions'] ?? null,
                                                     'columnConfig' => $column,
                                                     'rowData' => $row,

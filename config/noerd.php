@@ -26,6 +26,10 @@ return [
         'setup_yaml_path' => 'app-configs/setup/collections',
     ],
 
+    'cache' => [
+        'object_catalog' => env('NOERD_OBJECT_CATALOG_CACHE', true),
+    ],
+
     'theme' => [
         'active' => env('NOERD_THEME', 'default'),
 
