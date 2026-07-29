@@ -16,14 +16,16 @@ use Livewire\Attributes\Url;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use LogicException;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
 use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\ListQueryContext;
+use ReflectionClass;
+use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
-use Noerd\Facades\Noerd;
 
 trait NoerdList
 {
@@ -192,7 +194,7 @@ trait NoerdList
         // the param addresses the page-level list, but Livewire hydrates it on
         // nested lists too.
         $urlColumnFilters = (!$this->compact && !$this->returnsSelection)
-            ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && trim($value) !== '')
+            ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && mb_trim($value) !== '')
             : [];
         if ($urlColumnFilters !== []) {
             $this->listColumnFilters = $urlColumnFilters;
@@ -256,26 +258,6 @@ trait NoerdList
     }
 
     /**
-     * Mirror the resolved view state into the ?view= URL param — including
-     * 'default', so a shared link pins the standard view too. Composite keys are
-     * written with '--' instead of '::' so the URL stays free of '%3A%3A'
-     * encoding. The param stays null on single-view lists (no switcher, nothing
-     * to share) and always null on embedded lists, which must never write the
-     * page-level param.
-     */
-    private function syncListViewParam(): void
-    {
-        if ($this->compact || $this->returnsSelection || count($this->availableListViews) < 2) {
-            $this->listViewParam = null;
-
-            return;
-        }
-
-        $activeKey = StaticConfigHelper::composeListViewKey($this->listViewApp, $this->listView);
-        $this->listViewParam = str_replace('::', '--', $activeKey);
-    }
-
-    /**
      * All views available for this list across every allowed app: per app the
      * base config ('default') plus every "--{key}" sibling YAML. Current-app
      * entries carry plain keys, other apps' entries composite '{app}::{key}'
@@ -301,26 +283,9 @@ trait NoerdList
         return $this->buildList($rows);
     }
 
-    /**
-     * The list config regardless of the component's style: lists declaring
-     * $listModel build it via listData(), lists with a custom with() already
-     * return it as view data. Lets generic trait features (row click, select-all,
-     * bulk delete) work for both without assuming one style.
-     *
-     * @return array<string, mixed>
-     */
-    protected function resolvedListConfig(): array
+    public function rendering(): void
     {
-        if (property_exists($this, 'listModel') && $this->listModel) {
-            return $this->listData();
-        }
-
-        return method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
-    }
-
-    public function rendering()
-    {
-        if ((int)request()->customerId) {
+        if ((int) request()->customerId) {
             $this->listAction(request()->customerId);
         }
 
@@ -345,17 +310,6 @@ trait NoerdList
         $this->selectedRecordIds = [];
         $this->resetPage();
         $this->syncListQueryContext();
-    }
-
-    /**
-     * Set the active view state ($listViewApp + $listView) from a dropdown key —
-     * plain ('vip') or composite ('gastro::vip').
-     */
-    private function applyListViewKey(string $key): void
-    {
-        [$app, $viewKey] = StaticConfigHelper::parseListViewKey($key);
-        $this->listViewApp = $app;
-        $this->listView = $viewKey === 'default' ? null : $viewKey;
     }
 
     public function updatedPerPage(): void
@@ -435,7 +389,7 @@ trait NoerdList
      */
     public function setColumnFilter(string $field, ?string $value): void
     {
-        $value = trim((string)$value);
+        $value = mb_trim((string) $value);
 
         if ($value === '') {
             unset($this->listColumnFilters[$field]);
@@ -506,17 +460,6 @@ trait NoerdList
     }
 
     /**
-     * Whether listAction() is the trait's own implementation. An overriding
-     * component may mutate state its view shows, so only the trait's
-     * dispatch-only version is safe to leave unrendered.
-     */
-    private function usesTraitListAction(): bool
-    {
-        return (new \ReflectionMethod($this, 'listAction'))->getFileName()
-            === (new \ReflectionClass(NoerdList::class))->getFileName();
-    }
-
-    /**
      * Handle select action - dispatch selection event and close modal.
      */
     public function selectAction(mixed $modelId = null, array $relations = []): void
@@ -530,7 +473,7 @@ trait NoerdList
      */
     public function toggleRecordSelection(int|string $id): void
     {
-        $id = (int)$id;
+        $id = (int) $id;
 
         if (in_array($id, $this->selectedRecordIds, true)) {
             $this->selectedRecordIds = array_values(array_filter(
@@ -611,7 +554,7 @@ trait NoerdList
         $collection = is_array($rows) ? collect($rows) : $rows->getCollection();
 
         return $collection
-            ->map(fn($row): int => (int)(is_array($row) ? ($row['id'] ?? 0) : $row->id))
+            ->map(fn($row): int => (int) (is_array($row) ? ($row['id'] ?? 0) : $row->id))
             ->filter()
             ->values()
             ->all();
@@ -625,9 +568,7 @@ trait NoerdList
         return $this->getName();
     }
 
-    public function updateRow(): void
-    {
-    }
+    public function updateRow(): void {}
 
     #[Computed]
     public function tableFilters(): array
@@ -645,9 +586,7 @@ trait NoerdList
         return $filters;
     }
 
-    public function states(): void
-    {
-    }
+    public function states(): void {}
 
     public function listFilters(): array
     {
@@ -659,9 +598,7 @@ trait NoerdList
         return [];
     }
 
-    public function filters(): void
-    {
-    }
+    public function filters(): void {}
 
     public function refreshList(): void
     {
@@ -704,6 +641,23 @@ trait NoerdList
 
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * The list config regardless of the component's style: lists declaring
+     * $listModel build it via listData(), lists with a custom with() already
+     * return it as view data. Lets generic trait features (row click, select-all,
+     * bulk delete) work for both without assuming one style.
+     *
+     * @return array<string, mixed>
+     */
+    protected function resolvedListConfig(): array
+    {
+        if (property_exists($this, 'listModel') && $this->listModel) {
+            return $this->listData();
+        }
+
+        return method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
     }
 
     /**
@@ -923,7 +877,7 @@ trait NoerdList
         $picklistFields = array_keys($this->picklistOptionsFromDetail());
 
         foreach ($this->listColumnFilters as $field => $raw) {
-            if (!in_array($field, $allowed, true) || !is_string($raw) || trim($raw) === '') {
+            if (!in_array($field, $allowed, true) || !is_string($raw) || mb_trim($raw) === '') {
                 continue;
             }
 
@@ -1183,9 +1137,7 @@ trait NoerdList
         throw new LogicException('Override prepareCsvExport() to enable CSV export.');
     }
 
-    protected function prepareExportRow(mixed $row): void
-    {
-    }
+    protected function prepareExportRow(mixed $row): void {}
 
     protected function formatCsvValue(mixed $value, array $column): string
     {
@@ -1196,10 +1148,10 @@ trait NoerdList
             'date' => $value ? Carbon::parse($value)->format('d.m.Y') : '',
             'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
             'currency', 'number' => is_numeric($value)
-                ? number_format((float)$value, 2, ',', '.')
-                : (string)($value ?? ''),
+                ? number_format((float) $value, 2, ',', '.')
+                : (string) ($value ?? ''),
             'badge' => __($this->badgeLabel($value, $column['options'] ?? [])),
-            default => (string)($value ?? ''),
+            default => (string) ($value ?? ''),
         };
     }
 
@@ -1214,12 +1166,12 @@ trait NoerdList
         $value = $value instanceof BackedEnum ? $value->value : ($value instanceof UnitEnum ? $value->name : $value);
 
         foreach ($options as $option) {
-            if (isset($option['value']) && (string)$option['value'] === (string)$value) {
-                return (string)($option['label'] ?? $value);
+            if (isset($option['value']) && (string) $option['value'] === (string) $value) {
+                return (string) ($option['label'] ?? $value);
             }
         }
 
-        return (string)($value ?? '');
+        return (string) ($value ?? '');
     }
 
     /**
@@ -1238,5 +1190,47 @@ trait NoerdList
         }
 
         return $listeners;
+    }
+
+    /**
+     * Mirror the resolved view state into the ?view= URL param — including
+     * 'default', so a shared link pins the standard view too. Composite keys are
+     * written with '--' instead of '::' so the URL stays free of '%3A%3A'
+     * encoding. The param stays null on single-view lists (no switcher, nothing
+     * to share) and always null on embedded lists, which must never write the
+     * page-level param.
+     */
+    private function syncListViewParam(): void
+    {
+        if ($this->compact || $this->returnsSelection || count($this->availableListViews) < 2) {
+            $this->listViewParam = null;
+
+            return;
+        }
+
+        $activeKey = StaticConfigHelper::composeListViewKey($this->listViewApp, $this->listView);
+        $this->listViewParam = str_replace('::', '--', $activeKey);
+    }
+
+    /**
+     * Set the active view state ($listViewApp + $listView) from a dropdown key —
+     * plain ('vip') or composite ('gastro::vip').
+     */
+    private function applyListViewKey(string $key): void
+    {
+        [$app, $viewKey] = StaticConfigHelper::parseListViewKey($key);
+        $this->listViewApp = $app;
+        $this->listView = $viewKey === 'default' ? null : $viewKey;
+    }
+
+    /**
+     * Whether listAction() is the trait's own implementation. An overriding
+     * component may mutate state its view shows, so only the trait's
+     * dispatch-only version is safe to leave unrendered.
+     */
+    private function usesTraitListAction(): bool
+    {
+        return (new ReflectionMethod($this, 'listAction'))->getFileName()
+            === (new ReflectionClass(NoerdList::class))->getFileName();
     }
 }

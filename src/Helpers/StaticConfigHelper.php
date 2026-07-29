@@ -39,32 +39,6 @@ class StaticConfigHelper
     }
 
     /**
-     * Parse a YAML file through the mtime-guarded cache: an edited file (dev,
-     * test fixtures) is re-parsed, an unchanged one is parsed once per process.
-     */
-    private static function parseYamlFile(string $path): array
-    {
-        $mtime = @filemtime($path) ?: 0;
-        $entry = self::$yamlCache[$path] ?? null;
-        if ($entry !== null && $entry[0] === $mtime) {
-            return $entry[1];
-        }
-
-        $parsed = Yaml::parse(file_get_contents($path) ?: '') ?: [];
-        self::$yamlCache[$path] = [$mtime, $parsed];
-
-        return $parsed;
-    }
-
-    /**
-     * The memo key prefix shared by every context-dependent entry.
-     */
-    private static function runtimeContextKey(): string
-    {
-        return (TenantHelper::getSelectedTenantId() ?? 0).'|'.(self::getCurrentApp() ?? '');
-    }
-
-    /**
      * @param  class-string|null  $modelClass  the model the detail renders, when known — forwarded to the
      *                                         override resolver, which cannot read it off the YAML.
      */
@@ -176,7 +150,7 @@ class StaticConfigHelper
         }
 
         foreach (self::getModuleSourcePaths($app) as $moduleSource) {
-            $sourcePath = $moduleSource.DIRECTORY_SEPARATOR.$dir.DIRECTORY_SEPARATOR.$subPath.'.yml';
+            $sourcePath = $moduleSource . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR . $subPath . '.yml';
             if (file_exists($sourcePath)) {
                 return $sourcePath;
             }
@@ -295,12 +269,12 @@ class StaticConfigHelper
 
             $paths = [];
             foreach ($roots as $root) {
-                $basePath = $root.DIRECTORY_SEPARATOR."lists/{$subPath}.yml";
+                $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
                 if (! isset($paths['default']) && file_exists($basePath)) {
                     $paths['default'] = $basePath;
                 }
 
-                $variantPaths = glob($root.DIRECTORY_SEPARATOR."lists/{$subPath}--*.yml") ?: [];
+                $variantPaths = glob($root . DIRECTORY_SEPARATOR . "lists/{$subPath}--*.yml") ?: [];
                 foreach ($variantPaths as $variantPath) {
                     $key = Str::afterLast(basename($variantPath, '.yml'), '--');
                     if ($key === '' || isset($paths[$key])) {
@@ -379,6 +353,53 @@ class StaticConfigHelper
     }
 
     /**
+     * Derive the flat list component/YAML name from a model class:
+     * Customer::class → "customers-list", ProductGroup::class → "product-groups-list".
+     * Inverse of the componentToListName() naming convention — it only holds for
+     * models whose list follows that convention, which is why callers hide their
+     * feature instead of guessing when no model is declared.
+     */
+    public static function modelToListComponent(string $modelClass): string
+    {
+        return Str::plural(Str::kebab(class_basename($modelClass))) . '-list';
+    }
+
+    /**
+     * Derive the detail component/YAML name from a model class:
+     * Customer::class → "customer-detail".
+     */
+    public static function modelToDetailComponent(string $modelClass): string
+    {
+        return Str::kebab(class_basename($modelClass)) . '-detail';
+    }
+
+    /**
+     * Parse a YAML file through the mtime-guarded cache: an edited file (dev,
+     * test fixtures) is re-parsed, an unchanged one is parsed once per process.
+     */
+    private static function parseYamlFile(string $path): array
+    {
+        $mtime = @filemtime($path) ?: 0;
+        $entry = self::$yamlCache[$path] ?? null;
+        if ($entry !== null && $entry[0] === $mtime) {
+            return $entry[1];
+        }
+
+        $parsed = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+        self::$yamlCache[$path] = [$mtime, $parsed];
+
+        return $parsed;
+    }
+
+    /**
+     * The memo key prefix shared by every context-dependent entry.
+     */
+    private static function runtimeContextKey(): string
+    {
+        return (TenantHelper::getSelectedTenantId() ?? 0) . '|' . (self::getCurrentApp() ?? '');
+    }
+
+    /**
      * Display labels for the allowed app folders: folder (lowercase) => TenantApp title.
      * Folders without a TenantApp row (e.g. 'setup') fall back in getListViews().
      *
@@ -386,7 +407,7 @@ class StaticConfigHelper
      */
     private static function appLabels(): array
     {
-        $cacheKey = 'appLabels.'.(TenantHelper::getSelectedTenantId() ?? 0);
+        $cacheKey = 'appLabels.' . (TenantHelper::getSelectedTenantId() ?? 0);
 
         return self::$runtimeCache[$cacheKey] ??= (function (): array {
             $labels = ['setup' => __('Setup')];
@@ -453,33 +474,12 @@ class StaticConfigHelper
     }
 
     /**
-     * Derive the flat list component/YAML name from a model class:
-     * Customer::class → "customers-list", ProductGroup::class → "product-groups-list".
-     * Inverse of the componentToListName() naming convention — it only holds for
-     * models whose list follows that convention, which is why callers hide their
-     * feature instead of guessing when no model is declared.
-     */
-    public static function modelToListComponent(string $modelClass): string
-    {
-        return Str::plural(Str::kebab(class_basename($modelClass))).'-list';
-    }
-
-    /**
-     * Derive the detail component/YAML name from a model class:
-     * Customer::class → "customer-detail".
-     */
-    public static function modelToDetailComponent(string $modelClass): string
-    {
-        return Str::kebab(class_basename($modelClass)).'-detail';
-    }
-
-    /**
      * Get allowed app folders for the current tenant.
      * Convention: folder name = strtolower(TenantApp.name)
      */
     private static function getAllowedAppFolders(): array
     {
-        $cacheKey = 'allowedFolders.'.(TenantHelper::getSelectedTenantId() ?? 0);
+        $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0);
 
         return self::$runtimeCache[$cacheKey] ??= (function (): array {
             $tenant = TenantHelper::getSelectedTenant();
@@ -505,14 +505,14 @@ class StaticConfigHelper
     {
         // Only HITS are memoised — a config created mid-process (dev, test
         // fixtures, install commands) must be found on the next lookup.
-        $cacheKey = 'configPath.'.self::runtimeContextKey().'.'.$subPath;
+        $cacheKey = 'configPath.' . self::runtimeContextKey() . '.' . $subPath;
         $cached = self::$runtimeCache[$cacheKey] ?? null;
         if ($cached !== null && file_exists($cached)) {
             return $cached;
         }
 
         foreach (self::configSearchRoots() as $root) {
-            $path = $root.DIRECTORY_SEPARATOR.$subPath;
+            $path = $root . DIRECTORY_SEPARATOR . $subPath;
             if (file_exists($path)) {
                 return self::$runtimeCache[$cacheKey] = $path;
             }
@@ -531,7 +531,7 @@ class StaticConfigHelper
      */
     private static function configSearchRoots(): array
     {
-        $cacheKey = 'searchRoots.'.self::runtimeContextKey();
+        $cacheKey = 'searchRoots.' . self::runtimeContextKey();
         if (isset(self::$runtimeCache[$cacheKey])) {
             return self::$runtimeCache[$cacheKey];
         }
@@ -549,7 +549,7 @@ class StaticConfigHelper
 
         $allAppFolders = self::$runtimeCache['activeAppFolders'] ??= TenantApp::where('is_active', true)
             ->pluck('name')
-            ->map(fn ($name) => mb_strtolower($name))
+            ->map(fn($name) => mb_strtolower($name))
             ->toArray();
 
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
@@ -655,7 +655,7 @@ class StaticConfigHelper
     private static function copyComponentsFromDirectory(string $sourceDir, array $componentMapping, string $userGroup): array
     {
         $results = [];
-        $files = glob($sourceDir.'/*.yml');
+        $files = glob($sourceDir . '/*.yml');
 
         foreach ($files as $file) {
             $componentName = basename($file, '.yml');
@@ -689,7 +689,7 @@ class StaticConfigHelper
     private static function copyComponentToModule(string $sourceFile, string $module, string $componentName): bool
     {
         $targetDir = base_path("app-modules/{$module}/content/components");
-        $targetFile = $targetDir."/{$componentName}.yml";
+        $targetFile = $targetDir . "/{$componentName}.yml";
 
         // Create directory if it doesn't exist
         if (! is_dir($targetDir)) {
@@ -761,7 +761,7 @@ class StaticConfigHelper
                 continue;
             }
 
-            $appConfigsPath = $appModulesPath.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR.'app-configs';
+            $appConfigsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-configs';
             if (! is_dir($appConfigsPath)) {
                 continue;
             }
@@ -772,7 +772,7 @@ class StaticConfigHelper
                     continue;
                 }
 
-                $fullPath = $appConfigsPath.DIRECTORY_SEPARATOR.$appKey;
+                $fullPath = $appConfigsPath . DIRECTORY_SEPARATOR . $appKey;
                 if (is_dir($fullPath)) {
                     $mappings[$appKey][] = $module;
                 }

@@ -65,7 +65,7 @@ it('prefers a registered relation type over the table convention', function (): 
         'widgets-list',
         null,
         Customer::class,
-        titleResolver: fn (mixed $model): string => 'WIDGET:'.$model->name,
+        titleResolver: fn(mixed $model): string => 'WIDGET:' . $model->name,
     ));
 
     expect(app(RelationTitleResolver::class)->title('widget_id', $customer->id))->toBe('WIDGET:Erika Musterfrau');

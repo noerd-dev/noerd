@@ -27,11 +27,11 @@ final class ColumnFilterParser
         if (preg_match('/^\s*(>=|<=|!=|<>|=|>|<)\s*(.*)$/u', $raw, $matches)) {
             return [
                 'op' => $matches[1] === '<>' ? '!=' : $matches[1],
-                'value' => trim($matches[2]),
+                'value' => mb_trim($matches[2]),
             ];
         }
 
-        return ['op' => null, 'value' => trim($raw)];
+        return ['op' => null, 'value' => mb_trim($raw)];
     }
 
     /**
@@ -39,7 +39,7 @@ final class ColumnFilterParser
      */
     public static function apply(Builder $query, string $field, string $type, string $raw): void
     {
-        if (trim($raw) === '') {
+        if (mb_trim($raw) === '') {
             return;
         }
 
@@ -47,14 +47,14 @@ final class ColumnFilterParser
             in_array($type, ['bool', 'boolean', 'inversebool'], true) => self::applyBool($query, $field, $raw),
             in_array($type, ['number', 'currency'], true) => self::applyNumber($query, $field, $raw),
             in_array($type, ['date', 'datetime'], true) => self::applyDate($query, $field, $raw),
-            in_array($type, ['badge', 'select'], true) => $query->where($field, '=', trim($raw)),
+            in_array($type, ['badge', 'select'], true) => $query->where($field, '=', mb_trim($raw)),
             default => self::applyText($query, $field, $raw),
         };
     }
 
     private static function applyBool(Builder $query, string $field, string $raw): void
     {
-        $value = trim($raw);
+        $value = mb_trim($raw);
         if ($value !== '1' && $value !== '0') {
             return;
         }

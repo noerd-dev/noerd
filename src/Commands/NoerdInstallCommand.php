@@ -237,7 +237,7 @@ class NoerdInstallCommand extends Command
                 $cssContent = str_replace(
                     "@import 'tailwindcss';",
                     "@import 'tailwindcss';\n" . $noerdImport,
-                    $cssContent
+                    $cssContent,
                 );
             } else {
                 $cssContent = $noerdImport . "\n" . $cssContent;

@@ -134,13 +134,13 @@ describe('StaticConfigHelper runtime memoisation', function (): void {
     beforeEach(function (): void {
         $this->listDir = base_path('app-configs/setup/lists');
         File::ensureDirectoryExists($this->listDir);
-        $this->memoFixture = $this->listDir.'/zz-memo-test-list.yml';
+        $this->memoFixture = $this->listDir . '/zz-memo-test-list.yml';
         File::put($this->memoFixture, 'title: Memo One');
     });
 
     afterEach(function (): void {
         File::delete($this->memoFixture);
-        File::delete($this->listDir.'/zz-memo-late-list.yml');
+        File::delete($this->listDir . '/zz-memo-late-list.yml');
     });
 
     it('does not repeat the tenant queries on subsequent config lookups', function (): void {
@@ -173,7 +173,7 @@ describe('StaticConfigHelper runtime memoisation', function (): void {
     it('finds a config created after a failed lookup', function (): void {
         expect(StaticConfigHelper::getListConfig('zz-memo-late-list'))->toBe([]);
 
-        File::put($this->listDir.'/zz-memo-late-list.yml', 'title: Late');
+        File::put($this->listDir . '/zz-memo-late-list.yml', 'title: Late');
 
         expect(StaticConfigHelper::getListConfig('zz-memo-late-list')['title'])->toBe('Late');
     });

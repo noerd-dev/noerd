@@ -25,7 +25,7 @@ class RecordingLayoutOverrideResolver implements LayoutOverrideResolver
 
     public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
-        static::$seen[] = $viewType.'|'.$component;
+        static::$seen[] = $viewType . '|' . $component;
         static::$seenModels[] = $modelClass;
 
         return $config;

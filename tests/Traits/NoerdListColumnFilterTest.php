@@ -258,6 +258,20 @@ class TestableColumnFilterListComponent extends Component
 
     public const COMPONENT = 'testable-column-filter-list';
 
+    public function with(): array
+    {
+        return [
+            'listConfig' => $this->buildList(
+                $this->listQuery(NoerdUser::class)->paginate($this->perPage),
+            ),
+        ];
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
     protected function getListConfig(?string $customName = null): array
     {
         return [
@@ -271,20 +285,6 @@ class TestableColumnFilterListComponent extends Component
                 ['field' => 'custom_attributes.color', 'label' => 'Color'],
             ],
         ];
-    }
-
-    public function with(): array
-    {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(NoerdUser::class)->paginate($this->perPage),
-            ),
-        ];
-    }
-
-    public function render(): string
-    {
-        return '<div></div>';
     }
 }
 

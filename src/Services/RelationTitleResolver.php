@@ -28,7 +28,7 @@ final class RelationTitleResolver
             return null;
         }
 
-        $key = $fkColumn.'|'.$id;
+        $key = $fkColumn . '|' . $id;
 
         return $this->titles[$key] ??= $this->resolve($fkColumn, $id);
     }
@@ -37,7 +37,7 @@ final class RelationTitleResolver
     {
         $base = Str::beforeLast($fkColumn, '_id');
 
-        $definition = $this->registry->resolve(Str::camel($base).'Relation');
+        $definition = $this->registry->resolve(Str::camel($base) . 'Relation');
         if ($definition !== null) {
             $title = $definition->resolveTitleForValue($id);
             if ($title !== '') {
@@ -49,7 +49,7 @@ final class RelationTitleResolver
         $nameColumn = $this->nameColumn($table);
         if ($nameColumn !== false) {
             $name = DB::table($table)->where('id', $id)->value($nameColumn);
-            if (is_string($name) && trim($name) !== '') {
+            if (is_string($name) && mb_trim($name) !== '') {
                 return $name;
             }
         }

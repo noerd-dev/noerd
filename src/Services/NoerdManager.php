@@ -13,7 +13,7 @@ class NoerdManager
 
         if ($current === null) {
             throw new RuntimeException(
-                'Noerd::modal() must be called from within a Livewire request lifecycle.'
+                'Noerd::modal() must be called from within a Livewire request lifecycle.',
             );
         }
 

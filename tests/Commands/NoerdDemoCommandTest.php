@@ -22,12 +22,12 @@ class DemoCommandWithoutNoerdFixture extends NoerdDemoCommand
     }
 }
 
-it('uses the RequiresNoerdInstallation trait', function () {
+it('uses the RequiresNoerdInstallation trait', function (): void {
     expect(class_uses_recursive(NoerdDemoCommand::class))
         ->toContain(RequiresNoerdInstallation::class);
 });
 
-it('aborts without installing anything when noerd is not installed', function () {
+it('aborts without installing anything when noerd is not installed', function (): void {
     $command = new DemoCommandWithoutNoerdFixture();
     $command->setLaravel(app());
 

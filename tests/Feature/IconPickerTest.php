@@ -12,7 +12,7 @@ it('exposes the full heroicon list', function (): void {
 
     Livewire::actingAs($user)
         ->test('noerd::icon-picker', ['context' => 'detailData.icon'])
-        ->assertViewHas('icons', fn ($icons): bool => count($icons) > 300);
+        ->assertViewHas('icons', fn($icons): bool => count($icons) > 300);
 });
 
 it('writes the chosen icon to the parent detail and closes the modal', function (): void {
