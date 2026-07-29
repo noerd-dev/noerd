@@ -177,9 +177,12 @@ class MakeModuleCommand extends Command
 namespace Noerd\\{$this->moduleNameStudly}\\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Noerd\Traits\BelongsToTenant;
 
 class {$this->modelNameStudly} extends Model
 {
+    use BelongsToTenant;
+
     protected \$guarded = ['id'];
 
     protected \$casts = [
@@ -275,11 +278,9 @@ PHP;
 
     private function createTranslations(): void
     {
+        // English is the key itself (flat JSON translations) — only de.json is generated.
         $deContent = $this->getStub('lang-de.stub');
         $this->filesystem->put("{$this->basePath}/resources/lang/de.json", $deContent);
-
-        $enContent = $this->getStub('lang-en.stub');
-        $this->filesystem->put("{$this->basePath}/resources/lang/en.json", $enContent);
 
         $this->line('<info>✓ Created:</info> Translations');
     }

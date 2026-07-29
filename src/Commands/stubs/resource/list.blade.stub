@@ -1,17 +1,13 @@
 <?php
 
 use Livewire\Component;
-use Noerd\Facades\Noerd;
 use Noerd\Traits\NoerdList;
 use {{ModelClass}};
 
 new class extends Component {
     use NoerdList;
 
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('{{entity}}-detail', ['modelId' => $modelId, 'relations' => $relations]);
-    }
+    public $detailComponent = '{{entity}}-detail';
 
     public function with(): array
     {

@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
-use Noerd\Facades\Noerd;
 use Noerd\Support\SetupCollectionDefinitionData;
 use Noerd\Traits\NoerdList;
 
@@ -13,15 +12,12 @@ new class extends Component
 {
     use NoerdList;
 
+    public $detailComponent = 'noerd::setup-collection-definition-detail';
+
     public function mount(): void
     {
         $this->listId = Str::random();
         $this->loadListFilters();
-    }
-
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('noerd::setup-collection-definition-detail', ['modelId' => $modelId, 'relations' => $relations]);
     }
 
     public function with(): array

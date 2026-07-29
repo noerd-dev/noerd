@@ -1,42 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Noerd\Facades\Noerd;
 use Noerd\Traits\NoerdList;
 use Noerd\{{ModuleName}}\Models\{{Model}};
 
 new class extends Component {
-
     use NoerdList;
 
-    public const DETAIL_COMPONENT = '{{module-name}}::{{models}}-list';
-
-    public function listAction(mixed $modelId = null, array $relations = []): void
-    {
-        Noerd::modal('{{module-name}}::{{model}}-detail', ['{{model}}Id' => $modelId, 'relations' => $relations]);
-    }
-
-    public function with(): array
-    {
-        $rows = {{Model}}::where('tenant_id', Auth::user()->selected_tenant_id)
-            ->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')
-            ->when($this->search, function ($query): void {
-                $query->where('name', 'like', '%' . $this->search . '%');
-            })
-            ->paginate($this->perPage);
-
-        $listConfig = $this->getListConfig();
-
-        return [
-            'rows' => $rows,
-            'listSettings' => $listConfig,
-        ];
-    }
-} ?>
+    public $listModel = {{Model}}::class;
+    public $detailComponent = '{{module-name}}::{{model}}-detail';
+};
+?>
 
 <x-noerd::page>
-    <div>
-        @include('noerd::components.table.table-build', ['listSettings' => $listConfig])
-    </div>
+    <x-noerd::list/>
 </x-noerd::page>

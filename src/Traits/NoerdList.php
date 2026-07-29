@@ -486,6 +486,12 @@ trait NoerdList
      */
     public function openListRow(int|string $modelId): void
     {
+        // Rows without an id (aggregated/grouped lists) render an empty id —
+        // a click on them stays a no-op, exactly like the index path resolves it.
+        if ($modelId === '') {
+            return;
+        }
+
         if ($this->returnsSelection) {
             $this->toggleRecordSelection($modelId);
 
