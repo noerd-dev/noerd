@@ -7,7 +7,7 @@ use RuntimeException;
 
 class NoerdManager
 {
-    public function modal(string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $quickCreate = false): void
+    public function modal(string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $quickCreate = false, ?string $url = null): void
     {
         $current = Livewire::current();
 
@@ -30,6 +30,7 @@ class NoerdManager
             arguments: $arguments,
             position: $position,
             size: $size,
+            url: $url,
         );
     }
 }

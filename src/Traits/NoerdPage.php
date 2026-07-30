@@ -77,6 +77,10 @@ trait NoerdPage
 
     public function initPage(): void
     {
+        if ($this->redirectToListModal()) {
+            return;
+        }
+
         // Pages backed by a single Eloquent model declare $detailModel — the
         // record is loaded into $detailData exactly like a detail would.
         if (isset($this->detailModel)) {
@@ -91,6 +95,40 @@ trait NoerdPage
         $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
 
         $this->resolveQuickCreate();
+    }
+
+    /**
+     * A detail full page opened with ?modal=true (the URL a detailRoute list
+     * writes while its modal is open) redirects back to the page the user last
+     * visited in this session (whatever it is — the accounts list, the vouchers
+     * list, the dashboard) and reopens the record as a modal OVER that page via
+     * a flashed instruction the noerd-modal stack consumes on mount. No owning
+     * list is derived. Without a previous page (fresh session, reload of the
+     * link itself) the plain full page renders. Only applies to real page
+     * loads: inside a modal the component mounts during a Livewire request
+     * (X-Livewire header) and is never redirected.
+     */
+    protected function redirectToListModal(): bool
+    {
+        if (! $this->modelId || $this->embedded || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
+            return false;
+        }
+
+        $previousUrl = session()->previousUrl();
+
+        if (! $previousUrl || $previousUrl === request()->fullUrl()) {
+            return false;
+        }
+
+        session()->flash('noerd-modal.open', [
+            'component' => $this->getName(),
+            'arguments' => ['modelId' => $this->modelId],
+            'url' => request()->fullUrl(),
+        ]);
+
+        $this->redirect($previousUrl);
+
+        return true;
     }
 
     public function closeModalProcess(?string $source = null): void
