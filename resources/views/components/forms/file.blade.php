@@ -16,25 +16,20 @@
 @endphp
 
 <div>
-    @if($label)
-        <x-noerd::input-label for="{{ $name }}" :value="__($label)"/>
+    @if ($label)
+        <x-noerd::input-label for="{{ $name }}" :value="__($label)" />
     @endif
     <input
         type="file"
         id="{{ $name }}"
-        @if($live)
+        @if ($live)
             wire:model.live="{{ $name }}"
         @else
             wire:model="{{ $name }}"
         @endif
-        @if($multiple) multiple @endif
-        @if($accept) accept="{{ $accept }}" @endif
-        class="w-full border rounded-lg block text-base sm:text-sm py-2 h-10 ps-3 pe-3
-               bg-white text-zinc-700
-               border-zinc-200
-               file:mr-4 file:py-1 file:px-4 file:rounded file:border-0
-               file:text-sm file:font-medium file:bg-zinc-100 file:text-zinc-700
-               focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
-    >
-    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
+        @if ($multiple) multiple @endif
+        @if ($accept) accept="{{ $accept }}" @endif
+        class="focus:ring-brand-border block h-10 w-full rounded-lg border border-zinc-200 bg-white py-2 ps-3 pe-3 text-base text-zinc-700 file:mr-4 file:rounded file:border-0 file:bg-zinc-100 file:px-4 file:py-1 file:text-sm file:font-medium file:text-zinc-700 focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
+    />
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

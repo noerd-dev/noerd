@@ -12,7 +12,7 @@
         @php
             // Resolve the $modelId token in the arguments (same convention as the relation box)
             $arguments = collect($list['arguments'] ?? [])
-                ->map(fn ($value) => $value === '$modelId' ? $modelId : $value)
+                ->map(fn($value) => $value === '$modelId' ? $modelId : $value)
                 ->all();
         @endphp
 
@@ -22,6 +22,7 @@
             :component="$list['component'] ?? null"
             :arguments="$arguments"
             :lazy="$list['lazy'] ?? false"
-            :wireKey="'detail-list-' . ($list['component'] ?? '') . '-' . $modelId" />
+            :wireKey="'detail-list-' . ($list['component'] ?? '') . '-' . $modelId"
+        />
     @endforeach
 @endif

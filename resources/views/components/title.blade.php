@@ -1,4 +1,1 @@
-<div class="lg:flex items-center font-semibold lg:h-[30px] mx-auto my-auto text-slate-900 w-full">
-    {{$slot}}
-</div>
-
+<div class="mx-auto my-auto w-full items-center font-semibold text-slate-900 lg:flex lg:h-[30px]">{{ $slot }}</div>

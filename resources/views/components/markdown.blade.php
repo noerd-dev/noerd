@@ -13,6 +13,4 @@
     ]);
 @endphp
 
-<div {{ $attributes->merge(['class' => 'rich-text']) }}>
-    {!! $html !!}
-</div>
+<div {{ $attributes->merge(['class' => 'rich-text']) }}>{!! $html !!}</div>

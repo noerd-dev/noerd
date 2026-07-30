@@ -1,28 +1,40 @@
 <x-slot:header>
     <x-noerd::modal-title>
         <div class="pb-3 lg:pb-0">
-            @if(count($listViews ?? []) > 1)
+            @if (count($listViews ?? []) > 1)
                 {{-- List-view switcher: pick one of several YAML views for this list --}}
                 <div x-data="{ open: false }" class="relative">
-                    <button type="button"
-                            x-on:click="open = ! open" x-on:click.outside="open = false"
-                            class="flex items-center gap-1 rounded focus:outline-hidden"
-                            :aria-expanded="open" aria-haspopup="true"
-                            title="{{ __('Switch list view') }}">
+                    <button
+                        type="button"
+                        x-on:click="open = ! open"
+                        x-on:click.outside="open = false"
+                        class="flex items-center gap-1 rounded focus:outline-hidden"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="{{ __('Switch list view') }}"
+                    >
                         {{ $title }}
-                        @if(isset($rows) && ! is_array($rows))
+                        @if (isset($rows) && ! is_array($rows))
                             <span class="font-light">({{ $rows->total() }})</span>
                         @endif
-                        <x-noerd::icons.chevron-down class="my-auto text-gray-500"/>
+                        <x-noerd::icons.chevron-down class="my-auto text-gray-500" />
                     </button>
-                    <div x-show="open" x-transition x-cloak
-                         class="absolute left-0 z-90 mt-2 w-56 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                         role="menu" aria-orientation="vertical">
-                        @foreach($listViews as $viewKey => $view)
-                            <button type="button" role="menuitem"
-                                    wire:click="switchListView('{{ $viewKey }}')"
-                                    x-on:click="open = false"
-                                    class="block w-full px-4 py-2 text-left text-sm {{ $viewKey === $activeListView ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }} hover:bg-gray-50">
+                    <div
+                        x-show="open"
+                        x-transition
+                        x-cloak
+                        class="absolute left-0 z-90 mt-2 w-56 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
+                        role="menu"
+                        aria-orientation="vertical"
+                    >
+                        @foreach ($listViews as $viewKey => $view)
+                            <button
+                                type="button"
+                                role="menuitem"
+                                wire:click="switchListView('{{ $viewKey }}')"
+                                x-on:click="open = false"
+                                class="block w-full px-4 py-2 text-left text-sm {{ $viewKey === $activeListView ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }} hover:bg-gray-50"
+                            >
                                 {{ __($view['title']) }}
                                 <span class="opacity-50">({{ $view['appLabel'] }})</span>
                             </button>
@@ -30,11 +42,9 @@
                     </div>
                 </div>
             @else
-                {{$title}}
-                @if(isset($rows) && ! is_array($rows))
-                    <span class="font-light">
-                        ({{ $rows->total() }})
-                    </span>
+                {{ $title }}
+                @if (isset($rows) && ! is_array($rows))
+                    <span class="font-light"> ({{ $rows->total() }}) </span>
                 @endif
             @endif
         </div>
@@ -42,23 +52,31 @@
         @php
             $columnFiltersActive = collect($this->listColumnFilters ?? [])->filter()->isNotEmpty();
         @endphp
-        @if($this->tableFilters() || $columnFiltersActive)
-            <div class="flex items-center ml-4">
-                @foreach($this->tableFilters() as $tableFilter)
-                    @if(in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
-                        <x-noerd::filters.date-dropdown :filter="$tableFilter"
-                                                        :value="$this->listFilters[$tableFilter['column']] ?? ''"/>
+        @if ($this->tableFilters() || $columnFiltersActive)
+            <div class="ml-4 flex items-center">
+                @foreach ($this->tableFilters() as $tableFilter)
+                    @if (in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
+                        <x-noerd::filters.date-dropdown
+                            :filter="$tableFilter"
+                            :value="$this->listFilters[$tableFilter['column']] ?? ''"
+                        />
                     @else
-                        <x-noerd::filters.picklist :filter="$tableFilter"
-                                                   :value="$this->listFilters[$tableFilter['column']] ?? ''"/>
+                        <x-noerd::filters.picklist
+                            :filter="$tableFilter"
+                            :value="$this->listFilters[$tableFilter['column']] ?? ''"
+                        />
                     @endif
                 @endforeach
-                @if(collect($this->listFilters)->filter()->isNotEmpty() || $columnFiltersActive)
-                    <x-noerd::button variant="icon" size="sm" icon="x-mark"
-                                     type="button"
-                                     wire:click="clearAllListFilters"
-                                     :title="__('Clear all filters')"
-                                     class="-ml-3"/>
+                @if (collect($this->listFilters)->filter()->isNotEmpty() || $columnFiltersActive)
+                    <x-noerd::button
+                        variant="icon"
+                        size="sm"
+                        icon="x-mark"
+                        type="button"
+                        wire:click="clearAllListFilters"
+                        :title="__('Clear all filters')"
+                        class="-ml-3"
+                    />
                 @endif
             </div>
         @endif
@@ -76,36 +94,48 @@
             $actionsRendered = !empty($actions) && !($this->returnsSelection ?? false);
         @endphp
 
-        @if((isset($disableSearch) && !$disableSearch) || $showCsvExport)
-            <div @unless($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
-            class="ml-auto mr-2 flex items-center gap-2">
-                @if($showCsvExport)
-                    <x-noerd::button variant="secondary" icon="arrow-down-tray"
-                                     class="h-8"
-                                     title="{{ __('Export CSV') }}"
-                                     wire:click="exportCsv">
+        @if ((isset($disableSearch) && !$disableSearch) || $showCsvExport)
+            <div
+                @unless ($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
+                class="mr-2 ml-auto flex items-center gap-2"
+            >
+                @if ($showCsvExport)
+                    <x-noerd::button
+                        variant="secondary"
+                        icon="arrow-down-tray"
+                        class="h-8"
+                        title="{{ __('Export CSV') }}"
+                        wire:click="exportCsv"
+                    >
                         CSV
                     </x-noerd::button>
                 @endif
-                @if(isset($disableSearch) && !$disableSearch)
-                    <div x-data="{ searchFocused: false }"
-                         @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }">
+                @if (isset($disableSearch) && !$disableSearch)
+                    <div
+                        x-data="{ searchFocused: false }"
+                        @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }"
+                    >
                         <div class="relative">
                             <x-noerd::text-input
                                 x-ref="searchInput"
                                 @focus="searchFocused = true"
                                 @blur="searchFocused = false"
                                 @keydown.escape="$refs.searchInput.blur()"
-                                placeholder="{{ __('Search') }}" wire:model.live="search" type="text"
-                                class="min-w-[200px] !mt-0 mb-3 lg:mb-0 h-8 pr-8"/>
-                            <kbd x-show="!searchFocused"
-                                 x-transition:enter="transition ease-out duration-100"
-                                 x-transition:enter-start="opacity-0"
-                                 x-transition:enter-end="opacity-100"
-                                 x-transition:leave="transition ease-in duration-75"
-                                 x-transition:leave-start="opacity-100"
-                                 x-transition:leave-end="opacity-0"
-                                 class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">{{ $searchShortcut['badge'] }}</kbd>
+                                placeholder="{{ __('Search') }}"
+                                wire:model.live="search"
+                                type="text"
+                                class="!mt-0 mb-3 h-8 min-w-[200px] pr-8 lg:mb-0"
+                            />
+                            <kbd
+                                x-show="! searchFocused"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="opacity-0"
+                                x-transition:enter-end="opacity-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="opacity-100"
+                                x-transition:leave-end="opacity-0"
+                                class="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500"
+                            >{{ $searchShortcut['badge'] }}</kbd>
                         </div>
                     </div>
                 @endif
@@ -113,32 +143,35 @@
         @else
             <div class="ml-auto"></div>
         @endif
-        @unless($this->returnsSelection ?? false)
+        @unless ($this->returnsSelection ?? false)
             @php
                 $listHeaderActions = app(\Noerd\Services\HeaderActionsRegistry::class)->listActions();
             @endphp
-            @if($listHeaderActions !== [])
+            @if ($listHeaderActions !== [])
                 {{-- Collapses when every action hid itself: the children are
                      server-rendered before Alpine initializes, so probing for a
                      button is reliable. Without this an empty wrapper would still
                      carry its mr-2/modalControlsClass margins. --}}
-                <div x-data="{ hasActions: false }"
-                     x-init="hasActions = $el.querySelector('button') !== null"
-                     x-show="hasActions" x-cloak
-                     @unless($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
-                     class="flex shrink-0 items-center gap-1 mr-2">
-                    @foreach($listHeaderActions as $listHeaderAction)
+                <div
+                    x-data="{ hasActions: false }"
+                    x-init="hasActions = $el.querySelector('button') !== null"
+                    x-show="hasActions"
+                    x-cloak
+                    @unless ($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
+                    class="mr-2 flex shrink-0 items-center gap-1"
+                >
+                    @foreach ($listHeaderActions as $listHeaderAction)
                         @livewire($listHeaderAction, [
                             'model' => $this->listModel ?? null,
                             'component' => $this->getComponentName(),
-                        ], key('list-header-action-'.$listHeaderAction))
+                        ], key('list-header-action-' . $listHeaderAction))
                     @endforeach
                 </div>
             @endif
         @endunless
-        @if(!empty($actions) && !($this->returnsSelection ?? false))
+        @if (!empty($actions) && !($this->returnsSelection ?? false))
             <div :class="isModal ? modalControlsClass : ''" class="flex gap-2">
-                @foreach($actions as $actionIndex => $actionItem)
+                @foreach ($actions as $actionIndex => $actionItem)
                     @php
                         $isSecondary = ($actionItem['style'] ?? '') === 'secondary';
                         $effectiveShortcut = $actionItem['shortcut']
@@ -148,30 +181,35 @@
                             ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . $actionItem['action'], $effectiveShortcut)
                             : null;
                     @endphp
-                    @if($hasShortcut)
-                        <div x-data
-                             @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }">
-                            @else
-                                <div>
-                                    @endif
-                                    <x-noerd::button
-                                        :variant="$isSecondary ? 'secondary' : 'primary'"
-                                        :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
-                                        x-ref="actionBtn{{ $actionIndex }}"
-                                        class="relative h-8"
-                                        wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})">
-                                        {{ __($actionItem['label']) }}
-                                        @if($hasShortcut)
-                                            <kbd @class([
+                    @if ($hasShortcut)
+                        <div
+                            x-data
+                            @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }"
+                        >
+                    @else
+                        <div>
+                    @endif
+                    <x-noerd::button
+                        :variant="$isSecondary ? 'secondary' : 'primary'"
+                        :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
+                        x-ref="actionBtn{{ $actionIndex }}"
+                        class="relative h-8"
+                        wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})"
+                    >
+                        {{ __($actionItem['label']) }}
+                        @if ($hasShortcut)
+                            <kbd
+                                @class([
                                     'ml-2 rounded px-1 py-0.5 text-xs',
                                     'border border-gray-300 bg-gray-100 text-gray-500' => $isSecondary,
                                     'border border-white/30 bg-white/20 text-brand-primary-text' => !$isSecondary,
-                                ])>{{ $shortcut['badge'] }}</kbd>
-                                        @endif
-                                    </x-noerd::button>
-                                </div>
-                                @endforeach
-                        </div>
+                                ])
+                            >{{ $shortcut['badge'] }}</kbd>
+                        @endif
+                    </x-noerd::button>
+                    </div>
+                @endforeach
+            </div>
         @endif
     </x-noerd::modal-title>
 </x-slot:header>

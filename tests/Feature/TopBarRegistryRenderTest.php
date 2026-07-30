@@ -26,7 +26,7 @@ beforeEach(function (): void {
 });
 
 it('renders a component a module registered', function (): void {
-    Livewire::component('test-top-bar-item', new class () extends Component {
+    Livewire::component('test-top-bar-item', new class extends Component {
         public function render(): string
         {
             return '<div>registered-top-bar-item</div>';

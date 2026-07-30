@@ -29,7 +29,7 @@
         @endif
 
         {{-- Break the compact list out to the full detail width, then re-pad so it aligns cleanly --}}
-        <div class="-ml-6 -mr-6">
+        <div class="-mr-6 -ml-6">
             <div class="mx-8">
                 @livewire($component, $params, key($listKey))
             </div>

@@ -4,17 +4,17 @@
     // quickCreate may be passed explicitly, but normally rides inside the layout
     // (set from the detail YAML `quickCreate: true` and resolved per record by NoerdDetail),
     // so detail blades don't need to wire the prop. An explicit prop still wins.
-    $quickCreate = $quickCreate ?? ($layout['quickCreate'] ?? false);
+    $quickCreate ??= ($layout['quickCreate'] ?? false);
 @endphp
 
-@if($quickCreate)
+@if ($quickCreate)
     @php
         // Quick-create renders only the mandatory fields (required, or explicitly
         // opted in via `quickCreate: true`) as a single vertical column. Tabs and
         // the block heading are dropped so the modal stays compact under its title.
         $quickFields = array_values(array_filter(
             $layout['fields'] ?? [],
-            fn ($field) => ($field['required'] ?? false) || ($field['quickCreate'] ?? false),
+            fn($field) => ($field['required'] ?? false) || ($field['quickCreate'] ?? false),
         ));
         $quickFields = array_map(function ($field) {
             $field['colspan'] = 12;
@@ -25,7 +25,7 @@
         unset($quickLayout['tabs'], $quickLayout['title'], $quickLayout['description']);
     @endphp
 
-    <div class="py-6 [&>div>div]:py-0">
+    <div class="[&>div>div]:py-0 py-6">
         @include('noerd::components.detail.block', array_merge($quickLayout, ['detailData' => $detailData]))
     </div>
 @else
@@ -39,73 +39,73 @@
 
     {{-- Tab Content Panels --}}
     <x-noerd::tab-panels>
-    @foreach($tabs as $tab)
-        @php
-            // Skip tabs with 'component' - they open as modals, not inline content
-            if (isset($tab['component'])) {
-                continue;
-            }
-
-            $showTab = true;
-            if (isset($tab['requiresId']) && $tab['requiresId'] && !$modelId) {
-                $showTab = false;
-            }
-            if (isset($tab['permission'])) {
-                $permissionModel = $tab['permissionModel'] ?? null;
-                $showTab = $showTab && Gate::allows($tab['permission'], $permissionModel);
-            }
-            if (isset($tab['viewExists']) && !View::exists($tab['viewExists'])) {
-                $showTab = false;
-            }
-
-            // Reactive client-side visibility for the panel — mirrors field-level showIf.
-            $tabShowIf = null;
-            if (isset($tab['showIf'])) {
-                if (is_string($tab['showIf'])) {
-                    $tabShowIf = '$wire.' . $tab['showIf'];
-                } elseif (is_array($tab['showIf'])) {
-                    $tabShowIf = '$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'";
+        @foreach ($tabs as $tab)
+            @php
+                // Skip tabs with 'component' - they open as modals, not inline content
+                if (isset($tab['component'])) {
+                    continue;
                 }
-            }
-        @endphp
 
-        @if($showTab)
-            <x-noerd::tab-panel :number="$tab['number']" :show="$tabShowIf">
-                {{-- Render prepend slot for this tab if it exists (e.g., prependTab1, prependTab2, etc.) --}}
-                @php
-                    $prependSlotName = 'prependTab' . $tab['number'];
-                @endphp
-                @if(isset($$prependSlotName))
-                    {{ $$prependSlotName }}
-                @endif
+                $showTab = true;
+                if (isset($tab['requiresId']) && $tab['requiresId'] && !$modelId) {
+                    $showTab = false;
+                }
+                if (isset($tab['permission'])) {
+                    $permissionModel = $tab['permissionModel'] ?? null;
+                    $showTab = $showTab && Gate::allows($tab['permission'], $permissionModel);
+                }
+                if (isset($tab['viewExists']) && !View::exists($tab['viewExists'])) {
+                    $showTab = false;
+                }
 
-                @if($showBlock)
+                // Reactive client-side visibility for the panel — mirrors field-level showIf.
+                $tabShowIf = null;
+                if (isset($tab['showIf'])) {
+                    if (is_string($tab['showIf'])) {
+                        $tabShowIf = '$wire.' . $tab['showIf'];
+                    } elseif (is_array($tab['showIf'])) {
+                        $tabShowIf = '$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'";
+                    }
+                }
+            @endphp
+
+            @if ($showTab)
+                <x-noerd::tab-panel :number="$tab['number']" :show="$tabShowIf">
+                    {{-- Render prepend slot for this tab if it exists (e.g., prependTab1, prependTab2, etc.) --}}
                     @php
-                        $tabFields = array_filter($fields, fn($field) => ($field['tab'] ?? 1) === $tab['number']);
-                        $tabLayout = array_merge($layout, ['fields' => array_values($tabFields)]);
-                        if ($tab['number'] !== 1) {
-                            unset($tabLayout['title'], $tabLayout['description']);
-                        }
+                        $prependSlotName = 'prependTab' . $tab['number'];
                     @endphp
+                    @if (isset(${$prependSlotName}))
+                        {{ $$prependSlotName }}
+                    @endif
 
-                    @include('noerd::components.detail.block', array_merge($tabLayout, ['detailData' => $detailData]))
-                @endif
+                    @if ($showBlock)
+                        @php
+                            $tabFields = array_filter($fields, fn($field) => ($field['tab'] ?? 1) === $tab['number']);
+                            $tabLayout = array_merge($layout, ['fields' => array_values($tabFields)]);
+                            if ($tab['number'] !== 1) {
+                                unset($tabLayout['title'], $tabLayout['description']);
+                            }
+                        @endphp
 
-                {{-- Render named slot for this tab if it exists (e.g., tab1, tab2, etc.) --}}
-                @php
-                    $slotName = 'tab' . $tab['number'];
-                @endphp
-                @if(isset($$slotName))
-                    {{ $$slotName }}
-                @endif
+                        @include('noerd::components.detail.block', array_merge($tabLayout, ['detailData' => $detailData]))
+                    @endif
 
-                {{-- The default slot is tab-1 content — a single-tab detail can pass
+                    {{-- Render named slot for this tab if it exists (e.g., tab1, tab2, etc.) --}}
+                    @php
+                        $slotName = 'tab' . $tab['number'];
+                    @endphp
+                    @if (isset(${$slotName}))
+                        {{ $$slotName }}
+                    @endif
+
+                    {{-- The default slot is tab-1 content — a single-tab detail can pass
                      its extra markup directly without an explicit tab1 slot. --}}
-                @if($tab['number'] === 1)
-                    {{ $slot }}
-                @endif
-            </x-noerd::tab-panel>
-        @endif
-    @endforeach
+                    @if ($tab['number'] === 1)
+                        {{ $slot }}
+                    @endif
+                </x-noerd::tab-panel>
+            @endif
+        @endforeach
     </x-noerd::tab-panels>
 @endif

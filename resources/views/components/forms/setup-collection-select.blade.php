@@ -10,8 +10,8 @@
 ])
 
 @php
-    use Noerd\Models\SetupCollection;
     use Noerd\Helpers\SetupCollectionHelper;
+    use Noerd\Models\SetupCollection;
 
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
@@ -47,19 +47,19 @@
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" />
     <select
-        @if($live)
+        @if ($live)
             wire:model.live.debounce="{{ $name }}"
         @else
             wire:model="{{ $name }}"
         @endif
-        class="w-full border rounded-lg block disabled:shadow-none appearance-none text-base sm:text-sm py-1 h-8 leading-[1.375rem] ps-3 pe-3 bg-white text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 shadow-xs border-zinc-200 border-b-zinc-300/80 disabled:border-b-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
+        class="focus:ring-brand-border block h-8 w-full appearance-none rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white py-1 ps-3 pe-3 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 shadow-xs focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:border-b-zinc-200 disabled:text-zinc-500 disabled:placeholder-zinc-400/70 disabled:shadow-none sm:text-sm"
         id="{{ $name }}"
     >
-        @foreach($options as $option)
+        @foreach ($options as $option)
             <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
         @endforeach
     </select>
-    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

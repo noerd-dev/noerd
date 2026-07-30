@@ -11,17 +11,16 @@
         ? app(\Noerd\Services\HeaderActionsRegistry::class)->detailActions()
         : [];
 @endphp
-<div class="lg:flex py-6 px-6 border-b border-gray-300">
+<div class="border-b border-gray-300 px-6 py-6 lg:flex">
     <x-noerd::title>
-        {{$slot}}
-        @if(isset($actions) || $detailHeaderActions !== [])
-            <div class="ml-auto flex items-center gap-4 shrink-0"
-                 :class="isModal ? modalControlsClass : ''">
-                @foreach($detailHeaderActions as $detailHeaderAction)
+        {{ $slot }}
+        @if (isset($actions) || $detailHeaderActions !== [])
+            <div class="ml-auto flex shrink-0 items-center gap-4" :class="isModal ? modalControlsClass : ''">
+                @foreach ($detailHeaderActions as $detailHeaderAction)
                     @livewire($detailHeaderAction, [
                         'model' => $headerActionHost->detailModel ?? null,
                         'component' => $headerActionHost->getName(),
-                    ], key('detail-header-action-'.$detailHeaderAction))
+                    ], key('detail-header-action-' . $detailHeaderAction))
                 @endforeach
                 {{ $actions ?? '' }}
             </div>

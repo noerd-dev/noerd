@@ -18,17 +18,17 @@
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" />
 
     <textarea
         placeholder="{{ $value }}"
         wire:model="{{ $name }}"
         name="{{ $name }}"
         rows="{{ $rows }}"
-        class="w-full border rounded-lg block read-only:shadow-none appearance-none text-base sm:text-sm py-2 leading-[1.375rem] ps-3 pe-3 bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 shadow-xs border-zinc-200 border-b-zinc-300/80 read-only:border-b-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
+        class="focus:ring-brand-border block w-full appearance-none rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white py-2 ps-3 pe-3 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 shadow-xs read-only:border-b-zinc-200 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 read-only:shadow-none focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
         {{ $readonly ? 'readonly' : '' }}
         {{ $attributes->merge(['class' => '']) }}
     ></textarea>
 
-    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

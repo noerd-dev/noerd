@@ -11,7 +11,8 @@
             border-radius: 0.5rem;
             box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
             color: #f3f4f6;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-family:
+                ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
             font-size: 0.875rem;
             line-height: 1.5rem;
             overflow-x: auto;
@@ -32,7 +33,10 @@
             position: absolute;
             right: 0.5rem;
             top: 0.5rem;
-            transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease;
+            transition:
+                background-color 150ms ease,
+                color 150ms ease,
+                opacity 150ms ease;
             width: 2rem;
             z-index: 10;
         }
@@ -61,13 +65,9 @@
 @endonce
 
 <div {{ $attributes->merge(['class' => 'mt-3']) }}>
-    <p class="text-xs font-medium text-gray-400 uppercase mb-2">{{ $label }}</p>
+    <p class="mb-2 text-xs font-medium text-gray-400 uppercase">{{ $label }}</p>
 
-    <div
-        class="noerd-code-snippet-wrap relative"
-        x-data="noerdCodeSnippet()"
-        x-init="highlight($refs.code)"
-    >
+    <div class="noerd-code-snippet-wrap relative" x-data="noerdCodeSnippet()" x-init="highlight($refs.code)">
         <button
             type="button"
             class="noerd-code-snippet-copy"

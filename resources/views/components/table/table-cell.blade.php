@@ -1,6 +1,7 @@
-<td class="py-1 first:pl-4 last:border-r-0 border-gray-300 border-r border-b"
-    @click="activeColumn = {{$column}}, selectedRow = {{$row}}"
-    x-data="{showDropdown: false}"
+<td
+    class="border-r border-b border-gray-300 py-1 first:pl-4 last:border-r-0"
+    @click="activeColumn = {{ $column }}, selectedRow = {{ $row }}"
+    x-data="{ showDropdown: false }"
     {{--
     x-noerd::on:keydown.arrow-down.prevent="down()"
     x-noerd::on:keydown.arrow-up.prevent="up()"
@@ -8,19 +9,30 @@
     x-noerd::on:keydown.arrow-right.prevent="right()"
     --}}
 >
-
-    @if($columnValue === 'action')
-        <div class="flex ml-auto mr-1" disabled wire:navigate>
-
-            @if($actions)
-                <div :class="showDropdown ? 'opacity-100' : 'opacity-0'"
-                     @click.stop
-                     class="relative inline-block text-left ml-auto opacity-0 group-hover:opacity-100">
-                    <button @click.outside="showDropdown = false" @click="showDropdown = !showDropdown" type="button"
-                            class="inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
-                            id="menu-button" aria-expanded="true" aria-haspopup="true">
-                        <svg class="my-auto" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                             viewBox="0 0 16 16">
+    @if ($columnValue === 'action')
+        <div class="mr-1 ml-auto flex" disabled wire:navigate>
+            @if ($actions)
+                <div
+                    :class="showDropdown ? 'opacity-100' : 'opacity-0'"
+                    @click.stop
+                    class="relative ml-auto inline-block text-left opacity-0 group-hover:opacity-100"
+                >
+                    <button
+                        @click.outside="showDropdown = false"
+                        @click="showDropdown = ! showDropdown"
+                        type="button"
+                        class="inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
+                        id="menu-button"
+                        aria-expanded="true"
+                        aria-haspopup="true"
+                    >
+                        <svg
+                            class="my-auto"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                        >
                             <title>menu-dots</title>
                             <g fill="#333">
                                 <circle fill="#333" cx="8" cy="8" r="2"></circle>
@@ -30,19 +42,29 @@
                         </svg>
                     </button>
 
-                    <div x-transition x-show="showDropdown"
-                         class="absolute  right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                         role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                    <div
+                        x-transition
+                        x-show="showDropdown"
+                        class="absolute right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
+                        role="menu"
+                        aria-orientation="vertical"
+                        aria-labelledby="menu-button"
+                        tabindex="-1"
+                    >
                         <div class="py-1" role="none">
-                            @foreach($actions as $action)
-                                <a wire:click.prevent="{{$action['action']}}('{{$id}}')"
-                                   @isset($action['confirm'])
-                                       wire:confirm="{{ __($action['confirm']) }}"
-                                   @endisset
-                                   class="cursor-pointer group flex items-center px-4 py-2 text-sm text-gray-700"
-                                   role="menuitem" tabindex="-1" id="menu-item-0">
+                            @foreach ($actions as $action)
+                                <a
+                                    wire:click.prevent="{{ $action['action'] }}('{{ $id }}')"
+                                    @isset($action['confirm'])
+                                        wire:confirm="{{ __($action['confirm']) }}"
+                                    @endisset
+                                    class="group flex cursor-pointer items-center px-4 py-2 text-sm text-gray-700"
+                                    role="menuitem"
+                                    tabindex="-1"
+                                    id="menu-item-0"
+                                >
                                     @isset($action['heroicon'])
-                                        <x-icon name="{{$action['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
+                                        <x-icon name="{{ $action['heroicon'] }}" class="mr-2 h-4 w-4 text-gray-800" />
                                     @endisset
                                     {{ __($action['label']) }}
                                 </a>
@@ -51,109 +73,142 @@
                     </div>
                 </div>
             @else
-                <button
-                    class="opacity-0 ml-auto mr-1 group-hover:opacity-100  my-auto bg-white shadow-sm hover:bg-gray-50 flex h-6 px-1.5 text-sm text-center rounded-lg items-center justify-center">
+                <button class="my-auto mr-1 ml-auto flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-center text-sm opacity-0 shadow-sm group-hover:opacity-100 hover:bg-gray-50">
                     <div class="m-auto">
-                        <x-noerd::icons.pencil class="w-3! h-3!"/>
+                        <x-noerd::icons.pencil class="h-3! w-3!" />
                     </div>
                 </button>
             @endif
         </div>
-    @elseif($columnValue === 'selectAction')
-        <a class="m-0.5 flex"
-           @click.stop="show = !show"
-           wire:navigate
-
-           wire:click.stop.prevent="{{$action}}('{{$id}}')"
+    @elseif ($columnValue === 'selectAction')
+        <a
+            class="m-0.5 flex"
+            @click.stop="show = ! show"
+            wire:navigate
+            wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
         >
-            <x-noerd::button icon="plus-circle" class="ml-auto">
-                {{ __($label) }}
-            </x-noerd::button>
+            <x-noerd::button icon="plus-circle" class="ml-auto"> {{ __($label) }} </x-noerd::button>
         </a>
-    @elseif($columnValue === 'deleteAction')
-        <a class="m-0.5 flex" wire:confirm="{{ __('Are you sure you want to delete your account?') }}" wire:navigate
-
-           wire:click.stop.prevent="{{$action}}('{{$id}}')">
-            <x-noerd::button variant="danger" class="ml-auto">
-                {{ __($label) }}
-            </x-noerd::button>
+    @elseif ($columnValue === 'deleteAction')
+        <a
+            class="m-0.5 flex"
+            wire:confirm="{{ __('Are you sure you want to delete your account?') }}"
+            wire:navigate
+            wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+        >
+            <x-noerd::button variant="danger" class="ml-auto"> {{ __($label) }} </x-noerd::button>
         </a>
-    @elseif($columnValue === 'secondAction')
-        <a class="m-0.5 flex" wire:navigate
-
-           wire:click.stop.prevent="{{$action}}('{{$id}}')">
-            <x-noerd::button variant="secondary" class="ml-auto">
-                {{ __($label) }}
-            </x-noerd::button>
+    @elseif ($columnValue === 'secondAction')
+        <a class="m-0.5 flex" wire:navigate wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
+            <x-noerd::button variant="secondary" class="ml-auto"> {{ __($label) }} </x-noerd::button>
         </a>
     @else
-        @if($type === 'bool' || $type === 'boolean')
-            @if($value == true)
-                <div class="px-3 tw-shrink-0 text-right">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="w-6 h-6 text-green-400">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+        @if ($type === 'bool' || $type === 'boolean')
+            @if ($value === true)
+                <div class="tw-shrink-0 px-3 text-right">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="h-6 w-6 text-green-400"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
                     </svg>
                 </div>
             @else
-                <div class="px-3 tw-shrink-0 text-right">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="w-6 h-6 text-red-400">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M9.75 9.75l4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                <div class="tw-shrink-0 px-3 text-right">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="h-6 w-6 text-red-400"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9.75 9.75l4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
                     </svg>
                 </div>
             @endif
-        @elseif($type === 'inversebool')
-            @if($value == true)
-                <div class="px-3 tw-shrink-0 text-right">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="w-6 h-6 text-green-400">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+        @elseif ($type === 'inversebool')
+            @if ($value === true)
+                <div class="tw-shrink-0 px-3 text-right">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="h-6 w-6 text-green-400"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
                     </svg>
                 </div>
             @endif
         @else
-            @if($type == 'id')
-                <a wire:navigate class="bg-gray-100"
-                   wire:click.stop.prevent="{{$action}}('{{$id}}')">
-                    <input type="text"
-
-                           wire:change="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}', $event.target.value)"
-                           @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
-                           class="cursor-pointer underline w-auto border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent text-sm py-0.5 px-1.5 @if(in_array($type, ['number'])) text-right @endif"
-                           value="{{$value}}">
+            @if ($type === 'id')
+                <a wire:navigate class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
+                    <input
+                        type="text"
+                        wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
+                        @if ($readOnly ?? true) readonly @endif
+                        id="cell-{{ $column }}-{{ $row }}"
+                        class="cursor-pointer underline w-auto border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent text-sm py-0.5 px-1.5 @if(in_array($type, ['number'])) text-right @endif"
+                        value="{{ $value }}"
+                    />
                 </a>
-            @elseif($type == 'date')
-                @if($value)
-                    <input type="{{$type}}"
-                           wire:click.stop.prevent="{{$action}}('{{$id}}')"
-                           @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
-                           class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                           value="{{ $value instanceof \Illuminate\Support\Carbon ? $value->format('Y-m-d') : $value }}">
+            @elseif ($type === 'date')
+                @if ($value)
+                    <input
+                        type="{{ $type }}"
+                        wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                        @if ($readOnly ?? true) readonly @endif
+                        id="cell-{{ $column }}-{{ $row }}"
+                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
+                        value="{{ $value instanceof \Illuminate\Support\Carbon ? $value->format('Y-m-d') : $value }}"
+                    />
                 @endif
-            @elseif($type == 'datetime')
-                @if($value)
-                    <span wire:click.stop.prevent="{{$action}}('{{$id}}')"
-                          class="cursor-pointer text-sm py-0.5 px-1.5">
+            @elseif ($type === 'datetime')
+                @if ($value)
+                    <span
+                        wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                        class="cursor-pointer px-1.5 py-0.5 text-sm"
+                    >
                         {{ app()->getLocale() === 'de' ? \Carbon\Carbon::parse($value)->format('d.m.Y H:i') : \Carbon\Carbon::parse($value)->format('Y-m-d H:i') }}
                     </span>
                 @endif
-            @elseif($type == 'number')
-                <input type="{{$type}}"
-                       wire:click.stop.prevent="{{$action}}('{{$id}}')"
-                       @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
-                       class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                       value="{{round((float)$value,2)}}">
-            @elseif($type == 'currency')
-                <input type="{{$type}}"
-                       wire:click.stop.prevent="{{$action}}('{{$id}}')"
-                       @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
-                       class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
-                       value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}">
-            @elseif($type == 'badge')
+            @elseif ($type === 'number')
+                <input
+                    type="{{ $type }}"
+                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    @if ($readOnly ?? true) readonly @endif
+                    id="cell-{{ $column }}-{{ $row }}"
+                    class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
+                    value="{{ round((float)$value,2) }}"
+                />
+            @elseif ($type === 'currency')
+                <input
+                    type="{{ $type }}"
+                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    @if ($readOnly ?? true) readonly @endif
+                    id="cell-{{ $column }}-{{ $row }}"
+                    class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-right text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
+                    value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}"
+                />
+            @elseif ($type === 'badge')
                 @php
                     $badgeValue = $value instanceof \BackedEnum ? $value->value : ($value instanceof \UnitEnum ? $value->name : $value);
                     $badgeLabel = $badgeValue;
@@ -164,34 +219,43 @@
                         }
                     }
                 @endphp
-                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="flex items-center cursor-pointer px-1.5">
-                    @if($badgeValue !== null && $badgeValue !== '')
-                        <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium leading-tight bg-gray-100 text-gray-700">
+                <div
+                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    class="flex cursor-pointer items-center px-1.5"
+                >
+                    @if ($badgeValue !== null && $badgeValue !== '')
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs leading-tight font-medium whitespace-nowrap text-gray-700">
                             {{ __($badgeLabel) }}
                         </span>
                     @endif
                 </div>
-            @elseif($type == 'relationBadge')
+            @elseif ($type === 'relationBadge')
                 @php
                     $relationTitle = app(\Noerd\Services\RelationTitleResolver::class)->title($columnValue, $value);
                 @endphp
-                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="flex items-center cursor-pointer px-1.5">
-                    @if($relationTitle !== null && $relationTitle !== '')
-                        <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium leading-tight bg-gray-100 text-gray-700">
+                <div
+                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    class="flex cursor-pointer items-center px-1.5"
+                >
+                    @if ($relationTitle !== null && $relationTitle !== '')
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs leading-tight font-medium whitespace-nowrap text-gray-700">
                             {{ $relationTitle }}
                         </span>
                     @endif
                 </div>
-            @elseif($type == 'customAttribute')
+            @elseif ($type === 'customAttribute')
                 @php
                     $customAttributeValue = \Noerd\Support\RelationFieldDefinition::normalizeDisplayValue(data_get($rowData, $columnValue));
                 @endphp
-                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="flex items-center cursor-pointer">
-                    <span class="w-full text-sm py-0.5 px-1.5">{{ $customAttributeValue }}</span>
+                <div wire:click.stop.prevent="{{ $action }}('{{ $id }}')" class="flex cursor-pointer items-center">
+                    <span class="w-full px-1.5 py-0.5 text-sm">{{ $customAttributeValue }}</span>
                 </div>
-            @elseif($type == 'badge_with_text')
-                <div wire:click.stop.prevent="{{$action}}('{{$id}}')" class="cursor-pointer flex items-center gap-2 py-0.5 px-1.5">
-                    @if(is_array($value) && isset($value['badge']) && $value['badge'])
+            @elseif ($type === 'badge_with_text')
+                <div
+                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    class="flex cursor-pointer items-center gap-2 px-1.5 py-0.5"
+                >
+                    @if (is_array($value) && isset($value['badge']) && $value['badge'])
                         @php
                             $badgeVariant = $value['variant'] ?? 'primary';
                             $badgeClasses = match ($badgeVariant) {
@@ -205,50 +269,59 @@
                             {{ $value['badge'] }}
                         </span>
                     @endif
-                    @if(is_array($value) && isset($value['text']))
+                    @if (is_array($value) && isset($value['text']))
                         <span class="text-sm text-gray-600">{{ $value['text'] }}</span>
-                    @elseif(!is_array($value))
+                    @elseif (!is_array($value))
                         <span class="text-sm">{{ $value }}</span>
                     @endif
                 </div>
-            @elseif($type == 'relation_link')
-                @if($value && isset($columnConfig['modalComponent']))
+            @elseif ($type === 'relation_link')
+                @if ($value && isset($columnConfig['modalComponent']))
                     <button
                         @click.stop="$modal('{{ $columnConfig['modalComponent'] }}', { {{ $columnConfig['idParam'] ?? 'id' }}: {{ $rowData[$columnConfig['idField'] ?? 'id'] ?? 'null' }} })"
-                        class="inline-flex ml-1.5 items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer transition-colors">
+                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
+                    >
                         {{ $value }}
                     </button>
-                @elseif($value)
-                    <span class="text-sm py-0.5 px-1.5">{{ $value }}</span>
+                @elseif ($value)
+                    <span class="px-1.5 py-0.5 text-sm">{{ $value }}</span>
                 @endif
-            @elseif($type == 'colored_text')
-                <div @if(isset($columnConfig['wireClick']))
-                         wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
-                     @else
-                         wire:click.stop.prevent="{{$action}}('{{$id}}')"
-                     @endif
-                     class="cursor-pointer py-0.5 px-1.5 inline-flex items-center gap-1.5">
-                    @if(is_array($value) && isset($value['prefix']))
+            @elseif ($type === 'colored_text')
+                <div
+                    @if (isset($columnConfig['wireClick']))
+                        wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
+                    @else
+                        wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    @endif
+                    class="inline-flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5"
+                >
+                    @if (is_array($value) && isset($value['prefix']))
                         <span class="text-sm {{ $value['prefixClass'] ?? '' }}">{{ $value['prefix'] }}</span>
                     @endif
-                    @if(is_array($value) && isset($value['text']) && $value['text'] !== '')
+                    @if (is_array($value) && isset($value['text']) && $value['text'] !== '')
                         <span class="inline-flex items-center px-2 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
                             {{ $value['text'] }}
                         </span>
-                    @elseif(!is_array($value) && $value !== '' && $value !== null)
+                    @elseif (!is_array($value) && $value !== '' && $value !== null)
                         <span class="text-sm">{{ $value }}</span>
                     @endif
-                    @if(is_array($value) && ! empty($value['icon']))
-                        <x-icon name="{{ $value['icon'] }}" class="w-4 h-4 {{ $value['iconClass'] ?? 'text-gray-500' }}" />
+                    @if (is_array($value) && ! empty($value['icon']))
+                        <x-icon
+                            name="{{ $value['icon'] }}"
+                            class="w-4 h-4 {{ $value['iconClass'] ?? 'text-gray-500' }}"
+                        />
                     @endif
                 </div>
             @else
-                <input type="{{$type}}"
-                       wire:click.stop.prevent="{{$action}}('{{$id}}')"
-                       wire:change="updateRow({{$id ?? null}}, '{{$columnValue ?? null}}', $event.target.value)"
-                       @if($readOnly ?? true) readonly @endif id="cell-{{$column}}-{{$row}}"
-                       class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5"
-                       value="{{$value}}">
+                <input
+                    type="{{ $type }}"
+                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
+                    @if ($readOnly ?? true) readonly @endif
+                    id="cell-{{ $column }}-{{ $row }}"
+                    class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
+                    value="{{ $value }}"
+                />
 
             @endif
         @endif

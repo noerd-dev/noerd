@@ -1,5 +1,6 @@
 @php
     use Illuminate\Foundation\Vite;
+
     $vite = clone app(Vite::class);
 @endphp
 

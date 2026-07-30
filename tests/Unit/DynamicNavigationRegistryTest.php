@@ -6,7 +6,7 @@ use Noerd\Services\DynamicNavigationRegistry;
 it('registers and resolves a provider', function (): void {
     $registry = new DynamicNavigationRegistry();
 
-    $provider = new class () implements DynamicNavigationProviderContract {
+    $provider = new class implements DynamicNavigationProviderContract {
         public function type(): string
         {
             return 'test-type';
@@ -33,7 +33,7 @@ it('returns null for unregistered type', function (): void {
 it('returns all registered providers', function (): void {
     $registry = new DynamicNavigationRegistry();
 
-    $provider1 = new class () implements DynamicNavigationProviderContract {
+    $provider1 = new class implements DynamicNavigationProviderContract {
         public function type(): string
         {
             return 'type-a';
@@ -45,7 +45,7 @@ it('returns all registered providers', function (): void {
         }
     };
 
-    $provider2 = new class () implements DynamicNavigationProviderContract {
+    $provider2 = new class implements DynamicNavigationProviderContract {
         public function type(): string
         {
             return 'type-b';

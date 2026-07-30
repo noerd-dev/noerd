@@ -1,4 +1,4 @@
-<div class="rounded-md bg-blue-50 p-4 mt-2">
+<div class="mt-2 rounded-md bg-blue-50 p-4">
     <div class="flex">
         <div class="shrink-0">
             <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-slot="icon">
@@ -6,9 +6,7 @@
             </svg>
         </div>
         <div class="ml-3 flex-1 md:flex md:justify-between">
-            <p class="text-sm text-blue-700">
-                {{ $slot }}
-            </p>
+            <p class="text-sm text-blue-700">{{ $slot }}</p>
         </div>
     </div>
 </div>

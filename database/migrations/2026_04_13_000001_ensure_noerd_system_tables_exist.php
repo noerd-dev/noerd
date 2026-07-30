@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  * 2. Neither old nor new name exists → create from scratch
  * 3. Table already exists → skip
  */
-return new class () extends Migration {
+return new class extends Migration {
     public function up(): void
     {
         $this->ensureNoerdProfiles();

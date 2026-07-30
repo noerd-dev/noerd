@@ -6,7 +6,4 @@
                 : '';
 @endphp
 
-<div {{ $attributes->merge(['class' => $classes]) }}>
-    {{ $slot }}
-</div>
-
+<div {{ $attributes->merge(['class' => $classes]) }}>{{ $slot }}</div>

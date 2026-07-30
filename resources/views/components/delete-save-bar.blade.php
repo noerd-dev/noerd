@@ -7,75 +7,78 @@
     'modelId' => null,
 ])
 
-@foreach($footerComponents as $fc)
-    @if(!($fc['requiresId'] ?? false) || $modelId)
+@foreach ($footerComponents as $fc)
+    @if (!($fc['requiresId'] ?? false) || $modelId)
         <livewire:is :component="$fc['component']" :modelId="$modelId" />
     @endif
 @endforeach
 
-<div
-    {{ $attributes->merge(['class' => 'ml-auto']) }}
-    x-data="{showButtons: false}">
-
-
-<div class="ml-auto flex gap-2">
-        <div x-show="$wire.showSuccessIndicator"
-             x-transition.out.opacity.duration.1000ms
-             x-noerd::effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
-             class="flex mt-2 mr-2">
-            <div class="flex ml-auto">
+<div {{ $attributes->merge(['class' => 'ml-auto']) }} x-data="{ showButtons: false }">
+    <div class="ml-auto flex gap-2">
+        <div
+            x-show="$wire.showSuccessIndicator"
+            x-transition.out.opacity.duration.1000ms
+            x-noerd::effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
+            class="mt-2 mr-2 flex"
+        >
+            <div class="ml-auto flex">
                 <div class="shrink-0">
                     <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                              clip-rule="evenodd"/>
+                        <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                            clip-rule="evenodd"
+                        />
                     </svg>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium text-green-800">
-                        {{__('Successfully saved')}}
-                    </p>
+                    <p class="text-sm font-medium text-green-800">{{ __('Successfully saved') }}</p>
                 </div>
             </div>
         </div>
 
-        @if($deleteMessage)
-            <x-noerd::button variant="danger"
-                             wire:key="{{\Illuminate\Support\Str::uuid()}}"
-                             wire:click="delete"
-                             x-show="showButtons"
-                             wire:confirm="{{$deleteMessage}}"
-                             @click="show= false">
+        @if ($deleteMessage)
+            <x-noerd::button
+                variant="danger"
+                wire:key="{{ \Illuminate\Support\Str::uuid() }}"
+                wire:click="delete"
+                x-show="showButtons"
+                wire:confirm="{{ $deleteMessage }}"
+                @click="show = false"
+            >
                 {{ __('Delete') }}
             </x-noerd::button>
         @else
-            <x-noerd::button variant="danger"
-                             wire:key="{{\Illuminate\Support\Str::uuid()}}"
-                             wire:click="delete"
-                             x-show="showButtons"
-                             @click="show= false">
+            <x-noerd::button
+                variant="danger"
+                wire:key="{{ \Illuminate\Support\Str::uuid() }}"
+                wire:click="delete"
+                x-show="showButtons"
+                @click="show = false"
+            >
                 {{ __('Delete') }}
             </x-noerd::button>
         @endif
 
         <x-noerd::button variant="ghost" x-show="showButtons" @click="showButtons = false">
-            {{__('Cancel')}}
+            {{ __('Cancel') }}
         </x-noerd::button>
 
-        @if($showDelete)
-            <x-noerd::button variant="danger"
-                             wire:key="{{\Illuminate\Support\Str::uuid()}}"
-                             x-show="!showButtons"
-                             @click="showButtons = true">
+        @if ($showDelete)
+            <x-noerd::button
+                variant="danger"
+                wire:key="{{ \Illuminate\Support\Str::uuid() }}"
+                x-show="! showButtons"
+                @click="showButtons = true"
+            >
                 {{ __('Delete') }}
             </x-noerd::button>
         @endif
 
-        @if($showSave)
+        @if ($showSave)
             <x-noerd::button wireTarget="store" icon="check-circle" wire:click="store">
-                {{__('Save')}}
+                {{ __('Save') }}
             </x-noerd::button>
         @endif
     </div>
-
 </div>

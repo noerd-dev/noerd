@@ -25,8 +25,8 @@
 <x-noerd::detail.numbered-row :field="$rowField">
     <div class="flex h-7 items-center">
         <input
-            @if($readonly) disabled @endif
-            @if($live)
+            @if ($readonly) disabled @endif
+            @if ($live)
                 wire:model.live.debounce="{{ $name }}"
             @else
                 wire:model="{{ $name }}"
@@ -34,7 +34,7 @@
             :checked="{{ $isChecked ? 'true' : 'false' }}"
             id="{{ $name }}"
             type="checkbox"
-            class="h-4 w-4 rounded-sm border border-gray-300 text-brand-primary focus:ring-brand-border"
-        >
+            class="text-brand-primary focus:ring-brand-border h-4 w-4 rounded-sm border border-gray-300"
+        />
     </div>
 </x-noerd::detail.numbered-row>

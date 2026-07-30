@@ -13,5 +13,6 @@
         :modelClass="$modelClass"
         :modelId="$modelId"
         :relations="$relations"
-        :key="'relation-box-'.$modelId" />
+        :key="'relation-box-' . $modelId"
+    />
 @endif

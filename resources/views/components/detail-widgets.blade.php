@@ -13,7 +13,7 @@
             @php
                 // Resolve the $modelId token in the arguments (same convention as detail-lists)
                 $arguments = collect($widget['arguments'] ?? [])
-                    ->map(fn ($value) => $value === '$modelId' ? $modelId : $value)
+                    ->map(fn($value) => $value === '$modelId' ? $modelId : $value)
                     ->all();
             @endphp
 
@@ -22,7 +22,8 @@
                 :component="$widget['component'] ?? null"
                 :columns="$widget['columns'] ?? []"
                 :arguments="$arguments"
-                :wireKey="'detail-widget-' . ($widget['component'] ?? '') . '-' . $modelId" />
+                :wireKey="'detail-widget-' . ($widget['component'] ?? '') . '-' . $modelId"
+            />
         @endforeach
     </div>
 @endif

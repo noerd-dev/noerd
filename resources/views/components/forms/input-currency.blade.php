@@ -22,9 +22,12 @@
 @endphp
 
 <div>
-    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required"/>
+    <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" />
 
-    <div class="relative" wire:ignore.self x-data="{
+    <div
+        class="relative"
+        wire:ignore.self
+        x-data="{
         rawValue: $wire.get('{{ $name }}'),
         decSep: '{{ $decSep }}',
         thousSep: '{{ $thousSep }}',
@@ -32,7 +35,7 @@
             let num = parseFloat(val);
             if (isNaN(num)) num = 0;
             let parts = num.toFixed(2).split('.');
-            let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, this.thousSep);
+            let intPart = parts[0].replace(/\B(?=(\d{3})+(?! \d))/g, this.thousSep);
             return intPart + this.decSep + parts[1];
         },
         parseInput(val) {
@@ -60,9 +63,11 @@
             $wire.set('{{ $name }}', parsed);
             this.showFormatted();
         }
-    }" x-init="$nextTick(() => showFormatted())">
-        @if($symbolPosition === 'before')
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400 text-sm pointer-events-none">{{ $symbol }}</span>
+    }"
+        x-init="$nextTick(() => showFormatted())"
+    >
+        @if ($symbolPosition === 'before')
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-zinc-400">{{ $symbol }}</span>
         @endif
 
         <input
@@ -76,12 +81,12 @@
             name="{{ $name }}"
             x-on:focus="onFocus($event)"
             x-on:blur="onBlur($event)"
-        >
+        />
 
-        @if($symbolPosition === 'after')
-            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 text-sm pointer-events-none">{{ $symbol }}</span>
+        @if ($symbolPosition === 'after')
+            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-zinc-400">{{ $symbol }}</span>
         @endif
     </div>
 
-    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2"/>
+    <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

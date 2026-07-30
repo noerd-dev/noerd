@@ -18,25 +18,25 @@
     <input
         {{ $readonly ? 'readonly' : '' }}
         autocomplete="off"
-        class="w-full border border-zinc-200 rounded-sm block appearance-none text-base sm:text-sm py-1 h-7 ps-2 pe-2 bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 focus:outline-none focus:ring-1 focus:ring-brand-border"
+        class="focus:ring-brand-border block h-7 w-full appearance-none rounded-sm border border-zinc-200 bg-white py-1 ps-2 pe-2 text-base text-zinc-700 placeholder-zinc-400 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 focus:ring-1 focus:outline-none sm:text-sm"
         type="{{ $type }}"
         id="{{ $name }}"
         name="{{ $name }}"
-        @if($live)
+        @if ($live)
             wire:model.live.debounce="{{ $name }}"
         @else
             wire:model="{{ $name }}"
         @endif
-        @if($type === 'date')
+        @if ($type === 'date')
             x-init="
                 let v = $wire.get('{{ $name }}');
                 if (v && v.length > 10) $wire.set('{{ $name }}', v.substring(0, 10), false);
             "
-        @elseif($type === 'time')
+        @elseif ($type === 'time')
             x-init="
                 let v = $wire.get('{{ $name }}');
                 if (v && v.length > 5) $wire.set('{{ $name }}', v.substring(0, 5), false);
             "
         @endif
-    >
+    />
 </x-noerd::detail.numbered-row>

@@ -1,28 +1,27 @@
 <x-app-layout>
-
     <div class="p-8">
         <x-noerd::box>
             <div class="max-w-xl">
-                <livewire:noerd::profile.update-profile-information-form/>
+                <livewire:noerd::profile.update-profile-information-form />
             </div>
         </x-noerd::box>
 
         <x-noerd::box>
             <div class="max-w-xl">
-                <livewire:noerd::profile.update-password-form/>
+                <livewire:noerd::profile.update-password-form />
             </div>
         </x-noerd::box>
 
         <x-noerd::box>
             <div class="max-w-xl">
-                <livewire:noerd::profile.update-language-form/>
+                <livewire:noerd::profile.update-language-form />
             </div>
         </x-noerd::box>
 
-        @if(config('noerd.features.multi_tenant'))
+        @if (config('noerd.features.multi_tenant'))
             <x-noerd::box>
                 <div class="max-w-xl">
-                    <livewire:noerd::profile.tenant-access-display-form/>
+                    <livewire:noerd::profile.tenant-access-display-form />
                 </div>
             </x-noerd::box>
         @endif
@@ -34,6 +33,5 @@
             </div>
         </div>
         --}}
-
     </div>
 </x-app-layout>

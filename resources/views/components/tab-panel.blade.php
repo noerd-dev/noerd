@@ -9,8 +9,10 @@
     the page-body padding edge, so input focus rings are not cut off. Flush
     panels (inside an already unpadded wrapper) opt out with `mx-0! px-0!`.
 --}}
-<div @if($show) x-show="{{ $show }}" @endif
-     {{ $attributes->merge(['class' => 'min-h-0 overflow-y-auto -mx-6 px-6']) }}
-     :class="currentTab === {{ $number }} ? 'visible' : 'invisible pointer-events-none'">
+<div
+    @if ($show) x-show="{{ $show }}" @endif
+    {{ $attributes->merge(['class' => 'min-h-0 overflow-y-auto -mx-6 px-6']) }}
+    :class="currentTab === {{ $number }} ? 'visible' : 'invisible pointer-events-none'"
+>
     {{ $slot }}
 </div>
