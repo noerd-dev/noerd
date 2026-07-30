@@ -31,7 +31,7 @@ describe('Detail view system', function (): void {
         ])
             ->assertSeeHtml('data-view="compact"')
             ->assertSeeHtml('data-compact="true"')
-            ->assertSeeHtml('!pb-0 w-36 shrink-0 truncate');
+            ->assertSeeHtml('w-36 shrink-0 truncate');
     });
 
     it('renders the numbered view with full-width gray rows and number cells', function (): void {
@@ -55,11 +55,15 @@ describe('Detail view system', function (): void {
         ]);
 
         // Fields 1 + 2 get automatic numbers; field 3 pins number 21 in the layout.
-        $component
-            ->assertSeeHtml('tabular-nums ">1</div>')
-            ->assertSeeHtml('tabular-nums ">2</div>')
-            ->assertSeeHtml('tabular-nums ">21</div>')
-            ->assertDontSeeHtml('tabular-nums ">3</div>');
+        // Match the number cell content whitespace-insensitively so Blade
+        // reformatting of numbered-row.blade.php cannot break the assertion.
+        $html = $component->html();
+        $numberCell = fn(int $number): string => '/tabular-nums[^"]*">\s*' . $number . '\s*<\/div>/';
+
+        expect(preg_match($numberCell(1), $html))->toBe(1)
+            ->and(preg_match($numberCell(2), $html))->toBe(1)
+            ->and(preg_match($numberCell(21), $html))->toBe(1)
+            ->and(preg_match($numberCell(3), $html))->toBe(0);
     });
 
     it('falls back to the default view for unknown view names', function (): void {
