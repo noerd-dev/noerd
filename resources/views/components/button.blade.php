@@ -11,7 +11,9 @@
         $icon = 'trash';
     }
 
-    $isIconOnly = $variant === 'icon';
+    // `control` mirrors the modal panel chrome (close/fullscreen): a bordered
+    // 32px square with a 16px icon, so header actions sit flush with them.
+    $isIconOnly = in_array($variant, ['icon', 'control'], true);
 
     $type = $type ?? ($variant === 'primary' ? 'submit' : 'button');
 
@@ -30,11 +32,12 @@
         'danger' => '!bg-brand-danger text-brand-danger-text border border-gray-300 shadow-xs hover:bg-brand-danger/80 focus:ring-red-500',
         'pill' => 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-brand-primary/80',
         'ghost', 'icon' => 'text-gray-700 hover:bg-gray-100 focus:ring-brand-primary/80',
+        'control' => 'border border-gray-300 text-gray-700 hover:bg-gray-100 focus:ring-brand-primary/80',
         default => '',
     };
 
-    $iconSize = match ($size) {
-        'sm' => 'w-4 h-4',
+    $iconSize = match (true) {
+        $size === 'sm', $variant === 'control' => 'w-4 h-4',
         default => 'w-5 h-5',
     };
 

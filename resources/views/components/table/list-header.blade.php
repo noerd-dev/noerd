@@ -158,7 +158,7 @@
                     x-show="hasActions"
                     x-cloak
                     @unless ($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
-                    class="mr-2 flex shrink-0 items-center gap-1"
+                    class="mr-2 flex shrink-0 items-center gap-2"
                 >
                     @foreach ($listHeaderActions as $listHeaderAction)
                         @livewire($listHeaderAction, [

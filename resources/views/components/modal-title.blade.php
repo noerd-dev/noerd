@@ -16,12 +16,25 @@
         {{ $slot }}
         @if (isset($actions) || $detailHeaderActions !== [])
             <div class="ml-auto flex shrink-0 items-center gap-4" :class="isModal ? modalControlsClass : ''">
-                @foreach ($detailHeaderActions as $detailHeaderAction)
-                    @livewire($detailHeaderAction, [
-                        'model' => $headerActionHost->detailModel ?? null,
-                        'component' => $headerActionHost->getName(),
-                    ], key('detail-header-action-' . $detailHeaderAction))
-                @endforeach
+                @if ($detailHeaderActions !== [])
+                    {{-- Grouped so the icon buttons keep the 8px rhythm of the modal
+                         panel controls. Collapses when every action hid itself —
+                         otherwise the empty wrapper would still eat the parent gap. --}}
+                    <div
+                        x-data="{ hasActions: false }"
+                        x-init="hasActions = $el.querySelector('button') !== null"
+                        x-show="hasActions"
+                        x-cloak
+                        class="flex shrink-0 items-center gap-2"
+                    >
+                        @foreach ($detailHeaderActions as $detailHeaderAction)
+                            @livewire($detailHeaderAction, [
+                                'model' => $headerActionHost->detailModel ?? null,
+                                'component' => $headerActionHost->getName(),
+                            ], key('detail-header-action-' . $detailHeaderAction))
+                        @endforeach
+                    </div>
+                @endif
                 {{ $actions ?? '' }}
             </div>
         @endif
