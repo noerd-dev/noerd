@@ -65,7 +65,7 @@
                     $fieldView = $fieldViewDefinition->name;
                     $field['view'] = $fieldView;
                     $field['compact'] = $fieldView === 'compact';
-                    if ($fieldViewDefinition->numbersRows) {
+                    if ($fieldViewDefinition->numbersRows && ($field['type'] ?? '') !== 'spacer') {
                         $numberedRowIndex++;
                         $field['number'] ??= $numberedRowIndex;
                     }

@@ -67,7 +67,7 @@
             x-ref="input"
             {{ $readonly ? 'readonly' : '' }}
             autocomplete="off"
-            class="w-full border border-zinc-200 rounded-sm block read-only:shadow-none appearance-none text-base sm:text-sm py-1 h-7 bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 focus:outline-none focus:ring-1 focus:ring-brand-border text-right {{ $symbolPosition === 'before' ? 'ps-7 pe-2' : 'ps-2 pe-7' }}"
+            class="w-full border border-zinc-400 rounded-none block read-only:shadow-none appearance-none text-base sm:text-sm py-1.5 h-9 bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 focus:outline-none focus:ring-0 focus:border-dotted focus:border-zinc-600 text-right {{ $symbolPosition === 'before' ? 'ps-7 pe-2' : 'ps-2 pe-7' }}"
             type="text"
             inputmode="decimal"
             id="{{ $name }}"

@@ -23,7 +23,7 @@
 @endphp
 
 <x-noerd::detail.numbered-row :field="$rowField">
-    <div class="flex h-7 items-center">
+    <div class="flex h-9 items-center">
         <input
             @if ($readonly) disabled @endif
             @if ($live)
@@ -34,7 +34,7 @@
             :checked="{{ $isChecked ? 'true' : 'false' }}"
             id="{{ $name }}"
             type="checkbox"
-            class="text-brand-primary focus:ring-brand-border h-4 w-4 rounded-sm border border-gray-300"
+            class="text-brand-primary focus:ring-brand-border h-4 w-4 rounded-none border border-zinc-400"
         />
     </div>
 </x-noerd::detail.numbered-row>

@@ -178,9 +178,10 @@ Example flow:
 - Applies to all modals during the session
 
 The toggle is applied **client-side** via the Alpine store `$store.app.modalFullscreen`; the
-Livewire call only persists the preference and calls `skipRender()`. Both modal states share the
-same anchor (top-aligned, `mt-14`) and differ only in `max-width`, `max-height` and
-`border-radius` — all animatable — so switching glides instead of jumping. Consequently:
+Livewire call only persists the preference and calls `skipRender()`. The panel is permanently
+centered (`top-1/2` + `-translate-y-1/2`); the two states differ only in `min-height`/`max-height`
+(fullscreen: `100dvh`, covering the whole viewport), `max-width` and `border-radius` — all
+interpolable — so the panel grows symmetrically from the center instead of jumping. Consequently:
 
 - Never bake the fullscreen state into server-rendered classes. Bind it with Alpine (`:class`)
   instead, otherwise the layout snaps once more when the response arrives

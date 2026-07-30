@@ -105,7 +105,7 @@ detail YAML. Built-in views:
 |------|--------|
 | `default` | Label on top of the input (also used when `view` is absent or unknown) |
 | `compact` | Label to the LEFT of the input with tighter vertical spacing |
-| `numbered` | Form rows like the German ELSTER tax UI: one field per full-width row (colspan is ignored), light gray row background, leading row number, right-aligned label, input on the right |
+| `numbered` | Numbered form rows in the style of official/tax forms: one field per full-width row (colspan is ignored), light gray row background, leading row number, right-aligned label, input on the right |
 
 ```yaml
 title: Account
@@ -125,7 +125,8 @@ fields:
 The view is inherited by nested `type: block` fields; a single field (or nested block) may override
 it with its own `view:` key.
 
-**Numbered view:** rows are numbered automatically per block (nested blocks restart at 1). A field
+**Numbered view:** rows are numbered automatically per block (nested blocks restart at 1);
+`type: spacer` rows render as a blank line and consume NO number. A field
 may pin its number with an explicit `number:` key — numbers may repeat, like on tax forms. The
 shared row chrome (gray row, number cell, right-aligned label) lives in
 `<x-noerd::detail.numbered-row>`; the per-field partials in `forms/numbered/` only provide the bare

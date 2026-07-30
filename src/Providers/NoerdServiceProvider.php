@@ -171,7 +171,7 @@ class NoerdServiceProvider extends ServiceProvider
             gridClasses: 'py-3 pt-1 gap-y-1',
             fullWidthRows: true,
             numbersRows: true,
-            spacerClass: 'h-9',
+            spacerClass: 'h-12',
         ));
 
         $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);

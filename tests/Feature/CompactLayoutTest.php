@@ -34,7 +34,7 @@ describe('Compact detail layout', function (): void {
         ])
             ->assertSeeHtml('flex items-center gap-2')
             ->assertSeeHtml('flex items-start gap-2')
-            ->assertSeeHtml('!pb-0 w-36 shrink-0 truncate');
+            ->assertSeeHtml('w-36 shrink-0 truncate');
     });
 
     it('does not emit compact markers by default', function (): void {

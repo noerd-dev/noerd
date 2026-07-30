@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Tests;
 
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
@@ -12,18 +13,60 @@ use Noerd\Providers\NoerdServiceProvider;
 use Noerd\Services\ListQueryContext;
 use NoerdModal\Providers\NoerdModalServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use PDO;
+use Throwable;
 use WireUi\Heroicons\HeroiconsServiceProvider;
 
 abstract class TestCase extends BaseTestCase
 {
+    /**
+     * RefreshDatabaseState is a process-global static shared with the host
+     * application's suite. When host tests (MySQL) and these testbench tests
+     * (sqlite :memory:) run in one PHPUnit process, whichever suite migrates
+     * first flags the OTHER suite's database as already migrated —
+     * RefreshDatabase then skips migrating an empty database ("no such table:
+     * tenants"/"noerd_users"). Each suite therefore gets its own view of the
+     * state: the testbench view is swapped in for the whole test (setUp through
+     * tearDown — testbench resets the state again in its own tearDown, exactly
+     * like a standalone run) and the host view is restored afterwards.
+     */
+    private static bool $testbenchMigrated = false;
+
+    /** @var array<string, PDO> */
+    private static array $testbenchInMemoryConnections = [];
+
+    private static bool $hostMigrated = false;
+
+    /** @var array<string, PDO> */
+    private static array $hostInMemoryConnections = [];
+
+    private static bool $refreshDatabaseStateSwapped = false;
+
     protected function setUp(): void
     {
-        parent::setUp();
+        $this->swapInTestbenchRefreshDatabaseState();
+
+        try {
+            parent::setUp();
+        } catch (Throwable $exception) {
+            $this->swapOutTestbenchRefreshDatabaseState();
+
+            throw $exception;
+        }
 
         $this->linkModuleIntoSkeleton();
         $this->withoutVite();
 
         app(ListQueryContext::class)->reset();
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            parent::tearDown();
+        } finally {
+            $this->swapOutTestbenchRefreshDatabaseState();
+        }
     }
     protected function getPackageProviders($app): array
     {
@@ -73,6 +116,32 @@ abstract class TestCase extends BaseTestCase
         if (static::usesRefreshDatabaseTestingConcern()) {
             $this->loadMigrationsFrom(\Orchestra\Testbench\default_migration_path());
         }
+    }
+
+    private function swapInTestbenchRefreshDatabaseState(): void
+    {
+        self::$hostMigrated = RefreshDatabaseState::$migrated;
+        self::$hostInMemoryConnections = RefreshDatabaseState::$inMemoryConnections;
+
+        RefreshDatabaseState::$migrated = self::$testbenchMigrated;
+        RefreshDatabaseState::$inMemoryConnections = self::$testbenchInMemoryConnections;
+
+        self::$refreshDatabaseStateSwapped = true;
+    }
+
+    private function swapOutTestbenchRefreshDatabaseState(): void
+    {
+        if (! self::$refreshDatabaseStateSwapped) {
+            return;
+        }
+
+        self::$testbenchMigrated = RefreshDatabaseState::$migrated;
+        self::$testbenchInMemoryConnections = RefreshDatabaseState::$inMemoryConnections;
+
+        RefreshDatabaseState::$migrated = self::$hostMigrated;
+        RefreshDatabaseState::$inMemoryConnections = self::$hostInMemoryConnections;
+
+        self::$refreshDatabaseStateSwapped = false;
     }
 
     /**

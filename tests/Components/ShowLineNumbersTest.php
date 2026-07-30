@@ -19,19 +19,32 @@ $columns = [
     ['field' => 'name', 'label' => 'Name', 'type' => 'text'],
 ];
 
+/**
+ * Matches the line-number cell content whitespace-insensitively so Blade
+ * reformatting of the list view cannot break the assertion.
+ */
+function lineNumberCellPattern(int $number): string
+{
+    return '/select-none"\s*>\s*' . $number . '\s*<\/td>/';
+}
+
 it('renders a leading line-number column when showLineNumbers is set in the config', function () use ($rows, $columns): void {
-    Livewire::test(TestableLineNumbersListComponent::class)
+    $html = Livewire::test(TestableLineNumbersListComponent::class)
         ->set('rowsData', $rows)
         ->set('configData', ['showLineNumbers' => true, 'columns' => $columns])
-        ->assertSeeHtml('select-none">1</td>')
-        ->assertSeeHtml('select-none">2</td>');
+        ->html();
+
+    expect(preg_match(lineNumberCellPattern(1), $html))->toBe(1)
+        ->and(preg_match(lineNumberCellPattern(2), $html))->toBe(1);
 });
 
 it('does not render line numbers when the config does not enable them', function () use ($rows, $columns): void {
-    Livewire::test(TestableLineNumbersListComponent::class)
+    $html = Livewire::test(TestableLineNumbersListComponent::class)
         ->set('rowsData', $rows)
         ->set('configData', ['columns' => $columns])
-        ->assertDontSeeHtml('select-none">1</td>');
+        ->html();
+
+    expect(preg_match(lineNumberCellPattern(1), $html))->toBe(0);
 });
 
 /**

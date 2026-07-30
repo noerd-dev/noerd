@@ -48,22 +48,25 @@ describe('Detail view system', function (): void {
             ->assertSeeHtml('text-right truncate');
     });
 
-    it('numbers rows automatically and lets an explicit number win', function (): void {
+    it('numbers rows automatically, skips spacers and lets an explicit number win', function (): void {
         $component = Livewire::test('noerd::detail-view-test', [
             'initialModel' => [],
             'view' => 'numbered',
         ]);
 
-        // Fields 1 + 2 get automatic numbers; field 3 pins number 21 in the layout.
-        // Match the number cell content whitespace-insensitively so Blade
-        // reformatting of numbered-row.blade.php cannot break the assertion.
+        // Fields 1 + 2 get automatic numbers; the spacer after them consumes NO number;
+        // the currency field pins number 21 in the layout (still consuming slot 3), so the
+        // textarea after it gets number 4. Match the number cell content whitespace-
+        // insensitively so Blade reformatting of numbered-row.blade.php cannot break this.
         $html = $component->html();
         $numberCell = fn(int $number): string => '/tabular-nums[^"]*">\s*' . $number . '\s*<\/div>/';
 
         expect(preg_match($numberCell(1), $html))->toBe(1)
             ->and(preg_match($numberCell(2), $html))->toBe(1)
             ->and(preg_match($numberCell(21), $html))->toBe(1)
-            ->and(preg_match($numberCell(3), $html))->toBe(0);
+            ->and(preg_match($numberCell(4), $html))->toBe(1)
+            ->and(preg_match($numberCell(3), $html))->toBe(0)
+            ->and(preg_match($numberCell(5), $html))->toBe(0);
     });
 
     it('falls back to the default view for unknown view names', function (): void {

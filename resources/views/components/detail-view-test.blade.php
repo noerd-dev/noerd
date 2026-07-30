@@ -22,6 +22,7 @@ new class extends Component {
                 ['name' => 'model.title', 'label' => 'Title', 'type' => 'text', 'colspan' => 6],
                 ['name' => 'model.status', 'label' => 'Status', 'type' => 'select', 'colspan' => 6,
                     'options' => [['value' => 'a', 'label' => 'A'], ['value' => 'b', 'label' => 'B']]],
+                ['type' => 'spacer', 'colspan' => 12],
                 ['name' => 'model.amount', 'label' => 'Amount', 'type' => 'currency', 'colspan' => 6, 'number' => 21],
                 ['name' => 'model.notes', 'label' => 'Notes', 'type' => 'textarea', 'colspan' => 12],
                 ['name' => 'model.plain', 'label' => 'Plain', 'type' => 'text', 'colspan' => 6, 'view' => 'default'],

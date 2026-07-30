@@ -23,10 +23,10 @@
         :value="__($label)"
         :required="$required"
         :title="__($label)"
-        class="!pb-0 flex-1 min-w-0 text-right truncate {{ $labelTop ? 'pt-1' : '' }}"
+        class="!pb-0 !font-normal flex-1 min-w-0 text-right truncate {{ $labelTop ? 'pt-1' : '' }}"
     />
 
-    <div class="w-2/5 shrink-0">
+    <div class="w-1/2 shrink-0">
         {{ $slot }}
         <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
     </div>
