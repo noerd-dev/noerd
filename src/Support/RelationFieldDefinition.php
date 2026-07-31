@@ -7,11 +7,16 @@ use Illuminate\Support\Str;
 class RelationFieldDefinition
 {
     /**
+     * @param  ?string  $detailRoute  Named Route::livewire() route of the detail full
+     *                                page (e.g. 'crm.account.detail'); when set, the
+     *                                relation detail opens via Noerd::modalRoute()
+     *                                (URL rewrite) and $detailComponent is not used
      * @param  callable|null  $titleResolver
      */
     public function __construct(
         public string $listComponent,
         public ?string $detailComponent = null,
+        public ?string $detailRoute = null,
         public ?string $modelClass = null,
         public $titleResolver = null,
         public ?string $selectEvent = null,
@@ -22,14 +27,16 @@ class RelationFieldDefinition
      */
     public static function model(
         string $listComponent,
-        ?string $detailComponent,
-        ?string $modelClass,
+        ?string $detailComponent = null,
+        ?string $modelClass = null,
         callable|string|null $titleResolver = 'name',
         ?string $selectEvent = null,
+        ?string $detailRoute = null,
     ): self {
         return new self(
             listComponent: $listComponent,
             detailComponent: $detailComponent,
+            detailRoute: $detailRoute,
             modelClass: $modelClass,
             titleResolver: is_string($titleResolver)
                 ? static fn(mixed $model): mixed => data_get($model, $titleResolver)

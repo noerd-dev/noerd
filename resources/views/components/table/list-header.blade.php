@@ -178,8 +178,13 @@
                             ?? ($actionIndex === 0 ? 'n' : null);
                         $hasShortcut = $effectiveShortcut !== null;
                         $shortcut = $hasShortcut
-                            ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . $actionItem['action'], $effectiveShortcut)
+                            ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
                             : null;
+                        // An action either opens a named Livewire route as a modal
+                        // (route:) or calls a method on the list component (action:).
+                        $clickExpression = isset($actionItem['route'])
+                            ? '$modalRoute(' . Js::from($actionItem['route']) . ', ' . Js::from($actionItem['arguments'] ?? []) . ')'
+                            : '$wire.' . $actionItem['action'] . '(null, ' . Js::from($relations ?? []) . ')';
                     @endphp
                     @if ($hasShortcut)
                         <div
@@ -194,7 +199,7 @@
                         :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
                         x-ref="actionBtn{{ $actionIndex }}"
                         class="relative h-8"
-                        wire:click.prevent="{{ $actionItem['action'] }}(null, {{ Js::from($relations ?? []) }})"
+                        @click.prevent="{{ $clickExpression }}"
                     >
                         {{ __($actionItem['label']) }}
                         @if ($hasShortcut)

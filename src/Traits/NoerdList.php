@@ -274,32 +274,24 @@ trait NoerdList
     /**
      * Lists may declare `public ?string $detailRoute = '...';` (a named Livewire
      * route of the detail full page, e.g. 'crm.account.detail') INSTEAD of a
-     * $detailComponent. The modal component is resolved from the route, and
-     * opening a record's detail modal rewrites the browser URL to that route
-     * (plus ?modal=true); closing the modal restores the previous list URL.
-     * Reloading the rewritten URL redirects back to the list with the record
-     * reopened as a modal (see NoerdPage::redirectToListModal()). Opt-in —
-     * lists without the property keep the plain query-param behavior.
+     * $detailComponent. Noerd::modalRoute() opens the component behind the route
+     * and rewrites the browser URL to it (+ ?modal=true); closing the modal
+     * restores the previous list URL. Reloading the rewritten URL reopens the
+     * record as a modal over the previously visited page (see
+     * NoerdPage::redirectToListModal()). Opt-in — lists without the property
+     * keep the plain query-param behavior.
      */
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
         $detailRoute = property_exists($this, 'detailRoute') ? $this->detailRoute : null;
 
-        $component = ($detailRoute ? $this->detailRouteComponent($detailRoute) : null) ?? $this->detailComponent;
-        $url = ($detailRoute && $modelId) ? route($detailRoute, [$modelId, 'modal' => 'true']) : null;
-        
-        Noerd::modal($component, ['modelId' => $modelId, 'relations' => $relations], url: $url);
-    }
+        if ($detailRoute) {
+            Noerd::modalRoute($detailRoute, ['modelId' => $modelId, 'relations' => $relations]);
 
-    /**
-     * The Livewire component behind a named route registered via
-     * Route::livewire() (stored in the route action by Livewire's macro).
-     */
-    protected function detailRouteComponent(string $routeName): ?string
-    {
-        $component = app('router')->getRoutes()->getByName($routeName)?->getAction('livewire_component');
+            return;
+        }
 
-        return is_string($component) ? $component : null;
+        Noerd::modal($this->detailComponent, ['modelId' => $modelId, 'relations' => $relations]);
     }
 
     public function listData(): array

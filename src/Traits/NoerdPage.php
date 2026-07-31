@@ -77,7 +77,7 @@ trait NoerdPage
 
     public function initPage(): void
     {
-        if ($this->redirectToListModal()) {
+        if ($this->prepareRoutedModal()) {
             return;
         }
 
@@ -98,19 +98,36 @@ trait NoerdPage
     }
 
     /**
+     * Routed-modal handling shared by initPage() and initDetail(): normalizes
+     * the 'new' modelId sentinel (the URL of a create modal, e.g.
+     * /crm/account/new) to null and performs the ?modal=true redirect. Returns
+     * true when a redirect was issued and mounting should stop.
+     */
+    protected function prepareRoutedModal(): bool
+    {
+        if ($this->modelId === 'new') {
+            $this->modelId = null;
+        }
+
+        return $this->redirectToListModal();
+    }
+
+    /**
      * A detail full page opened with ?modal=true (the URL a detailRoute list
      * writes while its modal is open) redirects back to the page the user last
      * visited in this session (whatever it is — the accounts list, the vouchers
      * list, the dashboard) and reopens the record as a modal OVER that page via
-     * a flashed instruction the noerd-modal stack consumes on mount. No owning
-     * list is derived. Without a previous page (fresh session, reload of the
-     * link itself) the plain full page renders. Only applies to real page
-     * loads: inside a modal the component mounts during a Livewire request
-     * (X-Livewire header) and is never redirected.
+     * a flashed instruction the noerd-modal stack consumes on mount — for a
+     * record as well as for a create modal (modelId null after the 'new'
+     * sentinel was normalized). No owning list is derived. Without a previous
+     * page (fresh session, reload of the link itself) the plain full page
+     * renders. Only applies to real page loads: inside a modal the component
+     * mounts during a Livewire request (X-Livewire header) and is never
+     * redirected.
      */
     protected function redirectToListModal(): bool
     {
-        if (! $this->modelId || $this->embedded || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
+        if ($this->embedded || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
             return false;
         }
 

@@ -123,6 +123,12 @@ new class extends Component
             return;
         }
 
+        if ($definition->detailRoute) {
+            Noerd::modalRoute($definition->detailRoute, ['modelId' => $this->value]);
+
+            return;
+        }
+
         $detailComponent = $definition->getDetailComponent();
         if (! $detailComponent) {
             return;

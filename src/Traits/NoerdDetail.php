@@ -28,6 +28,10 @@ trait NoerdDetail
 
     public function initDetail(): void
     {
+        if ($this->prepareRoutedModal()) {
+            return;
+        }
+
         // For detail components declaring $detailModel. Loads the pageLayout first
         // so the YAML quick-create opt-in below can be read from it.
         if (isset($this->detailModel)) {

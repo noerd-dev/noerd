@@ -32,6 +32,8 @@ new class extends Component
 
     public ?string $detailComponent = null;
 
+    public ?string $detailRoute = null;
+
     public ?string $legacySelectEvent = null;
 
     public function mount(
@@ -58,6 +60,7 @@ new class extends Component
         $this->modelId = $modelId;
         $this->listComponent = $definition->listComponent;
         $this->detailComponent = $definition->getDetailComponent();
+        $this->detailRoute = $definition->detailRoute;
         $this->legacySelectEvent = $definition->getSelectEvent();
 
         $this->resolveDisplayTitle();
@@ -88,11 +91,19 @@ new class extends Component
 
     public function openDetail(): void
     {
-        if (! $this->value || ! $this->detailComponent) {
+        if (! $this->value) {
             return;
         }
 
-        Noerd::modal($this->detailComponent, ['modelId' => $this->value]);
+        if ($this->detailRoute) {
+            Noerd::modalRoute($this->detailRoute, ['modelId' => $this->value]);
+
+            return;
+        }
+
+        if ($this->detailComponent) {
+            Noerd::modal($this->detailComponent, ['modelId' => $this->value]);
+        }
     }
 
     private function resolveDisplayTitle(): void
