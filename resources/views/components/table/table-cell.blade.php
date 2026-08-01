@@ -53,11 +53,30 @@
                     >
                         <div class="py-1" role="none">
                             @foreach ($actions as $action)
+                                @php
+                                    // Mirrors detail-actions: route: opens a route modal for the
+                                    // row record, modalComponent: is the fallback, action: calls
+                                    // a method on the list component. An unregistered route
+                                    // without a fallback hides the entry.
+                                    $rowActionRoute = $action['route'] ?? null;
+                                    $rowActionRoute = $rowActionRoute && \Illuminate\Support\Facades\Route::has($rowActionRoute)
+                                        ? $rowActionRoute
+                                        : null;
+                                @endphp
+                                @if (! empty($action['route']) && ! $rowActionRoute && empty($action['modalComponent']))
+                                    @continue
+                                @endif
                                 <a
-                                    wire:click.prevent="{{ $action['action'] }}('{{ $id }}')"
-                                    @isset($action['confirm'])
-                                        wire:confirm="{{ __($action['confirm']) }}"
-                                    @endisset
+                                    @if ($rowActionRoute)
+                                        x-on:click.prevent="$modalRoute({{ \Illuminate\Support\Js::from($rowActionRoute) }}, {{ \Illuminate\Support\Js::from(['modelId' => $id]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $action['modalComponent'] ?? null])) }})"
+                                    @elseif (! empty($action['modalComponent']))
+                                        x-on:click.prevent="$modal({{ \Illuminate\Support\Js::from($action['modalComponent']) }}, {{ \Illuminate\Support\Js::from(['modelId' => $id]) }})"
+                                    @else
+                                        wire:click.prevent="{{ $action['action'] }}('{{ $id }}')"
+                                        @isset($action['confirm'])
+                                            wire:confirm="{{ __($action['confirm']) }}"
+                                        @endisset
+                                    @endif
                                     class="group flex cursor-pointer items-center px-4 py-2 text-sm text-gray-700"
                                     role="menuitem"
                                     tabindex="-1"
