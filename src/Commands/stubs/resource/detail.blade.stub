@@ -1,6 +1,5 @@
 <?php
 
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
 use {{ModelClass}};
@@ -10,8 +9,7 @@ new class extends Component {
 
     public $detailModel = {{ModelBaseName}}::class;
 
-    #[Url(as: '{{entity}}Id', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = '{{entity}}Id';
 }; ?>
 
 <x-noerd::page>

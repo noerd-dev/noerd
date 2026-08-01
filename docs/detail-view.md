@@ -442,15 +442,25 @@ Each footer component receives `modelId` as a prop and is rendered via `<livewir
 
 ## Livewire Component
 
-A detail component declares its model as `public $detailModel` — everything else (mounting,
-`store()`, `delete()`) comes from the `NoerdDetail` trait.
+A detail component declares its model as `public $detailModel` and its URL alias as
+`public ?string $detailPrimary` — everything else (mounting, `store()`, `delete()`)
+comes from the `NoerdDetail` trait.
+
+`$detailPrimary` is MANDATORY for every model-backed detail (a missing declaration
+throws on mount). It binds `$modelId` to the entity-scoped query parameter
+(`?supplierId=5`) — never redeclare `$modelId` or add a `#[Url]` attribute yourself.
+The binding is applied by the trait (`queryStringNoerdPage()`) and automatically
+skipped when the component is mounted `embedded: true`, so a hosting page can own
+the same URL parameter without conflicts. Set `detailPrimary` only as a literal
+property default (never in `mount()`): the modal system probes a fresh instance to
+collect the URL params to clear on close. Components without `$detailModel`
+(dashboards, always-embedded children) simply leave it `null` — no URL binding.
 
 Example: `supplier-detail.blade.php`
 
 ```php
 <?php
 
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Accounting\Models\Supplier;
@@ -460,8 +470,7 @@ new class extends Component {
 
     public $detailModel = Supplier::class;
 
-    #[Url(as: 'supplierId', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = 'supplierId';
 }; ?>
 
 <x-noerd::page>

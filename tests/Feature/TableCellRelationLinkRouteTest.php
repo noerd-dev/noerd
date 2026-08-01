@@ -42,7 +42,7 @@ it('renders a relation_link route cell as $modalRoute with the id from idField',
         ->not->toContain('$modal(');
 });
 
-it('defaults idParam to modelId in route mode and to id in component mode', function (): void {
+it('defaults idParam to modelId in both route and component mode', function (): void {
     registerTestLivewireRoute('zz-cell-default/{modelId}', 'noerd::theme-test', 'zz.cell.default');
 
     $routeHtml = renderRelationLinkCell([
@@ -56,8 +56,17 @@ it('defaults idParam to modelId in route mode and to id in component mode', func
     ]);
 
     expect(html_entity_decode($routeHtml))->toContain('modelId');
-    expect(html_entity_decode($componentHtml))->toContain('id\\u0022:42')
-        ->not->toContain('modelId');
+    expect(html_entity_decode($componentHtml))->toContain('modelId\\u0022:42');
+});
+
+it('honors an explicit idParam override in component mode', function (): void {
+    $componentHtml = renderRelationLinkCell([
+        'modalComponent' => 'zz::vehicle-detail',
+        'idField' => 'vehicle_id',
+        'idParam' => 'vehicleId',
+    ]);
+
+    expect(html_entity_decode($componentHtml))->toContain('vehicleId\\u0022:42');
 });
 
 it('falls back to the modalComponent when the relation_link route is unregistered', function (): void {

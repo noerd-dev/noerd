@@ -300,9 +300,9 @@
                     $relationRoute = $relationRoute && \Illuminate\Support\Facades\Route::has($relationRoute)
                         ? $relationRoute
                         : null;
-                    // Route mode addresses the record, so the param follows the
-                    // {modelId} route convention; component mode keeps its 'id' default.
-                    $relationIdParam = $columnConfig['idParam'] ?? ($relationRoute ? 'modelId' : 'id');
+                    // Both modes address the record via its $modelId property — the
+                    // {modelId} route param and the component mount argument alike.
+                    $relationIdParam = $columnConfig['idParam'] ?? 'modelId';
                     $relationId = $rowData[$columnConfig['idField'] ?? 'id'] ?? null;
                 @endphp
                 @if ($value && $relationRoute)

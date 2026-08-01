@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\DemoCategory;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
 
@@ -10,8 +9,7 @@ new class extends Component {
 
     public $detailModel = DemoCategory::class;
 
-    #[Url(as: 'demoCategoryId', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = 'demoCategoryId';
 
     public function store(): void
     {

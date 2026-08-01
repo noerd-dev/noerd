@@ -1,7 +1,6 @@
 <?php
 
 use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Contracts\MediaResolverContract;
@@ -20,8 +19,7 @@ new class extends Component
     use SetupLanguageFilterTrait;
     use WithFileUploads;
 
-    #[Url(as: 'setupCollectionId', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = 'setupCollectionId';
 
     // Note: This component does NOT declare $detailModel because it uses custom layout from collectionLayout
     // instead of the standard YAML config system
@@ -35,7 +33,7 @@ new class extends Component
     public function mount(mixed $model = null, ?string $collectionKey = null): void
     {
         // Note: We don't call initDetail here because this component uses custom layout
-        // from collectionLayout instead of YAML config. The modelId is bound via #[Url] attribute.
+        // from collectionLayout instead of YAML config. The modelId is bound via $detailPrimary.
         if ($model !== null) {
             $this->modelId = $model instanceof SetupCollectionEntry ? $model->id : $model;
         }

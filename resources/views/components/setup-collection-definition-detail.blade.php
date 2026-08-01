@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\StaticConfigHelper;
@@ -14,8 +13,7 @@ new class extends Component
 {
     use NoerdDetail;
 
-    #[Url(as: 'setupCollectionDefinitionId', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = 'setupCollectionDefinitionId';
 
     public array $fields = [];
 

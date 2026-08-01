@@ -2,7 +2,6 @@
 
 use App\Models\DemoCategory;
 use App\Models\DemoCustomer;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
 
@@ -11,8 +10,7 @@ new class extends Component {
 
     public $detailModel = DemoCustomer::class;
 
-    #[Url(as: 'demoCustomerId', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = 'demoCustomerId';
 
     public function categoryOptions(): array
     {

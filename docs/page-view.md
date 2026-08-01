@@ -67,7 +67,6 @@ Both `relations` and `widgets` open a list NARROWED by the current record, so th
 ```php
 <?php
 
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Noerd\Traits\NoerdPage;
 use Noerd\Crm\Models\Account;
@@ -75,8 +74,7 @@ use Noerd\Crm\Models\Account;
 new class extends Component {
     use NoerdPage;
 
-    #[Url(as: 'accountId', keep: false, except: '')]
-    public $modelId = null;
+    public ?string $detailPrimary = 'accountId';
 
     public $detailModel = Account::class;
     public const LIST_COMPONENT = 'crm::accounts-list';
@@ -106,6 +104,10 @@ new class extends Component {
   chrome-less (no header/footer/scroll wrapper), the page owns all chrome.
 - `LIST_COMPONENT` is only needed for namespaced lists; a same-namespace `account-page` derives
   `accounts-list` automatically (`getListComponent()` strips `-page` and `-detail` alike).
+- `$detailPrimary` binds `$modelId` to the page's URL parameter (`?accountId=5`) via the trait's
+  `queryStringNoerdPage()` — never redeclare `$modelId` or add a `#[Url]` attribute. The embedded
+  detail may declare the SAME alias (it does, for standalone use): an `embedded: true` instance
+  skips the binding automatically, so page and detail never compete for the URL parameter.
 
 ## Generic store roundtrip
 

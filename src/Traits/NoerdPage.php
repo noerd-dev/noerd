@@ -9,6 +9,7 @@ use Noerd\Facades\Noerd;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Support\ThemeContext;
+use RuntimeException;
 
 /**
  * Base trait for `*-page` components: page chrome (tabs, modal lifecycle,
@@ -20,7 +21,6 @@ trait NoerdPage
 {
     public bool $showSuccessIndicator = false;
 
-    #[Url(as: 'id', keep: false, except: '')]
     public $modelId = null;
 
     #[Url(as: 'tab', keep: false, except: 1)]
@@ -58,6 +58,8 @@ trait NoerdPage
      */
     public function mountNoerdPage(): void
     {
+        $this->assertDetailPrimaryDeclared();
+
         // Embedded children (a detail rendered inside a hosting page component) own no
         // tabs — leave the tab session/URL state to the hosting page.
         if ($this->embedded) {
@@ -71,6 +73,33 @@ trait NoerdPage
         }
 
         session(['noerd.lastDetailComponent' => $component]);
+    }
+
+    /**
+     * Trait-level query string (auto-collected by Livewire's SupportQueryString):
+     * binds $modelId to the component's public URL alias declared in
+     * `public ?string $detailPrimary = '{entity}Id';` (e.g. 'customerId' →
+     * ?customerId=5). Like $detailModel, the property is deliberately NOT
+     * declared on the trait — PHP forbids redeclaring a trait property with a
+     * different default. It is MANDATORY for model-backed *-detail components
+     * and must be a literal property default (never assigned in mount()): the
+     * modal system probes a fresh instance to collect the params to clear on
+     * close. Embedded children never bind — the hosting page owns the URL
+     * parameter, and a stale query param must not override the mount-passed
+     * modelId. Must stay PUBLIC: noerd-modal's resolveUrlParameters() discovers
+     * it via get_class_methods().
+     */
+    public function queryStringNoerdPage(): array
+    {
+        $detailPrimary = $this->detailPrimary ?? null;
+
+        if ($this->embedded || ! $detailPrimary) {
+            return [];
+        }
+
+        return [
+            'modelId' => ['as' => $detailPrimary, 'keep' => false, 'except' => ''],
+        ];
     }
 
     public function mount(): void
@@ -255,6 +284,30 @@ trait NoerdPage
         if ($id) {
             Noerd::modalFor($detailRoute, $detailComponent, ['modelId' => $id]);
         }
+    }
+
+    /**
+     * Every model-backed `*-detail` must declare its URL alias explicitly.
+     * `*-page` components (entity pages declare it anyway; settings pages are
+     * tenant singletons) and components without $detailModel (dashboards,
+     * always-embedded children, bespoke modals) are exempt.
+     */
+    protected function assertDetailPrimaryDeclared(): void
+    {
+        if (! isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
+            return;
+        }
+
+        if (! Str::endsWith($this->getName(), '-detail')) {
+            return;
+        }
+
+        throw new RuntimeException(sprintf(
+            'Model-backed detail [%s] must declare its URL alias: `public ?string $detailPrimary = \'%sId\';` '
+            . '(embedded instances skip the URL binding automatically).',
+            $this->getName(),
+            Str::camel(class_basename($this->detailModel)),
+        ));
     }
 
     /**
