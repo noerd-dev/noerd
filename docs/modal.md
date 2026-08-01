@@ -156,6 +156,102 @@ $this->dispatch('noerdModal',
 );
 ```
 
+## Route Modals
+
+A modal can also be opened by the NAME of a `Route::livewire()` route instead of by
+component name. The route is resolved to the component behind it, the browser URL is
+rewritten to the route (plus `?modal=true`) and restored when the modal closes.
+
+```php
+use Noerd\Facades\Noerd;
+
+// Opens the component behind the route and rewrites the URL to /crm/account/5?modal=true
+Noerd::modalRoute('crm.account.detail', ['modelId' => 5]);
+```
+
+```blade
+<button @click="$modalRoute('crm.account.detail', { modelId: 5 })">Edit Account</button>
+```
+
+Route params are filled by name from the arguments. A create modal has no record id —
+the conventional `{modelId}` param then carries the `new` sentinel
+(`/crm/account/new?modal=true`), which `NoerdPage::prepareRoutedModal()` maps back to
+`null`. Reloading such a URL reopens the record as a modal over the page the user last
+visited (`NoerdPage::redirectToListModal()`).
+
+### Route modal or component modal?
+
+**Use a route** when the modal shows ONE addressable record. All three must hold:
+
+1. the target is a `*-detail` / `*-page` component using `NoerdDetail` / `NoerdPage` —
+   only those understand the `new` sentinel and the `?modal=true` reload contract;
+2. a named `Route::livewire('{app}/{entity}/{modelId}', …)` route exists for exactly
+   that component;
+3. the only identity-bearing argument is `modelId` — everything else is chrome
+   (`relations`, `quickCreate`).
+
+You get a shareable URL, a working reload, "open in new tab", and callers that no
+longer hard-code a foreign module's component name.
+
+**Keep the component** for everything else:
+
+- **Action dialogs** — `*-modal`, `*-confirmation`, `*-review`, `*-import`, `*-editor`:
+  they perform one operation and close, they have no identity.
+- **Pickers** — anything opened with `listActionMethod`, `selectMode`, `selectContext`,
+  `multiSelect`, `returnsSelection` or `context`. The selection is not a URL.
+- **Filtered lists** — a list narrowed by a parent record (`accountId`, `folderId`).
+  A route may be used here for decoupling, but the URL is deliberately NOT rewritten
+  (see below).
+
+Reviewer's test: *paste the resulting URL into a fresh tab — does it show the same
+thing?* Yes → route. No → component.
+
+### Fallback component
+
+Pass the component alongside the route and it opens when the route name is not
+registered — so a caller may reference a route owned by an optional module:
+
+```php
+Noerd::modalFor('customer.detail', 'customer::customer-detail', ['modelId' => 5]);
+```
+
+`modalFor()` is the canonical shape: route when configured and registered, component
+otherwise. In Blade the same is expressed through the `$modalRoute` options object:
+
+```blade
+@click="$modalRoute('customer.detail', { modelId: 5 }, null, null, null, { fallbackComponent: 'customer::customer-detail' })"
+```
+
+### Suppressing the URL rewrite
+
+`rewriteUrl: false` resolves the route to its component but keeps the browser URL. Use
+it for targets that are not addressable — most notably a list opened filtered by a
+parent record, where the list route carries no filter param and a reload would show
+the unfiltered list:
+
+```blade
+@click="$modalRoute('crm.contacts', { accountId: 5 }, null, null, null, { rewriteUrl: false })"
+```
+
+The modal stack also guards this automatically: an argument that is neither a route
+param nor pure chrome suppresses the rewrite, so a YAML author cannot produce a URL
+that lies.
+
+### Where `route:` is available
+
+| Place | Key |
+|-------|-----|
+| List row click | `public ?string $detailRoute` on the list component |
+| List header action (`lists/*.yml`) | `route:` (+ optional `arguments:`) instead of `action:` |
+| Detail action (`details/*.yml`) | `route:` instead of `modalComponent:` |
+| Relation box tile (`pages/*.yml` `relations:`) | `route:` next to `component:` (no URL rewrite) |
+| Widget "show more" (`pages/*.yml` `widgets:`) | `route:` next to `component:` (no URL rewrite) |
+| List column `type: relation_link` | `route:` instead of `modalComponent:` |
+| Relation field | `detailRoute:` on `RelationFieldDefinition::model()`, or `detailRoute:` on the field |
+| Sidebar entry (`navigation.yml`) | `modalRoute:` to open as a modal, `newRoute:` for the "+" button — `route:` keeps meaning "navigate" |
+| Page/detail tab | `modalRoute:` next to `component:` |
+| Dashboard card | `route=` instead of `component=` |
+
 ## Modal Stacking
 
 The modal system supports unlimited nested modals:

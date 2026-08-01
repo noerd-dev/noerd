@@ -34,15 +34,53 @@ class NoerdManager
      * (+ ?modal=true) and restored when the modal closes; route params are filled
      * by name from $arguments (a missing required param — e.g. a new record —
      * opens the modal without a URL rewrite).
+     *
+     * $fallbackComponent is opened when the route name is not registered, so a
+     * caller may reference a route owned by an optional module. $rewriteUrl:false
+     * resolves the route but keeps the browser URL — for targets that are not
+     * addressable (e.g. a list opened filtered by a parent record).
      */
-    public function modalRoute(string $routeName, mixed $arguments = [], ?string $position = null, ?string $size = null): void
-    {
+    public function modalRoute(
+        string $routeName,
+        mixed $arguments = [],
+        ?string $position = null,
+        ?string $size = null,
+        ?string $fallbackComponent = null,
+        bool $rewriteUrl = true,
+    ): void {
         $this->dispatchModal([
             'route' => $routeName,
+            'modalComponent' => $fallbackComponent,
             'arguments' => $arguments,
             'position' => $position,
             'size' => $size,
+            'rewriteUrl' => $rewriteUrl,
         ]);
+    }
+
+    /**
+     * Open a record by route when a route name is configured, else by component.
+     * The single call shape for every place that supports both (list row click,
+     * relation fields, relation detail jumps): the route wins when registered,
+     * the component is the fallback when the owning module is not installed.
+     */
+    public function modalFor(
+        ?string $routeName,
+        ?string $component,
+        mixed $arguments = [],
+        ?string $position = null,
+        ?string $size = null,
+        bool $rewriteUrl = true,
+    ): void {
+        if ($routeName !== null && $routeName !== '') {
+            $this->modalRoute($routeName, $arguments, $position, $size, $component, $rewriteUrl);
+
+            return;
+        }
+
+        if ($component !== null && $component !== '') {
+            $this->modal($component, $arguments, $position, $size);
+        }
     }
 
     /** @param array<string, mixed> $params */

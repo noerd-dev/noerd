@@ -1,0 +1,14 @@
+label: Compact
+gridClasses: 'py-3 pt-1 gap-x-6 gap-y-1.5'
+fullWidthRows: false
+numbersRows: false
+spacerClass: h-7
+controlClasses: 'block h-7 w-full appearance-none rounded-sm border border-zinc-200 bg-white py-1 ps-2 pe-2 text-base sm:text-sm text-zinc-700 placeholder-zinc-400 focus:ring-1 focus:ring-brand-border focus:outline-none disabled:text-zinc-500 disabled:bg-zinc-50'
+controlSize: sm
+buttonClasses: 'h-7 px-2.5 py-1 text-xs'
+tableClasses: 'table w-full'
+headCellClasses: 'pr-2 pb-1 text-xs'
+cellClasses: 'pr-2 pt-1 align-middle'
+rowClasses: w-full
+sectionPadding: py-3
+totalsPadding: pt-2

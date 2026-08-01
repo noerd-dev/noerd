@@ -1,16 +1,19 @@
 <?php
 
+namespace Noerd\Livewire;
+
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
+use RuntimeException;
 
 /**
- * Compact variant of noerd-relation-field: identical behaviour, but the label sits
- * to the LEFT of the relation control. Resolved automatically by the detail block
- * when a field is rendered in compact mode.
+ * Shared behaviour of every relation field view variant (default, compact,
+ * numbered, …). The variants differ ONLY in their markup: each single-file
+ * component is `new class extends RelationFieldComponent {}` plus its Blade.
  */
-new class extends Component
+abstract class RelationFieldComponent extends Component
 {
     public string $relationType = '';
 
@@ -25,6 +28,12 @@ new class extends Component
     public bool $readonly = false;
 
     public mixed $modelId = null;
+
+    /** Row number supplied by the detail block in themes that number their rows. */
+    public ?int $number = null;
+
+    /** Theme the owning detail block renders in — selects the element template. */
+    public string $theme = 'default';
 
     public string $displayTitle = '';
 
@@ -44,6 +53,8 @@ new class extends Component
         bool $required = false,
         bool $readonly = false,
         mixed $modelId = null,
+        ?int $number = null,
+        string $theme = 'default',
     ): void {
         $definition = app(RelationFieldRegistry::class)->resolve($relationType);
 
@@ -58,6 +69,8 @@ new class extends Component
         $this->required = $required;
         $this->readonly = $readonly;
         $this->modelId = $modelId;
+        $this->number = $number;
+        $this->theme = $theme;
         $this->listComponent = $definition->listComponent;
         $this->detailComponent = $definition->getDetailComponent();
         $this->detailRoute = $definition->detailRoute;
@@ -95,15 +108,22 @@ new class extends Component
             return;
         }
 
-        if ($this->detailRoute) {
-            Noerd::modalRoute($this->detailRoute, ['modelId' => $this->value]);
+        Noerd::modalFor($this->detailRoute, $this->detailComponent, ['modelId' => $this->value]);
+    }
 
-            return;
-        }
-
-        if ($this->detailComponent) {
-            Noerd::modal($this->detailComponent, ['modelId' => $this->value]);
-        }
+    /**
+     * The field array the numbered row chrome expects.
+     *
+     * @return array<string, mixed>
+     */
+    public function numberedRowField(): array
+    {
+        return [
+            'name' => $this->fieldName,
+            'label' => $this->label,
+            'required' => $this->required,
+            'number' => $this->number,
+        ];
     }
 
     private function resolveDisplayTitle(): void
@@ -115,46 +135,11 @@ new class extends Component
 
     private function syncParentState(): void
     {
-        $this->dispatch('setFieldValue',
+        $this->dispatch(
+            'setFieldValue',
             field: $this->fieldName,
             value: $this->value,
             relationTitle: $this->displayTitle,
         );
     }
-}; ?>
-
-<div class="flex items-center gap-2">
-    <x-noerd::input-label for="{{ $fieldName }}" :value="__($label)" :required="$required" :title="__($label)" class="!pb-0 w-36 shrink-0 truncate"/>
-    <div class="flex-1 min-w-0">
-        <div class="flex">
-            <input
-                class="w-full cursor-pointer border border-zinc-200 rounded-sm block appearance-none text-base sm:text-sm py-1 h-7 ps-2 pe-2 bg-white text-zinc-700 read-only:text-zinc-500 placeholder-zinc-400 read-only:placeholder-zinc-400/70 focus:outline-none focus:ring-1 focus:ring-brand-border"
-                type="text"
-                readonly
-                id="{{ $fieldName }}"
-                value="{{ $displayTitle }}"
-                @click="@if($displayTitle) $wire.openDetail() @elseif(! $readonly) $modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $fieldName }}', listActionMethod: 'selectAction'}) @endif"
-            >
-
-            @if($displayTitle && ! $readonly)
-                <button
-                    wire:click="clear"
-                    class="h-7 inline-flex items-center px-2 !mt-0 !ml-1 text-zinc-400 hover:text-zinc-600"
-                    type="button"
-                >
-                    <x-noerd::icons.x-mark class="w-5 h-5"></x-noerd::icons.x-mark>
-                </button>
-            @endif
-
-            @if(! $readonly)
-                <x-noerd::button
-                    @click="$modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $fieldName }}', listActionMethod: 'selectAction'})"
-                    class="!h-7 !px-2 rounded-sm !mt-0 !ml-1"
-                    type="button"
-                >
-                    <x-noerd::icons.magnifying-glass></x-noerd::icons.magnifying-glass>
-                </x-noerd::button>
-            @endif
-        </div>
-    </div>
-</div>
+}

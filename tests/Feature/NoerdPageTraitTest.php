@@ -143,3 +143,16 @@ it('leaves the tab session untouched for embedded components', function (): void
     expect($detail->currentTab)->toBe(2)
         ->and(session('noerd.lastDetailComponent'))->toBe('zz-fixture-page');
 });
+
+it('resolves the layout theme for hand-written chrome', function (): void {
+    $page = new NoerdPageFixturePage();
+
+    expect($page->detailTheme())->toBe('default');
+
+    $page->pageLayout = ['theme' => 'numbered'];
+    expect($page->detailTheme())->toBe('numbered');
+
+    // A theme whose registration is gone must never break a page.
+    $page->pageLayout = ['theme' => 'does-not-exist'];
+    expect($page->detailTheme())->toBe('default');
+});

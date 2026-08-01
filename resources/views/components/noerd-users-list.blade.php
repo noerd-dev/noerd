@@ -14,7 +14,7 @@ new class () extends Component {
     public const DETAIL_COMPONENT = 'noerd::noerd-users-list';
 
     public $listModel = NoerdUser::class;
-    public $detailComponent = 'noerd::noerd-user-detail';
+    public ?string $detailRoute = 'noerd-user.detail';
 
     public function mount(): void
     {

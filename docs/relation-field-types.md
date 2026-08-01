@@ -60,6 +60,22 @@ $relationFieldRegistry->register('quoteRelation', RelationFieldDefinition::model
 - The legacy `{entity}Selected` event is still dispatched for compatibility
 - Unregistered relation types fail explicitly during rendering
 
+### Theme Templates
+
+The two Livewire components delegate their markup to the active theme's templates
+`relation-field.blade.php` / `polymorphic-relation-field.blade.php` (see [Themes](themes.md)). The
+detail block passes the field's theme as the `theme` prop; a theme without an own relation template
+falls back to the default theme's.
+
+The behaviour lives once in the abstract `Noerd\Livewire\RelationFieldComponent` /
+`Noerd\Livewire\PolymorphicRelationFieldComponent`; a copied theme folder restyles relation fields
+by editing the two templates — no PHP is duplicated.
+
+The numbered templates render inside `<x-noerd::detail.numbered-row>` and need the row number:
+`RelationFieldRegistry` puts `number` into the component props whenever the detail block numbered
+the field (i.e. only in a theme with `numbersRows`), and the base class exposes it as
+`$this->numberedRowField()`.
+
 ## Migration Rule
 
 - `type: relation` is forbidden

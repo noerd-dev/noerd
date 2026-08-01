@@ -58,7 +58,11 @@ it('dispatches modal when listAction is called', function (): void {
 
     Livewire::test('noerd::setup-collection-definitions-list')
         ->call('listAction', 'expense_categories')
-        ->assertDispatched('noerdModal', modalComponent: 'noerd::setup-collection-definition-detail');
+        ->assertDispatched(
+            'noerdModal',
+            fn (string $event, array $params): bool => ($params['route'] ?? null) === 'setup-collection-definition.detail'
+                && ($params['arguments']['modelId'] ?? null) === 'expense_categories',
+        );
 });
 
 it('loads existing collection definition in detail component', function (): void {

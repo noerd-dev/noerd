@@ -5,6 +5,7 @@
     'label' => '',
     'modalComponent' => '',
     'detailComponent' => '',
+    'detailRoute' => null,
     'relationField' => null,
     'modelId' => 0,
     'readonly' => false,
@@ -23,6 +24,9 @@
     $required = $field['required'] ?? $required;
 
     $detailComponent = $field['detailComponent'] ?? $detailComponent;
+    // Preferred jump target for the already-selected record; the component stays
+    // as the fallback. The magnifier below opens a PICKER and stays component-based.
+    $detailRoute = $field['detailRoute'] ?? $detailRoute;
     if (empty($detailComponent) && !empty($modalComponent)) {
         $detailComponent = \Illuminate\Support\Str::singular(
             \Illuminate\Support\Str::before($modalComponent, '-list'),
@@ -49,7 +53,7 @@
                 readonly
                 id="{{ $name }}"
                 name="{{ $name }}"
-                @click="$wire.{{ $wireModel }} ? $wire.openRelationDetail('{{ $detailComponent }}', '{{ $name }}') : $modal('{{ $modalComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $name }}', listActionMethod: 'selectAction'})"
+                @click="$wire.{{ $wireModel }} ? $wire.openRelationDetail('{{ $detailComponent }}', '{{ $name }}', {{ \Illuminate\Support\Js::from($detailRoute ?: null) }}) : $modal('{{ $modalComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $name }}', listActionMethod: 'selectAction'})"
                 @if ($live)
                     wire:model.live.debounce="{{ $wireModel }}"
                 @else

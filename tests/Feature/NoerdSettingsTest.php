@@ -160,17 +160,76 @@ describe('Currency feature flag', function (): void {
             ->assertDontSee(__('Currency'));
     });
 
-    it('does not save when currency feature is disabled', function (): void {
+    it('does not save the currency when the currency feature is disabled', function (): void {
         config()->set('noerd.features.currency', false);
         $user = createUserWithSetupTenant();
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
             ->set('settingsData.currency', 'USD')
-            ->call('store');
+            ->set('settingsData.detail_theme', 'compact')
+            ->call('store')
+            ->assertHasNoErrors();
 
-        $this->assertDatabaseMissing('noerd_settings', [
+        // The remaining settings still persist — only the currency is left untouched.
+        $this->assertDatabaseHas('noerd_settings', [
             'tenant_id' => $user->selected_tenant_id,
+            'currency' => 'EUR',
+            'detail_theme' => 'compact',
         ]);
+    });
+});
+
+describe('Theme setting', function (): void {
+    it('defaults to the config fallback when no setting exists', function (): void {
+        config()->set('noerd.theme.default', 'numbered');
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->assertSet('settingsData.detail_theme', 'numbered')
+            ->assertSet('settingsData.detail_theme_enforced', false);
+    });
+
+    it('loads an existing setting from the database', function (): void {
+        $user = createUserWithSetupTenant();
+
+        NoerdSettings::create([
+            'tenant_id' => $user->selected_tenant_id,
+            'detail_theme' => 'compact',
+            'detail_theme_enforced' => true,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->assertSet('settingsData.detail_theme', 'compact')
+            ->assertSet('settingsData.detail_theme_enforced', true);
+    });
+
+    it('saves the theme and the enforce flag', function (): void {
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->set('settingsData.detail_theme', 'numbered')
+            ->set('settingsData.detail_theme_enforced', true)
+            ->call('store')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('noerd_settings', [
+            'tenant_id' => $user->selected_tenant_id,
+            'detail_theme' => 'numbered',
+            'detail_theme_enforced' => true,
+        ]);
+    });
+
+    it('rejects a theme that is not registered', function (): void {
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->set('settingsData.detail_theme', 'does-not-exist')
+            ->call('store')
+            ->assertHasErrors(['settingsData.detail_theme']);
     });
 });

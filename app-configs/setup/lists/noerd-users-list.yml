@@ -4,7 +4,7 @@ searchableColumns:
   - email
 actions:
   - label: New User
-    action: listAction
+    route: noerd-user.detail
 disableSearch: false
 description: ''
 columns:

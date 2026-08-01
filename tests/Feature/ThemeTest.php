@@ -6,41 +6,40 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
-describe('Detail view system', function (): void {
+describe('Theme system', function (): void {
 
     beforeEach(function (): void {
         $this->admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
         $this->actingAs($this->admin);
     });
 
-    it('emits no view markers in the default view', function (): void {
-        Livewire::test('noerd::detail-view-test', [
+    it('emits no theme markers in the default theme', function (): void {
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'default',
+            'theme' => 'default',
         ])
             ->assertSuccessful()
-            ->assertDontSeeHtml('data-view=')
-            ->assertDontSeeHtml('data-compact="true"')
+            ->assertDontSeeHtml('data-theme=')
+            ->assertDontSeeHtml('data-compact')
             ->assertDontSeeHtml('bg-zinc-100');
     });
 
-    it('emits both the canonical and the legacy marker for the compact view', function (): void {
-        Livewire::test('noerd::detail-view-test', [
+    it('emits the theme marker for the compact theme', function (): void {
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'compact',
+            'theme' => 'compact',
         ])
-            ->assertSeeHtml('data-view="compact"')
-            ->assertSeeHtml('data-compact="true"')
+            ->assertSeeHtml('data-theme="compact"')
+            ->assertDontSeeHtml('data-compact')
             ->assertSeeHtml('w-36 shrink-0 truncate');
     });
 
-    it('renders the numbered view with full-width gray rows and number cells', function (): void {
-        Livewire::test('noerd::detail-view-test', [
+    it('renders the numbered theme with full-width gray rows and number cells', function (): void {
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'numbered',
+            'theme' => 'numbered',
         ])
-            ->assertSeeHtml('data-view="numbered"')
-            ->assertDontSeeHtml('data-compact="true"')
+            ->assertSeeHtml('data-theme="numbered"')
             ->assertSeeHtml('col-span-full')
             ->assertSeeHtml('bg-zinc-100')
             ->assertSeeHtml('tabular-nums')
@@ -49,9 +48,9 @@ describe('Detail view system', function (): void {
     });
 
     it('numbers rows automatically, skips spacers and lets an explicit number win', function (): void {
-        $component = Livewire::test('noerd::detail-view-test', [
+        $component = Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'numbered',
+            'theme' => 'numbered',
         ]);
 
         // Fields 1 + 2 get automatic numbers; the spacer after them consumes NO number;
@@ -69,41 +68,41 @@ describe('Detail view system', function (): void {
             ->and(preg_match($numberCell(5), $html))->toBe(0);
     });
 
-    it('falls back to the default view for unknown view names', function (): void {
-        Livewire::test('noerd::detail-view-test', [
+    it('falls back to the default theme for unknown theme names', function (): void {
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'bogus',
+            'theme' => 'bogus',
         ])
             ->assertSuccessful()
-            ->assertDontSeeHtml('data-view=')
+            ->assertDontSeeHtml('data-theme=')
             ->assertDontSeeHtml('bg-zinc-100');
     });
 
-    it('honors a per-field view override', function (): void {
-        // model.plain declares view 'default' — in numbered mode it renders as a
+    it('honors a per-field theme override', function (): void {
+        // model.plain declares theme 'default' — in the numbered theme it renders as a
         // standard label-on-top input while its siblings get the row chrome.
-        Livewire::test('noerd::detail-view-test', [
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'numbered',
+            'theme' => 'numbered',
         ])
             ->assertSeeHtml('for="model.plain"')
             ->assertSeeHtml('col-span-1 sm:col-span-6');
     });
 
-    it('inherits the view in nested blocks', function (): void {
-        Livewire::test('noerd::detail-view-test', [
+    it('inherits the theme in nested blocks', function (): void {
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'numbered',
+            'theme' => 'numbered',
         ])
             ->assertSeeHtml('for="model.nested"')
             // The nested block renders its own numbered grid marker.
-            ->assertSeeHtml('data-view="numbered"');
+            ->assertSeeHtml('data-theme="numbered"');
     });
 
-    it('still renders field labels in the numbered view', function (): void {
-        Livewire::test('noerd::detail-view-test', [
+    it('still renders field labels in the numbered theme', function (): void {
+        Livewire::test('noerd::theme-test', [
             'initialModel' => [],
-            'view' => 'numbered',
+            'theme' => 'numbered',
         ])
             ->assertSeeHtml('for="model.title"')
             ->assertSeeHtml('for="model.notes"');

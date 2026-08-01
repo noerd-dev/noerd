@@ -54,7 +54,9 @@ class StaticConfigHelper
             return [];
         }
 
-        return self::applyOverrides('detail', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass);
+        return self::applyThemeSetting(
+            self::applyOverrides('detail', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
+        );
     }
 
     /**
@@ -92,7 +94,9 @@ class StaticConfigHelper
             return [];
         }
 
-        return self::applyOverrides('page', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass);
+        return self::applyThemeSetting(
+            self::applyOverrides('page', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
+        );
     }
 
     /**
@@ -466,6 +470,66 @@ class StaticConfigHelper
     {
         return app(LayoutOverrideResolver::class)
             ->apply($viewType, $component, $config, $modelClass);
+    }
+
+    /**
+     * Apply the system-wide theme an admin configured under Setup → System
+     * Settings. It only FILLS the top-level `theme:` when the YAML expresses
+     * no intent of its own — a YAML `theme:` wins. When the admin ticked
+     * "enforce", the system theme is forced instead and every per-field /
+     * nested-block override is dropped, so the whole form renders in the
+     * configured theme.
+     *
+     * Detail and page configs only — lists have an unrelated `compact` concept.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private static function applyThemeSetting(array $config): array
+    {
+        ['theme' => $theme, 'enforced' => $enforced] = ThemeHelper::forTenant();
+
+        if (! $enforced) {
+            if (! array_key_exists('theme', $config)) {
+                $config['theme'] = $theme;
+            }
+
+            return $config;
+        }
+
+        $config['theme'] = $theme;
+
+        if (isset($config['fields']) && is_array($config['fields'])) {
+            $config['fields'] = self::stripFieldThemes($config['fields']);
+        }
+
+        return $config;
+    }
+
+    /**
+     * Recursively remove per-field theme overrides so an enforced system theme
+     * is inherited by every field and nested `type: block`.
+     *
+     * @param  array<int, mixed>  $fields
+     * @return array<int, mixed>
+     */
+    private static function stripFieldThemes(array $fields): array
+    {
+        foreach ($fields as $index => $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+
+            unset($field['theme']);
+
+            if (isset($field['fields']) && is_array($field['fields'])) {
+                $field['fields'] = self::stripFieldThemes($field['fields']);
+            }
+
+            $fields[$index] = $field;
+        }
+
+        return $fields;
     }
 
     private static function stripComponentNamespace(string $component): string

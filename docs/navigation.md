@@ -43,11 +43,30 @@ For example: `app-configs/accounting/navigation.yml`
 |----------|-------------|
 | `title` | Display name (use translation key) |
 | `name` | Unique identifier for the app |
-| `route` | Laravel route name |
+| `route` | Laravel route name — the entry NAVIGATES there (and drives the active-state highlight) |
 | `heroicon` | Icon from Heroicons (e.g., `users`, `cog-6-tooth`) |
-| `newComponent` | Livewire component to open when clicking "New" |
+| `newRoute` | Named detail route opened as a modal by the "+" button (preferred) |
+| `newComponent` | Livewire component opened by the "+" button — fallback for `newRoute` |
+| `modalRoute` | Named route opened as a MODAL instead of navigating |
 | `hidden` | Hide the top-level menu item |
 | `block_menus` | Groups of navigation items |
+
+### Route vs. component
+
+`route:` always means *navigate to that page*. To open something as a modal, use the
+separate keys:
+
+```yaml
+- title: Accounts
+  route: crm.accounts          # the list page this entry links to
+  newRoute: crm.account.detail # the "+" button opens /crm/account/new?modal=true
+  newComponent: crm::account-page  # fallback when the route is not registered
+  heroicon: 'building-office'
+```
+
+`newRoute:`/`modalRoute:` win when the named route is registered; the `*Component`
+key is used otherwise, so an entry may reference a route owned by an optional module.
+See [Modal System](modal.md#route-modals) for when a route is the right target.
 
 ## Example
 

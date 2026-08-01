@@ -73,3 +73,18 @@ if (! function_exists('validDetailPayload')) {
         );
     }
 }
+
+if (! function_exists('registerTestLivewireRoute')) {
+    /**
+     * Register a named Route::livewire() route from inside a test.
+     *
+     * RouteServiceProvider refreshes the collection's name lookups once on boot,
+     * so a route added afterwards is invisible to Route::has()/getByName() until
+     * the lookups are refreshed again.
+     */
+    function registerTestLivewireRoute(string $uri, string $component, string $name): void
+    {
+        Illuminate\Support\Facades\Route::livewire($uri, $component)->name($name);
+        Illuminate\Support\Facades\Route::getRoutes()->refreshNameLookups();
+    }
+}

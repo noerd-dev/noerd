@@ -1,9 +1,10 @@
 @props([
     'variant' => 'primary',
-    'size' => 'md',
+    'size' => null,
     'icon' => null,
     'wireTarget' => null,
     'type' => null,
+    'theme' => null,
 ])
 
 @php
@@ -17,10 +18,26 @@
 
     $type = $type ?? ($variant === 'primary' ? 'submit' : 'button');
 
-    $baseClasses = 'my-auto inline-flex cursor-pointer items-center justify-center gap-2 transition focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-25'
-        . ($variant === 'pill' ? ' rounded-lg' : ' rounded-sm');
+    $baseClasses = 'my-auto inline-flex cursor-pointer items-center justify-center gap-2 transition focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-25';
 
-    $sizeClasses = match ($size) {
+    // Without an explicit size the button follows the active theme (set by the
+    // rendering detail/page or the detail block); an explicit size always wins.
+    $themeButtonClasses = null;
+    if ($size === null && ! $isIconOnly) {
+        $themeName = $theme ?? \Noerd\Support\ThemeContext::current();
+        if ($themeName !== null) {
+            $themeButtonClasses = app(\Noerd\Services\ThemeRegistry::class)->get($themeName)->buttonClasses;
+        }
+    }
+
+    // A theme's buttonClasses may carry its own corner rounding (e.g. the
+    // numbered theme's square rounded-none) — only then skip the default.
+    if ($themeButtonClasses === null || ! str_contains($themeButtonClasses, 'rounded')) {
+        $baseClasses .= $variant === 'pill' ? ' rounded-lg' : ' rounded-sm';
+    }
+
+    $size = $size ?? 'md';
+    $sizeClasses = $themeButtonClasses ?? match ($size) {
         'sm' => $isIconOnly ? 'h-6 w-6' : 'h-6 px-2.5 py-1 text-xs',
         'lg' => $isIconOnly ? 'h-10 w-10' : 'h-10 px-5 py-2.5 text-base',
         default => $isIconOnly ? 'h-8 w-8' : 'h-8 px-4 py-1.5 text-sm',

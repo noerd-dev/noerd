@@ -276,9 +276,26 @@
                     @endif
                 </div>
             @elseif ($type === 'relation_link')
-                @if ($value && isset($columnConfig['modalComponent']))
+                @php
+                    $relationRoute = $columnConfig['route'] ?? null;
+                    $relationRoute = $relationRoute && \Illuminate\Support\Facades\Route::has($relationRoute)
+                        ? $relationRoute
+                        : null;
+                    // Route mode addresses the record, so the param follows the
+                    // {modelId} route convention; component mode keeps its 'id' default.
+                    $relationIdParam = $columnConfig['idParam'] ?? ($relationRoute ? 'modelId' : 'id');
+                    $relationId = $rowData[$columnConfig['idField'] ?? 'id'] ?? null;
+                @endphp
+                @if ($value && $relationRoute)
                     <button
-                        @click.stop="$modal('{{ $columnConfig['modalComponent'] }}', { {{ $columnConfig['idParam'] ?? 'id' }}: {{ $rowData[$columnConfig['idField'] ?? 'id'] ?? 'null' }} })"
+                        @click.stop="$modalRoute({{ \Illuminate\Support\Js::from($relationRoute) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $columnConfig['modalComponent'] ?? null])) }})"
+                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
+                    >
+                        {{ $value }}
+                    </button>
+                @elseif ($value && isset($columnConfig['modalComponent']))
+                    <button
+                        @click.stop="$modal({{ \Illuminate\Support\Js::from($columnConfig['modalComponent']) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }})"
                         class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
                     >
                         {{ $value }}

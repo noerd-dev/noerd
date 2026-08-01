@@ -15,4 +15,14 @@ class NoerdSettings extends Model
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'detail_theme_enforced' => 'boolean',
+        ];
+    }
 }

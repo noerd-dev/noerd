@@ -490,7 +490,11 @@ trait GeneratesResourceFiles
         $this->line("<info>Route added:</info> {$listRoute}");
     }
 
-    protected function addDetailRoute(): void
+    /** Name of the detail route once addDetailRoute() confirmed it exists. */
+    protected ?string $detailRouteName = null;
+
+    /** Returns true when the detail route exists afterwards (added now or already present). */
+    protected function addDetailRoute(): bool
     {
         $routeFile = base_path('routes/web.php');
         $content = $this->filesystem->get($routeFile);
@@ -499,18 +503,49 @@ trait GeneratesResourceFiles
 
         if (str_contains($content, "'{$detailRouteName}'")) {
             $this->warn("Route '{$detailRouteName}' already exists in routes/web.php — skipping.");
+            $this->detailRouteName = $detailRouteName;
 
-            return;
+            return true;
         }
 
         $detailRoute = "Route::livewire('{$this->appConfigName}/{$this->entity}/{modelId}', '{$this->entity}-detail')->name('{$detailRouteName}');";
 
         if (! $this->confirm("Add detail route to routes/web.php?\n  <comment>{$detailRoute}</comment>\n  <info>Note: The component can also be used as a modal without a dedicated route.</info>", true)) {
-            return;
+            return false;
         }
 
         $this->filesystem->append($routeFile, "\n{$detailRoute}\n");
         $this->line("<info>Route added:</info> {$detailRoute}");
+        $this->detailRouteName = $detailRouteName;
+
+        return true;
+    }
+
+    /**
+     * Declare the detail route on the generated list, next to $detailComponent.
+     * Both properties on purpose: the route opens the record and rewrites the URL,
+     * the component stays as the fallback when the route is not registered.
+     */
+    protected function annotateListDetailRoute(string $listBladePath): void
+    {
+        if ($this->detailRouteName === null || ! $this->filesystem->exists($listBladePath)) {
+            return;
+        }
+
+        $content = $this->filesystem->get($listBladePath);
+        $componentLine = "    public \$detailComponent = '{$this->entity}-detail';";
+
+        if (! str_contains($content, $componentLine) || str_contains($content, '$detailRoute')) {
+            return;
+        }
+
+        $this->filesystem->put($listBladePath, str_replace(
+            $componentLine,
+            "    public ?string \$detailRoute = '{$this->detailRouteName}';\n\n" . $componentLine,
+            $content,
+        ));
+
+        $this->line("<info>Detail route declared on:</info> {$listBladePath}");
     }
 
     protected function addNavigation(bool $useSingularRoute = false): void
@@ -542,6 +577,11 @@ trait GeneratesResourceFiles
                 . "          heroicon: rectangle-stack";
 
             if (! $useSingularRoute) {
+                // newRoute wins when registered, newComponent stays as the fallback.
+                if ($this->detailRouteName !== null) {
+                    $navEntry .= "\n          newRoute: {$this->detailRouteName}";
+                }
+
                 $navEntry .= "\n          newComponent: {$this->entity}-detail";
             }
 

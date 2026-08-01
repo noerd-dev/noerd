@@ -30,6 +30,11 @@ return [
         'object_catalog' => env('NOERD_OBJECT_CATALOG_CACHE', true),
     ],
 
+    'theme' => [
+        'default' => env('NOERD_THEME', 'default'),
+        'enforced' => env('NOERD_THEME_ENFORCED', false),
+    ],
+
     'keyboard_shortcuts' => [
         'search_focus' => 's',
         'new_entry' => 'n',
@@ -37,8 +42,8 @@ return [
         'delete' => 'ctrl+backspace',
     ],
 
-    'theme' => [
-        'active' => env('NOERD_THEME', 'default'),
+    'brand' => [
+        'active' => env('NOERD_BRAND', 'default'),
 
         'presets' => [
             'default' => [

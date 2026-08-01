@@ -29,48 +29,44 @@
     };
 
     $fieldTypeRegistry = app(\Noerd\Services\FieldTypeRegistry::class);
-    $detailViewRegistry = app(\Noerd\Services\DetailViewRegistry::class);
+    $themeRegistry = app(\Noerd\Services\ThemeRegistry::class);
 
-    // Legacy boolean `compact` maps to view 'compact'; an explicit `view` wins.
-    $view = $view ?? (($compact ?? false) ? 'compact' : 'default');
-    $viewDefinition = $detailViewRegistry->get($view);
-    $view = $viewDefinition->name;
+    $theme = \Noerd\Helpers\ThemeHelper::fromLayout(['theme' => $theme ?? null]);
+    $themeDefinition = $themeRegistry->get($theme);
+    \Noerd\Support\ThemeContext::set($theme);
     $numberedRowIndex = 0;
 @endphp
 <div>
     @if(isset($title) || isset($description))
         @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
     @endif
-    <div @if($view !== 'default') data-view="{{ $view }}" @endif @if($view === 'compact') data-compact="true" @endif class="grid {{ $viewDefinition->gridClasses }} grid-cols-1 sm:grid-cols-{{$cols ?? '12'}}">
+    <div @if($theme !== 'default') data-theme="{{ $theme }}" @endif class="grid {{ $themeDefinition->gridClasses }} grid-cols-1 sm:grid-cols-{{$cols ?? '12'}}">
         @foreach($fields ?? [] as $field)
             @if(isset($field['show']) && !$field['show'])
             @elseif(isset($field['viewExists']) && !\Illuminate\Support\Facades\View::exists($field['viewExists']))
             @elseif($field['type'] === 'block')
                 {{-- Nested block with its own title and fields --}}
-                <div class="{{ $viewDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '12') }}" {!! $getShowIfDirective($field) !!}>
+                <div class="{{ $themeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '12') }}" {!! $getShowIfDirective($field) !!}>
                     @include('noerd::components.detail.block', [
                         'title' => $field['title'] ?? null,
                         'description' => $field['description'] ?? null,
                         'fields' => $field['fields'] ?? [],
                         'cols' => $field['cols'] ?? $cols ?? '12',
                         'modelId' => $modelId ?? null,
-                        'view' => $field['view'] ?? (isset($field['compact']) ? ($field['compact'] ? 'compact' : 'default') : $view),
+                        'theme' => $field['theme'] ?? $theme,
                     ])
                 </div>
             @else
                 @php
-                    $fieldView = $field['view']
-                        ?? (isset($field['compact']) ? ($field['compact'] ? 'compact' : 'default') : $view);
-                    $fieldViewDefinition = $detailViewRegistry->get($fieldView);
-                    $fieldView = $fieldViewDefinition->name;
-                    $field['view'] = $fieldView;
-                    $field['compact'] = $fieldView === 'compact';
-                    if ($fieldViewDefinition->numbersRows && ($field['type'] ?? '') !== 'spacer') {
+                    $fieldThemeDefinition = $themeRegistry->get($field['theme'] ?? $theme);
+                    $fieldTheme = $fieldThemeDefinition->name;
+                    $field['theme'] = $fieldTheme;
+                    if ($fieldThemeDefinition->numbersRows && ($field['type'] ?? '') !== 'spacer') {
                         $numberedRowIndex++;
                         $field['number'] ??= $numberedRowIndex;
                     }
                 @endphp
-                <div class="{{ $fieldViewDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}" {!! $getShowIfDirective($field) !!}>
+                <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}" {!! $getShowIfDirective($field) !!}>
                     @php
                         $fieldTypeDefinition = $fieldTypeRegistry->resolve($field['type'] ?? '');
                         $resolvedRendererProps = $fieldTypeDefinition?->resolveProps(
@@ -86,29 +82,15 @@
                             $modelId ?? null,
                         );
 
-                        // For non-default views, prefer a parallel variant of the renderer if one exists.
-                        // Includes live in forms/{view}/, livewire components use a "-{view}" suffix.
-                        // When no variant exists, the original element renders unchanged.
-                        $rendererTarget = $fieldTypeDefinition?->target;
-                        if ($fieldView !== 'default' && $rendererTarget) {
-                            if ($fieldTypeDefinition->kind === 'include') {
-                                $variantTarget = \Illuminate\Support\Str::replaceFirst('.forms.', '.forms.' . $fieldView . '.', $rendererTarget);
-                                if ($variantTarget !== $rendererTarget && \Illuminate\Support\Facades\View::exists($variantTarget)) {
-                                    $rendererTarget = $variantTarget;
-                                }
-                            } elseif ($fieldTypeDefinition->kind === 'livewire') {
-                                $variantNamespace = 'noerd';
-                                $variantComponentName = $rendererTarget;
-                                if (str_contains($rendererTarget, '::')) {
-                                    [$variantNamespace, $variantComponentName] = explode('::', $rendererTarget, 2);
-                                }
-                                $variantName = $variantComponentName . '-' . $fieldView;
-                                if (\Illuminate\Support\Facades\View::exists($variantNamespace . '::components.' . $variantName)) {
-                                    $rendererTarget = str_contains($fieldTypeDefinition->target, '::')
-                                        ? $variantNamespace . '::' . $variantName
-                                        : $variantName;
-                                }
-                            }
+                        // Element templates live in theme folders; a theme that does not
+                        // ship an element falls back to the default theme's template and
+                        // finally to the renderer registered on the field type. Livewire
+                        // renderers theme via the "-{theme}" suffix convention instead.
+                        $rendererTarget = null;
+                        if ($fieldTypeDefinition) {
+                            $rendererTarget = $fieldTypeDefinition->kind === 'livewire'
+                                ? \Noerd\Support\ThemeElementResolver::resolveLivewire($fieldTypeDefinition, $fieldTheme)
+                                : \Noerd\Support\ThemeElementResolver::resolveInclude($fieldTypeDefinition, $fieldTheme);
                         }
                     @endphp
 
@@ -124,11 +106,6 @@
                         @php
                             $fieldType = $field['type'] ?? '';
                             $looksLikeRelation = $fieldType === 'relation' || \Illuminate\Support\Str::endsWith($fieldType, 'Relation');
-
-                            $fallbackTarget = 'noerd::components.forms.input';
-                            if ($fieldView !== 'default' && \Illuminate\Support\Facades\View::exists('noerd::components.forms.' . $fieldView . '.input')) {
-                                $fallbackTarget = 'noerd::components.forms.' . $fieldView . '.input';
-                            }
                         @endphp
 
                         @if($looksLikeRelation)
@@ -136,7 +113,7 @@
                                 throw new \RuntimeException("Relation field type [{$fieldType}] is not registered. Register it in a module service provider and reference that explicit type in YAML.");
                             @endphp
                         @else
-                            @include($fallbackTarget, ['field' => $field])
+                            @include(\Noerd\Support\ThemeElementResolver::resolveFallbackInput($fieldTheme), ['field' => $field])
                         @endif
                     @endif
                 </div>

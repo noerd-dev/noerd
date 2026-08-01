@@ -64,60 +64,48 @@ it('returns null for navigation when no app selected', function (): void {
     expect($navigation)->toBeNull();
 });
 
-it('hides navigation items when config value is false', function (): void {
-    config()->set('noerd.features.roles', false);
+/**
+ * Which entries the installed setup navigation carries — and which of them are
+ * gated by `feature:` or `superAdmin:` — is configuration. So these compare the
+ * two resolutions against each other instead of naming any entry: gating may only
+ * ever REMOVE entries, never add or reorder them.
+ *
+ * @return array<int, string>
+ */
+function setupNavigationTitles(): array
+{
+    StaticConfigHelper::flushRuntimeCaches();
 
+    return collect(StaticConfigHelper::getNavigationStructure()[0]['block_menus'] ?? [])
+        ->flatMap(fn(array $block): array => collect($block['navigations'] ?? [])->pluck('title')->all())
+        ->all();
+}
+
+it('hides feature-gated navigation items when the config value is false', function (): void {
     $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
     $this->actingAs($user);
 
-    $navigation = StaticConfigHelper::getNavigationStructure();
-
-    // Find user-roles in navigation
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
-    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
-
-    expect($navTitles)->not->toContain('User Roles');
-});
-
-it('shows navigation items when config value is true', function (): void {
     config()->set('noerd.features.roles', true);
+    $enabled = setupNavigationTitles();
 
-    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
-    $this->actingAs($user);
+    config()->set('noerd.features.roles', false);
+    $disabled = setupNavigationTitles();
 
-    $navigation = StaticConfigHelper::getNavigationStructure();
-
-    // Find user-roles in navigation
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
-    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
-
-    expect($navTitles)->toContain('User Roles');
+    expect($enabled)->not->toBeEmpty()
+        ->and(array_diff($disabled, $enabled))->toBeEmpty()
+        ->and(array_diff($enabled, $disabled))->not->toBeEmpty();
 });
 
-it('shows superAdmin navigation items for super admins', function (): void {
-    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create([
-        'super_admin' => true,
-    ]);
-    $this->actingAs($user);
+it('hides superAdmin navigation items from non-super admins', function (): void {
+    $tenant = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup');
 
-    $navigation = StaticConfigHelper::getNavigationStructure();
+    $this->actingAs($tenant->create(['super_admin' => true]));
+    $superAdmin = setupNavigationTitles();
 
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
-    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
+    $this->actingAs($tenant->create(['super_admin' => false]));
+    $regular = setupNavigationTitles();
 
-    expect($navTitles)->toContain('Apps');
-});
-
-it('hides superAdmin navigation items for non-super admins', function (): void {
-    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create([
-        'super_admin' => false,
-    ]);
-    $this->actingAs($user);
-
-    $navigation = StaticConfigHelper::getNavigationStructure();
-
-    $adminBlock = collect($navigation[0]['block_menus'])->firstWhere('title', 'Administration');
-    $navTitles = collect($adminBlock['navigations'])->pluck('title')->all();
-
-    expect($navTitles)->not->toContain('Apps');
+    expect($superAdmin)->not->toBeEmpty()
+        ->and(array_diff($regular, $superAdmin))->toBeEmpty()
+        ->and(array_diff($superAdmin, $regular))->not->toBeEmpty();
 });

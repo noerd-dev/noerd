@@ -20,6 +20,7 @@
             <x-noerd::detail-widget
                 :title="$widget['title'] ?? null"
                 :component="$widget['component'] ?? null"
+                :route="$widget['route'] ?? null"
                 :columns="$widget['columns'] ?? []"
                 :arguments="$arguments"
                 :wireKey="'detail-widget-' . ($widget['component'] ?? '') . '-' . $modelId"

@@ -1,7 +1,7 @@
 title: User Roles
 actions:
   - label: New User Role
-    action: listAction
+    route: user-role.detail
 disableSearch: false
 columns:
   - field: name

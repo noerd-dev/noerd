@@ -62,7 +62,7 @@ fields:
 |----------|-------------|
 | `title` | Page title (translation key) |
 | `description` | Optional description text |
-| `view` | Layout view for the form: `default`, `compact`, `numbered` (see [Layout Views](#layout-views)) |
+| `theme` | Theme for the form: `default`, `compact`, `numbered` or any discovered theme (see [Themes](themes.md)) |
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
 | `actions` | Array of action button definitions rendered above the form (see [Detail Actions](#detail-actions)) |
@@ -70,7 +70,7 @@ fields:
 
 > **Note:** `relations:` (Relation Box) and `widgets:` are PAGE concerns — they live in the
 > optional page YAML (`pages/{entity}-page.yml`), not in a detail YAML. See [Page View](page-view.md).
-> A detail YAML contains only the form: `title`, `description`, `view`, `quickCreate`, `fields`
+> A detail YAML contains only the form: `title`, `description`, `theme`, `quickCreate`, `fields`
 > (and form-level `tabs`).
 
 ## Tab Properties
@@ -93,23 +93,19 @@ fields:
 | `required` | Mark field as required |
 | `colspan` | Grid column span (1-12) |
 | `tab` | Tab number (defaults to 1) |
-| `view` | Per-field layout view override (see [Layout Views](#layout-views)) |
-| `number` | Explicit row number in the `numbered` view (defaults to auto-increment) |
+| `theme` | Per-field theme override (see [Themes](themes.md)) |
+| `number` | Explicit row number in the `numbered` theme (defaults to auto-increment) |
 
-## Layout Views
+## Themes
 
-A detail form renders in one of several **views**, selected by the top-level `view:` key in the
-detail YAML. Built-in views:
-
-| View | Layout |
-|------|--------|
-| `default` | Label on top of the input (also used when `view` is absent or unknown) |
-| `compact` | Label to the LEFT of the input with tighter vertical spacing |
-| `numbered` | Numbered form rows in the style of official/tax forms: one field per full-width row (colspan is ignored), light gray row background, leading row number, right-aligned label, input on the right |
+A detail form renders in one of several **themes**, selected by the top-level `theme:` key in the
+detail YAML (per-field and nested-block overrides are supported), or system-wide under
+**Setup → System Settings**. A theme is a self-contained folder of element templates plus a
+`theme.yml` — copying the folder creates a new theme.
 
 ```yaml
 title: Account
-view: compact
+theme: compact
 fields:
   - name: detailData.name
     label: Name
@@ -119,52 +115,99 @@ fields:
     label: Notes
     type: textarea
     colspan: 12
-    view: default   # per-field override
+    theme: default   # per-field override
 ```
 
-The view is inherited by nested `type: block` fields; a single field (or nested block) may override
-it with its own `view:` key.
+See **[Themes](themes.md)** for the full reference: built-in themes, `theme.yml` keys, creating a
+new theme in a project or module, element resolution, theme-aware buttons and the system-wide
+default with enforcement.
 
-**Numbered view:** rows are numbered automatically per block (nested blocks restart at 1);
-`type: spacer` rows render as a blank line and consume NO number. A field
-may pin its number with an explicit `number:` key — numbers may repeat, like on tax forms. The
-shared row chrome (gray row, number cell, right-aligned label) lives in
-`<x-noerd::detail.numbered-row>`; the per-field partials in `forms/numbered/` only provide the bare
-control.
+## Position Tables
 
-**Backward compatibility:** the legacy boolean `compact: true` is still accepted and maps to
-`view: compact`; an explicit `view:` wins. Use `view:` in all new YAML.
+Documents with line items (order, quote, invoice, order confirmation, production planning) render
+their **positions** as a hand-written table, not through the YAML field grid. That table still
+follows the active theme — never hardcode a control class string in a module again.
 
-### Registering a New View
+Generic components, all in the noerd module:
 
-Views are `DetailViewDefinition` objects held by the `DetailViewRegistry` singleton. The built-ins
-are registered in `NoerdServiceProvider::boot()`; any module can add (or override) a view in its
-own service provider:
+| Component | Props | Renders |
+|---|---|---|
+| `<x-noerd::positions.section>` | `theme`, `title`, `description` | The white card, the standard block head and a body whose padding follows the theme |
+| `<x-noerd::positions.table>` | `theme`, `columns` | `<table>` + `<thead>`; in a numbering theme a leading `#` column is prepended |
+| `<x-noerd::positions.row>` | `theme`, `number`, `colspan`, `details` slot | A full `<tbody>` (so it can be a row component's root); banded with a leading number cell in a numbering theme |
+| `<x-noerd::positions.cell>` | `theme`, `width` | One `<td>` with the theme's padding |
+| `<x-noerd::positions.totals>` | `theme`, `net`, `gross`, `taxes`, `currency`, `locale` | Total Net / one row per tax rate / Total Gross |
+| `<x-noerd::forms.control>` | `theme`, `type` | A bare `<input>`/`<select>` styled by the theme; every `wire:*`/`step`/`disabled` attribute passes through |
 
-```php
-use Noerd\Services\DetailViewRegistry;
-use Noerd\Support\DetailViewDefinition;
+`columns` entries are either a plain label or `['label' => …, 'class' => 'w-32']`; an empty label
+marks the trailing action column. Labels are translated with `__()`.
 
-app(DetailViewRegistry::class)->register(new DetailViewDefinition(
-    name: 'table',
-    gridClasses: 'py-2 gap-0',       // spacing classes on the grid wrapper
-    fullWidthRows: true,             // ignore per-field colspan
-    numbersRows: false,              // no auto row numbering
-    spacerClass: 'h-9',              // height of the `spacer` field type
-));
+`taxes` accepts both shapes in use across the modules — a `rate => amount` map (`['19' => 4.2]`) and
+a list of rows (`[['tax_rate' => 19, 'tax_total' => 4.2]]`) — so a caller passes `$model->taxes`
+unchanged.
+
+**Parent detail/page blade** — read the theme once from the trait and hand it down:
+
+```blade
+@php $positionsTheme = $this->detailTheme(); @endphp
+
+<x-noerd::positions.section :theme="$positionsTheme" title="Positions">
+    <x-noerd::positions.table
+        :theme="$positionsTheme"
+        :columns="[['label' => 'Quantity', 'class' => 'w-32'], 'Name', '']"
+    >
+        @foreach($model->positions as $position)
+            <livewire:module::position
+                :key="$position->id"
+                :$position
+                :theme="$positionsTheme"
+                :number="$loop->iteration"
+            />
+        @endforeach
+    </x-noerd::positions.table>
+
+    <x-noerd::positions.totals
+        :theme="$positionsTheme"
+        :net="$model->total_net"
+        :gross="$model->total_gross"
+        :taxes="$model->taxes"
+    />
+</x-noerd::positions.section>
 ```
 
-Field elements resolve per convention — no block changes needed:
+**Row component** — accepts the theme and its row number as props (never call `detailTheme()` here:
+a row component has no page layout of its own):
 
-- `include` field types: `forms/{view}/<name>.blade.php` next to the original
-  (e.g. `forms/table/input-select.blade.php`); the generic input fallback is `forms/{view}/input.blade.php`
-- `livewire` field types: a `<name>-{view}` view alongside the component, namespace-aware
-  (`mod::name` resolves `mod::components.name-{view}`)
-- If no variant exists for a field type, the original element renders unchanged (graceful fallback)
+```blade
+public string $theme = 'default';
+public ?int $number = null;
 
-Unknown view names silently fall back to `default` — a YAML typo never breaks a detail page. The
-grid wrapper emits `data-view="{view}"` for non-default views (plus the legacy
-`data-compact="true"` for compact).
+public function mount($position, string $theme = 'default', ?int $number = null): void { … }
+```
+
+```blade
+<x-noerd::positions.row :theme="$theme" :number="$number" :colspan="3">
+    <x-noerd::positions.cell :theme="$theme" width="w-32">
+        <x-noerd::forms.control :theme="$theme" type="number" wire:change="store" wire:model="quantity"/>
+    </x-noerd::positions.cell>
+    …
+    <x-slot:details>
+        {{-- optional full-width row beneath, e.g. a rich-text description --}}
+    </x-slot:details>
+</x-noerd::positions.row>
+```
+
+`colspan` is the number of columns declared on the table; `positions.row` adds the number column
+itself when the theme numbers rows, so the details row never has to be adjusted per theme.
+
+**`$this->detailTheme()`** lives on the `NoerdPage` trait (and therefore on `NoerdDetail`). It
+normalizes `$pageLayout` — an unregistered theme falls back to `default`.
+
+In the `numbered` theme a position table gets a leading `#` column and gray banded rows, matching
+the numbered form rows above it.
+
+Note that `controlClasses` describes the control *inside a position row*; the element templates in
+the theme folders (`themes/{name}/`) keep their own (slightly smaller) class strings.
 
 ## Detail Actions
 
@@ -198,10 +241,27 @@ fields:
 | Property | Description |
 |----------|-------------|
 | `label` | Button label (translation key) |
-| `action` | Livewire method called via `wire:click` (required) |
+| `route` | Named `Route::livewire()` route opened as a modal (preferred for record targets) |
+| `modalComponent` | Livewire component opened as a modal — also the fallback when `route` is not registered |
+| `action` | Livewire method called via `wire:click` (used when neither `route` nor `modalComponent` is set) |
 | `heroicon` | Optional heroicon rendered before the label |
 | `confirm` | Optional confirmation prompt shown via `wire:confirm` (translation key) |
 | `requiresId` | Defaults to `true` — the button is hidden until the record is saved (`modelId` is set). Set to `false` to always show it |
+| `viewExists` | Optional view name — the button is hidden when that view is not registered, so YAML may reference an optional module safely |
+
+Precedence is `route:` → `modalComponent:` → `action:`. A `route:` action whose route is
+not registered and that has no `modalComponent` is not rendered at all. See
+[Modal System](modal.md#route-modals) for when a route is the right target.
+
+```yaml
+actions:
+  - label: Open Account
+    route: crm.account.detail
+    modalComponent: crm::account-page   # fallback if the CRM module is absent
+    heroicon: building-office
+    arguments:
+      modelId: $modelId
+```
 
 ### Livewire Method
 
@@ -271,7 +331,8 @@ fields:
 | `label` | Tile label (translation key) |
 | `heroicon` | Heroicon rendered before the label |
 | `relation` | Eloquent relationship method on the model used to count records (e.g. `contacts`). An unknown method yields a count of `0` instead of throwing |
-| `component` | List component opened as a modal on click (e.g. `contacts-list`, without the module prefix) |
+| `route` | Named route of the list, opened as a modal. The browser URL is deliberately NOT rewritten — the tile opens the list NARROWED by the current record, which a plain list route cannot express |
+| `component` | List component opened as a modal on click (e.g. `contacts-list`, without the module prefix) — also the fallback when `route` is not registered |
 | `arguments` | Arguments passed to the modal; the `$modelId` token resolves to the current record id, static values pass through unchanged |
 
 ## Embedded Lists

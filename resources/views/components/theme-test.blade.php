@@ -5,19 +5,19 @@ use Livewire\Component;
 new class extends Component {
     public array $model = [];
 
-    public string $view = 'default';
+    public string $theme = 'default';
 
-    public function mount(array $initialModel = [], string $view = 'default'): void
+    public function mount(array $initialModel = [], string $theme = 'default'): void
     {
         $this->model = $initialModel;
-        $this->view = $view;
+        $this->theme = $theme;
     }
 }; ?>
 
 <div>
     @php
         $pageLayout = [
-            'view' => $view,
+            'theme' => $theme,
             'fields' => [
                 ['name' => 'model.title', 'label' => 'Title', 'type' => 'text', 'colspan' => 6],
                 ['name' => 'model.status', 'label' => 'Status', 'type' => 'select', 'colspan' => 6,
@@ -25,7 +25,7 @@ new class extends Component {
                 ['type' => 'spacer', 'colspan' => 12],
                 ['name' => 'model.amount', 'label' => 'Amount', 'type' => 'currency', 'colspan' => 6, 'number' => 21],
                 ['name' => 'model.notes', 'label' => 'Notes', 'type' => 'textarea', 'colspan' => 12],
-                ['name' => 'model.plain', 'label' => 'Plain', 'type' => 'text', 'colspan' => 6, 'view' => 'default'],
+                ['name' => 'model.plain', 'label' => 'Plain', 'type' => 'text', 'colspan' => 6, 'theme' => 'default'],
                 ['type' => 'block', 'title' => 'Nested', 'colspan' => 12, 'fields' => [
                     ['name' => 'model.nested', 'label' => 'Nested Field', 'type' => 'text', 'colspan' => 6],
                 ]],
@@ -35,6 +35,6 @@ new class extends Component {
 
     @include('noerd::components.detail.block', [
         'fields' => $pageLayout['fields'],
-        'view' => $pageLayout['view'],
+        'theme' => $pageLayout['theme'],
     ])
 </div>

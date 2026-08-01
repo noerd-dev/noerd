@@ -1,6 +1,7 @@
 @props([
     'title' => null,
     'component' => null,
+    'route' => null,
     'columns' => [],
     'arguments' => [],
     'wireKey' => null,
@@ -14,6 +15,7 @@
         'minimal' => true,
         'minimalColumns' => $columns,
         'showMoreComponent' => $component,
+        'showMoreRoute' => $route,
         'showMoreArguments' => $arguments,
     ]);
 

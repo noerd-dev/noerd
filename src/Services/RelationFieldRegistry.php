@@ -24,7 +24,7 @@ class RelationFieldRegistry
             resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($type): array {
                 $fieldName = $field['name'] ?? '';
 
-                return [
+                $props = [
                     'relationType' => $type,
                     'fieldName' => $fieldName,
                     'label' => $field['label'] ?? '',
@@ -33,6 +33,15 @@ class RelationFieldRegistry
                     'readonly' => $field['readonly'] ?? false,
                     'modelId' => $modelId,
                 ];
+
+                // Only themes that number their rows put a number on the field.
+                if (isset($field['number'])) {
+                    $props['number'] = (int) $field['number'];
+                }
+
+                $props['theme'] = $field['theme'] ?? 'default';
+
+                return $props;
             },
             keyResolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): string => $type . '-' . ($field['name'] ?? 'relation') . '-' . ($modelId ?? 'new'),
         ));
@@ -49,7 +58,7 @@ class RelationFieldRegistry
                 $fieldName = $field['name'] ?? '';
                 $typeField = $field['typeField'] ?? '';
 
-                return [
+                $props = [
                     'fieldName' => $fieldName,
                     'typeField' => $typeField,
                     'label' => $field['label'] ?? '',
@@ -60,6 +69,15 @@ class RelationFieldRegistry
                     'readonly' => $field['readonly'] ?? false,
                     'modelId' => $modelId,
                 ];
+
+                // Only themes that number their rows put a number on the field.
+                if (isset($field['number'])) {
+                    $props['number'] = (int) $field['number'];
+                }
+
+                $props['theme'] = $field['theme'] ?? 'default';
+
+                return $props;
             },
             keyResolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): string => $type . '-' . ($field['name'] ?? 'relation') . '-' . ($modelId ?? 'new'),
         ));

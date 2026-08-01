@@ -1,0 +1,14 @@
+label: Numbered
+gridClasses: 'py-3 pt-1 gap-y-1'
+fullWidthRows: true
+numbersRows: true
+spacerClass: h-12
+controlClasses: 'block h-9 w-full appearance-none rounded-none border border-zinc-400 bg-white py-1.5 ps-2 pe-2 text-base sm:text-sm text-zinc-700 placeholder-zinc-400 focus:border-dotted focus:border-zinc-600 focus:ring-0 focus:outline-none disabled:text-zinc-500'
+controlSize: md
+buttonClasses: 'h-9 px-4 py-1.5 text-sm rounded-none'
+tableClasses: 'table w-full border-separate border-spacing-y-1'
+headCellClasses: 'px-1 pb-1'
+cellClasses: 'px-1 py-1 align-middle'
+rowClasses: 'w-full bg-zinc-100'
+sectionPadding: py-3
+totalsPadding: pt-2

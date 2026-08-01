@@ -1,6 +1,6 @@
-{{-- Shared row chrome for the 'numbered' detail view: gray full-width row with a leading row
+{{-- Shared row chrome for the 'numbered' theme: gray full-width row with a leading row
      number, a right-aligned label and the control in a fixed-width slot on the right. The
-     per-field partials in forms/numbered/ only provide the bare control via the slot. --}}
+     element templates in themes/numbered/ only provide the bare control via the slot. --}}
 @props([
     'field' => null,
     'labelTop' => false,

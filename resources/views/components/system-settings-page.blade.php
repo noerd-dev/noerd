@@ -1,9 +1,12 @@
 <?php
 
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\ThemeHelper;
 use Noerd\Models\NoerdSettings;
+use Noerd\Services\ThemeRegistry;
 use Noerd\Traits\NoerdDetail;
 
 new class () extends Component {
@@ -21,31 +24,55 @@ new class () extends Component {
         $this->clientId = auth()->user()->selected_tenant_id;
         $settings = NoerdSettings::where('tenant_id', $this->clientId)->first();
 
-        if ($settings) {
-            $this->settingsData = $settings->toArray();
-        } else {
-            $this->settingsData = [
-                'currency' => 'EUR',
-            ];
+        $this->settingsData = [
+            'currency' => $settings->currency ?? 'EUR',
+            'detail_theme' => $settings->detail_theme ?? config('noerd.theme.default', 'default'),
+            'detail_theme_enforced' => (bool) ($settings->detail_theme_enforced ?? false),
+        ];
+    }
+
+    /**
+     * @return array<string, string> theme name => display label
+     */
+    public function themeOptions(): array
+    {
+        $options = [];
+        foreach (app(ThemeRegistry::class)->all() as $themeName => $definition) {
+            $options[$themeName] = $definition->label ?? Str::headline($themeName);
         }
+
+        return $options;
     }
 
     public function store(): void
     {
-        if (! config('noerd.features.currency', true)) {
-            return;
+        $rules = [
+            'settingsData.detail_theme' => ['required', 'in:' . implode(',', array_keys($this->themeOptions()))],
+            'settingsData.detail_theme_enforced' => ['boolean'],
+        ];
+
+        if (config('noerd.features.currency', true)) {
+            $rules['settingsData.currency'] = ['required', 'in:EUR,USD,GBP,CHF,CZK,DKK'];
         }
 
-        $this->validate([
-            'settingsData.currency' => ['required', 'in:EUR,USD,GBP,CHF,CZK,DKK'],
-        ]);
+        $this->validate($rules);
+
+        $payload = [
+            'detail_theme' => $this->settingsData['detail_theme'],
+            'detail_theme_enforced' => (bool) ($this->settingsData['detail_theme_enforced'] ?? false),
+        ];
+
+        if (config('noerd.features.currency', true)) {
+            $payload['currency'] = $this->settingsData['currency'];
+        }
 
         NoerdSettings::updateOrCreate(
             ['tenant_id' => $this->clientId],
-            ['currency' => $this->settingsData['currency']],
+            $payload,
         );
 
         CurrencyHelper::clearCache();
+        ThemeHelper::clearCache();
 
         $this->showSuccessIndicator = true;
     }
@@ -58,8 +85,8 @@ new class () extends Component {
         </x-noerd::modal-title>
     </x-slot:header>
 
-    @if(config('noerd.features.currency', true))
-        <div class="my-12">
+    <div class="my-12 flex flex-col gap-8">
+        @if(config('noerd.features.currency', true))
             <x-noerd::box>
                 <div class="mt-4">
                     <x-noerd::input-label>
@@ -76,10 +103,35 @@ new class () extends Component {
                     <p class="text-sm text-gray-500 mt-1">{{ __('Select the currency for your company') }}</p>
                 </div>
             </x-noerd::box>
-        </div>
+        @endif
 
-        <x-slot:footer>
-            <x-noerd::delete-save-bar class="relative" :show-delete="false"></x-noerd::delete-save-bar>
-        </x-slot:footer>
-    @endif
+        <x-noerd::box>
+            <div class="mt-4">
+                <x-noerd::input-label>
+                    {{ __('Theme') }}
+                </x-noerd::input-label>
+                <x-noerd::select-input wire:model.live="settingsData.detail_theme">
+                    @foreach($this->themeOptions() as $themeName => $themeLabel)
+                        <option value="{{ $themeName }}">{{ __($themeLabel) }}</option>
+                    @endforeach
+                </x-noerd::select-input>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ __('Default theme for all detail forms. A detail configuration that defines its own theme keeps it.') }}
+                </p>
+            </div>
+
+            <div class="mt-6">
+                <x-noerd::checkbox wire:model.live="settingsData.detail_theme_enforced">
+                    {{ __('Enforce in Setup') }}
+                </x-noerd::checkbox>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ __('Apply the selected theme everywhere, even where a detail configuration defines a different one.') }}
+                </p>
+            </div>
+        </x-noerd::box>
+    </div>
+
+    <x-slot:footer>
+        <x-noerd::delete-save-bar class="relative" :show-delete="false"></x-noerd::delete-save-bar>
+    </x-slot:footer>
 </x-noerd::page>

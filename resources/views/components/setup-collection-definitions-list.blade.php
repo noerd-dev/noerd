@@ -12,7 +12,8 @@ new class extends Component
 {
     use NoerdList;
 
-    public $detailComponent = 'noerd::setup-collection-definition-detail';
+    public ?string $detailRoute = 'setup-collection-definition.detail';
+
 
     public function mount(): void
     {

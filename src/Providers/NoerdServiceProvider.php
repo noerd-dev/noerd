@@ -24,6 +24,7 @@ use Noerd\Commands\MakeListCommand;
 use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
+use Noerd\Commands\MakeThemeCommand;
 use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
@@ -35,6 +36,7 @@ use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Helpers\ThemeHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
@@ -47,7 +49,7 @@ use Noerd\Models\TenantApp;
 use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
-use Noerd\Services\DetailViewRegistry;
+use Noerd\Services\BrandService;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
@@ -58,12 +60,12 @@ use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
-use Noerd\Services\ThemeService;
+use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
-use Noerd\Support\DetailViewDefinition;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
+use Noerd\Support\ThemeContext;
 use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
@@ -86,7 +88,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(HeaderActionsRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
-        $this->app->singleton(DetailViewRegistry::class);
+        $this->app->singleton(ThemeRegistry::class);
         $this->app->singleton(NoerdManager::class);
         $this->app->singleton(RelationFieldRegistry::class, fn($app) => new RelationFieldRegistry(
             $app->make(FieldTypeRegistry::class),
@@ -94,7 +96,7 @@ class NoerdServiceProvider extends ServiceProvider
         // Singleton so the per-request FK-title lookups are memoized.
         $this->app->singleton(RelationTitleResolver::class);
         $this->app->singleton(PicklistRegistry::class);
-        $this->app->singleton(ThemeService::class);
+        $this->app->singleton(BrandService::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
 
         // Bind the Setup collection definition repository based on the shared mode toggle.
@@ -118,7 +120,12 @@ class NoerdServiceProvider extends ServiceProvider
         // StaticConfigHelper's memos are PHP statics, which outlive the app
         // instance inside one Pest process — flush them whenever a fresh app
         // boots (a per-request no-op under FPM, where statics die anyway).
-        $this->app->booted(fn() => StaticConfigHelper::flushRuntimeCaches());
+        $this->app->booted(function (): void {
+            StaticConfigHelper::flushRuntimeCaches();
+            ThemeHelper::clearCache();
+            ThemeContext::clear();
+            $this->app->make(ThemeRegistry::class)->clearCache();
+        });
     }
 
     public function boot(): void
@@ -156,23 +163,11 @@ class NoerdServiceProvider extends ServiceProvider
         $registry = $this->app->make(DynamicNavigationRegistry::class);
         $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
 
-        $detailViewRegistry = $this->app->make(DetailViewRegistry::class);
-        $detailViewRegistry->register(new DetailViewDefinition(
-            name: 'default',
-            gridClasses: 'py-8 pt-4 gap-6',
-        ));
-        $detailViewRegistry->register(new DetailViewDefinition(
-            name: 'compact',
-            gridClasses: 'py-3 pt-1 gap-x-6 gap-y-1.5',
-            spacerClass: 'h-7',
-        ));
-        $detailViewRegistry->register(new DetailViewDefinition(
-            name: 'numbered',
-            gridClasses: 'py-3 pt-1 gap-y-1',
-            fullWidthRows: true,
-            numbersRows: true,
-            spacerClass: 'h-12',
-        ));
+        // Theme folders: the project root wins over module themes, which win
+        // over the noerd built-ins (default, compact, numbered).
+        $themeRegistry = $this->app->make(ThemeRegistry::class);
+        $themeRegistry->registerPath(resource_path('views/themes'), priority: 100);
+        $themeRegistry->registerPath(__DIR__ . '/../../resources/views/themes', priority: 0);
 
         $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
         $relationFieldRegistry = $this->app->make(RelationFieldRegistry::class);
@@ -307,6 +302,7 @@ class NoerdServiceProvider extends ServiceProvider
                 MakePageCommand::class,
                 MakeDashboardCommand::class,
                 MakeCollectionCommand::class,
+                MakeThemeCommand::class,
                 CreateAdminCommand::class,
                 CreateTenantCommand::class,
                 NoerdDemoCommand::class,

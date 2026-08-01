@@ -2,19 +2,19 @@
 
 namespace Noerd\Services;
 
-class ThemeService
+class BrandService
 {
     /**
-     * Get the resolved color values for the active theme,
+     * Get the resolved color values for the active brand,
      * with individual overrides applied.
      *
      * @return array<string, string>
      */
     public function colors(): array
     {
-        $theme = config('noerd.theme.active', 'default');
-        $presets = config("noerd.theme.presets.{$theme}", config('noerd.theme.presets.default'));
-        $overrides = config('noerd.theme.overrides', []);
+        $brand = config('noerd.brand.active', 'default');
+        $presets = config("noerd.brand.presets.{$brand}", config('noerd.brand.presets.default', []));
+        $overrides = config('noerd.brand.overrides', []);
 
         $resolved = [];
         foreach ($presets as $key => $value) {

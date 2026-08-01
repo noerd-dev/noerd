@@ -254,7 +254,12 @@
                                                     @endforeach
                                                 </tr>
                                             @empty
-                                                @php($primaryAction = $actions[0] ?? null)
+                                                {{-- Block form on purpose: the inline one-line php directive must not be
+                                                     combined with a php block later in the same file — Blade's
+                                                     raw-block matcher would swallow everything in between. --}}
+                                                @php
+                                                    $primaryAction = $actions[0] ?? null;
+                                                @endphp
                                                 <tr>
                                                     <td
                                                         colspan="{{ count($table) + ($multiSelect ? 1 : 0) + ($showLineNumbers ? 1 : 0) }}"
@@ -262,15 +267,35 @@
                                                     >
                                                         <p class="text-sm text-gray-500">{{ __('No entries yet') }}</p>
                                                         @if ($primaryAction)
+                                                            @php
+                                                                // Mirrors the header action: route: opens a modal,
+                                                                // action: calls a method on the list component.
+                                                                $emptyStateRoute = $primaryAction['route'] ?? null;
+                                                                $emptyStateRoute = $emptyStateRoute && \Illuminate\Support\Facades\Route::has($emptyStateRoute)
+                                                                    ? $emptyStateRoute
+                                                                    : null;
+                                                            @endphp
                                                             <div class="mt-4 flex justify-center">
-                                                                <x-noerd::button
-                                                                    variant="primary"
-                                                                    :icon="$primaryAction['heroicon'] ?? 'plus'"
-                                                                    class="h-8"
-                                                                    wire:click.prevent="{{ $primaryAction['action'] }}(null, {{ Js::from($relations ?? []) }})"
-                                                                >
-                                                                    {{ __($primaryAction['label']) }}
-                                                                </x-noerd::button>
+                                                                @if ($emptyStateRoute)
+                                                                    <x-noerd::button
+                                                                        variant="primary"
+                                                                        :icon="$primaryAction['heroicon'] ?? 'plus'"
+                                                                        class="h-8"
+                                                                        x-data
+                                                                        x-on:click.prevent="$modalRoute({{ Js::from($emptyStateRoute) }}, {{ Js::from($primaryAction['arguments'] ?? []) }})"
+                                                                    >
+                                                                        {{ __($primaryAction['label']) }}
+                                                                    </x-noerd::button>
+                                                                @elseif (! empty($primaryAction['action']))
+                                                                    <x-noerd::button
+                                                                        variant="primary"
+                                                                        :icon="$primaryAction['heroicon'] ?? 'plus'"
+                                                                        class="h-8"
+                                                                        wire:click.prevent="{{ $primaryAction['action'] }}(null, {{ Js::from($relations ?? []) }})"
+                                                                    >
+                                                                        {{ __($primaryAction['label']) }}
+                                                                    </x-noerd::button>
+                                                                @endif
                                                             </div>
                                                         @endif
                                                     </td>

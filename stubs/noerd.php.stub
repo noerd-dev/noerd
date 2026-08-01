@@ -54,18 +54,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Theme
+    | Brand
     |--------------------------------------------------------------------------
     |
-    | Configure the application's color theme. The theme controls sidebar,
-    | appbar, and page background colors. Individual color overrides take
-    | precedence over theme presets.
+    | Configure the application's brand color palette. The brand controls
+    | sidebar, appbar, and page background colors. Individual color overrides
+    | take precedence over brand presets.
     |
-    | Supported themes: "default", "sand", "white"
+    | Supported brands: "default", "sand", "white"
     |
     */
-    'theme' => [
-        'active' => env('NOERD_THEME', 'default'),
+    'brand' => [
+        'active' => env('NOERD_BRAND', 'default'),
 
         'presets' => [
             'default' => [
@@ -186,5 +186,22 @@ return [
     */
     'cache' => [
         'object_catalog' => env('NOERD_OBJECT_CATALOG_CACHE', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Theme
+    |--------------------------------------------------------------------------
+    |
+    | Fallback for the system-wide default theme of detail forms ("default",
+    | "compact", "numbered", or any discovered theme folder). Admins override
+    | this per tenant under Setup -> System Settings. A detail YAML declaring
+    | its own "theme:" wins, unless "enforced" is on — then the system theme
+    | is applied everywhere.
+    |
+    */
+    'theme' => [
+        'default' => env('NOERD_THEME', 'default'),
+        'enforced' => env('NOERD_THEME_ENFORCED', false),
     ],
 ];

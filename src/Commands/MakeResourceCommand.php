@@ -62,7 +62,12 @@ class MakeResourceCommand extends Command
             }
 
             $this->addListRoute();
-            $this->addDetailRoute();
+
+            // The detail route must be known before the list is annotated with it.
+            if ($this->addDetailRoute()) {
+                $this->annotateListDetailRoute($listBlade);
+            }
+
             $this->addNavigation();
 
             $this->line('');

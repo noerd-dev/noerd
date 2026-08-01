@@ -144,6 +144,14 @@ trait NoerdList
 
     public ?string $showMoreComponent = null;
 
+    /**
+     * Named route of the full list opened by "show more". Preferred over
+     * $showMoreComponent, which stays as the fallback. The browser URL is NOT
+     * rewritten — the modal shows a list narrowed by $showMoreArguments, which a
+     * plain list route cannot express.
+     */
+    public ?string $showMoreRoute = null;
+
     /** @var array<string, mixed> */
     public array $showMoreArguments = [];
 
@@ -280,18 +288,18 @@ trait NoerdList
      * record as a modal over the previously visited page (see
      * NoerdPage::redirectToListModal()). Opt-in — lists without the property
      * keep the plain query-param behavior.
+     *
+     * $detailComponent stays alongside as the fallback: it opens when the route
+     * name is not registered, so a list may reference a detail route owned by an
+     * optional module.
      */
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        $detailRoute = property_exists($this, 'detailRoute') ? $this->detailRoute : null;
-
-        if ($detailRoute) {
-            Noerd::modalRoute($detailRoute, ['modelId' => $modelId, 'relations' => $relations]);
-
-            return;
-        }
-
-        Noerd::modal($this->detailComponent, ['modelId' => $modelId, 'relations' => $relations]);
+        Noerd::modalFor(
+            property_exists($this, 'detailRoute') ? $this->detailRoute : null,
+            property_exists($this, 'detailComponent') ? $this->detailComponent : null,
+            ['modelId' => $modelId, 'relations' => $relations],
+        );
     }
 
     public function listData(): array

@@ -291,6 +291,11 @@
     "Currency": "Währung",
     "System Settings": "Systemeinstellungen",
     "Select the currency for your company": "Wählen Sie die Währung für Ihr Unternehmen",
+    "Compact": "Kompakt",
+    "Numbered": "Nummeriert",
+    "Enforce in Setup": "Zwingend durchsetzen im Setup",
+    "Default theme for all detail forms. A detail configuration that defines its own theme keeps it.": "Standard-Theme für alle Detailformulare. Eine Detailkonfiguration mit eigenem Theme behält dieses.",
+    "Apply the selected theme everywhere, even where a detail configuration defines a different one.": "Das gewählte Theme überall anwenden, auch wenn eine Detailkonfiguration ein abweichendes Theme definiert.",
 
     "Clear all filters": "Alle Filter löschen",
     "Switch list view": "Listenansicht wechseln",

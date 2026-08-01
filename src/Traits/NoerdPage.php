@@ -5,7 +5,10 @@ namespace Noerd\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Helpers\ThemeHelper;
+use Noerd\Support\ThemeContext;
 
 /**
  * Base trait for `*-page` components: page chrome (tabs, modal lifecycle,
@@ -97,57 +100,6 @@ trait NoerdPage
         $this->resolveQuickCreate();
     }
 
-    /**
-     * Routed-modal handling shared by initPage() and initDetail(): normalizes
-     * the 'new' modelId sentinel (the URL of a create modal, e.g.
-     * /crm/account/new) to null and performs the ?modal=true redirect. Returns
-     * true when a redirect was issued and mounting should stop.
-     */
-    protected function prepareRoutedModal(): bool
-    {
-        if ($this->modelId === 'new') {
-            $this->modelId = null;
-        }
-
-        return $this->redirectToListModal();
-    }
-
-    /**
-     * A detail full page opened with ?modal=true (the URL a detailRoute list
-     * writes while its modal is open) redirects back to the page the user last
-     * visited in this session (whatever it is — the accounts list, the vouchers
-     * list, the dashboard) and reopens the record as a modal OVER that page via
-     * a flashed instruction the noerd-modal stack consumes on mount — for a
-     * record as well as for a create modal (modelId null after the 'new'
-     * sentinel was normalized). No owning list is derived. Without a previous
-     * page (fresh session, reload of the link itself) the plain full page
-     * renders. Only applies to real page loads: inside a modal the component
-     * mounts during a Livewire request (X-Livewire header) and is never
-     * redirected.
-     */
-    protected function redirectToListModal(): bool
-    {
-        if ($this->embedded || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
-            return false;
-        }
-
-        $previousUrl = session()->previousUrl();
-
-        if (! $previousUrl || $previousUrl === request()->fullUrl()) {
-            return false;
-        }
-
-        session()->flash('noerd-modal.open', [
-            'component' => $this->getName(),
-            'arguments' => ['modelId' => $this->modelId],
-            'url' => request()->fullUrl(),
-        ]);
-
-        $this->redirect($previousUrl);
-
-        return true;
-    }
-
     public function closeModalProcess(?string $source = null): void
     {
         $this->currentTab = 1;
@@ -213,6 +165,29 @@ trait NoerdPage
     }
 
     /**
+     * The active theme (default, compact, numbered, …). Blades pass it to
+     * hand-written chrome that lives outside the YAML field grid — position
+     * tables above all — so those follow the form's theme:
+     * `<livewire:module::position :theme="$this->detailTheme()" />`.
+     */
+    public function detailTheme(): string
+    {
+        return ThemeHelper::fromLayout($this->pageLayout);
+    }
+
+    /**
+     * Livewire trait rendering hook: expose the active theme to chrome
+     * components outside the YAML field grid (x-noerd::button above all).
+     * Deliberately not cleared per component — a hosting page's footer renders
+     * after its embedded detail, and both resolve the same layout theme. The
+     * context is request-scoped and reset on app boot.
+     */
+    public function renderingNoerdPage(): void
+    {
+        ThemeContext::set($this->detailTheme());
+    }
+
+    /**
      * The embedded detail persisted its record: adopt the id, refresh the page's
      * model snapshot and run the shared post-store chrome (success indicator,
      * quick-create exit). Pages hook extra persistence via afterEmbeddedDetailStored().
@@ -259,7 +234,12 @@ trait NoerdPage
         return call_user_func($callback);
     }
 
-    public function openRelationDetail(string $detailComponent, string $fieldName): void
+    /**
+     * Open the detail of the record a relation field points at. $detailRoute is
+     * the preferred target (the browser URL is rewritten to the record);
+     * $detailComponent stays as the fallback for an unregistered route.
+     */
+    public function openRelationDetail(string $detailComponent, string $fieldName, ?string $detailRoute = null): void
     {
         $key = str_replace('detailData.', '', $fieldName);
         $id = data_get($this->detailData, $key);
@@ -273,12 +253,59 @@ trait NoerdPage
         }
 
         if ($id) {
-            $this->dispatch(
-                event: 'noerdModal',
-                modalComponent: $detailComponent,
-                arguments: ['modelId' => $id],
-            );
+            Noerd::modalFor($detailRoute, $detailComponent, ['modelId' => $id]);
         }
+    }
+
+    /**
+     * Routed-modal handling shared by initPage() and initDetail(): normalizes
+     * the 'new' modelId sentinel (the URL of a create modal, e.g.
+     * /crm/account/new) to null and performs the ?modal=true redirect. Returns
+     * true when a redirect was issued and mounting should stop.
+     */
+    protected function prepareRoutedModal(): bool
+    {
+        if ($this->modelId === 'new') {
+            $this->modelId = null;
+        }
+
+        return $this->redirectToListModal();
+    }
+
+    /**
+     * A detail full page opened with ?modal=true (the URL a detailRoute list
+     * writes while its modal is open) redirects back to the page the user last
+     * visited in this session (whatever it is — the accounts list, the vouchers
+     * list, the dashboard) and reopens the record as a modal OVER that page via
+     * a flashed instruction the noerd-modal stack consumes on mount — for a
+     * record as well as for a create modal (modelId null after the 'new'
+     * sentinel was normalized). No owning list is derived. Without a previous
+     * page (fresh session, reload of the link itself) the plain full page
+     * renders. Only applies to real page loads: inside a modal the component
+     * mounts during a Livewire request (X-Livewire header) and is never
+     * redirected.
+     */
+    protected function redirectToListModal(): bool
+    {
+        if ($this->embedded || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
+            return false;
+        }
+
+        $previousUrl = session()->previousUrl();
+
+        if (! $previousUrl || $previousUrl === request()->fullUrl()) {
+            return false;
+        }
+
+        session()->flash('noerd-modal.open', [
+            'component' => $this->getName(),
+            'arguments' => ['modelId' => $this->modelId],
+            'url' => request()->fullUrl(),
+        ]);
+
+        $this->redirect($previousUrl);
+
+        return true;
     }
 
     /**

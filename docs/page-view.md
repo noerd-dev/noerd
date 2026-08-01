@@ -14,7 +14,7 @@ concerns". The split:
 | Form fields, validation, persistence of ONE model | `NoerdDetail` | `{entity}-detail.blade.php` |
 
 **Details are pure model forms.** Their YAML (`details/{entity}-detail.yml`, mandatory) contains
-only `title`, `description`, `compact`, `quickCreate` and `fields` (plus form-level `tabs` when
+only `title`, `description`, `theme`, `quickCreate` and `fields` (plus form-level `tabs` when
 the fields themselves are tabbed). `widgets:` and `relations:` do NOT belong in a detail YAML —
 they are page concerns. A detail opened standalone (e.g. from a relation field) therefore renders
 just the form, without widgets or relation box.
@@ -34,11 +34,13 @@ relations:
   - label: Contacts
     heroicon: users
     relation: contacts
+    route: crm.contacts
     component: contacts-list
     arguments:
       accountId: $modelId
 widgets:
   - title: Opportunities
+    route: crm.opportunities
     component: crm::opportunities-list
     columns:
       - name
@@ -53,8 +55,12 @@ widgets:
 | `detail` | The embedded detail Livewire component (full name, e.g. `crm::account-detail`). Drives the generic store roundtrip |
 | `quickCreate` | Opt-in for the narrow quick-create modal on new records (also sizes the modal via noerd-modal) |
 | `tabs` | Page-level tabs (e.g. Media, Activity Log) — rendered by the page blade via `<x-noerd::tabs>` |
-| `relations` | Relation Box tiles (see detail-view.md → Relation Box; the component usage is identical, only the YAML lives on the page now) |
-| `widgets` | Right-hand widget sidebar rendered by `<x-noerd::detail-grid>` / `<x-noerd::detail-widgets>` |
+| `relations` | Relation Box tiles (see detail-view.md → Relation Box; the component usage is identical, only the YAML lives on the page now). Each tile may carry `route:` next to `component:` |
+| `widgets` | Right-hand widget sidebar rendered by `<x-noerd::detail-grid>` / `<x-noerd::detail-widgets>`. `route:` is the "Show more" target, `component:` the embedded list and the route fallback |
+
+Both `relations` and `widgets` open a list NARROWED by the current record, so their
+`route:` resolves the component WITHOUT rewriting the browser URL — see
+[Modal System](modal.md#route-modals).
 
 ## Component structure
 

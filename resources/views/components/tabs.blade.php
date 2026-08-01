@@ -61,7 +61,24 @@
                         @if ($tabShowIf)
                             <div class="inline-flex" {!! $tabShowIf !!}>
                         @endif
-                        @if (isset($tab['component']))
+                        @if (isset($tab['modalRoute']))
+                            @php
+                                $tabArguments = isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : [];
+                                // The record's own route supplies the href, so cmd-click
+                                // and "open in new tab" land on the real full page.
+                                $tabRouteParameters = isset($tab['routeParameters'])
+                                    ? $resolveArguments($tab['routeParameters'])
+                                    : array_intersect_key($tabArguments, ['modelId' => null]);
+                            @endphp
+                            <x-noerd::tab
+                                :modalRoute="$tab['modalRoute']"
+                                :component="$tab['component'] ?? null"
+                                :arguments="$tabArguments"
+                                :routeParameters="$tabRouteParameters"
+                            >
+                                {{ __($tab['label']) }}
+                            </x-noerd::tab>
+                        @elseif (isset($tab['component']))
                             @php
                                 $tabArguments = isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : [];
                                 $isRoutable = ! empty($tab['routable']);

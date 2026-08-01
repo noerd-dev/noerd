@@ -11,7 +11,7 @@ new class extends Component {
     public const DETAIL_COMPONENT = 'noerd::user-roles-list';
 
     public $listModel = UserRole::class;
-    public $detailComponent = 'noerd::user-role-detail';
+    public ?string $detailRoute = 'user-role.detail';
 
     public function mount(): void
     {

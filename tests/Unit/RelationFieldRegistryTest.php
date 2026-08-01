@@ -36,7 +36,26 @@ it('registers a relation type and exposes it via field type registry', function 
         'required' => true,
         'readonly' => false,
         'modelId' => 99,
+        'theme' => 'default',
     ]);
+});
+
+it('passes the row number on only when the theme numbered the field', function (): void {
+    $fieldTypeRegistry = new FieldTypeRegistry();
+    $relationFieldRegistry = new RelationFieldRegistry($fieldTypeRegistry);
+
+    $relationFieldRegistry->register('customerRelation', RelationFieldDefinition::model(
+        listComponent: 'customers-list',
+        detailComponent: 'customer-detail',
+        modelClass: null,
+        titleResolver: 'name',
+    ));
+
+    $definition = $fieldTypeRegistry->resolve('customerRelation');
+    $field = ['name' => 'detailData.customer_id', 'label' => 'Customer'];
+
+    expect($definition?->resolveProps($field, null, null, null))->not->toHaveKey('number')
+        ->and($definition?->resolveProps($field + ['number' => 3], null, null, null)['number'])->toBe(3);
 });
 
 it('resolves top-level relation values from the parent component', function (): void {

@@ -1,4 +1,11 @@
-@props(['tabNumber' => null, 'route' => null, 'routeParameters' => [], 'component' => null, 'arguments' => null, 'external' => null, 'active' => false])
+@props(['tabNumber' => null, 'route' => null, 'routeParameters' => [], 'component' => null, 'modalRoute' => null, 'arguments' => null, 'external' => null, 'active' => false])
+
+@php
+    // `route:` navigates, `modalRoute:` opens the record's own route as a modal.
+    // `component:` remains the fallback for an unregistered modalRoute.
+    $tabModalRoute = $modalRoute && \Illuminate\Support\Facades\Route::has($modalRoute) ? $modalRoute : null;
+    $opensAsModal = $tabModalRoute || $component;
+@endphp
 
 @isset($tabNumber)
     <div class="inline-flex">
@@ -14,7 +21,7 @@
     </div>
 @endisset
 
-@if (isset($route) && ! isset($component))
+@if (isset($route) && ! $opensAsModal)
     <div class="inline-flex">
         <a
             @if ($external) target="_blank" @else wire:navigate @endif
@@ -32,12 +39,22 @@
     </div>
 @endif
 
-@isset($component)
-    @php $componentRouteUrl = $route ? route($route, $routeParameters) : null; @endphp
+@if ($opensAsModal)
+    @php
+        // A modalRoute tab points at the record's real page, so it also supplies
+        // the href for cmd-click / "open in new tab".
+        $componentRouteUrl = $tabModalRoute
+            ? route($tabModalRoute, $routeParameters ?? [])
+            : ($route ? route($route, $routeParameters) : null);
+
+        $clickExpression = $tabModalRoute
+            ? '$modalRoute(' . \Illuminate\Support\Js::from($tabModalRoute) . ', ' . \Illuminate\Support\Js::from($arguments ?? []) . ', null, null, null, ' . \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $component])) . ')'
+            : '$modal(' . \Illuminate\Support\Js::from($component) . ', ' . \Illuminate\Support\Js::from($arguments ?? []) . ')';
+    @endphp
     <div class="mr-6 -mb-[1px] inline-flex items-center border-b-2 border-transparent hover:border-gray-500">
         <a
             @if ($componentRouteUrl) href="{{ $componentRouteUrl }}" @endif
-            @click="if (! $event.metaKey && ! $event.ctrlKey) { $event.preventDefault(); $modal('{{ $component }}', {{ json_encode($arguments ?? []) }}); }"
+            @click="if (! $event.metaKey && ! $event.ctrlKey) { $event.preventDefault(); {{ $clickExpression }}; }"
             class="cursor-pointer text-gray-600 focus:outline-none focus-visible:outline-none"
         >
             <span class="group inline-flex items-center rounded-sm p-0 py-3 text-sm"> {{ $slot }} </span>
@@ -54,4 +71,4 @@
             </a>
         @endif
     </div>
-@endisset
+@endif

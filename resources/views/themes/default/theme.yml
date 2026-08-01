@@ -1,0 +1,13 @@
+label: Default
+gridClasses: 'py-8 pt-4 gap-6'
+fullWidthRows: false
+numbersRows: false
+spacerClass: h-16
+controlClasses: 'w-full border rounded-lg block appearance-none text-base sm:text-sm py-2 h-10 leading-[1.375rem] ps-3 pe-3 bg-white text-zinc-700 placeholder-zinc-400 shadow-xs border-zinc-200 border-b-zinc-300/80 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2 disabled:text-zinc-500 disabled:bg-zinc-50 disabled:shadow-none'
+controlSize: md
+tableClasses: 'table table-sm w-full'
+headCellClasses: 'pr-3 pb-1'
+cellClasses: 'pr-3 pt-2 align-middle'
+rowClasses: w-full
+sectionPadding: py-8
+totalsPadding: pt-6

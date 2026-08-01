@@ -9,7 +9,7 @@ new class extends Component
     use NoerdList;
 
     public $listModel = SetupLanguage::class;
-    public $detailComponent = 'noerd::setup-language-detail';
+    public ?string $detailRoute = 'setup-language.detail';
 
     public function mount(): void
     {

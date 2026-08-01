@@ -95,11 +95,21 @@
         </tbody>
     </table>
 
-    @if ($hasMore && $this->showMoreComponent)
+    @php
+        $showMoreRoute = ($this->showMoreRoute ?? null);
+        $showMoreRoute = $showMoreRoute && \Illuminate\Support\Facades\Route::has($showMoreRoute) ? $showMoreRoute : null;
+    @endphp
+    @if ($hasMore && ($showMoreRoute || $this->showMoreComponent))
         <div class="border-t border-gray-200 px-4 py-1.5">
             <button
                 type="button"
-                @click="$modal('{{ $this->showMoreComponent }}', {{ \Illuminate\Support\Js::from($this->showMoreArguments) }})"
+                {{-- The full list is narrowed by showMoreArguments, which a plain list
+                     route cannot express — resolve the component, keep the URL. --}}
+                @if ($showMoreRoute)
+                    @click="$modalRoute({{ \Illuminate\Support\Js::from($showMoreRoute) }}, {{ \Illuminate\Support\Js::from($this->showMoreArguments) }}, null, null, null, {rewriteUrl: false, fallbackComponent: {{ \Illuminate\Support\Js::from($this->showMoreComponent) }}})"
+                @else
+                    @click="$modal({{ \Illuminate\Support\Js::from($this->showMoreComponent) }}, {{ \Illuminate\Support\Js::from($this->showMoreArguments) }})"
+                @endif
                 class="text-brand-primary text-xs font-medium hover:underline"
             >
                 {{ __('Show more') }}

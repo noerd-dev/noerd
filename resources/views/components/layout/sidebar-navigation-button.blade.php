@@ -12,11 +12,23 @@ new class extends Component {
         ? request()->is(ltrim($navi['link'], '/'))
         : request()->routeIs($routeName);
     $activeClass = $isActive ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50';
+
+    // `route:` means NAVIGATE (and drives $isActive above), so opening an entry as
+    // a modal uses `modalRoute:`; `component:` stays as the fallback.
+    $naviModalRoute = ($navi['modalRoute'] ?? null);
+    $naviModalRoute = $naviModalRoute && \Illuminate\Support\Facades\Route::has($naviModalRoute) ? $naviModalRoute : null;
+    $naviModalComponent = $navi['component'] ?? null;
+    $opensAsModal = $naviModalRoute || $naviModalComponent;
+    $naviArguments = $arguments ?? [];
 @endphp
 
 <div>
-    @isset($navi['component'])
-        <a @click="$modal('{{$navi['component']}}', {{json_encode($arguments ?? [])}}); if(! isDesktop) showSidebar = false"
+    @if ($opensAsModal)
+        <a @if ($naviModalRoute)
+               @click="$modalRoute({{ \Illuminate\Support\Js::from($naviModalRoute) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $naviModalComponent])) }}); if(! isDesktop) showSidebar = false"
+           @else
+               @click="$modal({{ \Illuminate\Support\Js::from($naviModalComponent) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}); if(! isDesktop) showSidebar = false"
+           @endif
            class="{{ $activeClass }} flex cursor-pointer items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
@@ -28,10 +40,10 @@ new class extends Component {
                 {{ __($navi['title']) }}
             </div>
         </a>
-    @endisset
+    @endif
 
     @isset($navi['link'])
-        @if(!isset($navi['component']))
+        @if (! $opensAsModal)
             <a wire:navigate href="{{ $navi['link'] }}" @isset($navi['external']) target="_blank" @endisset
                @click="if(! isDesktop) showSidebar = false"
                class="{{ $activeClass }} flex items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
@@ -49,7 +61,7 @@ new class extends Component {
                 </div>
             </a>
         @endif
-    @elseif(!isset($navi['component']))
+    @elseif (! $opensAsModal)
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
            @click="if(! isDesktop) showSidebar = false"
            class="{{ $activeClass }} flex items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">

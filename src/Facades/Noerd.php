@@ -7,7 +7,8 @@ use Noerd\Services\NoerdManager;
 
 /**
  * @method static void modal(string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $quickCreate = false)
- * @method static void modalRoute(string $routeName, mixed $arguments = [], ?string $position = null, ?string $size = null)
+ * @method static void modalRoute(string $routeName, mixed $arguments = [], ?string $position = null, ?string $size = null, ?string $fallbackComponent = null, bool $rewriteUrl = true)
+ * @method static void modalFor(?string $routeName, ?string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $rewriteUrl = true)
  *
  * @see \Noerd\Services\NoerdManager
  */

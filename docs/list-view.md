@@ -91,7 +91,7 @@ columns:
 | `bool` | Toggleable boolean: green checkmark (true), red circle (false). Clickable to toggle value |
 | `inversebool` | Green checkmark when true, nothing when false. Clickable to toggle value |
 | `badge_with_text` | Badge with optional text (value must be array with `badge` and `text` keys) |
-| `relation_link` | Clickable link that opens a modal (requires `modalComponent` and `idField` in column config) |
+| `relation_link` | Clickable link that opens a modal (requires `idField` plus either `route` or `modalComponent` in the column config; in route mode `idParam` defaults to `modelId`) |
 
 **Example:**
 
@@ -117,9 +117,9 @@ columns:
 
 ## Livewire Component
 
-A list component declares its model as `public $listModel` and its detail component as
-`public $detailComponent` — everything else (query, modal opening, mounting, request
-handling) comes from the `NoerdList` trait.
+A list component declares its model as `public $listModel` and its detail target as
+`public ?string $detailRoute` (preferred) and/or `public $detailComponent` — everything
+else (query, modal opening, mounting, request handling) comes from the `NoerdList` trait.
 
 Example: `customers-list.blade.php`
 
@@ -134,6 +134,7 @@ new class extends Component {
     use NoerdList;
 
     public $listModel = Customer::class;
+    public ?string $detailRoute = 'customer.detail';
     public $detailComponent = 'customer::customer-detail';
 };
 ?>
@@ -144,8 +145,14 @@ new class extends Component {
 ```
 
 The trait defaults build the query via `listQuery($this->listModel)` (which applies search,
-sort and the Excel-style column filters from the YAML config) and open `$detailComponent`
-as a modal on row click.
+sort and the Excel-style column filters from the YAML config) and open the detail as a modal
+on row click.
+
+`$detailRoute` wins when the named route is registered: the record opens as a modal AND the
+browser URL is rewritten to `/{app}/{entity}/{id}?modal=true`, so the link is shareable and a
+reload reopens the record over the previously visited page. `$detailComponent` stays as the
+fallback — keep both, so a list may reference a detail route owned by an optional module.
+See [Modal System](modal.md#route-modals).
 
 ### Custom Query Logic
 
@@ -209,9 +216,10 @@ public function with(): array
 
 - **Trait:** `NoerdList` provides all necessary properties and methods
 - **$listModel:** The Eloquent model backing the list — required for the trait defaults and the header actions (layout/object manager)
-- **$detailComponent:** The detail component opened by the trait's `listAction()`
+- **$detailRoute:** Named detail route opened by `listAction()` — rewrites the browser URL to the record (preferred)
+- **$detailComponent:** The detail component opened by `listAction()` when no `$detailRoute` is registered
 - **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`
-- **listAction():** Trait default opens `$detailComponent` as a modal with `['modelId' => $modelId]`; only override it for custom behavior (extra modal arguments, no modal, …)
+- **listAction():** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId]`; only override it for custom behavior (extra modal arguments, no modal, …)
 - **buildList():** Generates the list configuration from the YAML
 - **request()->customerId / request()->create:** Handled by the trait's `rendering()`; override `rendering()` when the list uses its own URL parameter (e.g. `invoiceId`)
 - **`<x-noerd::list />`:** Renders the table
@@ -254,7 +262,9 @@ actions:
 | Property | Description |
 |----------|-------------|
 | `label` | Translation key for the button text |
-| `action` | Livewire method name to call (always explicit, no fallback) |
+| `route` | (optional) Named route opened as a modal — use this instead of `action: listAction` for the "New …" button |
+| `arguments` | (optional, with `route`) Arguments passed to the modal |
+| `action` | Livewire method name to call (used when no `route` is given) |
 | `heroicon` | (optional) Heroicon name for the button icon |
 | `style` | (optional) Set to `secondary` for secondary button style. Default is primary |
 
@@ -268,11 +278,15 @@ actions:
 **Standard single action (most common):**
 
 ```yaml
-title: accounting_label_customers
+title: Customers
 actions:
-  - label: accounting_label_new_customer
-    action: listAction
+  - label: New Customer
+    route: customer.detail
 ```
+
+`route:` opens the detail route as a modal and writes `/customer/new?modal=true` into the
+address bar. `action: listAction` is the component-based equivalent and stays valid for
+lists whose detail has no route.
 
 **Multiple actions with icon:**
 
