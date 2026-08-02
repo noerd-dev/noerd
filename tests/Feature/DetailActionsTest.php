@@ -8,11 +8,11 @@ use Noerd\Tests\TestCase;
 uses(TestCase::class);
 
 if (! function_exists('renderDetailActions')) {
-    function renderDetailActions(array $actions, mixed $modelId = null): string
+    function renderDetailActions(array $actions, mixed $modelId = null, array $urls = []): string
     {
         return Blade::render(
-            '<x-noerd::detail-actions :layout="$layout" :modelId="$modelId" />',
-            ['layout' => ['actions' => $actions], 'modelId' => $modelId],
+            '<x-noerd::detail-actions :layout="$layout" :modelId="$modelId" :urls="$urls" />',
+            ['layout' => ['actions' => $actions], 'modelId' => $modelId, 'urls' => $urls],
         );
     }
 }
@@ -183,4 +183,51 @@ it('does not add loading chrome to modal actions', function (): void {
     expect($html)->toContain('Open Modal')
         ->not->toContain('Sending...')
         ->not->toContain('wire:loading');
+});
+
+it('renders a url action as a new-tab link resolved from the urls map', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Open Table', 'url' => 'tableUrl', 'heroicon' => 'arrow-top-right-on-square'],
+    ], 5, ['tableUrl' => 'https://example.test/t/abc']);
+
+    expect($html)->toContain('href="https://example.test/t/abc"')
+        ->toContain('target="_blank"')
+        ->toContain('rel="noopener"')
+        ->toContain('Open Table')
+        ->not->toContain('wire:click');
+});
+
+it('renders a literal url action without the urls map', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Open Docs', 'url' => '/docs'],
+    ], 5);
+
+    expect($html)->toContain('href="/docs"')
+        ->toContain('Open Docs');
+});
+
+it('keeps a url action in the same tab when newTab is false', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Same Tab', 'url' => '/docs', 'newTab' => false],
+    ], 5);
+
+    expect($html)->toContain('href="/docs"')
+        ->not->toContain('target="_blank"');
+});
+
+it('hides a url action whose key is missing from the urls map', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Ghost Link', 'url' => 'missingUrl'],
+    ], 5, ['tableUrl' => 'https://example.test/t/abc']);
+
+    expect($html)->not->toContain('Ghost Link');
+});
+
+it('prefers a modal target over a url on the same action', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Open Modal', 'modalComponent' => 'zz::modal', 'url' => '/docs'],
+    ], 5);
+
+    expect($html)->toContain('$modal(')
+        ->not->toContain('href="/docs"');
 });

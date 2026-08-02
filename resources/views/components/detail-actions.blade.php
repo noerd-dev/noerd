@@ -1,9 +1,28 @@
 @props([
     'layout' => [],
     'modelId' => null,
+    'urls' => [],
 ])
 
 @php
+    // A url: action either carries a literal URL or names a key in the urls map
+    // the detail component passes in (so the target may depend on the record).
+    $resolveActionUrl = function (array $action) use ($urls): ?string {
+        $url = $action['url'] ?? null;
+
+        if (! is_string($url) || $url === '') {
+            return null;
+        }
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        $resolved = $urls[$url] ?? null;
+
+        return is_string($resolved) && $resolved !== '' ? $resolved : null;
+    };
+
     $actions = collect($layout['actions'] ?? [])
         ->filter(fn(array $action): bool => $modelId || ($action['requiresId'] ?? true) === false)
         ->filter(fn(array $action): bool => empty($action['viewExists'])
@@ -13,6 +32,9 @@
         ->filter(fn(array $action): bool => empty($action['route'])
             || \Illuminate\Support\Facades\Route::has($action['route'])
             || ! empty($action['modalComponent']))
+        // A url: action without a resolvable URL is dropped instead of rendering a dead link.
+        ->filter(fn(array $action): bool => ! array_key_exists('url', $action)
+            || $resolveActionUrl($action) !== null)
         ->values();
 
     // The action buttons follow the active theme (set by the rendering
@@ -25,6 +47,7 @@
     if (! str_contains($actionSizeClasses, 'rounded')) {
         $actionSizeClasses .= ' rounded-md';
     }
+    $actionClasses = 'inline-flex cursor-pointer items-center gap-1.5 border border-gray-300 bg-white font-medium text-gray-700 shadow-xs hover:bg-gray-100 ' . $actionSizeClasses;
 @endphp
 
 @if ($actions->isNotEmpty())
@@ -41,33 +64,50 @@
                 $actionRoute = $actionRoute && \Illuminate\Support\Facades\Route::has($actionRoute)
                     ? $actionRoute
                     : null;
+
+                $actionUrl = $actionRoute || ! empty($action['modalComponent'])
+                    ? null
+                    : $resolveActionUrl($action);
             @endphp
-            <button
-                type="button"
-                @if ($actionRoute)
-                    x-data
-                    x-on:click="$modalRoute({{ \Illuminate\Support\Js::from($actionRoute) }},{{ \Illuminate\Support\Js::from($modalArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $action['modalComponent'] ?? null])) }})"
-                @elseif (! empty($action['modalComponent']))
-                    x-data
-                    x-on:click="$modal({{ \Illuminate\Support\Js::from($action['modalComponent']) }}, {{ \Illuminate\Support\Js::from($modalArguments) }})"
-                @else
-                    wire:click="{{ $action['action'] }}"
-                    wire:loading.attr="disabled"
-                    wire:target="{{ $action['action'] }}"
-                    @if (! empty($action['confirm'])) wire:confirm="{{ __($action['confirm']) }}" @endif
-                @endif
-                class="inline-flex cursor-pointer items-center gap-1.5 border border-gray-300 bg-white font-medium text-gray-700 shadow-xs hover:bg-gray-100 {{ $actionSizeClasses }}"
-            >
-                @if (! empty($action['heroicon']))
-                    <x-icon name="{{ $action['heroicon'] }}" class="h-4 w-4 text-gray-500" />
-                @endif
-                @if (empty($actionRoute) && empty($action['modalComponent']) && ! empty($action['loading']))
-                    <span wire:loading.remove wire:target="{{ $action['action'] }}">{{ __($action['label']) }}</span>
-                    <span wire:loading wire:target="{{ $action['action'] }}">{{ __($action['loading']) }}</span>
-                @else
+            @if ($actionUrl)
+                <a
+                    href="{{ $actionUrl }}"
+                    @if (($action['newTab'] ?? true)) target="_blank" rel="noopener" @endif
+                    class="{{ $actionClasses }}"
+                >
+                    @if (! empty($action['heroicon']))
+                        <x-icon name="{{ $action['heroicon'] }}" class="h-4 w-4 text-gray-500" />
+                    @endif
                     {{ __($action['label']) }}
-                @endif
-            </button>
+                </a>
+            @else
+                <button
+                    type="button"
+                    @if ($actionRoute)
+                        x-data
+                        x-on:click="$modalRoute({{ \Illuminate\Support\Js::from($actionRoute) }},{{ \Illuminate\Support\Js::from($modalArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $action['modalComponent'] ?? null])) }})"
+                    @elseif (! empty($action['modalComponent']))
+                        x-data
+                        x-on:click="$modal({{ \Illuminate\Support\Js::from($action['modalComponent']) }}, {{ \Illuminate\Support\Js::from($modalArguments) }})"
+                    @else
+                        wire:click="{{ $action['action'] }}"
+                        wire:loading.attr="disabled"
+                        wire:target="{{ $action['action'] }}"
+                        @if (! empty($action['confirm'])) wire:confirm="{{ __($action['confirm']) }}" @endif
+                    @endif
+                    class="{{ $actionClasses }}"
+                >
+                    @if (! empty($action['heroicon']))
+                        <x-icon name="{{ $action['heroicon'] }}" class="h-4 w-4 text-gray-500" />
+                    @endif
+                    @if (empty($actionRoute) && empty($action['modalComponent']) && ! empty($action['loading']))
+                        <span wire:loading.remove wire:target="{{ $action['action'] }}">{{ __($action['label']) }}</span>
+                        <span wire:loading wire:target="{{ $action['action'] }}">{{ __($action['loading']) }}</span>
+                    @else
+                        {{ __($action['label']) }}
+                    @endif
+                </button>
+            @endif
         @endforeach
     </div>
 @endif

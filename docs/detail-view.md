@@ -243,13 +243,15 @@ fields:
 | `label` | Button label (translation key) |
 | `route` | Named `Route::livewire()` route opened as a modal (preferred for record targets) |
 | `modalComponent` | Livewire component opened as a modal — also the fallback when `route` is not registered |
-| `action` | Livewire method called via `wire:click` (used when neither `route` nor `modalComponent` is set) |
+| `url` | Renders the action as a plain link (`<a href>`) instead of a button — either a literal URL (`http…` / `/…`) or a key in the `urls` map passed to the component |
+| `newTab` | Only with `url:` — defaults to `true` (`target="_blank"`). Set to `false` to open in the same tab |
+| `action` | Livewire method called via `wire:click` (used when neither `route`, `modalComponent` nor `url` is set) |
 | `heroicon` | Optional heroicon rendered before the label |
 | `confirm` | Optional confirmation prompt shown via `wire:confirm` (translation key) |
 | `requiresId` | Defaults to `true` — the button is hidden until the record is saved (`modelId` is set). Set to `false` to always show it |
 | `viewExists` | Optional view name — the button is hidden when that view is not registered, so YAML may reference an optional module safely |
 
-Precedence is `route:` → `modalComponent:` → `action:`. A `route:` action whose route is
+Precedence is `route:` → `modalComponent:` → `url:` → `action:`. A `route:` action whose route is
 not registered and that has no `modalComponent` is not rendered at all. See
 [Modal System](modal.md#route-modals) for when a route is the right target.
 
@@ -262,6 +264,27 @@ actions:
     arguments:
       modelId: $modelId
 ```
+
+### Link Actions
+
+A `url:` action renders as a link that opens in a new tab — use it for targets outside the backend
+(a public guest page, an external system). A record-dependent URL is computed by the detail component
+and handed to the component through the `urls` prop; the YAML only names the key:
+
+```blade
+<x-noerd::detail-actions :layout="$pageLayout" :modelId="$modelId"
+                         :urls="['tableUrl' => $this->tableUrl()]" />
+```
+
+```yaml
+actions:
+  - label: Open Table
+    url: tableUrl
+    heroicon: arrow-top-right-on-square
+```
+
+An action whose `url:` neither is a literal URL nor resolves through the `urls` map is not rendered
+at all, so YAML may reference a URL an installation does not provide.
 
 ### Livewire Method
 
