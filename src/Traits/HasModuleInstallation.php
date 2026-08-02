@@ -662,6 +662,64 @@ trait HasModuleInstallation
     }
 
     /**
+     * Ensure a widget exists in the global dashboard-widgets config
+     * (app-configs/dashboard-widgets.yml). Rewrites any widget still pointing at one of
+     * the $legacyComponents to the new component name, then appends the widget if it is
+     * not present yet. Matches on `component` only — an installation may re-tune
+     * policy/width/height without the installer duplicating or overwriting the entry —
+     * and appends (unlike the quick-menu prepend) so the first-installed module keeps
+     * the first slot on the dashboard.
+     *
+     * @param  array{policy: string, component: string, width?: int, height?: int}  $widget
+     * @param  string[]  $legacyComponents
+     */
+    protected function ensureDashboardWidget(array $widget, array $legacyComponents = []): void
+    {
+        $configPath = base_path('app-configs/dashboard-widgets.yml');
+
+        $config = file_exists($configPath)
+            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
+            : [];
+        $widgets = $config['widgets'] ?? [];
+
+        $changed = false;
+        foreach ($widgets as $i => $existing) {
+            if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
+                $widgets[$i]['component'] = $widget['component'];
+                $changed = true;
+            }
+        }
+
+        $present = false;
+        foreach ($widgets as $existing) {
+            if (($existing['component'] ?? null) === $widget['component']) {
+                $present = true;
+                break;
+            }
+        }
+
+        if (! $present) {
+            $widgets[] = $widget;
+            $changed = true;
+        }
+
+        if (! $changed) {
+            $this->line('<comment>Dashboard-widgets config already contains the widget.</comment>');
+
+            return;
+        }
+
+        $dir = dirname($configPath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $config['widgets'] = $widgets;
+        file_put_contents($configPath, Yaml::dump($config, 10, 2));
+        $this->line('<info>Dashboard-widgets config updated:</info> app-configs/dashboard-widgets.yml');
+    }
+
+    /**
      * Ensure a navigation entry exists in a block of the project's setup navigation
      * (app-configs/setup/navigation.yml). Matches on the entry's `route`, so calling
      * this repeatedly never duplicates the entry. Creates the named block if absent.

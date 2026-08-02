@@ -78,4 +78,6 @@ new class extends Component {
             @endforeach
         </div>
     </div>
+
+    <livewire:noerd::layout.dashboard-widgets />
 </x-noerd::page>
