@@ -13,7 +13,9 @@
 @endphp
 
 @if ($type === 'select')
-    <select {{ $attributes->merge(['class' => $themeDefinition->controlClasses]) }}>{{ $slot }}</select>
+    <select {{ $attributes->merge(['class' => $themeDefinition->controlClasses]) }}>
+        {{ $slot }}
+    </select>
 @else
     <input type="{{ $type }}" {{ $attributes->merge(['class' => $themeDefinition->controlClasses]) }} />
 @endif

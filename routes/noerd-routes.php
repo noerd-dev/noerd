@@ -12,8 +12,6 @@ Route::group(['prefix' => 'setup', 'middleware' => ['auth', 'verified', 'setup',
     Route::livewire('tenant-apps', 'noerd::tenant-apps-list')->name('tenant-apps');
     Route::livewire('users', 'noerd::noerd-users-list')->name('users');
     Route::livewire('noerd-user/{modelId}', 'noerd::noerd-user-detail')->name('noerd-user.detail');
-    Route::livewire('user-roles', 'noerd::user-roles-list')->name('user-roles');
-    Route::livewire('user-role/{modelId}', 'noerd::user-role-detail')->name('user-role.detail');
     Route::livewire('tenant', 'noerd::tenant-detail')->name('tenant');
     Route::livewire('create-tenant', 'noerd::create-tenant')->name('create-tenant');
     Route::livewire('models', 'noerd::models-list')->name('models');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
 use Noerd\Contracts\DynamicNavigationProviderContract;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
@@ -106,6 +107,10 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
     });
 
     it('leaves non-dynamic navigation blocks unchanged', function (): void {
+        Route::get('zz-route1', fn() => '')->name('route1');
+        Route::get('zz-route2', fn() => '')->name('route2');
+        Route::getRoutes()->refreshNameLookups();
+
         $navigationStructure = [
             [
                 'title' => 'Test App',
@@ -128,6 +133,37 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
         $result = $method->invoke(null, $navigationStructure);
 
         expect($result)->toEqual($navigationStructure);
+    });
+
+    it('drops route-only entries whose route is not registered', function (): void {
+        Route::get('zz-registered', fn() => '')->name('zz-registered');
+        Route::getRoutes()->refreshNameLookups();
+
+        $navigationStructure = [
+            [
+                'title' => 'Test App',
+                'block_menus' => [
+                    [
+                        'title' => 'Static Block',
+                        'navigations' => [
+                            ['title' => 'Registered', 'route' => 'zz-registered'],
+                            ['title' => 'Stale', 'route' => 'zz-not-registered'],
+                            ['title' => 'Link', 'link' => '/somewhere'],
+                            ['title' => 'Modal', 'component' => 'some-modal'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $reflection = new ReflectionClass(StaticConfigHelper::class);
+        $method = $reflection->getMethod('processDynamicNavigation');
+        $method->setAccessible(true);
+
+        $result = $method->invoke(null, $navigationStructure);
+
+        expect(array_column($result[0]['block_menus'][0]['navigations'], 'title'))
+            ->toBe(['Registered', 'Link', 'Modal']);
     });
 });
 

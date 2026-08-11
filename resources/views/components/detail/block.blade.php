@@ -65,6 +65,10 @@
                         $numberedRowIndex++;
                         $field['number'] ??= $numberedRowIndex;
                     }
+
+                    // Set unconditionally so optional keys (helpText) never leak into
+                    // the next field; cleared again after the loop.
+                    \Noerd\Support\FieldContext::set($field);
                 @endphp
                 <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}" {!! $getShowIfDirective($field) !!}>
                     @php
@@ -119,5 +123,6 @@
                 </div>
             @endif
         @endforeach
+        @php \Noerd\Support\FieldContext::clear(); @endphp
     </div>
 </div>

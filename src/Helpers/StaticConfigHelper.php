@@ -3,6 +3,7 @@
 namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Models\TenantApp;
@@ -734,8 +735,33 @@ class StaticConfigHelper
                 return false;
             }
 
-            return ! (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin());
+            if (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin()) {
+                return false;
+            }
+
+            return self::navigationTargetExists($nav);
         }));
+    }
+
+    /**
+     * A navigation entry needs a resolvable target: a plain link, a modal
+     * (component fallback or registered modalRoute) or a registered `route:`.
+     * A stale entry pointing at an uninstalled module's route is dropped here so
+     * the sidebar's route() call cannot take the whole page down.
+     */
+    private static function navigationTargetExists(array $nav): bool
+    {
+        if (isset($nav['link']) || isset($nav['component'])) {
+            return true;
+        }
+
+        if (! empty($nav['modalRoute']) && Route::has($nav['modalRoute'])) {
+            return true;
+        }
+
+        $routeName = ($nav['route'] ?? null) === 'collections' ? 'cms.collections' : ($nav['route'] ?? '');
+
+        return $routeName !== '' && Route::has($routeName);
     }
 
     /**

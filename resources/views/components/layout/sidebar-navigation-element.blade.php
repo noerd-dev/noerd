@@ -15,8 +15,19 @@ new class extends Component {
     $naviModalComponent = $navi['component'] ?? null;
     $opensAsModal = $naviModalRoute || $naviModalComponent;
     $naviArguments = $arguments ?? [];
+
+    // The primary `route:` may belong to an optional module. A stale navigation
+    // entry must never take the whole page down, so a route-only entry whose
+    // route is not registered is skipped entirely.
+    $routeName = ($navi['route'] ?? null) === 'collections' ? 'cms.collections' : ($navi['route'] ?? '');
+    $routeExists = $routeName !== '' && \Illuminate\Support\Facades\Route::has($routeName);
+    $hasTarget = isset($navi['link']) || $opensAsModal || $routeExists;
 @endphp
 
+@if (! $hasTarget)
+    {{-- Livewire needs an unconditional root element. --}}
+    <li class="hidden"></li>
+@else
 <li class="{{ (isset($navi['link']) ? request()->is(ltrim($navi['link'], '/')) : request()->routeIs($navi['route'] ?? null))  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
     @if ($opensAsModal)
         <a @if ($naviModalRoute)
@@ -59,12 +70,6 @@ new class extends Component {
     @elseif ($opensAsModal)
         {{-- Already rendered as the modal anchor above. --}}
     @else
-        {{-- Block form on purpose: the inline one-line php directive must not be combined
-             with a php block later in the same file — Blade's raw-block matcher would
-             swallow everything in between. --}}
-        @php
-            $routeName = ($navi['route'] ?? null) === 'collections' ? 'cms.collections' : ($navi['route'] ?? '');
-        @endphp
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
         @click="if(! isDesktop) showSidebar = false"
         class="{{ request()->routeIs($routeName)  ? '!border-brand-primary ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
@@ -112,3 +117,4 @@ new class extends Component {
         @endif
     @endisset
 </li>
+@endif

@@ -31,6 +31,7 @@ class RelationFieldRegistry
                     'value' => $this->resolveCurrentValue($fieldName, $component, $detailData),
                     'required' => $field['required'] ?? false,
                     'readonly' => $field['readonly'] ?? false,
+                    'helpText' => $field['helpText'] ?? '',
                     'modelId' => $modelId,
                 ];
 
@@ -67,6 +68,7 @@ class RelationFieldRegistry
                     'allowedTypes' => array_values(array_filter($allowedRelationTypes, fn(string $t): bool => $this->has($t))),
                     'required' => $field['required'] ?? false,
                     'readonly' => $field['readonly'] ?? false,
+                    'helpText' => $field['helpText'] ?? '',
                     'modelId' => $modelId,
                 ];
 

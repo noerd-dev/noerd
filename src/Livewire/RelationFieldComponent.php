@@ -27,6 +27,9 @@ abstract class RelationFieldComponent extends Component
 
     public bool $readonly = false;
 
+    /** Optional YAML `helpText`, rendered as a tooltip next to the label. */
+    public string $helpText = '';
+
     public mixed $modelId = null;
 
     /** Row number supplied by the detail block in themes that number their rows. */
@@ -55,6 +58,7 @@ abstract class RelationFieldComponent extends Component
         mixed $modelId = null,
         ?int $number = null,
         string $theme = 'default',
+        string $helpText = '',
     ): void {
         $definition = app(RelationFieldRegistry::class)->resolve($relationType);
 
@@ -68,6 +72,7 @@ abstract class RelationFieldComponent extends Component
         $this->value = $value;
         $this->required = $required;
         $this->readonly = $readonly;
+        $this->helpText = $helpText;
         $this->modelId = $modelId;
         $this->number = $number;
         $this->theme = $theme;
@@ -123,6 +128,7 @@ abstract class RelationFieldComponent extends Component
             'label' => $this->label,
             'required' => $this->required,
             'number' => $this->number,
+            'helpText' => $this->helpText,
         ];
     }
 

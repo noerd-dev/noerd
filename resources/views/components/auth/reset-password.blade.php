@@ -60,7 +60,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="flex min-h-screen items-stretch">
+<div class="flex min-h-[calc(100dvh_-_var(--environment-banner-height,0px))] items-stretch">
     <div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
         <div class="mx-auto w-full max-w-sm lg:w-96">
             <div>

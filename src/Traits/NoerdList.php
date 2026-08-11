@@ -117,7 +117,7 @@ trait NoerdList
      */
     public bool $multiSelect = false;
 
-    /** @var array<int, int> Ids ticked while the list is in multi-select mode. */
+    /** @var array<int, int|string> Ids ticked while the list is in multi-select mode (string for composite ids of manual-row lists). */
     public array $selectedRecordIds = [];
 
     /**
@@ -501,18 +501,28 @@ trait NoerdList
      */
     public function toggleRecordSelection(int|string $id): void
     {
-        $id = (int) $id;
+        $id = $this->normalizeRecordId($id);
 
         if (in_array($id, $this->selectedRecordIds, true)) {
             $this->selectedRecordIds = array_values(array_filter(
                 $this->selectedRecordIds,
-                fn(int $selected): bool => $selected !== $id,
+                fn(int|string $selected): bool => $selected !== $id,
             ));
 
             return;
         }
 
         $this->selectedRecordIds[] = $id;
+    }
+
+    /**
+     * Numeric row ids stay ints (the storage type of every model-backed list);
+     * non-numeric ids (composite string ids of manual-row lists) stay strings, so
+     * strict comparisons work for both.
+     */
+    public function normalizeRecordId(mixed $id): int|string
+    {
+        return is_numeric($id) ? (int) $id : (string) $id;
     }
 
     /**
@@ -570,7 +580,7 @@ trait NoerdList
     /**
      * Ids of the rows currently rendered (current page).
      *
-     * @return array<int, int>
+     * @return array<int, int|string>
      */
     public function visibleRowIds(): array
     {
@@ -582,7 +592,7 @@ trait NoerdList
         $collection = is_array($rows) ? collect($rows) : $rows->getCollection();
 
         return $collection
-            ->map(fn($row): int => (int) (is_array($row) ? ($row['id'] ?? 0) : $row->id))
+            ->map(fn($row): int|string => $this->normalizeRecordId(is_array($row) ? ($row['id'] ?? 0) : $row->id))
             ->filter()
             ->values()
             ->all();

@@ -15,7 +15,6 @@
 return [
     'features' => [
         'multi_tenant' => env('NOERD_MULTI_TENANT', true),
-        'roles' => env('NOERD_ROLE_FEATURE_ENABLED', true),
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),
         'currency' => env('NOERD_CURRENCY_ENABLED', true),
     ],

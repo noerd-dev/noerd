@@ -316,6 +316,7 @@ These options are available for most field types:
 |--------|------|---------|-------------|
 | `name` | string | required | Property path (e.g., `detailData.email`, `detailData.customer_id`) |
 | `label` | string | required | Translation key for the field label |
+| `helpText` | string | - | Explanation shown as a tooltip behind a question-mark icon next to the label (translation key) |
 | `type` | string | `text` | Field type |
 | `colspan` | int | `3` | Width in grid columns (1-12) |
 | `required` | bool | `false` | Show required indicator on label |
@@ -325,6 +326,23 @@ These options are available for most field types:
 | `showIf` | string/object | - | Condition to show the field |
 | `showIfNot` | string/object | - | Condition to hide the field |
 | `show` | bool | `true` | Statically show/hide the field |
+
+### helpText
+
+Any field may explain itself. `helpText` renders a small question-mark icon next to the label; hovering it
+(or tapping / focussing it) shows the text as a tooltip. It is translated with `__()` and works with every
+field type in every theme (`default`, `compact`, `numbered`).
+
+```yaml
+- name: detailData.key
+  label: Key
+  type: text
+  colspan: 6
+  required: true
+  helpText: 'Technical identifier, uppercase without spaces (e.g. ADMIN).'
+```
+
+> Not to be confused with the block-level `description` (on `type: block`), which is a visible sub-heading.
 
 ---
 

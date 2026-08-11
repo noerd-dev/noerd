@@ -9,7 +9,6 @@ use Noerd\Models\Profile;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
-use Noerd\Models\UserRole;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -36,16 +35,6 @@ it('loads noerd-user-detail via direct route', function (): void {
     $this->get('/setup/noerd-user/' . $this->user->id)
         ->assertSuccessful()
         ->assertSeeLivewire('noerd::noerd-user-detail');
-});
-
-it('loads user-role-detail via direct route', function (): void {
-    $userRole = UserRole::factory()->create([
-        'tenant_id' => $this->tenant->id,
-    ]);
-
-    $this->get('/setup/user-role/' . $userRole->id)
-        ->assertSuccessful()
-        ->assertSeeLivewire('noerd::user-role-detail');
 });
 
 it('loads setup-collection-detail via direct route', function (): void {

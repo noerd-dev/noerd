@@ -28,7 +28,7 @@ afterEach(function (): void {
 });
 
 it('renders a permitted widget with its tile-unit size', function (): void {
-    Gate::define('canWidgetTest', fn ($user): bool => true);
+    Gate::define('canWidgetTest', fn($user): bool => true);
 
     writeDashboardWidgetsFixture([
         [
@@ -49,7 +49,7 @@ it('renders a permitted widget with its tile-unit size', function (): void {
 });
 
 it('hides a widget whose policy is denied', function (): void {
-    Gate::define('canWidgetTest', fn ($user): bool => false);
+    Gate::define('canWidgetTest', fn($user): bool => false);
 
     writeDashboardWidgetsFixture([
         [
@@ -73,7 +73,7 @@ it('renders nothing when the config file is missing', function (): void {
 });
 
 it('defaults width and height to one tile unit', function (): void {
-    Gate::define('canWidgetTest', fn ($user): bool => true);
+    Gate::define('canWidgetTest', fn($user): bool => true);
 
     writeDashboardWidgetsFixture([
         [

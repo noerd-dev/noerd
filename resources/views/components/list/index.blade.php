@@ -69,7 +69,7 @@
         $allVisibleSelected = false;
         if ($multiSelect) {
             foreach ($rows as $multiSelectRow) {
-                $visibleRowIds[] = (int) ($multiSelectRow['id'] ?? 0);
+                $visibleRowIds[] = $this->normalizeRecordId($multiSelectRow['id'] ?? 0);
             }
             $visibleRowIds = array_values(array_filter($visibleRowIds));
             $allVisibleSelected = $visibleRowIds !== [] && array_diff($visibleRowIds, $selectedRecordIds) === [];
@@ -217,7 +217,7 @@
                                                         </td>
                                                     @endif
                                                     @if ($multiSelect)
-                                                        @php $rowChecked = in_array((int) ($row['id'] ?? 0), $selectedRecordIds, true); @endphp
+                                                        @php $rowChecked = in_array($this->normalizeRecordId($row['id'] ?? 0), $selectedRecordIds, true); @endphp
                                                         <td
                                                             class="w-10 border-r border-b border-gray-300 px-3 py-1 text-center"
                                                             @click.stop

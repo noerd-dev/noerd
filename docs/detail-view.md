@@ -89,6 +89,7 @@ fields:
 |----------|-------------|
 | `name` | Property path (e.g., `detailData.name`) |
 | `label` | Field label (translation key) |
+| `helpText` | Explanation shown as a tooltip behind a question-mark icon next to the label (translation key); works in every theme |
 | `type` | Field type (text, textarea, checkbox, relation, etc.) |
 | `required` | Mark field as required |
 | `colspan` | Grid column span (1-12) |

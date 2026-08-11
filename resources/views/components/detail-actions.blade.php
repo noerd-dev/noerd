@@ -101,7 +101,10 @@
                         <x-icon name="{{ $action['heroicon'] }}" class="h-4 w-4 text-gray-500" />
                     @endif
                     @if (empty($actionRoute) && empty($action['modalComponent']) && ! empty($action['loading']))
-                        <span wire:loading.remove wire:target="{{ $action['action'] }}">{{ __($action['label']) }}</span>
+                        <span
+                            wire:loading.remove
+                            wire:target="{{ $action['action'] }}"
+                        >{{ __($action['label']) }}</span>
                         <span wire:loading wire:target="{{ $action['action'] }}">{{ __($action['loading']) }}</span>
                     @else
                         {{ __($action['label']) }}

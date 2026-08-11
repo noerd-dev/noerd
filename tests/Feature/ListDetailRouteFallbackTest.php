@@ -14,7 +14,7 @@ it('dispatches the route plus the component as fallback when a list declares bot
         ->call('listAction', 123)
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['route'] ?? null) === 'zz.fallback.detail'
+            fn(string $event, array $params): bool => ($params['route'] ?? null) === 'zz.fallback.detail'
                 && ($params['modalComponent'] ?? null) === 'zz-fallback-detail'
                 && ($params['arguments']['modelId'] ?? null) === 123,
         );
@@ -25,7 +25,7 @@ it('dispatches only the component for a list without a detailRoute', function ()
         ->call('listAction', 5)
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['modalComponent'] ?? null) === 'zz-component-only-detail'
+            fn(string $event, array $params): bool => ($params['modalComponent'] ?? null) === 'zz-component-only-detail'
                 && ! array_key_exists('route', $params),
         );
 });
@@ -35,7 +35,7 @@ it('passes relations through as a url-neutral argument', function (): void {
         ->call('listAction', null, ['accountId' => 9])
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['arguments']['relations'] ?? null) === ['accountId' => 9],
+            fn(string $event, array $params): bool => ($params['arguments']['relations'] ?? null) === ['accountId' => 9],
         );
 });
 
@@ -44,7 +44,7 @@ it('requests a url rewrite for a routed list row', function (): void {
         ->call('listAction', 1)
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['rewriteUrl'] ?? null) === true,
+            fn(string $event, array $params): bool => ($params['rewriteUrl'] ?? null) === true,
         );
 });
 

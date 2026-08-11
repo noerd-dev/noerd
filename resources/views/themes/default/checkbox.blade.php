@@ -34,7 +34,14 @@
             />
         </div>
         <div class="ml-3 text-sm leading-6">
-            <label for="{{ $name }}" class="font-medium text-gray-900">{{ __($label) }}</label>
+            {{-- Raw label (not x-noerd::input-label, the classes differ on purpose), so the
+                 YAML `helpText` tooltip is rendered explicitly here. --}}
+            <label for="{{ $name }}" class="font-medium text-gray-900">
+                {{ __($label) }}
+                @if (! empty($field['helpText']))
+                    <x-noerd::help-tooltip :text="__($field['helpText'])" />
+                @endif
+            </label>
         </div>
     </div>
 

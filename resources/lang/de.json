@@ -100,7 +100,6 @@
     "UKI": "Uki",
     "Update Password": "Passwort aktualisieren",
     "Update your account's profile information and email address.": "Aktualisieren Sie die Profilinformationen und die E-Mail-Adresse Ihres Kontos.",
-    "User Roles": "Benutzerrollen",
     "Users": "Benutzer",
     "Value": "Wert",
     "Width": "Breite",
@@ -118,7 +117,6 @@
     "Showing": "Zeige",
     "Previous": "Zurück",
     "Next": "Weiter",
-
     "Tenant Access": "Mandanten-Zugriff",
     "Overview of your current access rights to tenants and assigned roles.": "Übersicht über Ihre aktuellen Zugriffsrechte auf Mandanten und zugewiesene Rollen.",
     "Access to the following tenants:": "Zugriff auf folgende Mandanten:",
@@ -127,7 +125,6 @@
     "Error: Tenant information is missing. Please reload the page.": "Fehler: Mandanten-Information fehlt. Bitte laden Sie die Seite neu.",
     "You are currently not assigned to any tenant. Please contact your administrator to get access to the application.": "Aktuell bist du keinem Mandanten zugeordnet. Bitte kontaktiere deinen Administrator, um Zugriff auf die Anwendung zu erhalten.",
     "User has access": "Benutzer hat Zugriff",
-
     "Overdue Invoice": "Überfällige Rechnung",
     "Open": "Offen",
     "Close modal": "Modal schließen",
@@ -138,7 +135,6 @@
     "Close": "Schließen",
     "Language": "Sprache",
     "Select your preferred language for the user interface.": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
-
     "The file must be one of the following formats: :values": "Die Datei muss eines der folgenden Formate haben: :values",
     "The file may not be larger than :max KB": "Die Datei darf maximal :max KB groß sein",
     "Unknown file": "Unbekannte Datei",
@@ -153,7 +149,6 @@
     "Please select...": "Bitte wählen...",
     "Headline": "Überschrift",
     "Parent Page": "Übergeordnete Seite",
-
     "General": "Allgemein",
     "Advanced Settings": "Erweiterte Einstellungen",
     "Activity Log": "Aktivitätenprotokoll",
@@ -188,27 +183,23 @@
     "Sawmill Price": "Preis Sägewerk",
     "Harvester Price Customer": "Preis Harvester Kunde",
     "Sawmill Price Customer": "Preis Sägewerk Kunde",
-
     "Order Date": "Bestelldatum",
     "Zipcode": "PLZ",
     "City": "Stadt",
     "Gross": "Brutto",
     "Category": "Kategorie",
-
     "Remaining Value": "Restwert",
     "Minimum Delivery Time (Minutes)": "Mindest Lieferzeit (Minuten)",
     "Delivery Only": "Nur Lieferung",
     "Pickup Only": "Nur Abholung",
     "Closed": "Geschlossen",
     "Preorder Days": "Vorbestelltage",
-
     "Additional Field": "Zusatzfeld",
     "Required?": "Pflichfeld?",
     "Header Image": "Titelbild",
     "Logo": "Logo",
     "Order Options": "Bestelloptionen",
     "Exceptions": "Ausnahmen",
-
     "Shop Notification": "Shop Benachrichtigung",
     "Display From": "Anzeige von",
     "Display Until": "Anzeige bis",
@@ -221,7 +212,6 @@
     "Global Parameters": "Globale Parameter",
     "New Parameter": "Neuer Parameter",
     "New Storage Location": "Neue Lagerstelle",
-
     "Tenant": "Mandant",
     "Login as user": "Als Benutzer anmelden",
     "Do you really want to log in as this user?": "Möchtest Du Dich wirklich als dieser Benutzer anmelden?",
@@ -234,18 +224,15 @@
     "Text middle": "Text mitte",
     "Text right": "Text rechts",
     "Coordinates": "Koordinaten Punkt",
-
     "Setup": "Einrichtung",
     "User": "Benutzer",
     "Contact Person": "Ansprechpartner",
     "ZIP Code": "PLZ",
-    "New User Role": "Neue Benutzerrolle",
     "Tenant Invoices": "Mandanten-Rechnungen",
     "New Tenant Invoice": "Neue Mandanten-Rechnung",
     "Total Amount": "Gesamtbetrag",
     "PayPal": "PayPal",
     "Profile / Roles": "Profil / Rollen",
-
     "Administration": "Administration",
     "Data Management": "Datenverwaltung",
     "Collections": "Sammlungen",
@@ -256,7 +243,6 @@
     "Entry": "Eintrag",
     "Collection not found": "Collection nicht gefunden",
     "Please select a collection": "Bitte wählen Sie eine Sammlung aus",
-
     "Languages": "Sprachen",
     "New Language": "Neue Sprache",
     "Code": "Code",
@@ -264,7 +250,6 @@
     "This language is set as the default language and cannot be deleted.": "Diese Sprache ist als Standardsprache festgelegt und kann nicht gelöscht werden.",
     "The last language cannot be deleted.": "Die letzte Sprache kann nicht gelöscht werden.",
     "The default language cannot be deleted while it is the only active language.": "Die Standardsprache kann nicht gelöscht werden, solange sie die einzige aktive Sprache ist.",
-
     "Error": "Fehler",
     "App not available": "App nicht verfügbar",
     "The app \":app\" is not assigned to this tenant.": "Die App \":app\" ist diesem Mandanten nicht zugewiesen.",
@@ -273,7 +258,6 @@
     "Back to home": "Zurück zur Startseite",
     "You are logged in as :name": "Du bist als :name angemeldet",
     "Return to your account": "Zurück zum eigenen Konto",
-
     "Apps": "Apps",
     "Assigned Apps": "Zugewiesene Apps",
     "Available Apps": "Verfügbare Apps",
@@ -287,7 +271,6 @@
     "Are you sure you want to make this app visible?": "Möchten Sie diese App wirklich sichtbar machen?",
     "Previous record": "Vorheriger Datensatz",
     "Next record": "Nächster Datensatz",
-    "This role cannot be deleted because it still has users assigned.": "Diese Rolle kann nicht gelöscht werden, da ihr noch Benutzer zugewiesen sind.",
     "Currency": "Währung",
     "System Settings": "Systemeinstellungen",
     "Select the currency for your company": "Wählen Sie die Währung für Ihr Unternehmen",
@@ -296,10 +279,8 @@
     "Enforce in Setup": "Zwingend durchsetzen im Setup",
     "Default theme for all detail forms. A detail configuration that defines its own theme keeps it.": "Standard-Theme für alle Detailformulare. Eine Detailkonfiguration mit eigenem Theme behält dieses.",
     "Apply the selected theme everywhere, even where a detail configuration defines a different one.": "Das gewählte Theme überall anwenden, auch wenn eine Detailkonfiguration ein abweichendes Theme definiert.",
-
     "Clear all filters": "Alle Filter löschen",
     "Switch list view": "Listenansicht wechseln",
-
     "Show From": "Zeige ab",
     "Show Until": "Zeige bis",
     "Today": "Heute",
@@ -314,7 +295,6 @@
     "One Year": "Ein Jahr",
     "Select date": "Datum wählen",
     "Apply": "Anwenden",
-
     "Collection Definition": "Collection-Definition",
     "Collection Definitions": "Collection-Definitionen",
     "New Collection Definition": "Neue Collection-Definition",
@@ -338,7 +318,6 @@
     "Last Login": "Letzter Login",
     "Create New Tenant": "Neuen Mandanten erstellen",
     "New Tenant": "Neuer Mandant",
-
     "Demo Categories": "Demo Kategorien",
     "Demo Tags": "Demo Tags",
     "Demo Customers": "Demo Kunden",
@@ -348,7 +327,6 @@
     "New Demo Tag": "Neuer Demo Tag",
     "Demo Customer": "Demo Kunde",
     "New Demo Customer": "Neuer Demo Kunde",
-
     "Phone": "Telefon",
     "Zip Code": "PLZ",
     "Status": "Status",
@@ -362,23 +340,17 @@
     "Scheduled Time": "Geplante Uhrzeit",
     "Tags": "Tags",
     "Generate Report": "Report generieren",
-
     "Advanced": "Erweitert",
-
     "New": "Neu",
     "In Progress": "In Bearbeitung",
     "Completed": "Abgeschlossen",
     "Cancelled": "Storniert",
-
     "Low": "Niedrig",
     "Medium": "Mittel",
     "High": "Hoch",
     "Critical": "Kritisch",
-
     "Report has been generated": "Report wurde generiert",
-
     "Your demo expires in :days days": "Ihre Demo läuft in :days Tagen ab",
-
     "Orders & Customers": "Bestellungen & Kunden",
     "Products & Menus": "Artikel & Speisekarten",
     "Content & Design": "Inhalt & Design",
@@ -395,11 +367,9 @@
     "Additional Fields Checkout": "Zusatzfelder",
     "Rating Mail": "Bewertungs-Mail",
     "Billing": "Abrechnung",
-
     "Tasks & Reports": "Aufgaben & Berichte",
     "Site Assignments": "Standortzuweisung",
     "selected": "ausgewählt",
-
     "Filter": "Filtern",
     "Clear filter": "Filter löschen",
     "All": "Alle",

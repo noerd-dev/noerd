@@ -81,6 +81,9 @@ trait GeneratesResourceFiles
 
     protected string $stubPath;
 
+    /** Name of the detail route once addDetailRoute() confirmed it exists. */
+    protected ?string $detailRouteName = null;
+
     protected function getStubPath(): string
     {
         return __DIR__ . '/../stubs/resource';
@@ -489,9 +492,6 @@ trait GeneratesResourceFiles
         $this->filesystem->append($routeFile, "\n{$listRoute}\n");
         $this->line("<info>Route added:</info> {$listRoute}");
     }
-
-    /** Name of the detail route once addDetailRoute() confirmed it exists. */
-    protected ?string $detailRouteName = null;
 
     /** Returns true when the detail route exists afterwards (added now or already present). */
     protected function addDetailRoute(): bool

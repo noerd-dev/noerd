@@ -16,7 +16,7 @@
 @endphp
 
 <table class="{{ $themeDefinition->tableClasses }}">
-    <thead class="text-left font-medium text-sm text-gray-700">
+    <thead class="text-left text-sm font-medium text-gray-700">
         <tr>
             @if ($themeDefinition->numbersRows)
                 <th scope="col" class="w-8 text-right text-zinc-400 {{ $themeDefinition->headCellClasses }}">#</th>

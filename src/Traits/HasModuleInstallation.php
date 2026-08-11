@@ -475,7 +475,7 @@ trait HasModuleInstallation
         ]);
 
         if ($exitCode === 0) {
-            $this->line("<info>✓ TenantApp created via migration</info>");
+            $this->line('<info>✓ TenantApp created via migration</info>');
         }
 
         return $exitCode === 0;
@@ -723,11 +723,15 @@ trait HasModuleInstallation
      * Ensure a navigation entry exists in a block of the project's setup navigation
      * (app-configs/setup/navigation.yml). Matches on the entry's `route`, so calling
      * this repeatedly never duplicates the entry. Creates the named block if absent.
+     * An existing entry with the same route is REPLACED wholesale when it differs —
+     * module-owned entries are owned by the module, so title changes and removed
+     * keys (e.g. a dropped `config:` gate) propagate on re-install.
      *
      * Only the project copy is written — never the module's install template
-     * (app-modules/noerd/app-configs/setup/navigation.yml). The sidebar resolves
-     * `route:` keys through an unguarded route() call, so shipping an entry in the
-     * template would break every installation that lacks the route's module.
+     * (app-modules/noerd/app-configs/setup/navigation.yml): an entry naming a route
+     * of an uninstalled module would otherwise ship to every installation. Stale
+     * entries are additionally tolerated at render time — the sidebar skips entries
+     * whose route is not registered.
      *
      * @param  array{title: string, route: string, heroicon?: string}  $entry
      */
@@ -756,12 +760,22 @@ trait HasModuleInstallation
             $blockIndex = array_key_last($navigation[0]['block_menus']);
         }
 
-        foreach ($navigation[0]['block_menus'][$blockIndex]['navigations'] ?? [] as $existing) {
-            if (($existing['route'] ?? null) === $entry['route']) {
+        foreach ($navigation[0]['block_menus'][$blockIndex]['navigations'] ?? [] as $index => $existing) {
+            if (($existing['route'] ?? null) !== $entry['route']) {
+                continue;
+            }
+
+            if ($existing === $entry) {
                 $this->line("<comment>Setup navigation already contains:</comment> {$entry['title']}");
 
                 return;
             }
+
+            $navigation[0]['block_menus'][$blockIndex]['navigations'][$index] = $entry;
+            file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
+            $this->line("<info>Setup navigation entry replaced:</info> {$blockTitle} → {$entry['title']}");
+
+            return;
         }
 
         $navigation[0]['block_menus'][$blockIndex]['navigations'][] = $entry;

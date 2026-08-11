@@ -8,6 +8,4 @@
     $themeDefinition = app(\Noerd\Services\ThemeRegistry::class)->get($theme);
 @endphp
 
-<td {{ $attributes->merge(['class' => trim($width . ' ' . $themeDefinition->cellClasses)]) }}>
-    {{ $slot }}
-</td>
+<td {{ $attributes->merge(['class' => trim($width . ' ' . $themeDefinition->cellClasses)]) }}>{{ $slot }}</td>

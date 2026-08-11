@@ -20,7 +20,7 @@
 <tbody>
     <tr class="{{ $themeDefinition->rowClasses }}">
         @if ($themeDefinition->numbersRows)
-            <td class="w-8 pl-2 pr-1 text-right text-sm text-zinc-400 tabular-nums align-middle">{{ $number }}</td>
+            <td class="w-8 pr-1 pl-2 text-right align-middle text-sm text-zinc-400 tabular-nums">{{ $number }}</td>
         @endif
 
         {{ $slot }}
@@ -28,9 +28,7 @@
 
     @isset($details)
         <tr class="{{ $themeDefinition->rowClasses }}">
-            <td colspan="{{ $detailsColspan }}" class="pt-3 pb-8">
-                {{ $details }}
-            </td>
+            <td colspan="{{ $detailsColspan }}" class="pt-3 pb-8">{{ $details }}</td>
         </tr>
     @endisset
 </tbody>

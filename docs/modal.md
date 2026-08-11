@@ -47,7 +47,7 @@ $modal(componentName, arguments?, source?)
 |-----------|------|-------------|
 | `componentName` | string | Name of the Livewire component |
 | `arguments` | object | Optional parameters passed to the component |
-| `source` | string | Optional source component for list refresh |
+| `source` | string | Optional source component for list refresh — defaults to the Livewire component the clicked element belongs to, so the opener refreshes itself when the modal closes. Pass it only to refresh a DIFFERENT component |
 
 ### Basic Usage
 
@@ -62,7 +62,9 @@ $modal(componentName, arguments?, source?)
     Edit Customer
 </button>
 
-<!-- Open with source for auto-refresh -->
+<!-- The opening component refreshes itself on close — no source needed -->
+
+<!-- Open with an explicit source to refresh ANOTHER component instead -->
 <button @click="$modal('customer-detail', { modelId: 123 }, 'customers-list')">
     Edit Customer
 </button>

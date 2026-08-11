@@ -16,7 +16,5 @@
         </div>
     @endif
 
-    <div class="min-h-0 flex-1 overflow-y-auto">
-        {{ $slot }}
-    </div>
+    <div class="min-h-0 flex-1 overflow-y-auto">{{ $slot }}</div>
 </div>

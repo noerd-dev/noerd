@@ -15,10 +15,6 @@
         - title: Users
           route: users
           heroicon: users
-        - title: User Roles
-          route: user-roles
-          heroicon: shield-check
-          config: noerd.features.roles
         - title: Languages
           route: setup-languages
           heroicon: language

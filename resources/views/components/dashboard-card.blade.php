@@ -21,7 +21,7 @@
     $cardOptions = array_filter([
         'fallbackComponent' => $cardComponent,
         'rewriteUrl' => ($rewriteUrl ?? true) ? null : false,
-    ], fn ($value): bool => $value !== null);
+    ], fn($value): bool => $value !== null);
 @endphp
 
 <a

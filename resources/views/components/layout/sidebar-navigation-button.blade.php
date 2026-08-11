@@ -20,8 +20,18 @@ new class extends Component {
     $naviModalComponent = $navi['component'] ?? null;
     $opensAsModal = $naviModalRoute || $naviModalComponent;
     $naviArguments = $arguments ?? [];
+
+    // The primary `route:` may belong to an optional module. A stale navigation
+    // entry must never take the whole page down, so a route-only entry whose
+    // route is not registered is skipped entirely.
+    $routeExists = $routeName !== '' && \Illuminate\Support\Facades\Route::has($routeName);
+    $hasTarget = isset($navi['link']) || $opensAsModal || $routeExists;
 @endphp
 
+@if (! $hasTarget)
+    {{-- Livewire needs an unconditional root element. --}}
+    <div class="hidden"></div>
+@else
 <div>
     @if ($opensAsModal)
         <a @if ($naviModalRoute)
@@ -80,3 +90,4 @@ new class extends Component {
         </a>
     @endisset
 </div>
+@endif

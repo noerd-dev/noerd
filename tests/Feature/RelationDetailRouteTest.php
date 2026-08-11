@@ -21,7 +21,7 @@ it('opens a relation detail by route with the component as fallback', function (
         ->call('openRelationDetail', 'zz::account-detail', 'detailData.account_id', 'zz.relation.account')
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['route'] ?? null) === 'zz.relation.account'
+            fn(string $event, array $params): bool => ($params['route'] ?? null) === 'zz.relation.account'
                 && ($params['modalComponent'] ?? null) === 'zz::account-detail'
                 && ($params['arguments']['modelId'] ?? null) === 17,
         );
@@ -33,7 +33,7 @@ it('opens a relation detail by component when no route is given', function (): v
         ->call('openRelationDetail', 'zz::account-detail', 'detailData.account_id')
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['modalComponent'] ?? null) === 'zz::account-detail'
+            fn(string $event, array $params): bool => ($params['modalComponent'] ?? null) === 'zz::account-detail'
                 && ! array_key_exists('route', $params),
         );
 });

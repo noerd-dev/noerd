@@ -60,7 +60,7 @@ it('dispatches modal when listAction is called', function (): void {
         ->call('listAction', 'expense_categories')
         ->assertDispatched(
             'noerdModal',
-            fn (string $event, array $params): bool => ($params['route'] ?? null) === 'setup-collection-definition.detail'
+            fn(string $event, array $params): bool => ($params['route'] ?? null) === 'setup-collection-definition.detail'
                 && ($params['arguments']['modelId'] ?? null) === 'expense_categories',
         );
 });

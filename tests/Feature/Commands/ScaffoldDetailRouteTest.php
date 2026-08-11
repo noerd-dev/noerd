@@ -21,7 +21,7 @@ class ZzScaffoldProbe extends Command
     {
         parent::__construct();
 
-        $this->filesystem = new Filesystem;
+        $this->filesystem = new Filesystem();
         $this->entity = 'gadget';
         $this->entities = 'gadgets';
         $this->appConfigName = 'workshop';
@@ -60,7 +60,7 @@ afterEach(function (): void {
 it('declares the detail route next to the detail component on a generated list', function (): void {
     $path = writeGeneratedList();
 
-    $probe = new ZzScaffoldProbe;
+    $probe = new ZzScaffoldProbe();
     $probe->setDetailRouteName('workshop.gadget.detail');
     $probe->annotate($path);
 
@@ -73,7 +73,7 @@ it('leaves the generated list untouched when no detail route was created', funct
     $path = writeGeneratedList();
     $before = file_get_contents($path);
 
-    $probe = new ZzScaffoldProbe;
+    $probe = new ZzScaffoldProbe();
     $probe->setDetailRouteName(null);
     $probe->annotate($path);
 
@@ -86,7 +86,7 @@ it('does not declare the detail route twice', function (): void {
     );
     $before = file_get_contents($path);
 
-    $probe = new ZzScaffoldProbe;
+    $probe = new ZzScaffoldProbe();
     $probe->setDetailRouteName('workshop.gadget.detail');
     $probe->annotate($path);
 

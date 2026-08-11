@@ -11,6 +11,7 @@
     $label = $field['label'] ?? '';
     $required = $field['required'] ?? false;
     $number = $field['number'] ?? null;
+    $helpText = $field['helpText'] ?? null;
 @endphp
 
 <div class="flex {{ $labelTop ? 'items-start' : 'items-center' }} gap-3 bg-zinc-100 rounded-sm px-2 py-1.5 w-full">
@@ -22,6 +23,7 @@
         for="{{ $name }}"
         :value="__($label)"
         :required="$required"
+        :helpText="$helpText"
         :title="__($label)"
         class="!pb-0 !font-normal flex-1 min-w-0 text-right truncate {{ $labelTop ? 'pt-1' : '' }}"
     />

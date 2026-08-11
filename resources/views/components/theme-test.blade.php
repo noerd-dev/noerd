@@ -7,10 +7,14 @@ new class extends Component {
 
     public string $theme = 'default';
 
-    public function mount(array $initialModel = [], string $theme = 'default'): void
+    /** Synthetic layout override; empty keeps the fixture layout below. */
+    public array $fields = [];
+
+    public function mount(array $initialModel = [], string $theme = 'default', array $fields = []): void
     {
         $this->model = $initialModel;
         $this->theme = $theme;
+        $this->fields = $fields;
     }
 }; ?>
 
@@ -31,6 +35,10 @@ new class extends Component {
                 ]],
             ],
         ];
+
+        if ($fields !== []) {
+            $pageLayout['fields'] = $fields;
+        }
     @endphp
 
     @include('noerd::components.detail.block', [

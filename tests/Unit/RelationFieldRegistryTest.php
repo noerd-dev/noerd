@@ -35,6 +35,7 @@ it('registers a relation type and exposes it via field type registry', function 
         'value' => 12,
         'required' => true,
         'readonly' => false,
+        'helpText' => '',
         'modelId' => 99,
         'theme' => 'default',
     ]);

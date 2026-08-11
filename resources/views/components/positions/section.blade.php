@@ -10,13 +10,11 @@
     $themeDefinition = app(\Noerd\Services\ThemeRegistry::class)->get($theme);
 @endphp
 
-<div class="bg-white shadow-xs rounded-lg mt-6">
+<div class="mt-6 rounded-lg bg-white shadow-xs">
     @include('noerd::components.detail.block-head', [
         'title' => $title === '' ? '' : __($title),
         'description' => $description === '' ? '' : __($description),
     ])
 
-    <div class="{{ $themeDefinition->sectionPadding }}">
-        {{ $slot }}
-    </div>
+    <div class="{{ $themeDefinition->sectionPadding }}">{{ $slot }}</div>
 </div>

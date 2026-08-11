@@ -11,10 +11,6 @@ it('has direct route for noerd-user-detail', function (): void {
     expect(Route::has('noerd-user.detail'))->toBeTrue();
 });
 
-it('has direct route for user-role-detail', function (): void {
-    expect(Route::has('user-role.detail'))->toBeTrue();
-});
-
 it('has direct route for setup-collection-detail', function (): void {
     expect(Route::has('setup-collection.detail'))->toBeTrue();
 });

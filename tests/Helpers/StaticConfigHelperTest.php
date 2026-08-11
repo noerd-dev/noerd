@@ -24,7 +24,7 @@ it('loads table config for existing list', function (): void {
     $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
     $this->actingAs($user);
 
-    $config = StaticConfigHelper::getListConfig('user-roles-list');
+    $config = StaticConfigHelper::getListConfig('setup-languages-list');
     expect($config)->toBeArray()->and($config)->not->toBeEmpty();
 });
 
@@ -85,15 +85,40 @@ it('hides feature-gated navigation items when the config value is false', functi
     $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
     $this->actingAs($user);
 
-    config()->set('noerd.features.roles', true);
-    $enabled = setupNavigationTitles();
+    // Synthetic fixture: which shipped entries are gated is configuration, so the
+    // gating MECHANIC is proven against a temporary navigation.yml instead.
+    $navigationPath = base_path('app-configs/setup/navigation.yml');
+    $backup = file_exists($navigationPath) ? file_get_contents($navigationPath) : null;
+    @mkdir(dirname($navigationPath), 0755, true);
+    file_put_contents($navigationPath, <<<'YAML'
+-
+  title: Setup
+  name: setup
+  block_menus:
+    -
+      title: Administration
+      navigations:
+        -
+          title: 'Zz Ungated Entry'
+          route: setup
+        -
+          title: 'Zz Gated Entry'
+          route: setup
+          config: noerd.testing.synthetic_gate
+YAML);
 
-    config()->set('noerd.features.roles', false);
-    $disabled = setupNavigationTitles();
+    try {
+        config()->set('noerd.testing.synthetic_gate', true);
+        $enabled = setupNavigationTitles();
 
-    expect($enabled)->not->toBeEmpty()
-        ->and(array_diff($disabled, $enabled))->toBeEmpty()
-        ->and(array_diff($enabled, $disabled))->not->toBeEmpty();
+        config()->set('noerd.testing.synthetic_gate', false);
+        $disabled = setupNavigationTitles();
+
+        expect($enabled)->toBe(['Zz Ungated Entry', 'Zz Gated Entry'])
+            ->and($disabled)->toBe(['Zz Ungated Entry']);
+    } finally {
+        $backup === null ? @unlink($navigationPath) : file_put_contents($navigationPath, $backup);
+    }
 });
 
 it('hides superAdmin navigation items from non-super admins', function (): void {

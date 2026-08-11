@@ -36,7 +36,7 @@
         $baseClasses .= $variant === 'pill' ? ' rounded-lg' : ' rounded-sm';
     }
 
-    $size = $size ?? 'md';
+    $size ??= 'md';
     $sizeClasses = $themeButtonClasses ?? match ($size) {
         'sm' => $isIconOnly ? 'h-6 w-6' : 'h-6 px-2.5 py-1 text-xs',
         'lg' => $isIconOnly ? 'h-10 w-10' : 'h-10 px-5 py-2.5 text-base',
