@@ -1,0 +1,29 @@
+# Noerd Framework Documentation
+
+Documentation for the Noerd framework — a YAML-driven modular framework for Laravel applications.
+
+> **Note:** The mirror at [noerd-dev/docs](https://github.com/noerd-dev/docs) is auto-synced from the `docs/` folder of [noerd-dev/noerd](https://github.com/noerd-dev/noerd) on every push to `main`. Do not commit to the mirror directly — changes there will be overwritten. Edit the docs in the noerd repository instead.
+
+## Contents
+
+- [Installation](installation.md)
+- [Creating Apps](create-app.md)
+- [Creating Modules](creating-modules.md)
+- [List View](list-view.md)
+- [List Search](list-search.md)
+- [List Filters](list-filters.md)
+- [Detail View](detail-view.md)
+- [Page View](page-view.md)
+- [Field Types](field-types.md)
+- [Relation Field Types](relation-field-types.md)
+- [Modal System](modal.md)
+- [Themes](themes.md)
+- [Navigation](navigation.md)
+- [Header Actions](header-actions.md)
+- [Dashboard Widgets](dashboard-widgets.md)
+- [Quick Menu](quick-menu.md)
+- [Banner](banner.md)
+- [Setup Collections](setup-collections.md)
+- [Artisan Commands](artisan-commands.md)
+- [Example Application](example-application.md)
+- [Upgrade to 0.6](upgrade-0.6.md)
