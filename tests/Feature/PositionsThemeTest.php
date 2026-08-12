@@ -43,7 +43,7 @@ describe('Position tables follow the theme', function (): void {
             ->assertSeeHtml('rounded-none');
 
         $html = $component->html();
-        $numberCell = fn(int $number): string => '/tabular-nums[^"]*">' . $number . '<\/td>/';
+        $numberCell = fn (int $number): string => '/tabular-nums[^"]*">'.$number.'<\/td>/';
 
         expect(preg_match($numberCell(1), $html))->toBe(1)
             ->and(preg_match($numberCell(2), $html))->toBe(1)
@@ -72,14 +72,18 @@ describe('Position tables follow the theme', function (): void {
 
     it('renders both accepted tax shapes identically', function (): void {
         // The Livewire wrapper carries the component payload, which of course differs
-        // between the two shapes — compare the rendered block only.
+        // between the two shapes — compare the rendered totals only, anchored on
+        // stable text rather than a class attribute whose order may be re-sorted.
         $renderedBlock = function (array $taxes): string {
             $html = Livewire::test('noerd::positions-theme-test', [
                 'theme' => 'default',
                 'taxes' => $taxes,
             ])->html();
 
-            return mb_substr($html, mb_strpos($html, '<div class="bg-white'));
+            $anchor = mb_strpos($html, __('Total Net'));
+            expect($anchor)->not->toBeFalse();
+
+            return mb_substr($html, $anchor);
         };
 
         expect($renderedBlock([['tax_rate' => 19, 'tax_total' => 4.2]]))

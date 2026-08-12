@@ -13,6 +13,12 @@ noerd is a Laravel Livewire boilerplate for building admin panels and business a
 - **App Management** — Create custom business apps for purchasing, sales, or any department. Alternatively, use ready-made apps like Booking or CMS to get started quickly.
 - **AI-Powered Development** — An AI-ready boilerplate designed for rapidly building apps and tools. The YAML-driven architecture enables AI assistants to generate and modify components efficiently.
 
+## Requirements
+
+- PHP 8.4+
+- Laravel 12+
+- Livewire 4+
+
 ## Install Noerd
 
 ```bash
@@ -30,17 +36,31 @@ If you skip any of these steps, you can run them later with the respective [Arti
 
 ### Created Tables
 
-| Table | Description                                                |
-|-------|------------------------------------------------------------|
-| `users` | User accounts (if not already exists)                      |
-| `noerd_user_settings` | User settings (language, selected tenant)                  |
-| `noerd_user_roles` | User roles per tenant. One User can have many roles        |
-| `tenants` | Tenants / Organizations / Environments                     |
-| `tenant_apps` | Available apps which can be assigned to tenants            |
-| `profiles` | Role profiles (ADMIN, USER, etc.) One User has one profile |
-| `setup_collections` | Dynamic data collections                                   |
-| `setup_collection_entries` | Entries in collections                                     |
+| Table | Description |
+|-------|-------------|
+| `noerd_users` | User accounts |
+| `noerd_user_settings` | User settings (language, selected tenant) |
+| `noerd_user_roles` | User roles per tenant (with `noerd_user_role` pivot). One user can have many roles |
+| `noerd_profiles` | Role profiles (ADMIN, USER, etc.). One user has one profile per tenant |
+| `noerd_settings` | Per-tenant system settings (currency, detail theme) |
+| `tenants` | Tenants / Organizations / Environments |
+| `users_tenants` | User ↔ tenant assignments |
+| `tenant_apps` | Available apps which can be assigned to tenants (with `tenant_app` pivot) |
+| `tenant_invoices` | Tenant invoices |
+| `setup_collections` | Dynamic data collections |
+| `setup_collection_entries` | Entries in collections |
+| `setup_collection_definitions` | Collection schemas when `noerd.collections.mode` is `database` |
+| `setup_languages` | Per-tenant admin-panel languages |
 
+## Configuration
+
+`noerd:install` publishes `config/noerd.php`. Notable flags:
+
+- `features.multi_tenant` (`NOERD_MULTI_TENANT`) — tenant switcher and multi-tenant UI
+- `features.currency` (`NOERD_CURRENCY_ENABLED`) — set to `false` to hide currency-related UI on
+  installations that don't need it
+- `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))
+- `brand.active` — color palette (see [Brand](brand.md))
 
 ## Verification
 

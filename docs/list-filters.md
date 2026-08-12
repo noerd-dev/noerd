@@ -96,7 +96,10 @@ Filters should be extracted into reusable traits so multiple list components can
 
 File location: `app-modules/{module}/src/Traits/{Name}FilterTrait.php`
 
-Example: `app-modules/order/src/Traits/YearFilterTrait.php`
+Example: `app-modules/liefertool/src/Traits/YearFilterTrait.php`
+
+The noerd module ships ready-made filter traits — `ShowFromFilterTrait` (date ranges),
+`TenantFilterTrait` and `SetupLanguageFilterTrait` — see [Reusable Traits](traits.md).
 
 ```php
 <?php

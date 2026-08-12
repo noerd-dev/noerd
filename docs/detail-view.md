@@ -13,7 +13,7 @@ app-configs/{app}/details/{name}-detail.yml
 
 ### Livewire Component:
 ```
-app-modules/{module}/resources/views/components/⚡{name}-detail.blade.php
+app-modules/{module}/resources/views/components/{name}-detail.blade.php
 ```
 
 ## YAML Configuration
@@ -63,6 +63,7 @@ fields:
 | `title` | Page title (translation key) |
 | `description` | Optional description text |
 | `theme` | Theme for the form: `default`, `compact`, `numbered` or any discovered theme (see [Themes](themes.md)) |
+| `quickCreate` | Open the "new record" dialog as a narrow quick-create modal |
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
 | `actions` | Array of action button definitions rendered above the form (see [Detail Actions](#detail-actions)) |
@@ -70,8 +71,6 @@ fields:
 
 > **Note:** `relations:` (Relation Box) and `widgets:` are PAGE concerns — they live in the
 > optional page YAML (`pages/{entity}-page.yml`), not in a detail YAML. See [Page View](page-view.md).
-> A detail YAML contains only the form: `title`, `description`, `theme`, `quickCreate`, `fields`
-> (and form-level `tabs`).
 
 ## Tab Properties
 
@@ -80,8 +79,29 @@ fields:
 | `number` | Tab index (1-based) |
 | `label` | Tab label (translation key) |
 | `component` | Embedded Livewire component |
-| `arguments` | Arguments passed to embedded component |
+| `arguments` | Arguments passed to embedded component; the `$modelId` token resolves to the current record id |
 | `requiresId` | Only show tab when editing existing record |
+| `permission` | Gate ability required to see the tab; `permissionModel` (optional) is passed as the ability's model argument |
+| `viewExists` | View name — the tab is hidden when that view is not registered (safe reference to an optional module) |
+| `showIf` | Reactive client-side visibility: a `$wire` property name (string) or `{field: ..., value: ...}` |
+| `modalRoute` | Named route opened as a modal instead of switching panels (with optional `routeParameters`) |
+| `route` | Named route the tab navigates to (full page load) |
+| `routable` | With `component`: makes the tab addressable via the generic `component-page/{componentName}` route |
+
+### Hand-Rolled Tab Panels
+
+When a component builds its tab panels manually (instead of via `<x-noerd::tab-content>`), always
+use the generic `<x-noerd::tab-panels>` / `<x-noerd::tab-panel>` components — never a bare
+`x-show` div. They keep the modal height constant across tabs and give every panel its own scroll
+container. `<x-noerd::tab-panel>` accepts `number` and an optional `show` prop with an Alpine
+expression for reactive visibility on top of the tab switch:
+
+```blade
+<x-noerd::tab-panels>
+    <x-noerd::tab-panel :number="1">…</x-noerd::tab-panel>
+    <x-noerd::tab-panel :number="2" :show="'$wire.someFlag'">…</x-noerd::tab-panel>
+</x-noerd::tab-panels>
+```
 
 ## Field Properties
 
@@ -249,6 +269,7 @@ fields:
 | `action` | Livewire method called via `wire:click` (used when neither `route`, `modalComponent` nor `url` is set) |
 | `heroicon` | Optional heroicon rendered before the label |
 | `confirm` | Optional confirmation prompt shown via `wire:confirm` (translation key) |
+| `loading` | Only with `action:` — alternate label shown while the method runs (`wire:loading`, translation key); the button is disabled meanwhile |
 | `requiresId` | Defaults to `true` — the button is hidden until the record is saved (`modelId` is set). Set to `false` to always show it |
 | `viewExists` | Optional view name — the button is hidden when that view is not registered, so YAML may reference an optional module safely |
 
@@ -300,64 +321,10 @@ public function transferToAccount(): void
 
 ## Relation Box
 
-A Relation Box renders a grid of clickable tiles (6 per row), each showing a heroicon, a label and the related record count, e.g. `Contacts (5)`. Clicking a tile opens the related list component as a modal, filtered by the current record. Use it instead of relation tabs when you want an overview of all relations at a glance.
-
-> The `relations:` array is declared in the PAGE YAML (`pages/{entity}-page.yml`) and the
-> component is placed in the `*-page` blade — see [Page View](page-view.md). The component
-> reference below applies unchanged.
-
-It is rendered via the generic `<x-noerd::detail-relations>` component, a thin wrapper around the `<livewire:noerd::relation-box>` Livewire component. The box only renders when `modelId`, a non-empty `relations` array and `modelClass` are all present, and refreshes its counts automatically when a list modal closes (`#[On('closeTopModal')]`).
-
-### Blade Usage
-
-Place the component between the header slot and `<x-noerd::tab-content>`:
-
-```blade
-<x-noerd::detail-relations
-    :layout="$pageLayout"
-    :modelId="$modelId"
-    :modelClass="\Noerd\Crm\Models\Account::class" />
-```
-
-| Prop | Description |
-|------|-------------|
-| `layout` | The detail's `$pageLayout` (provides the `relations` array) |
-| `modelId` | The current record id; tiles are hidden when empty |
-| `modelClass` | Fully-qualified Eloquent model class used to load the record and count relations |
-
-### YAML Configuration
-
-```yaml
-title: Account
-relations:
-  - label: Sub-Accounts
-    heroicon: building-office-2
-    relation: children
-    component: accounts-list
-    arguments:
-      parentAccountId: $modelId
-  - label: Contacts
-    heroicon: users
-    relation: contacts
-    component: contacts-list
-    arguments:
-      accountId: $modelId
-fields:
-  - name: detailData.name
-    label: Name
-    type: text
-```
-
-### Relation Properties
-
-| Property | Description |
-|----------|-------------|
-| `label` | Tile label (translation key) |
-| `heroicon` | Heroicon rendered before the label |
-| `relation` | Eloquent relationship method on the model used to count records (e.g. `contacts`). An unknown method yields a count of `0` instead of throwing |
-| `route` | Named route of the list, opened as a modal. The browser URL is deliberately NOT rewritten — the tile opens the list NARROWED by the current record, which a plain list route cannot express |
-| `component` | List component opened as a modal on click (e.g. `contacts-list`, without the module prefix) — also the fallback when `route` is not registered |
-| `arguments` | Arguments passed to the modal; the `$modelId` token resolves to the current record id, static values pass through unchanged |
+The Relation Box (a grid of clickable tiles showing related record counts) is a PAGE feature:
+the `relations:` array lives in the page YAML (`pages/{entity}-page.yml`) and the
+`<x-noerd::detail-relations>` component is placed in the `*-page` blade. See
+[Page View → Relation Box](page-view.md#relation-box).
 
 ## Embedded Lists
 
@@ -552,14 +519,27 @@ for new records, relation titles) and call `$this->initDetail()` first.
 - The Eloquent model is **never** stored as a component property
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
 
+## Further UI Components
+
+- **`<x-noerd::toolbar :buttons="[...]">`** — a horizontal action/status bar. Each entry is an
+  array with `label`, `action`, optional `heroicon`, `confirm`, `disabled`; `type: separator`
+  renders a divider, `type: status` a colored status chip (`variant: success|warning|neutral`).
+- **`<x-noerd::code-snippet label="..." language="blade">`** — renders the slot content as a dark
+  code panel with a copy button; useful on settings pages that show embed codes.
+- **`<x-noerd::help-tooltip text="...">`** — the question-mark tooltip used by `helpText`; can be
+  placed manually next to custom labels.
+
 ## Naming Conventions
 
 - Lists: `{plural}-list.blade.php` (e.g., `customers-list.blade.php`)
 - Details: `{singular}-detail.blade.php` (e.g., `customer-detail.blade.php`)
-- Components must be placed directly in the `components/` folder, not in subfolders
+- Components live directly in the `components/` folder by default. Nested component names are
+  supported (e.g. `booking::bookings.types-list`): DETAIL YAMLs map the dots to subfolders
+  (`details/bookings/booking-detail.yml`), LIST YAMLs always stay flat in `lists/` — the dot
+  segments are ignored for lists (see [List View](list-view.md))
 
 ## Next Steps
 
-- [Components](components.md) - Learn about available UI components
-- [YAML Configuration](yaml-configuration.md) - Deep dive into YAML options
+- [Field Types](field-types.md) - All available field types and their options
+- [Page View](page-view.md) - Page chrome, relations, widgets around a detail form
 - [Creating Modules](creating-modules.md) - Build independent modules

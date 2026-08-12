@@ -1,8 +1,9 @@
 # Registered Relation Field Types
 
-Relations no longer use the generic `relation` field type.
-
-Every relation must be registered in a module service provider and referenced in YAML with an explicit type such as `customerRelation`, `vehicleRelation`, `authorRelation` or `pageRelation`.
+Relation fields are registered types. Every relation is registered in a module service provider and
+referenced in YAML with an explicit type such as `customerRelation`, `vehicleRelation`,
+`authorRelation` or `pageRelation`. The generic `type: relation` is not supported — an unregistered
+relation type fails explicitly during rendering.
 
 ## YAML Usage
 
@@ -13,7 +14,8 @@ Every relation must be registered in a module service provider and referenced in
   colspan: 6
 ```
 
-`modalComponent` and `relationField` are no longer configured in YAML for registered relation fields.
+The registered definition supplies the list component, detail target and title resolution —
+nothing else is configured in YAML.
 
 ## Registering a Relation Type
 
@@ -34,13 +36,16 @@ $relationFieldRegistry->register('customerRelation', RelationFieldDefinition::mo
 ));
 ```
 
-## Required Definition Data
+## Definition Parameters (`RelationFieldDefinition::model()`)
 
-- `type`: explicit YAML field type, for example `customerRelation`
-- `listComponent`: list opened in select mode
-- `detailComponent`: detail modal opened for existing values
-- `modelClass`: model used to hydrate the saved relation value
-- `titleResolver`: model attribute or callback that returns the display title
+| Parameter | Description |
+|-----------|-------------|
+| `listComponent` | List opened in select mode (required) |
+| `detailComponent` | Detail modal opened for existing values |
+| `modelClass` | Model used to hydrate the saved relation value |
+| `titleResolver` | Model attribute name or callback that returns the display title (default `'name'`) |
+| `selectEvent` | Custom selection event name; defaults to the `{entity}Selected` convention derived from the list component |
+| `detailRoute` | Named `Route::livewire()` route opened as a modal for existing values — preferred over `detailComponent` when the record is addressable (see [Modals](modal.md#route-modals)); `detailComponent` stays as the fallback when the route is not registered |
 
 ## Custom Title Resolver
 
@@ -53,11 +58,41 @@ $relationFieldRegistry->register('quoteRelation', RelationFieldDefinition::model
 ));
 ```
 
+## Polymorphic Relation Fields
+
+For a field that may point at one of several relation types (e.g. an invoice source that is either
+an order or a quote), register a polymorphic type with the allowed relation types:
+
+```php
+$relationFieldRegistry->registerPolymorphic('invoiceSourceRelation', [
+    'orderRelation',
+    'quoteRelation',
+]);
+```
+
+Each allowed type must itself be a registered relation type. The YAML field additionally names the
+column that stores the selected type:
+
+```yaml
+- name: detailData.source_id
+  typeField: detailData.source_type
+  label: Source
+  type: invoiceSourceRelation
+  colspan: 6
+```
+
+Polymorphic fields render through the shared Livewire component
+`noerd-polymorphic-relation-field`, which shows a type selector next to the relation input.
+
 ## Runtime Behaviour
 
 - All registered relation types render through the shared Livewire component `noerd-relation-field`
-- Selection uses the generic event `noerdRelationSelected`
-- The legacy `{entity}Selected` event is still dispatched for compatibility
+  (polymorphic types through `noerd-polymorphic-relation-field`)
+- Selection uses the generic event `noerdRelationSelected`; the `{entity}Selected` event (or the
+  definition's `selectEvent`) is dispatched as well, so detail components can listen with
+  `#[On('customerSelected')]`
+- Registering a relation type automatically registers a matching field type in the
+  `FieldTypeRegistry` — no separate field-type registration is needed
 - Unregistered relation types fail explicitly during rendering
 
 ### Theme Templates
@@ -75,8 +110,3 @@ The numbered templates render inside `<x-noerd::detail.numbered-row>` and need t
 `RelationFieldRegistry` puts `number` into the component props whenever the detail block numbered
 the field (i.e. only in a theme with `numbersRows`), and the base class exposes it as
 `$this->numberedRowField()`.
-
-## Migration Rule
-
-- `type: relation` is forbidden
-- New relations must be registered first and only then referenced in YAML

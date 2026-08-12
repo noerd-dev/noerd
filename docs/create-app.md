@@ -14,10 +14,19 @@ The command asks for:
 3. **Icon** - Heroicon name (searchable)
 4. **Route** - Main route name (e.g., "crm.index")
 
-Within that command, you can assign that app to one or more tenants. You can also do that later with another Artisan command.
+For non-interactive use (e.g. in install scripts), every prompt has an option:
+
+```bash
+php artisan noerd:create-app --title="Customer Management" --name=CRM \
+    --icon=users --route=crm.index --active=1
+```
+
+Within that command, you can assign that app to one or more tenants. You can also do that later with another Artisan command:
 
 ```bash
 php artisan noerd:assign-apps-to-tenant
+# or non-interactive
+php artisan noerd:assign-apps-to-tenant --tenant-id=1
 ```
 
 If you visit /noerd-apps again, you should now see your created app in the sidebar.

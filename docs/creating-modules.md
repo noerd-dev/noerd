@@ -87,7 +87,7 @@ $this->detailData['custom_attributes']['my_key'];
 |-----------|---------|
 | `app-configs/` | YAML configurations |
 | `database/migrations/` | Database migrations |
-| `resources/views/components/` | Volt components (⚡ prefix) |
+| `resources/views/components/` | Livewire single-file components (`*-list.blade.php`, `*-detail.blade.php`) |
 | `resources/lang/` | Translations (JSON) |
 | `routes/` | Route definitions |
 | `src/Models/` | Eloquent models |
@@ -96,6 +96,6 @@ $this->detailData['custom_attributes']['my_key'];
 
 ## Next Steps
 
-- [Lists](03-lists.md) - Customize list views
-- [Detail Views](04-models.md) - Customize detail forms
-- [YAML Configuration](yaml-configuration.md) - Full YAML reference
+- [List View](list-view.md) - Customize list views
+- [Detail View](detail-view.md) - Customize detail forms
+- [Field Types](field-types.md) - Full YAML field reference

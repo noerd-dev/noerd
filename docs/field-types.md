@@ -290,9 +290,10 @@ fields:
 | Type | Description | Component |
 |------|-------------|-----------|
 | `text` | Standard text input (also email, number, date, time, datetime-local) | `input.blade.php` |
+| `currency` | Amount input formatted with the tenant's currency (symbol, separators) | `input-currency.blade.php` |
 | `colorHex` | Color picker with HEX value | `color-hex.blade.php` |
 | `textarea` | Multi-line text field | `input-textarea.blade.php` |
-| `select` | Dropdown with static options | `input-select.blade.php` |
+| `select` | Dropdown with static options or a component method (`optionsMethod`) | `input-select.blade.php` |
 | `picklist` | Dropdown with dynamic options (via Livewire method) | `picklist.blade.php` |
 | `checkbox` | Boolean checkbox | `checkbox.blade.php` |
 | `*Relation` | Registered relation field type such as `customerRelation` or `pageRelation` | `noerd-relation-field.blade.php` |
@@ -306,7 +307,14 @@ fields:
 | `collection-select` | CMS Collection selection | `input-collection-select.blade.php` |
 | `setupCollectionSelect` | Setup Collection selection | `setup-collection-select.blade.php` |
 | `button` | Action button | `button.blade.php` |
+| `icon` | Heroicon picker (opens the icon-picker modal) | `icon.blade.php` |
+| `spacer` | Empty grid cell reserving its `colspan` (deliberate blank column) | `spacer.blade.php` |
 | `block` | Container for nested fields | (in `block.blade.php`) |
+
+**Fallback behavior:** A `type` that is not registered (and does not end in `Relation`) renders as
+a generic HTML input with that type attribute — this is how `email`, `number`, `date`, `time` and
+`datetime-local` work. Unregistered `*Relation` types throw instead (see
+[Relation Field Types](relation-field-types.md)).
 
 ## Common Options
 
@@ -322,6 +330,7 @@ These options are available for most field types:
 | `required` | bool | `false` | Show required indicator on label |
 | `readonly` | bool | `false` | Make field read-only |
 | `live` | bool | `false` | Enable real-time updates (`wire:model.live.debounce`) |
+| `placeholder` | string | - | Placeholder text (translation key); supported by text-like inputs, selects and picklists |
 | `tab` | int | `1` | Tab number for multi-tab forms |
 | `showIf` | string/object | - | Condition to show the field |
 | `showIfNot` | string/object | - | Condition to hide the field |
@@ -413,6 +422,23 @@ Standard text input field. Also handles HTML5 input types like `email`, `number`
 **Notes:**
 - `date` type automatically truncates datetime values to date only (YYYY-MM-DD)
 - `time` type automatically truncates to HH:MM format
+
+---
+
+### currency
+
+Amount input formatted with the tenant's currency: the symbol and the decimal/thousands separators
+come from the tenant setting in Setup (fallback: `config('noerd.currency')`). The value is stored
+as a plain decimal.
+
+**YAML Example:**
+
+```yaml
+- name: detailData.amount
+  label: Amount
+  type: currency
+  colspan: 6
+```
 
 ---
 
@@ -548,15 +574,19 @@ Boolean checkbox field.
 
 ### select
 
-Dropdown with statically defined options in the YAML file.
+Dropdown with statically defined options in the YAML file, or options provided by a component
+method.
 
 **Options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `options` | array | required | Array of options |
+| `options` | array | required* | Array of options |
+| `optionsMethod` | string | - | Alternative to `options`: name of a component method returning the options array |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
+
+*Either `options` or `optionsMethod` must be set.
 
 **Option Format:**
 ```yaml
@@ -620,7 +650,7 @@ Dropdown with dynamically loaded options from a Livewire component method.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `picklistField` | string | required | Name of the component method that returns options |
+| `picklistField` | string | required | Name of the option provider: a component method, or a name registered in the `PicklistRegistry` (the component method wins; see [Extension Registries](extension-registries.md)) |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
 
@@ -667,8 +697,8 @@ Relations must use explicit registered field types such as `customerRelation`, `
 ```
 
 **Important:**
-- `type: relation` is no longer allowed
-- `modalComponent` and `relationField` are no longer configured in YAML for registered relation fields
+- There is no generic `type: relation` — every relation field uses its registered type
+- `modalComponent` and `relationField` are not YAML options for registered relation fields
 - The list component, detail component and display title resolver are defined centrally in the module service provider
 - Unregistered relation field types fail explicitly during rendering
 
@@ -987,6 +1017,7 @@ Dropdown for selecting entries from a Setup Collection.
 |--------|------|---------|-------------|
 | `collectionKey` | string | required | The setup collection key |
 | `displayField` | string | `name` | Field to display as option label |
+| `valueField` | string | entry id | Field stored as the value instead of the entry id |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
 
@@ -1004,6 +1035,46 @@ Dropdown for selecting entries from a Setup Collection.
 **Notes:**
 - Supports translatable display fields
 - Automatically handles locale fallback (current → 'de' → any available)
+
+---
+
+### icon
+
+Heroicon picker: the field shows the current icon with its name and opens the searchable
+`noerd::icon-picker` modal on click. The selected icon name is stored as a string.
+
+**YAML Example:**
+
+```yaml
+- name: detailData.icon
+  label: Icon
+  type: icon
+  colspan: 6
+```
+
+---
+
+### spacer
+
+Renders nothing but still occupies its `colspan`, reserving an empty grid cell — use it to keep a
+deliberate blank column so the next field starts on a new row. Needs no `name`; only `type: spacer`
+and `colspan` are relevant. The blank height follows the active theme (`spacerClass` in
+`theme.yml`).
+
+**YAML Example:**
+
+```yaml
+- name: detailData.name
+  label: Name
+  type: text
+  colspan: 6
+- type: spacer
+  colspan: 6
+- name: detailData.email
+  label: Email
+  type: text
+  colspan: 6
+```
 
 ---
 

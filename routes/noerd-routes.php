@@ -14,7 +14,6 @@ Route::group(['prefix' => 'setup', 'middleware' => ['auth', 'verified', 'setup',
     Route::livewire('noerd-user/{modelId}', 'noerd::noerd-user-detail')->name('noerd-user.detail');
     Route::livewire('tenant', 'noerd::tenant-detail')->name('tenant');
     Route::livewire('create-tenant', 'noerd::create-tenant')->name('create-tenant');
-    Route::livewire('models', 'noerd::models-list')->name('models');
     Route::livewire('collections', 'noerd::setup-collections-list')->name('setup-collections');
     Route::livewire('collection/{modelId}', 'noerd::setup-collection-detail')->name('setup-collection.detail');
     Route::livewire('collection-definitions', 'noerd::setup-collection-definitions-list')
