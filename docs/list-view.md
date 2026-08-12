@@ -59,11 +59,15 @@ columns:
 | Property | Description |
 |----------|-------------|
 | `title` | Page title (translation key) |
+| `description` | Optional description text under the title |
 | `actions` | Array of action buttons (see Actions below) |
 | `disableSearch` | Disable the search functionality |
 | `showSummary` | Show or hide the summary row in the table footer (default: `true`) |
+| `showLineNumbers` | Prepend an Excel-style row-number column (restarts on every page) |
 | `multiSelect` | Enable the checkbox column and bulk-action bar on this list page (see Multi-Select & Bulk Actions below) |
 | `bulkActions` | Array of bulk-action buttons shown when one or more rows are selected (see Multi-Select & Bulk Actions below) |
+| `searchableColumns` | Restrict the search to specific fields (see [List Search](list-search.md)) |
+| `notSortableColumns` | Fields whose header must not be sortable (see [List Search](list-search.md)) |
 | `columns` | Array of column definitions |
 
 ## Column Properties
@@ -74,8 +78,13 @@ columns:
 | `label` | Column header (translation key) | |
 | `width` | Column width as CSS percentage | `10` |
 | `minWidth` | Minimum width in pixels (`min-width`) | none |
-| `align` | Text alignment (`left`, `right`) | `left` |
+| `align` | Text alignment (`left`, `right`; `number`/`currency` auto-align right) | `left` |
 | `type` | Display type (see Column Types below) | `text` |
+| `options` | `value`/`label` pairs for the `badge` type (see below) | |
+| `readOnly` | For editable cell types (`bool`, inline inputs): render read-only | `true` |
+| `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
+| `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
+| `wireClick` / `wireClickField` | For `colored_text`: custom `wire:click` method plus the row field passed as its argument | / `id` |
 
 **Width behavior:** The `width` value is applied as `style="width: 15%;"` on the `<th>` element. If the sum of all column widths exceeds 100, the table becomes wider than its container and horizontal scrolling is enabled.
 
@@ -85,13 +94,23 @@ columns:
 |------|-------------|
 | `text` | Default. Standard text display |
 | `date` | Formats value as date (YYYY-MM-DD) |
+| `datetime` | Formats value as date + time (`d.m.Y H:i` in German locale, `Y-m-d H:i` otherwise) |
 | `number` | Right-aligned number, rounded to 2 decimals |
 | `currency` | Right-aligned number formatted as currency with `€` |
 | `id` | Clickable ID link |
 | `bool` | Toggleable boolean: green checkmark (true), red circle (false). Clickable to toggle value |
 | `inversebool` | Green checkmark when true, nothing when false. Clickable to toggle value |
+| `badge` | Neutral badge; the raw value is translated to a label via the column's `options` (`value`/`label` pairs). Columns mirroring a paired detail `type: select` field get this automatically |
 | `badge_with_text` | Badge with optional text (value must be array with `badge` and `text` keys) |
+| `relationBadge` | Badge showing the display title of a foreign-key value (resolved via the registered relation types) |
+| `customAttribute` | Value from the `custom_attributes` JSON column, normalized for display (translatable arrays are resolved to the active language) |
+| `colored_text` | Text with optional color classes; the row value may be an array with `text`, `class`, `prefix`, `prefixClass`, `icon` keys |
 | `relation_link` | Clickable link that opens a modal (requires `idField` plus either `route` or `modalComponent` in the column config; in route mode `idParam` defaults to `modelId`) |
+
+**Automatic typing:** Columns without an explicit `type` are typed from the database schema
+(`boolean` → `bool`, numeric → `number`, `date`/`datetime` → matching type), and columns whose
+field mirrors a `type: select` field in the paired detail YAML (`{x}-list` → `{x}-detail`) render
+as translated badges automatically. An explicit `type` or own `options` always wins.
 
 **Example:**
 
@@ -553,6 +572,55 @@ with reduced opacity — e.g. "Kunden (Delivery)":
 | `StaticConfigHelper::getListConfigForApp($app, $name)` | Load a list config for an explicit app |
 | `StaticConfigHelper::parseListViewKey($key)` | `[appFolder\|null, plainKey]` from a dropdown key |
 | `StaticConfigHelper::composeListViewKey($app, $key)` | Inverse of `parseListViewKey()` |
+
+## CSV Export
+
+A list can offer a CSV download of its (filtered) query. Enable it with the component property
+`public bool $enableCsvExport = true;` and override `prepareCsvExport()`:
+
+```php
+protected function prepareCsvExport(): array
+{
+    $config = $this->getListConfig();
+
+    return [
+        $this->listQuery($this->listModel),   // Builder — search/sort/filters already applied
+        $config['columns'] ?? [],             // columns to export (list YAML shape)
+        'customers.csv',                      // download filename
+    ];
+}
+```
+
+- The export button appears in the list header next to the search field
+- The file streams with a UTF-8 BOM and `;` as delimiter (Excel-friendly); headers are the
+  translated column labels; rows are read lazily in chunks
+- `formatCsvValue($value, $column)` formats each cell by column type (`bool` → Yes/No, `badge` →
+  the translated option label, dates/currency accordingly) — override it for custom formats
+- `prepareExportRow($row)` is an optional per-row hook (e.g. to eager-compute accessors)
+
+## Minimal Mode (List Widgets)
+
+Besides [compact mode](#compact-mode-embedded-lists), a list can render as a **minimal widget**: a
+slim, column-restricted variant used by the page widget sidebar (`<x-noerd::detail-widget>` mounts
+the embedded list this way). Mount properties:
+
+| Property | Description |
+|----------|-------------|
+| `minimal` | Enable the minimal variant |
+| `minimalColumns` | Field names to render, in order (subset of the YAML columns) |
+| `minimalLimit` | Row limit (default `5`; replaces pagination) |
+| `showMoreRoute` | Named list route for the "Show more" link — opened as a modal WITHOUT rewriting the URL (the modal shows the list narrowed by `showMoreArguments`) |
+| `showMoreComponent` | List component for "Show more" — fallback when the route is not registered |
+| `showMoreArguments` | Arguments passed to the "Show more" list (usually the same narrowing filter) |
+
+```blade
+<livewire:crm::opportunities-list
+    wire:key="widget-opportunities-{{ $modelId }}"
+    :minimal="true"
+    :minimalColumns="['name', 'amount']"
+    :showMoreRoute="'crm.opportunities'"
+    :showMoreArguments="['accountId' => $modelId]" />
+```
 
 ## Next Steps
 

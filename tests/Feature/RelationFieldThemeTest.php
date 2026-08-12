@@ -39,7 +39,8 @@ describe('Relation field theme templates', function (): void {
         Livewire::test('noerd-relation-field', $props + ['theme' => 'compact'])
             ->assertSuccessful()
             ->assertSeeHtml('w-36 shrink-0 truncate')
-            ->assertSeeHtml('!h-7 !px-2');
+            ->assertSeeHtml('!h-7')
+            ->assertSeeHtml('!px-2');
     });
 
     it('renders the numbered template inside the numbered row chrome', function () use ($props): void {

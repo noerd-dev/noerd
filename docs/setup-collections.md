@@ -26,10 +26,10 @@ That's it. No migrations, no models, no controllers required.
 **File:** `app-configs/setup/collections/customers.yml`
 
 ```yaml
-title: Kunde
-titleList: Kunden
+title: Customer
+titleList: Customers
 key: CUSTOMERS
-buttonList: 'Neuer Eintrag'
+buttonList: 'New Entry'
 description: ''
 hasPage: false
 fields:
@@ -44,10 +44,10 @@ fields:
 **File:** `app-configs/setup/collections/invoice_templates.yml`
 
 ```yaml
-title: Rechnungsvorlage
-titleList: Rechnungsvorlagen
+title: Invoice Template
+titleList: Invoice Templates
 key: INVOICE_TEMPLATES
-buttonList: 'Neue Vorlage'
+buttonList: 'New Template'
 description: ''
 fields:
   - name: detailData.name
@@ -58,6 +58,40 @@ fields:
     label: Template Path
     type: text
     colspan: 6
+```
+
+## Storage Modes: YAML vs. Database
+
+Where collection **schemas** (the definitions above) live is controlled by
+`config('noerd.collections.mode')`:
+
+| Config key | Env | Default | Description |
+|------------|-----|---------|-------------|
+| `collections.mode` | `NOERD_COLLECTIONS_MODE` | `yaml` | `yaml` or `database` |
+| `collections.show_definitions_ui` | — | derived | `true` when mode is `database` |
+| `collections.setup_yaml_path` | — | `app-configs/setup/collections` | YAML source directory |
+
+- **`yaml` (default):** Schemas live as committed YAML files in `setup_yaml_path`. The definitions
+  management UI is hidden — changes are deployed via files.
+- **`database`:** Schemas live per tenant in the `setup_collection_definitions` table. The Setup
+  area shows a management UI (routes `setup-collection-definitions` /
+  `setup-collection-definition.detail`, gated by the `setup.collections.ui` middleware) where
+  admins create and edit collection definitions at runtime.
+
+The entry **data** is always stored in the database (`setup_collections` /
+`setup_collection_entries`), regardless of the mode.
+
+### Switching Modes
+
+Two Artisan commands move definitions between the two storages (see
+[Artisan Commands](artisan-commands.md)):
+
+```bash
+# yaml -> database
+php artisan noerd:setup-collections:import-yaml --all-tenants
+
+# database -> yaml
+php artisan noerd:setup-collections:export-yaml --tenant-id=1
 ```
 
 ## Using Collections in Other Components
@@ -109,15 +143,19 @@ $allCollections = SetupCollectionHelper::getAllCollections();
 | `getCollectionTable(string $collection)` | `array` | Returns column definitions for list display |
 | `getAllCollections()` | `array` | Returns all collections with their metadata |
 
+The helper reads from the active storage mode transparently — the same API works in `yaml` and
+`database` mode.
+
 ## Available Field Types
 
-All standard field types are supported in Setup Collections. See the [Field Types Reference](/docs/field-types) for the complete list, including:
+All standard field types are supported in Setup Collections. See the
+[Field Types Reference](field-types.md) for the complete list, including:
 
 - `text`, `email`, `number`, `date`, `time`, `datetime-local`
 - `textarea`
 - `select`, `picklist`
 - `checkbox`
-- `relation`
+- Registered relation types such as `customerRelation` (see [Relation Field Types](relation-field-types.md))
 - `translatableText`, `translatableTextarea`
 - And more...
 
@@ -126,4 +164,4 @@ All standard field types are supported in Setup Collections. See the [Field Type
 1. **Use UPPERCASE keys**: The `key` property should be UPPERCASE and unique (e.g., `CUSTOMERS`, `INVOICE_TEMPLATES`)
 2. **Keep collections simple**: Setup Collections are best for lookup tables with a few fields
 3. **Use meaningful names**: The filename becomes the collection identifier, so use clear, descriptive names
-4. **Localize labels**: Use translation keys for field labels to support multiple languages
+4. **Localize labels**: Use English text as labels — they double as translation keys (map them in `de.json`)

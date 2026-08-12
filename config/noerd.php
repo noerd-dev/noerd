@@ -25,6 +25,29 @@ return [
         'setup_yaml_path' => 'app-configs/setup/collections',
     ],
 
+    'currency' => [
+        'symbol' => '€',
+        'decimal_separator' => ',',
+        'thousands_separator' => '.',
+        'symbol_position' => 'after',
+    ],
+
+    'branding' => [
+        'logo' => env('NOERD_LOGO', ''),
+        'favicon' => env('NOERD_FAVICON', ''),
+        'auth_background_image' => env('NOERD_AUTH_BACKGROUND_IMAGE', ''),
+    ],
+
+    'sidebar' => [
+        'apps_width' => env('NOERD_SIDEBAR_APPS_WIDTH', '80px'),
+        'navigation_width' => env('NOERD_SIDEBAR_NAVIGATION_WIDTH', '280px'),
+    ],
+
+    'generators' => [
+        'search_modules' => true,
+        'modules_path' => 'app-modules',
+    ],
+
     'cache' => [
         'object_catalog' => env('NOERD_OBJECT_CATALOG_CACHE', true),
     ],

@@ -37,19 +37,46 @@ For example: `app-configs/accounting/navigation.yml`
           heroicon: 'archive-box'
 ```
 
-## Navigation Properties
+## Top-Level Properties
 
 | Property | Description |
 |----------|-------------|
-| `title` | Display name (use translation key) |
+| `title` | Display name of the app (translation key) |
 | `name` | Unique identifier for the app |
+| `route` | The app's main route |
+| `hidden` | Hide the top-level menu item |
+| `block_menus` | Groups of navigation items (see below) |
+| `sub_menu` | Optional flat secondary menu |
+
+## Block Properties (`block_menus[]`)
+
+| Property | Description |
+|----------|-------------|
+| `title` | Block heading (translation key). Users can collapse a block; the state is kept in the session |
+| `navigations` | The entries of the block (see below) |
+| `route` | A block with a `route` and no `navigations` renders as a single top-level entry |
+| `heroicon` | Icon for the single-entry form |
+| `style` | `list` (default) or `buttons` — renders the block's entries as buttons |
+| `dynamic` | Provider type resolved through the `DynamicNavigationRegistry` — the block's entries are generated at runtime (e.g. the Setup collections). See [Extension Registries](extension-registries.md) |
+
+## Entry Properties (`navigations[]`)
+
+| Property | Description |
+|----------|-------------|
+| `title` | Display name (translation key) |
 | `route` | Laravel route name — the entry NAVIGATES there (and drives the active-state highlight) |
+| `link` | Plain URL (`/…` or absolute) instead of a named route |
+| `external` | Opens the target in a new tab and shows an external-link icon |
 | `heroicon` | Icon from Heroicons (e.g., `users`, `cog-6-tooth`) |
+| `icon` | Alternative: a noerd blade icon component name (e.g. `icons.media`) |
+| `modalRoute` | Named route opened as a MODAL instead of navigating |
+| `component` | Livewire component opened as a modal — fallback for `modalRoute` |
+| `arguments` | Arguments passed to the modal component |
 | `newRoute` | Named detail route opened as a modal by the "+" button (preferred) |
 | `newComponent` | Livewire component opened by the "+" button — fallback for `newRoute` |
-| `modalRoute` | Named route opened as a MODAL instead of navigating |
-| `hidden` | Hide the top-level menu item |
-| `block_menus` | Groups of navigation items |
+| `quickCreate` | With `newRoute`/`newComponent`: open the "+" target as a narrow quick-create modal (`modelId: null`, `quickCreate: true`) |
+| `config` | The entry is hidden unless `config(...)` with this key is truthy (e.g. `noerd.features.currency`) |
+| `superAdmin` | The entry is only visible to super admins |
 
 ### Route vs. component
 
@@ -68,7 +95,14 @@ separate keys:
 key is used otherwise, so an entry may reference a route owned by an optional module.
 See [Modal System](modal.md#route-modals) for when a route is the right target.
 
-## Example
+### Entries are filtered by target existence
+
+An entry whose target cannot be resolved is silently dropped: a `route:`/`modalRoute:` must be a
+registered route (`link:` and `component:` always pass). This keeps navigation YAMLs valid when an
+optional module that owns the route is not installed — stale entries simply disappear instead of
+breaking the sidebar.
+
+## Full Example
 
 `app-configs/accounting/navigation.yml`
 
@@ -87,9 +121,6 @@ See [Modal System](modal.md#route-modals) for when a route is the right target.
         - title: Invoices
           route: 'invoices'
           heroicon: 'document-currency-euro'
-        - title: Quotes
-          route: 'accounting.quotes'
-          heroicon: 'document-currency-euro'
     - title: Finances
       navigations:
         - title: Bank Accounts
@@ -99,15 +130,6 @@ See [Modal System](modal.md#route-modals) for when a route is the right target.
         - title: Bank Transactions
           route: 'accounting.bank-transactions'
           heroicon: 'banknotes'
-    - title: Products
-      navigations:
-        - title: Products
-          route: 'products'
-          newComponent: 'product-detail'
-          heroicon: 'archive-box'
-        - title: Product Groups
-          route: 'product-groups'
-          heroicon: 'rectangle-group'
     - title: Settings
       navigations:
         - title: Settings

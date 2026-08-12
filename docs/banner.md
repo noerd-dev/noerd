@@ -1,6 +1,8 @@
 # Banner System
 
-Banners display important notifications at the top of the application. They can be static messages or dynamic components.
+Banners display important notifications at the top of the application. They can be static messages
+or dynamic components. Only **one** banner is visible at a time: the highest-priority banner the
+user has not dismissed.
 
 ## File Location
 
@@ -32,10 +34,10 @@ banners:
 
 | Property | Description |
 |----------|-------------|
-| `priority` | Display order (higher = shown first) |
+| `priority` | Required — entries without a priority are ignored. The highest-priority active banner is shown |
 | `type` | Visual style: `danger`, `warning`, `info`, `success` |
 | `message` | Static text message |
-| `component` | Dynamic Livewire component (alternative to message) |
+| `component` | Dynamic Livewire component (alternative to `message`) |
 | `dismissible` | Allow users to close the banner |
 
 ## Banner Types
@@ -69,7 +71,8 @@ banners:
 
 ## Creating a Dynamic Component
 
-Components are placed in your module's views directory:
+Components are placed in your module's views directory and referenced with the `banner.{name}`
+prefix:
 
 ```
 app-modules/{module}/resources/views/components/banner/{name}.blade.php
@@ -77,7 +80,7 @@ app-modules/{module}/resources/views/components/banner/{name}.blade.php
 
 ### Example: Demo Expiry Banner
 
-`app-modules/liefertool/resources/views/components/banner/demo-expiry.blade.php`
+`app-modules/my-module/resources/views/components/banner/demo-expiry.blade.php`
 
 ```php
 <?php
@@ -98,48 +101,21 @@ new class extends Component {
             $daysRemaining = max(0, (int) $daysRemaining);
         }
 
-        $this->message = __('noerd_banner_demo_expiry', ['days' => $daysRemaining]);
+        $this->message = __('Your demo expires in :days days', ['days' => $daysRemaining]);
     }
 }; ?>
 
 <span>{{ $message }}</span>
 ```
 
+Translation labels use English text as the key; add the German mapping to the module's `de.json`
+(e.g. `"Your demo expires in :days days": "Ihre Demo läuft in :days Tagen ab"`).
+
 ## Key Concepts
 
-- **Priority:** Determines display order when multiple banners are active
+- **Single active banner:** When multiple banners are configured, only the highest-priority
+  non-dismissed banner renders. Dismissing it reveals the next one
 - **Component prefix:** Use `banner.{name}` to reference components in the `banner/` subdirectory
-- **Dismissible banners:** Users can close them; preference is stored per session
-- **Non-dismissible banners:** Always visible until removed from configuration
-
-## Examples
-
-### Maintenance Notice
-
-```yaml
-banners:
-  - priority: 100
-    type: danger
-    message: "Scheduled maintenance on Sunday, 2-4 AM"
-    dismissible: false
-```
-
-### Feature Announcement
-
-```yaml
-banners:
-  - priority: 10
-    type: info
-    message: "Try our new reporting feature!"
-    dismissible: true
-```
-
-### Trial Expiry Warning
-
-```yaml
-banners:
-  - priority: 50
-    type: warning
-    component: banner.demo-expiry
-    dismissible: true
-```
+- **Dismissible banners:** Users can close them; the dismissal is stored in the session
+  (`dismissed_banners`) and resets on the next login/session
+- **Non-dismissible banners:** Always visible until removed from the configuration

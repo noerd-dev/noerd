@@ -22,6 +22,14 @@ For full documentation, visit [noerd.dev](https://noerd.dev).
 - **Multi-Language** – Translation management baked in
 - **UI Building Blocks** – Reusable [modal](docs/modal.md), [banner](docs/banner.md), and [quick menu](docs/quick-menu.md) components
 
+## Documentation
+
+- Getting started: [Installation](docs/installation.md) · [Creating Apps](docs/create-app.md) · [Creating Modules](docs/creating-modules.md) · [Example Application](docs/example-application.md)
+- Lists: [List View](docs/list-view.md) · [List Search](docs/list-search.md) · [List Filters](docs/list-filters.md)
+- Forms: [Detail View](docs/detail-view.md) · [Page View](docs/page-view.md) · [Field Types](docs/field-types.md) · [Relation Field Types](docs/relation-field-types.md)
+- UI & layout: [Modal System](docs/modal.md) · [Themes](docs/themes.md) · [Brand](docs/brand.md) · [Navigation](docs/navigation.md) · [Header Actions](docs/header-actions.md) · [Dashboard Widgets](docs/dashboard-widgets.md) · [Quick Menu](docs/quick-menu.md) · [Banner](docs/banner.md) · [Keyboard Shortcuts](docs/keyboard-shortcuts.md)
+- Extending: [Extension Registries](docs/extension-registries.md) · [Reusable Traits](docs/traits.md) · [Setup Collections](docs/setup-collections.md) · [Artisan Commands](docs/artisan-commands.md)
+
 ## Demo
 
 A hosted demo with two pre-installed apps (a Content Management System and a Study App):

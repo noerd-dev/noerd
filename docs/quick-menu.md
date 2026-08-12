@@ -14,24 +14,22 @@ app-configs/quick-menu.yml
 buttons:
   - policy: canOrders
     component: quick-menu.open-orders
-  - policy: canOrders
-    component: quick-menu.shop-link
   - policy: canCms
     component: quick-menu.website-link
-  - policy: canTimes
-    component: quick-menu.next-slot
 ```
 
 ## Button Properties
 
 | Property | Description |
 |----------|-------------|
-| `policy` | Gate/policy name for access control |
+| `policy` | Gate ability or policy name for access control |
 | `component` | Livewire component to render |
 
 ## Policy-Based Access Control
 
-Each button requires a policy check. The button is only displayed if the user passes the policy check.
+Each button requires a policy check. The button is only displayed if the user passes it. The check
+tries a `Gate::define()` ability first; if no gate with that name exists, it falls back to the
+ability on the `Tenant` model policy:
 
 ```yaml
 buttons:
@@ -39,11 +37,12 @@ buttons:
     component: quick-menu.open-orders
 ```
 
-The user must have the `canOrders` permission (gate) for this button to appear.
+The user must have the `canOrders` ability for this button to appear.
 
 ## Creating a Quick-Menu Button
 
-Components are placed in your module's views directory:
+Components are placed in your module's views directory and referenced with the `quick-menu.{name}`
+prefix:
 
 ```
 app-modules/{module}/resources/views/components/quick-menu/{name}.blade.php
@@ -51,45 +50,36 @@ app-modules/{module}/resources/views/components/quick-menu/{name}.blade.php
 
 ### Example: Open Orders Button
 
-`app-modules/liefertool/resources/views/components/quick-menu/open-orders.blade.php`
+`app-modules/my-module/resources/views/components/quick-menu/open-orders.blade.php`
 
 ```php
 <?php
 
 use Livewire\Component;
-use Nywerk\Liefertool\Models\LiefertoolTenant;
+use MyVendor\MyModule\Models\Order;
 
 new class extends Component {
-    public $openOrders;
+    public int $openOrders = 0;
 
-    public function mount()
+    public function mount(): void
     {
-        $user = auth()->user();
-        if ($user && $user->can('canOrders')) {
-            $selectedTenant = LiefertoolTenant::find($user->selected_tenant_id);
-            $this->openOrders = $selectedTenant?->openOrders()->count();
-        }
+        $this->refreshOrderCount();
     }
 
-    public function refreshOrderCount()
+    public function refreshOrderCount(): void
     {
-        if (auth()->user()->can('canOrders')) {
-            $selectedTenant = LiefertoolTenant::find(auth()->user()->selected_tenant_id);
-            $this->openOrders = $selectedTenant?->openOrders()->count();
-        }
+        $this->openOrders = Order::where('status', 'open')->count();
     }
 }; ?>
 
 <div class="hidden lg:flex" wire:poll.15s="refreshOrderCount">
-    <button
+    <x-noerd::button
+        variant="pill"
         @click="$modal('orders-list', {{ json_encode(['filter' => 'open']) }})"
-        @class([
-            'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
-            'bg-red-300' => $openOrders > 0,
-        ])
+        :class="$openOrders > 0 ? '!bg-red-300' : ''"
     >
         {{ __('Open Orders') }}: {{ $openOrders }}
-    </button>
+    </x-noerd::button>
 </div>
 ```
 
@@ -112,12 +102,26 @@ new class extends Component {
 }; ?>
 
 <div class="hidden lg:flex">
-    <a href="{{ $websiteUrl }}" target="_blank"
-       class="bg-gray-100 rounded-lg my-auto text-sm px-3 py-1 hover:bg-gray-200">
-        {{ __('Website') }}
+    <a href="{{ $websiteUrl }}" target="_blank">
+        <x-noerd::button variant="pill">{{ __('Website') }}</x-noerd::button>
     </a>
 </div>
 ```
+
+## Registering a Button from a Module Installer
+
+A module's install command adds its quick-menu button idempotently via
+`HasModuleInstallation::ensureQuickMenuButton()` — the entry is appended to
+`app-configs/quick-menu.yml` only when not already present:
+
+```php
+$this->ensureQuickMenuButton([
+    'policy' => 'canOrders',
+    'component' => 'quick-menu.open-orders',
+]);
+```
+
+See [Creating Modules](creating-modules.md) for the install-command context.
 
 ## Key Concepts
 
@@ -125,58 +129,7 @@ new class extends Component {
 - **Responsive:** Use `hidden lg:flex` to show buttons only on larger screens
 - **Polling:** Use `wire:poll` for live updates (e.g., order counts)
 - **Modal integration:** Use `@click="$modal('component-name')"` to open modals
-
-## Styling Guidelines
-
-Recommended Tailwind classes for consistency:
-
-```blade
-<button class="bg-gray-100 rounded-lg my-auto text-sm px-3 py-1 hover:bg-gray-200">
-    Button Text
-</button>
-```
-
-For highlighting important states:
-
-```blade
-<button @class([
-    'bg-gray-100 rounded-lg my-auto text-sm px-3 py-1',
-    'bg-red-300' => $hasUrgentItems,
-])>
-    {{ $count }} Items
-</button>
-```
-
-## Examples
-
-### Counter with Live Updates
-
-```yaml
-buttons:
-  - policy: canOrders
-    component: quick-menu.open-orders
-```
-
-Component with polling:
-
-```php
-<div wire:poll.15s="refreshCount">
-    <button>{{ $count }} Items</button>
-</div>
-```
-
-### External Link
-
-```yaml
-buttons:
-  - policy: canCms
-    component: quick-menu.website-link
-```
-
-Simple link button:
-
-```blade
-<a href="{{ $url }}" target="_blank" class="...">
-    {{ __('Visit Website') }}
-</a>
-```
+- **Styling:** Use `<x-noerd::button variant="pill">` — it follows the active theme and brand;
+  don't hand-roll Tailwind button classes
+- **Tenant switcher:** The quick-menu row also hosts the tenant switcher (shown when
+  `noerd.features.multi_tenant` is on and the user has more than one tenant)

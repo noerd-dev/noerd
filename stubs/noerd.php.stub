@@ -40,6 +40,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Currency
+    |--------------------------------------------------------------------------
+    |
+    | Configure how currency values are formatted throughout the application.
+    | Used as the fallback when no tenant currency is selected in Setup.
+    |
+    */
+    'currency' => [
+        'symbol' => '€',
+        'decimal_separator' => ',',
+        'thousands_separator' => '.',
+        'symbol_position' => 'after', // 'before' or 'after'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Branding
     |--------------------------------------------------------------------------
     |
@@ -48,6 +64,7 @@ return [
     */
     'branding' => [
         'logo' => env('NOERD_LOGO', ''),
+        'favicon' => env('NOERD_FAVICON', ''),
         'auth_background_image' => env('NOERD_AUTH_BACKGROUND_IMAGE', ''),
     ],
 
