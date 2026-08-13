@@ -8,7 +8,6 @@ use Livewire\Component;
 use Noerd\Models\Profile;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupLanguage;
-use Noerd\Models\UserRole;
 use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
@@ -25,23 +24,11 @@ new class extends Component {
     public string $userLocale = 'en';
 
     public array $tenantAccess = [];
-    public array $userRoles = [];
     public array $possibleTenants = [];
 
     public function localeOptions(): array
     {
         return SetupLanguage::getActive()->pluck('name', 'code')->toArray();
-    }
-
-    #[Computed]
-    public function roles(): array
-    {
-        $roles = [];
-        $tenants = auth()->user()->adminTenants;
-        foreach ($tenants as $tenant) {
-            $roles[$tenant->name] = UserRole::where('tenant_id', $tenant->id)->get();
-        }
-        return $roles;
     }
 
     #[Computed]
@@ -81,9 +68,6 @@ new class extends Component {
         $user = new NoerdUser;
         if ($this->modelId) {
             $user = NoerdUser::find($this->modelId);
-            foreach ($user->roles as $role) {
-                $this->userRoles[$role->id] = true;
-            }
         }
 
         $this->detailData = $user->toArray();
@@ -131,6 +115,8 @@ new class extends Component {
                     }
                 }
 
+                $this->finishStore($userExists);
+
                 return;
             }
             // No password needed - user will set it via password reset link
@@ -140,12 +126,6 @@ new class extends Component {
 
         $userData = collect($this->detailData)->only(['name', 'email', 'password'])->toArray();
         $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $userData);
-        foreach ($this->userRoles as $key => $value) {
-            $user->roles()->detach($key);
-            if ($value) {
-                $user->roles()->attach($key);
-            }
-        }
 
         $allowedTenants = Auth::user()->adminTenants()->pluck('id');
         foreach ($this->possibleTenants as $tenantId => $value) {
@@ -156,7 +136,7 @@ new class extends Component {
             }
         }
 
-        $this->storeProcess($user);
+        $this->finishStore($user);
 
         if ($user->wasRecentlyCreated) {
             $user->locale = $this->userLocale;
@@ -199,6 +179,8 @@ new class extends Component {
                 </x-noerd::checkbox>
             @endif
 
+            <x-noerd::detail-slot name="user-below-form" :modelId="$modelId" />
+
             <div class="py-8 pt-4">
                 <div class="pb-4">
                     {{ __('Access to the following tenants:') }}
@@ -235,29 +217,6 @@ new class extends Component {
                 </fieldset>
                 <x-noerd::input-error :messages="$errors->get('tenantAccess')" class="mt-2"/>
             </div>
-
-            @if(count($this->roles()) > 0)
-                @foreach($this->roles() as $tenantName => $roles)
-                    @if(count($roles) > 0)
-                        <div class="py-8 pt-4">
-                            <div class="pb-4">
-                                Benutzerrollen {{$tenantName}}
-                            </div>
-                            <fieldset class="pl-2">
-                                @foreach($roles as $role)
-                                    <x-noerd::checkbox
-                                        wire:model.live="userRoles.{{$role->id}}" id="r{{$role->id}}"
-                                        :name="$tenant['id']">
-                                        {{ $role->name }} <br/>
-                                        {{$role->description}}
-                                    </x-noerd::checkbox>
-                                @endforeach
-                            </fieldset>
-                            <x-noerd::input-error :messages="$errors->get('userRoles')" class="mt-2"/>
-                        </div>
-                    @endif
-                @endforeach
-            @endif
 
             @isset($modelId)
                 <x-noerd::box>

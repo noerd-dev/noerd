@@ -2,6 +2,7 @@
 
 namespace Noerd\Livewire;
 
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
@@ -25,6 +26,7 @@ abstract class RelationFieldComponent extends Component
 
     public bool $required = false;
 
+    #[Locked]
     public bool $readonly = false;
 
     /** Optional YAML `helpText`, rendered as a tooltip next to the label. */
@@ -62,7 +64,7 @@ abstract class RelationFieldComponent extends Component
     ): void {
         $definition = app(RelationFieldRegistry::class)->resolve($relationType);
 
-        if (! $definition) {
+        if (!$definition) {
             throw new RuntimeException("Relation field type [{$relationType}] is not registered.");
         }
 
@@ -87,6 +89,11 @@ abstract class RelationFieldComponent extends Component
     #[On('noerdRelationSelected')]
     public function relationSelected(mixed $value, ?string $context = null): void
     {
+        // Hidden affordances are no guard — a readonly field never mutates.
+        if ($this->readonly) {
+            return;
+        }
+
         if ($context && $context !== $this->fieldName) {
             return;
         }
@@ -102,6 +109,10 @@ abstract class RelationFieldComponent extends Component
 
     public function clear(): void
     {
+        if ($this->readonly) {
+            return;
+        }
+
         $this->value = null;
         $this->displayTitle = '';
         $this->syncParentState();
@@ -109,7 +120,7 @@ abstract class RelationFieldComponent extends Component
 
     public function openDetail(): void
     {
-        if (! $this->value) {
+        if (!$this->value) {
             return;
         }
 

@@ -25,17 +25,18 @@ describe('Theme system', function (): void {
     });
 
     it('emits the theme marker for the compact theme', function (): void {
-        Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd::theme-test', [
             'initialModel' => [],
             'theme' => 'compact',
         ])
             ->assertSeeHtml('data-theme="compact"')
-            ->assertDontSeeHtml('data-compact')
-            ->assertSeeHtml('w-36 shrink-0 truncate');
+            ->assertDontSeeHtml('data-compact');
+
+        assertElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
     });
 
     it('renders the numbered theme with full-width gray rows and number cells', function (): void {
-        Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ])
@@ -43,8 +44,9 @@ describe('Theme system', function (): void {
             ->assertSeeHtml('col-span-full')
             ->assertSeeHtml('bg-zinc-100')
             ->assertSeeHtml('tabular-nums')
-            ->assertSeeHtml('gap-y-1')
-            ->assertSeeHtml('text-right truncate');
+            ->assertSeeHtml('gap-y-1');
+
+        assertElementHasClasses($component->html(), ['text-right', 'truncate']);
     });
 
     it('numbers rows automatically, skips spacers and lets an explicit number win', function (): void {
@@ -81,12 +83,13 @@ describe('Theme system', function (): void {
     it('honors a per-field theme override', function (): void {
         // model.plain declares theme 'default' — in the numbered theme it renders as a
         // standard label-on-top input while its siblings get the row chrome.
-        Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ])
-            ->assertSeeHtml('for="model.plain"')
-            ->assertSeeHtml('col-span-1 sm:col-span-6');
+            ->assertSeeHtml('for="model.plain"');
+
+        assertElementHasClasses($component->html(), ['col-span-1', 'sm:col-span-6']);
     });
 
     it('inherits the theme in nested blocks', function (): void {

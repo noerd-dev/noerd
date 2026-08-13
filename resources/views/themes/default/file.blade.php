@@ -5,6 +5,7 @@
     'multiple' => false,
     'accept' => '',
     'live' => false,
+    'readonly' => false,
 ])
 
 @php
@@ -13,6 +14,7 @@
     $multiple = $field['multiple'] ?? $multiple;
     $accept = $field['accept'] ?? $accept;
     $live = $field['live'] ?? $live;
+    $readonly = $field['readonly'] ?? $readonly;
 @endphp
 
 <div>
@@ -29,6 +31,7 @@
         @endif
         @if ($multiple) multiple @endif
         @if ($accept) accept="{{ $accept }}" @endif
+        @if ($readonly) disabled @endif
         class="focus:ring-brand-border block h-10 w-full rounded-lg border border-zinc-200 bg-white py-2 ps-3 pe-3 text-base text-zinc-700 file:mr-4 file:rounded file:border-0 file:bg-zinc-100 file:px-4 file:py-1 file:text-sm file:font-medium file:text-zinc-700 focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"
     />
     <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />

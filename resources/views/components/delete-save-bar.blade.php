@@ -7,6 +7,16 @@
     'modelId' => null,
 ])
 
+@php
+    // Object permissions: hide Save/Delete for every detail at once when the
+    // current user may not write/delete the object (see the noerd.object-* gates / AccessHelper).
+    $barComponent = $__livewire ?? null;
+    $showSave = $showSave
+        && (! $barComponent || ! method_exists($barComponent, 'canWriteObject') || $barComponent->canWriteObject());
+    $showDelete = $showDelete
+        && (! $barComponent || ! method_exists($barComponent, 'canDeleteObject') || $barComponent->canDeleteObject());
+@endphp
+
 @foreach ($footerComponents as $fc)
     @if (!($fc['requiresId'] ?? false) || $modelId)
         <livewire:is :component="$fc['component']" :modelId="$modelId" />

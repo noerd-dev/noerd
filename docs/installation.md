@@ -40,8 +40,7 @@ If you skip any of these steps, you can run them later with the respective [Arti
 |-------|-------------|
 | `noerd_users` | User accounts |
 | `noerd_user_settings` | User settings (language, selected tenant) |
-| `noerd_user_roles` | User roles per tenant (with `noerd_user_role` pivot). One user can have many roles |
-| `noerd_profiles` | Role profiles (ADMIN, USER, etc.). One user has one profile per tenant |
+| `noerd_profiles` | Access profiles (ADMIN, USER, etc.). One user has one profile per tenant |
 | `noerd_settings` | Per-tenant system settings (currency, detail theme) |
 | `tenants` | Tenants / Organizations / Environments |
 | `users_tenants` | User ↔ tenant assignments |

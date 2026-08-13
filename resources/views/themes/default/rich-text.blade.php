@@ -7,6 +7,7 @@
 @php
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
+    $readonly = $field['readonly'] ?? false;
 
     // Extract the field key from dot notation (e.g., 'summaryData.content' -> 'content', 'model.content' -> 'content')
     $fieldKey = str_contains($name, '.') ? mb_substr($name, mb_strpos($name, '.') + 1) : $name;
@@ -24,7 +25,7 @@
 <div {{ $attributes->merge(['class' => '']) }}>
     <x-noerd::input-label for="{{ $name }}" :value="__($label)" />
 
-    <x-noerd::forms.tiptap :field="$name" :content="$contentValue" />
+    <x-noerd::forms.tiptap :field="$name" :content="$contentValue" :readonly="$readonly" />
 
     <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

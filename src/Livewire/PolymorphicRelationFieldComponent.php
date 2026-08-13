@@ -3,6 +3,7 @@
 namespace Noerd\Livewire;
 
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
@@ -31,6 +32,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     public bool $required = false;
 
+    #[Locked]
     public bool $readonly = false;
 
     /** Optional YAML `helpText`, rendered as a tooltip next to the label. */
@@ -85,12 +87,17 @@ abstract class PolymorphicRelationFieldComponent extends Component
     #[On('noerdRelationSelected')]
     public function relationSelected(mixed $value, ?string $context = null): void
     {
+        // Hidden affordances are no guard — a readonly field never mutates.
+        if ($this->readonly) {
+            return;
+        }
+
         if ($context !== $this->fieldName) {
             return;
         }
 
         $definition = $this->activeDefinition();
-        if (! $definition) {
+        if (!$definition) {
             return;
         }
 
@@ -113,8 +120,12 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     public function updatedSelectedRelationType(string $value): void
     {
+        if ($this->readonly) {
+            return;
+        }
+
         $definition = $this->activeDefinition();
-        if (! $definition) {
+        if (!$definition) {
             return;
         }
 
@@ -132,6 +143,10 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     public function clear(): void
     {
+        if ($this->readonly) {
+            return;
+        }
+
         $this->value = null;
         $this->currentType = null;
         $this->selectedRelationType = '';
@@ -144,7 +159,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
     public function openDetail(): void
     {
         $definition = $this->activeDefinition();
-        if (! $definition || ! $this->value) {
+        if (!$definition || !$this->value) {
             return;
         }
 
@@ -161,7 +176,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
         foreach ($this->allowedTypes as $type) {
             $definition = $registry->resolve($type);
-            if (! $definition) {
+            if (!$definition) {
                 continue;
             }
 
@@ -203,7 +218,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     private function resolveRelationTypeFromModelType(?string $modelType): ?string
     {
-        if (! $modelType) {
+        if (!$modelType) {
             return null;
         }
 
@@ -221,7 +236,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
     private function resolveDisplayTitle(): void
     {
         $definition = $this->activeDefinition();
-        if (! $definition || $this->value === null || $this->value === '') {
+        if (!$definition || $this->value === null || $this->value === '') {
             $this->displayTitle = '';
 
             return;

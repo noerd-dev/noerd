@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Services\PicklistRegistry;
 
 /**
  * Trait for `*-detail` components: the model form on top of the NoerdPage base.
@@ -35,6 +36,12 @@ trait NoerdDetail
         // For detail components declaring $detailModel. Loads the pageLayout first
         // so the YAML quick-create opt-in below can be read from it.
         if (isset($this->detailModel)) {
+            if (!$this->canReadObject()) {
+                $this->objectReadBlocked = true;
+
+                return;
+            }
+
             $modelClass = $this->detailModel;
             $this->mountDetailComponent(new $modelClass(), $modelClass);
         }
@@ -44,6 +51,12 @@ trait NoerdDetail
 
     public function store(): void
     {
+        // Server-side guard: the save button is hidden for write-denied users, but
+        // store() stays reachable via the storeDetail-{name} listener and shortcut.
+        if (!$this->canWriteObject()) {
+            return;
+        }
+
         $this->validateFromLayout();
 
         $modelClass = $this->detailModel;
@@ -142,7 +155,7 @@ trait NoerdDetail
             return $this->{$picklistField}();
         }
 
-        $registry = app(\Noerd\Services\PicklistRegistry::class);
+        $registry = app(PicklistRegistry::class);
         $provider = $registry->resolve($picklistField);
 
         return $provider ? $provider() : [];
@@ -155,6 +168,12 @@ trait NoerdDetail
      */
     public function renderingNoerdDetail(): void
     {
+        // A component's custom mount() may have loaded record data after
+        // initDetail() bailed out — never let it reach the Livewire snapshot.
+        if ($this->objectReadBlocked) {
+            $this->detailData = [];
+        }
+
         $this->ensureCustomAttributesArray();
     }
 
@@ -186,7 +205,7 @@ trait NoerdDetail
 
     protected function mountDetailComponent(Model $model, string $modelClass): void
     {
-        if (! $this->loadDetailModel($model, $modelClass)) {
+        if (!$this->loadDetailModel($model, $modelClass)) {
             return;
         }
 
@@ -195,7 +214,7 @@ trait NoerdDetail
         // new pages use the NoerdPage trait and pages/{name}.yml instead). Only a
         // DETAIL_COMPONENT constant pointing at a `*-detail` opts back into YAML.
         $detailComponent = $this->getDetailComponent();
-        if (! Str::endsWith($detailComponent, '-page')) {
+        if (!Str::endsWith($detailComponent, '-page')) {
             $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
         }
 
@@ -210,7 +229,7 @@ trait NoerdDetail
      */
     protected function ensureCustomAttributesArray(): void
     {
-        if (array_key_exists('custom_attributes', $this->detailData) && ! is_array($this->detailData['custom_attributes'])) {
+        if (array_key_exists('custom_attributes', $this->detailData) && !is_array($this->detailData['custom_attributes'])) {
             $this->detailData['custom_attributes'] = [];
         }
     }

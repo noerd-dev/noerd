@@ -49,6 +49,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     {
         // TODO
         $adminIds = Profile::where('key', 'ADMIN')->pluck('id');
+
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
             ->withPivot('profile_id')
             ->wherePivotIn('profile_id', $adminIds)->with('profiles');
@@ -71,16 +72,14 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return mb_strtoupper(mb_substr($this->email, 0, 2));
     }
 
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(UserRole::class, 'noerd_user_role', 'user_id', 'noerd_user_role_id');
-    }
-
-    public function getRolesForTenantAttribute(): array
+    /**
+     * @return array{badge: string, text: string}
+     */
+    public function getProfileForTenantAttribute(): array
     {
         $selectedTenantId = TenantHelper::getSelectedTenantId();
 
-        if (! $selectedTenantId) {
+        if (!$selectedTenantId) {
             return ['badge' => '', 'text' => ''];
         }
 
@@ -91,12 +90,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             $profileName = $profile?->name ?? '';
         }
 
-        $rolesText = $this->roles
-            ->where('tenant_id', $selectedTenantId)
-            ->pluck('name')
-            ->implode(', ');
-
-        return ['badge' => $profileName, 'text' => $rolesText];
+        return ['badge' => $profileName, 'text' => ''];
     }
 
     public function profiles(): BelongsToMany
@@ -138,7 +132,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function getSettingAttribute(): UserSetting
     {
-        if (! $this->relationLoaded('userSetting') || $this->userSetting === null) {
+        if (!$this->relationLoaded('userSetting') || $this->userSetting === null) {
             $setting = $this->userSetting()->firstOrCreate(
                 ['user_id' => $this->id],
                 ['locale' => 'en'],
@@ -199,7 +193,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             'name' => $this->name,
             'selectedTenants' => $array ?? [],
             'tenants' => $this->tenants,
-            'roles' => $this->roles,
             'is_owner' => $this->is_owner,
         ];
     }

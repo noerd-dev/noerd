@@ -48,6 +48,7 @@ new class extends Component {
 
                 @foreach($selectedTenant?->tenantApps ?? [] as $tenantApp)
                     @continue($tenantApp->pivot->is_hidden)
+                    @continue(! \Noerd\Helpers\AccessHelper::canAccessApp($tenantApp->name))
                     <a @if($tenantApp->is_active)
                            wire:click="openApp('{{$tenantApp->name}}', '{{$tenantApp->route}}')"
                        class="cursor-pointer"

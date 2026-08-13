@@ -5,7 +5,6 @@ namespace Noerd\Helpers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Symfony\Component\Yaml\Yaml;
@@ -13,6 +12,9 @@ use Throwable;
 
 class StaticConfigHelper
 {
+    /** Container key for the optional layout-override hook (see layoutOverrides()). */
+    public const LAYOUT_OVERRIDES_BINDING = 'noerd.layout-overrides';
+
     private static ?array $moduleSourceMappingCache = null;
 
     /**
@@ -46,9 +48,9 @@ class StaticConfigHelper
     public static function getComponentFields(string $component, ?string $modelClass = null): array
     {
         $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("details/{$subPath}.yml");
+        $yamlPath = self::findConfigPath("details/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (! $yamlPath) {
+        if (!$yamlPath) {
             $currentApp = self::getCurrentApp();
             Log::warning("Config file not found: details/{$subPath}.yml (app: {$currentApp})");
 
@@ -68,9 +70,9 @@ class StaticConfigHelper
     public static function tryGetComponentFields(string $component): array
     {
         $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("details/{$subPath}.yml");
+        $yamlPath = self::findConfigPath("details/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (! $yamlPath) {
+        if (!$yamlPath) {
             return [];
         }
 
@@ -89,9 +91,9 @@ class StaticConfigHelper
     public static function getPageFields(string $component, ?string $modelClass = null): array
     {
         $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("pages/{$subPath}.yml");
+        $yamlPath = self::findConfigPath("pages/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (! $yamlPath) {
+        if (!$yamlPath) {
             return [];
         }
 
@@ -107,18 +109,19 @@ class StaticConfigHelper
     public static function getListConfig(string $tableName, ?string $modelClass = null): array
     {
         $subPath = self::componentToListName($tableName);
-        $yamlPath = self::findConfigPath("lists/{$subPath}.yml");
+        $ownerApp = self::componentOwnerApp($tableName);
+        $yamlPath = self::findConfigPath("lists/{$subPath}.yml", $ownerApp);
 
-        if (! $yamlPath) {
+        if (!$yamlPath) {
             // A "{name}--{key}" view without a YAML file of its own is a
             // resolver-defined view: it materializes as the base config with the
             // override for the full suffixed name applied on top.
             if (str_contains($tableName, '--')) {
                 $baseSubPath = Str::before($subPath, '--');
-                $yamlPath = self::findConfigPath("lists/{$baseSubPath}.yml");
+                $yamlPath = self::findConfigPath("lists/{$baseSubPath}.yml", $ownerApp);
             }
 
-            if (! $yamlPath) {
+            if (!$yamlPath) {
                 $currentApp = self::getCurrentApp();
                 Log::warning("Config file not found: lists/{$subPath}.yml (app: {$currentApp})");
 
@@ -135,6 +138,11 @@ class StaticConfigHelper
      * session app stays unchanged while the list renders the foreign app's config.
      * Overrides still apply with the app-agnostic component key, matching getListConfig().
      *
+     * Deliberately does NOT re-check the allowed/permitted app set: callers pass
+     * app keys that already came from getListViews() (which filters through
+     * getAllowedAppFolders() and the noerd.access-app gate, see AccessHelper) or
+     * sit behind admin-/app-gated routes.
+     *
      * @param  class-string|null  $modelClass
      */
     public static function getListConfigForApp(string $app, string $tableName, ?string $modelClass = null): array
@@ -144,11 +152,11 @@ class StaticConfigHelper
         // A "{name}--{key}" view without a YAML file of its own is a
         // resolver-defined view: it materializes as the base config with the
         // override for the full suffixed name applied on top.
-        if (! $yamlPath && str_contains($tableName, '--')) {
+        if (!$yamlPath && str_contains($tableName, '--')) {
             $yamlPath = self::resolveConfigPath($app, 'list', Str::before($tableName, '--'));
         }
 
-        if (! $yamlPath) {
+        if (!$yamlPath) {
             $subPath = self::componentToListName($tableName);
             Log::warning("Config file not found: lists/{$subPath}.yml (app: {$app})");
 
@@ -214,13 +222,13 @@ class StaticConfigHelper
     {
         $currentApp = self::getCurrentApp();
 
-        if (! $currentApp) {
+        if (!$currentApp) {
             return null;
         }
 
         $yamlPath = base_path("app-configs/{$currentApp}/navigation.yml");
 
-        if (! file_exists($yamlPath)) {
+        if (!file_exists($yamlPath)) {
             return null;
         }
 
@@ -287,7 +295,7 @@ class StaticConfigHelper
         // entries on plain keys so the base view stays addressable as 'default'.
         $plainApp = $currentApp ?? ($apps[0] ?? null);
 
-        $resolver = app(LayoutOverrideResolver::class);
+        $resolver = self::layoutOverrides();
         $appLabels = self::appLabels();
 
         $views = [];
@@ -300,7 +308,7 @@ class StaticConfigHelper
             $paths = [];
             foreach ($roots as $root) {
                 $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
-                if (! isset($paths['default']) && file_exists($basePath)) {
+                if (!isset($paths['default']) && file_exists($basePath)) {
                     $paths['default'] = $basePath;
                 }
 
@@ -329,7 +337,7 @@ class StaticConfigHelper
                 $appViews[$key] = (string) ($config['title'] ?? $key);
             }
 
-            if ($app === $plainApp) {
+            if ($app === $plainApp && $resolver) {
                 $resolverViews = $resolver->listViews(self::componentToListName($component));
                 unset($resolverViews['default']);
                 $appViews += $resolverViews;
@@ -349,9 +357,9 @@ class StaticConfigHelper
             }
         }
 
-        // Last word goes to the resolver: it may hide views (incl. 'default')
+        // Last word goes to the override hook: it may hide views (incl. 'default')
         // the current user is not allowed to see.
-        return $resolver->filterListViews(self::componentToListName($component), $views);
+        return $resolver ? $resolver->filterListViews(self::componentToListName($component), $views) : $views;
     }
 
     /**
@@ -363,7 +371,7 @@ class StaticConfigHelper
      */
     public static function parseListViewKey(string $key): array
     {
-        if (! str_contains($key, '::')) {
+        if (!str_contains($key, '::')) {
             return [null, $key];
         }
 
@@ -426,12 +434,18 @@ class StaticConfigHelper
      */
     private static function runtimeContextKey(): string
     {
-        return (TenantHelper::getSelectedTenantId() ?? 0) . '|' . (self::getCurrentApp() ?? '');
+        // Includes the user id: the allowed app folders (and everything derived
+        // from them, e.g. config search roots) vary per user once app
+        // permissions filter them.
+        return (TenantHelper::getSelectedTenantId() ?? 0) . '|' . (self::getCurrentApp() ?? '') . '|' . (auth()->id() ?? 0);
     }
 
     /**
      * Display labels for the allowed app folders: folder (lowercase) => TenantApp title.
      * Folders without a TenantApp row (e.g. 'setup') fall back in getListViews().
+     * Deliberately tenant-scoped, not permission-filtered: labels are only read
+     * for folders that already passed getAllowedAppFolders(); surplus entries
+     * never render.
      *
      * @return array<string, string>
      */
@@ -455,7 +469,7 @@ class StaticConfigHelper
 
     /**
      * Apply registered layout overrides to a parsed config.
-     * No-op by default; a module may rebind the resolver.
+     * No-op unless a layout-override hook is bound (see layoutOverrides()).
      *
      * $component must be the canonical key — the config's identity, namespace
      * stripped, as componentToSubPath() derives the file path from. Callers may hand
@@ -469,8 +483,18 @@ class StaticConfigHelper
      */
     private static function applyOverrides(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
-        return app(LayoutOverrideResolver::class)
-            ->apply($viewType, $component, $config, $modelClass);
+        return self::layoutOverrides()?->apply($viewType, $component, $config, $modelClass) ?? $config;
+    }
+
+    /**
+     * The optional layout-override hook. A project may bind an object under
+     * self::LAYOUT_OVERRIDES_BINDING exposing apply(), listViews() and
+     * filterListViews() (see docs/extension-registries.md); when nothing is
+     * bound every config renders straight from its YAML.
+     */
+    private static function layoutOverrides(): ?object
+    {
+        return app()->bound(self::LAYOUT_OVERRIDES_BINDING) ? app(self::LAYOUT_OVERRIDES_BINDING) : null;
     }
 
     /**
@@ -490,8 +514,8 @@ class StaticConfigHelper
     {
         ['theme' => $theme, 'enforced' => $enforced] = ThemeHelper::forTenant();
 
-        if (! $enforced) {
-            if (! array_key_exists('theme', $config)) {
+        if (!$enforced) {
+            if (!array_key_exists('theme', $config)) {
                 $config['theme'] = $theme;
             }
 
@@ -517,7 +541,7 @@ class StaticConfigHelper
     private static function stripFieldThemes(array $fields): array
     {
         foreach ($fields as $index => $field) {
-            if (! is_array($field)) {
+            if (!is_array($field)) {
                 continue;
             }
 
@@ -536,6 +560,26 @@ class StaticConfigHelper
     private static function stripComponentNamespace(string $component): string
     {
         return str_contains($component, '::') ? explode('::', $component, 2)[1] : $component;
+    }
+
+    /**
+     * The app-config folder a namespaced component belongs to ("communication::
+     * communications-list" => "communication"). Rendering such a component is an
+     * explicit reference to its module, so its own configs stay resolvable even
+     * when the tenant has not been granted that app — a module reached from
+     * another app's navigation (or embedded in another app's detail) would
+     * otherwise render without title, columns or fields.
+     *
+     * Returns null for an unnamespaced component; a namespace that ships no
+     * app-configs folder (e.g. "liefertool", "noerd") simply contributes no root.
+     */
+    private static function componentOwnerApp(string $component): ?string
+    {
+        if (!str_contains($component, '::')) {
+            return null;
+        }
+
+        return mb_strtolower(explode('::', $component, 2)[0]);
     }
 
     /**
@@ -569,19 +613,25 @@ class StaticConfigHelper
      */
     private static function getAllowedAppFolders(): array
     {
-        $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0);
+        // Keyed by user too: app permissions filter the folders, so one user's
+        // set must never leak to another within one process.
+        $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0) . '.' . (auth()->id() ?? 0);
 
         return self::$runtimeCache[$cacheKey] ??= (function (): array {
             $tenant = TenantHelper::getSelectedTenant();
-            if (! $tenant) {
+            if (!$tenant) {
                 return ['setup'];
             }
 
             $tenantAppNames = $tenant->tenantApps()->pluck('name')->toArray();
 
+            // 'setup' is never filtered — its routes are admin-gated by the
+            // setup middleware anyway.
             $allowedFolders = ['setup'];
             foreach ($tenantAppNames as $appName) {
-                $allowedFolders[] = mb_strtolower($appName);
+                if (AccessHelper::canAccessApp($appName)) {
+                    $allowedFolders[] = mb_strtolower($appName);
+                }
             }
 
             return $allowedFolders;
@@ -590,18 +640,22 @@ class StaticConfigHelper
 
     /**
      * Find config path with fallback to other allowed apps and module sources.
+     *
+     * $ownerApp is the app-config folder of the component being rendered (see
+     * componentOwnerApp()); it is searched LAST, so a tenant's own app-configs
+     * always win, but a module reached from another app still finds its configs.
      */
-    private static function findConfigPath(string $subPath): ?string
+    private static function findConfigPath(string $subPath, ?string $ownerApp = null): ?string
     {
         // Only HITS are memoised — a config created mid-process (dev, test
         // fixtures, install commands) must be found on the next lookup.
-        $cacheKey = 'configPath.' . self::runtimeContextKey() . '.' . $subPath;
+        $cacheKey = 'configPath.' . self::runtimeContextKey() . '.' . ($ownerApp ?? '-') . '.' . $subPath;
         $cached = self::$runtimeCache[$cacheKey] ?? null;
         if ($cached !== null && file_exists($cached)) {
             return $cached;
         }
 
-        foreach (self::configSearchRoots() as $root) {
+        foreach (self::configSearchRoots($ownerApp) as $root) {
             $path = $root . DIRECTORY_SEPARATOR . $subPath;
             if (file_exists($path)) {
                 return self::$runtimeCache[$cacheKey] = $path;
@@ -614,14 +668,17 @@ class StaticConfigHelper
     /**
      * Ordered base directories that findConfigPath() searches: current app
      * app-configs, other allowed apps' app-configs, current app's module source,
-     * other allowed apps' module sources. Discovery features (getListViews) walk
-     * the same roots so loading and discovery can never diverge.
+     * other allowed apps' module sources, and finally — when the caller passes
+     * one — the owning module's app-configs. Discovery features (getListViews)
+     * walk the allowed apps in the same order, so loading and discovery can only
+     * diverge for the owner-app last resort (a module the tenant has no app for
+     * contributes its base config, but no alternate views to switch between).
      *
      * @return array<int, string>
      */
-    private static function configSearchRoots(): array
+    private static function configSearchRoots(?string $ownerApp = null): array
     {
-        $cacheKey = 'searchRoots.' . self::runtimeContextKey();
+        $cacheKey = 'searchRoots.' . self::runtimeContextKey() . '.' . ($ownerApp ?? '-');
         if (isset(self::$runtimeCache[$cacheKey])) {
             return self::$runtimeCache[$cacheKey];
         }
@@ -645,7 +702,7 @@ class StaticConfigHelper
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
 
         foreach ($searchFolders as $folder) {
-            if (! in_array($folder, $allowedFolders) || $folder === $currentApp) {
+            if (!in_array($folder, $allowedFolders) || $folder === $currentApp) {
                 continue;
             }
 
@@ -666,6 +723,17 @@ class StaticConfigHelper
             }
 
             foreach (self::getModuleSourcePaths($folder) as $moduleSourcePath) {
+                $roots[] = $moduleSourcePath;
+            }
+        }
+
+        // 5. Last resort: the app-configs of the module the component belongs to.
+        // Reaching a namespaced component is an explicit reference to its module,
+        // so its own configs must resolve even without the app being granted.
+        if ($ownerApp) {
+            $roots[] = base_path("app-configs/{$ownerApp}");
+
+            foreach (self::getModuleSourcePaths($ownerApp) as $moduleSourcePath) {
                 $roots[] = $moduleSourcePath;
             }
         }
@@ -711,7 +779,7 @@ class StaticConfigHelper
                     $provider = $registry->resolve($dynamicType);
                     if ($provider) {
                         $children = $item['children'] ?? [];
-                        if (! is_array($children)) {
+                        if (!is_array($children)) {
                             $children = [];
                         }
                         $navigationStructure['items'][$index]['children'] = array_merge($children, $provider->items());
@@ -731,11 +799,11 @@ class StaticConfigHelper
     private static function filterNavigationByConfig(array $navigations): array
     {
         return array_values(array_filter($navigations, function ($nav) {
-            if (isset($nav['config']) && ! config($nav['config'])) {
+            if (isset($nav['config']) && !config($nav['config'])) {
                 return false;
             }
 
-            if (isset($nav['superAdmin']) && $nav['superAdmin'] && ! auth()->user()?->isSuperAdmin()) {
+            if (isset($nav['superAdmin']) && $nav['superAdmin'] && !auth()->user()?->isSuperAdmin()) {
                 return false;
             }
 
@@ -755,7 +823,7 @@ class StaticConfigHelper
             return true;
         }
 
-        if (! empty($nav['modalRoute']) && Route::has($nav['modalRoute'])) {
+        if (!empty($nav['modalRoute']) && Route::has($nav['modalRoute'])) {
             return true;
         }
 
@@ -807,8 +875,8 @@ class StaticConfigHelper
         $targetFile = $targetDir . "/{$componentName}.yml";
 
         // Create directory if it doesn't exist
-        if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true)) {
+        if (!is_dir($targetDir)) {
+            if (!mkdir($targetDir, 0755, true)) {
                 return false;
             }
         }
@@ -864,7 +932,7 @@ class StaticConfigHelper
         $mappings = [];
         $appModulesPath = base_path('app-modules');
 
-        if (! is_dir($appModulesPath)) {
+        if (!is_dir($appModulesPath)) {
             self::$moduleSourceMappingCache = $mappings;
 
             return $mappings;
@@ -877,7 +945,7 @@ class StaticConfigHelper
             }
 
             $appConfigsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-configs';
-            if (! is_dir($appConfigsPath)) {
+            if (!is_dir($appConfigsPath)) {
                 continue;
             }
 

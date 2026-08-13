@@ -7,11 +7,22 @@
     // scroll wrapper, no keyboard shortcuts — the hosting page owns all of that.
     $embedded ??= (($__livewire ?? null)?->embedded ?? false);
 
+    // Object permissions: denied abilities lose their keyboard shortcut too —
+    // hiding the buttons alone would leave ctrl+enter / ctrl+backspace live.
+    $pageComponent = $__livewire ?? null;
+    $pageObjectReadBlocked = $pageComponent?->objectReadBlocked ?? false;
+    $canWriteObject = ! $pageComponent
+        || ! method_exists($pageComponent, 'canWriteObject')
+        || $pageComponent->canWriteObject();
+    $canDeleteObject = ! $pageComponent
+        || ! method_exists($pageComponent, 'canDeleteObject')
+        || $pageComponent->canDeleteObject();
+
     $shortcuts = [];
-    if (method_exists($__livewire ?? new stdClass(), 'store')) {
+    if (method_exists($__livewire ?? new stdClass(), 'store') && $canWriteObject && ! $pageObjectReadBlocked) {
         $shortcuts['save'] = config('noerd.keyboard_shortcuts.save', 'ctrl+enter');
     }
-    if (method_exists($__livewire ?? new stdClass(), 'delete')) {
+    if (method_exists($__livewire ?? new stdClass(), 'delete') && $canDeleteObject && ! $pageObjectReadBlocked) {
         $shortcuts['delete'] = config('noerd.keyboard_shortcuts.delete', 'ctrl+backspace');
     }
 @endphp
@@ -41,6 +52,14 @@
 >
     @if ($embedded)
         {{ $slot }}
+    @elseif ($pageObjectReadBlocked)
+        {{-- Read-denied object: keep the header chrome (modal close button) but
+             replace the form body with the friendly denied state — no footer. --}}
+        {{ $header ?? '' }}
+
+        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
+            @include('noerd::components.object-access-denied')
+        </div>
     @else
         {{ $header ?? '' }}
         {{ $table ?? '' }}

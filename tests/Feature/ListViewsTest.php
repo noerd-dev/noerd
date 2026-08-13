@@ -6,7 +6,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Livewire\Component;
 use Livewire\Livewire;
-use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
@@ -167,7 +166,7 @@ it('keeps the paired detail component free of the view suffix', function (): voi
 });
 
 it('merges resolver-defined views into the discovery, files winning on key collision', function (): void {
-    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver {
+    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
         public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
         {
             return $config;
@@ -195,7 +194,7 @@ it('merges resolver-defined views into the discovery, files winning on key colli
 });
 
 it('materializes a resolver-defined view as the base config plus its override', function (): void {
-    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver {
+    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
         public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
         {
             if ($component === 'zz-view-test-list--db') {
@@ -228,7 +227,7 @@ it('materializes a resolver-defined view as the base config plus its override', 
 });
 
 it('activates the first allowed view when the resolver hides the default', function (): void {
-    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver {
+    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
         public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
         {
             return $config;
@@ -254,7 +253,7 @@ it('activates the first allowed view when the resolver hides the default', funct
 });
 
 it('keeps the base view when the resolver hides every view', function (): void {
-    app()->instance(LayoutOverrideResolver::class, new class implements LayoutOverrideResolver {
+    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
         public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
         {
             return $config;

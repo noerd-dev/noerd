@@ -5,6 +5,7 @@
     'label' => '',
     'picklistField' => '',
     'live' => false,
+    'readonly' => false,
     'required' => false,
     'placeholder' => null,
 ])
@@ -14,6 +15,7 @@
     $label = $field['label'] ?? $label;
     $picklistField = $field['picklistField'] ?? $picklistField;
     $live = $field['live'] ?? $live;
+    $readonly = $field['readonly'] ?? $readonly;
     $required = $field['required'] ?? $required;
     $placeholder = $field['placeholder'] ?? $placeholder;
 @endphp
@@ -34,6 +36,7 @@
                 wire:model="{{ $name }}"
             @endif
             class="focus:ring-brand-border block h-7 w-full appearance-none rounded-sm border border-zinc-200 bg-white py-0.5 ps-2 pe-2 text-base text-zinc-700 placeholder-zinc-400 focus:ring-1 focus:outline-none disabled:text-zinc-500 disabled:placeholder-zinc-400/70 sm:text-sm"
+            @if ($readonly) disabled @endif
             id="{{ $name }}"
         >
             @if ($placeholder)

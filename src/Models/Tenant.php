@@ -61,11 +61,6 @@ class Tenant extends Authenticatable
         return $this->belongsToMany(NoerdUser::class, 'users_tenants', 'tenant_id', 'user_id')->withPivot('profile_id');
     }
 
-    public function userRoles(): HasMany
-    {
-        return $this->hasMany(UserRole::class);
-    }
-
     public function tenantApps(): BelongsToMany
     {
         return $this->belongsToMany(TenantApp::class, 'tenant_app')

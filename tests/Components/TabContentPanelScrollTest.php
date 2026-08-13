@@ -44,9 +44,9 @@ it('renders tab-panels and tab-panel as generic stacking components', function (
 it('renders the page body as a single consolidated scroll container', function (): void {
     $html = Blade::render('<x-noerd::page>Body Content</x-noerd::page>');
 
-    expect($html)
-        ->toContain('flex-1 min-h-0 px-6 overflow-y-auto')
-        ->not->toMatch('/class="[^"]*"\s+class="/');
+    assertElementHasClasses($html, ['flex-1', 'min-h-0', 'px-6', 'overflow-y-auto']);
+
+    expect($html)->not->toMatch('/class="[^"]*"\s+class="/');
 });
 
 it('stretches the body into a flex column only for components with tabs', function (): void {
@@ -54,9 +54,9 @@ it('stretches the body into a flex column only for components with tabs', functi
 
     $this->actingAs($admin);
 
-    Livewire::test('noerd::noerd-user-detail')
-        ->assertSeeHtml('flex-1 min-h-0 px-6 overflow-y-auto flex flex-col');
+    $bodyClasses = ['flex-1', 'min-h-0', 'px-6', 'overflow-y-auto', 'flex', 'flex-col'];
 
-    Livewire::test('noerd::noerd-users-list')
-        ->assertDontSeeHtml('flex-1 min-h-0 px-6 overflow-y-auto flex flex-col');
+    assertElementHasClasses(Livewire::test('noerd::noerd-user-detail')->html(), $bodyClasses);
+
+    assertNoElementHasClasses(Livewire::test('noerd::noerd-users-list')->html(), $bodyClasses);
 });

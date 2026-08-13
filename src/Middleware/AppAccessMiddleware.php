@@ -5,6 +5,7 @@ namespace Noerd\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\TenantHelper;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -13,25 +14,37 @@ class AppAccessMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$appNames): Response
     {
         $appName = implode(',', $appNames);
         $user = auth()->user();
 
-        if (! $user) {
+        if (!$user) {
             return redirect('/login');
         }
 
         $tenant = TenantHelper::getSelectedTenant();
 
-        if (! $tenant) {
+        if (!$tenant) {
             return redirect('/');
         }
 
-        // In single-tenant mode, all apps are always accessible
-        if (! config('noerd.features.multi_tenant')) {
+        // In single-tenant mode, every app is assigned — but the per-app
+        // authorization gate (see AccessHelper) still applies.
+        if (!config('noerd.features.multi_tenant')) {
+            $accessible = array_filter(
+                $appNames,
+                fn(string $candidate): bool => AccessHelper::canAccessApp(mb_trim($candidate)),
+            );
+            if ($accessible === []) {
+                throw new NoerdException(
+                    NoerdException::TYPE_APP_ACCESS_DENIED,
+                    appName: mb_strtoupper(mb_trim($appNames[0])),
+                );
+            }
+
             TenantHelper::setSelectedAppFromRoute();
 
             return $next($request);
@@ -53,15 +66,22 @@ class AppAccessMiddleware
             }
         }
 
-        if (! $matchingApp) {
+        if (!$matchingApp) {
             throw new NoerdException(
                 NoerdException::TYPE_APP_NOT_ASSIGNED,
                 appName: mb_strtoupper($appNames[0]),
             );
         }
 
+        if (!AccessHelper::canAccessApp($matchingApp)) {
+            throw new NoerdException(
+                NoerdException::TYPE_APP_ACCESS_DENIED,
+                appName: mb_strtoupper($matchingApp),
+            );
+        }
+
         // Only set selected_app if none is currently selected
-        if (! TenantHelper::getSelectedApp()) {
+        if (!TenantHelper::getSelectedApp()) {
             TenantHelper::setSelectedApp(mb_strtoupper($matchingApp));
         }
 

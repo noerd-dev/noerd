@@ -7,7 +7,6 @@ use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Noerd\Models\UserRole;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
@@ -146,41 +145,6 @@ it('handles existing user with same email', function () use ($testSettings): voi
     expect($existingUser->fresh()->tenants->contains($tenant->id))->toBeTrue();
 });
 
-it('manages user roles correctly', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $tenant = $admin->tenants->first();
-
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
-
-    $role1 = UserRole::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Role 1']);
-    $role2 = UserRole::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Role 2']);
-
-    $user = NoerdUser::factory()->create();
-    $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
-
-    $this->actingAs($admin);
-
-    Livewire::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
-        ->set('detailData.name', $user->name)
-        ->set('detailData.email', $user->email)
-        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
-        ->set("userRoles.{$role1->id}", true)
-        ->set("userRoles.{$role2->id}", false)
-        ->call('store')
-        ->assertHasNoErrors();
-
-    // Check if user has the correct roles
-    $user->refresh();
-    expect($user->roles->contains($role1->id))->toBeTrue();
-    expect($user->roles->contains($role2->id))->toBeFalse();
-});
-
 it('manages tenant access correctly', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant1 = $admin->tenants->first();
@@ -238,58 +202,6 @@ it('requires at least one tenant access', function () use ($testSettings): void 
         ->set("possibleTenants.{$tenant->id}.hasAccess", false)
         ->call('store')
         ->assertHasErrors(['tenantAccess']);
-});
-
-it('loads user roles in mount', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $tenant = $admin->tenants->first();
-
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
-
-    $role = UserRole::factory()->create(['tenant_id' => $tenant->id]);
-    $user = NoerdUser::factory()->create();
-    $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
-    $user->roles()->attach($role->id);
-
-    $this->actingAs($admin);
-
-    // Test that the component can successfully set and store user roles
-    $component = Livewire::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
-        ->set("userRoles.{$role->id}", true)
-        ->set('detailData.name', $user->name)
-        ->set('detailData.email', $user->email)
-        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
-        ->call('store')
-        ->assertHasNoErrors();
-
-    // Check if user role was properly attached
-    $user->refresh();
-    expect($user->roles->contains($role->id))->toBeTrue();
-});
-
-it('computes roles correctly', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $tenant = $admin->tenants->first();
-
-    UserRole::factory()->create([
-        'tenant_id' => $tenant->id,
-        'name' => 'Test Role',
-        'key' => 'TEST_ROLE',
-    ]);
-
-    $this->actingAs($admin);
-
-    $component = Livewire::test($testSettings['componentName']);
-    $roles = $component->get('roles');
-
-    expect($roles)->toHaveKey($tenant->name);
-    expect($roles[$tenant->name])->toHaveCount(1);
 });
 
 it('computes tenant profiles correctly', function () use ($testSettings): void {

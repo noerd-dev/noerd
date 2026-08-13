@@ -35,6 +35,14 @@
     $themeDefinition = $themeRegistry->get($theme);
     \Noerd\Support\ThemeContext::set($theme);
     $numberedRowIndex = 0;
+
+    // Object write permission: when the hosting component denies writing, every
+    // field renders readonly/disabled. Client-side only a UX affordance — the
+    // hard boundary stays the store()/delete() guards in the traits. Nested
+    // `type: block` includes re-enter this template and recompute the flag.
+    $blockWriteDenied = isset($this)
+        && method_exists($this, 'canWriteObject')
+        && ! $this->canWriteObject();
 @endphp
 <div>
     @if(isset($title) || isset($description))
@@ -64,6 +72,10 @@
                     if ($fieldThemeDefinition->numbersRows && ($field['type'] ?? '') !== 'spacer') {
                         $numberedRowIndex++;
                         $field['number'] ??= $numberedRowIndex;
+                    }
+
+                    if ($blockWriteDenied) {
+                        $field['readonly'] = true;
                     }
 
                     // Set unconditionally so optional keys (helpText) never leak into

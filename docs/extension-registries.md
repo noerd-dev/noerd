@@ -190,30 +190,62 @@ public function register(): void
 }
 ```
 
-### LayoutOverrideResolver
+### Layout overrides (`noerd.layout-overrides` binding)
 
-Applies user/tenant layout overrides to a freshly parsed YAML config. `StaticConfigHelper` consults the binding right after `Yaml::parse()` for every list, detail and page config — the core itself never knows which module (if any) stores overrides.
+Applies user/tenant layout overrides to a freshly parsed YAML config. `StaticConfigHelper` consults the optional container binding `StaticConfigHelper::LAYOUT_OVERRIDES_BINDING` (`'noerd.layout-overrides'`) right after `Yaml::parse()` for every list, detail and page config — the core itself never knows which package (if any) stores overrides.
 
-**Contract** (`Noerd\Contracts\LayoutOverrideResolver`):
+**Shape** — there is no interface; bind any object exposing these three methods:
 
 | Method | Description |
 |--------|-------------|
 | `apply(string $viewType, string $component, array $config, ?string $modelClass = null): array` | Return the config with overrides applied (`$viewType` is `list`/`detail`/`page`; `$modelClass` is the rendered model when the caller knows it) |
-| `listViews(string $component): array` | Additional list views (`key => title`) that exist only in the resolver's own storage, with no `{component}--{key}.yml` file behind them — merged into `StaticConfigHelper::getListViews()` |
+| `listViews(string $component): array` | Additional list views (`key => title`) that exist only in the hook's own storage, with no `{component}--{key}.yml` file behind them — merged into `StaticConfigHelper::getListViews()` |
 | `filterListViews(string $component, array $views): array` | Drop the views the current user may not see; called as the final step on the complete cross-app view map |
 
-**Default:** `Noerd\Services\NullLayoutOverrideResolver` — `apply()` returns the config untouched, `listViews()` is empty, `filterListViews()` passes the map through. Every list and detail renders straight from its YAML.
+**Default:** nothing is bound — every list and detail renders straight from its YAML.
 
-**Rebinding** in a layout-override package's `register()`:
+**Binding** in a layout-override package's provider:
 
 ```php
 $this->app->singleton(
-    \Noerd\Contracts\LayoutOverrideResolver::class,
-    MyLayoutOverrideResolver::class,
+    \Noerd\Helpers\StaticConfigHelper::LAYOUT_OVERRIDES_BINDING,
+    MyLayoutOverrides::class,
 );
 ```
 
 **Important:**
 
+- All three methods are required — the core calls them without `method_exists` guards
 - `apply()` runs for every config parse — an implementation must be fast and return the array unchanged when it stores nothing for the component
 - `filterListViews()` receives plain view keys for the current app (`default`, `vip`) and composite `{app}::{key}` keys for other apps; restrictions stored app-agnostic must match on each entry's plain `key`
+
+### Authorization gates
+
+The generic chrome consults four **optional** Laravel gates, wrapped in `Noerd\Helpers\AccessHelper`. An undefined gate allows everything — the core ships no restrictions of its own; a project defines a gate to restrict centrally.
+
+| Gate (constant on `AccessHelper`) | Argument | Consulted by |
+|-----------------------------------|----------|--------------|
+| `noerd.access-app` (`APP_GATE`) | `string $appName` (tenant_apps.name, any case) | App switcher, app tiles, `AppAccessMiddleware`, `PublicAppMiddleware`, allowed-app config discovery |
+| `noerd.object-read` (`OBJECT_READ_GATE`) | `class-string $modelClass` | Lists (403 + row hiding) and detail mount (denied state) |
+| `noerd.object-write` (`OBJECT_WRITE_GATE`) | `class-string $modelClass` | Detail forms render read-only, list "New …" actions hidden |
+| `noerd.object-delete` (`OBJECT_DELETE_GATE`) | `class-string $modelClass` | Delete buttons and bulk delete hidden/blocked |
+
+Always go through the helper (`AccessHelper::canAccessApp()`, `::canReadObject()`, `::canWriteObject()`, `::canDeleteObject()`) — it short-circuits null arguments and undefined gates.
+
+**Defining a gate** (e.g. in a service provider's `boot()`):
+
+```php
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Gate;
+use Noerd\Helpers\AccessHelper;
+
+Gate::define(AccessHelper::APP_GATE, function (?Authenticatable $user, string $appName): bool {
+    return $appName !== 'RESTRICTED_APP';
+});
+```
+
+**Important:**
+
+- The `$user` parameter MUST be nullable (`?Authenticatable`) — some call sites (public apps, config discovery) run for guests, and a non-nullable closure silently denies every guest check
+- The Gate resolves the user from the default auth guard
+- Once a gate is defined, host-app `Gate::before`/`after` hooks apply to it (standard Laravel semantics); undefined gates are never touched

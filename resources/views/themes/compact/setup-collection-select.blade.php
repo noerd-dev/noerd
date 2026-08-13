@@ -7,6 +7,7 @@
     'displayField' => 'name',
     'valueField' => null,
     'live' => false,
+    'readonly' => false,
     'required' => false,
 ])
 
@@ -20,6 +21,7 @@
     $displayField = $field['displayField'] ?? $displayField;
     $valueField = $field['valueField'] ?? $valueField;
     $live = $field['live'] ?? $live;
+    $readonly = $field['readonly'] ?? $readonly;
     $required = $field['required'] ?? $required;
 
     $locale = session('selectedLanguage') ?? 'de';
@@ -58,6 +60,7 @@
                 wire:model="{{ $name }}"
             @endif
             class="focus:ring-brand-border block h-7 w-full appearance-none rounded-sm border border-zinc-200 bg-white py-0.5 ps-2 pe-2 text-base text-zinc-700 placeholder-zinc-400 focus:ring-1 focus:outline-none disabled:text-zinc-500 disabled:placeholder-zinc-400/70 sm:text-sm"
+            @if ($readonly) disabled @endif
             id="{{ $name }}"
         >
             @foreach ($options as $option)

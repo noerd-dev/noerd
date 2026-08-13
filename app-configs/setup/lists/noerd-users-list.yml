@@ -12,8 +12,8 @@ columns:
     label: Email
   - field: name
     label: Name
-  - field: roles_for_tenant
-    label: Profile / Roles
+  - field: profile_for_tenant
+    label: Profile
     type: badge_with_text
   - field: last_login_at
     label: Last Login

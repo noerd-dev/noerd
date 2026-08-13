@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Noerd\Facades\Noerd;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Support\ThemeContext;
@@ -40,6 +41,19 @@ trait NoerdPage
     public bool $quickCreate = false;
 
     public array $detailData = [];
+
+    /**
+     * Set on mount when the current user may not read the object behind this
+     * page/detail (see the noerd.object-read gate / AccessHelper). The page chrome then renders a
+     * friendly denied state instead of the form, and no record data is loaded.
+     */
+    public bool $objectReadBlocked = false;
+
+    /**
+     * The theme that was active when this component started rendering, restored
+     * afterwards so the theme never outlives the render (see renderedNoerdPage).
+     */
+    protected ?string $themeContextBefore = null;
 
     /**
      * Get the component name (alias for getName).
@@ -93,7 +107,7 @@ trait NoerdPage
     {
         $detailPrimary = $this->detailPrimary ?? null;
 
-        if ($this->embedded || ! $detailPrimary) {
+        if ($this->embedded || !$detailPrimary) {
             return [];
         }
 
@@ -116,8 +130,14 @@ trait NoerdPage
         // Pages backed by a single Eloquent model declare $detailModel — the
         // record is loaded into $detailData exactly like a detail would.
         if (isset($this->detailModel)) {
+            if (!$this->canReadObject()) {
+                $this->objectReadBlocked = true;
+
+                return;
+            }
+
             $modelClass = $this->detailModel;
-            if (! $this->loadDetailModel(new $modelClass(), $modelClass)) {
+            if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
                 return;
             }
         }
@@ -156,10 +176,37 @@ trait NoerdPage
 
     public function delete(): void
     {
+        // Server-side guard: the delete button is hidden for delete-denied users,
+        // but the method stays reachable via keyboard shortcut and direct calls.
+        if (!$this->canDeleteObject()) {
+            return;
+        }
+
         $modelClass = $this->detailModel;
         $modelClass::find($this->modelId)?->delete();
 
         $this->closeModalProcess($this->getListComponent());
+    }
+
+    /**
+     * Object permission checks for the model behind this page/detail. Public on
+     * purpose: the shared chrome (delete-save-bar, page shortcuts) consults them
+     * to hide Save/Delete affordances the current user may not use. Components
+     * without $detailModel are never restricted.
+     */
+    public function canReadObject(): bool
+    {
+        return AccessHelper::canReadObject($this->detailModel ?? null);
+    }
+
+    public function canWriteObject(): bool
+    {
+        return AccessHelper::canWriteObject($this->detailModel ?? null);
+    }
+
+    public function canDeleteObject(): bool
+    {
+        return AccessHelper::canDeleteObject($this->detailModel ?? null);
     }
 
     public function storeProcess($model): void
@@ -207,13 +254,25 @@ trait NoerdPage
     /**
      * Livewire trait rendering hook: expose the active theme to chrome
      * components outside the YAML field grid (x-noerd::button above all).
-     * Deliberately not cleared per component — a hosting page's footer renders
-     * after its embedded detail, and both resolve the same layout theme. The
-     * context is request-scoped and reset on app boot.
      */
     public function renderingNoerdPage(): void
     {
+        $this->themeContextBefore = ThemeContext::current();
+
         ThemeContext::set($this->detailTheme());
+    }
+
+    /**
+     * Livewire trait rendered hook: restore the theme that was active before this
+     * component rendered. Nesting is preserved — an embedded detail hands the
+     * context back to its hosting page, whose footer still renders in the page
+     * theme — while chrome rendered AFTER the page (the layout's app bar and
+     * quick-menu buttons) falls back to the default theme instead of inheriting
+     * a form theme it never belonged to.
+     */
+    public function renderedNoerdPage(): void
+    {
+        ThemeContext::set($this->themeContextBefore);
     }
 
     /**
@@ -273,7 +332,7 @@ trait NoerdPage
         $key = str_replace('detailData.', '', $fieldName);
         $id = data_get($this->detailData, $key);
 
-        if (! $id) {
+        if (!$id) {
             $lastKey = last(explode('.', $key));
             $camelKey = Str::camel($lastKey);
             if (property_exists($this, $camelKey)) {
@@ -294,11 +353,11 @@ trait NoerdPage
      */
     protected function assertDetailPrimaryDeclared(): void
     {
-        if (! isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
+        if (!isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
             return;
         }
 
-        if (! Str::endsWith($this->getName(), '-detail')) {
+        if (!Str::endsWith($this->getName(), '-detail')) {
             return;
         }
 
@@ -340,13 +399,13 @@ trait NoerdPage
      */
     protected function redirectToListModal(): bool
     {
-        if ($this->embedded || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
+        if ($this->embedded || request()->hasHeader('X-Livewire') || !request()->boolean('modal')) {
             return false;
         }
 
         $previousUrl = session()->previousUrl();
 
-        if (! $previousUrl || $previousUrl === request()->fullUrl()) {
+        if (!$previousUrl || $previousUrl === request()->fullUrl()) {
             return false;
         }
 
@@ -380,7 +439,7 @@ trait NoerdPage
         if (property_exists($this, 'modelId') && $this->modelId) {
             $model = $modelClass::find($this->modelId);
 
-            if (! $model) {
+            if (!$model) {
                 $this->modelId = null;
                 $this->dispatch('closeTopModal');
 
@@ -405,11 +464,11 @@ trait NoerdPage
     protected function resolveQuickCreate(): void
     {
         $optIn = ($this->quickCreateOnNew ?? false) || ($this->pageLayout['quickCreate'] ?? false);
-        if (! $this->modelId && $optIn) {
+        if (!$this->modelId && $optIn) {
             $this->quickCreate = true;
         }
 
-        if (! empty($this->pageLayout)) {
+        if (!empty($this->pageLayout)) {
             $this->pageLayout['quickCreate'] = $this->quickCreate;
         }
     }
@@ -475,7 +534,7 @@ trait NoerdPage
         }
 
         $filters = session('listFilters', []);
-        if (! empty($filters[$key])) {
+        if (!empty($filters[$key])) {
             $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
             $this->{$method}($filters[$key]);
         }

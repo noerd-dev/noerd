@@ -87,44 +87,6 @@ return new class extends Migration {
             });
         }
 
-        // Create user_roles table
-        if (!Schema::hasTable('noerd_user_roles')) {
-            Schema::create('noerd_user_roles', function (Blueprint $table): void {
-                $table->id();
-                $table->unsignedBigInteger('tenant_id')->nullable();
-                $table->string('key');
-                $table->string('name');
-                $table->string('description')->nullable();
-                $table->timestamps();
-
-                // Foreign key constraint
-                $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
-
-                // Index
-                $table->index('tenant_id');
-            });
-        }
-
-        // Create user_role pivot table
-        if (!Schema::hasTable('noerd_user_role')) {
-            Schema::create('noerd_user_role', function (Blueprint $table): void {
-                $table->id();
-                $table->unsignedBigInteger('user_id');
-                $table->unsignedBigInteger('noerd_user_role_id');
-                $table->timestamps();
-
-                // Note: Foreign key constraints are not added here since the referenced tables
-                // might be in different modules. They should be handled at the application level.
-
-                // Indexes for performance
-                $table->index('user_id');
-                $table->index('noerd_user_role_id');
-
-                // Unique constraint to prevent duplicate assignments
-                $table->unique(['user_id', 'noerd_user_role_id']);
-            });
-        }
-
         // Create tenant_invoices table
         if (!Schema::hasTable('tenant_invoices')) {
             Schema::create('tenant_invoices', function (Blueprint $table): void {
@@ -222,8 +184,6 @@ return new class extends Migration {
         Schema::dropIfExists('setup_collections');
         Schema::dropIfExists('setup_languages');
         Schema::dropIfExists('tenant_invoices');
-        Schema::dropIfExists('noerd_user_role');
-        Schema::dropIfExists('noerd_user_roles');
         Schema::dropIfExists('users_tenants');
         Schema::dropIfExists('tenant_app');
         Schema::dropIfExists('noerd_profiles');

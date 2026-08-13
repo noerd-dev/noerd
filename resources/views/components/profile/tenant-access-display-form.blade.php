@@ -37,7 +37,7 @@ new class extends Component {
         </div>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __('Overview of your current access rights to tenants and assigned roles.') }}
+            {{ __('Overview of your current access rights to tenants and assigned profiles.') }}
         </p>
     </header>
 

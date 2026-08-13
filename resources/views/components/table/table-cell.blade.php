@@ -269,6 +269,27 @@
                 <div wire:click.stop.prevent="{{ $action }}('{{ $id }}')" class="flex cursor-pointer items-center">
                     <span class="w-full px-1.5 py-0.5 text-sm">{{ $customAttributeValue }}</span>
                 </div>
+            @elseif ($type === 'checkbox')
+                @php
+                    // Editable checkbox cell bound to a component property:
+                    // `wireModel` names the array property, the row id is the key,
+                    // an optional `wireModelField` addresses a sub-key
+                    // (e.g. permissions.{id}.read). `live: true` syncs per click.
+                    $checkboxModel = ($columnConfig['wireModel'] ?? '')
+                        . '.' . $id
+                        . (isset($columnConfig['wireModelField']) ? '.' . $columnConfig['wireModelField'] : '');
+                @endphp
+                <div class="flex items-center justify-center px-1.5" @click.stop>
+                    <input
+                        type="checkbox"
+                        @if ($columnConfig['live'] ?? false)
+                            wire:model.live="{{ $checkboxModel }}"
+                        @else
+                            wire:model="{{ $checkboxModel }}"
+                        @endif
+                        class="text-brand-primary focus:ring-brand-border h-4 w-4 cursor-pointer rounded border-gray-300"
+                    />
+                </div>
             @elseif ($type === 'badge_with_text')
                 <div
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
@@ -281,6 +302,7 @@
                                 'danger' => 'bg-red-100 text-red-800',
                                 'success' => 'bg-green-100 text-green-800',
                                 'warning' => 'bg-yellow-100 text-yellow-800',
+                                'neutral' => 'bg-gray-100 text-gray-600',
                                 default => 'bg-brand-primary/10 text-brand-primary',
                             };
                         @endphp

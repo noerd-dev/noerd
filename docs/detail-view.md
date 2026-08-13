@@ -112,6 +112,7 @@ expression for reactive visibility on top of the tab switch:
 | `helpText` | Explanation shown as a tooltip behind a question-mark icon next to the label (translation key); works in every theme |
 | `type` | Field type (text, textarea, checkbox, relation, etc.) |
 | `required` | Mark field as required |
+| `readonly` | Render the field read-only/disabled (also forced on every field when the user's object permission denies writing, see below) |
 | `colspan` | Grid column span (1-12) |
 | `tab` | Tab number (defaults to 1) |
 | `theme` | Per-field theme override (see [Themes](themes.md)) |
@@ -142,6 +143,27 @@ fields:
 See **[Themes](themes.md)** for the full reference: built-in themes, `theme.yml` keys, creating a
 new theme in a project or module, element resolution, theme-aware buttons and the system-wide
 default with enforcement.
+
+## Read-Only Rendering on Write-Denied Objects
+
+When the `noerd.object-write` gate (see `AccessHelper`) denies **write** for the detail's
+`$detailModel`, the whole YAML form renders read-only —
+in every theme. The mechanism is a single seam in the detail block: it consults the hosting
+component's `canWriteObject()` and forces `readonly: true` onto every field before the element
+templates and relation-field props are resolved. Text inputs/textareas get the `readonly`
+attribute, selects/picklists/checkboxes are `disabled`, upload and picker affordances are hidden,
+the rich-text editor becomes non-editable, and `type: button` fields render disabled. Relation
+field components additionally guard their wire-reachable mutators (`clear()`, selection) on the
+server.
+
+Notes:
+
+- The client-side readonly state is a UX affordance — the security boundary stays the
+  `store()`/`delete()` guards in `NoerdDetail`/`NoerdPage`.
+- Hand-written markup in tab slots (custom `tab1` content, embedded components) is NOT covered by
+  the generic mechanism. Hosts with such markup consult `$this->canWriteObject()` themselves and
+  disable their controls accordingly.
+- Components without `canWriteObject()` (no `NoerdDetail`/`NoerdPage`) are never restricted.
 
 ## Position Tables
 

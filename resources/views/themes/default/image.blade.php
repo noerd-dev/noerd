@@ -8,6 +8,7 @@
 @php
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
+    $readonly = $field['readonly'] ?? false;
     // Filter out non-scalar values that leak from parent scope via @include
     $attributes = $attributes->filter(fn($value) => is_scalar($value) || null === $value);
 @endphp
@@ -43,33 +44,35 @@
         <div class="group relative mt-1 h-[150px] w-[150px] overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
             <div class="absolute inset-0" style="background: url('{{ $previewUrl }}') center / cover;"></div>
 
-            <div class="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                @if ($mediaAvailable)
+            @unless ($readonly)
+                <div class="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    @if ($mediaAvailable)
+                        <button
+                            type="button"
+                            wire:click="openSelectMediaModal('{{ $resolvedName }}')"
+                            title="{{ __('Choose image from media') }}"
+                            aria-label="{{ __('Choose image from media') }}"
+                            class="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow transition-colors hover:bg-white"
+                        >
+                            <x-dynamic-component component="heroicons::outline.photo" class="h-4 w-4 text-zinc-600" />
+                        </button>
+                    @endif
                     <button
                         type="button"
-                        wire:click="openSelectMediaModal('{{ $resolvedName }}')"
-                        title="{{ __('Choose image from media') }}"
-                        aria-label="{{ __('Choose image from media') }}"
+                        wire:click="deleteImage('{{ $resolvedName }}')"
+                        wire:confirm="{{ __('Remove this image? The original file stays in the media library.') }}"
+                        title="{{ __('Remove this image') }}"
+                        aria-label="{{ __('Remove this image') }}"
                         class="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow transition-colors hover:bg-white"
                     >
-                        <x-dynamic-component component="heroicons::outline.photo" class="h-4 w-4 text-zinc-600" />
+                        <span class="text-lg leading-none text-red-600">×</span>
                     </button>
-                @endif
-                <button
-                    type="button"
-                    wire:click="deleteImage('{{ $resolvedName }}')"
-                    wire:confirm="{{ __('Remove this image? The original file stays in the media library.') }}"
-                    title="{{ __('Remove this image') }}"
-                    aria-label="{{ __('Remove this image') }}"
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow transition-colors hover:bg-white"
-                >
-                    <span class="text-lg leading-none text-red-600">×</span>
-                </button>
-            </div>
+                </div>
+            @endunless
         </div>
     @endif
 
-    @if (! $previewUrl || ! $mediaAvailable)
+    @if ((! $previewUrl || ! $mediaAvailable) && ! $readonly)
         <div class="mt-2 flex gap-2">
             @if ($mediaAvailable)
                 <x-noerd::button

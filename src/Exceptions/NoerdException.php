@@ -9,6 +9,8 @@ class NoerdException extends Exception
 {
     public const TYPE_APP_NOT_ASSIGNED = 'app_not_assigned';
 
+    public const TYPE_APP_ACCESS_DENIED = 'app_access_denied';
+
     public const TYPE_CONFIG_NOT_FOUND = 'config_not_found';
 
     public function __construct(
@@ -18,6 +20,7 @@ class NoerdException extends Exception
     ) {
         $message = match ($type) {
             self::TYPE_APP_NOT_ASSIGNED => "App '{$appName}' is not assigned to this tenant",
+            self::TYPE_APP_ACCESS_DENIED => "App '{$appName}' is not accessible for this user",
             self::TYPE_CONFIG_NOT_FOUND => "Config file not found: {$configFile}",
             default => 'Unknown error',
         };
@@ -30,6 +33,6 @@ class NoerdException extends Exception
             'type' => $this->type,
             'appName' => $this->appName,
             'configFile' => $this->configFile,
-        ], 500);
+        ], $this->type === self::TYPE_APP_ACCESS_DENIED ? 403 : 500);
     }
 }

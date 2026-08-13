@@ -14,13 +14,14 @@ describe('Position tables follow the theme', function (): void {
     });
 
     it('renders the default theme unchanged', function (): void {
-        Livewire::test('noerd::positions-theme-test', ['theme' => 'default'])
+        $component = Livewire::test('noerd::positions-theme-test', ['theme' => 'default'])
             ->assertSuccessful()
             ->assertSeeHtml('py-8')
             ->assertSeeHtml('h-10')
-            ->assertSeeHtml('table table-sm w-full')
             ->assertDontSeeHtml('bg-zinc-100')
             ->assertDontSeeHtml('tabular-nums');
+
+        assertElementHasClasses($component->html(), ['table', 'table-sm', 'w-full']);
     });
 
     it('shrinks controls and padding in the compact theme', function (): void {
@@ -36,14 +37,15 @@ describe('Position tables follow the theme', function (): void {
     it('bands the rows and numbers them in the numbered theme', function (): void {
         $component = Livewire::test('noerd::positions-theme-test', ['theme' => 'numbered'])
             ->assertSuccessful()
-            ->assertSeeHtml('border-separate border-spacing-y-1')
             ->assertSeeHtml('bg-zinc-100')
             ->assertSeeHtml('tabular-nums')
             ->assertSeeHtml('h-9')
             ->assertSeeHtml('rounded-none');
 
+        assertElementHasClasses($component->html(), ['border-separate', 'border-spacing-y-1']);
+
         $html = $component->html();
-        $numberCell = fn (int $number): string => '/tabular-nums[^"]*">'.$number.'<\/td>/';
+        $numberCell = fn(int $number): string => '/tabular-nums[^"]*">' . $number . '<\/td>/';
 
         expect(preg_match($numberCell(1), $html))->toBe(1)
             ->and(preg_match($numberCell(2), $html))->toBe(1)

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
-use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
@@ -13,8 +12,8 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
-/** Records the (viewType, component) pairs the helper hands the resolver. */
-class RecordingPageOverrideResolver implements LayoutOverrideResolver
+/** Records the (viewType, component) pairs the helper hands the override hook. */
+class RecordingPageOverrideResolver
 {
     /** @var array<int, string> */
     public static array $seen = [];
@@ -70,7 +69,7 @@ it('returns an empty array silently when the page yaml is missing', function ():
 });
 
 it('applies overrides with the page view type and the canonical component key', function (): void {
-    app()->singleton(LayoutOverrideResolver::class, RecordingPageOverrideResolver::class);
+    app()->singleton(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, RecordingPageOverrideResolver::class);
 
     StaticConfigHelper::getPageFields('noerd::zz-widget-page');
 
@@ -79,7 +78,7 @@ it('applies overrides with the page view type and the canonical component key', 
 });
 
 it('does not consult the override resolver for a missing page yaml', function (): void {
-    app()->singleton(LayoutOverrideResolver::class, RecordingPageOverrideResolver::class);
+    app()->singleton(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, RecordingPageOverrideResolver::class);
 
     StaticConfigHelper::getPageFields('noerd::does-not-exist-page');
 

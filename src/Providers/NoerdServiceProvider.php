@@ -31,7 +31,6 @@ use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
-use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\SetupCollectionHelper;
@@ -50,12 +49,12 @@ use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\BrandService;
+use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\ListQueryContext;
 use Noerd\Services\NoerdManager;
-use Noerd\Services\NullLayoutOverrideResolver;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationFieldRegistry;
@@ -83,10 +82,10 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(QuickCreateExitHook::class);
 
         $this->app->singleton(ListQueryContext::class);
-        $this->app->singleton(LayoutOverrideResolver::class, NullLayoutOverrideResolver::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(HeaderActionsRegistry::class);
+        $this->app->singleton(DetailSlotsRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(ThemeRegistry::class);
         $this->app->singleton(NoerdManager::class);
@@ -271,7 +270,7 @@ class NoerdServiceProvider extends ServiceProvider
         ));
 
         View::composer('noerd::layouts.app', function ($view): void {
-            $view->with('showSidebar', ! session('hide_sidebar'));
+            $view->with('showSidebar', !session('hide_sidebar'));
         });
 
         // Publish public assets (fonts + built Vite assets)
@@ -321,7 +320,7 @@ class NoerdServiceProvider extends ServiceProvider
         $targetPath = public_path('vendor/noerd/fonts');
         $sourcePath = __DIR__ . '/../../public/fonts';
 
-        if (! File::exists($targetPath) && File::exists($sourcePath)) {
+        if (!File::exists($targetPath) && File::exists($sourcePath)) {
             File::ensureDirectoryExists(dirname($targetPath));
             File::copyDirectory($sourcePath, $targetPath);
         }
@@ -335,11 +334,11 @@ class NoerdServiceProvider extends ServiceProvider
         $targetPath = public_path('vendor/noerd/manifest.json');
         $sourcePath = __DIR__ . '/../../dist/build/manifest.json';
 
-        if (! File::exists($sourcePath)) {
+        if (!File::exists($sourcePath)) {
             return;
         }
 
-        $shouldPublish = ! File::exists($targetPath)
+        $shouldPublish = !File::exists($targetPath)
             || File::lastModified($sourcePath) > File::lastModified($targetPath);
 
         if ($shouldPublish) {

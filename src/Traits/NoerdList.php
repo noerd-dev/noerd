@@ -17,6 +17,7 @@ use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use LogicException;
 use Noerd\Facades\Noerd;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
@@ -252,8 +253,8 @@ trait NoerdList
             }
         }
 
-        // The base view can be hidden from this user (a role-restricted
-        // 'default') or exist only in another allowed app: fall to the first
+        // The base view can be hidden from this user (a restricted 'default')
+        // or exist only in another allowed app: fall to the first
         // view they are allowed to see. When every view is filtered away, the
         // base stays — fail open.
         if ($this->listView === null && $this->listViewApp === null
@@ -566,6 +567,12 @@ trait NoerdList
         // Building the list query once populates resolvedModelClass for this request.
         $this->resolvedListConfig();
 
+        // Server-side guard: the bulk-delete button is hidden for delete-denied
+        // users, but the method stays directly invokable.
+        if (!AccessHelper::canDeleteObject($this->objectPermissionModelClass())) {
+            return;
+        }
+
         if ($this->resolvedModelClass !== null) {
             $this->resolvedModelClass::query()
                 ->whereIn('id', $this->selectedRecordIds)
@@ -654,6 +661,10 @@ trait NoerdList
 
     public function exportCsv(): StreamedResponse
     {
+        // Populates resolvedModelClass so the read check sees the actual model.
+        $this->resolvedListConfig();
+        abort_unless(AccessHelper::canReadObject($this->objectPermissionModelClass()), 403);
+
         [$query, $columns, $filename] = $this->prepareCsvExport();
 
         return response()->streamDownload(function () use ($query, $columns): void {
@@ -766,9 +777,9 @@ trait NoerdList
         if (defined('static::DETAIL_COMPONENT')) {
             return static::DETAIL_COMPONENT;
         }
+
         return $this->getName();
     }
-
 
     protected function componentName(): string
     {
@@ -844,6 +855,12 @@ trait NoerdList
         $query = $modelClass::query()
             ->withoutGlobalScope(SearchScope::class)
             ->withoutGlobalScope(SortScope::class);
+
+        // Read-denied objects yield no rows in ANY rendering mode (page, embedded,
+        // picker, minimal) — restricted data must never leave the database.
+        if (!AccessHelper::canReadObject($modelClass)) {
+            $query->whereRaw('1 = 0');
+        }
 
         $listConfig = $this->getListConfig($configName);
 
@@ -1028,7 +1045,7 @@ trait NoerdList
      * Build complete list configuration including rows and table state.
      * Returns all data needed for the list.index DETAIL_COMPONENT.
      *
-     * @param LengthAwarePaginator|array $rows
+     * @param  LengthAwarePaginator|array  $rows
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
@@ -1040,6 +1057,20 @@ trait NoerdList
         $listSettings = $this->applyAutoColumnTypes($listSettings, $rows);
         $listSettings = $this->applyPicklistBadges($listSettings);
 
+        // Object permissions: strip the affordances the current user may not use.
+        // In-memory lists (no model class) stay unrestricted.
+        $permissionModel = $this->objectPermissionModelClass();
+        $objectAccessDenied = !AccessHelper::canReadObject($permissionModel);
+        if ($objectAccessDenied || !AccessHelper::canWriteObject($permissionModel)) {
+            unset($listSettings['actions']);
+        }
+        if (!AccessHelper::canDeleteObject($permissionModel)) {
+            $listSettings['bulkActions'] = array_values(array_filter(
+                $listSettings['bulkActions'] ?? [],
+                fn(array $action): bool => ($action['action'] ?? null) !== 'deleteSelected',
+            ));
+        }
+
         return [
             'listId' => $this->listId,
             'sortField' => $this->sortField,
@@ -1049,7 +1080,27 @@ trait NoerdList
             'listSettings' => $listSettings,
             'listColumnFilters' => $this->listColumnFilters,
             'filterableColumns' => $this->filterableColumnFields(),
+            'objectAccessDenied' => $objectAccessDenied,
         ];
+    }
+
+    /**
+     * The model class the object permission checks key off: an explicitly
+     * declared `public ?string $objectPermissionModel` wins (for repository-
+     * backed lists without $listModel, e.g. the liefertool orders list), then
+     * the class resolved by the last listQuery() call, falling back to a
+     * declared $listModel. Null for in-memory/manual lists — those are never
+     * restricted. Deliberately not declared on the trait — a component
+     * redeclares it with its own default (same pattern as $listModel).
+     */
+    protected function objectPermissionModelClass(): ?string
+    {
+        if (property_exists($this, 'objectPermissionModel') && $this->objectPermissionModel !== null) {
+            return $this->objectPermissionModel;
+        }
+
+        return $this->resolvedModelClass
+            ?? (property_exists($this, 'listModel') ? $this->listModel : null);
     }
 
     /**
@@ -1111,8 +1162,8 @@ trait NoerdList
     }
 
     /**
-     * @param array<int, array<string, mixed>> $fields
-     * @param array<string, array<int, array{value: mixed, label: string}>> $map
+     * @param  array<int, array<string, mixed>>  $fields
+     * @param  array<string, array<int, array{value: mixed, label: string}>>  $map
      */
     protected function collectSelectOptions(array $fields, array &$map): void
     {
@@ -1214,7 +1265,7 @@ trait NoerdList
      * Resolve a picklist value to its option label (untranslated); falls back to
      * the raw value when no option matches.
      *
-     * @param array<int, array{value: mixed, label: string}> $options
+     * @param  array<int, array{value: mixed, label: string}>  $options
      */
     protected function badgeLabel(mixed $value, array $options): string
     {

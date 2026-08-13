@@ -196,6 +196,12 @@ The grid wrapper emits `data-theme="{theme}"` for non-default themes. The resolu
 `Noerd\Support\ThemeElementResolver`; discovery and metadata in `Noerd\Services\ThemeRegistry`
 (a singleton — themes are discovered lazily and cached per request).
 
+Every element template supports a `readonly` state (`$field['readonly']`): the detail block forces
+it onto all fields when the hosting component's object permission denies writing, so a custom theme
+must honor it too (readonly attribute on inputs, `disabled` on selects/checkboxes, hidden picker
+and upload affordances). See "Read-Only Rendering on Write-Denied Objects" in
+[detail-view.md](detail-view.md).
+
 ## Buttons Follow the Theme
 
 `<x-noerd::button>` without an explicit `size` follows the active theme: the rendering detail/page
@@ -210,6 +216,11 @@ and any other button in the form chrome — without touching the call sites.
 - A theme without `buttonClasses` renders buttons exactly like the default theme.
 - `buttonClasses` may include a corner rounding (e.g. `rounded-none` in the numbered theme for
   square buttons) — the button then skips its default `rounded-sm`.
+- The context lives exactly as long as the render: `renderingNoerdPage()` sets it, `renderedNoerdPage()`
+  restores whatever was active before. Nesting therefore works (an embedded detail hands the context
+  back to its hosting page, whose footer still renders in the page theme), while chrome rendered
+  AFTER the page — the layout's app bar and quick-menu buttons — stays on the default theme instead
+  of inheriting a form theme it never belonged to.
 
 The `button` **field type** (`type: button` in a YAML) is a normal theme element
 (`themes/{name}/button.blade.php`) and restyles per theme like any input.

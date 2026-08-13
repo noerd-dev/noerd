@@ -24,11 +24,16 @@ new class extends Component {
     $hasTarget = isset($navi['link']) || $opensAsModal || $routeExists;
 @endphp
 
-@if (! $hasTarget)
-    {{-- Livewire needs an unconditional root element. --}}
-    <li class="hidden"></li>
-@else
-<li class="{{ (isset($navi['link']) ? request()->is(ltrim($navi['link'], '/')) : request()->routeIs($navi['route'] ?? null))  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
+{{-- The root <li> must be the FIRST element of this view and start on its own
+     line: Livewire detects a component's root element with a regex that only
+     matches a tag preceded by a newline, and it remembers that tag to build the
+     placeholder used whenever the PARENT re-renders. Wrapping the root in
+     @if/@else makes Blade swallow the newline, so Livewire stamps wire:id onto a
+     nested <div> instead — and the whole entry loses its markup the moment the
+     sidebar re-renders. Keep the conditional INSIDE the root element. --}}
+
+<li class="{{ $hasTarget ? '' : 'hidden' }} {{ (isset($navi['link']) ? request()->is(ltrim($navi['link'], '/')) : request()->routeIs($navi['route'] ?? null))  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
+    @if ($hasTarget)
     @if ($opensAsModal)
         <a @if ($naviModalRoute)
                @click="$modalRoute({{ \Illuminate\Support\Js::from($naviModalRoute) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $naviModalComponent])) }}); if(! isDesktop) showSidebar = false"
@@ -116,5 +121,5 @@ new class extends Component {
             </button>
         @endif
     @endisset
+    @endif
 </li>
-@endif

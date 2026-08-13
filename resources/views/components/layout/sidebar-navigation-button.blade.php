@@ -28,11 +28,16 @@ new class extends Component {
     $hasTarget = isset($navi['link']) || $opensAsModal || $routeExists;
 @endphp
 
-@if (! $hasTarget)
-    {{-- Livewire needs an unconditional root element. --}}
-    <div class="hidden"></div>
-@else
-<div>
+{{-- The root <div> must be the FIRST element of this view and start on its own
+     line: Livewire detects a component's root element with a regex that only
+     matches a tag preceded by a newline, and it remembers that tag to build the
+     placeholder used whenever the PARENT re-renders. Wrapping the root in
+     @if/@else makes Blade swallow the newline, so Livewire stamps wire:id onto a
+     nested element instead — and the entry loses its markup the moment the
+     sidebar re-renders. Keep the conditional INSIDE the root element. --}}
+
+<div class="{{ $hasTarget ? '' : 'hidden' }}">
+    @if ($hasTarget)
     @if ($opensAsModal)
         <a @if ($naviModalRoute)
                @click="$modalRoute({{ \Illuminate\Support\Js::from($naviModalRoute) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $naviModalComponent])) }}); if(! isDesktop) showSidebar = false"
@@ -89,5 +94,5 @@ new class extends Component {
             </div>
         </a>
     @endisset
+    @endif
 </div>
-@endif

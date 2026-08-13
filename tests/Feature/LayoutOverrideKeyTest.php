@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
-use Noerd\Contracts\LayoutOverrideResolver;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
@@ -14,8 +13,8 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
-/** Records the (viewType, component) pairs and the model classes the helper hands the resolver. */
-class RecordingLayoutOverrideResolver implements LayoutOverrideResolver
+/** Records the (viewType, component) pairs and the model classes the helper hands the override hook. */
+class RecordingLayoutOverrideResolver
 {
     /** @var array<int, string> */
     public static array $seen = [];
@@ -53,7 +52,7 @@ class LayoutOverrideFixtureWidget extends Model
 beforeEach(function (): void {
     RecordingLayoutOverrideResolver::$seen = [];
     RecordingLayoutOverrideResolver::$seenModels = [];
-    app()->singleton(LayoutOverrideResolver::class, RecordingLayoutOverrideResolver::class);
+    app()->singleton(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, RecordingLayoutOverrideResolver::class);
 
     $user = NoerdUser::factory()->create(['super_admin' => true]);
     $tenant = Tenant::factory()->create();

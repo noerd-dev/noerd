@@ -44,17 +44,6 @@ new class extends Component {
             $tenant->tenantApps()->attach($app->id);
         }
 
-        // copy all profiles (change later with app installation)
-        $userRoles = $selectedTenant?->userRoles ?? collect();
-        foreach ($userRoles as $userRole) {
-            $copyUserRole = new \Noerd\Models\UserRole();
-            $copyUserRole->key = $userRole->key;
-            $copyUserRole->name = $userRole->name;
-            $copyUserRole->description = $userRole->description;
-            $copyUserRole->tenant_id = $tenant->id;
-            $copyUserRole->save();
-        }
-
         TenantHelper::setSelectedTenantId($tenant->id);
 
         $this->showSuccess = true;

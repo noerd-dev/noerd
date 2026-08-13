@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Assert;
 
-if (! function_exists('requiredLayoutFields')) {
+if (!function_exists('requiredLayoutFields')) {
     /**
      * Field names marked required in the component's pageLayout.
      *
@@ -22,7 +24,7 @@ if (! function_exists('requiredLayoutFields')) {
     }
 }
 
-if (! function_exists('extractRequiredLayoutFields')) {
+if (!function_exists('extractRequiredLayoutFields')) {
     /**
      * @param  array<int, array<string, mixed>>  $fields
      * @return array<int, string>
@@ -50,7 +52,7 @@ if (! function_exists('extractRequiredLayoutFields')) {
     }
 }
 
-if (! function_exists('validDetailPayload')) {
+if (!function_exists('validDetailPayload')) {
     /**
      * Valid detailData array sourced from the model factory, merged with overrides.
      *
@@ -74,7 +76,7 @@ if (! function_exists('validDetailPayload')) {
     }
 }
 
-if (! function_exists('registerTestLivewireRoute')) {
+if (!function_exists('registerTestLivewireRoute')) {
     /**
      * Register a named Route::livewire() route from inside a test.
      *
@@ -84,7 +86,67 @@ if (! function_exists('registerTestLivewireRoute')) {
      */
     function registerTestLivewireRoute(string $uri, string $component, string $name): void
     {
-        Illuminate\Support\Facades\Route::livewire($uri, $component)->name($name);
-        Illuminate\Support\Facades\Route::getRoutes()->refreshNameLookups();
+        Route::livewire($uri, $component)->name($name);
+        Route::getRoutes()->refreshNameLookups();
+    }
+}
+
+if (!function_exists('assertElementHasClasses')) {
+    /**
+     * Assert that ONE element in the markup carries all given CSS classes.
+     *
+     * Matching a multi-class string as one substring (e.g. assertSeeHtml('h-7 px-2'))
+     * breaks the moment a Tailwind class sorter reorders the attribute, even though
+     * the markup is unchanged. This checks each class as a whole token within a
+     * single class attribute, so order and neighbouring classes are irrelevant while
+     * the "same element" guarantee is kept.
+     *
+     * @param  array<int, string>  $classes
+     */
+    function assertElementHasClasses(string $html, array $classes, string $message = ''): void
+    {
+        preg_match_all('/class="([^"]*)"/', $html, $matches);
+
+        foreach ($matches[1] as $classAttribute) {
+            $present = preg_split('/\s+/', mb_trim($classAttribute)) ?: [];
+
+            if (array_diff($classes, $present) === []) {
+                Assert::assertTrue(true);
+
+                return;
+            }
+        }
+
+        Assert::fail(
+            $message !== ''
+                ? $message
+                : 'No element carries all of these classes: ' . implode(' ', $classes),
+        );
+    }
+}
+
+if (!function_exists('assertNoElementHasClasses')) {
+    /**
+     * The negative counterpart of assertElementHasClasses().
+     *
+     * @param  array<int, string>  $classes
+     */
+    function assertNoElementHasClasses(string $html, array $classes, string $message = ''): void
+    {
+        preg_match_all('/class="([^"]*)"/', $html, $matches);
+
+        foreach ($matches[1] as $classAttribute) {
+            $present = preg_split('/\s+/', mb_trim($classAttribute)) ?: [];
+
+            if (array_diff($classes, $present) === []) {
+                Assert::fail(
+                    $message !== ''
+                        ? $message
+                        : 'An element unexpectedly carries all of these classes: ' . implode(' ', $classes),
+                );
+            }
+        }
+
+        Assert::assertTrue(true);
     }
 }

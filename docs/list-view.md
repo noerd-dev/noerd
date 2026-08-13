@@ -22,6 +22,14 @@ resolves its config by the flat file name (`lists/types-list.yml`); the subfolde
 are ignored for lists. Layout overrides key off the same flat name. (Detail YAMLs keep
 their dot-to-subfolder mapping.)
 
+The config is resolved against the app folders the tenant may use — current app first, then the
+other granted apps, then their module sources. A **namespaced** component (`communication::
+communications-list`) additionally falls back to its OWN module's app folder
+(`app-configs/communication/`), so a module reached from another app — linked from its navigation,
+embedded in its detail, or opened as a modal from one of its tabs — still finds its title, columns
+and fields even when the tenant was never granted that module as an app. The fallback is searched
+last, so a granted app's own copy always wins. The same applies to detail and page YAMLs.
+
 ## Example YAML Configuration
 
 Example: `app-configs/accounting/lists/customers-list.yml`
@@ -242,6 +250,11 @@ public function with(): array
 - **buildList():** Generates the list configuration from the YAML
 - **request()->customerId / request()->create:** Handled by the trait's `rendering()`; override `rendering()` when the list uses its own URL parameter (e.g. `invoiceId`)
 - **`<x-noerd::list />`:** Renders the table
+- **Object permissions:** Read/write/delete denial via the optional `noerd.object-*` gates (see
+  `AccessHelper` in extension-registries.md) hides rows, header actions and the delete bulk action. The permission target is the model resolved
+  by `listQuery()` / the declared `$listModel`. A repository-backed list without `$listModel`
+  declares it explicitly — `public ?string $objectPermissionModel = Order::class;` — otherwise it
+  stays unrestricted (reference: the liefertool orders list)
 
 ## Default Sorting
 
@@ -556,7 +569,7 @@ with reduced opacity — e.g. "Kunden (Delivery)":
   the param; embedded compact lists and pickers never read or write it.
 - Because the whole config is swapped, the view's own `searchableColumns`, `actions`,
   `notSortableColumns` and column types all apply automatically. Layout overrides (noerd-plus) key
-  per view file (e.g. `customers-list--vip`), app-agnostic — a role restriction on `vip` also hides
+  per view file (e.g. `customers-list--vip`), app-agnostic — a restriction on `vip` also hides
   every other app's `{app}::vip` entry.
 
 **Generic API:**

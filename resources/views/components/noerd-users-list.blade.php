@@ -58,7 +58,7 @@ new class () extends Component {
                     $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
                 }
             })
-            ->with(['roles', 'tenants'])
+            ->with(['tenants'])
             ->paginate($this->perPage);
 
         return $this->buildList($rows);

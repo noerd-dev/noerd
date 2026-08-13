@@ -6,7 +6,6 @@ use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Models\UserRole;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
@@ -178,52 +177,6 @@ it('copies tenant apps from current tenant to new tenant', function () use ($tes
     expect($createdTenant->tenantApps->contains($app2->id))->toBeTrue();
 });
 
-it('copies user roles from current tenant to new tenant', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->create();
-    $currentTenant = $admin->tenants->first();
-
-    // Create some user roles for current tenant
-    $role1 = UserRole::factory()->create([
-        'key' => 'TEST_ROLE_1',
-        'name' => 'Test Role 1',
-        'description' => 'First test role',
-        'tenant_id' => $currentTenant->id,
-    ]);
-
-    $role2 = UserRole::factory()->create([
-        'key' => 'TEST_ROLE_2',
-        'name' => 'Test Role 2',
-        'description' => 'Second test role',
-        'tenant_id' => $currentTenant->id,
-    ]);
-
-    $tenantName = 'Test Tenant';
-
-    $this->actingAs($admin);
-
-    Livewire::test($testSettings['componentName'])
-        ->set('name', $tenantName)
-        ->call('createTenant')
-        ->assertHasNoErrors();
-
-    $createdTenant = Tenant::where('name', $tenantName)->first();
-
-    // Verify user roles were copied to new tenant
-    $copiedRole1 = UserRole::where('tenant_id', $createdTenant->id)
-        ->where('key', 'TEST_ROLE_1')
-        ->first();
-    expect($copiedRole1)->not()->toBeNull();
-    expect($copiedRole1->name)->toBe('Test Role 1');
-    expect($copiedRole1->description)->toBe('First test role');
-
-    $copiedRole2 = UserRole::where('tenant_id', $createdTenant->id)
-        ->where('key', 'TEST_ROLE_2')
-        ->first();
-    expect($copiedRole2)->not()->toBeNull();
-    expect($copiedRole2->name)->toBe('Test Role 2');
-    expect($copiedRole2->description)->toBe('Second test role');
-});
-
 it('updates user selected_tenant_id to new tenant', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->create();
     $originalTenantId = $admin->selected_tenant_id;
@@ -266,29 +219,6 @@ it('handles case when current tenant has no apps', function () use ($testSetting
 
     // Verify new tenant also has no apps
     expect($createdTenant->tenantApps)->toHaveCount(0);
-});
-
-it('handles case when current tenant has no user roles', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->create();
-    $currentTenant = $admin->tenants->first();
-
-    // Ensure current tenant has no user roles
-    UserRole::where('tenant_id', $currentTenant->id)->delete();
-
-    $tenantName = 'Test Tenant';
-
-    $this->actingAs($admin);
-
-    Livewire::test($testSettings['componentName'])
-        ->set('name', $tenantName)
-        ->call('createTenant')
-        ->assertHasNoErrors();
-
-    $createdTenant = Tenant::where('name', $tenantName)->first();
-
-    // Verify new tenant also has no user roles (except the default ones created by the component)
-    $userRoles = UserRole::where('tenant_id', $createdTenant->id)->get();
-    expect($userRoles)->toHaveCount(0);
 });
 
 it('sets name property correctly in component', function () use ($testSettings): void {
