@@ -4,6 +4,7 @@
     'summary' => null,
     'compact' => null,
     'minimal' => null,
+    'hideHead' => false,
 ])
 
 @php
@@ -49,6 +50,9 @@
         $showSummary = $listSettings['showSummary'] ?? true;
         $table = $listSettings['columns'] ?? [];
 
+        // Grid mode renders the rows as a card grid instead of the table (YAML `displayMode: grid`)
+        $displayMode = $listSettings['displayMode'] ?? 'table';
+
         $listAction = $this->listActionMethod ?? 'listAction';
 
         // Multi-select: a leading checkbox column plus a footer that is either a picker
@@ -85,7 +89,10 @@
     @endphp
 
     <div>
-        @unless ($compact)
+        {{-- hideHead: for a list embedded below another component's page header (e.g.
+             inside a tab panel) — the slot registered by list-header would land on the
+             nearest enclosing component instead of the page and silently disappear. --}}
+        @unless ($compact || $hideHead)
             @include('noerd::components.table.list-header')
         @endunless
 
@@ -144,7 +151,7 @@
                 @keydown.window.arrow-up="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{ $listId }}-- }"
                 @keydown.window.enter="if (canHandleListKey()) { $event.preventDefault(); $wire.findListAction(selectedRow{{ $listId }}) }"
             >
-                @if ((!isset($hideHead) || $hideHead !== true) && !$compact)
+                @if (! $hideHead && ! $compact)
                     <div>
                         @include('noerd::components.table.title-search', [
                             'title' => $title,
@@ -160,6 +167,9 @@
                 @endif
 
                 @isset($table)
+                    @if ($displayMode === 'grid')
+                        @include('noerd::components.list.grid')
+                    @else
                     <div class="min-w-full pb-2 align-middle">
                         <div>
                             <div class="flow-root">
@@ -344,6 +354,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
 
                     @if (!$compact && isset($rows) && count($rows) > 0 && !is_array($rows))
                         <div>{{ $rows->links('noerd::pagination') }}</div>
