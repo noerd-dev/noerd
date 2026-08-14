@@ -254,15 +254,30 @@ the theme folders (`themes/{name}/`) keep their own (slightly smaller) class str
 
 ## Detail Actions
 
-Action buttons render a row above the form via the generic `<x-noerd::detail-actions>` component. Each button calls a Livewire method on the detail component itself. Use this for record-level operations such as "Transfer to Account" or "Generate PDF".
+Action buttons render a row above the form. Each button calls a Livewire method on the detail component itself. Use this for record-level operations such as "Transfer to Account" or "Generate PDF".
 
-### Blade Usage
+### Automatic Rendering
 
-Place the component between the header slot and `<x-noerd::tab-content>`:
+`<x-noerd::page>` renders the actions row automatically as the first element of the page body
+whenever the component's `$pageLayout` carries an `actions:` array — a detail blade needs NO
+`<x-noerd::detail-actions>` include. Adding an action is purely a YAML change.
+
+The auto-render is skipped for embedded details, quick-create dialogs, and components without a
+`$pageLayout` property (e.g. lists — the list-level `actions:` key is a different concept).
+
+A blade opts out via the `detailActions` attribute — do this when the layout needs custom logic
+(e.g. conditionally suppressing the actions) and render `<x-noerd::detail-actions>` explicitly
+instead (otherwise the row would render twice):
 
 ```blade
-<x-noerd::detail-actions :layout="$pageLayout" :modelId="$modelId" />
+<x-noerd::page :detailActions="false">
+    ...
+    <x-noerd::detail-actions :layout="$condition ? $pageLayout : []" :modelId="$modelId" />
 ```
+
+The explicit component also remains the right tool for hand-built (non-YAML) action layouts, and
+for a detail that must show its actions when rendered **embedded** in a hosting page (the embedded
+chrome renders only the slot, so the auto-render never runs there — see `pdm::assembly-detail`).
 
 ### YAML Configuration
 
@@ -286,7 +301,7 @@ fields:
 | `label` | Button label (translation key) |
 | `route` | Named `Route::livewire()` route opened as a modal (preferred for record targets) |
 | `modalComponent` | Livewire component opened as a modal — also the fallback when `route` is not registered |
-| `url` | Renders the action as a plain link (`<a href>`) instead of a button — either a literal URL (`http…` / `/…`) or a key in the `urls` map passed to the component |
+| `url` | Renders the action as a plain link (`<a href>`) instead of a button — either a literal URL (`http…` / `/…`) or a key in the `urls` map (see [Link Actions](#link-actions)) |
 | `newTab` | Only with `url:` — defaults to `true` (`target="_blank"`). Set to `false` to open in the same tab |
 | `action` | Livewire method called via `wire:click` (used when neither `route`, `modalComponent` nor `url` is set) |
 | `heroicon` | Optional heroicon rendered before the label |
@@ -313,11 +328,14 @@ actions:
 
 A `url:` action renders as a link that opens in a new tab — use it for targets outside the backend
 (a public guest page, an external system). A record-dependent URL is computed by the detail component
-and handed to the component through the `urls` prop; the YAML only names the key:
+and exposed through a public `detailActionUrls()` method — the auto-rendered actions row picks it up
+by convention; the YAML only names the key:
 
-```blade
-<x-noerd::detail-actions :layout="$pageLayout" :modelId="$modelId"
-                         :urls="['tableUrl' => $this->tableUrl()]" />
+```php
+public function detailActionUrls(): array
+{
+    return ['tableUrl' => $this->tableUrl];
+}
 ```
 
 ```yaml
