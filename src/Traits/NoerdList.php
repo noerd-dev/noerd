@@ -183,7 +183,8 @@ trait NoerdList
     /**
      * Whether a column field addresses a nested path rather than a real DB column — e.g. a custom
      * attribute (`custom_attributes.sap_number`) or a relation (`customer.name`). Such fields resolve at
-     * render time via data_get(); the database cannot sort or search on them.
+     * render time via data_get(); the database cannot sort or search on them. Column filters are the
+     * exception: a path into a JSON-cast column filters via the arrow operator (see isJsonColumnPath()).
      */
     public static function isDottedField(string $field): bool
     {
@@ -967,8 +968,9 @@ trait NoerdList
 
     /**
      * Fields the user may filter on via the header funnel: every YAML column that
-     * is not dotted, not 'action', and a real column on the resolved model's
-     * table — the same rule as sorting. Empty until listQuery() has resolved the
+     * is not 'action' and either a real column on the resolved model's table
+     * (the same rule as sorting) or a path into a JSON-cast column
+     * (`custom_attributes.x`). Empty until listQuery() has resolved the
      * model class, so lists with fully custom queries get no funnels.
      *
      * @return array<int, string>
@@ -989,10 +991,31 @@ trait NoerdList
             ->pluck('field')
             ->filter(fn($field): bool => is_string($field)
                 && $field !== 'action'
-                && !self::isDottedField($field)
-                && Schema::hasColumn($table, $field))
+                && (self::isDottedField($field)
+                    ? $this->isJsonColumnPath($field)
+                    : Schema::hasColumn($table, $field)))
             ->values()
             ->all();
+    }
+
+    /**
+     * Whether a dotted column field addresses a path inside a JSON column of the
+     * resolved model (e.g. `custom_attributes.sap_number`): the base segment must
+     * be a real table column that the model casts to an array/object, so the
+     * query can filter it via the JSON arrow operator. Relation paths
+     * (`customer.name`) have no such column and stay unfilterable.
+     */
+    protected function isJsonColumnPath(string $field): bool
+    {
+        if ($this->resolvedModelClass === null) {
+            return false;
+        }
+
+        $model = new $this->resolvedModelClass();
+        $base = Str::before($field, '.');
+
+        return Schema::hasColumn($model->getTable(), $base)
+            && $model->hasCast($base, ['array', 'json', 'object', 'collection']);
     }
 
     /**
@@ -1033,7 +1056,12 @@ trait NoerdList
             }
             $type ??= $schemaTypes[$field] ?? 'text';
 
-            ColumnFilterParser::apply($query, $field, $type, $raw);
+            // A JSON path (custom_attributes.x) filters via the arrow operator on
+            // its base column; it has no schema type, so YAML/picklist typing
+            // applies with text as the fallback.
+            $column = self::isDottedField($field) ? str_replace('.', '->', $field) : $field;
+
+            ColumnFilterParser::apply($query, $column, $type, $raw);
         }
     }
 

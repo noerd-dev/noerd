@@ -24,7 +24,15 @@ Invalid input (non-numeric value on a number column, unparseable date, operator 
 
 ### Which columns are filterable
 
-A column is filterable when it is declared in the list YAML `columns`, is not `action`, is not a dotted field (`relation.name`, `custom_attributes.x`), and exists as a real column on the model's table — the same rule as sorting. Lists that build a fully custom query (never calling `listQuery()`) show no funnels and apply no column filters.
+A column is filterable when it is declared in the list YAML `columns`, is not `action`, and either
+exists as a real column on the model's table (the same rule as sorting) or is a **path into a
+JSON-cast column** (e.g. `custom_attributes.sap_number`): the segment before the first dot must be a
+real table column that the model casts to an array/object — the filter then applies through the JSON
+arrow operator (`custom_attributes->sap_number`). Relation paths (`customer.name`) have no such base
+column and stay unfilterable (and every dotted field stays unsortable). A JSON path has no DB schema
+type, so its filter type comes from the list column's explicit `type:`/`options` or the paired detail
+picklist, with `text` as the fallback. Lists that build a fully custom query (never calling
+`listQuery()`) show no funnels and apply no column filters.
 
 ### Behavior
 
