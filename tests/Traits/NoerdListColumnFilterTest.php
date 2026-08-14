@@ -264,8 +264,8 @@ it('resolves active column filters into labeled header chips', function (): void
 
     expect($component->instance()->activeColumnFilterChips())->toBe([
         ['field' => 'name', 'label' => 'Name', 'value' => 'rot'],
-        ['field' => 'super_admin', 'label' => 'Admin', 'value' => 'Yes'],
-        ['field' => 'email', 'label' => 'Status', 'value' => 'Open'],
+        ['field' => 'super_admin', 'label' => 'Admin', 'value' => __('Yes')],
+        ['field' => 'email', 'label' => 'Status', 'value' => __('Open')],
     ]);
 });
 
@@ -278,7 +278,7 @@ it('resolves a bool zero filter chip to No', function (): void {
     filterListIds($component);
 
     expect($component->instance()->activeColumnFilterChips())->toBe([
-        ['field' => 'super_admin', 'label' => 'Admin', 'value' => 'No'],
+        ['field' => 'super_admin', 'label' => 'Admin', 'value' => __('No')],
     ]);
 });
 
