@@ -71,7 +71,11 @@ final class ColumnFilterParser
             return;
         }
 
-        $query->where($field, $op ?? '=', (float) $value);
+        // Integral thresholds bind as int: PDO binds floats as strings, and SQLite
+        // compares json_extract() results (JSON-path columns) by type — a string
+        // would never match a JSON number.
+        $number = (float) $value;
+        $query->where($field, $op ?? '=', $number === (float) (int) $number ? (int) $number : $number);
     }
 
     private static function applyDate(Builder $query, string $field, string $raw): void

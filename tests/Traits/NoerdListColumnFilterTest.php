@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Helpers\TenantHelper;
@@ -16,6 +19,19 @@ uses(TestCase::class, RefreshDatabase::class);
 function filterListIds(mixed $component): array
 {
     return $component->instance()->visibleRowIds();
+}
+
+function createColumnFilterJsonItemsTable(): void
+{
+    if (Schema::hasTable('column_filter_json_items')) {
+        return;
+    }
+
+    Schema::create('column_filter_json_items', function (Blueprint $table): void {
+        $table->id();
+        $table->string('name');
+        $table->json('custom_attributes')->nullable();
+    });
 }
 
 it('filters a text column with a like match by default', function (): void {
@@ -107,13 +123,85 @@ it('ignores filters on columns not present in the list yaml', function (): void 
     expect(filterListIds($component))->toHaveCount(2);
 });
 
-it('ignores filters on dotted fields', function (): void {
+it('ignores filters on dotted fields without a json base column', function (): void {
     NoerdUser::factory()->count(2)->create();
 
     $component = Livewire::test(TestableColumnFilterListComponent::class)
         ->call('setColumnFilter', 'custom_attributes.color', 'rot');
 
     expect(filterListIds($component))->toHaveCount(2);
+});
+
+it('ignores filters on dotted fields whose base column is not json cast', function (): void {
+    NoerdUser::factory()->count(2)->create();
+
+    $component = Livewire::test(TestableColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'email.domain', 'example');
+
+    expect(filterListIds($component))->toHaveCount(2);
+});
+
+it('filters a custom attribute path with a like match by default', function (): void {
+    createColumnFilterJsonItemsTable();
+    $red = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['color' => 'dunkelrot']]);
+    ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['color' => 'blau']]);
+    ColumnFilterJsonItem::create(['name' => 'C', 'custom_attributes' => null]);
+
+    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'custom_attributes.color', 'rot');
+
+    expect(filterListIds($component))->toBe([$red->id]);
+});
+
+it('filters a custom attribute path with an exact match on =', function (): void {
+    createColumnFilterJsonItemsTable();
+    ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['color' => 'dunkelrot']]);
+    $exact = ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['color' => 'rot']]);
+
+    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'custom_attributes.color', '=rot');
+
+    expect(filterListIds($component))->toBe([$exact->id]);
+});
+
+it('filters a numeric custom attribute path with comparison operators', function (): void {
+    createColumnFilterJsonItemsTable();
+    $cheap = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['price' => 5]]);
+    $expensive = ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['price' => 20]]);
+
+    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'custom_attributes.price', '>10');
+
+    expect(filterListIds($component))->toBe([$expensive->id]);
+
+    $component->call('setColumnFilter', 'custom_attributes.price', '<=5');
+    expect(filterListIds($component))->toBe([$cheap->id]);
+});
+
+it('filters a badge custom attribute path by option value', function (): void {
+    createColumnFilterJsonItemsTable();
+    $weekly = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['cycle' => 'weekly']]);
+    ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['cycle' => 'monthly']]);
+
+    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'custom_attributes.cycle', 'weekly');
+
+    expect(filterListIds($component))->toBe([$weekly->id]);
+});
+
+it('exposes json custom attribute paths as filterable', function (): void {
+    createColumnFilterJsonItemsTable();
+    ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => []]);
+
+    $component = Livewire::test(TestableJsonColumnFilterListComponent::class);
+    $listConfig = $component->instance()->with()['listConfig'];
+
+    expect($listConfig['filterableColumns'])->toBe([
+        'name',
+        'custom_attributes.color',
+        'custom_attributes.price',
+        'custom_attributes.cycle',
+    ]);
 });
 
 it('persists column filters per component in the session and restores them', function (): void {
@@ -240,6 +328,19 @@ it('renders funnel buttons only for filterable columns', function (): void {
         ->not->toContain('column-filter-custom_attributes.color');
 });
 
+it('renders funnel buttons for json custom attribute columns', function (): void {
+    createColumnFilterJsonItemsTable();
+    $tenant = Tenant::factory()->create();
+    $user = NoerdUser::factory()->create();
+    TenantHelper::setSelectedTenantId($tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
+    test()->actingAs($user);
+
+    $html = Livewire::test(TestableJsonColumnFilterRenderComponent::class)->html();
+
+    expect($html)->toContain('column-filter-custom_attributes.color-');
+});
+
 it('renders no funnel buttons in compact mode', function (): void {
     $tenant = Tenant::factory()->create();
     $user = NoerdUser::factory()->create();
@@ -339,8 +440,83 @@ class TestableColumnFilterListComponent extends Component
                 ['field' => 'id', 'label' => 'Id'],
                 ['field' => 'created_at', 'label' => 'Created'],
                 ['field' => 'custom_attributes.color', 'label' => 'Color'],
+                ['field' => 'email.domain', 'label' => 'Domain'],
             ],
         ];
+    }
+}
+
+/**
+ * Model over a runtime-created table with a JSON custom_attributes column, so
+ * the JSON-path column filters can be exercised without touching real tables.
+ */
+class ColumnFilterJsonItem extends Model
+{
+    public $timestamps = false;
+
+    protected $table = 'column_filter_json_items';
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'custom_attributes' => 'array',
+    ];
+}
+
+/**
+ * List component over the JSON model: one plain column plus custom-attribute
+ * paths in every filterable flavour (text, number, badge with options).
+ */
+class TestableJsonColumnFilterListComponent extends Component
+{
+    use NoerdList;
+
+    public const COMPONENT = 'testable-json-column-filter-list';
+
+    public function with(): array
+    {
+        return [
+            'listConfig' => $this->buildList(
+                $this->listQuery(ColumnFilterJsonItem::class)->paginate($this->perPage),
+            ),
+        ];
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Testable Json Items',
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+                ['field' => 'custom_attributes.color', 'label' => 'Color'],
+                ['field' => 'custom_attributes.price', 'label' => 'Price', 'type' => 'number'],
+                [
+                    'field' => 'custom_attributes.cycle',
+                    'label' => 'Cycle',
+                    'type' => 'badge',
+                    'options' => [
+                        ['value' => 'weekly', 'label' => 'Weekly'],
+                        ['value' => 'monthly', 'label' => 'Monthly'],
+                    ],
+                ],
+            ],
+        ];
+    }
+}
+
+/**
+ * Same JSON list, but rendering the real list Blade so the header funnels appear.
+ */
+class TestableJsonColumnFilterRenderComponent extends TestableJsonColumnFilterListComponent
+{
+    public function render(): string
+    {
+        return '<div><x-noerd::list /></div>';
     }
 }
 

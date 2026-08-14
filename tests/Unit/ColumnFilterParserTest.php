@@ -64,7 +64,7 @@ it('applies text operators as direct comparisons', function (string $raw, string
     'string greater than' => ['>m', '>', 'm'],
 ]);
 
-it('applies number filters with the parsed operator', function (string $raw, string $operator, float $value): void {
+it('applies number filters with the parsed operator', function (string $raw, string $operator, int|float $value): void {
     $query = filterQuery();
     ColumnFilterParser::apply($query, 'amount', 'number', $raw);
 
@@ -73,9 +73,9 @@ it('applies number filters with the parsed operator', function (string $raw, str
         ->and($wheres[0]['operator'])->toBe($operator)
         ->and($wheres[0]['value'])->toBe($value);
 })->with([
-    'greater than zero' => ['>0', '>', 0.0],
-    'less or equal ten' => ['<=10', '<=', 10.0],
-    'plain number is exact' => ['5', '=', 5.0],
+    'greater than zero' => ['>0', '>', 0],
+    'less or equal ten' => ['<=10', '<=', 10],
+    'plain number is exact' => ['5', '=', 5],
     'comma decimal' => ['>=2,5', '>=', 2.5],
 ]);
 
