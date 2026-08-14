@@ -436,6 +436,61 @@ trait NoerdList
     }
 
     /**
+     * Active Excel-style column filters resolved for display in the list header:
+     * one chip per filter carrying the translated column label and a
+     * human-readable value (option labels for picklist/badge columns, Yes/No for
+     * booleans, the raw expression as typed otherwise).
+     *
+     * @return array<int, array{field: string, label: string, value: string}>
+     */
+    public function activeColumnFilterChips(): array
+    {
+        $active = array_filter(
+            $this->listColumnFilters,
+            fn($value): bool => is_string($value) && mb_trim($value) !== '',
+        );
+
+        if ($active === []) {
+            return [];
+        }
+
+        $columns = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->filter(fn($column): bool => isset($column['field']))
+            ->keyBy('field');
+        $picklistOptions = $this->picklistOptionsFromDetail();
+        $schemaTypes = $this->resolvedModelClass !== null
+            ? $this->schemaColumnTypeMap((new $this->resolvedModelClass())->getTable())
+            : [];
+
+        $chips = [];
+        foreach ($active as $field => $raw) {
+            $column = $columns->get($field, []);
+            $type = $column['type'] ?? $schemaTypes[$field] ?? null;
+            $options = $column['options'] ?? $picklistOptions[$field] ?? [];
+
+            $value = mb_trim($raw);
+            if (in_array($type, ['bool', 'boolean', 'inversebool'], true)) {
+                $value = $value === '1' ? __('Yes') : __('No');
+            } else {
+                foreach ($options as $option) {
+                    if ((string) ($option['value'] ?? '') === $value) {
+                        $value = __($option['label'] ?? $value);
+                        break;
+                    }
+                }
+            }
+
+            $chips[] = [
+                'field' => $field,
+                'label' => __($column['label'] ?? $field),
+                'value' => $value,
+            ];
+        }
+
+        return $chips;
+    }
+
+    /**
      * Open a row by its POSITION in the current page — the keyboard path only
      * (arrow keys track a positional index, Enter submits it). Resolving the
      * position costs a full listData() round; mouse clicks know the model id

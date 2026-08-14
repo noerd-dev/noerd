@@ -50,10 +50,10 @@
         </div>
 
         @php
-            $columnFiltersActive = collect($this->listColumnFilters ?? [])->filter()->isNotEmpty();
+            $activeColumnFilterChips = $this->activeColumnFilterChips();
         @endphp
-        @if ($this->tableFilters() || $columnFiltersActive)
-            <div class="ml-4 flex items-center">
+        @if ($this->tableFilters() || $activeColumnFilterChips !== [])
+            <div class="ml-4 flex flex-wrap items-center gap-1">
                 @foreach ($this->tableFilters() as $tableFilter)
                     @if (in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
                         <x-noerd::filters.date-dropdown
@@ -67,7 +67,24 @@
                         />
                     @endif
                 @endforeach
-                @if (collect($this->listFilters)->filter()->isNotEmpty() || $columnFiltersActive)
+                @foreach ($activeColumnFilterChips as $filterChip)
+                    <span
+                        wire:key="column-filter-chip-{{ $filterChip['field'] }}"
+                        class="flex items-center gap-1 rounded-full bg-gray-100 py-0.5 pr-1 pl-2.5 text-xs font-normal whitespace-nowrap text-gray-700"
+                    >
+                        <span class="font-medium">{{ $filterChip['label'] }}:</span>
+                        {{ $filterChip['value'] }}
+                        <button
+                            type="button"
+                            wire:click="clearColumnFilter('{{ $filterChip['field'] }}')"
+                            title="{{ __('Clear filter') }}"
+                            class="rounded-full p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                        >
+                            <x-dynamic-component component="heroicons::mini.solid.x-mark" class="size-3" />
+                        </button>
+                    </span>
+                @endforeach
+                @if (collect($this->listFilters)->filter()->isNotEmpty() || count($activeColumnFilterChips) > 1)
                     <x-noerd::button
                         variant="icon"
                         size="sm"
@@ -75,7 +92,6 @@
                         type="button"
                         wire:click="clearAllListFilters"
                         :title="__('Clear all filters')"
-                        class="-ml-3"
                     />
                 @endif
             </div>
