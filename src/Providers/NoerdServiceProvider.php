@@ -29,6 +29,7 @@ use Noerd\Commands\MakeUserAdmin;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
+use Noerd\Commands\NoerdUpdateAllCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Contracts\MediaResolverContract;
@@ -292,6 +293,7 @@ class NoerdServiceProvider extends ServiceProvider
                 NoerdInfoCommand::class,
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,
+                NoerdUpdateAllCommand::class,
                 CreateTenantApp::class,
                 AssignAppsToTenant::class,
                 MakeModuleCommand::class,
