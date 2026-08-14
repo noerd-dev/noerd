@@ -40,11 +40,28 @@ A column is filterable when it is declared in the list YAML `columns`, is not `a
 - The header "Clear all filters" button (`clearAllListFilters()`) clears the column filters too; each popover also offers a per-column clear
 - CSV export respects active column filters when the export query builds on `listQuery()`
 
+### Header chips
+
+Every active column filter renders as a chip next to the list title, so the user always sees WHICH
+field is filtered by WHICH value — e.g. `PLZ: 95028 ✕`. Each chip carries its own ✕ that clears
+exactly that filter (`clearColumnFilter()`). The global "Clear all filters" ✕ only appears when more
+than one chip is active or header `listFilters` are set on top — with a single chip its own ✕ suffices.
+
+The chip resolves both parts for display via `NoerdList::activeColumnFilterChips()`:
+
+- **Label**: the column's translated `label` from the list YAML (falls back to the field name)
+- **Value**: bool columns show Yes/No instead of `1`/`0`; picklist/badge columns show the translated
+  option label (from the list column's own `options` or the paired detail YAML, same resolution as
+  the badge cells); everything else shows the expression as typed (`>=10`, `=Rot`, …)
+
+The type resolution (explicit YAML type → DB schema type) mirrors `applyColumnFilters()`, so a chip
+always describes the filter the query actually applies.
+
 ### Architecture
 
 - Expression parsing + query application: `Noerd\Services\ColumnFilterParser` (fixed operator set, values only ever bound as parameters — user input never reaches SQL text)
 - State + whitelist: `NoerdList::$listColumnFilters`, `setColumnFilter()`, `clearColumnFilter()`, `filterableColumnFields()`, `applyColumnFilters()` (hooked inside `listQuery()`)
-- Header UI: `noerd::components.table.column-filter`, included from `table-sort.blade.php`
+- Header UI: `noerd::components.table.column-filter`, included from `table-sort.blade.php`; active-filter chips: `NoerdList::activeColumnFilterChips()`, rendered in `noerd::components.table.list-header`
 - Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Traits/NoerdListColumnFilterTest.php`
 
 ## How Filters Work

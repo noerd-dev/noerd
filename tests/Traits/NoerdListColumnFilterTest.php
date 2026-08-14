@@ -252,6 +252,59 @@ it('renders no funnel buttons in compact mode', function (): void {
     expect($html)->not->toContain('column-filter-name-');
 });
 
+it('resolves active column filters into labeled header chips', function (): void {
+    NoerdUser::factory()->create(['name' => 'Rotkohl', 'super_admin' => true]);
+
+    $component = Livewire::test(TestableColumnFilterChipListComponent::class)
+        ->call('setColumnFilter', 'name', 'rot')
+        ->call('setColumnFilter', 'super_admin', '1')
+        ->call('setColumnFilter', 'email', 'open@example.com');
+
+    filterListIds($component);
+
+    expect($component->instance()->activeColumnFilterChips())->toBe([
+        ['field' => 'name', 'label' => 'Name', 'value' => 'rot'],
+        ['field' => 'super_admin', 'label' => 'Admin', 'value' => 'Yes'],
+        ['field' => 'email', 'label' => 'Status', 'value' => 'Open'],
+    ]);
+});
+
+it('resolves a bool zero filter chip to No', function (): void {
+    NoerdUser::factory()->create(['super_admin' => false]);
+
+    $component = Livewire::test(TestableColumnFilterChipListComponent::class)
+        ->call('setColumnFilter', 'super_admin', '0');
+
+    filterListIds($component);
+
+    expect($component->instance()->activeColumnFilterChips())->toBe([
+        ['field' => 'super_admin', 'label' => 'Admin', 'value' => 'No'],
+    ]);
+});
+
+it('returns no chips without active column filters', function (): void {
+    NoerdUser::factory()->create();
+
+    $component = Livewire::test(TestableColumnFilterChipListComponent::class);
+
+    expect($component->instance()->activeColumnFilterChips())->toBe([]);
+});
+
+it('renders active column filter chips in the list header', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = NoerdUser::factory()->create();
+    TenantHelper::setSelectedTenantId($tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
+    test()->actingAs($user);
+
+    $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
+        ->call('setColumnFilter', 'name', 'rot')
+        ->html();
+
+    expect($html)->toContain('column-filter-chip-name')
+        ->toContain('clearColumnFilter');
+});
+
 /**
  * List component with an inline YAML config over the noerd_users table.
  */
@@ -299,5 +352,45 @@ class TestableColumnFilterRenderComponent extends TestableColumnFilterListCompon
     public function render(): string
     {
         return '<div><x-noerd::list /></div>';
+    }
+}
+
+/**
+ * Same list wrapped in the page component, so the header slot (and with it the
+ * filter chips) actually renders.
+ */
+class TestableColumnFilterPageRenderComponent extends TestableColumnFilterListComponent
+{
+    public function render(): string
+    {
+        return '<div><x-noerd::page><x-noerd::list /></x-noerd::page></div>';
+    }
+}
+
+/**
+ * Synthetic config exercising every chip value resolution: plain text, an
+ * auto-typed bool column and a badge column with inline options.
+ */
+class TestableColumnFilterChipListComponent extends TestableColumnFilterListComponent
+{
+    public const COMPONENT = 'testable-column-filter-chip-list';
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Testable Users',
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+                ['field' => 'super_admin', 'label' => 'Admin'],
+                [
+                    'field' => 'email',
+                    'label' => 'Status',
+                    'type' => 'badge',
+                    'options' => [
+                        ['value' => 'open@example.com', 'label' => 'Open'],
+                    ],
+                ],
+            ],
+        ];
     }
 }
