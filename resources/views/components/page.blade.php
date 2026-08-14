@@ -11,6 +11,19 @@
     // hiding the buttons alone would leave ctrl+enter / ctrl+backspace live.
     $pageComponent = $__livewire ?? null;
     $pageObjectReadBlocked = $pageComponent?->objectReadBlocked ?? false;
+
+    // YAML detail actions render automatically as the first child of the scroll
+    // container; a blade opts out via <x-noerd::page :detailActions="false">.
+    $detailActions ??= true;
+    $pageDetailActionsLayout = $detailActions
+        && $pageComponent
+        && property_exists($pageComponent, 'pageLayout')
+        && ! ($pageComponent->quickCreate ?? false)
+        ? $pageComponent->pageLayout
+        : [];
+    $pageDetailActionUrls = $pageComponent && method_exists($pageComponent, 'detailActionUrls')
+        ? $pageComponent->detailActionUrls()
+        : [];
     $canWriteObject = ! $pageComponent
         || ! method_exists($pageComponent, 'canWriteObject')
         || $pageComponent->canWriteObject();
@@ -64,7 +77,12 @@
         {{ $header ?? '' }}
         {{ $table ?? '' }}
 
-        <div class="flex-1 min-h-0 px-6 overflow-y-auto{{ $hasCurrentTab ? ' flex flex-col' : '' }}">{{ $slot }}</div>
+        <div class="flex-1 min-h-0 px-6 overflow-y-auto{{ $hasCurrentTab ? ' flex flex-col' : '' }}">
+            @if (! empty($pageDetailActionsLayout['actions']))
+                <x-noerd::detail-actions :layout="$pageDetailActionsLayout" :modelId="$pageComponent->modelId ?? null" :urls="$pageDetailActionUrls" />
+            @endif
+            {{ $slot }}
+        </div>
 
         @isset($footer)
             <div class="z-50 flex w-full border-t border-gray-300 px-8 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
