@@ -4,7 +4,7 @@ Header actions let a module contribute small Livewire components to the header o
 
 ## Concept
 
-- **Separate slots for lists and details.** The registry keeps two independent lists: list actions render in the list header (`list-header`), detail actions render in the detail header (`modal-title`). An action that should appear in both contexts must be registered twice — there is no shared slot.
+- **Separate slots for lists and details.** The registry keeps two independent lists: list actions render in the list header controls (injected by `modal-title` via `table/list-controls` for every `NoerdList` host — including custom header slots), detail actions render in the detail header (`modal-title`). An action that should appear in both contexts must be registered twice — there is no shared slot.
 - **One action, one function, one Livewire component.** Every action is its own minimal Livewire component. It renders exactly one button (or nothing) and contains no logic for the other context.
 - **Actions own their visibility.** The core always mounts every registered action. The action itself decides in `mount()` whether it has something to show (permissions, current app, available configuration) and renders an empty root when hidden.
 

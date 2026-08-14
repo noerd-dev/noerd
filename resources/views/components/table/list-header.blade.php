@@ -1,5 +1,9 @@
 <x-slot:header>
-    <x-noerd::modal-title>
+    {{-- The controls (search, CSV, registry list actions, YAML action buttons)
+         are injected generically by modal-title for every NoerdList host —
+         this file only contributes the title, count, view switcher and the
+         filter chips. Relations are forwarded for YAML `action:` buttons. --}}
+    <x-noerd::modal-title :listRelations="$relations ?? []">
         <div class="pb-3 lg:pb-0">
             @if (count($listViews ?? []) > 1)
                 {{-- List-view switcher: pick one of several YAML views for this list --}}
@@ -97,140 +101,5 @@
             </div>
         @endif
 
-        @php
-            $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', 's');
-        @endphp
-
-        @php $showCsvExport = $this->enableCsvExport ?? false; @endphp
-
-        @php
-            // Action buttons are only rendered for non-picker lists. When they are absent
-            // (no actions, or picker/returnsSelection mode), the search must carry the modal
-            // controls offset itself so it doesn't slide under the close/fullscreen buttons.
-            $actionsRendered = !empty($actions) && !($this->returnsSelection ?? false);
-        @endphp
-
-        @if ((isset($disableSearch) && !$disableSearch) || $showCsvExport)
-            <div
-                @unless ($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
-                class="mr-2 ml-auto flex items-center gap-2"
-            >
-                @if ($showCsvExport)
-                    <x-noerd::button
-                        variant="secondary"
-                        icon="arrow-down-tray"
-                        class="h-8"
-                        title="{{ __('Export CSV') }}"
-                        wire:click="exportCsv"
-                    >
-                        CSV
-                    </x-noerd::button>
-                @endif
-                @if (isset($disableSearch) && !$disableSearch)
-                    <div
-                        x-data="{ searchFocused: false }"
-                        @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }"
-                    >
-                        <div class="relative">
-                            <x-noerd::text-input
-                                x-ref="searchInput"
-                                @focus="searchFocused = true"
-                                @blur="searchFocused = false"
-                                @keydown.escape="$refs.searchInput.blur()"
-                                placeholder="{{ __('Search') }}"
-                                wire:model.live="search"
-                                type="text"
-                                class="!mt-0 mb-3 h-8 min-w-[200px] pr-8 lg:mb-0"
-                            />
-                            <kbd
-                                x-show="! searchFocused"
-                                x-transition:enter="transition ease-out duration-100"
-                                x-transition:enter-start="opacity-0"
-                                x-transition:enter-end="opacity-100"
-                                x-transition:leave="transition ease-in duration-75"
-                                x-transition:leave-start="opacity-100"
-                                x-transition:leave-end="opacity-0"
-                                class="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500"
-                            >{{ $searchShortcut['badge'] }}</kbd>
-                        </div>
-                    </div>
-                @endif
-            </div>
-        @else
-            <div class="ml-auto"></div>
-        @endif
-        @unless ($this->returnsSelection ?? false)
-            @php
-                $listHeaderActions = app(\Noerd\Services\HeaderActionsRegistry::class)->listActions();
-            @endphp
-            @if ($listHeaderActions !== [])
-                {{-- Collapses when every action hid itself: the children are
-                     server-rendered before Alpine initializes, so probing for a
-                     button is reliable. Without this an empty wrapper would still
-                     carry its mr-2/modalControlsClass margins. --}}
-                <div
-                    x-data="{ hasActions: false }"
-                    x-init="hasActions = $el.querySelector('button') !== null"
-                    x-show="hasActions"
-                    x-cloak
-                    @unless ($actionsRendered) :class="isModal ? modalControlsClass : ''" @endunless
-                    class="mr-2 flex shrink-0 items-center gap-2"
-                >
-                    @foreach ($listHeaderActions as $listHeaderAction)
-                        @livewire($listHeaderAction, [
-                            'model' => $this->listModel ?? null,
-                            'component' => $this->getComponentName(),
-                        ], key('list-header-action-' . $listHeaderAction))
-                    @endforeach
-                </div>
-            @endif
-        @endunless
-        @if (!empty($actions) && !($this->returnsSelection ?? false))
-            <div :class="isModal ? modalControlsClass : ''" class="flex gap-2">
-                @foreach ($actions as $actionIndex => $actionItem)
-                    @php
-                        $isSecondary = ($actionItem['style'] ?? '') === 'secondary';
-                        $effectiveShortcut = $actionItem['shortcut']
-                            ?? ($actionIndex === 0 ? 'n' : null);
-                        $hasShortcut = $effectiveShortcut !== null;
-                        $shortcut = $hasShortcut
-                            ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
-                            : null;
-                        // An action either opens a named Livewire route as a modal
-                        // (route:) or calls a method on the list component (action:).
-                        $clickExpression = isset($actionItem['route'])
-                            ? '$modalRoute(' . Js::from($actionItem['route']) . ', ' . Js::from($actionItem['arguments'] ?? []) . ')'
-                            : '$wire.' . $actionItem['action'] . '(null, ' . Js::from($relations ?? []) . ')';
-                    @endphp
-                    @if ($hasShortcut)
-                        <div
-                            x-data
-                            @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }"
-                        >
-                    @else
-                        <div>
-                    @endif
-                    <x-noerd::button
-                        :variant="$isSecondary ? 'secondary' : 'primary'"
-                        :icon="$actionItem['heroicon'] ?? ($isSecondary ? null : 'plus')"
-                        x-ref="actionBtn{{ $actionIndex }}"
-                        class="relative h-8"
-                        @click.prevent="{{ $clickExpression }}"
-                    >
-                        {{ __($actionItem['label']) }}
-                        @if ($hasShortcut)
-                            <kbd
-                                @class([
-                                    'ml-2 rounded px-1 py-0.5 text-xs',
-                                    'border border-gray-300 bg-gray-100 text-gray-500' => $isSecondary,
-                                    'border border-white/30 bg-white/20 text-brand-primary-text' => !$isSecondary,
-                                ])
-                            >{{ $shortcut['badge'] }}</kbd>
-                        @endif
-                    </x-noerd::button>
-                    </div>
-                @endforeach
-            </div>
-        @endif
     </x-noerd::modal-title>
 </x-slot:header>

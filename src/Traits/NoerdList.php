@@ -175,6 +175,9 @@ trait NoerdList
     /** @var array<int, string>|null Request cache for filterableColumnFields(). */
     protected ?array $filterableColumnCache = null;
 
+    /** @var array<string, mixed>|null Last buildList() result, memoized per request. */
+    protected ?array $builtListConfigCache = null;
+
     private static array $schemaColumnCache = [];
 
     /**
@@ -748,6 +751,20 @@ trait NoerdList
     }
 
     /**
+     * The buildList() result, computed at most once per request. The header
+     * chrome (modal-title's generic list controls) and the list body both read
+     * this — for with()-style components Livewire evaluates with() before the
+     * view renders, so the cache is already populated when a custom header
+     * slot executes; slim components compute it lazily here.
+     *
+     * @return array<string, mixed>
+     */
+    public function builtListConfig(): array
+    {
+        return $this->builtListConfigCache ??= $this->resolvedListConfig();
+    }
+
+    /**
      * The list config regardless of the component's style: lists declaring
      * $listModel build it via listData(), lists with a custom with() already
      * return it as view data. Lets generic trait features (row click, select-all,
@@ -1126,7 +1143,7 @@ trait NoerdList
             ));
         }
 
-        return [
+        return $this->builtListConfigCache = [
             'listId' => $this->listId,
             'sortField' => $this->sortField,
             'sortAsc' => $this->sortAsc,

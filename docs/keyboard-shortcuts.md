@@ -20,7 +20,7 @@ Format: `'modifier+key'` — e.g. `'s'`, `'/'`, `'ctrl+enter'`, `'shift+k'`. Sup
 
 | Config key | Default | What it does | Where it applies |
 |------------|---------|--------------|------------------|
-| `search_focus` | `s` | Focuses the search input | Every list header (`x-noerd::table.list-header`); Escape blurs the field again |
+| `search_focus` | `s` | Focuses the search input | Every list header (`noerd::components.table.list-controls`, injected by `modal-title`); Escape blurs the field again |
 | `new_entry` | `n` | Triggers the first action button (the "New …" button) | Every list header — see the note on per-action keys below |
 | `save` | `ctrl+enter` | Calls `store()` on the open detail/page | Every `x-noerd::page` whose component has a `store()` method |
 | `delete` | `ctrl+backspace` | Asks for confirmation, then calls `delete()` | Every `x-noerd::page` whose component has a `delete()` method |
@@ -70,8 +70,8 @@ e.key.toLowerCase() === "enter" && (e.ctrlKey || e.metaKey)
 
 ### Lists (helper-driven)
 
-The list header (`app-modules/noerd/resources/views/components/table/list-header.blade.php`) is
-the reference consumer — one `parse()` call feeds both the window listener and the `<kbd>` badge:
+The list header controls (`app-modules/noerd/resources/views/components/table/list-controls.blade.php`)
+are the reference consumer — one `parse()` call feeds both the window listener and the `<kbd>` badge:
 
 ```blade
 @php

@@ -309,6 +309,20 @@ actions:
 - Buttons are displayed side by side
 - No `actions` key means no button is rendered
 
+**Where the controls render (generic injection):** the header controls — search, CSV export,
+registry list actions and the YAML action buttons — are injected by `x-noerd::modal-title`
+(`noerd::components.table.list-controls`) for EVERY component using the `NoerdList` trait. This
+covers the standard list header (`list-header` contributes only title, count, view switcher and
+filter chips) AND components with their own custom `<x-slot:header>` (e.g. a list nested in tab
+panels like the object manager): wrap the custom title in `<x-noerd::modal-title>` and the
+controls appear top right automatically — never hand-roll a search field or action buttons in a
+list header. Two props on `x-noerd::modal-title` tune the injection:
+
+| Prop | Description |
+|------|-------------|
+| `:listControls="false"` | Suppresses the injection (for headers without a real list behind them) |
+| `listControlsShow` | Alpine expression gating the controls' visibility, e.g. `currentTab === 2` |
+
 **Standard single action (most common):**
 
 ```yaml
