@@ -76,6 +76,8 @@ columns:
 | `bulkActions` | Array of bulk-action buttons shown when one or more rows are selected (see Multi-Select & Bulk Actions below) |
 | `searchableColumns` | Restrict the search to specific fields (see [List Search](list-search.md)) |
 | `notSortableColumns` | Fields whose header must not be sortable (see [List Search](list-search.md)) |
+| `displayMode` | `table` (default) or `grid` — render the rows as a card grid instead of a table (see Grid Mode below) |
+| `gridColumns` | Cards per row in grid mode at the largest breakpoint, `1`–`6` (default: `4`) |
 | `columns` | Array of column definitions |
 
 ## Column Properties
@@ -610,6 +612,56 @@ protected function prepareCsvExport(): array
 - `formatCsvValue($value, $column)` formats each cell by column type (`bool` → Yes/No, `badge` →
   the translated option label, dates/currency accordingly) — override it for custom formats
 - `prepareExportRow($row)` is an optional per-row hook (e.g. to eager-compute accessors)
+
+## Grid Mode (Card Layout)
+
+Any list can render its rows as a **card grid** instead of the table — purely through the list
+YAML, with zero changes to the component's Blade file:
+
+```yaml
+title: POS
+description: Select a customer to start a new order.
+displayMode: grid
+gridColumns: 4
+columns:
+  - field: name
+    label: Name
+  - field: company_name
+    label: Company
+  - field: city
+    label: City
+searchableColumns:
+  - name
+  - company_name
+  - city
+```
+
+Grid mode swaps only the rows block (`noerd::components.list.grid`) — the list header (title,
+search, view switcher, actions, filter chips), the pagination footer, the picker/bulk footers and
+the object-permission handling stay exactly as in table mode.
+
+**Card content** is derived from the `columns` array: the first column with a non-empty value
+renders as the bold card title, every remaining column as a secondary line; empty values are
+skipped entirely (so a missing `name` falls through to the next column as the title). Column types
+are honored like in minimal mode: `currency`, `date`, `datetime`, `bool` are formatted, `badge`
+renders as a translated pill; everything else renders as text (`data_get`, so dotted fields work).
+
+**Cards per row**: `gridColumns` (`1`–`6`, default `4`) sets the count at the largest breakpoint;
+smaller viewports collapse responsively (1 column on mobile, 2 from `sm`, 3 from `lg`). The classes
+come from a static map — Tailwind cannot generate class names at runtime, so only these values are
+supported; an unknown value falls back to `4`.
+
+**Row click** behaves exactly like a table row click (`openListRow` → `$detailRoute` /
+`$detailComponent`, or a custom `listAction()` override), including the keyboard navigation
+(arrow keys + Enter) and picker mode. In `multiSelect` mode each card gets a checkbox in its
+top-right corner wired to `toggleRecordSelection`.
+
+**Not rendered in grid mode** (thead-only features): column sort headers (the default sort from
+`setDefaultSort()` still applies), the Excel-style column-filter funnels (active filters still
+apply to the query and stay visible/clearable via the header filter chips), the select-all
+checkbox, `showLineNumbers` and the summary footer.
+
+A list mounted as a **minimal widget** ignores `displayMode` — minimal mode takes precedence.
 
 ## Minimal Mode (List Widgets)
 
