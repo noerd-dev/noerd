@@ -5,9 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         if (Schema::hasTable('noerd_settings')) {
@@ -18,13 +15,12 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('tenant_id')->unique()->constrained('tenants')->cascadeOnDelete();
             $table->string('currency')->default('EUR');
+            $table->string('detail_theme')->nullable();
+            $table->boolean('detail_theme_enforced')->default(false);
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('noerd_settings');
