@@ -380,5 +380,7 @@
     "No": "Nein",
     "e.g. >0 or <=10": "z. B. >0 oder <=10",
     "e.g. >=2026-01-01": "z. B. >=2026-01-01",
-    "e.g. =value or text": "z. B. =Wert oder Text"
+    "e.g. =value or text": "z. B. =Wert oder Text",
+    "Call": "Anrufen",
+    "Send email": "E-Mail senden"
 }

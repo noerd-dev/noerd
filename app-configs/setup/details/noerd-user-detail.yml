@@ -3,7 +3,7 @@ description: ''
 fields:
   - name: detailData.email
     label: Email
-    type: text
+    type: email
   - name: detailData.name
     label: Name
     type: text

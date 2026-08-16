@@ -26,7 +26,13 @@ fields:
     colspan: 6
     required: true
 
-  # text (email) - Email input
+  # phone - Phone input with tel: call button
+  - name: detailData.phone
+    label: Phone
+    type: phone
+    colspan: 6
+
+  # email - Email input with mailto: button
   - name: detailData.email
     label: Email
     type: email
@@ -289,7 +295,9 @@ fields:
 
 | Type | Description | Component |
 |------|-------------|-----------|
-| `text` | Standard text input (also email, number, date, time, datetime-local) | `input.blade.php` |
+| `text` | Standard text input (also number, date, time, datetime-local) | `input.blade.php` |
+| `phone` | Phone input with a `tel:` call button (opens the local phone app, e.g. FaceTime) | `phone.blade.php` |
+| `email` | Email input with a `mailto:` button (opens the local mail client) | `email.blade.php` |
 | `currency` | Amount input formatted with the tenant's currency (symbol, separators) | `input-currency.blade.php` |
 | `colorHex` | Color picker with HEX value | `color-hex.blade.php` |
 | `textarea` | Multi-line text field | `input-textarea.blade.php` |
@@ -312,7 +320,7 @@ fields:
 | `block` | Container for nested fields | (in `block.blade.php`) |
 
 **Fallback behavior:** A `type` that is not registered (and does not end in `Relation`) renders as
-a generic HTML input with that type attribute — this is how `email`, `number`, `date`, `time` and
+a generic HTML input with that type attribute — this is how `number`, `date`, `time` and
 `datetime-local` work. Unregistered `*Relation` types throw instead (see
 [Relation Field Types](relation-field-types.md)).
 
@@ -359,13 +367,13 @@ field type in every theme (`default`, `compact`, `numbered`).
 
 ### text
 
-Standard text input field. Also handles HTML5 input types like `email`, `number`, `date`, `time`, and `datetime-local`.
+Standard text input field. Also handles HTML5 input types like `number`, `date`, `time`, and `datetime-local`.
 
 **Options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `type` | string | `text` | Input type: `text`, `email`, `number`, `date`, `time`, `datetime-local` |
+| `type` | string | `text` | Input type: `text`, `number`, `date`, `time`, `datetime-local` |
 | `readonly` | bool | `false` | Make field read-only |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
@@ -378,13 +386,6 @@ Standard text input field. Also handles HTML5 input types like `email`, `number`
   label: Name
   type: text
   colspan: 6
-
-# Email field
-- name: detailData.email
-  label: Email
-  type: email
-  colspan: 6
-  required: true
 
 # Number field
 - name: detailData.quantity
@@ -422,6 +423,48 @@ Standard text input field. Also handles HTML5 input types like `email`, `number`
 **Notes:**
 - `date` type automatically truncates datetime values to date only (YYYY-MM-DD)
 - `time` type automatically truncates to HH:MM format
+
+---
+
+### phone
+
+Phone input (`<input type="tel">`) with a trailing call button that opens `tel:{number}` via the
+local phone app (e.g. FaceTime on macOS). The link always uses the CURRENT input value — edited
+but unsaved values included — and strips all formatting except digits and a leading `+`
+(`+49 (0)171 / 123-456` → `tel:+490171123456`). The button is hidden while the field is empty and
+stays clickable on read-only fields (calling is a read action).
+
+**YAML Example:**
+
+```yaml
+- name: detailData.phone
+  label: Phone
+  type: phone
+  colspan: 6
+```
+
+---
+
+### email
+
+Email input (`<input type="email">`) with a trailing button that opens `mailto:{address}` in the
+local mail client (e.g. Apple Mail on macOS). The link always uses the CURRENT input value —
+edited but unsaved values included. The button is hidden while the field is empty and stays
+clickable on read-only fields.
+
+`email` used to be an unregistered fallback type rendering a plain HTML email input; it is now a
+registered field type, so existing YAMLs with `type: email` get the mailto button automatically —
+no configuration change needed.
+
+**YAML Example:**
+
+```yaml
+- name: detailData.email
+  label: Email
+  type: email
+  colspan: 6
+  required: true
+```
 
 ---
 
