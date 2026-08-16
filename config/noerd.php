@@ -13,6 +13,24 @@
 */
 
 return [
+    'auth' => [
+        // Guard noerd registers and authenticates against. Set to 'web' to
+        // restore the legacy behavior (host default guard).
+        'guard' => env('NOERD_AUTH_GUARD', 'noerd'),
+
+        // Authenticatable model backing the noerd user provider.
+        'model' => env('NOERD_AUTH_MODEL', Noerd\Models\NoerdUser::class),
+
+        // Provider / password-broker names registered into auth.providers
+        // and auth.passwords at runtime (skipped when the host defines them).
+        'provider' => 'noerd_users',
+        'passwords' => 'noerd_users',
+
+        // When true, noerd also becomes the app's DEFAULT guard at runtime —
+        // escape hatch for hosts with unmigrated bare-'auth' routes.
+        'set_as_default' => env('NOERD_AUTH_DEFAULT', false),
+    ],
+
     'features' => [
         'multi_tenant' => env('NOERD_MULTI_TENANT', true),
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),

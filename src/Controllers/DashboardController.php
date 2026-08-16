@@ -4,12 +4,13 @@ namespace Noerd\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\NoerdAuth;
 
 class DashboardController
 {
     public function __invoke(): RedirectResponse
     {
-        $route = auth()->user()->selectedTenant()?->tenantApps
+        $route = NoerdAuth::user()->selectedTenant()?->tenantApps
             ->first(fn($tenantApp) => AccessHelper::canAccessApp($tenantApp->name))
             ?->route;
 

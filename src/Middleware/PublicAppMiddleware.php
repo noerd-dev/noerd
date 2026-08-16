@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\TenantApp;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +38,7 @@ class PublicAppMiddleware
             return $next($request);
         }
 
-        $user = auth()->user();
+        $user = NoerdAuth::user();
 
         if (!$user) {
             return redirect('/login');

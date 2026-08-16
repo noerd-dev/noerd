@@ -3,12 +3,19 @@
 namespace Noerd\Listeners;
 
 use Illuminate\Auth\Events\Login;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 
 class InitializeTenantSession
 {
     public function handle(Login $event): void
     {
+        // The Login event fires for every guard — only react to noerd logins
+        // (a host or website-guard user has no noerd tenant session).
+        if ($event->guard !== NoerdAuth::guardName()) {
+            return;
+        }
+
         $user = $event->user;
 
         if (! TenantHelper::hasTenant()) {

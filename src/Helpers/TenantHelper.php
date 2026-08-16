@@ -32,8 +32,8 @@ class TenantHelper
     {
         session(['noerd.selected_tenant_id' => $tenantId]);
 
-        if (auth()->check()) {
-            auth()->user()->setting->update(['selected_tenant_id' => $tenantId]);
+        if (NoerdAuth::check()) {
+            NoerdAuth::user()->setting->update(['selected_tenant_id' => $tenantId]);
         }
     }
 

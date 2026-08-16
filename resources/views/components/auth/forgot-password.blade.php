@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 
 new #[Layout('noerd::layouts.auth')] class extends Component {
     public string $email = '';
@@ -16,7 +16,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
             'email' => ['required', 'string', 'email'],
         ]);
 
-        Password::sendResetLink(['email' => $this->email]);
+        NoerdAuth::broker()->sendResetLink(['email' => $this->email]);
 
         session()->flash('status', __('A reset link will be sent if the account exists.'));
     }

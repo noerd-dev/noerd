@@ -90,6 +90,7 @@ class NoerdInstallCommand extends Command
 
             $this->info('Noerd content successfully installed!');
             $this->newLine();
+            $this->line('Noerd registers its own "noerd" auth guard at runtime — config/auth.php and .env were not modified.');
             $this->line('Visit your application at: <info>' . url('/noerd-apps') . '</info>');
 
             return 0;
@@ -197,9 +198,6 @@ class NoerdInstallCommand extends Command
 
             // Create tailwind.config.js
             $this->createTailwindConfig();
-
-            // Update auth configuration
-            $this->updateAuthConfig();
 
             // Update Livewire component layout
             $this->updateLivewireConfig();
@@ -334,53 +332,6 @@ export default {
 
         file_put_contents($configPath, $configContent);
         $this->line('<info>Created tailwind.config.js.</info>');
-    }
-
-    /**
-     * Update .env file to set AUTH_MODEL to Noerd User model and install Breeze
-     */
-    protected function updateAuthConfig(): void
-    {
-        // Set AUTH_MODEL in .env
-        $this->setAuthModelEnv();
-    }
-
-    /**
-     * Set AUTH_MODEL in the .env and .env.example files
-     */
-    protected function setAuthModelEnv(): void
-    {
-        foreach (['.env', '.env.example'] as $envFile) {
-            $this->addAuthModelToEnvFile($envFile);
-        }
-    }
-
-    /**
-     * Add AUTH_MODEL to a single env file if it is missing
-     */
-    protected function addAuthModelToEnvFile(string $envFile): void
-    {
-        $envPath = base_path($envFile);
-
-        if (!file_exists($envPath)) {
-            $this->warn("{$envFile} file not found, skipping AUTH_MODEL configuration.");
-            return;
-        }
-
-        $envContent = file_get_contents($envPath);
-
-        if (preg_match('/^AUTH_MODEL=/m', $envContent)) {
-            $this->line("<comment>AUTH_MODEL already configured in {$envFile} file.</comment>");
-            return;
-        }
-
-        $authModelLine = "\nAUTH_MODEL=Noerd\\Models\\NoerdUser\n";
-
-        if (file_put_contents($envPath, $envContent . $authModelLine) !== false) {
-            $this->line("<info>Added AUTH_MODEL to {$envFile} file.</info>");
-        } else {
-            $this->warn("Failed to update {$envFile} file. Please manually add: AUTH_MODEL=Noerd\\Models\\NoerdUser");
-        }
     }
 
     /**

@@ -49,7 +49,7 @@ class CurrencyHelper
 
     public static function configForTenant(?int $tenantId = null): array
     {
-        $tenantId ??= auth()->user()?->selected_tenant_id;
+        $tenantId ??= NoerdAuth::user()?->selected_tenant_id;
 
         if ($tenantId === null) {
             return config('noerd.currency', self::CURRENCY_PRESETS['EUR']);

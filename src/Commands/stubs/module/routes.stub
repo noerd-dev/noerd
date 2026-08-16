@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('{{module-name}}')
     ->as('{{module-name}}.')
-    ->middleware(['web', 'auth', 'verified'])
+    ->middleware(['noerd'])
     ->group(function (): void {
         Route::livewire('/', '{{models}}-list')->name('index');
     });

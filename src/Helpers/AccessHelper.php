@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\Gate;
  *
  * Gate closures MUST accept a nullable user (`?Authenticatable $user`):
  * some call sites (public apps, config discovery) run for guests, and a
- * non-nullable closure would silently deny them. Note that the Gate resolves
- * the user from the default auth guard.
+ * non-nullable closure would silently deny them. The gate user is resolved
+ * from noerd's own auth guard (see NoerdAuth), never from the host
+ * application's default guard.
  */
 final class AccessHelper
 {
@@ -35,7 +36,7 @@ final class AccessHelper
             return true;
         }
 
-        return !Gate::has(self::APP_GATE) || Gate::allows(self::APP_GATE, $appName);
+        return !Gate::has(self::APP_GATE) || Gate::forUser(NoerdAuth::user())->allows(self::APP_GATE, $appName);
     }
 
     /**
@@ -68,6 +69,6 @@ final class AccessHelper
             return true;
         }
 
-        return !Gate::has($gate) || Gate::allows($gate, $modelClass);
+        return !Gate::has($gate) || Gate::forUser(NoerdAuth::user())->allows($gate, $modelClass);
     }
 }

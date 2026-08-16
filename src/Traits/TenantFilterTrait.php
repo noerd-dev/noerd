@@ -2,7 +2,7 @@
 
 namespace Noerd\Traits;
 
-use Illuminate\Support\Facades\Auth;
+use Noerd\Helpers\NoerdAuth;
 
 trait TenantFilterTrait
 {
@@ -13,7 +13,7 @@ trait TenantFilterTrait
         $filter['type'] = 'Picklist';
         $filter['options'] = [];
 
-        $tenants = Auth::user()->adminTenants;
+        $tenants = NoerdAuth::user()->adminTenants;
 
         foreach ($tenants as $tenant) {
             $filter['options'][$tenant->id] = $tenant->name;

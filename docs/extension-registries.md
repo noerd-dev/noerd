@@ -247,5 +247,5 @@ Gate::define(AccessHelper::APP_GATE, function (?Authenticatable $user, string $a
 **Important:**
 
 - The `$user` parameter MUST be nullable (`?Authenticatable`) — some call sites (public apps, config discovery) run for guests, and a non-nullable closure silently denies every guest check
-- The Gate resolves the user from the default auth guard
+- The gate user is resolved from noerd's own auth guard (`AccessHelper` checks via `Gate::forUser(NoerdAuth::user())`), never from the host application's default guard — see `docs/auth.md`
 - Once a gate is defined, host-app `Gate::before`/`after` hooks apply to it (standard Laravel semantics); undefined gates are never touched

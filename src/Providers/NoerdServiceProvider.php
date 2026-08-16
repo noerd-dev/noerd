@@ -34,6 +34,7 @@ use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
@@ -75,6 +76,8 @@ class NoerdServiceProvider extends ServiceProvider
         // Merge module defaults so noerd.* keys resolve even when the project
         // root config/noerd.php is absent (e.g., module-only test boots).
         $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
+
+        $this->registerNoerdGuard();
 
         // Register the quick-create exit hook in the register phase: Livewire wires
         // its ComponentHookRegistry during its own boot(), so a boot()-phase
@@ -153,6 +156,14 @@ class NoerdServiceProvider extends ServiceProvider
         TenantApp::deleted(fn() => StaticConfigHelper::flushRuntimeCaches());
 
         $router = $this->app['router'];
+        // Shared route middleware groups: every noerd-based module protects
+        // its routes with the 'noerd' group instead of the bare 'auth' alias,
+        // so authentication always runs against noerd's own guard. The
+        // 'verified' middleware resolves $request->user() after auth's
+        // shouldUse() call, so it is guard-correct (and currently inert —
+        // NoerdUser does not implement MustVerifyEmail).
+        $router->middlewareGroup('noerd', ['web', 'auth:' . NoerdAuth::guardName(), 'verified']);
+        $router->middlewareGroup('noerd-guest', ['web', 'guest:' . NoerdAuth::guardName()]);
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('public-app', PublicAppMiddleware::class);
@@ -318,6 +329,50 @@ class NoerdServiceProvider extends ServiceProvider
                 PublishHomeCommand::class,
                 ImportSetupCollectionDefinitionsCommand::class,
                 ExportSetupCollectionDefinitionsCommand::class,
+            ]);
+        }
+    }
+
+    /**
+     * Register noerd's dedicated auth guard, user provider and password
+     * broker at runtime. The host's config/auth.php is never written to,
+     * and any key the host already defines wins over the injection.
+     */
+    private function registerNoerdGuard(): void
+    {
+        $guard = NoerdAuth::guardName();
+        $provider = NoerdAuth::providerName();
+        $broker = NoerdAuth::brokerName();
+
+        if (config("auth.guards.{$guard}") === null) {
+            config(["auth.guards.{$guard}" => [
+                'driver' => 'session',
+                'provider' => $provider,
+            ]]);
+        }
+
+        if (config("auth.providers.{$provider}") === null) {
+            config(["auth.providers.{$provider}" => [
+                'driver' => 'eloquent',
+                'model' => NoerdAuth::userModel(),
+            ]]);
+        }
+
+        if (config("auth.passwords.{$broker}") === null) {
+            config(["auth.passwords.{$broker}" => [
+                'provider' => $provider,
+                'table' => 'password_reset_tokens',
+                'expire' => 60,
+                'throttle' => 60,
+            ]]);
+        }
+
+        // Escape hatch for hosts whose routes still use the bare 'auth'
+        // middleware: make the noerd guard the application default.
+        if (config('noerd.auth.set_as_default')) {
+            config([
+                'auth.defaults.guard' => $guard,
+                'auth.defaults.passwords' => $broker,
             ]);
         }
     }

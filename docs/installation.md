@@ -51,6 +51,14 @@ If you skip any of these steps, you can run them later with the respective [Arti
 | `setup_collection_definitions` | Collection schemas when `noerd.collections.mode` is `database` |
 | `setup_languages` | Per-tenant admin-panel languages |
 
+### Authentication
+
+noerd ships its own auth stack: at runtime it registers a dedicated `noerd` guard, a `noerd_users`
+provider (backed by `Noerd\Models\NoerdUser`) and a matching password broker. Your application's
+`config/auth.php` and `.env` are **never modified** — noerd coexists with any existing auth setup
+(Laravel Nova, Breeze, a custom guard, ...). See [Authentication](auth.md) for details, overrides
+and the coexistence recipe.
+
 ## Configuration
 
 `noerd:install` publishes `config/noerd.php`. Notable flags:
@@ -58,6 +66,8 @@ If you skip any of these steps, you can run them later with the respective [Arti
 - `features.multi_tenant` (`NOERD_MULTI_TENANT`) — tenant switcher and multi-tenant UI
 - `features.currency` (`NOERD_CURRENCY_ENABLED`) — set to `false` to hide currency-related UI on
   installations that don't need it
+- `auth.guard` (`NOERD_AUTH_GUARD`) / `auth.set_as_default` (`NOERD_AUTH_DEFAULT`) — noerd's
+  dedicated auth guard (see [Authentication](auth.md))
 - `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))
 - `brand.active` — color palette (see [Brand](brand.md))
 
