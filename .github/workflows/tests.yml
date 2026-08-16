@@ -14,8 +14,18 @@ concurrency:
 
 jobs:
   tests:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - laravel: 13
+            php: '8.4'
+          - laravel: 12
+            php: '8.3'
 
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +33,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: ${{ matrix.php }}
           extensions: pdo_sqlite, sqlite3, mbstring, zip, exif, pcntl, bcmath, gd
           tools: composer:v2
           coverage: none
@@ -37,11 +47,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: composer-${{ runner.os }}-${{ hashFiles('composer.json') }}
-          restore-keys: composer-${{ runner.os }}-
+          key: composer-${{ runner.os }}-L${{ matrix.laravel }}-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ runner.os }}-L${{ matrix.laravel }}-
 
       - name: Install dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: composer update --no-interaction --no-progress --prefer-dist --with "laravel/framework:^${{ matrix.laravel }}.0"
 
       - name: Run tests
         run: vendor/bin/pest --colors=always --compact

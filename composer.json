@@ -2,18 +2,19 @@
     "name": "noerd/noerd",
     "description": "",
     "type": "library",
-    "version": "v0.9.9",
+    "version": "v0.9.10",
     "license": "MIT",
     "require": {
-        "laravel/framework": "^13.0",
+        "php": "^8.3",
+        "laravel/framework": "^12.0 || ^13.0",
         "livewire/livewire": "^4.0",
-        "noerd/modal": "^0.3",
+        "noerd/modal": "^0.3.23",
         "composer/composer": "^2.9",
         "wireui/heroicons": "^2.9",
         "symfony/yaml": "^7.1 || ^8.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^11.1",
+        "orchestra/testbench": "^10.6 || ^11.1",
         "pestphp/pest": "^4.0"
     },
     "autoload": {
