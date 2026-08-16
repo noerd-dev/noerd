@@ -120,6 +120,11 @@ it('marks tabs that open their own modal with an icon', function (): void {
     expect(mb_substr_count($modalTabs, 'data-modal-tab-icon'))->toBe(2)
         ->and($modalTabs)->toContain('<svg');
 
+    // The icon must trail the label: as the first flex item an SVG would become the
+    // span's baseline source and shift the whole tab against its siblings.
+    expect(mb_strpos($modalTabs, 'Related Records'))
+        ->toBeLessThan(mb_strpos($modalTabs, 'data-modal-tab-icon'));
+
     $inlineTabs = renderLayoutTabs([
         ['label' => 'General', 'number' => 1],
         ['label' => 'Overview', 'route' => 'zz.tab.page'],
