@@ -97,6 +97,37 @@ it('opens a component tab as a modal with the record id resolved', function (): 
         ->toBe(['recordType' => 'Zz\\Models\\Record', 'modelId' => 42]);
 });
 
+it('gives every tab variant the same content height so the underlines share the rail', function (): void {
+    $html = renderLayoutTabs([
+        ['label' => 'General', 'number' => 1],
+        ['label' => 'Overview', 'route' => 'zz.tab.page'],
+        ['label' => 'Related Records', 'component' => 'zz::records-list'],
+    ], 42);
+
+    preg_match_all('/<span class="(group inline-flex[^"]*)"/', $html, $matches);
+
+    expect($matches[1])->toHaveCount(3)
+        ->and(array_unique($matches[1]))->toHaveCount(1)
+        ->and($matches[1][0])->toContain('border-b-2 border-transparent');
+});
+
+it('marks tabs that open their own modal with an icon', function (): void {
+    $modalTabs = renderLayoutTabs([
+        ['label' => 'Related Records', 'component' => 'zz::records-list'],
+        ['label' => 'Related Record', 'modalRoute' => 'zz.tab.record', 'arguments' => ['modelId' => '$modelId']],
+    ], 42);
+
+    expect(mb_substr_count($modalTabs, 'data-modal-tab-icon'))->toBe(2)
+        ->and($modalTabs)->toContain('<svg');
+
+    $inlineTabs = renderLayoutTabs([
+        ['label' => 'General', 'number' => 1],
+        ['label' => 'Overview', 'route' => 'zz.tab.page'],
+    ], 42);
+
+    expect($inlineTabs)->not->toContain('data-modal-tab-icon');
+});
+
 it('hides a requiresId tab until the record is saved', function (): void {
     $tab = [
         'label' => 'Related Records',
