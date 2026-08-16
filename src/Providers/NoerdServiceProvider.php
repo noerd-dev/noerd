@@ -253,6 +253,14 @@ class NoerdServiceProvider extends ServiceProvider
             'noerd::components.forms.spacer',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
         ));
+        $fieldTypeRegistry->register('phone', FieldTypeDefinition::include(
+            'noerd::components.forms.phone',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
+        $fieldTypeRegistry->register('email', FieldTypeDefinition::include(
+            'noerd::components.forms.email',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+        ));
         $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
             'noerd::components.forms.icon',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
