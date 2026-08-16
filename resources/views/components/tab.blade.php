@@ -57,14 +57,20 @@
             @click="if (! $event.metaKey && ! $event.ctrlKey) { $event.preventDefault(); {{ $clickExpression }}; }"
             class="cursor-pointer text-gray-600 focus:outline-none focus-visible:outline-none"
         >
-            <span class="group inline-flex items-center rounded-sm p-0 py-3 text-sm"> {{ $slot }} </span>
+            <span class="group inline-flex items-center rounded-sm border-b-2 border-transparent p-0 py-3 text-sm">
+                {{-- The label stays the first flex item: an SVG in front would become the
+                     span's baseline source and shift the whole tab against its siblings. --}}
+                {{ $slot }}
+                {{-- Marks the tab as opening its own modal instead of an inline panel. --}}
+                <x-icon name="square-2-stack" data-modal-tab-icon="true" class="ml-1 h-4 w-4 shrink-0 text-gray-400" />
+            </span>
         </a>
         @if ($componentRouteUrl)
             <a
                 href="{{ $componentRouteUrl }}"
                 target="_blank"
                 rel="noopener"
-                class="py-3 pl-2 text-gray-500 hover:text-black focus:outline-none focus-visible:outline-none"
+                class="border-b-2 border-transparent py-3 pl-2 text-gray-500 hover:text-black focus:outline-none focus-visible:outline-none"
                 aria-label="{{ __('Open in new tab') }}"
             >
                 <x-noerd::icons.external />
