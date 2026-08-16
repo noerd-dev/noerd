@@ -15,8 +15,8 @@ noerd is a Laravel Livewire boilerplate for building admin panels and business a
 
 ## Requirements
 
-- PHP 8.4+
-- Laravel 12+
+- PHP 8.3+
+- Laravel 12 or 13
 - Livewire 4+
 
 ## Install Noerd

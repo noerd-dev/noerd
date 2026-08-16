@@ -38,8 +38,8 @@ https://demo.noerd.dev
 
 ## Requirements
 
-- PHP 8.4+
-- Laravel 12+
+- PHP 8.3+
+- Laravel 12 or 13
 - Livewire 4+
 
 ## Quickstart
