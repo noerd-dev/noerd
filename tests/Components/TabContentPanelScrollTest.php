@@ -36,7 +36,7 @@ it('renders tab-panels and tab-panel as generic stacking components', function (
     expect($html)
         ->toContain('grid min-h-0 grid-rows-1')
         ->toContain('pt-4')
-        ->toContain('min-h-0 overflow-y-auto -mx-6 px-6 flex')
+        ->toContain('min-h-0 overflow-y-auto -mx-6 px-6 -mb-8 pb-8 flex')
         ->toContain('x-show="$wire.someFlag"')
         ->toContain("currentTab === 2 ? 'visible' : 'invisible pointer-events-none'");
 });

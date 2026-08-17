@@ -6,12 +6,14 @@
     constant; each panel is its own scroll container. The optional `show` prop
     takes an Alpine expression that additionally toggles the panel via x-show.
     -mx-6/px-6 keep content aligned while moving the clip edge and scrollbar to
-    the page-body padding edge, so input focus rings are not cut off. Flush
-    panels (inside an already unpadded wrapper) opt out with `mx-0! px-0!`.
+    the page-body padding edge, so input focus rings are not cut off; -mb-8/pb-8
+    does the same vertically against the page chrome's bottom padding (the gap
+    above the footer stays, but lives inside the scroll container). Flush
+    panels (inside an already unpadded wrapper) opt out with `mx-0! px-0! mb-0! pb-0!`.
 --}}
 <div
     @if ($show) x-show="{{ $show }}" @endif
-    {{ $attributes->merge(['class' => 'min-h-0 overflow-y-auto -mx-6 px-6']) }}
+    {{ $attributes->merge(['class' => 'min-h-0 overflow-y-auto -mx-6 px-6 -mb-8 pb-8']) }}
     :class="currentTab === {{ $number }} ? 'visible' : 'invisible pointer-events-none'"
 >
     {{ $slot }}
