@@ -1,5 +1,5 @@
 label: Compact
-gridClasses: 'py-3 pt-1 gap-x-6 gap-y-1.5'
+gridClasses: 'pt-1 gap-x-6 gap-y-1.5'
 fullWidthRows: false
 numbersRows: false
 spacerClass: h-7

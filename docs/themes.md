@@ -107,7 +107,9 @@ folder name.
 
 ```yaml
 label: Compact                          # display label in System Settings
-gridClasses: 'py-3 pt-1 gap-x-6 gap-y-1.5'   # spacing classes on the form grid wrapper
+gridClasses: 'pt-1 gap-x-6 gap-y-1.5'   # spacing classes on the form grid wrapper (no bottom
+                                        # padding — the x-noerd::page chrome owns the gap above
+                                        # the footer)
 fullWidthRows: false                    # true: ignore per-field colspan (one field per row)
 numbersRows: false                      # true: automatic row numbering (numbered theme)
 spacerClass: h-7                        # height of the `spacer` field type

@@ -44,7 +44,10 @@
         && method_exists($this, 'canWriteObject')
         && ! $this->canWriteObject();
 @endphp
-<div>
+{{-- not-last:mb-8 separates the block from custom content rendered after it
+     (e.g. a tab slot); when the block is the last element the page chrome's
+     bottom padding provides the gap instead. --}}
+<div class="not-last:mb-8">
     @if(isset($title) || isset($description))
         @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
     @endif

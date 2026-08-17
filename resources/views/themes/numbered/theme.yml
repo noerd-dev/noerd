@@ -1,5 +1,5 @@
 label: Numbered
-gridClasses: 'py-3 pt-1 gap-y-1'
+gridClasses: 'pt-1 gap-y-1'
 fullWidthRows: true
 numbersRows: true
 spacerClass: h-12

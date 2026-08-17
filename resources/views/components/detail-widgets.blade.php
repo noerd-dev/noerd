@@ -8,7 +8,7 @@
 @endphp
 
 @if ($modelId && ! empty($widgets))
-    <div class="flex flex-col gap-6 first:pt-6">
+    <div class="flex flex-col gap-6">
         @foreach ($widgets as $widget)
             @php
                 // Resolve the $modelId token in the arguments (same convention as detail-lists)

@@ -18,7 +18,7 @@ final class ThemeDefinition
     public function __construct(
         public string $name,
         public ?string $label = null,
-        public string $gridClasses = 'py-8 pt-4 gap-6',
+        public string $gridClasses = 'pt-4 gap-6',
         public bool $fullWidthRows = false,
         public bool $numbersRows = false,
         public string $spacerClass = 'h-16',

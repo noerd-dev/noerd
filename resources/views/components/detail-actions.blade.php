@@ -51,7 +51,7 @@
 @endphp
 
 @if ($actions->isNotEmpty())
-    <div class="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 first:mt-6">
+    <div class="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
         @foreach ($actions as $action)
             @php
                 $modalArguments = collect($action['arguments'] ?? [])

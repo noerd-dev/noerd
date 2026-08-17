@@ -31,6 +31,13 @@
         || ! method_exists($pageComponent, 'canDeleteObject')
         || $pageComponent->canDeleteObject();
 
+    // Detail/page/settings bodies get their vertical padding from the chrome, so
+    // the gap below the header and above the footer never depends on which
+    // children happen to render (action bar, tabs, YAML block). Lists keep their
+    // own internal spacing. Opt out via <x-noerd::page :bodyPadding="false">.
+    $isListHost = $pageComponent && in_array(\Noerd\Traits\NoerdList::class, class_uses_recursive($pageComponent), true);
+    $bodyPadding ??= ! $isListHost;
+
     $shortcuts = [];
     if (method_exists($__livewire ?? new stdClass(), 'store') && $canWriteObject && ! $pageObjectReadBlocked) {
         $shortcuts['save'] = config('noerd.keyboard_shortcuts.save', 'ctrl+enter');
@@ -77,7 +84,7 @@
         {{ $header ?? '' }}
         {{ $table ?? '' }}
 
-        <div class="flex-1 min-h-0 px-6 overflow-y-auto{{ $hasCurrentTab ? ' flex flex-col' : '' }}">
+        <div class="flex-1 min-h-0 px-6 overflow-y-auto{{ $bodyPadding ? ' pt-6 pb-8' : '' }}{{ $hasCurrentTab ? ' flex flex-col' : '' }}">
             @if (! empty($pageDetailActionsLayout['actions']))
                 <x-noerd::detail-actions :layout="$pageDetailActionsLayout" :modelId="$pageComponent->modelId ?? null" :urls="$pageDetailActionUrls" />
             @endif
