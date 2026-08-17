@@ -3,8 +3,8 @@
 namespace Noerd\Repositories;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\SetupCollectionDefinition;
 use Noerd\Support\SetupCollectionDefinitionData;
@@ -96,7 +96,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
             $existing->update($attributes);
             $model = $existing;
         } else {
-            $attributes['created_by'] = Auth::id();
+            $attributes['created_by'] = NoerdAuth::id();
             $model = SetupCollectionDefinition::create($attributes);
         }
 
@@ -126,7 +126,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
             'title_list' => $source->title_list . '2',
             'description' => $source->description,
             'fields' => $source->fields,
-            'created_by' => Auth::id(),
+            'created_by' => NoerdAuth::id(),
         ]);
 
         self::resetCache();

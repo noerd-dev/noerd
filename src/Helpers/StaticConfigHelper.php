@@ -437,7 +437,7 @@ class StaticConfigHelper
         // Includes the user id: the allowed app folders (and everything derived
         // from them, e.g. config search roots) vary per user once app
         // permissions filter them.
-        return (TenantHelper::getSelectedTenantId() ?? 0) . '|' . (self::getCurrentApp() ?? '') . '|' . (auth()->id() ?? 0);
+        return (TenantHelper::getSelectedTenantId() ?? 0) . '|' . (self::getCurrentApp() ?? '') . '|' . (NoerdAuth::id() ?? 0);
     }
 
     /**
@@ -615,7 +615,7 @@ class StaticConfigHelper
     {
         // Keyed by user too: app permissions filter the folders, so one user's
         // set must never leak to another within one process.
-        $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0) . '.' . (auth()->id() ?? 0);
+        $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0) . '.' . (NoerdAuth::id() ?? 0);
 
         return self::$runtimeCache[$cacheKey] ??= (function (): array {
             $tenant = TenantHelper::getSelectedTenant();
@@ -803,7 +803,7 @@ class StaticConfigHelper
                 return false;
             }
 
-            if (isset($nav['superAdmin']) && $nav['superAdmin'] && !auth()->user()?->isSuperAdmin()) {
+            if (isset($nav['superAdmin']) && $nav['superAdmin'] && !NoerdAuth::user()?->isSuperAdmin()) {
                 return false;
             }
 

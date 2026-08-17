@@ -7,6 +7,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 ## Contents
 
 - [Installation](installation.md)
+- [Authentication](auth.md)
 - [Creating Apps](create-app.md)
 - [Creating Modules](creating-modules.md)
 - [List View](list-view.md)

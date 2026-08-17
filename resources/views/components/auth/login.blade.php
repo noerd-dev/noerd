@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -10,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 
 new #[Layout('noerd::layouts.auth')] class extends Component {
     #[Validate('required|string|email')]
@@ -29,7 +29,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 
         $this->ensureIsNotRateLimited();
 
-        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        if (!NoerdAuth::guard()->attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -40,7 +40,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
-        Auth::user()->update(['last_login_at' => now()]);
+        NoerdAuth::user()->update(['last_login_at' => now()]);
 
         $this->redirect(session()->pull('url.intended', route('noerd-apps', absolute: false)), navigate: false);
     }

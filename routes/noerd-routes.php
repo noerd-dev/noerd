@@ -7,7 +7,7 @@ use Noerd\Controllers\DashboardController;
 // (navigation.yml `route:` keys, tenant_apps.route, route() calls) and stay
 // unprefixed — only the URLs carry the prefix, so the redundant `setup-` in
 // paths like `setup-collections` is dropped in favour of the group prefix.
-Route::group(['prefix' => 'setup', 'middleware' => ['auth', 'verified', 'setup', 'web']], function (): void {
+Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function (): void {
     Route::livewire('/', 'noerd::noerd-users-list')->name('setup');
     Route::livewire('tenant-apps', 'noerd::tenant-apps-list')->name('tenant-apps');
     Route::livewire('users', 'noerd::noerd-users-list')->name('users');
@@ -27,25 +27,25 @@ Route::group(['prefix' => 'setup', 'middleware' => ['auth', 'verified', 'setup',
     Route::livewire('system-settings', 'noerd::system-settings-page')->name('system-settings');
 });
 
-Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
+Route::group(['middleware' => ['noerd']], function (): void {
     Route::livewire('/component-page/{componentName}', 'noerd::generic-component-page')->name('component-page');
 });
 
-Route::group(['middleware' => ['auth', 'web']], function (): void {
+Route::group(['middleware' => ['noerd']], function (): void {
     Route::livewire('noerd-apps', 'noerd::noerd-apps')->name('noerd-apps');
     Route::redirect('noerd-home', 'noerd-apps');
 });
 
-Route::group(['middleware' => ['auth', 'web']], function (): void {
+Route::group(['middleware' => ['noerd']], function (): void {
     Route::livewire('no-tenant', 'noerd::no-tenant')->name('no-tenant');
 });
 
-Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
+Route::group(['middleware' => ['noerd']], function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::view('profile', 'noerd::profile')->name('profile');
 });
 
-Route::middleware(['web', 'guest'])->group(function (): void {
+Route::middleware(['noerd-guest'])->group(function (): void {
     Route::livewire('login', 'noerd::auth.login')->name('login');
     Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('password.request');
 });

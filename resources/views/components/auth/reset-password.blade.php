@@ -9,6 +9,7 @@ use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 
 new #[Layout('noerd::layouts.auth')] class extends Component {
     #[Locked]
@@ -38,7 +39,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $status = Password::reset(
+        $status = NoerdAuth::broker()->reset(
             $this->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) {
                 $user->forceFill([

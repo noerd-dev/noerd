@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Auth;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\Tenant;
 use Noerd\Scopes\TenantScope;
 
@@ -16,8 +16,12 @@ trait BelongsToTenant
         static::addGlobalScope(new TenantScope());
 
         static::creating(function ($model): void {
-            if (Auth::check() && Auth::user()->selected_tenant_id && ! $model->tenant_id) {
-                $model->tenant_id = Auth::user()->selected_tenant_id;
+            // Resolve through noerd's own guard so a host guard's user (e.g.
+            // Nova) never stamps — or skips stamping — the tenant id.
+            $user = NoerdAuth::user();
+
+            if ($user && $user->selected_tenant_id && ! $model->tenant_id) {
+                $model->tenant_id = $user->selected_tenant_id;
             }
         });
     }

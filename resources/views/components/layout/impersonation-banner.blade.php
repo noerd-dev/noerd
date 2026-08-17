@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
@@ -12,7 +12,7 @@ new class extends Component {
     {
         if (session('impersonating_from')) {
             $this->isImpersonating = true;
-            $this->userName = Auth::user()?->name ?? '';
+            $this->userName = NoerdAuth::user()?->name ?? '';
         }
     }
 
@@ -24,7 +24,7 @@ new class extends Component {
         // Clear tenant session so InitializeTenantSession will set the correct tenant
         TenantHelper::clear();
 
-        Auth::loginUsingId($originalUserId);
+        NoerdAuth::guard()->loginUsingId($originalUserId);
 
         return redirect('/');
     }

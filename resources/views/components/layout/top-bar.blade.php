@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\TopBarRegistry;
 
 new class () extends Component {
@@ -20,9 +21,13 @@ new class () extends Component {
 
     public function logout(): void
     {
-        Auth::guard('web')->logout();
+        NoerdAuth::guard()->logout();
 
-        Session::invalidate();
+        // Drop noerd's session state but do NOT invalidate the whole
+        // session: a host guard (e.g. Nova) may share the session cookie.
+        Session::forget('noerd');
+        Session::forget('impersonating_from');
+        Session::regenerate();
         Session::regenerateToken();
 
         $this->redirect('/login');

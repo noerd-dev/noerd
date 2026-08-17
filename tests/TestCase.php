@@ -90,6 +90,12 @@ abstract class TestCase extends BaseTestCase
         $app['config']->set('app.key', 'base64:' . base64_encode(str_repeat('a', 32)));
         $app['config']->set('auth.providers.users.model', NoerdUser::class);
 
+        // Guard-less actingAs() calls resolve the default guard — point it at
+        // noerd's own guard (registered by NoerdServiceProvider) so tests hit
+        // the same guard the 'noerd' route middleware group authenticates.
+        $app['config']->set('auth.defaults.guard', 'noerd');
+        $app['config']->set('auth.defaults.passwords', 'noerd_users');
+
         // noerd:install points the Livewire page layout at the module's own
         // layout in real projects — mirror that here.
         $app['config']->set('livewire.component_layout', 'noerd::layouts.app');

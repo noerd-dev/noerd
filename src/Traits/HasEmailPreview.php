@@ -7,6 +7,7 @@ use Illuminate\Mail\Markdown;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\HtmlString;
+use Noerd\Helpers\NoerdAuth;
 
 trait HasEmailPreview
 {
@@ -62,7 +63,7 @@ trait HasEmailPreview
             return;
         }
 
-        $user = auth()->user();
+        $user = NoerdAuth::user();
         $email = $user->email;
 
         if (! $email) {
@@ -106,6 +107,6 @@ trait HasEmailPreview
 
     protected function getTestEmailCacheKey(): string
     {
-        return 'test-email-cooldown:' . $this->getEmailRateLimitPrefix() . ':' . auth()->id();
+        return 'test-email-cooldown:' . $this->getEmailRateLimitPrefix() . ':' . NoerdAuth::id();
     }
 }

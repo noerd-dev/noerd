@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Traits\NoerdList;
@@ -36,12 +37,12 @@ new class () extends Component {
         if (in_array($userId, $allowedUserIds) === false) {
             abort(401);
         }
-        session(['impersonating_from' => Auth::id()]);
+        session(['impersonating_from' => NoerdAuth::id()]);
 
         // Clear tenant session so InitializeTenantSession will set the correct tenant
         TenantHelper::clear();
 
-        Auth::loginUsingId($userId);
+        NoerdAuth::guard()->loginUsingId($userId);
 
         return redirect('/');
     }

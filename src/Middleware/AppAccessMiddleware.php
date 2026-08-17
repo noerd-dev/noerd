@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,7 +20,7 @@ class AppAccessMiddleware
     public function handle(Request $request, Closure $next, string ...$appNames): Response
     {
         $appName = implode(',', $appNames);
-        $user = auth()->user();
+        $user = NoerdAuth::user();
 
         if (!$user) {
             return redirect('/login');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Models\NoerdUser;
@@ -205,7 +206,7 @@ describe('InitializeTenantSession', function (): void {
 
         // Simulate login
         $listener = new InitializeTenantSession();
-        $listener->handle(new Login('web', $user, false));
+        $listener->handle(new Login(NoerdAuth::guardName(), $user, false));
 
         expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id);
     });
@@ -222,7 +223,7 @@ describe('InitializeTenantSession', function (): void {
         TenantHelper::clear();
 
         $listener = new InitializeTenantSession();
-        $listener->handle(new Login('web', $user, false));
+        $listener->handle(new Login(NoerdAuth::guardName(), $user, false));
 
         expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id);
     });
@@ -235,7 +236,7 @@ describe('InitializeTenantSession', function (): void {
         TenantHelper::clear();
 
         $listener = new InitializeTenantSession();
-        $listener->handle(new Login('web', $user, false));
+        $listener->handle(new Login(NoerdAuth::guardName(), $user, false));
 
         expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id);
     });
@@ -253,7 +254,7 @@ describe('InitializeTenantSession', function (): void {
         $user->setting->update(['selected_tenant_id' => $tenant2->id]);
 
         $listener = new InitializeTenantSession();
-        $listener->handle(new Login('web', $user, false));
+        $listener->handle(new Login(NoerdAuth::guardName(), $user, false));
 
         // Session tenant should remain unchanged
         expect(TenantHelper::getSelectedTenantId())->toBe($tenant1->id);
