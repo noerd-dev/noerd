@@ -25,7 +25,7 @@
         unset($quickLayout['tabs'], $quickLayout['title'], $quickLayout['description']);
     @endphp
 
-    <div class="[&>div>div]:py-0 py-6">
+    <div class="[&>div>div]:py-0">
         @include('noerd::components.detail.block', array_merge($quickLayout, ['detailData' => $detailData]))
     </div>
 @else

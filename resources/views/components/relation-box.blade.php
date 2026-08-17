@@ -77,7 +77,7 @@ new class extends Component {
     }
 }; ?>
 
-<div class="grid grid-cols-6 gap-4 pb-6 first:pt-6">
+<div class="grid grid-cols-6 gap-4 pb-6">
     @foreach($resolvedRelations as $relation)
         {{-- A tile opens the related list NARROWED by the current record, which a
              plain list route cannot express — so the route only resolves the

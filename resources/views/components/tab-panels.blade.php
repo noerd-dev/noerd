@@ -4,6 +4,6 @@
     between tabs) while each panel scrolls individually once the page body hits
     its max height. Panels must be the only children of this component.
 --}}
-<div {{ $attributes->merge(['class' => 'grid min-h-0 grid-rows-1 first:pt-6 [&>*]:col-start-1 [&>*]:row-start-1']) }}>
+<div {{ $attributes->merge(['class' => 'grid min-h-0 grid-rows-1 not-last:mb-8 [&>*]:col-start-1 [&>*]:row-start-1']) }}>
     {{ $slot }}
 </div>

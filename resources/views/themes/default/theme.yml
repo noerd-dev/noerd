@@ -1,5 +1,5 @@
 label: Default
-gridClasses: 'py-8 pt-4 gap-6'
+gridClasses: 'pt-4 gap-6'
 fullWidthRows: false
 numbersRows: false
 spacerClass: h-16
