@@ -67,7 +67,6 @@ fields:
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
 | `actions` | Array of action button definitions rendered above the form (see [Detail Actions](#detail-actions)) |
-| `footerComponents` | Array of Livewire components rendered in the footer bar |
 
 > **Note:** `relations:` (Relation Box) and `widgets:` are PAGE concerns — they live in the
 > optional page YAML (`pages/{entity}-page.yml`), not in a detail YAML. See [Page View](page-view.md).
@@ -117,6 +116,13 @@ expression for reactive visibility on top of the tab switch:
 | `tab` | Tab number (defaults to 1) |
 | `theme` | Per-field theme override (see [Themes](themes.md)) |
 | `number` | Explicit row number in the `numbered` theme (defaults to auto-increment) |
+
+## Relation Forms
+
+A field name may point into a RELATED model (e.g. `detailData.invoiceAddress.address_line_1`):
+the framework hydrates the related record's values on load and persists them after every save,
+with zero component code. Relation forms are declared on the model via the
+`DeclaresRelationForms` contract — see [Relation Forms](relation-forms.md).
 
 ## Themes
 
@@ -308,6 +314,8 @@ fields:
 | `confirm` | Optional confirmation prompt shown via `wire:confirm` (translation key) |
 | `loading` | Only with `action:` — alternate label shown while the method runs (`wire:loading`, translation key); the button is disabled meanwhile |
 | `requiresId` | Defaults to `true` — the button is hidden until the record is saved (`modelId` is set). Set to `false` to always show it |
+| `showIf` | Show the button only while a component property is truthy — or, in the object form (`field:` / `value:`), equals a value (see [Conditional Actions](#conditional-actions)) |
+| `showIfNot` | The negated form of `showIf`. Both may sit on the same action and are combined with AND |
 | `viewExists` | Optional view name — the button is hidden when that view is not registered, so YAML may reference an optional module safely |
 
 Precedence is `route:` → `modalComponent:` → `url:` → `action:`. A `route:` action whose route is
@@ -323,6 +331,39 @@ actions:
     arguments:
       modelId: $modelId
 ```
+
+### Conditional Actions
+
+`showIf` / `showIfNot` mirror the field- and tab-level conditions: the button carries an Alpine
+`x-show` bound to the detail component's state, so it follows a status property without a page
+reload. Both keys may sit on the same action (combined with AND):
+
+```yaml
+actions:
+  - label: Send account invitation
+    action: sendAccountInvite
+    heroicon: envelope
+    showIf: hasEmail
+    showIfNot: hasAccount
+  - label: Login as customer
+    action: loginAsCustomer
+    heroicon: arrow-right-on-rectangle
+    showIf: hasAccount
+```
+
+The string form checks a public property for truthiness (`hasAccount`, or a dotted path into an
+array property such as `detailData.is_business`). The object form compares against a value:
+
+```yaml
+    showIf:
+      field: detailData.status
+      value: open
+```
+
+Use it for record STATE that changes while the modal is open. Structural conditions keep their own
+keys: `requiresId` for "record not saved yet" and `viewExists` for "module not installed". When
+EVERY action is conditional, the action bar itself is hidden along with its buttons, so a fully
+suppressed row leaves no empty box behind.
 
 ### Link Actions
 
@@ -436,41 +477,6 @@ Pass the values directly as props:
 The embedded list is always compact (no header, no pagination — only the first `perPage` rows), so use
 it for record-scoped lists.
 
-## Footer Components
-
-Footer components are additional Livewire components rendered in the footer bar next to the delete and save buttons. They are defined in the YAML configuration and automatically passed to the `delete-save-bar` component.
-
-### YAML Configuration
-
-```yaml
-footerComponents:
-  - component: customer-test-button
-    requiresId: false
-  - component: customer-export
-    requiresId: true
-```
-
-### Footer Component Properties
-
-| Property | Description |
-|----------|-------------|
-| `component` | Name of the Livewire component to render |
-| `requiresId` | Only render when editing an existing record (`modelId` is set). Defaults to `false` |
-
-### Blade Usage
-
-Pass `footerComponents` and `modelId` from the page layout to the `delete-save-bar`:
-
-```blade
-<x-slot:footer>
-    <x-noerd::delete-save-bar :showDelete="isset($modelId)"
-        :footerComponents="$pageLayout['footerComponents'] ?? []"
-        :modelId="$modelId ?? null"/>
-</x-slot:footer>
-```
-
-Each footer component receives `modelId` as a prop and is rendered via `<livewire:is>`.
-
 ## Livewire Component
 
 A detail component declares its model as `public $detailModel` and its URL alias as
@@ -513,7 +519,6 @@ new class extends Component {
 
     <x-slot:footer>
         <x-noerd::delete-save-bar :showDelete="isset($modelId)"
-            :footerComponents="$pageLayout['footerComponents'] ?? []"
             :modelId="$modelId ?? null"/>
     </x-slot:footer>
 </x-noerd::page>

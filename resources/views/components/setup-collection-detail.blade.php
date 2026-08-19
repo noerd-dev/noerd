@@ -49,6 +49,13 @@ new class extends Component
         $this->entry = $entry->exists ? $entry : new SetupCollectionEntry;
         $this->collectionKey = $collectionKey;
 
+        // A deep link passes only the entry id — derive the collection from the
+        // record, otherwise the data conversion below runs without a key.
+        if (! $this->collectionKey && $this->entry->exists) {
+            $parentKey = SetupCollection::find($this->entry->setup_collection_id)?->collection_key;
+            $this->collectionKey = $parentKey ? mb_strtolower($parentKey) : null;
+        }
+
         // Load collection layout if collectionKey is provided
         if ($this->collectionKey) {
             $this->collectionLayout = SetupCollectionHelper::getCollectionFields($this->collectionKey);
@@ -61,7 +68,9 @@ new class extends Component
         // Load data from the JSON data field
         if ($this->entry->exists && $this->entry->data) {
             $rawData = is_array($this->entry->data) ? $this->entry->data : [];
-            $this->detailData = SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey);
+            $this->detailData = $this->collectionKey
+                ? SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey)
+                : $rawData;
         } else {
             $this->detailData = [];
         }

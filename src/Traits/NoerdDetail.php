@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Support\RelationFormSync;
 
 /**
  * Trait for `*-detail` components: the model form on top of the NoerdPage base.
@@ -60,7 +61,10 @@ trait NoerdDetail
         $this->validateFromLayout();
 
         $modelClass = $this->detailModel;
-        $model = $modelClass::updateOrCreate(['id' => $this->modelId], $this->detailData);
+        $model = $modelClass::updateOrCreate(
+            ['id' => $this->modelId],
+            RelationFormSync::strip($modelClass, $this->detailData),
+        );
 
         $this->finishStore($model);
     }
@@ -89,15 +93,43 @@ trait NoerdDetail
 
     /**
      * Validate using rules from pageLayout YAML configuration.
-     * Fields with 'required: true' will be validated as required.
+     * Fields with 'required: true' will be validated as required. Declared
+     * relation forms additionally contribute their validateUsing() rules —
+     * applied exactly when the form carries data and would be persisted.
      */
     public function validateFromLayout(): void
     {
         $rules = [];
         $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
 
+        $messages = [];
+        if (isset($this->detailModel)) {
+            foreach (RelationFormSync::forms($this->detailModel) as $key => $definition) {
+                if ($definition->rules === []) {
+                    continue;
+                }
+
+                if (!RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
+                    continue;
+                }
+
+                $data = $this->detailData[$key] ?? null;
+                if (!is_array($data) || !RelationFormSync::hasFormData($definition, $data)) {
+                    continue;
+                }
+
+                foreach ($definition->rules as $field => $fieldRules) {
+                    $rules['detailData.' . $key . '.' . $field] = $fieldRules;
+                }
+
+                foreach ($definition->messages as $messageKey => $message) {
+                    $messages['detailData.' . $key . '.' . $messageKey] = $message;
+                }
+            }
+        }
+
         if (!empty($rules)) {
-            $this->validate($rules);
+            $this->validate($rules, $messages);
         }
     }
 
@@ -175,6 +207,7 @@ trait NoerdDetail
         }
 
         $this->ensureCustomAttributesArray();
+        $this->ensureRelationFormsHydrated();
     }
 
     protected function resolveImageFieldKey(string $fieldName): string
@@ -219,6 +252,48 @@ trait NoerdDetail
         }
 
         $this->ensureCustomAttributesArray();
+        $this->ensureRelationFormsHydrated();
+    }
+
+    /**
+     * Hydrate declared relation forms (DeclaresRelationForms on $detailModel) into
+     * $detailData: for each form the active layout renders and whose key is not in
+     * $detailData yet, fill it from the related record — or with nulls for a new
+     * record, so the nested wire:model bindings never drop updates. Keyed on
+     * array_key_exists, so it is idempotent and costs at most one query per
+     * request; it runs from mountDetailComponent() AND renderingNoerdDetail() so
+     * it survives custom mount()s that overwrite $detailData.
+     */
+    protected function ensureRelationFormsHydrated(): void
+    {
+        if (!isset($this->detailModel)) {
+            return;
+        }
+
+        $modelClass = $this->detailModel;
+        $forms = RelationFormSync::forms($modelClass);
+        if ($forms === []) {
+            return;
+        }
+
+        $owner = null;
+        foreach ($forms as $key => $definition) {
+            if (array_key_exists($key, $this->detailData)) {
+                continue;
+            }
+
+            if (!RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
+                continue;
+            }
+
+            if ($this->modelId && $owner === null) {
+                $owner = $modelClass::find($this->modelId);
+            }
+
+            $this->detailData[$key] = $owner
+                ? RelationFormSync::hydrate($owner, $definition)
+                : RelationFormSync::emptyForm($definition);
+        }
     }
 
     /**

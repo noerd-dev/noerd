@@ -258,6 +258,8 @@ describe('Setup Collection Detail Component', function (): void {
     });
 
     it('can save a new entry', function (): void {
+        $entriesBefore = SetupCollectionEntry::where('tenant_id', $this->tenant->id)->count();
+
         $component = Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'example'])
             ->set('detailData.title.de', 'Test Titel')
             ->set('detailData.title.en', 'Test Title')
@@ -266,7 +268,7 @@ describe('Setup Collection Detail Component', function (): void {
 
         $component->assertSet('showSuccessIndicator', true);
 
-        expect(SetupCollectionEntry::where('tenant_id', $this->tenant->id)->count())->toBe(1);
+        expect(SetupCollectionEntry::where('tenant_id', $this->tenant->id)->count())->toBe($entriesBefore + 1);
     });
 });
 

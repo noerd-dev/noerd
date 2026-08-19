@@ -18,6 +18,7 @@ use Livewire\WithPagination;
 use LogicException;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
@@ -1274,7 +1275,31 @@ trait NoerdList
                 continue;
             }
 
-            if (($field['type'] ?? null) !== 'select' || empty($field['options']) || !isset($field['name'])) {
+            if (!isset($field['name'])) {
+                continue;
+            }
+
+            // A value-storing collection select (valueField) resolves its badge
+            // labels from the tenant's collection entries — same source as the
+            // form element. Id-storing collection selects stay excluded (their
+            // columns are FK ids, not picklist values).
+            if (($field['type'] ?? null) === 'setupCollectionSelect'
+                && !empty($field['collectionKey'])
+                && !empty($field['valueField'])) {
+                $options = SetupCollectionHelper::selectOptions(
+                    $field['collectionKey'],
+                    $field['displayField'] ?? 'name',
+                    $field['valueField'],
+                );
+
+                if ($options !== []) {
+                    $map[Str::after($field['name'], 'detailData.')] = $options;
+                }
+
+                continue;
+            }
+
+            if (($field['type'] ?? null) !== 'select' || empty($field['options'])) {
                 continue;
             }
 

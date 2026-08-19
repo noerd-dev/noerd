@@ -63,7 +63,9 @@ use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
+use Noerd\Support\DefaultCountries;
 use Noerd\Support\FieldTypeDefinition;
+use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\ThemeContext;
@@ -84,6 +86,7 @@ class NoerdServiceProvider extends ServiceProvider
         // registration here could land too late. The register phase of all providers
         // runs before any boot(), and the static call needs no container binding.
         ComponentHookRegistry::register(QuickCreateExitHook::class);
+        ComponentHookRegistry::register(RelationFormPersistHook::class);
 
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
@@ -145,9 +148,10 @@ class NoerdServiceProvider extends ServiceProvider
         // Register event listeners
         Event::listen(Login::class, InitializeTenantSession::class);
 
-        // Create default languages when a new tenant is created
+        // Create default languages and setup collections when a new tenant is created
         Tenant::created(function (Tenant $tenant): void {
             SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
+            DefaultCountries::ensureForTenant($tenant->id);
         });
 
         // The config search roots memoise the active/allowed app folders — a

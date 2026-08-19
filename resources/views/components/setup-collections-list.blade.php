@@ -180,6 +180,8 @@ new class extends Component
                     'field' => $fieldKey,
                     'label' => $label,
                     'width' => $width,
+                    // Marks the cell as language-dependent (light blue frame in the list).
+                    'translatable' => str_starts_with($field['type'] ?? '', 'translatable'),
                 ];
             }
         }

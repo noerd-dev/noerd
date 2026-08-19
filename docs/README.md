@@ -16,6 +16,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Detail View](detail-view.md)
 - [Page View](page-view.md)
 - [Field Types](field-types.md)
+- [Languages](languages.md)
 - [Relation Field Types](relation-field-types.md)
 - [Modal System](modal.md)
 - [Themes](themes.md)

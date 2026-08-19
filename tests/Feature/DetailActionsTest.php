@@ -231,3 +231,74 @@ it('prefers a modal target over a url on the same action', function (): void {
     expect($html)->toContain('$modal(')
         ->not->toContain('href="/docs"');
 });
+
+it('binds a showIf action to an Alpine x-show on the component property', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Login As Customer', 'action' => 'loginAsCustomer', 'showIf' => 'hasAccount'],
+    ], 5);
+
+    expect($html)->toContain('x-show="$wire.hasAccount"')
+        ->toContain('wire:click="loginAsCustomer"');
+});
+
+it('negates a showIfNot action and combines both conditions on one action', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Invite', 'action' => 'invite', 'showIf' => 'hasEmail', 'showIfNot' => 'hasAccount'],
+    ], 5);
+
+    expect(html_entity_decode($html))->toContain('x-show="$wire.hasEmail && !$wire.hasAccount"');
+});
+
+it('compares against a value with the object condition form', function (): void {
+    $html = renderDetailActions([
+        [
+            'label' => 'Archive',
+            'action' => 'archive',
+            'showIf' => ['field' => 'detailData.status', 'value' => 'open'],
+        ],
+    ], 5);
+
+    expect(html_entity_decode($html))->toContain("x-show=\"(\$wire.detailData.status === 'open')\"");
+});
+
+it('leaves an unconditional action free of an x-show directive', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'Always', 'action' => 'always'],
+    ], 5);
+
+    expect($html)->toContain('Always')
+        ->not->toContain('x-show');
+});
+
+it('hides the whole action bar when every action is conditional', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'A', 'action' => 'a', 'showIf' => 'flagA'],
+        ['label' => 'B', 'action' => 'b', 'showIf' => 'flagB'],
+    ], 5);
+
+    expect(html_entity_decode($html))->toContain('x-show="($wire.flagA) || ($wire.flagB)"');
+});
+
+it('keeps the action bar visible when at least one action is unconditional', function (): void {
+    $html = renderDetailActions([
+        ['label' => 'A', 'action' => 'a', 'showIf' => 'flagA'],
+        ['label' => 'B', 'action' => 'b'],
+    ], 5);
+
+    expect(html_entity_decode($html))->not->toContain('x-show="($wire.flagA)');
+});
+
+it('keeps a conditional modal action clickable with a single Alpine scope', function (): void {
+    $html = renderDetailActions([
+        [
+            'label' => 'New Order',
+            'modalComponent' => 'pos::pos-order-modal',
+            'showIf' => 'hasAccount',
+        ],
+        ['label' => 'Always', 'action' => 'always'],
+    ], 5);
+
+    expect($html)->toContain('$modal(')
+        ->toContain('x-show="$wire.hasAccount"')
+        ->and(substr_count($html, 'x-data'))->toBe(1);
+});

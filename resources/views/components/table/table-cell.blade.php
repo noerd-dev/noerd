@@ -1,5 +1,11 @@
+@php
+    // A column may declare `translatable: true` — the cell then carries a subtle blue
+    // tint so a language-dependent value is recognisable at a glance in the list.
+    $isTranslatableCell = (bool) ($columnConfig['translatable'] ?? false);
+@endphp
+
 <td
-    class="border-r border-b border-gray-300 py-1 first:pl-4 last:border-r-0"
+    class="border-r border-b border-gray-300 py-1 first:pl-4 last:border-r-0 {{ $isTranslatableCell ? 'bg-sky-50 group-hover:bg-transparent' : '' }}"
     @click="activeColumn = {{ $column }}, selectedRow = {{ $row }}"
     x-data="{ showDropdown: false }"
     {{--
@@ -377,6 +383,9 @@
                     wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
                     @if ($readOnly ?? true) readonly @endif
                     id="cell-{{ $column }}-{{ $row }}"
+                    @if ($isTranslatableCell)
+                        title="{{ __('This field is translatable. The value belongs to the language selected in the language switcher.') }}"
+                    @endif
                     class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
                     value="{{ $value }}"
                 />
