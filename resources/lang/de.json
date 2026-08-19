@@ -382,5 +382,6 @@
     "e.g. >=2026-01-01": "z. B. >=2026-01-01",
     "e.g. =value or text": "z. B. =Wert oder Text",
     "Call": "Anrufen",
-    "Send email": "E-Mail senden"
+    "Send email": "E-Mail senden",
+    "This field is translatable. The value belongs to the language selected in the language switcher.": "Dieses Feld ist übersetzbar. Der Wert gehört zu der Sprache, die oben im Sprachumschalter gewählt ist."
 }

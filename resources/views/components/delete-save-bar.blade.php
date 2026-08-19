@@ -3,7 +3,6 @@
     'showDelete' => false,
     'showSave' => true,
     'deleteMessage' => null,
-    'footerComponents' => [],
     'modelId' => null,
 ])
 
@@ -16,12 +15,6 @@
     $showDelete = $showDelete
         && (! $barComponent || ! method_exists($barComponent, 'canDeleteObject') || $barComponent->canDeleteObject());
 @endphp
-
-@foreach ($footerComponents as $fc)
-    @if (!($fc['requiresId'] ?? false) || $modelId)
-        <livewire:is :component="$fc['component']" :modelId="$modelId" />
-    @endif
-@endforeach
 
 <div {{ $attributes->merge(['class' => 'ml-auto']) }} x-data="{ showButtons: false }">
     <div class="ml-auto flex gap-2">

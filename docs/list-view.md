@@ -92,6 +92,7 @@ columns:
 | `type` | Display type (see Column Types below) | `text` |
 | `options` | `value`/`label` pairs for the `badge` type (see below) | |
 | `readOnly` | For editable cell types (`bool`, inline inputs): render read-only | `true` |
+| `translatable` | Marks the column as language-dependent — the cell gets a subtle blue background so an editor sees that the value belongs to the selected language (see [Languages](languages.md)) | `false` |
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
 | `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
 | `wireClick` / `wireClickField` | For `colored_text`: custom `wire:click` method plus the row field passed as its argument | / `id` |

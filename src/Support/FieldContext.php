@@ -37,6 +37,18 @@ class FieldContext
         return is_string($helpText) && mb_trim($helpText) !== '' ? $helpText : null;
     }
 
+    /**
+     * Whether the field currently being rendered stores one value per language.
+     * Read by `x-noerd::input-label` so every theme marks translatable fields
+     * without each element template having to forward the flag.
+     */
+    public static function isTranslatable(): bool
+    {
+        $type = self::$current['type'] ?? null;
+
+        return is_string($type) && str_starts_with($type, 'translatable');
+    }
+
     public static function clear(): void
     {
         self::$current = null;

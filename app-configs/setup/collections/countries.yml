@@ -1,0 +1,18 @@
+title: Country
+titleList: Countries
+key: COUNTRIES
+buttonList: New Country
+description: 'List of countries, maintained per tenant'
+fields:
+  - name: detailData.name
+    label: Country Name
+    type: translatableText
+    colspan: 8
+    required: true
+    width: 60
+  - name: detailData.code
+    label: Country Code
+    type: text
+    colspan: 4
+    required: true
+    width: 20

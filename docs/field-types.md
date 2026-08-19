@@ -952,6 +952,13 @@ TipTap WYSIWYG editor for formatted text content.
 ## Translatable Fields
 
 These field types store content as JSON objects with language keys (e.g., `{"de": "...", "en": "..."}`).
+The active key is the language chosen in the language switcher; the available languages come from the
+tenant's configured content languages — see [Languages](languages.md).
+
+Translatable inputs are rendered with a **light blue frame**, and their label carries a language icon
+whose tooltip explains that the value belongs to the selected language. The marker is part of every
+theme (`default`, `compact`, `numbered`) and is derived from the field type — nothing to configure. In
+a list, a column declaring `translatable: true` gets a subtle blue cell background instead.
 
 ### translatableText
 

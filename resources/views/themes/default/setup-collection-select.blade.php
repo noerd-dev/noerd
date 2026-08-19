@@ -12,7 +12,6 @@
 
 @php
     use Noerd\Helpers\SetupCollectionHelper;
-    use Noerd\Models\SetupCollection;
 
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
@@ -23,29 +22,11 @@
     $readonly = $field['readonly'] ?? $readonly;
     $required = $field['required'] ?? $required;
 
-    // Get current locale
-    $locale = session('selectedLanguage') ?? 'de';
-
-    // Get collection entries
-    $collection = SetupCollection::where('collection_key', $collectionKey)->first();
-    $entries = $collection?->entries ?? collect();
-
-    // Get collection config to check if displayField is translatable
-    $collectionConfig = SetupCollectionHelper::getCollectionFields(mb_strtolower($collectionKey));
-    $fieldConfig = collect($collectionConfig['fields'] ?? [])->firstWhere('name', 'detailData.' . $displayField);
-    $isTranslatable = in_array($fieldConfig['type'] ?? '', ['translatableText', 'translatableTextarea']);
-
-    // Build options array
-    $options = [['value' => '', 'label' => 'Bitte wählen']];
-    foreach ($entries as $entry) {
-        $optionLabel = $entry->data[$displayField] ?? '';
-        // Always handle array values (translatable fields) - get locale, fallback to 'de', then any available
-        if (is_array($optionLabel)) {
-            $optionLabel = $optionLabel[$locale] ?? $optionLabel['de'] ?? reset($optionLabel) ?? '';
-        }
-        $optionValue = $valueField ? ($entry->data[$valueField] ?? '') : $entry->id;
-        $options[] = ['value' => $optionValue, 'label' => $optionLabel];
-    }
+    // Build options array — shared resolution with the list picklist badges.
+    $options = [
+        ['value' => '', 'label' => 'Bitte wählen'],
+        ...SetupCollectionHelper::selectOptions($collectionKey, $displayField, $valueField),
+    ];
 @endphp
 
 <div>

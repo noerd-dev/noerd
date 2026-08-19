@@ -4,7 +4,7 @@
      apply persistent transforms (which would make them the containing block for a
      fixed panel) and the compact/numbered labels use `truncate` (overflow: hidden)
      — both would clip an in-place panel. --}}
-@props(['text' => null])
+@props(['text' => null, 'icon' => 'question-mark-circle', 'iconClass' => 'text-gray-400 hover:text-gray-600'])
 
 @php
     $helpTooltipText = mb_trim((string) ($text ?? ''));
@@ -24,9 +24,9 @@
             @click.prevent.stop="open = ! open"
             @click.outside="open = false"
             :aria-expanded="open"
-            class="focus-visible:ring-brand-border ms-1 inline-flex shrink-0 cursor-help rounded-full align-middle text-gray-400 hover:text-gray-600 focus:outline-none focus-visible:ring-2"
+            class="focus-visible:ring-brand-border ms-1 inline-flex shrink-0 cursor-help rounded-full align-middle focus:outline-none focus-visible:ring-2 {{ $iconClass }}"
         >
-            <x-icon name="question-mark-circle" class="size-4" />
+            <x-icon :name="$icon" class="size-4" />
             <span class="sr-only">{{ $helpTooltipText }}</span>
         </button>
 

@@ -15,7 +15,15 @@ class StaticConfigHelper
     /** Container key for the optional layout-override hook (see layoutOverrides()). */
     public const LAYOUT_OVERRIDES_BINDING = 'noerd.layout-overrides';
 
-    private static ?array $moduleSourceMappingCache = null;
+    /**
+     * Module-to-app-config mapping per base path. Keyed by base_path(): one Pest
+     * process runs host tests and package tests whose testbench skeleton has its
+     * own (much smaller) app-modules directory — an unkeyed memo would leak the
+     * skeleton's mapping into every later test.
+     *
+     * @var array<string, array<string, array<int, string>>>
+     */
+    private static array $moduleSourceMappingCache = [];
 
     /**
      * Request-scope memo for the DB-backed lookups (allowed app folders, active
@@ -255,7 +263,7 @@ class StaticConfigHelper
      */
     public static function clearModuleSourceCache(): void
     {
-        self::$moduleSourceMappingCache = null;
+        self::$moduleSourceMappingCache = [];
     }
 
     /**
@@ -925,17 +933,17 @@ class StaticConfigHelper
      */
     private static function getModuleSourceMapping(): array
     {
-        if (self::$moduleSourceMappingCache !== null) {
-            return self::$moduleSourceMappingCache;
+        $basePath = base_path();
+
+        if (isset(self::$moduleSourceMappingCache[$basePath])) {
+            return self::$moduleSourceMappingCache[$basePath];
         }
 
         $mappings = [];
         $appModulesPath = base_path('app-modules');
 
         if (!is_dir($appModulesPath)) {
-            self::$moduleSourceMappingCache = $mappings;
-
-            return $mappings;
+            return self::$moduleSourceMappingCache[$basePath] = $mappings;
         }
 
         $modules = scandir($appModulesPath);
@@ -962,8 +970,6 @@ class StaticConfigHelper
             }
         }
 
-        self::$moduleSourceMappingCache = $mappings;
-
-        return $mappings;
+        return self::$moduleSourceMappingCache[$basePath] = $mappings;
     }
 }
