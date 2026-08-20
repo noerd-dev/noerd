@@ -104,6 +104,14 @@ abstract class TestCase extends BaseTestCase
         $app['config']->set('queue.default', 'sync');
         $app['config']->set('mail.default', 'array');
 
+        // Translated output must not depend on the host application's
+        // APP_LOCALE — a real project (and this repo's .env.testing) runs
+        // German, which would break every assertion on an English source
+        // string. Tests that exercise translation set their own locale
+        // explicitly, e.g. FieldHelpTextTest.
+        $app['config']->set('app.locale', 'en');
+        $app['config']->set('app.fallback_locale', 'en');
+
         // Defaults to testbench's built-in sqlite :memory: connection. A
         // dedicated variable (not DB_CONNECTION) selects another database, so
         // a host application's CI environment never leaks into these tests.
