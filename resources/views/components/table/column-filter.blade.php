@@ -1,7 +1,10 @@
-{{-- Excel-style column filter: funnel button in the header cell opening a popover.
-     Included from table-sort for every filterable column. Expects: field, type,
-     options, filterValue, align. --}}
+{{-- Excel-style column filter: funnel button opening a popover. Included from
+     table-sort for every filterable column of a table list, and from
+     list/grid-controls for a grid list. Expects: field, type, options,
+     filterValue, align. Optional: filterLabel — when set, the trigger renders as
+     a standalone labeled chip instead of the hover-revealed header funnel. --}}
 @php
+    $filterLabel = $filterLabel ?? null;
     $filterValue = (string) ($filterValue ?? '');
     $filterType = $type ?? 'text';
     $filterOptions = $options ?? [];
@@ -20,20 +23,32 @@
     wire:key="column-filter-{{ $field }}-{{ md5($filterValue) }}"
     x-data="{ open: false, value: @js($filterValue) }"
     @click.outside="open = false"
-    class="relative {{ ($align ?? 'left') === 'right' ? 'ml-1' : 'ml-auto' }}"
+    class="relative {{ $filterLabel === null ? (($align ?? 'left') === 'right' ? 'ml-1' : 'ml-auto') : '' }}"
 >
     <button
         type="button"
         @click="open = ! open"
         x-ref="{{ $filterRef }}"
         title="{{ __('Filter') }}"
-        class="flex items-center rounded p-0.5 {{ $filterActive ? 'text-brand-primary' : 'text-gray-400 opacity-0 group-hover/th:opacity-100 focus:opacity-100 hover:text-gray-600' }}"
+        @class([
+            // Standalone chip (grid lists): always visible, since there is no
+            // header cell to hover. Header funnel: revealed on hover/focus.
+            'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm' => $filterLabel !== null,
+            'border-brand-primary text-brand-primary' => $filterLabel !== null && $filterActive,
+            'border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900' => $filterLabel !== null && ! $filterActive,
+            'flex items-center rounded p-0.5' => $filterLabel === null,
+            'text-brand-primary' => $filterLabel === null && $filterActive,
+            'text-gray-400 opacity-0 group-hover/th:opacity-100 focus:opacity-100 hover:text-gray-600' => $filterLabel === null && ! $filterActive,
+        ])
         :class="open && 'opacity-100'"
     >
         @if ($filterActive)
             <x-dynamic-component component="heroicons::solid.funnel" class="size-3.5" />
         @else
             <x-dynamic-component component="heroicons::outline.funnel" class="size-3.5" />
+        @endif
+        @if ($filterLabel !== null)
+            <span>{{ $filterLabel }}</span>
         @endif
     </button>
 

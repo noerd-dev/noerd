@@ -6,9 +6,10 @@
     <div class="top-5 flex items-center whitespace-nowrap">
         @if ($field !== 'action')
             @php
-                // A dotted field resolves out of a JSON column or a relation, not a real DB column, so the
-                // query cannot order by it — never offer a sort that would silently do nothing.
-                $isSortable = !in_array($field, $notSortableColumns ?? []) && !str_contains($field, '.');
+                // One rule for every rendering mode (see NoerdList::isSortableColumn): a dotted field
+                // resolves out of a JSON column or a relation, not a real DB column, so the query cannot
+                // order by it — never offer a sort that would silently do nothing.
+                $isSortable = $this->isSortableColumn($field, $notSortableColumns ?? []);
             @endphp
             @if ($isSortable)
                 <button

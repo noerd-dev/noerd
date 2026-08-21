@@ -41,6 +41,52 @@ it('uses default sort when no setDefaultSort is called', function (): void {
     expect($component->get('sortAsc'))->toBe(false);
 });
 
+it('treats only undotted, non-action, allowed columns as sortable', function (): void {
+    $component = new TestableNoerdListDefaultComponent();
+
+    expect($component->isSortableColumn('name'))->toBeTrue()
+        ->and($component->isSortableColumn('customer.name'))->toBeFalse()
+        ->and($component->isSortableColumn('custom_attributes.color'))->toBeFalse()
+        ->and($component->isSortableColumn('action'))->toBeFalse()
+        ->and($component->isSortableColumn('city', ['city']))->toBeFalse()
+        ->and($component->isSortableColumn('city', ['name']))->toBeTrue();
+});
+
+it('sets the sort direction without changing the sort field', function (): void {
+    $component = Livewire::test(TestableNoerdListComponent::class)
+        ->call('setSortDirection', true);
+
+    expect($component->get('sortField'))->toBe('created_at')
+        ->and($component->get('sortAsc'))->toBeTrue();
+
+    $component->call('setSortDirection', true);
+    expect($component->get('sortAsc'))->toBeTrue();
+
+    $component->call('setSortDirection', false);
+    expect($component->get('sortAsc'))->toBeFalse();
+});
+
+it('sets the sort direction for a field that is no sortable column', function (): void {
+    // `id` is the technical default sort and never a YAML column — the direction entries
+    // of the grid sort dropdown must still work there.
+    $component = Livewire::test(TestableNoerdListDefaultComponent::class)
+        ->call('setSortDirection', true);
+
+    expect($component->get('sortField'))->toBe('id')
+        ->and($component->get('sortAsc'))->toBeTrue();
+});
+
+it('persists the sort direction to the session and the query context', function (): void {
+    $component = Livewire::test(TestableNoerdListComponent::class)->call('setSortDirection', true);
+
+    $componentName = new ReflectionMethod($component->instance(), 'componentName');
+    $componentName->setAccessible(true);
+
+    expect(app(ListQueryContext::class)->getSortAsc())->toBeTrue()
+        ->and(session('listSort.' . $componentName->invoke($component->instance())))
+        ->toBe(['field' => 'created_at', 'asc' => true]);
+});
+
 it('derives select event name from plain list component', function (): void {
     $component = new TestableSelectEventPlainComponent();
     $method = new ReflectionMethod($component, 'getSelectEvent');

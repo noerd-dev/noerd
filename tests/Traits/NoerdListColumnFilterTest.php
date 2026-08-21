@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -31,6 +32,25 @@ function createColumnFilterJsonItemsTable(): void
         $table->id();
         $table->string('name');
         $table->json('custom_attributes')->nullable();
+    });
+}
+
+function createColumnFilterRelationTables(): void
+{
+    if (Schema::hasTable('column_filter_records')) {
+        return;
+    }
+
+    Schema::create('column_filter_owners', function (Blueprint $table): void {
+        $table->id();
+        $table->string('city');
+        $table->integer('rating')->default(0);
+    });
+
+    Schema::create('column_filter_records', function (Blueprint $table): void {
+        $table->id();
+        $table->string('name');
+        $table->unsignedBigInteger('owner_id')->nullable();
     });
 }
 
@@ -202,6 +222,96 @@ it('exposes json custom attribute paths as filterable', function (): void {
         'custom_attributes.price',
         'custom_attributes.cycle',
     ]);
+});
+
+it('filters a relation column path with a like match by default', function (): void {
+    createColumnFilterRelationTables();
+    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+    $hamburg = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+    $match = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $hamburg->id]);
+    ColumnFilterRecord::create(['name' => 'C', 'owner_id' => null]);
+
+    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'owner.city', 'erli');
+
+    expect(filterListIds($component))->toBe([$match->id]);
+});
+
+it('filters a relation column path with an exact match on =', function (): void {
+    createColumnFilterRelationTables();
+    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+    $berlinSuburb = ColumnFilterOwner::create(['city' => 'Berlin-Spandau', 'rating' => 3]);
+    $exact = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $berlinSuburb->id]);
+
+    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'owner.city', '=Berlin');
+
+    expect(filterListIds($component))->toBe([$exact->id]);
+});
+
+it('types a relation column from the schema of the related table', function (): void {
+    createColumnFilterRelationTables();
+    $low = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 3]);
+    $high = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $low->id]);
+    $match = ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $high->id]);
+
+    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'owner.rating', '>5');
+
+    expect(filterListIds($component))->toBe([$match->id]);
+});
+
+it('exposes relation column paths as filterable but ignores unknown ones', function (): void {
+    createColumnFilterRelationTables();
+    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
+
+    $component = Livewire::test(TestableRelationColumnFilterListComponent::class);
+    $listConfig = $component->instance()->with()['listConfig'];
+
+    expect($listConfig['filterableColumns'])->toBe([
+        'name',
+        'owner.city',
+        'owner.rating',
+    ]);
+});
+
+it('ignores filters on unresolvable relation paths', function (): void {
+    createColumnFilterRelationTables();
+    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => null]);
+
+    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'nope.city', 'Berlin');
+
+    expect(filterListIds($component))->toHaveCount(2);
+});
+
+it('hydrates a dotted relation filter from the url', function (): void {
+    createColumnFilterRelationTables();
+    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+    $hamburg = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+    $match = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $hamburg->id]);
+
+    $component = Livewire::withUrlParams(['cf' => ['owner.city' => 'Berlin']])
+        ->test(TestableRelationColumnFilterListComponent::class);
+
+    expect($component->get('listColumnFilters'))->toBe(['owner.city' => 'Berlin'])
+        ->and(filterListIds($component))->toBe([$match->id]);
+});
+
+it('keeps relation column paths unsortable', function (): void {
+    createColumnFilterRelationTables();
+    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
+
+    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+        ->call('sortBy', 'owner.city');
+
+    expect($component->get('sortField'))->toBe('id');
 });
 
 it('persists column filters per component in the session and restores them', function (): void {
@@ -504,6 +614,81 @@ class TestableJsonColumnFilterListComponent extends Component
                         ['value' => 'monthly', 'label' => 'Monthly'],
                     ],
                 ],
+            ],
+        ];
+    }
+}
+
+/**
+ * Related model over a runtime-created table, so relation-path column filters can
+ * be exercised without touching real tables.
+ */
+class ColumnFilterOwner extends Model
+{
+    public $timestamps = false;
+
+    protected $table = 'column_filter_owners';
+
+    protected $guarded = [];
+}
+
+/**
+ * Owning model with a belongsTo relation, plus a method that returns no relation
+ * at all — its dotted path must stay out of the filterable columns.
+ */
+class ColumnFilterRecord extends Model
+{
+    public $timestamps = false;
+
+    protected $table = 'column_filter_records';
+
+    protected $guarded = [];
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(ColumnFilterOwner::class, 'owner_id');
+    }
+
+    public function nope(): string
+    {
+        return 'not a relation';
+    }
+}
+
+/**
+ * List component over the relation model: one plain column, two relation paths
+ * (text and a number typed from the related table's schema) and one path whose
+ * base method is no relation at all.
+ */
+class TestableRelationColumnFilterListComponent extends Component
+{
+    use NoerdList;
+
+    public const COMPONENT = 'testable-relation-column-filter-list';
+
+    public function with(): array
+    {
+        return [
+            'listConfig' => $this->buildList(
+                $this->listQuery(ColumnFilterRecord::class)->paginate($this->perPage),
+            ),
+        ];
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Testable Records',
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+                ['field' => 'owner.city', 'label' => 'City'],
+                ['field' => 'owner.rating', 'label' => 'Rating'],
+                ['field' => 'nope.city', 'label' => 'Nope'],
             ],
         ];
     }

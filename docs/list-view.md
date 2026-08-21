@@ -671,10 +671,26 @@ supported; an unknown value falls back to `4`.
 (arrow keys + Enter) and picker mode. In `multiSelect` mode each card gets a checkbox in its
 top-right corner wired to `toggleRecordSelection`.
 
-**Not rendered in grid mode** (thead-only features): column sort headers (the default sort from
-`setDefaultSort()` still applies), the Excel-style column-filter funnels (active filters still
-apply to the query and stay visible/clearable via the header filter chips), the select-all
-checkbox, `showLineNumbers` and the summary footer.
+**Column filters and sorting** are offered as a **control bar above the cards**
+(`noerd::components.list.grid-controls`), since grid mode renders neither the header funnels nor the
+sort headers:
+
+- **Left: one labeled funnel button per filterable column**, opening the very same popover as the
+  header funnel of a table list (see [List Filters](list-filters.md)).
+- **Right: a sort dropdown** listing every sortable column — the same rule as the table header
+  (`NoerdList::isSortableColumn()`: not `action`, not dotted, not in `notSortableColumns`), so
+  relation/JSON paths are absent there as well; the query cannot order by them. Picking a column
+  calls `sortBy()` (re-picking the active column flips the direction); below a separator, two
+  entries set the direction explicitly via `setSortDirection()`. The trigger names the active
+  column (`Sort by: Name`) with an up/down icon, or reads just `Sort by` while the list sorts on a
+  column that is not part of the YAML (the technical `id` default).
+
+The bar sits above the empty state too, so a filter that matches nothing stays clearable; active
+filters additionally show as chips next to the list title. Compact/embedded grid lists render no
+control bar at all (they apply no column filters, and the table variant hides its header there too).
+
+**Not rendered in grid mode** (thead-only features): the select-all checkbox, `showLineNumbers` and
+the summary footer.
 
 A list mounted as a **minimal widget** ignores `displayMode` — minimal mode takes precedence.
 
