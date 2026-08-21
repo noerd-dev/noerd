@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Noerd\Services\RelationBoxRegistry;
 
 new class extends Component {
     public string $modelClass = '';
@@ -40,23 +41,52 @@ new class extends Component {
             return;
         }
 
-        foreach ($this->relations as $relation) {
-            $relationName = $relation['relation'] ?? null;
-            $count = $relationName && method_exists($model, $relationName)
-                ? $model->{$relationName}()->count()
-                : 0;
+        // Page YAML tiles first (authored order — the page owner controls its
+        // layout), tiles contributed via the RelationBoxRegistry append after,
+        // sorted by the registry. Their closures (count/visible) are resolved
+        // here to scalars and never become Livewire state.
+        $tiles = [...$this->relations, ...app(RelationBoxRegistry::class)->for($this->modelClass)];
 
-            $route = $relation['route'] ?? null;
+        foreach ($tiles as $tile) {
+            $resolved = $this->resolveTile($tile, $model);
 
-            $this->resolvedRelations[] = [
-                'label' => $relation['label'] ?? '',
-                'heroicon' => $relation['heroicon'] ?? 'rectangle-stack',
-                'component' => $relation['component'] ?? '',
-                'route' => $route && \Illuminate\Support\Facades\Route::has($route) ? $route : '',
-                'count' => $count,
-                'arguments' => $this->resolveArguments($relation['arguments'] ?? []),
-            ];
+            if ($resolved !== null) {
+                $this->resolvedRelations[] = $resolved;
+            }
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $tile
+     * @return array{label: string, heroicon: string, component: string, route: string, count: int, arguments: array<string, mixed>}|null
+     */
+    private function resolveTile(array $tile, Model $model): ?array
+    {
+        $visible = $tile['visible'] ?? null;
+
+        if ($visible instanceof Closure && ! $visible($model)) {
+            return null;
+        }
+
+        $relationName = $tile['relation'] ?? null;
+        $countResolver = $tile['count'] ?? null;
+
+        $count = match (true) {
+            $countResolver instanceof Closure => (int) $countResolver($model),
+            $relationName && method_exists($model, $relationName) => $model->{$relationName}()->count(),
+            default => 0,
+        };
+
+        $route = $tile['route'] ?? null;
+
+        return [
+            'label' => $tile['label'] ?? '',
+            'heroicon' => $tile['heroicon'] ?? 'rectangle-stack',
+            'component' => $tile['component'] ?? '',
+            'route' => $route && \Illuminate\Support\Facades\Route::has($route) ? $route : '',
+            'count' => $count,
+            'arguments' => $this->resolveArguments($tile['arguments'] ?? []),
+        ];
     }
 
     /**

@@ -59,6 +59,7 @@ use Noerd\Services\ListQueryContext;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Services\RelationBoxRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
@@ -93,6 +94,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(HeaderActionsRegistry::class);
         $this->app->singleton(DetailSlotsRegistry::class);
+        $this->app->singleton(RelationBoxRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(ThemeRegistry::class);
         $this->app->singleton(NoerdManager::class);
