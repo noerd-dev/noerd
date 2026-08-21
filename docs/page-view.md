@@ -121,7 +121,9 @@ new class extends Component {
 
 A Relation Box renders a grid of clickable tiles (6 per row), each showing a heroicon, a label and the related record count, e.g. `Contacts (5)`. Clicking a tile opens the related list component as a modal, filtered by the current record. Use it instead of relation tabs when you want an overview of all relations at a glance.
 
-It is rendered via the generic `<x-noerd::detail-relations>` component, a thin wrapper around the `<livewire:noerd::relation-box>` Livewire component. The box only renders when `modelId`, a non-empty `relations` array and `modelClass` are all present, and refreshes its counts automatically when a list modal closes (`#[On('closeTopModal')]`).
+It is rendered via the generic `<x-noerd::detail-relations>` component, a thin wrapper around the `<livewire:noerd::relation-box>` Livewire component. The box only renders when `modelId`, `modelClass` and at least one tile (a YAML `relations` entry or a registry contribution, see below) are present, and refreshes its counts automatically when a list modal closes (`#[On('closeTopModal')]`).
+
+Besides the page YAML, an optional module can contribute tiles programmatically via the `RelationBoxRegistry` — e.g. accounting appends an Invoices tile to the party page without the party module knowing about it. Contributed tiles render after the YAML tiles; see [extension-registries.md](extension-registries.md#relationboxregistry).
 
 ### Blade Usage
 

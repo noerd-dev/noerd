@@ -6,9 +6,11 @@
 
 @php
     $relations = $layout['relations'] ?? [];
+    $hasContributedTiles = $modelClass !== ''
+        && app(\Noerd\Services\RelationBoxRegistry::class)->for($modelClass) !== [];
 @endphp
 
-@if ($modelId && ! empty($relations) && $modelClass)
+@if ($modelId && $modelClass && (! empty($relations) || $hasContributedTiles))
     <livewire:noerd::relation-box
         :modelClass="$modelClass"
         :modelId="$modelId"

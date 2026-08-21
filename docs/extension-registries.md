@@ -158,6 +158,54 @@ $registry->register($this->app->make(SetupCollectionsNavigationProvider::class))
 
 A module registers its own provider the same way from `boot()`. Reference implementations outside the core: the reservation module (`reservation-object-types`) and the CMS module (`page-collections`, `collections`).
 
+## RelationBoxRegistry
+
+Lets an optional module append tiles to another module's relation box (`<x-noerd::detail-relations>`
+/ `noerd::relation-box`, see [page-view.md](page-view.md)) without the host module knowing the
+contributor. The host page's YAML `relations:` tiles render first in authored order; registry tiles
+append after them, sorted ascending by `sort` (equal sorts keep registration order). A registration
+ceases to exist with its module — the reason this is a registry and not a YAML entry: a YAML entry
+would outlive an uninstalled module.
+
+**API** (`Noerd\Services\RelationBoxRegistry`):
+
+| Method | Description |
+|--------|-------------|
+| `register(string $modelClass, array $tile, int $sort = 100)` | Contribute a tile for every relation box hosting `$modelClass` |
+| `for(string $modelClass)` | All contributed tiles for the class, including tiles registered for a parent class (a project-level subclass inherits its base's tiles), sorted |
+
+A tile mirrors the YAML relation shape — `label` (translation key), `heroicon`, `component` and/or
+`route`, `arguments` with the `$modelId` token — plus two keys YAML cannot express:
+
+| Key | Description |
+|-----|-------------|
+| `count` | `Closure(Model): int` — for counts the host model has no relation method for. Without it, the YAML `relation:` method lookup applies (missing method → `0`) |
+| `visible` | `Closure(Model): bool` — return `false` to drop the tile, e.g. when the tenant lacks the contributing app |
+
+Closures are resolved inside the relation box at render time and never become Livewire state; counts
+re-resolve on `closeTopModal` like YAML tiles.
+
+**Shipped example** — accounting plugs the party's documents into the party page's relation box
+(party never learns about accounting; `Party` has no `invoices()` relation by design):
+
+```php
+app(RelationBoxRegistry::class)->register(Party::class, [
+    'label' => 'Invoices',
+    'heroicon' => 'document-currency-euro',
+    'component' => 'accounting::invoices-list',
+    'arguments' => ['partyId' => '$modelId'],
+    'count' => fn(Party $party): int => Invoice::where('party_id', $party->id)->count(),
+    'visible' => fn(): bool => /* tenant has the accounting app + per-app gate */,
+], sort: 10);
+```
+
+Reference: `AccountingServiceProvider::registerPartyRelationBoxTiles()`.
+
+- The count/visible closures run per render — keep the queries cheap; `BelongsToTenant` models need
+  no manual tenant scoping
+- A page whose only tiles are contributed still renders its relation box — the
+  `<x-noerd::detail-relations>` guard consults the registry
+
 ## Overridable Null Bindings
 
 Two contracts are bound to inert default implementations so the core works without the optional module that provides the real one. A module takes over by rebinding the contract in its service provider's `register()`.
