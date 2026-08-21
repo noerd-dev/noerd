@@ -165,6 +165,14 @@ columns:
 
 Columns listed in `notSortableColumns` will display their label as plain text instead of a clickable sort button. Clicking `sortBy()` for these fields will be ignored.
 
+The rule lives once in `NoerdList::isSortableColumn($field, $notSortableColumns)`: a column is
+sortable when it is not `action`, not listed in `notSortableColumns` and **not dotted** — a
+`custom_attributes.x` or `customer.name` path resolves at render time, so the query cannot order by
+it (such columns can still be filtered, see [List Filters](list-filters.md)). Lists in
+[grid mode](list-view.md#grid-mode-card-layout) render no table header and surface exactly the same
+set of columns in a sort dropdown above the cards, plus `setSortDirection()` entries for an explicit
+ascending/descending choice.
+
 ## Best Practices
 
 1. **Use `listQuery()`**: Prefer the automatic approach via `listQuery()` for all standard lists

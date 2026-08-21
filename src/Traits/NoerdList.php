@@ -5,6 +5,7 @@ namespace Noerd\Traits;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
@@ -27,6 +28,7 @@ use Noerd\Services\ListQueryContext;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 use UnitEnum;
 
 trait NoerdList
@@ -177,6 +179,15 @@ trait NoerdList
     /** @var array<int, string>|null Request cache for filterableColumnFields(). */
     protected ?array $filterableColumnCache = null;
 
+    /**
+     * Request cache for relationColumnPath(), keyed by column field. Keeps the
+     * relation-method probing (one model instantiation per segment) to a single
+     * run per field and request.
+     *
+     * @var array<string, array{relation: string, column: string, table: string}|null>|null
+     */
+    protected ?array $relationColumnPathCache = null;
+
     /** @var array<string, mixed>|null Last buildList() result, memoized per request. */
     protected ?array $builtListConfigCache = null;
 
@@ -191,6 +202,26 @@ trait NoerdList
     public static function isDottedField(string $field): bool
     {
         return str_contains($field, '.');
+    }
+
+    /**
+     * Whether the list may be ORDERED BY this column — the single rule behind the table header's
+     * sort button and the grid list's sort dropdown. A dotted field resolves out of a JSON column
+     * or a relation at render time, so the query cannot order by it (listQuery() would silently
+     * fall back to `id`); `action` is a button column; `notSortableColumns` is the YAML opt-out.
+     *
+     * Callers pass notSortableColumns explicitly: the render path has them from the BUILT config,
+     * which is also correct for array configs (buildList($rows, $config)), alternate list views and
+     * custom config names — unlike a fresh getListConfig() lookup, which would resolve to an empty
+     * config there and wrongly offer every column as sortable.
+     *
+     * @param  array<int, string>  $notSortableColumns
+     */
+    public function isSortableColumn(string $field, array $notSortableColumns = []): bool
+    {
+        return $field !== 'action'
+            && !self::isDottedField($field)
+            && !in_array($field, $notSortableColumns, true);
     }
 
     public function mount(): void
@@ -379,31 +410,31 @@ trait NoerdList
 
     public function sortBy(string $field): void
     {
-        // A dotted field is not a real column (e.g. `custom_attributes.sap_number`, `customer.name`), so
-        // the query could not order by it — listQuery() would silently fall back to `id`. Refuse it here
-        // rather than let the header appear to sort and do nothing.
-        if (self::isDottedField($field)) {
+        // Refuse a column the query could not order by rather than let the header appear
+        // to sort and do nothing (see isSortableColumn()).
+        if (!$this->isSortableColumn($field, $this->getListConfig()['notSortableColumns'] ?? [])) {
             return;
         }
 
-        $listConfig = $this->getListConfig();
-        $notSortable = $listConfig['notSortableColumns'] ?? [];
-        if (in_array($field, $notSortable)) {
-            return;
-        }
-
-        if ($this->sortField === $field) {
-            $this->sortAsc = !$this->sortAsc;
-        } else {
-            $this->sortAsc = true;
-        }
+        $this->sortAsc = $this->sortField === $field ? !$this->sortAsc : true;
         $this->sortField = $field;
-        $this->syncListQueryContext();
+        $this->persistListSort();
+    }
 
-        session(["listSort.{$this->componentName()}" => [
-            'field' => $this->sortField,
-            'asc' => $this->sortAsc,
-        ]]);
+    /**
+     * Set the sort direction without changing the column — the grid list's sort dropdown offers it
+     * as two explicit entries. Deliberately NOT routed through sortBy(): direction is always a safe
+     * operation, also for a $sortField that is no sortable column at all (the technical default
+     * `id`, or a stale sort restored from the session after a YAML change).
+     */
+    public function setSortDirection(bool $ascending): void
+    {
+        if ($this->sortAsc === $ascending) {
+            return;
+        }
+
+        $this->sortAsc = $ascending;
+        $this->persistListSort();
     }
 
     public function loadListFilters(): void
@@ -935,6 +966,7 @@ trait NoerdList
         $this->resolvedModelClass = $modelClass;
         $this->listQueryConfigName = $configName;
         $this->filterableColumnCache = null;
+        $this->relationColumnPathCache = null;
 
         $query = $modelClass::query()
             ->withoutGlobalScope(SearchScope::class)
@@ -980,9 +1012,10 @@ trait NoerdList
     /**
      * Fields the user may filter on via the header funnel: every YAML column that
      * is not 'action' and either a real column on the resolved model's table
-     * (the same rule as sorting) or a path into a JSON-cast column
-     * (`custom_attributes.x`). Empty until listQuery() has resolved the
-     * model class, so lists with fully custom queries get no funnels.
+     * (the same rule as sorting), a path into a JSON-cast column
+     * (`custom_attributes.x`) or a path through Eloquent relations
+     * (`defaultDeliveryAddress.locality`). Empty until listQuery() has resolved
+     * the model class, so lists with fully custom queries get no funnels.
      *
      * @return array<int, string>
      */
@@ -1003,7 +1036,7 @@ trait NoerdList
             ->filter(fn($field): bool => is_string($field)
                 && $field !== 'action'
                 && (self::isDottedField($field)
-                    ? $this->isJsonColumnPath($field)
+                    ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
                     : Schema::hasColumn($table, $field)))
             ->values()
             ->all();
@@ -1027,6 +1060,31 @@ trait NoerdList
 
         return Schema::hasColumn($model->getTable(), $base)
             && $model->hasCast($base, ['array', 'json', 'object', 'collection']);
+    }
+
+    /**
+     * Resolve a dotted column field into a relation filter target: everything
+     * before the last dot is the (possibly nested) relation path handed to
+     * whereHas(), the last segment the column on the related table — e.g.
+     * `defaultDeliveryAddress.locality` => relation `defaultDeliveryAddress`,
+     * column `locality`. Returns null whenever a segment is not a relation
+     * method or the column does not exist, so a YAML typo never breaks the list.
+     *
+     * @return array{relation: string, column: string, table: string}|null
+     */
+    protected function relationColumnPath(string $field): ?array
+    {
+        if ($this->resolvedModelClass === null) {
+            return null;
+        }
+
+        $this->relationColumnPathCache ??= [];
+
+        if (array_key_exists($field, $this->relationColumnPathCache)) {
+            return $this->relationColumnPathCache[$field];
+        }
+
+        return $this->relationColumnPathCache[$field] = $this->resolveRelationColumnPath($field);
     }
 
     /**
@@ -1056,6 +1114,25 @@ trait NoerdList
 
         foreach ($this->listColumnFilters as $field => $raw) {
             if (!in_array($field, $allowed, true) || !is_string($raw) || mb_trim($raw) === '') {
+                continue;
+            }
+
+            // A relation path (`defaultDeliveryAddress.locality`) filters through a
+            // whereHas() subquery on the related table — a join would collide with
+            // the base table's column names. JSON paths take precedence and fall
+            // through to the arrow-operator branch below.
+            $relationPath = self::isDottedField($field) && !$this->isJsonColumnPath($field)
+                ? $this->relationColumnPath($field)
+                : null;
+            if ($relationPath !== null) {
+                $relationType = $yamlTypes[$field]
+                    ?? $this->schemaColumnTypeMap($relationPath['table'])[$relationPath['column']]
+                    ?? 'text';
+                $query->whereHas(
+                    $relationPath['relation'],
+                    fn(Builder $related) => ColumnFilterParser::apply($related, $relationPath['column'], $relationType, $raw),
+                );
+
                 continue;
             }
 
@@ -1434,6 +1511,65 @@ trait NoerdList
     }
 
     /**
+     * @return array{relation: string, column: string, table: string}|null
+     */
+    private function resolveRelationColumnPath(string $field): ?array
+    {
+        $segments = explode('.', $field);
+        $column = (string) array_pop($segments);
+
+        if ($segments === [] || $column === '') {
+            return null;
+        }
+
+        $model = new $this->resolvedModelClass();
+        foreach ($segments as $segment) {
+            $related = $this->resolveRelatedModel($model, $segment);
+            if ($related === null) {
+                return null;
+            }
+            $model = $related;
+        }
+
+        $table = $model->getTable();
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            return null;
+        }
+
+        return [
+            'relation' => implode('.', $segments),
+            'column' => $column,
+            'table' => $table,
+        ];
+    }
+
+    /**
+     * The related model behind one relation segment, or null when the method is
+     * not a callable no-argument relation. Calling the method is unavoidable to
+     * learn the related class, so it is guarded by reflection and try/catch.
+     */
+    private function resolveRelatedModel(Model $model, string $method): ?Model
+    {
+        if ($method === '' || !method_exists($model, $method)) {
+            return null;
+        }
+
+        try {
+            $reflection = new ReflectionMethod($model, $method);
+
+            if (!$reflection->isPublic() || $reflection->isStatic() || $reflection->getNumberOfRequiredParameters() > 0) {
+                return null;
+            }
+
+            $relation = $model->{$method}();
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $relation instanceof Relation ? $relation->getRelated() : null;
+    }
+
+    /**
      * Mirror the resolved view state into the ?view= URL param — including
      * 'default', so a shared link pins the standard view too. Composite keys are
      * written with '--' instead of '::' so the URL stays free of '%3A%3A'
@@ -1462,6 +1598,21 @@ trait NoerdList
         [$app, $viewKey] = StaticConfigHelper::parseListViewKey($key);
         $this->listViewApp = $app;
         $this->listView = $viewKey === 'default' ? null : $viewKey;
+    }
+
+    /**
+     * Publish the current sort to the query context (for lists sorting through the global
+     * SortScope) and remember it per component, so a reload restores it. Shared by sortBy()
+     * and setSortDirection().
+     */
+    private function persistListSort(): void
+    {
+        $this->syncListQueryContext();
+
+        session(["listSort.{$this->componentName()}" => [
+            'field' => $this->sortField,
+            'asc' => $this->sortAsc,
+        ]]);
     }
 
     /**

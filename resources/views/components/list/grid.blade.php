@@ -1,9 +1,10 @@
 {{-- Card-grid display mode, included from list/index.blade.php in place of the
      table when the list YAML sets `displayMode: grid`. Runs in the index scope,
      so $rows, $table, $listId, $listSettings, $multiSelect, $selectedRecordIds,
-     $actions and $relations are available. Thead-only features (sort headers,
-     column filters, select-all, line numbers, summary) are not rendered here —
-     active column filters still apply and stay clearable via the header chips. --}}
+     $actions and $relations are available. Column filters and the sort control are
+     offered as a bar above the cards (list/grid-controls) instead of the header
+     funnels and sort headers. The remaining thead-only features (select-all, line
+     numbers, summary) are not rendered in grid mode. --}}
 @php
     // Tailwind cannot generate class names at runtime — every supported
     // gridColumns value maps to a literal class list so the scanner picks it up.
@@ -30,6 +31,9 @@
 @endphp
 
 <div class="min-w-full pb-2 align-middle">
+    {{-- Above the empty state too, so a filter that matches nothing stays clearable --}}
+    @include('noerd::components.list.grid-controls')
+
     @if (count($rows))
         <div class="grid {{ $gridClass }} gap-3">
             @foreach ($rows as $key => $row)

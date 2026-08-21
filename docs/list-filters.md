@@ -8,6 +8,8 @@ In addition, every list gets Excel-style **column filters** automatically — se
 
 Every filterable column shows a funnel icon in its header (revealed on header hover, always visible while active). Clicking it opens a popover where the user types a filter expression; the filter is applied on Enter or via the Apply button. This is a single generic feature in `NoerdList` + the list views — no per-list configuration or per-module duplication.
 
+A list in [grid mode](list-view.md#grid-mode-card-layout) has no table header to hang the funnels on and renders the same popovers as labeled buttons in a **control bar above the cards** instead (which also carries the grid sort dropdown).
+
 ### Operator syntax
 
 A filter expression may start with a comparison operator: `>=`, `<=`, `>`, `<`, `=`, `!=` (`<>` is accepted as `!=`). Without an operator the default depends on the column type:
@@ -24,15 +26,27 @@ Invalid input (non-numeric value on a number column, unparseable date, operator 
 
 ### Which columns are filterable
 
-A column is filterable when it is declared in the list YAML `columns`, is not `action`, and either
-exists as a real column on the model's table (the same rule as sorting) or is a **path into a
-JSON-cast column** (e.g. `custom_attributes.sap_number`): the segment before the first dot must be a
-real table column that the model casts to an array/object — the filter then applies through the JSON
-arrow operator (`custom_attributes->sap_number`). Relation paths (`customer.name`) have no such base
-column and stay unfilterable (and every dotted field stays unsortable). A JSON path has no DB schema
-type, so its filter type comes from the list column's explicit `type:`/`options` or the paired detail
-picklist, with `text` as the fallback. Lists that build a fully custom query (never calling
-`listQuery()`) show no funnels and apply no column filters.
+A column is filterable when it is declared in the list YAML `columns`, is not `action`, and resolves
+to one of three things:
+
+1. a **real column** on the model's table (the same rule as sorting)
+2. a **path into a JSON-cast column** (e.g. `custom_attributes.sap_number`): the segment before the
+   first dot must be a real table column that the model casts to an array/object — the filter then
+   applies through the JSON arrow operator (`custom_attributes->sap_number`). A JSON path has no DB
+   schema type, so its filter type comes from the list column's explicit `type:`/`options` or the
+   paired detail picklist, with `text` as the fallback
+3. a **path through Eloquent relations** (e.g. `defaultDeliveryAddress.locality`): every segment
+   before the last dot must be a public no-argument method returning a relation (nested paths work,
+   exactly like `whereHas('a.b')`), and the last segment a real column on the related table. The
+   filter applies as a `whereHas()` subquery on that column — a join would collide with the base
+   table's column names. The filter type comes from the list column's explicit `type:`, else from
+   the **related** table's schema, with `text` as the fallback
+
+JSON paths take precedence over relation paths. A path that resolves to neither (a YAML typo, a
+method that is not a relation, a missing column) is silently dropped: no funnel, no filter, never an
+error. Dotted fields stay **unsortable and unsearchable** in every case — only filtering understands
+them. Lists that build a fully custom query (never calling `listQuery()`) show no funnels and apply
+no column filters.
 
 ### Behavior
 
