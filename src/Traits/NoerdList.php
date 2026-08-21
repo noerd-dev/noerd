@@ -31,6 +31,7 @@ use UnitEnum;
 
 trait NoerdList
 {
+    use RoutedModal;
     use WithoutUrlPagination;
     use WithPagination;
 
@@ -200,6 +201,15 @@ trait NoerdList
     public function mountList(): void
     {
         $this->listId = Str::random();
+
+        // A list that IS a record (opened by route as a modal, e.g. the object of
+        // the custom-attribute manager) reopens as a modal over the previously
+        // visited page when its ?modal=true URL is loaded directly. Plain lists
+        // are never routed that way and fall straight through.
+        if ($this->redirectToRoutedModal()) {
+            return;
+        }
+
         $this->perPage = session('listPerPage', 50);
         $this->loadListFilters();
 
@@ -292,7 +302,7 @@ trait NoerdList
      * and rewrites the browser URL to it (+ ?modal=true); closing the modal
      * restores the previous list URL. Reloading the rewritten URL reopens the
      * record as a modal over the previously visited page (see
-     * NoerdPage::redirectToListModal()). Opt-in — lists without the property
+     * RoutedModal::redirectToRoutedModal()). Opt-in — lists without the property
      * keep the plain query-param behavior.
      *
      * $detailComponent stays alongside as the fallback: it opens when the route

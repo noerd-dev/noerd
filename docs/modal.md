@@ -175,22 +175,27 @@ Noerd::modalRoute('crm.account.detail', ['modelId' => 5]);
 <button @click="$modalRoute('crm.account.detail', { modelId: 5 })">Edit Account</button>
 ```
 
-Route params are filled by name from the arguments. A create modal has no record id —
-the conventional `{modelId}` param then carries the `new` sentinel
-(`/crm/account/new?modal=true`), which `NoerdPage::prepareRoutedModal()` maps back to
-`null`. Reloading such a URL reopens the record as a modal over the page the user last
-visited (`NoerdPage::redirectToListModal()`).
+Route params are filled by name from the arguments — `modelId` by convention, but any
+property the target binds may be the record's identity (`/setup/object-manager/{table}`).
+A create modal has no record id — the conventional `{modelId}` param then carries the
+`new` sentinel (`/crm/account/new?modal=true`), which `NoerdPage::prepareRoutedModal()`
+maps back to `null`. Reloading such a URL reopens the record as a modal over the page the
+user last visited (`RoutedModal::redirectToRoutedModal()`, shared by `NoerdPage` and
+`NoerdList`).
 
 ### Route modal or component modal?
 
 **Use a route** when the modal shows ONE addressable record. All three must hold:
 
-1. the target is a `*-detail` / `*-page` component using `NoerdDetail` / `NoerdPage` —
-   only those understand the `new` sentinel and the `?modal=true` reload contract;
+1. the target uses `NoerdDetail` / `NoerdPage` (a `*-detail` / `*-page`) or — for a
+   record that IS a list, e.g. the object of the custom-attribute manager —
+   `NoerdList`. Those traits share the `?modal=true` reload contract through
+   `RoutedModal`; `NoerdPage` additionally understands the `new` sentinel;
 2. a named `Route::livewire('{app}/{entity}/{modelId}', …)` route exists for exactly
    that component;
-3. the only identity-bearing argument is `modelId` — everything else is chrome
-   (`relations`, `quickCreate`).
+3. every identity-bearing argument is a parameter of that route — conventionally
+   `modelId`, but any bound property works (`/setup/object-manager/{table}`).
+   Everything else is chrome (`relations`, `quickCreate`).
 
 You get a shareable URL, a working reload, "open in new tab", and callers that no
 longer hard-code a foreign module's component name.

@@ -20,6 +20,8 @@ use RuntimeException;
  */
 trait NoerdPage
 {
+    use RoutedModal;
+
     public bool $showSuccessIndicator = false;
 
     public $modelId = null;
@@ -381,43 +383,7 @@ trait NoerdPage
             $this->modelId = null;
         }
 
-        return $this->redirectToListModal();
-    }
-
-    /**
-     * A detail full page opened with ?modal=true (the URL a detailRoute list
-     * writes while its modal is open) redirects back to the page the user last
-     * visited in this session (whatever it is — the accounts list, the vouchers
-     * list, the dashboard) and reopens the record as a modal OVER that page via
-     * a flashed instruction the noerd-modal stack consumes on mount — for a
-     * record as well as for a create modal (modelId null after the 'new'
-     * sentinel was normalized). No owning list is derived. Without a previous
-     * page (fresh session, reload of the link itself) the plain full page
-     * renders. Only applies to real page loads: inside a modal the component
-     * mounts during a Livewire request (X-Livewire header) and is never
-     * redirected.
-     */
-    protected function redirectToListModal(): bool
-    {
-        if ($this->embedded || request()->hasHeader('X-Livewire') || !request()->boolean('modal')) {
-            return false;
-        }
-
-        $previousUrl = session()->previousUrl();
-
-        if (!$previousUrl || $previousUrl === request()->fullUrl()) {
-            return false;
-        }
-
-        session()->flash('noerd-modal.open', [
-            'component' => $this->getName(),
-            'arguments' => ['modelId' => $this->modelId],
-            'url' => request()->fullUrl(),
-        ]);
-
-        $this->redirect($previousUrl);
-
-        return true;
+        return $this->redirectToRoutedModal();
     }
 
     /**

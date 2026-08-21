@@ -2,6 +2,20 @@
 
 @php
     /**
+     * A list host's page body carries no chrome padding — the list brings its own
+     * spacing (see x-noerd::page). A tab bar sitting ABOVE that list is the body's
+     * first child though, so it would end up flush against the page header: it
+     * supplies the missing gap itself, matching the 24px a detail page gets from
+     * the chrome. Compact/embedded lists have no page header to sit under.
+     */
+    $tabsTopPadding = isset($__livewire)
+        && in_array(\Noerd\Traits\NoerdList::class, class_uses_recursive($__livewire), true)
+        && ! ($__livewire->compact ?? false)
+        && ! ($__livewire->minimal ?? false)
+            ? ' pt-6'
+            : '';
+
+    /**
      * Resolve argument values from YML configuration.
      * Supports:
      * - '$variableName' - references a Livewire component property
@@ -29,7 +43,7 @@
 @endphp
 
 @if ($layout && isset($layout['tabs']) && count($layout['tabs']) > 0)
-    <div class="w-full shrink-0 pb-6">
+    <div class="w-full shrink-0 pb-6{{ $tabsTopPadding }}">
         <div class="flex w-full border-b border-gray-300">
             <nav class="inline-block" aria-label="Tabs">
                 @foreach ($layout['tabs'] as $tab)
@@ -109,7 +123,7 @@
         </div>
     </div>
 @elseif (!$slot->isEmpty())
-    <div class="w-full shrink-0 pb-6">
+    <div class="w-full shrink-0 pb-6{{ $tabsTopPadding }}">
         <div class="flex w-full border-b border-gray-300">
             <nav class="inline-block" aria-label="Tabs">{{ $slot }}</nav>
         </div>
