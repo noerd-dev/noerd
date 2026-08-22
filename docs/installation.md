@@ -18,6 +18,7 @@ noerd is a Laravel Livewire boilerplate for building admin panels and business a
 - PHP 8.3+
 - Laravel 12 or 13
 - Livewire 4+
+- Node.js `^20.19 || >=22.12` and npm (for the frontend build)
 
 ## Install Noerd
 
@@ -58,6 +59,40 @@ provider (backed by `Noerd\Models\NoerdUser`) and a matching password broker. Yo
 `config/auth.php` and `.env` are **never modified** — noerd coexists with any existing auth setup
 (Laravel Nova, Breeze, a custom guard, ...). See [Authentication](auth.md) for details, overrides
 and the coexistence recipe.
+
+## Frontend
+
+noerd's layouts render `@vite(['resources/css/app.css', 'resources/js/app.js'])`, so the host
+application needs a Vite/Tailwind scaffold. A project generated from a Laravel starter kit already
+has one; an API-only application does not. `noerd:install` (and `noerd:update`) therefore **creates
+whatever is missing and patches whatever exists** — it never overwrites a file you own:
+
+| File | Missing | Present |
+|------|---------|---------|
+| `package.json` | Created with `dev`/`build` scripts and the build tooling in `devDependencies` | Only the missing scripts and dependencies are added; existing version ranges are never changed, and a package already declared under `dependencies` is not duplicated |
+| `vite.config.js` | Created with `laravel-vite-plugin` (both entry points, `refresh: true`) and `@tailwindcss/vite` | **Never rewritten.** The installer only warns when the noerd entry points or the Tailwind plugin are missing from your config |
+| `resources/css/app.css` | Created with the Tailwind import, the noerd theme import, `@plugin '@tailwindcss/forms'` and the `@source` paths | The same directives are injected individually, so re-running adds no duplicates (quote style and spacing are ignored) |
+| `resources/js/app.js` | Created as an empty entry module | Never touched |
+
+Nothing has to be imported in `resources/js/app.js`: Livewire ships its own runtime (including
+Alpine) and noerd loads its compiled bundle through `<x-noerd::assets />`. Put your project's own
+CSS in `resources/css/app.css` below the injected directives.
+
+The installer pins **vite `^8`** with **laravel-vite-plugin `^3`**, or falls back to vite `^7` /
+laravel-vite-plugin `^2` when the installed Node version is older than `^20.19 || >=22.12`. A
+summary table lists every file as `created`, `patched`, `skipped` or `warning`.
+
+Afterwards, build the assets:
+
+```bash
+npm install
+npm run build     # or: npm run dev
+```
+
+> Installations created before the brand palette became CSS-first still carry a generated
+> `tailwind.config.js` and a `@config` line in `app.css`. `noerd:update` offers to remove both (a
+> `tailwind.config.js.bak` is kept); a config you customised yourself is only reported, never
+> touched. See [Brand](brand.md).
 
 ## Configuration
 
