@@ -111,6 +111,31 @@ class StaticConfigHelper
     }
 
     /**
+     * Resolve the MANDATORY settings YAML of a settings page (settings/{name}.yml,
+     * see the NoerdSettingsPage trait). Settings pages are always configured by
+     * their YAML alone: deliberately NO applyOverrides() (the layout manager must
+     * never touch them) and NO applyThemeSetting() — they always render in the
+     * built-in `settings` theme (fields stacked vertically, no grid).
+     */
+    public static function getSettingsFields(string $component): array
+    {
+        $subPath = self::componentToSubPath($component);
+        $yamlPath = self::findConfigPath("settings/{$subPath}.yml", self::componentOwnerApp($component));
+
+        if (!$yamlPath) {
+            $currentApp = self::getCurrentApp();
+            Log::warning("Config file not found: settings/{$subPath}.yml (app: {$currentApp})");
+
+            return [];
+        }
+
+        $config = self::parseYamlFile($yamlPath);
+        $config['theme'] = 'settings';
+
+        return $config;
+    }
+
+    /**
      * @param  class-string|null  $modelClass  the model the list renders, when known — forwarded to the
      *                                         override resolver, which cannot read it off the YAML.
      */
@@ -184,6 +209,7 @@ class StaticConfigHelper
         $dir = match ($viewType) {
             'detail' => 'details',
             'page' => 'pages',
+            'settings' => 'settings',
             default => 'lists',
         };
         $subPath = $viewType === 'list'

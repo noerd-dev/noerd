@@ -13,6 +13,9 @@ concerns". The split:
 | Chrome, tabs, modal lifecycle, quick-create, list interplay | `NoerdPage` | `{entity}-page.blade.php` |
 | Form fields, validation, persistence of ONE model | `NoerdDetail` | `{entity}-detail.blade.php` |
 
+**Tenant-singleton settings screens are neither pages nor details** — they use the
+`NoerdSettingsPage` trait and a `settings/{name}.yml`, see [Settings Pages](settings-page.md).
+
 **Details are pure model forms.** Their YAML (`details/{entity}-detail.yml`, mandatory) contains
 only `title`, `description`, `theme`, `quickCreate` and `fields` (plus form-level `tabs` when
 the fields themselves are tabbed). `widgets:` and `relations:` do NOT belong in a detail YAML —

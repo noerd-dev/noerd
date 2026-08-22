@@ -83,6 +83,9 @@ beforeEach(function (): void {
         ],
     ]));
 
+    File::ensureDirectoryExists($sourceDir . '/settings');
+    File::put($sourceDir . '/settings/zz-fixture-settings-page.yml', "title: Fixture Settings\n");
+
     // No target app-configs dir and no tenant_apps row: forces the fresh install
     // path (not the update path) on the first run.
     File::deleteDirectory(base_path('app-configs/' . ENSURE_APP_MODULE_KEY));
@@ -138,6 +141,22 @@ it('self-heals the update path when the app is registered but its config dir is 
 
     // The missing config folder is created and the navigation published into it.
     expect(File::exists($targetDir . '/navigation.yml'))->toBeTrue();
+});
+
+it('publishes the settings folder on install and update', function (): void {
+    $settingsTarget = base_path('app-configs/' . ENSURE_APP_MODULE_KEY . '/settings/zz-fixture-settings-page.yml');
+
+    // Fresh install path.
+    runEnsureAppInstall($this);
+    expect(File::exists($settingsTarget))->toBeTrue();
+
+    // A re-run diverts to the update path — the settings copy must run there too.
+    File::delete($settingsTarget);
+    $this->artisan('noerd:install-ensure-app-fixture', ['--force' => true])
+        ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+        ->assertExitCode(0);
+
+    expect(File::exists($settingsTarget))->toBeTrue();
 });
 
 it('restores the tenant app row when it was manually deleted after install', function (): void {
