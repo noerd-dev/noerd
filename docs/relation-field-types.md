@@ -91,6 +91,19 @@ Polymorphic fields render through the shared Livewire component
 - Selection uses the generic event `noerdRelationSelected`; the `{entity}Selected` event (or the
   definition's `selectEvent`) is dispatched as well, so detail components can listen with
   `#[On('customerSelected')]`
+- The handler sets the foreign key in `detailData` and the display value in the generic
+  `relationTitles` array — never a separate display property (`$this->customer`); the YAML field
+  references it with `relationField: relationTitles.customer_id`:
+
+  ```php
+  #[On('customerSelected')]
+  public function customerSelected(int $customerId): void
+  {
+      $customer = Customer::find($customerId);
+      $this->detailData['customer_id'] = $customer->id;
+      $this->relationTitles['customer_id'] = $customer->name;
+  }
+  ```
 - Registering a relation type automatically registers a matching field type in the
   `FieldTypeRegistry` — no separate field-type registration is needed
 - Unregistered relation types fail explicitly during rendering

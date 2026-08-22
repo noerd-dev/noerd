@@ -34,6 +34,27 @@ php artisan noerd:create-app
 # Route: {module-name}.index
 ```
 
+## Install and update commands (required)
+
+Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) ships two
+Artisan commands; `noerd:module` generates both from its stubs:
+
+- **`noerd:install-{module}`** — extends `Illuminate\Console\Command`, uses the
+  `HasModuleInstallation` and `RequiresNoerdInstallation` traits and implements `getModuleName()`,
+  `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`.
+  Its `handle()` calls `$this->runModuleInstallation()`, which copies the YAML configs into
+  `app-configs/{module}/`, registers the tenant app and runs the migrations.
+- **`noerd:update-{module}`** — a slim subclass of the install command whose `handle()` calls
+  `$this->runModuleUpdate()` (never `runModuleInstallation()`, which prompts for the tenant
+  assignment) plus the module's idempotent post-install steps. `noerd:update-all` discovers every
+  command named `noerd:update-{module}` — a module without one silently drops out of the
+  project-wide update.
+
+Register both in the module's ServiceProvider inside
+`if ($this->app->runningInConsole()) { $this->commands([...]); }`.
+See [Reusable Traits](traits.md) for the two traits and [Artisan Commands](artisan-commands.md)
+for `noerd:update-all`.
+
 ## Customization
 
 After creation, customize the module:
@@ -83,19 +104,24 @@ $this->detailData['custom_attributes']['my_key'];
 
 ## Module Structure Reference
 
-| Directory | Purpose |
+| Directory / file | Purpose |
 |-----------|---------|
-| `app-configs/` | YAML configurations |
-| `database/migrations/` | Database migrations |
-| `resources/views/components/` | Livewire single-file components (`*-list.blade.php`, `*-detail.blade.php`) |
-| `resources/lang/` | Translations (JSON) |
-| `routes/` | Route definitions |
-| `src/Models/` | Eloquent models |
+| `app-configs/{module}/` | YAML configuration templates (`lists/`, `details/`, `pages/`, `navigation.yml`) — copied into the project by the install command; keep both copies in sync |
+| `database/migrations/`, `database/factories/`, `database/seeders/` | Database migrations, factories and seeders (module-owned) |
+| `resources/boost/guidelines/core.blade.php` | Module-specific rules for AI coding agents, rendered by Laravel Boost (see [AI Agents](ai-agents.md)) |
+| `resources/lang/de.json` | Translations (English key → German) |
+| `resources/views/components/` | Livewire single-file components (`*-list.blade.php`, `*-detail.blade.php`, `*-page.blade.php`, `*-modal.blade.php`) — flat, no subfolders |
+| `routes/{module}-routes.php` | Route definitions |
+| `src/Commands/` | `{Module}InstallCommand`, `{Module}UpdateCommand` |
+| `src/Models/` | Eloquent models (`$guarded`, `BelongsToTenant`) |
 | `src/Providers/` | ServiceProvider |
-| `tests/` | Pest tests |
+| `tests/` | Pest tests, `tests/Traits/` for module test traits (see [Testing](testing.md)) |
+| `AGENTS.md`, `CLAUDE.md` | Contributor notes for humans and AI agents working on the module |
 
 ## Next Steps
 
 - [List View](list-view.md) - Customize list views
 - [Detail View](detail-view.md) - Customize detail forms
 - [Field Types](field-types.md) - Full YAML field reference
+- [Testing](testing.md) - Testing module components
+- [AI Agents](ai-agents.md) - Boost guidelines and skills shipped with noerd and your module

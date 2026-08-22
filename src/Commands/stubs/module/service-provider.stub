@@ -4,6 +4,7 @@ namespace Noerd\{{ModuleName}}\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Noerd\{{ModuleName}}\Commands\{{ModuleName}}InstallCommand;
+use Noerd\{{ModuleName}}\Commands\{{ModuleName}}UpdateCommand;
 
 class {{ModuleName}}ServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,7 @@ class {{ModuleName}}ServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 {{ModuleName}}InstallCommand::class,
+                {{ModuleName}}UpdateCommand::class,
             ]);
         }
     }

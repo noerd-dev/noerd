@@ -1,0 +1,31 @@
+# AGENTS.md — noerd/{{module-name}}
+
+Contributor notes for humans and AI agents working on the {{ModuleName}} module. The rules for
+building WITH noerd (lists, details, pages, modals, modules, tests) come from the `noerd/noerd`
+Boost guideline and skills; the module-specific rules are in
+`resources/boost/guidelines/core.blade.php`. Both are rendered into the host project's agent files
+by `php artisan boost:update` (add `noerd/{{module-name}}` to the `packages` array in `boost.json`).
+
+## Layout
+
+- `app-configs/{{module-name}}/` — YAML templates (lists/, details/, navigation.yml); the installed
+  copy lives in the host's `app-configs/{{module-name}}/` — change both
+- `resources/views/components/` — Livewire single-file components (`{{models}}-list.blade.php`,
+  `{{model}}-detail.blade.php`), flat, Livewire namespace `{{module-name}}::`
+- `src/Models/`, `src/Commands/`, `src/Providers/{{ModuleName}}ServiceProvider.php`
+- `database/migrations|factories|seeders/`, `tests/` (Pest), `resources/lang/de.json`
+
+## Commands
+
+- `php artisan noerd:install-{{module-name}}` — first installation (asks for the tenant assignment)
+- `php artisan noerd:update-{{module-name}}` — idempotent YAML update, discovered by `noerd:update-all`
+
+## Working on the module
+
+- Tests: `php artisan test --compact app-modules/{{module-name}}/tests` (Pest; tests prove
+  mechanics, never the current YAML configuration)
+- Format with the host project's `vendor/bin/pint --dirty` from the project root
+- Keep the module independent of other optional modules; project-specific fields go into
+  `custom_attributes`, never into module code or module YAML
+- When a feature changes: update the YAML in both places, `resources/lang/de.json`, the tests and
+  `resources/boost/guidelines/core.blade.php`

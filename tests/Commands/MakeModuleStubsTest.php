@@ -106,3 +106,47 @@ it('generates only a de.json translation with English-text keys', function (): v
     expect($translations)->toHaveKey('New Widget')
         ->and(array_keys($translations))->each->not->toContain('_label_');
 });
+
+it('generates an update command that runs the idempotent module update', function (): void {
+    $content = ($this->renderStub)('update-command.stub');
+
+    expect($content)
+        ->toContain('class ZzWidgetUpdateCommand extends ZzWidgetInstallCommand')
+        ->toContain("'noerd:update-zz-widget")
+        ->toContain('return $this->runModuleUpdate();')
+        ->not->toContain('runModuleInstallation');
+});
+
+it('registers install and update command in the service provider', function (): void {
+    $content = ($this->renderStub)('service-provider.stub');
+
+    expect($content)
+        ->toContain('ZzWidgetInstallCommand::class,')
+        ->toContain('ZzWidgetUpdateCommand::class,');
+});
+
+it('generates a blade-renderable boost guideline for the module', function (): void {
+    $content = ($this->renderStub)('boost-guideline.stub');
+
+    expect($content)
+        ->toStartWith('@verbatim')
+        ->toContain('## ZzWidget Module')
+        ->toContain('noerd:install-zz-widget')
+        ->toContain('noerd:update-zz-widget')
+        ->toContain('widgets-list.blade.php')
+        ->not->toContain('{{module-name}}');
+
+    expect(\Illuminate\Support\Facades\Blade::render($content))
+        ->toStartWith('## ZzWidget Module')
+        ->not->toContain('@verbatim');
+});
+
+it('generates AGENTS.md and a CLAUDE.md importing it', function (): void {
+    expect(($this->renderStub)('agents.stub'))
+        ->toContain('# AGENTS.md — noerd/zz-widget')
+        ->toContain('noerd:install-zz-widget')
+        ->toContain('noerd:update-zz-widget')
+        ->not->toContain('{{ModuleName}}');
+
+    expect(($this->renderStub)('claude.stub'))->toBe("@AGENTS.md\n");
+});
