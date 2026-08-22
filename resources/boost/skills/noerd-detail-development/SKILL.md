@@ -22,7 +22,7 @@ guideline; this skill is the procedure. Docs: `vendor/noerd/noerd/docs/detail-vi
 | Form + relation box / widgets / page tabs / quick-create | `*-page` with `detail:` in the page YAML embedding the slim `*-detail` |
 | Fields that edit a related model (e.g. default address) | Keep the detail slim; declare `relationForms()` on the MODEL (`DeclaresRelationForms`) |
 | Persist through a service | Override `store()`: `validateFromLayout()` → service → `storeProcess($model)` |
-| Settings screen without a single model | Bespoke methods are allowed (exempt from the slim rule) |
+| Tenant-singleton settings screen | `*-page` with the `NoerdSettingsPage` trait + `settings/{name}.yml` — stacked full-width fields, may edit several models via `$settingsModels`; see `docs/settings-page.md` |
 
 ## 2. Create the detail — `resources/views/components/{entity}-detail.blade.php`
 

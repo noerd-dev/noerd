@@ -1,13 +1,14 @@
 # Themes
 
 A **theme** controls how detail forms (and the hand-written chrome around them, e.g. position
-tables and buttons) are rendered. Noerd ships three built-in themes:
+tables and buttons) are rendered. Noerd ships four built-in themes:
 
 | Theme | Layout |
 |-------|--------|
 | `default` | Label on top of the input (also used when `theme` is absent or unknown) |
 | `compact` | Label to the LEFT of the input with tighter vertical spacing |
 | `numbered` | Numbered form rows in the style of official/tax forms: one field per full-width row (colspan is ignored), light gray row background, leading row number, right-aligned label, input on the right |
+| `settings` | Internal (`hidden: true`): fields stacked vertically, full width — forced on [settings pages](settings-page.md), never selectable as a form theme |
 
 A theme is a **self-contained folder**: all element blade templates (input, select, textarea,
 checkbox, button, relation field, …) plus a `theme.yml` metadata file. Creating a new theme means
@@ -107,6 +108,8 @@ folder name.
 
 ```yaml
 label: Compact                          # display label in System Settings
+hidden: false                           # true: internal theme, excluded from the System
+                                        # Settings theme picker (e.g. the settings theme)
 gridClasses: 'pt-1 gap-x-6 gap-y-1.5'   # spacing classes on the form grid wrapper (no bottom
                                         # padding — the x-noerd::page chrome owns the gap above
                                         # the footer)

@@ -38,6 +38,12 @@ new class () extends Component {
     {
         $options = [];
         foreach (app(ThemeRegistry::class)->all() as $themeName => $definition) {
+            // Internal themes (e.g. the settings-page theme) are never a valid
+            // tenant-wide form theme.
+            if ($definition->hidden) {
+                continue;
+            }
+
             $options[$themeName] = $definition->label ?? Str::headline($themeName);
         }
 

@@ -732,6 +732,44 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
 - Reference: `docs/page-view.md` and the `page.blade.stub` rendered by `noerd:make-resource`
   (`src/Commands/stubs/resource/page.blade.stub`).
 
+### Settings Pages (NoerdSettingsPage)
+
+A settings screen is a TENANT SINGLETON: it edits one row per tenant (keyed by `tenant_id`), not an
+addressable record. Such screens must use the `Noerd\Traits\NoerdSettingsPage` trait and a settings
+YAML — never hand-written fields, never `NoerdDetail` with a bespoke tenant-keyed `mount()`/`store()`.
+
+- The component (name keeps the `*-page` suffix) declares the models it edits, keyed by the public
+  array property the YAML fields bind to — a settings page may edit SEVERAL models at once:
+  ```php
+  use NoerdSettingsPage;
+
+  public array $settingsModels = [
+      'detailData' => ModuleSettings::class,
+      'extraData' => OtherSettings::class,   // extra keys need a matching public array property
+
+  ];
+
+  public array $extraData = [];
+  ```
+  The slim component contains nothing else. Custom `mount()` starts with `$this->initSettings()`;
+  custom `store()` (extra validation) ends with `$this->validateFromLayout();
+  $this->persistSettings(); $this->showSuccessIndicator = true;`.
+- The layout comes EXCLUSIVELY from `settings/{component}.yml` (`app-configs/{app}/settings/` + the
+  module copy, both in sync). Allowed keys: `title`, `description`, `tabs`, `fields` — same field
+  types, `tab:`, `required:`, `showIf`/`showIfNot`, `helpText` as detail YAMLs. `colspan` is
+  irrelevant: settings pages have NO grid, every field renders as a stacked full-width row in the
+  built-in hidden `settings` theme. A `theme:` key in the YAML and the tenant-wide theme setting
+  (even enforced) are both ignored, and the noerd-pro layout manager NEVER applies — settings pages
+  can have no layout overrides. There is also no `custom_attributes` object manager.
+- No `$detailPrimary`, no `$modelId`, no delete: the URL stays clean, the singleton row is created
+  on first save via `updateOrCreate(['tenant_id' => …])` (stripping id/tenant_id/timestamps).
+- Blade skeleton: `<x-noerd::page>` + `<x-noerd::modal-title>` header +
+  `<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId"/>` (tab slots like `tab2` may add
+  extra markup) + footer `<x-noerd::delete-save-bar :show-delete="false"/>`.
+- The `settings/` folder is published by `noerd:install-{module}` / `noerd:update-{module}` exactly
+  like `lists/`/`details/`/`pages/`.
+- Reference: `docs/settings-page.md` and `tests/Feature/SettingsPageTraitTest.php`.
+
 ### Relations on Pages (Relation Box)
 Page components can render a "Relation Box" — a grid of clickable tiles (6 per row), each
 showing a heroicon, a label and the related record count, e.g. `Contacts (5)`. Clicking a tile

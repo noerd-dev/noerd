@@ -18,6 +18,7 @@ final class ThemeDefinition
     public function __construct(
         public string $name,
         public ?string $label = null,
+        public bool $hidden = false,
         public string $gridClasses = 'pt-4 gap-6',
         public bool $fullWidthRows = false,
         public bool $numbersRows = false,
@@ -59,6 +60,7 @@ final class ThemeDefinition
         return new self(
             name: $name,
             label: is_string($data['label'] ?? null) ? $data['label'] : null,
+            hidden: (bool) ($data['hidden'] ?? false),
             gridClasses: $string('gridClasses'),
             fullWidthRows: (bool) ($data['fullWidthRows'] ?? false),
             numbersRows: (bool) ($data['numbersRows'] ?? false),

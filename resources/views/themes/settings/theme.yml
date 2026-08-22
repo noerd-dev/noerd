@@ -1,0 +1,5 @@
+label: Settings
+hidden: true
+gridClasses: 'pt-4 gap-y-5'
+fullWidthRows: true
+numbersRows: false
