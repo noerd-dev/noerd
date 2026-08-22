@@ -90,12 +90,14 @@ class MakeModuleCommand extends Command
             $this->createComposerJson();
             $this->createServiceProvider();
             $this->createInstallCommand();
+            $this->createUpdateCommand();
             $this->createRoutes();
             $this->createModel();
             $this->createMigration();
             $this->createLivewireComponents();
             $this->createYamlConfigurations();
             $this->createTranslations();
+            $this->createAgentDocs();
             $this->createGitkeep();
             $this->updateMainComposerJson();
 
@@ -105,6 +107,7 @@ class MakeModuleCommand extends Command
             $this->warn('Next steps:');
             $this->line("  1. composer update noerd/{$this->moduleName}");
             $this->line("  2. php artisan noerd:install-{$this->moduleName}");
+            $this->line("  3. Add \"noerd/{$this->moduleName}\" to the packages in boost.json and run php artisan boost:update (optional, for AI agents)");
 
             return 0;
         } catch (Exception $e) {
@@ -122,6 +125,7 @@ class MakeModuleCommand extends Command
             'src/Commands',
             'resources/views/components',
             'resources/lang',
+            'resources/boost/guidelines',
             'database/migrations',
             'database/factories',
             'database/seeders',
@@ -160,6 +164,25 @@ class MakeModuleCommand extends Command
         $path = "{$this->basePath}/src/Commands/{$this->moduleNameStudly}InstallCommand.php";
         $this->filesystem->put($path, $content);
         $this->line('<info>✓ Created:</info> InstallCommand');
+    }
+
+    private function createUpdateCommand(): void
+    {
+        $content = $this->getStub('update-command.stub');
+        $path = "{$this->basePath}/src/Commands/{$this->moduleNameStudly}UpdateCommand.php";
+        $this->filesystem->put($path, $content);
+        $this->line('<info>✓ Created:</info> update command');
+    }
+
+    private function createAgentDocs(): void
+    {
+        $this->filesystem->put(
+            "{$this->basePath}/resources/boost/guidelines/core.blade.php",
+            $this->getStub('boost-guideline.stub'),
+        );
+        $this->filesystem->put("{$this->basePath}/AGENTS.md", $this->getStub('agents.stub'));
+        $this->filesystem->put("{$this->basePath}/CLAUDE.md", $this->getStub('claude.stub'));
+        $this->line('<info>✓ Created:</info> agent guidelines (Boost guideline, AGENTS.md, CLAUDE.md)');
     }
 
     private function createRoutes(): void

@@ -1,0 +1,113 @@
+---
+name: noerd-module-development
+description: "Use this skill when creating a new Noerd module or tenant app, or when touching module-level plumbing: the noerd:module scaffolder, the mandatory noerd:install-{module} / noerd:update-{module} commands, the ServiceProvider, app-configs (lists/details/pages/navigation.yml and the rule to keep project and module copies in sync), navigation entries and heroicons, JSON translations (English keys, de.json), project-specific fields via custom_attributes, module independence, and shipping agent guidelines (Boost guideline, AGENTS.md) with the module. Triggers on 'create a module/app', 'add a navigation entry', 'install/update command', 'project-specific field', 'module structure'."
+license: MIT
+metadata:
+  author: noerd
+---
+
+# Noerd Module Development
+
+A module is a Composer package under `app-modules/{module}/` (namespace `Noerd\{Module}` by
+convention) that ships a tenant app: YAML configs, Livewire components, model, migrations, routes,
+translations, tests and an install/update command. Hard rules: `noerd/noerd` Boost guideline. Docs:
+`vendor/noerd/noerd/docs/creating-modules.md`, `create-app.md`, `navigation.md`,
+`artisan-commands.md`, `traits.md`, `ai-agents.md`.
+
+## 1. Scaffold
+
+```bash
+php artisan noerd:module            # asks for module name + main model
+composer update noerd/{module}
+php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates
+```
+
+Generated layout (keep it — do not invent new base folders):
+
+```
+app-modules/{module}/
+├── app-configs/{module}/            # YAML templates: lists/, details/, pages/, navigation.yml
+├── database/{migrations,factories,seeders}/
+├── resources/boost/guidelines/core.blade.php   # module-specific agent rules (Boost)
+├── resources/lang/de.json           # English key → German
+├── resources/views/components/      # *-list.blade.php, *-detail.blade.php, *-page.blade.php, *-modal.blade.php (flat)
+├── routes/{module}-routes.php
+├── src/{Commands,Models,Providers}/
+├── tests/                           # Pest, incl. tests/Traits
+├── AGENTS.md + CLAUDE.md            # contributor notes for the module
+└── composer.json
+```
+
+## 2. Mandatory install + update commands
+
+- `noerd:install-{module}` — extends `Illuminate\Console\Command`, uses `HasModuleInstallation` +
+  `RequiresNoerdInstallation`, implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`,
+  `getAppIcon()`, `getAppRoute()`, `getSourceDir()`; `handle()` → `$this->runModuleInstallation()`.
+- `noerd:update-{module}` — slim subclass whose `handle()` → `$this->runModuleUpdate()` plus only
+  idempotent post-install steps. `noerd:update-all` discovers it by name; a missing one silently
+  drops the module from project-wide updates.
+- Register both in the ServiceProvider inside `if ($this->app->runningInConsole())`.
+- The tenant app name stored in `tenant_apps` is the UPPERCASE module key (`INVENTORY`) — gates
+  and test traits must match it exactly.
+
+## 3. YAML configs — always two copies
+
+| What | Module template | Installed project copy |
+|---|---|---|
+| lists | `app-modules/{module}/app-configs/{app}/lists/*-list.yml` | `app-configs/{app}/lists/` |
+| details / pages | `…/details/*-detail.yml`, `…/pages/*-page.yml` | `app-configs/{app}/details/`, `pages/` |
+| navigation | `…/navigation.yml` | `app-configs/{app}/navigation.yml` |
+
+Change BOTH. The folder is always called `app-configs/` (never `app-contents/`). List YAMLs stay
+flat in `lists/`. Block-style YAML only. Navigation icons are heroicons:
+
+```yaml
+- title: Module
+  name: module
+  route: module.index
+  block_menus:
+    - title: Overview
+      navigations:
+        - title: Things
+          route: module.things
+          heroicon: cube
+        - title: New Thing
+          heroicon: plus
+          modalRoute: module.thing.detail      # opens the route modal (plain `route:` navigates)
+          newRoute: module.thing.detail
+```
+
+## 4. Translations
+
+English text IS the key (`__('Invoice')`, YAML `label: Invoice`); only `resources/lang/de.json`
+(`"Invoice": "Rechnung"`), loaded with `loadJsonTranslationsFrom()`. Omit entries where English =
+German. The JSON namespace is flat across modules — avoid the same key with a different German value.
+
+## 5. Project-specific fields → `custom_attributes`
+
+Never change module code or module YAML for one project's fields. Add a `custom_attributes` JSON
+column via a migration in the **project root**, cast `'custom_attributes' => 'array'` in the module
+model, and read/write `$this->detailData['custom_attributes']['my_key']` in project-level views.
+
+## 6. Independence
+
+No `use` of another optional module's classes/views/YAML; tests, traits (`tests/Traits/`),
+factories, seeders and migrations live inside the module; no module-specific code in the host
+project's `DatabaseSeeder`. Models use `$guarded`, never `$fillable`.
+
+## 7. Agent-readable guidelines for the module
+
+- `resources/boost/guidelines/core.blade.php` — module rules (purpose, YAML locations, component
+  names, commands, test call). Blade-rendered by Boost: wrap literal `{{ }}`/`@` in `@verbatim`.
+  The host enables it by adding `"noerd/{module}"` to the `packages` array in `boost.json` and
+  running `php artisan boost:update`.
+- `AGENTS.md` (+ `CLAUDE.md` containing `@AGENTS.md`) — contributor workflow for the module repo.
+- Keep both current when the module gains features.
+
+## Done when
+
+- [ ] `noerd:install-{module}` AND `noerd:update-{module}` exist and are registered
+- [ ] YAML in both locations, navigation with heroicons, `de.json` updated
+- [ ] no cross-module dependency, tests/migrations inside the module
+- [ ] Boost guideline + AGENTS.md of the module reflect the change
+- [ ] Pest tests green, `vendor/bin/pint --dirty` run
