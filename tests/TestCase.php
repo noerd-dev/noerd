@@ -179,9 +179,14 @@ abstract class TestCase extends BaseTestCase
         }
 
         // The install commands treat a published config/noerd.php as the
-        // marker that noerd:install has been run.
-        if (! file_exists(base_path('config/noerd.php'))) {
-            File::copy(dirname(__DIR__) . '/config/noerd.php', base_path('config/noerd.php'));
+        // marker that noerd:install has been run. The copy is refreshed whenever the package
+        // config is newer — copying only when missing would pin the suite to a stale config
+        // for the lifetime of the skeleton, so a new key would never reach the tests.
+        $configSource = dirname(__DIR__) . '/config/noerd.php';
+        $configTarget = base_path('config/noerd.php');
+
+        if (! file_exists($configTarget) || filemtime($configSource) > filemtime($configTarget)) {
+            File::copy($configSource, $configTarget);
         }
     }
 }

@@ -1,7 +1,7 @@
 # Brand (Colors & Branding)
 
 The **brand** is the application's color palette plus its branding assets (logo, auth background
-image). It controls the sidebar, appbar, topbar, page background and button colors through a set of
+image). It controls the sidebar, appbar, page background and button colors through a set of
 `brand-*` CSS custom properties, served by `Noerd\Services\BrandService`.
 
 Brand and theme are two orthogonal concepts:
@@ -21,7 +21,7 @@ preset.
 
 ## Color Keys
 
-Every preset defines the same 11 color keys. Each key becomes a CSS custom property
+Every preset defines the same 10 color keys. Each key becomes a CSS custom property
 `--color-{key}` (e.g. `brand-primary` → `--color-brand-primary`), which backs the Tailwind
 utilities `bg-brand-primary`, `text-brand-primary-text`, `border-brand-border`, and so on.
 
@@ -30,7 +30,6 @@ utilities `bg-brand-primary`, `text-brand-primary-text`, `border-brand-border`, 
 | `brand-bg` | Page background (the `<body>`) |
 | `brand-navi` | Sidebar navigation background |
 | `brand-navi-hover` | Sidebar navigation item hover state |
-| `brand-topbar` | Topbar background |
 | `brand-primary` | Primary buttons and accents |
 | `brand-primary-text` | Text on primary surfaces |
 | `brand-secondary` | Secondary buttons |
@@ -49,7 +48,6 @@ preset is active:
 | `brand-bg` | `NOERD_COLOR_BRAND_BG` |
 | `brand-navi` | `NOERD_COLOR_BRAND_NAVI` |
 | `brand-navi-hover` | `NOERD_COLOR_BRAND_NAVI_HOVER` |
-| `brand-topbar` | `NOERD_COLOR_BRAND_TOPBAR` |
 | `brand-primary` | `NOERD_COLOR_BRAND_PRIMARY` |
 | `brand-primary-text` | `NOERD_COLOR_BRAND_PRIMARY_TEXT` |
 | `brand-secondary` | `NOERD_COLOR_BRAND_SECONDARY` |
@@ -79,12 +77,21 @@ app(BrandService::class)->color('brand-primary');          // '#000'
 app(BrandService::class)->cssCustomProperties();           // '--color-brand-bg: #f9f9f9; …'
 ```
 
+The package's own stylesheet (`resources/css/noerd.css`, imported into `resources/css/app.css` by
+`noerd:install`) declares every color key as a `--color-brand-*` custom property in its `@theme`
+block. That block exists purely to **register** the Tailwind utilities: `bg-brand-primary` compiles
+to `background-color: var(--color-brand-primary)`, never to a literal value.
+
 `cssCustomProperties()` is emitted by the app layout
-(`app-modules/noerd/resources/views/layouts/app.blade.php`) inside the `:root { … }` style block,
-so the resolved values override the static `--color-brand-*` defaults from the project's
-`resources/css/app.css` `@theme` block at runtime. The `@theme` block only registers the Tailwind
-utilities — the effective colors always come from the config, so changing `NOERD_BRAND` or an
-override needs **no CSS rebuild**.
+(`app-modules/noerd/resources/views/layouts/app.blade.php`) inside the `:root { … }` style block and
+re-declares the same custom properties, so the resolved values take effect at runtime. The effective
+colors therefore always come from the config, and changing `NOERD_BRAND` or an override needs **no
+CSS rebuild**.
+
+> Do not reintroduce the palette as literal values in a `tailwind.config.js` `theme.extend.colors`
+> block. Tailwind would then compile the utilities to fixed hex values and `BrandService` could no
+> longer override them. Earlier noerd versions generated exactly such a config plus a `@config` line
+> in `app.css`; `noerd:update` offers to remove both.
 
 ## Branding Assets
 
@@ -125,7 +132,6 @@ Two options, both in the project (never in the noerd module):
             'brand-bg'             => '#f8fafc',
             'brand-navi'           => '#0f172a',
             'brand-navi-hover'     => '#1e293b',
-            'brand-topbar'         => '#ffffff',
             'brand-primary'        => '#1d4ed8',
             'brand-primary-text'   => '#ffffff',
             'brand-secondary'      => '#ffffff',
@@ -144,7 +150,7 @@ Two options, both in the project (never in the noerd module):
 
 **Important:**
 
-- A custom preset must define **all 11 keys** — `cssCustomProperties()` emits exactly the keys of
+- A custom preset must define **all 10 keys** — `cssCustomProperties()` emits exactly the keys of
   the active preset, and a missing key would leave the static CSS default in place for that color.
 - Overrides apply on top of *whichever* preset is active; an empty override value is ignored.
 - `BrandService` reads the config on every call — no cache to clear.

@@ -106,8 +106,10 @@ automatically and a module that is not installed is simply absent.
 warns and asks once up front whether to proceed. Combined with `--no-interaction` all existing files
 are skipped and only missing files are copied — a useful "top up a fresh checkout" mode.
 
-> `noerd:update --force` does more than copy YAML: it also overwrites `tailwind.config.js` and
-> `config/noerd.php` and runs `npm install`. Use `--except=noerd:update` to leave the core step out.
+> `noerd:update --force` does more than copy YAML: it also overwrites `config/noerd.php`, scaffolds
+> the missing frontend files (see [Installation](installation.md#frontend)), runs `npm install` for
+> any dependency it added, and removes a legacy `tailwind.config.js` brand bridge without asking.
+> Use `--except=noerd:update` to leave the core step out.
 
 **Failures do not abort the run.** Every command is executed, a summary table lists each one as
 `updated`, `failed` or `skipped`, and the exit code is non-zero if any of them failed.

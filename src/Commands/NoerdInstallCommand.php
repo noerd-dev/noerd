@@ -11,6 +11,7 @@ use function Laravel\Prompts\confirm;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Services\FrontendScaffolder;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -190,14 +191,15 @@ class NoerdInstallCommand extends Command
         $this->info('Setting up frontend assets...');
 
         try {
-            // Update app.css
-            $this->updateAppCss();
+            $scaffolder = new FrontendScaffolder(base_path(), $this->detectNodeVersion());
 
-            // Install npm packages
-            $this->installNpmPackages();
+            $this->displayFrontendSummary($scaffolder->scaffold());
 
-            // Create tailwind.config.js
-            $this->createTailwindConfig();
+            // Install whatever the scaffolder added to package.json
+            $this->installNpmPackages($scaffolder->missingNpmPackages());
+
+            // Retire the obsolete tailwind.config.js brand bridge
+            $this->migrateLegacyTailwindConfig($scaffolder);
 
             // Update Livewire component layout
             $this->updateLivewireConfig();
@@ -212,69 +214,45 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Update app.css with noerd styles
+     * Display which frontend files were created, patched or left alone
+     *
+     * @param  array<int, array{file: string, action: string, detail: string}>  $results
      */
-    protected function updateAppCss(): void
+    protected function displayFrontendSummary(array $results): void
     {
-        $cssPath = base_path('resources/css/app.css');
+        $rows = [];
 
-        if (!file_exists($cssPath)) {
-            $this->warn('app.css not found, skipping CSS updates.');
-            return;
+        foreach ($results as $result) {
+            $rows[] = [
+                $result['file'],
+                $this->formatFrontendAction($result['action']),
+                $result['detail'],
+            ];
         }
 
-        $cssContent = file_get_contents($cssPath);
-        $changed = false;
+        $this->table(['File', 'Action', 'Detail'], $rows);
 
-        $noerdImport = "@import '../../vendor/noerd/noerd/resources/css/noerd.css';";
-
-        // Import the noerd base theme (e.g. --text-sm: 13px) shared by every consumer.
-        // Must sit right after `@import 'tailwindcss';` so it overrides Tailwind defaults.
-        if (!str_contains($cssContent, $noerdImport)) {
-            if (str_contains($cssContent, "@import 'tailwindcss';")) {
-                $cssContent = str_replace(
-                    "@import 'tailwindcss';",
-                    "@import 'tailwindcss';\n" . $noerdImport,
-                    $cssContent,
-                );
-            } else {
-                $cssContent = $noerdImport . "\n" . $cssContent;
+        foreach ($results as $result) {
+            if ($result['action'] === FrontendScaffolder::ACTION_WARNING) {
+                $this->warn($result['file'] . ': ' . $result['detail']);
             }
-            $changed = true;
-        }
-
-        $noerdStyles = "
-@source '../../vendor/noerd/modal/resources/views';
-@source '../../vendor/noerd/noerd/resources/views';
-@config '../../tailwind.config.js';
-";
-
-        // Check if noerd styles are already present
-        if (!str_contains($cssContent, '@source \'../../vendor/noerd/noerd/resources/views\';')) {
-            $cssContent .= $noerdStyles;
-            $changed = true;
-        }
-
-        if ($changed) {
-            file_put_contents($cssPath, $cssContent);
-            $this->line('<info>Updated app.css with noerd styles.</info>');
-        } else {
-            $this->line('<comment>Noerd styles already present in app.css.</comment>');
         }
     }
 
     /**
-     * Install required npm packages
+     * Install the npm packages the scaffolder added to package.json
+     *
+     * @param  array<int, string>  $packages
      */
-    protected function installNpmPackages(): void
+    protected function installNpmPackages(array $packages): void
     {
-        $this->line('<comment>Installing npm packages...</comment>');
+        if ($packages === []) {
+            $this->line('<comment>All required npm packages are already declared.</comment>');
 
-        $packages = [
-            '@tailwindcss/forms@^0.5.2',
-            'tailwind-scrollbar@^4.0.2',
-            'dotenv@^16.4.7',
-        ];
+            return;
+        }
+
+        $this->line('<comment>Installing npm packages...</comment>');
 
         $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
         exec($command, $output, $returnCode);
@@ -288,50 +266,52 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Create tailwind.config.js
+     * Offer to remove the obsolete tailwind.config.js brand bridge
+     *
+     * Brand colors are registered as `--color-brand-*` in the package's noerd.css, so the generated
+     * config and its `@config` line in app.css are no longer needed. A host-customised config is
+     * only reported — it is never removed automatically.
      */
-    protected function createTailwindConfig(): void
+    protected function migrateLegacyTailwindConfig(FrontendScaffolder $scaffolder): void
     {
-        $configPath = base_path('tailwind.config.js');
-
-        if (file_exists($configPath) && !$this->option('force')) {
-            if (!$this->confirm('tailwind.config.js already exists. Do you want to overwrite it?')) {
-                $this->line('<comment>Skipped tailwind.config.js creation.</comment>');
-                return;
-            }
+        if (!$scaffolder->hasLegacyTailwindBridge()) {
+            return;
         }
 
-        $configContent = "import defaultTheme from 'tailwindcss/defaultTheme'
-import forms from '@tailwindcss/forms'
+        if (!$scaffolder->legacyTailwindConfigIsUnmodified()) {
+            $this->warn('tailwind.config.js looks customised and was left untouched.');
+            $this->warn('Brand colors now ship as --color-brand-* in noerd.css; a `colors` block in your config overrides them at build time. See docs/brand.md.');
 
-require('dotenv').config();
+            return;
+        }
 
-/** @type {import('tailwindcss').Config} */
-export default {
-    theme: {
-        extend: {
-            display: ['group-hover'],
-            colors: {
-                'brand-bg': '#f9f9f9', // Page background, table row hover
-                'brand-navi': process.env.VITE_BRAND_NAVI || '#fafafa', // Sidebar background
-                'brand-navi-hover': process.env.VITE_BRAND_NAVI_HOVER || '#f5f5f5', // Sidebar item hover
-                'brand-primary': process.env.VITE_BRAND_PRIMARY || '#000', // Primary buttons, active indicators, checkbox bg
-                'brand-primary-text': process.env.VITE_BRAND_PRIMARY_TEXT || '#fff', // Text on primary buttons, checkbox checkmark
-                'brand-secondary': process.env.VITE_BRAND_SECONDARY || '#ffffff', // Secondary button background
-                'brand-secondary-text': process.env.VITE_BRAND_SECONDARY_TEXT || '#374151', // Text on secondary buttons
-                'brand-danger': process.env.VITE_BRAND_DANGER || '#fecaca', // Danger button background
-                'brand-danger-text': process.env.VITE_BRAND_DANGER_TEXT || '#374151', // Text on danger buttons
-                'brand-border': process.env.VITE_BRAND_BORDER || '#000', // Focus ring, active nav border
-            },
-        },
-    },
+        $this->line('');
+        $this->line('<comment>Found the legacy noerd tailwind.config.js brand bridge.</comment>');
+        $this->line('Brand colors now ship as --color-brand-* in noerd.css, which lets NOERD_BRAND take effect without a rebuild.');
 
-    plugins: [forms, require('tailwind-scrollbar')],
-}
-";
+        if (!$this->option('force') && !$this->confirm('Remove tailwind.config.js and its @config line from app.css?', true)) {
+            $this->line('<comment>Kept tailwind.config.js.</comment>');
 
-        file_put_contents($configPath, $configContent);
-        $this->line('<info>Created tailwind.config.js.</info>');
+            return;
+        }
+
+        $scaffolder->removeLegacyTailwindBridge();
+
+        $this->line('<info>Removed tailwind.config.js (backed up as tailwind.config.js.bak) and its @config line.</info>');
+    }
+
+    /**
+     * Detect the installed Node version so the scaffolder can pin compatible build tooling
+     */
+    protected function detectNodeVersion(): ?string
+    {
+        exec('node -v 2>/dev/null', $output, $returnCode);
+
+        if ($returnCode !== 0 || $output === []) {
+            return null;
+        }
+
+        return mb_trim((string) $output[0]);
     }
 
     /**
@@ -809,6 +789,16 @@ export default {
         } else {
             $this->warn('Could not execute npm run build. Please run it manually.');
         }
+    }
+
+    private function formatFrontendAction(string $action): string
+    {
+        return match ($action) {
+            FrontendScaffolder::ACTION_CREATED => '<info>created</info>',
+            FrontendScaffolder::ACTION_PATCHED => '<info>patched</info>',
+            FrontendScaffolder::ACTION_WARNING => '<comment>warning</comment>',
+            default => '<comment>skipped</comment>',
+        };
     }
 
     /**

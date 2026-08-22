@@ -9,6 +9,24 @@
 @theme {
     /* App-wide default text size: text-sm is the de-facto base, 14px -> 13px */
     --text-sm: 0.8125rem;
+
+    /*
+     * Brand palette. These values only REGISTER the bg-brand-*, text-brand-* and border-brand-*
+     * utilities and mirror the `default` preset in config/noerd.php. Because the utilities compile
+     * to var(--color-brand-*), the effective colors always come from BrandService, which re-declares
+     * the same custom properties on :root in layouts/app.blade.php — so switching NOERD_BRAND or a
+     * NOERD_COLOR_BRAND_* override needs no CSS rebuild. See docs/brand.md.
+     */
+    --color-brand-bg: #f9f9f9;
+    --color-brand-navi: #fafafa;
+    --color-brand-navi-hover: #f5f5f5;
+    --color-brand-primary: #000;
+    --color-brand-primary-text: #fff;
+    --color-brand-secondary: #ffffff;
+    --color-brand-secondary-text: #374151;
+    --color-brand-danger: #fecaca;
+    --color-brand-danger-text: #374151;
+    --color-brand-border: #000;
 }
 
 /*
