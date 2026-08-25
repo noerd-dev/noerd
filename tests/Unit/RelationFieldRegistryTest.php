@@ -41,6 +41,31 @@ it('registers a relation type and exposes it via field type registry', function 
     ]);
 });
 
+it('renders a relation type through its custom field component when one is registered', function (): void {
+    $fieldTypeRegistry = new FieldTypeRegistry();
+    $relationFieldRegistry = new RelationFieldRegistry($fieldTypeRegistry);
+
+    $relationFieldRegistry->register('customerAddressCardRelation', RelationFieldDefinition::model(
+        listComponent: 'customer-addresses-list',
+        detailComponent: 'customer-address-detail',
+        modelClass: null,
+        titleResolver: 'label',
+        fieldComponent: 'customer::customer-address-card-field',
+    ));
+
+    $fieldTypeDefinition = $fieldTypeRegistry->resolve('customerAddressCardRelation');
+
+    expect($fieldTypeDefinition?->kind)->toBe('livewire');
+    expect($fieldTypeDefinition?->target)->toBe('customer::customer-address-card-field');
+    // The custom component receives the identical props as the generic renderer.
+    expect($fieldTypeDefinition?->resolveProps([
+        'name' => 'detailData.default_invoice_address_id',
+        'label' => 'Default Invoice Address',
+    ], new class {
+        public array $detailData = ['default_invoice_address_id' => 7];
+    }, null, 3)['value'])->toBe(7);
+});
+
 it('passes the row number on only when the theme numbered the field', function (): void {
     $fieldTypeRegistry = new FieldTypeRegistry();
     $relationFieldRegistry = new RelationFieldRegistry($fieldTypeRegistry);
