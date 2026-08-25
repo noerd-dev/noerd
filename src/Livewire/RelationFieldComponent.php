@@ -143,6 +143,25 @@ abstract class RelationFieldComponent extends Component
         ];
     }
 
+    /**
+     * The related Eloquent model behind the current value — for custom renderer
+     * components (fieldComponent) that display more than the title.
+     */
+    public function relatedModel(): mixed
+    {
+        if (!$this->value) {
+            return null;
+        }
+
+        $definition = app(RelationFieldRegistry::class)->resolve($this->relationType);
+
+        if (!$definition?->modelClass || !class_exists($definition->modelClass)) {
+            return null;
+        }
+
+        return $definition->modelClass::query()->find($this->value);
+    }
+
     private function resolveDisplayTitle(): void
     {
         $definition = app(RelationFieldRegistry::class)->resolve($this->relationType);

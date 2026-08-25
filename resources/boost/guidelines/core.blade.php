@@ -314,6 +314,28 @@ public function customerSelected($customerId): void
 
 **Reference:** `docs/relation-field-types.md`
 
+### Custom Field Types (FieldTypeRegistry)
+The YAML `type:` of a detail field is resolved through the `Noerd\Services\FieldTypeRegistry`
+singleton — nothing is hardcoded. A module registers additional field types in its ServiceProvider
+`boot()` and any detail YAML may then use them:
+
+- `FieldTypeDefinition::include('module::components.forms.my-type', resolver: ...)` for Blade
+  partials, `FieldTypeDefinition::livewire('module::my-field', resolver: ..., keyResolver: ...)`
+  for dedicated Livewire field components. The optional `resolver` computes the props per render
+  from `(array $field, $component, $detailData, $modelId)`.
+- Relation types are registered via `RelationFieldRegistry::register('{x}Relation', RelationFieldDefinition::model(...))`
+  — this auto-registers the matching field type; never register both by hand. The generic renderer
+  is `noerd-relation-field` (readonly input + magnifier). To restyle ONE relation type (e.g. an
+  address card), pass a custom Livewire component as `fieldComponent:` in the definition; that
+  component MUST extend `Noerd\Livewire\RelationFieldComponent` (inherits the full picker/select/
+  clear/openDetail behaviour and the same props) and may read the related record via
+  `$this->relatedModel()`. Never fork the selection round trip in custom markup — reuse
+  `$modal('{{ $listComponent }}', {id: ..., context: '{{ $fieldName }}', listActionMethod: 'selectAction'})`.
+- Unknown types fall back to the plain input (`text`, `number`, `date`, … need no registration);
+  unregistered `*Relation` types throw during rendering.
+- Reference: `docs/field-types.md` ("Custom Field Types"), `docs/relation-field-types.md`
+  ("Custom Renderer Component"), `docs/extension-registries.md`.
+
 ### Actions in List Components
 List components support multiple action buttons via the `actions` array in the YAML configuration.
 

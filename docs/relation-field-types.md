@@ -46,6 +46,7 @@ $relationFieldRegistry->register('customerRelation', RelationFieldDefinition::mo
 | `titleResolver` | Model attribute name or callback that returns the display title (default `'name'`) |
 | `selectEvent` | Custom selection event name; defaults to the `{entity}Selected` convention derived from the list component |
 | `detailRoute` | Named `Route::livewire()` route opened as a modal for existing values — preferred over `detailComponent` when the record is addressable (see [Modals](modal.md#route-modals)); `detailComponent` stays as the fallback when the route is not registered |
+| `fieldComponent` | Livewire component rendering the field in the detail form; `null` (default) uses the generic `noerd-relation-field` input. See [Custom Renderer Component](#custom-renderer-component) |
 
 ## Custom Title Resolver
 
@@ -57,6 +58,46 @@ $relationFieldRegistry->register('quoteRelation', RelationFieldDefinition::model
     titleResolver: fn (Quote $quote): string => $quote->number . ' (' . \Number::currency($quote->total_net, in: 'EUR', locale: 'de') . ')',
 ));
 ```
+
+## Custom Renderer Component
+
+By default every relation type renders as the generic readonly input with a clear button and a
+magnifier (`noerd-relation-field`). A module can replace that markup for a single relation type —
+e.g. render an address as a clickable card — by passing its own Livewire component as
+`fieldComponent`:
+
+```php
+$relationFieldRegistry->register('customerAddressCardRelation', RelationFieldDefinition::model(
+    listComponent: 'customer::customer-addresses-list',
+    detailComponent: 'customer::customer-address-detail',
+    detailRoute: 'customer.address.detail',
+    modelClass: CustomerAddress::class,
+    titleResolver: fn (CustomerAddress $address): string => $address->label ?? '',
+    fieldComponent: 'customer::customer-address-card-field',
+));
+```
+
+The component MUST extend `Noerd\Livewire\RelationFieldComponent` — it then inherits the complete
+behaviour (mount hydration, the `noerdRelationSelected` round trip, `clear()`, `openDetail()`,
+`setFieldValue` sync to the parent detail) and receives exactly the same props as the generic
+renderer (`relationType`, `fieldName`, `label`, `value`, `modelId`, `theme`, …). Only the Blade
+markup differs. The single-file component is two lines plus markup:
+
+```blade
+<?php
+
+new class extends \Noerd\Livewire\RelationFieldComponent {}; ?>
+
+<div>
+    {{-- custom markup; open the picker exactly like the generic template: --}}
+    {{-- @click="$modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $fieldName }}', listActionMethod: 'selectAction'})" --}}
+</div>
+```
+
+For markup that shows more than the title, the base class exposes the related Eloquent record via
+`$this->relatedModel()` (resolved through the definition's `modelClass`; `null` while the field is
+empty). Non-default themes resolve a `{component}-{theme}` sibling when it exists and fall back to
+the component itself (see [Themes](themes.md)).
 
 ## Polymorphic Relation Fields
 
@@ -87,7 +128,8 @@ Polymorphic fields render through the shared Livewire component
 ## Runtime Behaviour
 
 - All registered relation types render through the shared Livewire component `noerd-relation-field`
-  (polymorphic types through `noerd-polymorphic-relation-field`)
+  (polymorphic types through `noerd-polymorphic-relation-field`), unless the definition names a
+  custom `fieldComponent`
 - Selection uses the generic event `noerdRelationSelected`; the `{entity}Selected` event (or the
   definition's `selectEvent`) is dispatched as well, so detail components can listen with
   `#[On('customerSelected')]`

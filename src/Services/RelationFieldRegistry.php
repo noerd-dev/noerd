@@ -20,7 +20,7 @@ class RelationFieldRegistry
         $this->definitions[$type] = $definition;
 
         $this->fieldTypeRegistry->register($type, FieldTypeDefinition::livewire(
-            'noerd-relation-field',
+            $definition->fieldComponent ?? 'noerd-relation-field',
             resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($type): array {
                 $fieldName = $field['name'] ?? '';
 

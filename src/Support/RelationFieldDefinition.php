@@ -12,6 +12,10 @@ class RelationFieldDefinition
      *                                relation detail opens via Noerd::modalRoute()
      *                                (URL rewrite) and $detailComponent is not used
      * @param  callable|null  $titleResolver
+     * @param  ?string  $fieldComponent  Livewire component rendering the field in the
+     *                                   detail form; null uses the generic
+     *                                   'noerd-relation-field'. A custom component must
+     *                                   extend Noerd\Livewire\RelationFieldComponent
      */
     public function __construct(
         public string $listComponent,
@@ -20,6 +24,7 @@ class RelationFieldDefinition
         public ?string $modelClass = null,
         public $titleResolver = null,
         public ?string $selectEvent = null,
+        public ?string $fieldComponent = null,
     ) {}
 
     /**
@@ -32,6 +37,7 @@ class RelationFieldDefinition
         callable|string|null $titleResolver = 'name',
         ?string $selectEvent = null,
         ?string $detailRoute = null,
+        ?string $fieldComponent = null,
     ): self {
         return new self(
             listComponent: $listComponent,
@@ -42,6 +48,7 @@ class RelationFieldDefinition
                 ? static fn(mixed $model): mixed => data_get($model, $titleResolver)
                 : $titleResolver,
             selectEvent: $selectEvent,
+            fieldComponent: $fieldComponent,
         );
     }
 
