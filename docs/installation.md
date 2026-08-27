@@ -98,7 +98,9 @@ npm run build     # or: npm run dev
 
 `noerd:install` publishes `config/noerd.php`. Notable flags:
 
-- `features.multi_tenant` (`NOERD_MULTI_TENANT`) — tenant switcher and multi-tenant UI
+- `features.multi_tenant` (`NOERD_MULTI_TENANT`) — tenant switcher and multi-tenant UI. Enabled
+  by default; `noerd:install` does not write this flag to `.env` — set `NOERD_MULTI_TENANT=false`
+  yourself to disable it
 - `features.currency` (`NOERD_CURRENCY_ENABLED`) — set to `false` to hide currency-related UI on
   installations that don't need it
 - `auth.guard` (`NOERD_AUTH_GUARD`) / `auth.set_as_default` (`NOERD_AUTH_DEFAULT`) — noerd's

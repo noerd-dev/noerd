@@ -12,7 +12,8 @@ Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function
     Route::livewire('tenant-apps', 'noerd::tenant-apps-list')->name('tenant-apps');
     Route::livewire('users', 'noerd::noerd-users-list')->name('users');
     Route::livewire('noerd-user/{modelId}', 'noerd::noerd-user-detail')->name('noerd-user.detail');
-    Route::livewire('tenant', 'noerd::tenant-detail')->name('tenant');
+    Route::livewire('tenants', 'noerd::tenants-list')->name('tenants');
+    Route::livewire('tenant/{modelId}', 'noerd::tenant-detail')->name('tenant.detail');
     Route::livewire('create-tenant', 'noerd::create-tenant')->name('create-tenant');
     Route::livewire('collections', 'noerd::setup-collections-list')->name('setup-collections');
     Route::livewire('collection/{modelId}', 'noerd::setup-collection-detail')->name('setup-collection.detail');

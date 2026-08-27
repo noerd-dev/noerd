@@ -5,8 +5,8 @@
   block_menus:
     - title: Administration
       navigations:
-        - title: Tenant
-          route: tenant
+        - title: Tenants
+          route: tenants
           heroicon: building-office
         - title: Apps
           route: tenant-apps

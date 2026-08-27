@@ -732,15 +732,8 @@ class NoerdInstallCommand extends Command
 
         // Create default tenant if none exist
         if (Tenant::count() === 0) {
-            $multiTenant = confirm('Do you want to enable multi-tenant mode?', default: false);
-            $this->setEnvValue('NOERD_MULTI_TENANT', $multiTenant ? 'true' : 'false');
-
-            if ($multiTenant) {
-                $this->call('noerd:create-tenant');
-            } else {
-                $this->call('noerd:create-tenant', ['--default' => true]);
-                $this->autoAssignAllApps();
-            }
+            $this->call('noerd:create-tenant');
+            $this->autoAssignAllApps();
         } else {
             $this->line('<comment>Tenant(s) already exist, skipping.</comment>');
         }
@@ -810,22 +803,5 @@ class NoerdInstallCommand extends Command
         $allAppIds = TenantApp::where('is_active', true)->pluck('id')->toArray();
         $tenant->tenantApps()->sync($allAppIds);
         $this->info("All apps auto-assigned to tenant '{$tenant->name}'.");
-    }
-
-    /**
-     * Set or update a value in the .env file.
-     */
-    private function setEnvValue(string $key, string $value): void
-    {
-        $envPath = base_path('.env');
-        $envContent = file_get_contents($envPath);
-
-        if (preg_match("/^{$key}=/m", $envContent)) {
-            $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $envContent);
-        } else {
-            $envContent .= "\n{$key}={$value}\n";
-        }
-
-        file_put_contents($envPath, $envContent);
     }
 }
