@@ -52,7 +52,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
                 </form>
 
                 <p class="mt-10 text-center text-sm/6 text-gray-500">
-                    <a href="{{ route('login') }}" wire:navigate class="font-semibold">
+                    <a href="{{ route('noerd.login') }}" wire:navigate class="font-semibold">
                         {{ __('Back to login') }}
                     </a>
                 </p>

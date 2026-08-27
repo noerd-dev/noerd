@@ -5,12 +5,12 @@ namespace Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Prompts\Elements\Link;
-use Laravel\Prompts\Elements\NumberedList;
 
 use function Laravel\Prompts\callout;
 use function Laravel\Prompts\confirm;
 
+use Laravel\Prompts\Elements\Link;
+use Laravel\Prompts\Elements\NumberedList;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -787,6 +787,34 @@ class NoerdInstallCommand extends Command
         }
     }
 
+    /**
+     * Display the closing "Application ready" callout with the next steps.
+     */
+    protected function displayApplicationReady(): void
+    {
+        $url = mb_rtrim((string) config('app.url'), '/');
+        $appsUrl = $url . '/noerd-apps';
+
+        if (!function_exists('\Laravel\Prompts\callout')) {
+            $this->newLine();
+            $this->info('Application ready!');
+            $this->line("Open: {$appsUrl} and log in with your admin user.");
+            $this->line('New to noerd? Check out the documentation: https://noerd.dev');
+
+            return;
+        }
+
+        callout('Application ready', [
+            'You can start your local development using:',
+            new NumberedList([
+                'Run: composer run dev',
+                'Open: ' . new Link($appsUrl) . ' and log in with your admin user',
+            ]),
+            'New to noerd? Check out the ' . new Link('https://noerd.dev', 'documentation') . '.',
+            'Build something amazing!',
+        ]);
+    }
+
     private function formatFrontendAction(string $action): string
     {
         return match ($action) {
@@ -806,32 +834,5 @@ class NoerdInstallCommand extends Command
         $allAppIds = TenantApp::where('is_active', true)->pluck('id')->toArray();
         $tenant->tenantApps()->sync($allAppIds);
         $this->info("All apps auto-assigned to tenant '{$tenant->name}'.");
-    }
-
-    /**
-     * Display the closing "Application ready" callout with the next steps.
-     */
-    protected function displayApplicationReady(): void
-    {
-        $url = rtrim((string) config('app.url'), '/');
-
-        if (!function_exists('\Laravel\Prompts\callout')) {
-            $this->newLine();
-            $this->info('Application ready!');
-            $this->line("Open: {$url}/noerd-apps and log in with your admin user.");
-            $this->line('New to noerd? Check out the documentation: https://noerd.dev');
-
-            return;
-        }
-
-        callout('Application ready', [
-            'You can start your local development using:',
-            new NumberedList([
-                'Run: composer run dev',
-                'Open: ' . new Link($url . '/noerd-apps') . ' and log in with your admin user',
-            ]),
-            'New to noerd? Check out the ' . new Link('https://noerd.dev', 'documentation') . '.',
-            'Build something amazing!',
-        ]);
     }
 }

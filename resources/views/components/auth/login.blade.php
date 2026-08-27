@@ -100,8 +100,8 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
                     <div>
                         <div class="flex items-center justify-between">
                             <x-noerd::input-label for="password" :value="__('Password')" />
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold">
+                            @if (Route::has('noerd.password.request'))
+                                <a href="{{ route('noerd.password.request') }}" wire:navigate class="text-sm font-semibold">
                                     {{ __('Forgot password?') }}
                                 </a>
                             @endif

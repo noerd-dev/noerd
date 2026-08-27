@@ -5,7 +5,7 @@ use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 
-new class () extends Component {
+new class extends Component {
     public function switchTenant(int $tenantId): void
     {
         $user = Auth::user();
@@ -26,8 +26,10 @@ new class () extends Component {
             $appPrefix = $segments[0] ?? null;
 
             if ($appPrefix) {
-                // System paths that are always accessible
-                $systemPaths = ['setup', 'profile', 'dashboard', 'no-tenant'];
+                // System paths that are always accessible: the setup area,
+                // the apps dashboard and every core screen under the noerd
+                // URL prefix (user, no-tenant, ...).
+                $systemPaths = ['setup', 'noerd-apps', mb_trim(config('noerd.routes.prefix', 'noerd'), '/')];
 
                 if (in_array($appPrefix, $systemPaths)) {
                     $redirectUrl = $referer;

@@ -49,7 +49,7 @@ describe('PublicAppMiddleware', function (): void {
         $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
-        expect($response->headers->get('Location'))->toContain('/login');
+        expect($response->headers->get('Location'))->toContain('/noerd/login');
     });
 
     it('allows authenticated access to public apps', function (): void {
@@ -89,7 +89,7 @@ describe('PublicAppMiddleware', function (): void {
         $response = $this->middleware->handle($request, fn() => response('OK'), 'documentation');
 
         expect($response->getStatusCode())->toBe(302);
-        expect($response->headers->get('Location'))->toContain('/login');
+        expect($response->headers->get('Location'))->toContain('/noerd/login');
     });
 
     it('matches app name case-insensitively for public apps', function (): void {

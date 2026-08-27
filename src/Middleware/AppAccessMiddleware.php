@@ -23,7 +23,7 @@ class AppAccessMiddleware
         $user = NoerdAuth::user();
 
         if (!$user) {
-            return redirect('/login');
+            return redirect()->route('noerd.login');
         }
 
         $tenant = TenantHelper::getSelectedTenant();

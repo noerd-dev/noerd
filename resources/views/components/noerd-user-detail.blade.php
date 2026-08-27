@@ -1,12 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Noerd\Models\Profile;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Profile;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdDetail;
 
@@ -65,7 +65,7 @@ new class extends Component {
         $this->selectedTenant = auth()->user()->selectedTenant();
         $this->userLocale = SetupLanguage::getDefaultCode();
 
-        $user = new NoerdUser;
+        $user = new NoerdUser();
         if ($this->modelId) {
             $user = NoerdUser::find($this->modelId);
         }
@@ -143,7 +143,7 @@ new class extends Component {
 
             if ($this->sendPasswordResetMail) {
                 // Send password reset link instead of generated password
-                Password::sendResetLink(['email' => $user->email]);
+                NoerdAuth::broker()->sendResetLink(['email' => $user->email]);
             }
 
             $user->save();

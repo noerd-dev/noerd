@@ -23,7 +23,7 @@ describe('AppAccessMiddleware', function (): void {
         $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
-        expect($response->headers->get('Location'))->toContain('/login');
+        expect($response->headers->get('Location'))->toContain('/noerd/login');
     });
 
     it('redirects to home when user has no selected tenant', function (): void {
@@ -36,7 +36,7 @@ describe('AppAccessMiddleware', function (): void {
         $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
-        expect($response->headers->get('Location'))->not->toContain('/login');
+        expect($response->headers->get('Location'))->not->toContain('/noerd/login');
     });
 
     it('throws NoerdException when tenant does not have the app assigned', function (): void {

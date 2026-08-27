@@ -30,6 +30,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Routes
+    |--------------------------------------------------------------------------
+    |
+    | URL prefix for the noerd core routes (login, apps, user, ...). Route
+    | NAMES are unaffected — only the URLs carry the prefix, so navigation
+    | and route() calls keep working when the prefix changes. The /setup
+    | area keeps its own prefix and is not affected.
+    |
+    */
+    'routes' => [
+        'prefix' => env('NOERD_ROUTE_PREFIX', 'noerd'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Feature Flags
     |--------------------------------------------------------------------------
     |

@@ -106,7 +106,7 @@ describe('login flow', function (): void {
         $user = NoerdUser::factory()->create();
         $this->actingAs($user, 'noerd');
 
-        $this->get('/login')->assertRedirect();
+        $this->get(route('noerd.login'))->assertRedirect(route('noerd-apps'));
     });
 });
 
@@ -161,7 +161,7 @@ describe('logout isolation', function (): void {
 
         Livewire::test('noerd::layout.top-bar')
             ->call('logout')
-            ->assertRedirect('/login');
+            ->assertRedirect(route('noerd.login'));
 
         expect(Auth::guard('noerd')->check())->toBeFalse();
         expect(Auth::guard('web')->check())->toBeTrue();

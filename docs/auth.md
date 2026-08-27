@@ -35,25 +35,50 @@ another user model), define the key in your `config/auth.php` and noerd will use
   the bare `auth` middleware alias (which resolves the default guard). Leave it `false` when noerd
   coexists with another auth stack (Nova, Breeze, ...) that owns the default guard.
 
+## Routes & URL prefix
+
+noerd's core screens live under a configurable URL prefix (default `noerd`, set via
+`config('noerd.routes.prefix')` / `NOERD_ROUTE_PREFIX`): `/noerd/login`, `/noerd/forgot-password`,
+`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd-user`), `/noerd/no-tenant`,
+`/noerd/component-page/{componentName}`. Only the URLs carry the prefix — the route names are
+stable and unaffected by a prefix change. The `/setup` area keeps its own prefix, and the apps
+dashboard stays at `/noerd-apps` (already namespaced, and the address the installer prints).
+
+The auth route names are namespaced (`noerd.login`, `noerd.password.request`,
+`noerd.password.reset`) and the package registers **no** route named `login`, `dashboard`,
+`profile`, `password.request` or `password.reset` — a coexisting starter kit keeps those names to
+itself and `php artisan route:cache` never sees a duplicate.
+
+`/login` still works on a plain noerd installation: an **unnamed** redirect to the prefixed login
+route. Because it is unnamed and registered before the host's routes, a starter kit that claims the
+`/login` URI simply overrides it — the redirect only serves hosts without their own login.
+
 ## Route middleware groups
 
 `NoerdServiceProvider` registers two shared route middleware groups:
 
 ```php
-$router->middlewareGroup('noerd', ['web', 'auth:noerd', 'verified']);
-$router->middlewareGroup('noerd-guest', ['web', 'guest:noerd']);
+$router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', 'verified']);
+$router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':noerd']);
 ```
 
 Every noerd-based module protects its routes with `['noerd']` (plus module-specific aliases such
 as `app-access:crm`) instead of `['web', 'auth', 'verified']`. The `noerd:module` scaffolder
 generates routes with the `noerd` group.
 
-The `auth:noerd` middleware does the heavy lifting for guard propagation: Laravel's `Authenticate`
-middleware calls `Auth::shouldUse('noerd')` for the matched guard, which makes `noerd` the default
-guard **for the remainder of that request** — every guard-less `auth()->user()`, `@auth`,
-`$request->user()` and Gate check inside a noerd route resolves the noerd guard without any code
-change. Livewire re-applies the route's persistent middleware (including `auth:noerd`) on every
-component update, so this holds for Livewire actions too.
+`Noerd\Middleware\NoerdAuthenticate` extends Laravel's `Authenticate` and pins the guest redirect
+to `route('noerd.login')`; `Noerd\Middleware\NoerdRedirectIfAuthenticated` extends
+`RedirectIfAuthenticated` and pins the authenticated redirect to `route('noerd-apps')`. Neither the
+host's `auth`/`guest` middleware aliases nor globally registered `redirectUsing()` callbacks (e.g.
+from a starter kit's `bootstrap/app.php`) apply to noerd routes — the two stacks never redirect
+into each other.
+
+The authenticate middleware also does the heavy lifting for guard propagation: it calls
+`Auth::shouldUse('noerd')` for the matched guard, which makes `noerd` the default guard **for the
+remainder of that request** — every guard-less `auth()->user()`, `@auth`, `$request->user()` and
+Gate check inside a noerd route resolves the noerd guard without any code change. Livewire
+re-applies the route's persistent middleware on every component update (`NoerdAuthenticate` is
+registered in Livewire's persistent-middleware list), so this holds for Livewire actions too.
 
 ## The `NoerdAuth` helper
 
@@ -84,8 +109,8 @@ login) needs no special setup:
 
 1. Install noerd as usual — `config/auth.php` keeps the host's `users` provider and default guard.
 2. Keep `NOERD_AUTH_DEFAULT` unset (or `false`).
-3. noerd users live in `noerd_users` and log in via noerd's `/login` against the `noerd` guard;
-   host users keep logging in via their own stack against `web`.
+3. noerd users live in `noerd_users` and log in via noerd's `/noerd/login` against the `noerd`
+   guard; host users keep logging in via their own stack (e.g. their own `/login`) against `web`.
 
 Both guards share the session cookie but store independent login keys
 (`login_noerd_<hash>` vs `login_web_<hash>`) and separate remember-me cookies — a user can be
