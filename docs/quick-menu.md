@@ -2,6 +2,28 @@
 
 The Quick-Menu displays action buttons in the header area for fast access to common functions.
 
+## Buttons Are App-Independent
+
+The quick-menu is tenant scoped, not app scoped: it renders the same buttons with the same targets
+no matter which app is selected in the app bar. A quick-menu button must therefore never read
+`TenantHelper::getSelectedApp()` (directly or through a helper that falls back to it) to decide
+where it links or what it shows.
+
+When a button's target only makes sense per app, render **one button per app the tenant runs**
+instead of one button that changes meaning — e.g. a tenant running three shop modules gets three
+shop buttons, each pinned to its own module:
+
+```php
+foreach ($shopModuleService->modulesForTenant($tenant) as $module) {
+    $this->shopLinks[] = [
+        'label' => $titles[$module->value],
+        'url' => DomainHelper::url($tenant->id, $module), // module passed explicitly
+    ];
+}
+```
+
+App-specific entry points belong in that app's navigation, dashboard or header actions.
+
 ## File Location
 
 ```
@@ -125,6 +147,7 @@ See [Creating Modules](creating-modules.md) for the install-command context.
 
 ## Key Concepts
 
+- **App-independent:** Buttons never depend on the selected app — see above
 - **Component prefix:** Use `quick-menu.{name}` to reference components in the `quick-menu/` subdirectory
 - **Responsive:** Use `hidden lg:flex` to show buttons only on larger screens
 - **Polling:** Use `wire:poll` for live updates (e.g., order counts)

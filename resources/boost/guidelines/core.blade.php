@@ -183,6 +183,16 @@ protected $fillable = ['name', 'email', 'phone'];
 - No dependencies between optional modules (an optional module must never `use` classes, views or YAML of another optional module)
 - Module-specific code (e.g., in `DatabaseSeeder`) must not be placed in the main project
 
+### Quick-Menu Buttons Are App-Independent
+The quick-menu (`app-configs/quick-menu.yml`) is tenant scoped, not app scoped: a button renders the
+same, with the same target, no matter which app is selected in the app bar.
+
+- A quick-menu component must NEVER read `TenantHelper::getSelectedApp()` — not directly, and not
+  through a helper that falls back to it. Pass the module/app explicitly instead.
+- If a target only makes sense per app, render one button per app the tenant runs (labelled with
+  that app's tenant-app title) instead of one button that changes meaning.
+- App-specific entry points belong in the app's navigation, dashboard or header actions.
+
 ### Custom Attributes (Project-Specific Fields)
 Modules must NEVER be modified for project-specific data fields — neither the module code, nor the module's YAML configuration files (lists/details). Instead, use the `custom_attributes` JSON column available on key models.
 
