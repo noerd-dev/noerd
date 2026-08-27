@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Models\Tenant;
@@ -18,31 +19,31 @@ new class extends Component {
 
     public function mount(): void
     {
+        if (! $this->modelId) {
+            $this->modelId = (string) Auth::user()->selected_tenant_id;
+        }
+
+        $user = Auth::user();
+        abort_unless(
+            $user->isSuperAdmin() || $user->adminTenants()->whereKey($this->modelId)->exists(),
+            403,
+        );
+
         $this->initDetail();
-
-        $tenant = Tenant::find(auth()->user()->selected_tenant_id);
-
-        $this->detailData = $tenant->toArray();
     }
 
     public function store(): void
     {
         $this->validate([
             'detailData.name' => ['required', 'string', 'max:255', 'min:3'],
-            'detailData.email' => ['required', 'email', 'max:255'],
         ]);
 
-        $tenant = Tenant::find(auth()->user()->selected_tenant_id);
+        $tenant = Tenant::findOrFail($this->modelId);
         $tenant->name = $this->detailData['name'];
-        $tenant->email = $this->detailData['email'];
-        $tenant->contact_name = $this->detailData['contact_name'] ?? null;
-        $tenant->address = $this->detailData['address'] ?? null;
-        $tenant->zipcode = $this->detailData['zipcode'] ?? null;
-        $tenant->city = $this->detailData['city'] ?? null;
         $tenant->logo = $this->detailData['logo'] ?? null;
         $tenant->save();
 
-        $this->showSuccessIndicator = true;
+        $this->storeProcess($tenant);
     }
 
     public function delete(): void
