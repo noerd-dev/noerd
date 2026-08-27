@@ -21,26 +21,9 @@ class NoerdInstallCommand extends Command
 
     protected $description = 'Install noerd content to the local content directory';
 
-    private bool $shouldInstallDemo = false;
-
     public function handle()
     {
         $this->info('Installing noerd content...');
-
-        // Ask upfront whether to install demo data so the decision
-        // is preserved even if later steps fail. On "no", noerd:demo
-        // is never invoked — no migration, views, configs or routes copied.
-        $this->shouldInstallDemo = confirm(
-            label: 'Would you like to install the Demo App?',
-            default: true,
-            hint: 'DemoCustomer with lists & details',
-        );
-
-        if (! $this->shouldInstallDemo) {
-            $this->line('<comment>Demo app will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
-        }
-
-        $this->newLine();
 
         $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
         $targetDir = base_path('app-configs/setup');
@@ -84,21 +67,38 @@ class NoerdInstallCommand extends Command
             // Ask to run npm build
             $this->runNpmBuild();
 
-            // Install demo data only if the user confirmed at the start.
-            if ($this->shouldInstallDemo) {
-                $this->call('noerd:demo', ['--force' => $this->option('force')]);
-            }
+            // Offer the demo app as the last installation step.
+            $this->installDemoApp();
 
             $this->info('Noerd content successfully installed!');
-            $this->newLine();
-            $this->line('Noerd registers its own "noerd" auth guard at runtime — config/auth.php and .env were not modified.');
-            $this->line('Visit your application at: <info>' . url('/noerd-apps') . '</info>');
 
             return 0;
         } catch (Exception $e) {
             $this->error('Error installing noerd content: ' . $e->getMessage());
             return 1;
         }
+    }
+
+    /**
+     * Ask whether to install the demo app and run noerd:demo on confirmation
+     */
+    protected function installDemoApp(): void
+    {
+        $this->newLine();
+
+        $shouldInstallDemo = confirm(
+            label: 'Would you like to install the Demo App?',
+            default: true,
+            hint: 'DemoCustomer with lists & details',
+        );
+
+        if (! $shouldInstallDemo) {
+            $this->line('<comment>Demo app will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
+
+            return;
+        }
+
+        $this->call('noerd:demo', ['--force' => $this->option('force')]);
     }
 
     /**
