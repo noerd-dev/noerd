@@ -31,6 +31,12 @@ return [
         'set_as_default' => env('NOERD_AUTH_DEFAULT', false),
     ],
 
+    'routes' => [
+        // URL prefix for the noerd core routes (login, apps, user, ...).
+        // Route NAMES are unaffected — only the URLs carry the prefix.
+        'prefix' => env('NOERD_ROUTE_PREFIX', 'noerd'),
+    ],
+
     'features' => [
         'multi_tenant' => env('NOERD_MULTI_TENANT', true),
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),

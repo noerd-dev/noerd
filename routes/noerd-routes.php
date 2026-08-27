@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Noerd\Controllers\DashboardController;
 
 // Every setup page lives under /setup. Route NAMES are the public contract
 // (navigation.yml `route:` keys, tenant_apps.route, route() calls) and stay
@@ -28,30 +27,40 @@ Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function
     Route::livewire('system-settings', 'noerd::system-settings-page')->name('system-settings');
 });
 
-Route::group(['middleware' => ['noerd']], function (): void {
-    Route::livewire('/component-page/{componentName}', 'noerd::generic-component-page')->name('component-page');
-});
+// Every other core screen lives under the configurable URL prefix (default
+// /noerd) so a host application — e.g. one generated from a Laravel starter
+// kit — keeps its own /login, /dashboard etc. Route names stay stable; the
+// auth routes are namespaced (noerd.login, noerd.password.*) so the package
+// never claims the starter-kit route names (they would break route:cache).
+$prefix = config('noerd.routes.prefix', 'noerd');
 
+// The apps dashboard deliberately stays at its unprefixed URL — /noerd-apps
+// is already namespaced and is the address users know from the installer.
 Route::group(['middleware' => ['noerd']], function (): void {
     Route::livewire('noerd-apps', 'noerd::noerd-apps')->name('noerd-apps');
-    Route::redirect('noerd-home', 'noerd-apps');
 });
 
-Route::group(['middleware' => ['noerd']], function (): void {
+Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void {
+    Route::livewire('component-page/{componentName}', 'noerd::generic-component-page')->name('component-page');
+    Route::redirect('home', '/noerd-apps');
     Route::livewire('no-tenant', 'noerd::no-tenant')->name('no-tenant');
+    Route::view('user', 'noerd::profile')->name('noerd-user');
 });
 
-Route::group(['middleware' => ['noerd']], function (): void {
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
-    Route::view('profile', 'noerd::profile')->name('profile');
-});
-
-Route::middleware(['noerd-guest'])->group(function (): void {
-    Route::livewire('login', 'noerd::auth.login')->name('login');
-    Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('password.request');
+Route::group(['prefix' => $prefix, 'middleware' => ['noerd-guest']], function (): void {
+    Route::livewire('login', 'noerd::auth.login')->name('noerd.login');
+    Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('noerd.password.request');
 });
 
 // Password reset works for both guests and authenticated users
-Route::middleware(['web'])->group(function (): void {
-    Route::livewire('reset-password/{token}', 'noerd::auth.reset-password')->name('password.reset');
+Route::group(['prefix' => $prefix, 'middleware' => ['web']], function (): void {
+    Route::livewire('reset-password/{token}', 'noerd::auth.reset-password')->name('noerd.password.reset');
+});
+
+// Convenience alias: /login keeps working on a plain noerd installation. The
+// redirect is deliberately UNNAMED and registered before the host's routes —
+// a starter kit that claims the /login URI (same method + URI, registered
+// later) simply overrides it, and no name collision can break route:cache.
+Route::middleware(['web'])->group(function () use ($prefix): void {
+    Route::redirect('login', '/' . mb_trim($prefix, '/') . '/login');
 });

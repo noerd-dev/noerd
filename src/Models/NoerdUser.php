@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\NoerdUserFactory;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Notifications\NoerdResetPassword;
 
 class NoerdUser extends Authenticatable implements HasLocalePreference
 {
@@ -33,6 +34,16 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         'super_admin' => 'boolean',
         'last_login_at' => 'datetime',
     ];
+
+    /**
+     * The framework notification links to route('password.reset') — a name
+     * noerd does not claim. Send noerd's own notification instead, which
+     * builds the link from the noerd.password.reset route.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new NoerdResetPassword($token));
+    }
 
     public function selectedTenant(): ?Tenant
     {

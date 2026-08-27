@@ -41,6 +41,8 @@ use Noerd\Helpers\ThemeHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
+use Noerd\Middleware\NoerdAuthenticate;
+use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
@@ -66,9 +68,9 @@ use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
 use Noerd\Support\DefaultCountries;
 use Noerd\Support\FieldTypeDefinition;
-use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
+use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\ThemeContext;
 use Noerd\View\Components\AppLayout;
 
@@ -164,12 +166,19 @@ class NoerdServiceProvider extends ServiceProvider
         $router = $this->app['router'];
         // Shared route middleware groups: every noerd-based module protects
         // its routes with the 'noerd' group instead of the bare 'auth' alias,
-        // so authentication always runs against noerd's own guard. The
+        // so authentication always runs against noerd's own guard. The noerd
+        // subclasses pin the redirect targets to noerd's own routes — the
+        // host's 'auth'/'guest' aliases and any redirectUsing() callbacks
+        // (e.g. from a coexisting starter kit) never apply here. The
         // 'verified' middleware resolves $request->user() after auth's
         // shouldUse() call, so it is guard-correct (and currently inert —
         // NoerdUser does not implement MustVerifyEmail).
-        $router->middlewareGroup('noerd', ['web', 'auth:' . NoerdAuth::guardName(), 'verified']);
-        $router->middlewareGroup('noerd-guest', ['web', 'guest:' . NoerdAuth::guardName()]);
+        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), 'verified']);
+        $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':' . NoerdAuth::guardName()]);
+        // Livewire's default persistent-middleware list only knows the
+        // framework's Authenticate class — the subclass must be added so
+        // component updates stay auth-protected.
+        Livewire::addPersistentMiddleware([NoerdAuthenticate::class]);
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('public-app', PublicAppMiddleware::class);

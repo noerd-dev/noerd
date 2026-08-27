@@ -23,5 +23,5 @@ it('aborts with 404 when the component name has no module namespace', function (
 
 it('requires authentication', function (): void {
     $this->get(route('component-page', ['componentName' => 'noerd::dashboard']))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('noerd.login'));
 });

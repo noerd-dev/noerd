@@ -5,7 +5,7 @@ use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\TopBarRegistry;
 
-new class () extends Component {
+new class extends Component {
     /**
      * Livewire components contributed by optional modules. Each one decides for
      * itself whether it renders anything.
@@ -30,7 +30,7 @@ new class () extends Component {
         Session::regenerate();
         Session::regenerateToken();
 
-        $this->redirect('/login');
+        $this->redirect(route('noerd.login'));
     }
 
     public function setSidebarVisibility(bool $showSidebar): void
@@ -117,7 +117,7 @@ new class () extends Component {
                              class="absolute right-0 z-90 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                              role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button"
                              tabindex="-1">
-                            <a wire:navigate href="{{route('profile')}}" class="block px-4 py-2 text-sm text-gray-700"
+                            <a wire:navigate href="{{route('noerd-user')}}" class="block px-4 py-2 text-sm text-gray-700"
                                role="menuitem"
                                tabindex="-1" id="user-menu-item-0">{{__('Profile')}}</a>
 

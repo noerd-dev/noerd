@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
+use Noerd\Notifications\NoerdResetPassword;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
@@ -280,7 +280,7 @@ it('sends password reset link when creating new user', function () use ($testSet
     // Verify that a password reset notification was sent to the new user
     Notification::assertSentTo(
         $createdUser,
-        ResetPassword::class,
+        NoerdResetPassword::class,
     );
 
     // Verify that only one notification was sent

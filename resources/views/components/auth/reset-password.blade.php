@@ -41,23 +41,23 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 
         $status = NoerdAuth::broker()->reset(
             $this->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user) {
+            function ($user): void {
                 $user->forceFill([
                     'password' => Hash::make($this->password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
                 event(new PasswordReset($user));
-            }
+            },
         );
 
-        if ($status != Password::PASSWORD_RESET) {
+        if ($status !== Password::PASSWORD_RESET) {
             $this->addError('email', __($status));
             return;
         }
 
         Session::flash('status', __($status));
-        $this->redirectRoute('login', navigate: true);
+        $this->redirectRoute('noerd.login', navigate: true);
     }
 }; ?>
 

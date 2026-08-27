@@ -85,7 +85,7 @@ fields:
 | `showIf` | Reactive client-side visibility: a `$wire` property name (string) or `{field: ..., value: ...}` |
 | `modalRoute` | Named route opened as a modal instead of switching panels (with optional `routeParameters`) |
 | `route` | Named route the tab navigates to (full page load) |
-| `routable` | With `component`: makes the tab addressable via the generic `component-page/{componentName}` route |
+| `routable` | With `component`: makes the tab addressable via the generic `/noerd/component-page/{componentName}` route |
 
 ### Hand-Rolled Tab Panels
 

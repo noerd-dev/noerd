@@ -1,11 +1,10 @@
 <?php
 
-use Noerd\Models\NoerdUser;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Noerd\Models\NoerdUser;
 
 new class extends Component {
     public string $name = '';
@@ -29,7 +28,7 @@ new class extends Component {
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(NoerdUser::class)->ignore($user->id)
+                Rule::unique(NoerdUser::class)->ignore($user->id),
             ],
         ]);
 
@@ -49,7 +48,7 @@ new class extends Component {
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $path = session('url.intended', RouteServiceProvider::HOME);
+            $path = session('url.intended', route('noerd-apps'));
 
             $this->redirect($path);
 
