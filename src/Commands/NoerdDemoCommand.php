@@ -167,7 +167,7 @@ class NoerdDemoCommand extends Command
 
 
 // Noerd Demo
-Route::group(['middleware' => ['auth', 'verified', 'web']], function (): void {
+Route::group(['middleware' => ['noerd']], function (): void {
     Route::livewire('demo-customers', 'demo-customers-list')->name('demo-customers');
     Route::livewire('demo-customer/{modelId}', 'demo-customer-detail')->name('demo-customer.detail');
     Route::livewire('demo-categories', 'demo-categories-list')->name('demo-categories');
