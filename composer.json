@@ -2,7 +2,7 @@
     "name": "noerd/noerd",
     "description": "",
     "type": "library",
-    "version": "v0.10.12",
+    "version": "v0.10.13",
     "license": "MIT",
     "require": {
         "php": "^8.3",
