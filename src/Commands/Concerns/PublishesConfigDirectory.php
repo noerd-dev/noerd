@@ -30,7 +30,7 @@ trait PublishesConfigDirectory
             'overwritten_files' => 0,
         ];
 
-        $display = function (string $path) use ($sourceDir, $targetDir, $displayBase): string {
+        $display = function (string $path) use ($targetDir, $displayBase): string {
             if ($displayBase !== null) {
                 return str_replace($displayBase . DIRECTORY_SEPARATOR, '', $path);
             }

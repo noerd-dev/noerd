@@ -14,7 +14,8 @@
     },
     "require-dev": {
         "orchestra/testbench": "^10.6 || ^11.1",
-        "pestphp/pest": "^4.0"
+        "pestphp/pest": "^4.0",
+        "laravel/pint": "^1.18"
     },
     "autoload": {
         "psr-4": {
@@ -39,5 +40,9 @@
                 "Noerd\\Providers\\NoerdServiceProvider"
             ]
         }
+    },
+    "scripts": {
+        "test": "pest",
+        "lint": "pint --test"
     }
 }

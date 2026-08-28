@@ -29,13 +29,6 @@ class Tenant extends Authenticatable
         'updated_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-        ];
-    }
-
     /**
      * Get the UUID attribute with fallback to hash for backward compatibility.
      */
@@ -76,5 +69,12 @@ class Tenant extends Authenticatable
     protected static function newFactory(): TenantFactory
     {
         return TenantFactory::new();
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+        ];
     }
 }

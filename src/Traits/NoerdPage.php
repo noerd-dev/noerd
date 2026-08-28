@@ -134,28 +134,6 @@ trait NoerdPage
         });
     }
 
-    /**
-     * Shared init skeleton of initPage()/initDetail()/initSettings(): routed-
-     * modal redirect, the object-read guard (canReadObject() is unrestricted
-     * for components without $detailModel and overridden by settings pages),
-     * then the component-specific loading. The three inits used to be three
-     * drifting copies of exactly this sequence.
-     */
-    protected function initNoerdComponent(callable $load): void
-    {
-        if ($this->prepareRoutedModal()) {
-            return;
-        }
-
-        if (!$this->canReadObject()) {
-            $this->objectReadBlocked = true;
-
-            return;
-        }
-
-        $load();
-    }
-
     public function closeModalProcess(?string $source = null): void
     {
         $this->currentTab = 1;
@@ -340,6 +318,28 @@ trait NoerdPage
         if ($id) {
             Noerd::modalFor($detailRoute, $detailComponent, ['modelId' => $id]);
         }
+    }
+
+    /**
+     * Shared init skeleton of initPage()/initDetail()/initSettings(): routed-
+     * modal redirect, the object-read guard (canReadObject() is unrestricted
+     * for components without $detailModel and overridden by settings pages),
+     * then the component-specific loading. The three inits used to be three
+     * drifting copies of exactly this sequence.
+     */
+    protected function initNoerdComponent(callable $load): void
+    {
+        if ($this->prepareRoutedModal()) {
+            return;
+        }
+
+        if (!$this->canReadObject()) {
+            $this->objectReadBlocked = true;
+
+            return;
+        }
+
+        $load();
     }
 
     /**

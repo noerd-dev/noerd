@@ -35,17 +35,6 @@ final class RelationTitleResolver
     }
 
     /**
-     * Memo key including the current tenant: the convention lookup is a raw
-     * unscoped DB read, so a memoized title must never be served to another
-     * tenant a long-lived worker later handles (defense in depth on top of the
-     * per-request reset in the provider's Octane listener).
-     */
-    private function memoKey(string $fkColumn, mixed $id): string
-    {
-        return (TenantHelper::currentTenantId() ?? 0) . '|' . $fkColumn . '|' . $id;
-    }
-
-    /**
      * Prime the per-request memo for a whole page of ids in ONE query per source
      * instead of one per row: a registered relation type loads via a single
      * whereIn on its model (tenant scopes and the titleResolver apply exactly
@@ -103,6 +92,17 @@ final class RelationTitleResolver
         foreach ($pending as $idKey => $id) {
             $this->titles[$this->memoKey($fkColumn, $id)] = $resolved[$idKey] ?? (string) $id;
         }
+    }
+
+    /**
+     * Memo key including the current tenant: the convention lookup is a raw
+     * unscoped DB read, so a memoized title must never be served to another
+     * tenant a long-lived worker later handles (defense in depth on top of the
+     * per-request reset in the provider's Octane listener).
+     */
+    private function memoKey(string $fkColumn, mixed $id): string
+    {
+        return (TenantHelper::currentTenantId() ?? 0) . '|' . $fkColumn . '|' . $id;
     }
 
     private function resolve(string $fkColumn, mixed $id): string

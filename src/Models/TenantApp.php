@@ -10,14 +10,6 @@ class TenantApp extends Model
 {
     protected $guarded = [];
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-            'is_public' => 'boolean',
-        ];
-    }
-
     public function scopePublic(Builder $query): Builder
     {
         return $query->where('is_public', true);
@@ -52,5 +44,13 @@ class TenantApp extends Model
     public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'tenant_app');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'is_public' => 'boolean',
+        ];
     }
 }

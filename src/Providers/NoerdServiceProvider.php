@@ -70,9 +70,9 @@ use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
 use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
+use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LockedPropertiesHook;
-use Noerd\Support\FieldContext;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\RelationFormPersistHook;
@@ -170,26 +170,6 @@ class NoerdServiceProvider extends ServiceProvider
         // singleton keeps it at one build per request (the structure itself is
         // additionally memoized in StaticConfigHelper's runtime cache).
         $this->app->singleton(NavigationService::class);
-    }
-
-    /**
-     * Drop every request-scoped PHP static the package maintains. Runs on app
-     * boot (fresh per test in one Pest process, per-request no-op under FPM)
-     * and — via the Octane RequestReceived listener — before every Octane
-     * request. The schema column listing is deliberately not part of this
-     * flush: it describes the database structure, not request state (see the
-     * boot hook and the MigrationsEnded listener).
-     */
-    private function flushRequestState(): void
-    {
-        StaticConfigHelper::flushRuntimeCaches();
-        TenantHelper::clearCache();
-        ThemeHelper::clearCache();
-        ThemeContext::clear();
-        FieldContext::clear();
-        CurrencyHelper::clearCache();
-        DatabaseSetupCollectionDefinitionRepository::resetCache();
-        $this->app->make(ThemeRegistry::class)->clearCache();
     }
 
     public function boot(): void
@@ -406,6 +386,26 @@ class NoerdServiceProvider extends ServiceProvider
                 ExportSetupCollectionDefinitionsCommand::class,
             ]);
         }
+    }
+
+    /**
+     * Drop every request-scoped PHP static the package maintains. Runs on app
+     * boot (fresh per test in one Pest process, per-request no-op under FPM)
+     * and — via the Octane RequestReceived listener — before every Octane
+     * request. The schema column listing is deliberately not part of this
+     * flush: it describes the database structure, not request state (see the
+     * boot hook and the MigrationsEnded listener).
+     */
+    private function flushRequestState(): void
+    {
+        StaticConfigHelper::flushRuntimeCaches();
+        TenantHelper::clearCache();
+        ThemeHelper::clearCache();
+        ThemeContext::clear();
+        FieldContext::clear();
+        CurrencyHelper::clearCache();
+        DatabaseSetupCollectionDefinitionRepository::resetCache();
+        $this->app->make(ThemeRegistry::class)->clearCache();
     }
 
     /**

@@ -300,5 +300,5 @@ it('keeps a conditional modal action clickable with a single Alpine scope', func
 
     expect($html)->toContain('$modal(')
         ->toContain('x-show="$wire.hasAccount"')
-        ->and(substr_count($html, 'x-data'))->toBe(1);
+        ->and(mb_substr_count($html, 'x-data'))->toBe(1);
 });

@@ -269,27 +269,6 @@ class StaticConfigHelper
         return self::$runtimeCache[$cacheKey] = self::buildNavigationStructure($currentApp);
     }
 
-    /**
-     * @see getNavigationStructure()
-     */
-    private static function buildNavigationStructure(string $currentApp): ?array
-    {
-        $yamlPath = base_path("app-configs/{$currentApp}/navigation.yml");
-
-        if (!file_exists($yamlPath)) {
-            return null;
-        }
-
-        $navigationStructure = self::parseYamlFile($yamlPath);
-
-        // Process dynamic navigation blocks
-        if ($navigationStructure) {
-            $navigationStructure = self::processDynamicNavigation($navigationStructure);
-        }
-
-        return $navigationStructure;
-    }
-
     public static function getCurrentApp(): ?string
     {
         $selectedApp = TenantHelper::getSelectedApp();
@@ -480,6 +459,27 @@ class StaticConfigHelper
         self::$yamlCache[$path] = [$version, $parsed];
 
         return $parsed;
+    }
+
+    /**
+     * @see getNavigationStructure()
+     */
+    private static function buildNavigationStructure(string $currentApp): ?array
+    {
+        $yamlPath = base_path("app-configs/{$currentApp}/navigation.yml");
+
+        if (!file_exists($yamlPath)) {
+            return null;
+        }
+
+        $navigationStructure = self::parseYamlFile($yamlPath);
+
+        // Process dynamic navigation blocks
+        if ($navigationStructure) {
+            $navigationStructure = self::processDynamicNavigation($navigationStructure);
+        }
+
+        return $navigationStructure;
     }
 
     /**

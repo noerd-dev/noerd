@@ -27,17 +27,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         'api_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_owner' => 'boolean',
-            'super_admin' => 'boolean',
-            'last_login_at' => 'datetime',
-        ];
-    }
-
     /**
      * The framework notification links to route('password.reset') — a name
      * noerd does not claim. Send noerd's own notification instead, which
@@ -204,5 +193,16 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     protected static function newFactory(): NoerdUserFactory
     {
         return NoerdUserFactory::new();
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'is_owner' => 'boolean',
+            'super_admin' => 'boolean',
+            'last_login_at' => 'datetime',
+        ];
     }
 }

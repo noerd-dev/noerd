@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * users()/tenants() result) and the same app assigned to a tenant twice.
  * Existing duplicate rows are collapsed first, so the constraints always apply.
  */
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         $this->constrainUsersTenants();

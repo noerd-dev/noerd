@@ -55,3 +55,24 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/pest --colors=always --compact
+
+  lint:
+    name: Pint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress --prefer-dist
+
+      - name: Run Pint
+        run: vendor/bin/pint --test

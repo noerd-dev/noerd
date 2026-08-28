@@ -10,13 +10,6 @@ class NoerdUpdateAllCommand extends Command
 {
     use RequiresNoerdInstallation;
 
-    protected $signature = 'noerd:update-all
-        {--force : Overwrite existing files without asking}
-        {--build : Run npm build after the core noerd:update}
-        {--except=* : Skip a command; module key or full name (--except=cms, --except=noerd:update)}';
-
-    protected $description = 'Run noerd:update and every installed module\'s noerd:update-{module} command';
-
     private const CORE = 'noerd:update';
 
     /**
@@ -24,6 +17,13 @@ class NoerdUpdateAllCommand extends Command
      * that a preceding `noerd:update --force` overwrites with the core template.
      */
     private const RUN_LAST = ['noerd:update-plus'];
+
+    protected $signature = 'noerd:update-all
+        {--force : Overwrite existing files without asking}
+        {--build : Run npm build after the core noerd:update}
+        {--except=* : Skip a command; module key or full name (--except=cms, --except=noerd:update)}';
+
+    protected $description = 'Run noerd:update and every installed module\'s noerd:update-{module} command';
 
     /**
      * Only the modules whose service provider is loaded register an update command,
@@ -118,7 +118,7 @@ class NoerdUpdateAllCommand extends Command
     private function partition(array $names): array
     {
         $except = array_map(
-            static fn (string $value): string => str_contains($value, ':') ? $value : 'noerd:update-' . $value,
+            static fn(string $value): string => str_contains($value, ':') ? $value : 'noerd:update-' . $value,
             (array) $this->option('except'),
         );
 
@@ -193,7 +193,7 @@ class NoerdUpdateAllCommand extends Command
             $rows[] = [$name, '<comment>skipped</comment>', '--except'];
         }
 
-        $failed = array_filter($results, static fn (array $result): bool => $result['status'] === 'failed');
+        $failed = array_filter($results, static fn(array $result): bool => $result['status'] === 'failed');
 
         $this->newLine();
         $this->info('Update summary:');

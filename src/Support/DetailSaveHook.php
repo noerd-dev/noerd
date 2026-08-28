@@ -32,6 +32,8 @@ abstract class DetailSaveHook extends ComponentHook
 {
     private const SAVE_ACTIONS = ['store', 'save', 'update'];
 
+    abstract protected function afterSave(Component $component, Model $record): void;
+
     public function call($method, $params, $returnEarly, $metadata, $componentContext): callable
     {
         $effective = $method;
@@ -78,6 +80,4 @@ abstract class DetailSaveHook extends ComponentHook
             $this->afterSave($component, $record);
         };
     }
-
-    abstract protected function afterSave(Component $component, Model $record): void;
 }

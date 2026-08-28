@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Str;
+use LogicException;
 use Noerd\Contracts\DeclaresRelationForms;
 
 /**
@@ -136,7 +137,7 @@ final class RelationFormSync
         }
 
         foreach ($data as $value) {
-            if (is_string($value) ? trim($value) !== '' : $value !== null) {
+            if (is_string($value) ? mb_trim($value) !== '' : $value !== null) {
                 return true;
             }
         }
@@ -147,7 +148,7 @@ final class RelationFormSync
     private static function defaultPersist(Model $owner, RelationFormDefinition $definition, array $data): void
     {
         $data = array_map(
-            fn (mixed $value): mixed => is_string($value) && trim($value) === '' ? null : $value,
+            fn(mixed $value): mixed => is_string($value) && mb_trim($value) === '' ? null : $value,
             $data,
         );
 
@@ -173,7 +174,7 @@ final class RelationFormSync
             return;
         }
 
-        throw new \LogicException(sprintf(
+        throw new LogicException(sprintf(
             'Relation form [%s] on [%s] uses an unsupported relation type [%s] — declare a persistUsing closure.',
             $definition->relation,
             $owner::class,
