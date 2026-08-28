@@ -198,6 +198,12 @@ class NoerdServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
         Blade::component('app-layout', AppLayout::class);
         Livewire::addNamespace('noerd', viewPath: __DIR__ . '/../../resources/views/components');
+        // The un-namespaced location is load-bearing public API: the generic
+        // relation field components resolve by their bare names
+        // ('noerd-relation-field', 'noerd-polymorphic-relation-field' — the
+        // RelationFieldRegistry defaults, documented in the guideline). Note it
+        // also exposes every other noerd component un-namespaced; new code must
+        // reference components via the 'noerd::' namespace.
         Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');

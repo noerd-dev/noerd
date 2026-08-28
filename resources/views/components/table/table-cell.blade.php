@@ -16,7 +16,7 @@
     --}}
 >
     @if ($columnValue === 'action')
-        <div class="mr-1 ml-auto flex" disabled wire:navigate>
+        <div class="mr-1 ml-auto flex">
             @if ($actions)
                 <div
                     :class="showDropdown ? 'opacity-100' : 'opacity-0'"
@@ -28,8 +28,8 @@
                         @click="showDropdown = ! showDropdown"
                         type="button"
                         class="inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
-                        id="menu-button"
-                        aria-expanded="true"
+                        id="row-menu-button-{{ $id }}"
+                        :aria-expanded="showDropdown ? 'true' : 'false'"
                         aria-haspopup="true"
                     >
                         <svg
@@ -86,7 +86,6 @@
                                     class="group flex cursor-pointer items-center px-4 py-2 text-sm text-gray-700"
                                     role="menuitem"
                                     tabindex="-1"
-                                    id="menu-item-0"
                                 >
                                     @isset($action['heroicon'])
                                         <x-icon name="{{ $action['heroicon'] }}" class="mr-2 h-4 w-4 text-gray-800" />
@@ -130,7 +129,7 @@
     @else
         @if ($type === 'bool' || $type === 'boolean')
             @if ($value === true)
-                <div class="tw-shrink-0 px-3 text-right">
+                <div class="shrink-0 px-3 text-right">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -147,7 +146,7 @@
                     </svg>
                 </div>
             @else
-                <div class="tw-shrink-0 px-3 text-right">
+                <div class="shrink-0 px-3 text-right">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -166,7 +165,7 @@
             @endif
         @elseif ($type === 'inversebool')
             @if ($value === true)
-                <div class="tw-shrink-0 px-3 text-right">
+                <div class="shrink-0 px-3 text-right">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"

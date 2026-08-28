@@ -38,17 +38,21 @@ new class extends Component {
         $tenant = TenantHelper::getSelectedTenant();
         $apps = $tenant->tenantApps()->get();
 
-        $loop = 0;
-        foreach ($apps as $app) {
-            if ($newPosition === $loop) {
-                $loop++;
+        // One transaction: an interrupted reorder must not leave duplicate
+        // sort_order values behind.
+        \Illuminate\Support\Facades\DB::transaction(function () use ($tenant, $apps, $appId, $newPosition): void {
+            $loop = 0;
+            foreach ($apps as $app) {
+                if ($newPosition === $loop) {
+                    $loop++;
+                }
+                if ($app->id === $appId) {
+                    $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $newPosition]);
+                } else {
+                    $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $loop++]);
+                }
             }
-            if ($app->id === $appId) {
-                $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $newPosition]);
-            } else {
-                $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $loop++]);
-            }
-        }
+        });
 
         $this->loadApps();
     }

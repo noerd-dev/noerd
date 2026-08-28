@@ -69,7 +69,7 @@ new class extends Component {
         @foreach($config['buttons'] ?? [] as $button)
             @if(!isset($button['policy']) || $this->canAccess($button['policy']))
                 <div class="shrink-0">
-                    <livewire:dynamic-component :component="$button['component']" />
+                    <livewire:dynamic-component :component="$button['component']" :wire:key="'quick-menu-' . $button['component']" />
                 </div>
             @endif
         @endforeach

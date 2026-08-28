@@ -59,7 +59,7 @@ new class extends Component {
                         @else
                             <ul role="list" class="space-y-1">
                                 @foreach($block['navigations'] as $navi)
-                                    <livewire:noerd::layout.sidebar-navigation-element wire:key="{{$navi['title']}}"
+                                    <livewire:noerd::layout.sidebar-navigation-element wire:key="nav-{{ $navi['route'] ?? $navi['link'] ?? $navi['title'] }}"
                                                                                 :navi="$navi"/>
                                 @endforeach
                             </ul>
@@ -69,7 +69,7 @@ new class extends Component {
             @endif
             @if(empty($block['navigations']) && isset($block['route']))
                 <ul role="list" class="pb-2">
-                    <livewire:noerd::layout.sidebar-navigation-element wire:key="{{$block['title']}}" :navi="$block"/>
+                    <livewire:noerd::layout.sidebar-navigation-element wire:key="nav-block-{{ $block['route'] ?? $block['title'] }}" :navi="$block"/>
                 </ul>
             @endif
         @endforeach
@@ -80,7 +80,7 @@ new class extends Component {
                 <li>
                     <ul role="list" class="-mx-2 space-y-1" :class="showSidebar ? 'w-full' : ''">
                         @foreach($navigation as $navi)
-                            @livewire('layout.sidebar-navigation-element', ['navi' => $navi])
+                            @livewire('noerd::layout.sidebar-navigation-element', ['navi' => $navi], key('subnav-' . ($navi['route'] ?? $navi['link'] ?? $navi['title'] ?? $loop->index)))
                         @endforeach
                     </ul>
                 </li>

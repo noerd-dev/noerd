@@ -77,7 +77,7 @@ $styles = [
             <div class="px-4 py-2 text-center text-sm font-medium flex items-center justify-center relative">
                 <div class="flex-1 text-center">
                     @if(isset($banner['component']))
-                        @livewire($banner['component'])
+                        @livewire($banner['component'], [], key('banner-' . $banner['component']))
                     @else
                         {{ $banner['message'] ?? '' }}
                     @endif

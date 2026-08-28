@@ -12,18 +12,3 @@
         </tbody>
     </table>
 </div>
-<style>
-    .noerd-table {
-        td {
-            padding-top: 6px;
-            padding-bottom: 6px;
-            padding-left: 8px;
-            padding-right: 8px;
-            font-size: 0.875rem;
-        }
-
-        tr:hover {
-            background: #f9fafb;
-        }
-    }
-</style>
