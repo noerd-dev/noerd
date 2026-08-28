@@ -2,6 +2,9 @@
 
 use Noerd\Contracts\DynamicNavigationProviderContract;
 use Noerd\Services\DynamicNavigationRegistry;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 it('registers and resolves a provider', function (): void {
     $registry = new DynamicNavigationRegistry();

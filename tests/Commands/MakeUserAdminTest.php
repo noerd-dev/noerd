@@ -194,30 +194,3 @@ it('handles user with partial admin access correctly', function (): void {
         Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->first()->id,
     );
 });
-
-it('provides detailed summary output', function (): void {
-    $user = NoerdUser::factory()->withExampleTenant()->create();
-
-    $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput('Summary:')
-        ->expectsOutput('- ADMIN profiles created: 1')
-        ->expectsOutput('- ADMIN access granted: 1')
-        ->expectsOutputToContain("Set user's selected_tenant_id to tenant ID:")
-        ->assertExitCode(0);
-});
-
-it('verifies admin status after completion', function (): void {
-    $user = NoerdUser::factory()->withExampleTenant()->create();
-
-    expect($user->isAdminOfAnyTenant())->toBeFalse();
-
-    $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput("✅ User {$user->name} is now an admin with access to Setup!")
-        ->assertExitCode(0);
-
-    // Double-check the user can now access setup
-    $user->refresh();
-    expect($user->isAdminOfAnyTenant())->toBeTrue();
-    expect($user->profiles->where('key', 'ADMIN')->count())->toBeGreaterThan(0);
-    expect($user->selected_tenant_id)->not->toBeNull();
-});

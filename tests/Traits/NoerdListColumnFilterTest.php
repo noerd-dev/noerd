@@ -74,6 +74,16 @@ it('filters a text column with an exact match on =', function (): void {
     expect(filterListIds($component))->toBe([$exact->id]);
 });
 
+it('matches LIKE wildcards in a text filter literally', function (): void {
+    $literal = NoerdUser::factory()->create(['name' => '100%']);
+    NoerdUser::factory()->create(['name' => '100x']);
+
+    $component = Livewire::test(TestableColumnFilterListComponent::class)
+        ->call('setColumnFilter', 'name', '100%');
+
+    expect(filterListIds($component))->toBe([$literal->id]);
+});
+
 it('filters a number column with comparison operators', function (): void {
     $first = NoerdUser::factory()->create();
     $second = NoerdUser::factory()->create();

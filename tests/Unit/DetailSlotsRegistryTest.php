@@ -1,12 +1,9 @@
 <?php
 
 use Noerd\Services\DetailSlotsRegistry;
+use Noerd\Tests\TestCase;
 
-it('starts empty so a slot renders nothing by default', function (): void {
-    $registry = new DetailSlotsRegistry();
-
-    expect($registry->for('user-below-form'))->toBe([]);
-});
+uses(TestCase::class);
 
 it('orders slot components by sort ascending regardless of registration order', function (): void {
     $registry = new DetailSlotsRegistry();

@@ -86,9 +86,7 @@ afterEach(function (): void {
 describe('system theme default', function (): void {
     it('falls back to the config default when no tenant setting exists', function (): void {
         expect(StaticConfigHelper::getComponentFields('zz-plain-detail')['theme'])->toBe('default');
-    });
 
-    it('honours the config fallback for installations without a settings row', function (): void {
         config()->set('noerd.theme.default', 'compact');
         ThemeHelper::clearCache();
 

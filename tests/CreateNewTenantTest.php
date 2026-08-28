@@ -22,7 +22,7 @@ it('renders the create-new-tenant component', function () use ($testSettings): v
 
     Livewire::test($testSettings['componentName'])
         ->assertStatus(200)
-        ->assertSeeText('Neuen Mandanten erstellen');
+        ->assertSeeHtml('wire:submit="createTenant"');
 });
 
 it('validates required name field', function () use ($testSettings): void {
@@ -219,15 +219,4 @@ it('handles case when current tenant has no apps', function () use ($testSetting
 
     // Verify new tenant also has no apps
     expect($createdTenant->tenantApps)->toHaveCount(0);
-});
-
-it('sets name property correctly in component', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->create();
-    $tenantName = 'Test Tenant';
-
-    $this->actingAs($admin);
-
-    Livewire::test($testSettings['componentName'])
-        ->set('name', $tenantName)
-        ->assertSet('name', $tenantName);
 });

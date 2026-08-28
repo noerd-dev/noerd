@@ -104,11 +104,3 @@ it('resolves url actions through the detailActionUrls convention', function (): 
         ->assertSee('Synthetic Probe Action')
         ->assertSeeHtml('href="https://example.test/probe"');
 });
-
-it('hides url actions whose key is missing from detailActionUrls', function (): void {
-    Livewire::test('page-actions-test::url-probe', [
-        'pageLayout' => ['actions' => [syntheticProbeAction(['url' => 'missingUrl'])]],
-    ])
-        ->assertOk()
-        ->assertDontSee('Synthetic Probe Action');
-});

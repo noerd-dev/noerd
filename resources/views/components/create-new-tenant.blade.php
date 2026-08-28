@@ -3,8 +3,8 @@
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public string $name = '';
@@ -48,7 +48,7 @@ new class extends Component {
         $profile->save();
 
         // Default also admin
-        $tenant->users()->attach(auth()->user()->id, [
+        $tenant->users()->attach(NoerdAuth::user()->id, [
             'profile_id' => $profile->id,
         ]);
 

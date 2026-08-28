@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public array $widgets = [];
@@ -25,7 +26,7 @@ new class extends Component {
 
     public function canAccess(string $policy): bool
     {
-        $user = auth()->user();
+        $user = NoerdAuth::user();
 
         // Try gate-based ability first (for abilities defined via Gate::define)
         if (Gate::has($policy)) {

@@ -3,12 +3,13 @@
 use Livewire\Component;
 use Illuminate\Support\Str;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
 
     public function mount(): void
     {
-        $user = auth()->user();
+        $user = NoerdAuth::user();
         $selectedTenantId = TenantHelper::getSelectedTenantId();
 
         // Fall back to an available tenant when none is selected, or when the user

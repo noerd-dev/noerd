@@ -42,12 +42,15 @@ it('parses operator prefixes', function (string $raw, ?string $op, string $value
 
 it('applies a plain text value as a like filter with escaped wildcards', function (): void {
     $query = filterQuery();
-    ColumnFilterParser::apply($query, 'name', 'text', '50%_a\\b');
+    ColumnFilterParser::apply($query, 'name', 'text', '50%_a!b');
 
+    // LIKE with an explicit escape character — the only form that escapes
+    // literally on every driver (sqlite has no default LIKE escape character).
     $wheres = addedWheres($query);
     expect($wheres)->toHaveCount(1)
-        ->and($wheres[0]['operator'])->toBe('like')
-        ->and($wheres[0]['value'])->toBe('%50\%\_a\\\\b%');
+        ->and($wheres[0]['type'])->toBe('raw')
+        ->and($wheres[0]['sql'])->toContain("like ? escape '!'")
+        ->and($query->getBindings())->toBe(['%50!%!_a!!b%']);
 });
 
 it('applies text operators as direct comparisons', function (string $raw, string $operator, string $value): void {

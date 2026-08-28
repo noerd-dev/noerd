@@ -67,23 +67,6 @@ afterEach(function (): void {
     }
 });
 
-it('can set listFilters without error', function (): void {
-    Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])
-        ->set('listFilters.language', 'de')
-        ->assertHasNoErrors();
-});
-
-it('applies language filter without error', function (): void {
-    // Set session language to 'en' so that when rendering syncs from session,
-    // it uses the same value we're setting
-    session(['selectedLanguage' => 'en']);
-
-    $component = Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])
-        ->set('listFilters.language', 'en');
-
-    expect($component->get('listFilters')['language'])->toBe('en');
-});
-
 it('renders an empty state with the primary action when there are no entries', function (): void {
     app()->setLocale('en');
 

@@ -79,7 +79,14 @@ it('denies access to regular admins', function (): void {
 });
 
 it('denies access to non-admin users', function (): void {
+    // A member of the selected tenant, but without an ADMIN profile. Without a
+    // membership the request is redirected to the no-tenant screen before the
+    // admin check is ever reached (EnsureTenantMembership drops a tenant the
+    // user does not belong to), which would not test authorization at all.
+    $tenant = Tenant::factory()->create();
     $nonAdmin = NoerdUser::factory()->create();
+    $nonAdmin->tenants()->attach($tenant->id);
+    TenantHelper::setSelectedTenantId($tenant->id);
 
     $this->actingAs($nonAdmin);
 

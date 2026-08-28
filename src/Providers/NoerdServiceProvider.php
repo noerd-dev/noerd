@@ -43,6 +43,7 @@ use Noerd\Helpers\ThemeHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
+use Noerd\Middleware\EnsureTenantMembership;
 use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\PublicAppMiddleware;
@@ -212,7 +213,7 @@ class NoerdServiceProvider extends ServiceProvider
         // 'verified' middleware resolves $request->user() after auth's
         // shouldUse() call, so it is guard-correct (and currently inert —
         // NoerdUser does not implement MustVerifyEmail).
-        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), 'verified']);
+        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), 'verified', EnsureTenantMembership::class]);
         $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':' . NoerdAuth::guardName()]);
         // Livewire's default persistent-middleware list only knows the
         // framework's Authenticate class — the subclass must be added so

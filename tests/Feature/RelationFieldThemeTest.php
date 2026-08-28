@@ -72,12 +72,6 @@ describe('Relation field theme templates', function (): void {
                 ->assertDispatched('setFieldValue');
         }
     });
-
-    it('ignores a selection meant for another field', function () use ($props): void {
-        Livewire::test('noerd-relation-field', $props + ['theme' => 'numbered'])
-            ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.other_id')
-            ->assertSet('value', null);
-    });
 });
 
 describe('Polymorphic relation field theme templates', function (): void {

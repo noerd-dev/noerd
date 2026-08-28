@@ -1,6 +1,9 @@
 <?php
 
 use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 it('starts empty so the core renders no module actions of its own', function (): void {
     $registry = new HeaderActionsRegistry();

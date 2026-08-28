@@ -1051,14 +1051,12 @@ trait NoerdList
             $validFields = array_filter($searchableFields, fn($f) => is_string($f) && self::tableHasColumn($table, $f));
 
             if (!empty($validFields)) {
-                // Escape LIKE wildcards so a literal % or _ in the search input
-                // matches literally — same rule as ColumnFilterParser.
-                $search = addcslashes($this->search, '\\%_');
+                // Contains match with escaped LIKE wildcards — same rule and
+                // driver-portable escape as ColumnFilterParser.
+                $search = $this->search;
                 $query->where(function (Builder $q) use ($validFields, $search): void {
                     foreach (array_values($validFields) as $index => $field) {
-                        $index === 0
-                            ? $q->where($field, 'like', '%' . $search . '%')
-                            : $q->orWhere($field, 'like', '%' . $search . '%');
+                        ColumnFilterParser::applyLikeContains($q, $field, $search, $index === 0 ? 'and' : 'or');
                     }
                 });
             }

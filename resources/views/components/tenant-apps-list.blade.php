@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\TenantApp;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public array $assignedApps = [];
@@ -11,7 +11,7 @@ new class extends Component {
 
     public function mount(): void
     {
-        if (! Auth::user()->isSuperAdmin()) {
+        if (! NoerdAuth::user()->isSuperAdmin()) {
             abort(403);
         }
 

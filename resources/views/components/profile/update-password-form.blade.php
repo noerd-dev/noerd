@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -19,7 +19,10 @@ new class extends Component
     {
         try {
             $validated = $this->validate([
-                'current_password' => ['required', 'string', 'current_password'],
+                // The rule verifies against a GUARD — unqualified it uses the
+                // application default, which is not noerd's guard unless a host
+                // opted in. Pin it to the guard this form actually updates.
+                'current_password' => ['required', 'string', 'current_password:' . NoerdAuth::guardName()],
                 'password' => ['required', 'string', Password::defaults(), 'confirmed'],
             ]);
         } catch (ValidationException $e) {
@@ -28,7 +31,7 @@ new class extends Component
             throw $e;
         }
 
-        Auth::user()->update([
+        NoerdAuth::user()->update([
             'password' => Hash::make($validated['password']),
         ]);
 

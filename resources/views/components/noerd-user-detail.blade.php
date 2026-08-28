@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -34,7 +33,7 @@ new class extends Component {
     #[Computed]
     public function tenantProfiles(): array
     {
-        $profiles = Profile::where('tenant_id', auth()->user()->selected_tenant_id)->get();
+        $profiles = Profile::where('tenant_id', NoerdAuth::user()->selected_tenant_id)->get();
         $array = [];
         foreach ($profiles as $profile) {
             $array[$profile->id] = $profile->name;
@@ -55,7 +54,7 @@ new class extends Component {
             return false;
         }
 
-        return $user->tenants->contains(auth()->user()->selected_tenant_id);
+        return $user->tenants->contains(NoerdAuth::user()->selected_tenant_id);
     }
 
     public function mount(): void
@@ -86,7 +85,7 @@ new class extends Component {
             ? $user->tenants->mapWithKeys(fn($tenant) => [$tenant->id => $tenant->pivot->profile_id])->all()
             : [];
 
-        foreach (auth()->user()->adminTenants as $tenant) {
+        foreach (NoerdAuth::user()->adminTenants as $tenant) {
             $this->possibleTenants[$tenant->id] = $tenant->toArray();
             $profileId = $profileByTenant[$tenant->id] ?? null;
 

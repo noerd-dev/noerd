@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
@@ -146,6 +148,49 @@ it('refuses deleteSelected when the list config declares no such bulk action', f
         ->call('deleteSelected');
 
     expect(NoerdUser::query()->count())->toBe(2);
+});
+
+it('refuses deleteSelected for a delete-denied user', function (): void {
+    Gate::define(AccessHelper::OBJECT_DELETE_GATE, fn(?NoerdUser $user, string $modelClass): bool => false);
+
+    $users = NoerdUser::factory()->count(2)->create();
+
+    Livewire::test(ZzBulkDeleteListComponent::class)
+        ->set('selectedRecordIds', $users->pluck('id')->all())
+        ->call('deleteSelected');
+
+    expect(NoerdUser::query()->count())->toBe(2);
+});
+
+it('fires the model events for every bulk-deleted record', function (): void {
+    $deleted = [];
+    NoerdUser::deleted(function (NoerdUser $model) use (&$deleted): void {
+        $deleted[] = $model->id;
+    });
+
+    $users = NoerdUser::factory()->count(2)->create();
+
+    Livewire::test(ZzBulkDeleteListComponent::class)
+        ->set('selectedRecordIds', $users->pluck('id')->all())
+        ->call('deleteSelected');
+
+    expect($deleted)->toEqualCanonicalizing($users->pluck('id')->all());
+});
+
+it('clamps and persists an updated page size', function (): void {
+    $component = Livewire::test(ZzBulkDeleteListComponent::class)
+        ->set('perPage', 999999);
+
+    expect($component->get('perPage'))->toBe(200)
+        ->and(session('listPerPage.zz-bulk-delete-list'))->toBe(200);
+});
+
+it('re-renders when the refreshList event for the list name arrives', function (): void {
+    $component = Livewire::test(ZzBulkDeleteListComponent::class);
+
+    // The listener name embeds the component name (see NoerdList::getListeners()).
+    $component->dispatch('refreshList-' . $component->instance()->getName())
+        ->assertDispatched('$refresh');
 });
 
 /** List narrowed in its OWN listData() — the shipped pattern of tenants-list. */

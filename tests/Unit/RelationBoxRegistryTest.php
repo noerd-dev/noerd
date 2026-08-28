@@ -1,6 +1,9 @@
 <?php
 
 use Noerd\Services\RelationBoxRegistry;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 class RbrBaseModel {}
 class RbrChildModel extends RbrBaseModel {}

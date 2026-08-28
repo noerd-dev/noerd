@@ -10,6 +10,7 @@ use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -50,7 +51,7 @@ new class extends Component
         $this->mountList();
 
         // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(auth()->user()->selected_tenant_id);
+        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
 
         if (! $this->collectionKey) {
             $this->collectionKey = request()->get('key');
@@ -82,14 +83,14 @@ new class extends Component
 
         // Get or create the parent collection
         $parentCollection = SetupCollection::firstOrCreate([
-            'tenant_id' => auth()->user()->selected_tenant_id,
+            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
             'collection_key' => mb_strtoupper($this->collectionKey),
         ], [
             'name' => ucfirst($this->collectionKey),
         ]);
 
         // Get collection entries
-        $query = SetupCollectionEntry::where('tenant_id', auth()->user()->selected_tenant_id)
+        $query = SetupCollectionEntry::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
             ->where('setup_collection_id', $parentCollection->id)
             ->orderBy('sort', 'asc')
             ->orderBy('created_at', 'desc');

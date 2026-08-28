@@ -27,7 +27,7 @@ new class () extends Component {
         // here too, independent of the dynamic-mount guard.
         abort_unless(NoerdAuth::user()?->isAdmin(), 403);
 
-        $this->clientId = auth()->user()->selected_tenant_id;
+        $this->clientId = NoerdAuth::user()->selected_tenant_id;
         $settings = NoerdSettings::where('tenant_id', $this->clientId)->first();
 
         $this->settingsData = [

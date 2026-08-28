@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Helpers\NoerdAuth;
@@ -21,7 +20,7 @@ new class extends Component {
     public function mount(): void
     {
         if (! $this->modelId) {
-            $this->modelId = (string) Auth::user()->selected_tenant_id;
+            $this->modelId = (string) NoerdAuth::user()->selected_tenant_id;
         }
 
         $this->authorizeTenant();
