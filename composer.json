@@ -9,7 +9,6 @@
         "laravel/framework": "^12.0 || ^13.0",
         "livewire/livewire": "^4.0",
         "noerd/modal": "^0.3.23",
-        "composer/composer": "^2.9",
         "wireui/heroicons": "^2.9",
         "symfony/yaml": "^7.1 || ^8.0"
     },
