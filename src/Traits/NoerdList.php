@@ -845,6 +845,29 @@ trait NoerdList
     }
 
     /**
+     * The table's schema columns keyed by column name, introspected at most once
+     * per table and process. Backs every column-existence check in the trait:
+     * Schema::hasColumn() is NOT cached by Laravel and issues one
+     * information-schema query per call — on an 8-column list that used to mean
+     * a two-digit number of metadata queries per render.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    protected static function tableColumns(string $table): array
+    {
+        return self::$schemaColumnCache[$table]
+            ??= collect(Schema::getColumns($table))->keyBy('name')->all();
+    }
+
+    /**
+     * Cached replacement for Schema::hasColumn() (see tableColumns()).
+     */
+    protected static function tableHasColumn(string $table, string $column): bool
+    {
+        return array_key_exists($column, self::tableColumns($table));
+    }
+
+    /**
      * Keep the client-controlled page size within sane bounds — an unbounded
      * ->paginate($perPage) is a memory-exhaustion vector.
      */
@@ -1320,29 +1343,6 @@ trait NoerdList
     }
 
     /**
-     * The table's schema columns keyed by column name, introspected at most once
-     * per table and process. Backs every column-existence check in the trait:
-     * Schema::hasColumn() is NOT cached by Laravel and issues one
-     * information-schema query per call — on an 8-column list that used to mean
-     * a two-digit number of metadata queries per render.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    protected static function tableColumns(string $table): array
-    {
-        return self::$schemaColumnCache[$table]
-            ??= collect(Schema::getColumns($table))->keyBy('name')->all();
-    }
-
-    /**
-     * Cached replacement for Schema::hasColumn() (see tableColumns()).
-     */
-    protected static function tableHasColumn(string $table, string $column): bool
-    {
-        return array_key_exists($column, self::tableColumns($table));
-    }
-
-    /**
      * One shared instance of the resolved model class for table-name and cast
      * introspection — the render path asks for it many times per request.
      */
@@ -1616,36 +1616,6 @@ trait NoerdList
     }
 
     /**
-     * @see getListConfig()
-     */
-    private function resolveListConfig(?string $customName): array
-    {
-        if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
-            return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
-        }
-        $name = $customName ?? $this->getListComponent();
-
-        // An active alternate view only applies to this component's own config,
-        // never to an explicitly requested custom config. A view from another
-        // app resolves via explicit-app lookup; the session app stays untouched.
-        if ($customName === null && ($this->listView !== null || $this->listViewApp !== null)) {
-            $viewName = $this->listView !== null ? "{$name}--{$this->listView}" : $name;
-            $config = $this->listViewApp !== null
-                ? StaticConfigHelper::getListConfigForApp($this->listViewApp, $viewName, $this->listModel ?? null)
-                : StaticConfigHelper::getListConfig($viewName, $this->listModel ?? null);
-            if ($config !== []) {
-                return $config;
-            }
-            // The view's YAML disappeared mid-session — fall back to the default view.
-            $this->listView = null;
-            $this->listViewApp = null;
-            $this->syncListViewParam();
-        }
-
-        return StaticConfigHelper::getListConfig($name, $this->listModel ?? null);
-    }
-
-    /**
      * Override in the component to enable CSV export.
      *
      * @return array{0: Builder, 1: array, 2: string}
@@ -1722,6 +1692,36 @@ trait NoerdList
         }
 
         return $listeners;
+    }
+
+    /**
+     * @see getListConfig()
+     */
+    private function resolveListConfig(?string $customName): array
+    {
+        if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
+            return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
+        }
+        $name = $customName ?? $this->getListComponent();
+
+        // An active alternate view only applies to this component's own config,
+        // never to an explicitly requested custom config. A view from another
+        // app resolves via explicit-app lookup; the session app stays untouched.
+        if ($customName === null && ($this->listView !== null || $this->listViewApp !== null)) {
+            $viewName = $this->listView !== null ? "{$name}--{$this->listView}" : $name;
+            $config = $this->listViewApp !== null
+                ? StaticConfigHelper::getListConfigForApp($this->listViewApp, $viewName, $this->listModel ?? null)
+                : StaticConfigHelper::getListConfig($viewName, $this->listModel ?? null);
+            if ($config !== []) {
+                return $config;
+            }
+            // The view's YAML disappeared mid-session — fall back to the default view.
+            $this->listView = null;
+            $this->listViewApp = null;
+            $this->syncListViewParam();
+        }
+
+        return StaticConfigHelper::getListConfig($name, $this->listModel ?? null);
     }
 
     /**

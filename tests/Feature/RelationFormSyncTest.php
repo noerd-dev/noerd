@@ -73,7 +73,7 @@ class ZzRelationSpyHost extends ZzRelationHost
                 relation: 'zzChild',
                 fields: ['line_1', 'city'],
             )
-                ->persistWhen(fn (array $data): bool => ($data['line_1'] ?? '') !== 'skip-me')
+                ->persistWhen(fn(array $data): bool => ($data['line_1'] ?? '') !== 'skip-me')
                 ->persistUsing(function (Model $owner, array $data): void {
                     self::$spy = ['owner_id' => $owner->id, 'data' => $data];
                 }),

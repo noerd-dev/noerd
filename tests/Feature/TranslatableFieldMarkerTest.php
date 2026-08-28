@@ -40,7 +40,7 @@ describe('Translatable field marker in detail forms', function (): void {
         ])->assertSuccessful()->html();
 
         assertElementHasClasses($html, ['border-sky-300', 'rounded-lg']);
-        expect(substr_count($html, 'border-sky-300'))->toBeGreaterThanOrEqual(2);
+        expect(mb_substr_count($html, 'border-sky-300'))->toBeGreaterThanOrEqual(2);
     });
 
     it('frames a translatable field in blue in the compact theme and keeps the compact layout', function (): void {
@@ -92,7 +92,7 @@ describe('Translatable field marker in detail forms', function (): void {
         ])->assertSuccessful()->html();
 
         // One language affordance per translatable field, carrying the explanation.
-        expect(substr_count($html, 'This field is translatable.'))->toBe(4)
+        expect(mb_substr_count($html, 'This field is translatable.'))->toBe(4)
             ->and($html)->toContain('text-sky-500');
     })->with(['default', 'compact', 'numbered']);
 
@@ -204,7 +204,7 @@ YAML);
         expect($html)->toContain('Germany')->toContain('DE');
         // … but only the translatable cell carries the tinted background, and it is a
         // background — never a frame, which would fight the table's own grid lines.
-        expect(substr_count($html, 'bg-sky-50 group-hover:bg-transparent'))->toBe(1)
+        expect(mb_substr_count($html, 'bg-sky-50 group-hover:bg-transparent'))->toBe(1)
             ->and($html)->not->toContain('border-sky-300!');
     });
 
