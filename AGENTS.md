@@ -47,9 +47,12 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - **Host run:** inside a host project `php artisan test --compact app-modules/noerd/tests/...`.
   The host's `tests/Pest.php` is loaded instead of ours, therefore **every test file binds the test
   case itself** with `uses(Noerd\Tests\TestCase::class);` — never move that into `tests/Pest.php`.
-- `tests/helpers.php` (autoloaded via composer `autoload.files`) holds the global test helpers
-  (`validDetailPayload()`, `requiredLayoutFields()`, `registerTestLivewireRoute()`, …). New global
-  helpers go there, guarded with `function_exists`.
+- `tests/helpers.php` holds the global test helpers (`validDetailPayload()`,
+  `requiredLayoutFields()`, `registerTestLivewireRoute()`, …). It is deliberately NOT in the
+  production composer autoload (test functions must never load in a consumer app's requests):
+  `Noerd\Tests\TestCase` requires it, so every suite extending it gets the helpers, and a host
+  project additionally requires it from its own `tests/Pest.php`. New global helpers go there,
+  guarded with `function_exists`.
 - **Tests prove mechanics, not configuration.** The YAML files under `app-configs/` are
   per-installation configuration: never assert their current content (titles, themes, field lists,
   route vs. component targets). Use synthetic layouts, fixture YAMLs written at runtime or the
