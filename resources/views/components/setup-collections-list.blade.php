@@ -16,7 +16,7 @@ new class extends Component
     use SetupLanguageFilterTrait;
 
     public $listModel = SetupCollectionEntry::class;
-    public ?string $detailRoute = 'setup-collection.detail';
+    public ?string $detailRoute = 'noerd.setup-collection.detail';
 
     public string|int|null $collectionKey = null;
 
@@ -62,7 +62,7 @@ new class extends Component
 
     public function listAction(mixed $modelId = null, array $relations = []): void
     {
-        Noerd::modalFor('setup-collection.detail', 'noerd::setup-collection-detail', ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relations' => $relations]);
+        Noerd::modalFor('noerd.setup-collection.detail', 'noerd::setup-collection-detail', ['modelId' => $modelId, 'collectionKey' => $this->collectionKey, 'relations' => $relations]);
     }
 
     public function listData(): array

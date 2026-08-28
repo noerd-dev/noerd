@@ -92,7 +92,7 @@ new class extends Component {
                     @endforeach
 
                     @if(auth()->user()->isAdmin())
-                        <a class="shrink-0" wire:navigate href="{{route('setup')}}">
+                        <a class="shrink-0" wire:navigate href="{{route('noerd.setup')}}">
                             <x-noerd::button variant="icon" icon="cog-6-tooth" type="button">
                                 <span class="sr-only">View setup</span>
                             </x-noerd::button>
@@ -117,7 +117,7 @@ new class extends Component {
                              class="absolute right-0 z-90 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                              role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button"
                              tabindex="-1">
-                            <a wire:navigate href="{{route('noerd-user')}}" class="block px-4 py-2 text-sm text-gray-700"
+                            <a wire:navigate href="{{route('noerd.profile')}}" class="block px-4 py-2 text-sm text-gray-700"
                                role="menuitem"
                                tabindex="-1" id="user-menu-item-0">{{__('Profile')}}</a>
 

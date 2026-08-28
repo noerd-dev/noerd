@@ -96,7 +96,7 @@
                             @php
                                 $tabArguments = isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : [];
                                 $isRoutable = ! empty($tab['routable']);
-                                $tabRoute = $isRoutable ? 'component-page' : null;
+                                $tabRoute = $isRoutable ? 'noerd.component-page' : null;
                                 $tabRouteParameters = $isRoutable
                                     ? array_merge(['componentName' => $tab['component']], $tabArguments)
                                     : [];

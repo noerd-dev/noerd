@@ -7,7 +7,7 @@ new class extends Component {
     public function openHome(): void
     {
         TenantHelper::setSelectedApp('noerd-apps');
-        $this->redirect(route('noerd-apps'), navigate: true);
+        $this->redirect(route('noerd.apps'), navigate: true);
     }
 
     public function openSidebar(): void

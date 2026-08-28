@@ -7,7 +7,7 @@ new class extends Component {
 } ?>
 
 @php
-    $routeName = ($navi['route'] ?? null) === 'collections' ? 'cms.collections' : ($navi['route'] ?? '');
+    $routeName = $navi['route'] ?? '';
     $isActive = isset($navi['link'])
         ? request()->is(ltrim($navi['link'], '/'))
         : request()->routeIs($routeName);

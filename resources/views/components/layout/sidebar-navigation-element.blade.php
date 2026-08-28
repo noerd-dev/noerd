@@ -19,7 +19,7 @@ new class extends Component {
     // The primary `route:` may belong to an optional module. A stale navigation
     // entry must never take the whole page down, so a route-only entry whose
     // route is not registered is skipped entirely.
-    $routeName = ($navi['route'] ?? null) === 'collections' ? 'cms.collections' : ($navi['route'] ?? '');
+    $routeName = $navi['route'] ?? '';
     $routeExists = $routeName !== '' && \Illuminate\Support\Facades\Route::has($routeName);
     $hasTarget = isset($navi['link']) || $opensAsModal || $routeExists;
 @endphp
