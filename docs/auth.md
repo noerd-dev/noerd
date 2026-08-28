@@ -39,7 +39,7 @@ another user model), define the key in your `config/auth.php` and noerd will use
 
 noerd's core screens live under a configurable URL prefix (default `noerd`, set via
 `config('noerd.routes.prefix')` / `NOERD_ROUTE_PREFIX`): `/noerd/login`, `/noerd/forgot-password`,
-`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd-user`), `/noerd/no-tenant`,
+`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd.profile`), `/noerd/no-tenant`,
 `/noerd/component-page/{componentName}`. Only the URLs carry the prefix — the route names are
 stable and unaffected by a prefix change. The `/setup` area keeps its own prefix, and the apps
 dashboard stays at `/noerd-apps` (already namespaced, and the address the installer prints).
@@ -68,7 +68,7 @@ generates routes with the `noerd` group.
 
 `Noerd\Middleware\NoerdAuthenticate` extends Laravel's `Authenticate` and pins the guest redirect
 to `route('noerd.login')`; `Noerd\Middleware\NoerdRedirectIfAuthenticated` extends
-`RedirectIfAuthenticated` and pins the authenticated redirect to `route('noerd-apps')`. Neither the
+`RedirectIfAuthenticated` and pins the authenticated redirect to `route('noerd.apps')`. Neither the
 host's `auth`/`guest` middleware aliases nor globally registered `redirectUsing()` callbacks (e.g.
 from a starter kit's `bootstrap/app.php`) apply to noerd routes — the two stacks never redirect
 into each other.

@@ -29,7 +29,7 @@ class SetupCollectionsNavigationProvider implements DynamicNavigationProviderCon
         return $this->repository->all()
             ->map(fn(SetupCollectionDefinitionData $d) => [
                 'title' => $d->titleList,
-                'link' => route('setup-collections', ['key' => $d->filename], absolute: false),
+                'link' => route('noerd.setup-collections', ['key' => $d->filename], absolute: false),
                 'heroicon' => 'archive-box',
             ])
             ->values()

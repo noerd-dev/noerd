@@ -1,28 +1,28 @@
 - title: Setup
   name: setup
   hidden: true
-  route: setup
+  route: noerd.setup
   block_menus:
     - title: Administration
       navigations:
         - title: Tenants
-          route: tenants
+          route: noerd.tenants
           heroicon: building-office
         - title: Apps
-          route: tenant-apps
+          route: noerd.tenant-apps
           heroicon: squares-2x2
           superAdmin: true
         - title: Users
-          route: users
+          route: noerd.users
           heroicon: users
         - title: Languages
-          route: setup-languages
+          route: noerd.setup-languages
           heroicon: language
         - title: System Settings
-          route: system-settings
+          route: noerd.system-settings
           heroicon: cog-6-tooth
         - title: Collection Definitions
-          route: setup-collection-definitions
+          route: noerd.setup-collection-definitions
           heroicon: rectangle-stack
           config: noerd.collections.show_definitions_ui
     - title: Data Management

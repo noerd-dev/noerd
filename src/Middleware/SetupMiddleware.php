@@ -22,7 +22,7 @@ class SetupMiddleware
             $firstTenantId = $user->tenants->first()?->id;
 
             if (! $firstTenantId) {
-                return redirect()->route('no-tenant');
+                return redirect()->route('noerd.no-tenant');
             }
 
             TenantHelper::setSelectedTenantId($firstTenantId);

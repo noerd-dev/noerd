@@ -106,7 +106,7 @@ describe('login flow', function (): void {
         $user = NoerdUser::factory()->create();
         $this->actingAs($user, 'noerd');
 
-        $this->get(route('noerd.login'))->assertRedirect(route('noerd-apps'));
+        $this->get(route('noerd.login'))->assertRedirect(route('noerd.apps'));
     });
 });
 

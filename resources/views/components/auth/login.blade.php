@@ -42,7 +42,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 
         NoerdAuth::user()->update(['last_login_at' => now()]);
 
-        $this->redirect(session()->pull('url.intended', route('noerd-apps', absolute: false)), navigate: false);
+        $this->redirect(session()->pull('url.intended', route('noerd.apps', absolute: false)), navigate: false);
     }
 
     /**
