@@ -280,7 +280,7 @@ it('keeps the base view when the resolver hides every view', function (): void {
 });
 
 it('renders the view switcher only when multiple views exist', function (): void {
-    $user = NoerdUser::factory()->adminUser()->withExampleTenant()->withSelectedApp('setup')->create();
+    $user = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($user);
 
     Livewire::test('noerd::setup-languages-list')

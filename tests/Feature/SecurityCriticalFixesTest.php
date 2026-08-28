@@ -244,3 +244,36 @@ it('reduces a detail payload to declared layout keys and always drops identity/t
         'custom_attributes' => ['sap' => 'A1'],
     ]);
 });
+
+it('scopes admin rights to the tenant of the current request', function (): void {
+    $administered = Tenant::factory()->create();
+    $memberOnly = Tenant::factory()->create();
+
+    $user = makeTenantUser($administered, admin: true);
+    // Same user is a plain member of a second tenant.
+    $memberProfile = Profile::factory()->create(['tenant_id' => $memberOnly->id, 'key' => 'MEMBER']);
+    $user->tenants()->attach($memberOnly->id, ['profile_id' => $memberProfile->id]);
+    $this->actingAs($user);
+
+    TenantHelper::setSelectedTenantId($administered->id);
+    expect($user->fresh()->isAdmin())->toBeTrue();
+
+    // Switching to the tenant they only belong to must NOT carry admin rights —
+    // that is what made the setup area of any co-tenant reachable.
+    TenantHelper::setSelectedTenantId($memberOnly->id);
+    expect($user->fresh()->isAdmin())->toBeFalse()
+        ->and(ComponentAccessGuard::allows('noerd::tenants-list'))->toBeFalse();
+
+    // The cross-tenant variant stays available for console/reporting contexts.
+    expect($user->fresh()->isAdminOfAnyTenant())->toBeTrue();
+});
+
+it('keeps a super admin unrestricted across tenants', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = makeTenantUser($tenant, admin: false, super: true);
+    $this->actingAs($user);
+
+    TenantHelper::setSelectedTenantId(Tenant::factory()->create()->id);
+
+    expect($user->fresh()->isAdmin())->toBeTrue();
+});

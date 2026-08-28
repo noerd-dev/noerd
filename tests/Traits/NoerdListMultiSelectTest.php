@@ -147,3 +147,52 @@ it('refuses deleteSelected when the list config declares no such bulk action', f
 
     expect(NoerdUser::query()->count())->toBe(2);
 });
+
+/** List narrowed in its OWN listData() — the shipped pattern of tenants-list. */
+class ZzNarrowedBulkListComponent extends Component
+{
+    use NoerdList;
+
+    public const COMPONENT = 'zz-narrowed-bulk-list';
+
+    public $listModel = NoerdUser::class;
+
+    public array $allowedIds = [];
+
+    public function listData(): array
+    {
+        return $this->buildList(
+            $this->listQuery(NoerdUser::class)
+                ->whereIn('id', $this->allowedIds)
+                ->paginate($this->perPage),
+        );
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Narrowed Users',
+            'multiSelect' => true,
+            'columns' => [['field' => 'name', 'label' => 'Name']],
+            'bulkActions' => [['label' => 'Delete', 'action' => 'deleteSelected']],
+        ];
+    }
+}
+
+it('never bulk-deletes a record the list itself does not yield', function (): void {
+    $mine = NoerdUser::factory()->create();
+    $foreign = NoerdUser::factory()->create();
+
+    Livewire::test(ZzNarrowedBulkListComponent::class, ['allowedIds' => [$mine->id]])
+        // A crafted selection containing an id the narrowed list never shows.
+        ->set('selectedRecordIds', [$mine->id, $foreign->id])
+        ->call('deleteSelected');
+
+    expect(NoerdUser::find($mine->id))->toBeNull()
+        ->and(NoerdUser::find($foreign->id))->not->toBeNull();
+});
