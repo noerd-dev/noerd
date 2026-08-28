@@ -56,13 +56,17 @@ class AppAccessMiddleware
             explode(',', $appName),
         );
 
+        // ONE query for all candidates; the first candidate in route order wins,
+        // matching the old per-candidate loop (which cost one query each).
+        $assignedByLower = $tenant->tenantApps()
+            ->namedAny($appNames)
+            ->pluck('name')
+            ->keyBy(fn(string $name): string => mb_strtolower($name));
+
         $matchingApp = null;
         foreach ($appNames as $candidate) {
-            $found = $tenant->tenantApps()
-                ->whereRaw('LOWER(name) = ?', [$candidate])
-                ->value('name');
-            if ($found) {
-                $matchingApp = $found;
+            if ($assignedByLower->has($candidate)) {
+                $matchingApp = $assignedByLower[$candidate];
                 break;
             }
         }

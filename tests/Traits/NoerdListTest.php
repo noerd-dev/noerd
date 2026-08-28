@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
-use Noerd\Services\ListQueryContext;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 
@@ -23,15 +22,6 @@ it('sets ascending sort when specified', function (): void {
 
     expect($component->get('sortField'))->toBe('name');
     expect($component->get('sortAsc'))->toBe(true);
-});
-
-it('syncs sort state to ListQueryContext', function (): void {
-    Livewire::test(TestableNoerdListComponent::class);
-
-    $context = app(ListQueryContext::class);
-
-    expect($context->getSortField())->toBe('created_at');
-    expect($context->getSortAsc())->toBe(false);
 });
 
 it('uses default sort when no setDefaultSort is called', function (): void {
@@ -76,14 +66,13 @@ it('sets the sort direction for a field that is no sortable column', function ()
         ->and($component->get('sortAsc'))->toBeTrue();
 });
 
-it('persists the sort direction to the session and the query context', function (): void {
+it('persists the sort direction to the session', function (): void {
     $component = Livewire::test(TestableNoerdListComponent::class)->call('setSortDirection', true);
 
     $componentName = new ReflectionMethod($component->instance(), 'componentName');
     $componentName->setAccessible(true);
 
-    expect(app(ListQueryContext::class)->getSortAsc())->toBeTrue()
-        ->and(session('listSort.' . $componentName->invoke($component->instance())))
+    expect(session('listSort.' . $componentName->invoke($component->instance())))
         ->toBe(['field' => 'created_at', 'asc' => true]);
 });
 

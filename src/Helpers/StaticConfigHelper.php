@@ -36,7 +36,7 @@ class StaticConfigHelper
      */
     private static array $runtimeCache = [];
 
-    /** @var array<string, array{0: int, 1: array}> parsed YAML per path, guarded by mtime */
+    /** @var array<string, array{0: string, 1: array}> parsed YAML per path, guarded by mtime+size */
     private static array $yamlCache = [];
 
     /**
@@ -235,16 +235,6 @@ class StaticConfigHelper
         }
 
         return null;
-    }
-
-    /**
-     * Public accessor for the module-source directory of an app-config key
-     * (app-modules/{module}/app-configs/{app}). Returns null when no module ships
-     * that app; when several modules do, the first in module scandir order.
-     */
-    public static function moduleSourcePathForApp(string $app): ?string
-    {
-        return self::getModuleSourcePath($app);
     }
 
     /**
@@ -898,68 +888,6 @@ class StaticConfigHelper
         $routeName = $nav['route'] ?? '';
 
         return $routeName !== '' && Route::has($routeName);
-    }
-
-    /**
-     * Copy components from a specific directory to app-modules
-     */
-    private static function copyComponentsFromDirectory(string $sourceDir, array $componentMapping, string $userGroup): array
-    {
-        $results = [];
-        $files = glob($sourceDir . '/*.yml');
-
-        foreach ($files as $file) {
-            $componentName = basename($file, '.yml');
-            $module = $componentMapping[$componentName] ?? null;
-
-            if ($module) {
-                $success = self::copyComponentToModule($file, $module, $componentName);
-                $results[] = [
-                    'component' => $componentName,
-                    'module' => $module,
-                    'userGroup' => $userGroup,
-                    'success' => $success,
-                ];
-            } else {
-                $results[] = [
-                    'component' => $componentName,
-                    'module' => 'unknown',
-                    'userGroup' => $userGroup,
-                    'success' => false,
-                    'reason' => 'No module mapping found',
-                ];
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Copy a single component to its target app-module
-     */
-    private static function copyComponentToModule(string $sourceFile, string $module, string $componentName): bool
-    {
-        $targetDir = base_path("app-modules/{$module}/content/components");
-        $targetFile = $targetDir . "/{$componentName}.yml";
-
-        // Create directory if it doesn't exist
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
-                return false;
-            }
-        }
-
-        // Copy the file
-        return copy($sourceFile, $targetFile);
-    }
-
-    /**
-     * Get the first module source path for a given app-config key.
-     * Maps app-configs/{app-key} -> app-modules/{module}/app-configs/{app-key}
-     */
-    private static function getModuleSourcePath(string $appKey): ?string
-    {
-        return self::getModuleSourcePaths($appKey)[0] ?? null;
     }
 
     /**

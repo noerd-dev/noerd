@@ -24,7 +24,7 @@ class PublicAppMiddleware
     public function handle(Request $request, Closure $next, string $appName): Response
     {
         $publicApp = TenantApp::query()
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($appName)])
+            ->named($appName)
             ->where('is_active', true)
             ->where('is_public', true)
             ->first();
@@ -53,7 +53,7 @@ class PublicAppMiddleware
         }
 
         $hasApp = $tenant->tenantApps()
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($appName)])
+            ->named($appName)
             ->exists();
 
         if (!$hasApp) {

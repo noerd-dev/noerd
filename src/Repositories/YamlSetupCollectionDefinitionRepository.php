@@ -92,6 +92,14 @@ class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefiniti
 
     private function pathFor(string $filename): string
     {
+        // The filename comes from a client-supplied collection key (?key=…,
+        // mount arguments), so it must be a bare identifier — otherwise it
+        // reads any .yml on the filesystem. Mirrors the guard in
+        // StaticConfigHelper::resolveConfigPath().
+        if (! preg_match('/^[A-Za-z0-9_-]+$/', $filename)) {
+            return $this->basePath . '/__invalid__.yml';
+        }
+
         return $this->basePath . '/' . $filename . '.yml';
     }
 

@@ -10,6 +10,9 @@ use Symfony\Component\Yaml\Yaml;
 
 trait HasModuleInstallation
 {
+    use \Noerd\Commands\Concerns\PublishesConfigDirectory;
+    use \Noerd\Commands\Concerns\RunsNpmBuild;
+
     private array $installResults = [
         'created_dirs' => 0,
         'copied_files' => 0,
@@ -107,42 +110,7 @@ trait HasModuleInstallation
         $this->line('');
 
         try {
-            // Copy lists
-            $listsSource = $sourceDir . DIRECTORY_SEPARATOR . 'lists';
-            $listsTarget = $targetDir . DIRECTORY_SEPARATOR . 'lists';
-            if (is_dir($listsSource)) {
-                $this->copyDirectoryContents($listsSource, $listsTarget);
-            }
-
-            // Copy details
-            $detailsSource = $sourceDir . DIRECTORY_SEPARATOR . 'details';
-            $detailsTarget = $targetDir . DIRECTORY_SEPARATOR . 'details';
-            if (is_dir($detailsSource)) {
-                $this->copyDirectoryContents($detailsSource, $detailsTarget);
-            }
-
-            // Copy pages
-            $pagesSource = $sourceDir . DIRECTORY_SEPARATOR . 'pages';
-            $pagesTarget = $targetDir . DIRECTORY_SEPARATOR . 'pages';
-            if (is_dir($pagesSource)) {
-                $this->copyDirectoryContents($pagesSource, $pagesTarget);
-            }
-
-            // Copy settings
-            $settingsSource = $sourceDir . DIRECTORY_SEPARATOR . 'settings';
-            $settingsTarget = $targetDir . DIRECTORY_SEPARATOR . 'settings';
-            if (is_dir($settingsSource)) {
-                $this->copyDirectoryContents($settingsSource, $settingsTarget);
-            }
-
-            // Copy additional subdirectories
-            foreach ($this->getAdditionalSubdirectories() as $subdir) {
-                $additionalSource = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
-                $additionalTarget = $targetDir . DIRECTORY_SEPARATOR . $subdir;
-                if (is_dir($additionalSource)) {
-                    $this->copyDirectoryContents($additionalSource, $additionalTarget);
-                }
-            }
+            $this->copyConfigSubdirectories($sourceDir, $targetDir);
 
             // Copy navigation.yml
             $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
@@ -259,42 +227,7 @@ trait HasModuleInstallation
         }
 
         try {
-            // Copy lists
-            $listsSource = $sourceDir . DIRECTORY_SEPARATOR . 'lists';
-            $listsTarget = $targetDir . DIRECTORY_SEPARATOR . 'lists';
-            if (is_dir($listsSource)) {
-                $this->copyDirectoryContents($listsSource, $listsTarget);
-            }
-
-            // Copy details
-            $detailsSource = $sourceDir . DIRECTORY_SEPARATOR . 'details';
-            $detailsTarget = $targetDir . DIRECTORY_SEPARATOR . 'details';
-            if (is_dir($detailsSource)) {
-                $this->copyDirectoryContents($detailsSource, $detailsTarget);
-            }
-
-            // Copy pages
-            $pagesSource = $sourceDir . DIRECTORY_SEPARATOR . 'pages';
-            $pagesTarget = $targetDir . DIRECTORY_SEPARATOR . 'pages';
-            if (is_dir($pagesSource)) {
-                $this->copyDirectoryContents($pagesSource, $pagesTarget);
-            }
-
-            // Copy settings
-            $settingsSource = $sourceDir . DIRECTORY_SEPARATOR . 'settings';
-            $settingsTarget = $targetDir . DIRECTORY_SEPARATOR . 'settings';
-            if (is_dir($settingsSource)) {
-                $this->copyDirectoryContents($settingsSource, $settingsTarget);
-            }
-
-            // Copy additional subdirectories (e.g., collections, forms for CMS)
-            foreach ($this->getAdditionalSubdirectories() as $subdir) {
-                $additionalSource = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
-                $additionalTarget = $targetDir . DIRECTORY_SEPARATOR . $subdir;
-                if (is_dir($additionalSource)) {
-                    $this->copyDirectoryContents($additionalSource, $additionalTarget);
-                }
-            }
+            $this->copyConfigSubdirectories($sourceDir, $targetDir);
 
             $this->installAsNewApp($sourceDir, $targetDir, $isHidden);
 
@@ -486,71 +419,36 @@ trait HasModuleInstallation
     }
 
     /**
-     * Copy directory contents recursively.
+     * Copy every standard app-config subdirectory (lists, details, pages,
+     * settings, plus the module's getAdditionalSubdirectories()) from the
+     * module source into the project. Shared by install and update — the two
+     * flows used to carry identical copies of this sequence.
+     */
+    protected function copyConfigSubdirectories(string $sourceDir, string $targetDir): void
+    {
+        $subdirectories = array_merge(
+            ['lists', 'details', 'pages', 'settings'],
+            $this->getAdditionalSubdirectories(),
+        );
+
+        foreach ($subdirectories as $subdir) {
+            $source = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
+            if (is_dir($source)) {
+                $this->copyDirectoryContents($source, $targetDir . DIRECTORY_SEPARATOR . $subdir);
+            }
+        }
+    }
+
+    /**
+     * Copy directory contents recursively, accumulating the module-wide
+     * install counters (see PublishesConfigDirectory).
      */
     protected function copyDirectoryContents(string $sourceDir, string $targetDir): void
     {
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
-                throw new Exception("Failed to create directory: {$targetDir}");
-            }
-            $relativePath = str_replace(base_path('app-configs') . DIRECTORY_SEPARATOR, '', $targetDir);
-            $this->line("<info>Created directory:</info> {$relativePath}");
-            $this->installResults['created_dirs']++;
-        }
+        $results = $this->publishConfigDirectory($sourceDir, $targetDir, base_path('app-configs'));
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST,
-        );
-
-        foreach ($iterator as $item) {
-            $sourcePath = $item->getPathname();
-            $relativePath = mb_substr($sourcePath, mb_strlen($sourceDir) + 1);
-            $targetPath = $targetDir . DIRECTORY_SEPARATOR . $relativePath;
-
-            if ($item->isDir()) {
-                if (!is_dir($targetPath)) {
-                    if (!mkdir($targetPath, 0755, true)) {
-                        throw new Exception("Failed to create directory: {$targetPath}");
-                    }
-                    $displayPath = str_replace(base_path('app-configs') . DIRECTORY_SEPARATOR, '', $targetPath);
-                    $this->line("<info>Created directory:</info> {$displayPath}");
-                    $this->installResults['created_dirs']++;
-                }
-            } else {
-                $displayPath = str_replace(base_path('app-configs') . DIRECTORY_SEPARATOR, '', $targetPath);
-
-                if (file_exists($targetPath)) {
-                    if (!$this->option('force')) {
-                        $choice = $this->choice(
-                            "File already exists: {$displayPath}. What do you want to do?",
-                            ['skip', 'overwrite', 'overwrite-all'],
-                            'skip',
-                        );
-
-                        if ($choice === 'skip') {
-                            $this->line("<comment>Skipped:</comment> {$displayPath}");
-                            $this->installResults['skipped_files']++;
-
-                            continue;
-                        }
-                        if ($choice === 'overwrite-all') {
-                            $this->input->setOption('force', true);
-                        }
-                    }
-
-                    $this->line("<comment>Overwriting:</comment> {$displayPath}");
-                    $this->installResults['overwritten_files']++;
-                } else {
-                    $this->line("<info>Copying:</info> {$displayPath}");
-                    $this->installResults['copied_files']++;
-                }
-
-                if (!copy($sourcePath, $targetPath)) {
-                    throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
-                }
-            }
+        foreach ($results as $key => $count) {
+            $this->installResults[$key] += $count;
         }
     }
 
@@ -597,17 +495,7 @@ trait HasModuleInstallation
      */
     protected function displayInstallSummary(): void
     {
-        $this->line('');
-        $this->info('Installation Summary:');
-        $this->table(
-            ['Operation', 'Count'],
-            [
-                ['Directories created', $this->installResults['created_dirs']],
-                ['Files copied', $this->installResults['copied_files']],
-                ['Files overwritten', $this->installResults['overwritten_files']],
-                ['Files skipped', $this->installResults['skipped_files']],
-            ],
-        );
+        $this->displayPublishSummary($this->installResults);
     }
 
     /**
@@ -834,32 +722,7 @@ trait HasModuleInstallation
         $this->line('');
 
         if ($this->confirm('Would you like to run "npm run build" to compile frontend assets?', true)) {
-            $this->line('Running npm run build...');
-            $this->line('');
-
-            $process = proc_open(
-                'npm run build',
-                [
-                    0 => STDIN,
-                    1 => STDOUT,
-                    2 => STDERR,
-                ],
-                $pipes,
-                base_path(),
-            );
-
-            if (is_resource($process)) {
-                $exitCode = proc_close($process);
-
-                $this->line('');
-                if ($exitCode === 0) {
-                    $this->info('Frontend assets compiled successfully!');
-                } else {
-                    $this->warn('npm run build finished with errors. You may need to run it manually.');
-                }
-            } else {
-                $this->warn('Could not execute npm run build. Please run it manually.');
-            }
+            $this->executeNpmBuild();
         } else {
             $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
         }

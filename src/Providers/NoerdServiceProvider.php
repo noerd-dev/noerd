@@ -34,6 +34,7 @@ use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
@@ -58,7 +59,6 @@ use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
-use Noerd\Services\ListQueryContext;
 use Noerd\Services\NavigationService;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
@@ -70,10 +70,12 @@ use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
 use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
+use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
+use Noerd\Support\SchemaColumnCache;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\WriteGuardHook;
 use Noerd\View\Components\AppLayout;
@@ -98,7 +100,6 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(WriteGuardHook::class);
         ComponentHookRegistry::register(ComponentAccessHook::class);
 
-        $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(HeaderActionsRegistry::class);
@@ -138,12 +139,31 @@ class NoerdServiceProvider extends ServiceProvider
         // instance inside one Pest process — flush them whenever a fresh app
         // boots (a per-request no-op under FPM, where statics die anyway).
         $this->app->booted(function (): void {
-            StaticConfigHelper::flushRuntimeCaches();
-            TenantHelper::clearCache();
-            ThemeHelper::clearCache();
-            ThemeContext::clear();
-            $this->app->make(ThemeRegistry::class)->clearCache();
+            $this->flushRequestState();
+            // The schema cache survives ordinary boots (it describes database
+            // structure, not request state) — but a fresh app in a test process
+            // may point at a DIFFERENT database (testbench sqlite vs. host
+            // MySQL) whose tables share names, so it must reset here too.
+            SchemaColumnCache::clear();
         });
+
+        // Migrations change what the schema cache describes — never keep
+        // serving the pre-migration column listing.
+        Event::listen(\Illuminate\Database\Events\MigrationsEnded::class, fn() => SchemaColumnCache::clear());
+
+        // Under Octane booted() fires once per WORKER, not per request — the
+        // same flush must run before every request, or one user's memoized
+        // tenant/config/theme state leaks into the next request the worker
+        // serves. Guarded by class_exists so the listener only registers when
+        // Octane is installed. The schema cache deliberately survives requests.
+        if (class_exists(\Laravel\Octane\Events\RequestReceived::class)) {
+            Event::listen(\Laravel\Octane\Events\RequestReceived::class, function (): void {
+                $this->flushRequestState();
+                // Stateful singletons are rebuilt per request: the title
+                // resolver memoizes tenant-scoped DB values.
+                $this->app->forgetInstance(RelationTitleResolver::class);
+            });
+        }
 
         // The navigation is injected by several layout views per page — a
         // singleton keeps it at one build per request (the structure itself is
@@ -157,6 +177,12 @@ class NoerdServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
         Blade::component('app-layout', AppLayout::class);
         Livewire::addNamespace('noerd', viewPath: __DIR__ . '/../../resources/views/components');
+        // The un-namespaced location is load-bearing public API: the generic
+        // relation field components resolve by their bare names
+        // ('noerd-relation-field', 'noerd-polymorphic-relation-field' — the
+        // RelationFieldRegistry defaults, documented in the guideline). Note it
+        // also exposes every other noerd component un-namespaced; new code must
+        // reference components via the 'noerd::' namespace.
         Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
@@ -353,6 +379,26 @@ class NoerdServiceProvider extends ServiceProvider
                 ExportSetupCollectionDefinitionsCommand::class,
             ]);
         }
+    }
+
+    /**
+     * Drop every request-scoped PHP static the package maintains. Runs on app
+     * boot (fresh per test in one Pest process, per-request no-op under FPM)
+     * and — via the Octane RequestReceived listener — before every Octane
+     * request. The schema column listing is deliberately not part of this
+     * flush: it describes the database structure, not request state (see the
+     * boot hook and the MigrationsEnded listener).
+     */
+    private function flushRequestState(): void
+    {
+        StaticConfigHelper::flushRuntimeCaches();
+        TenantHelper::clearCache();
+        ThemeHelper::clearCache();
+        ThemeContext::clear();
+        FieldContext::clear();
+        CurrencyHelper::clearCache();
+        DatabaseSetupCollectionDefinitionRepository::resetCache();
+        $this->app->make(ThemeRegistry::class)->clearCache();
     }
 
     /**

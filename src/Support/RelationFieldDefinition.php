@@ -68,9 +68,16 @@ class RelationFieldDefinition
         }
 
         if (is_array($value)) {
-            $selectedLanguage = 'de';
-            if (function_exists('app') && app()->bound('session.store')) {
-                $selectedLanguage = session('selectedLanguage', 'de');
+            // Container-safe: this static helper also runs in pure unit tests
+            // without a booted application, where neither session nor config
+            // are bound — fall back to 'en' there.
+            $app = \Illuminate\Container\Container::getInstance();
+            if ($app->bound('session.store')) {
+                $selectedLanguage = session('selectedLanguage') ?? app()->getLocale();
+            } elseif ($app->bound('config')) {
+                $selectedLanguage = app()->getLocale();
+            } else {
+                $selectedLanguage = 'en';
             }
 
             if (isset($value[$selectedLanguage]) && is_scalar($value[$selectedLanguage])) {

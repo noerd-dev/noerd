@@ -14,11 +14,12 @@ use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Services\FrontendScaffolder;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 class NoerdInstallCommand extends Command
 {
+    use \Noerd\Commands\Concerns\PublishesConfigDirectory;
+    use \Noerd\Commands\Concerns\RunsNpmBuild;
+
     protected $signature = 'noerd:install
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking (required to migrate in non-interactive runs)}
@@ -123,84 +124,11 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Copy directory contents recursively
+     * Copy directory contents recursively (see PublishesConfigDirectory).
      */
     protected function copyDirectoryContents(string $sourceDir, string $targetDir): array
     {
-        $results = [
-            'created_dirs' => 0,
-            'copied_files' => 0,
-            'skipped_files' => 0,
-            'overwritten_files' => 0,
-        ];
-
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST,
-        );
-
-        foreach ($iterator as $item) {
-            $sourcePath = $item->getPathname();
-            $relativePath = mb_substr($sourcePath, mb_strlen($sourceDir) + 1);
-            $targetPath = $targetDir . DIRECTORY_SEPARATOR . $relativePath;
-
-            if ($item->isDir()) {
-                // Create directory if it doesn't exist
-                if (!is_dir($targetPath)) {
-
-                    if (!mkdir($targetPath, 0755, true)) {
-                        throw new Exception("Failed to create directory: {$targetPath}");
-                    }
-
-                    $this->line("<info>Created directory:</info> {$relativePath}");
-                    $results['created_dirs']++;
-                }
-            } else {
-                // Check if file already exists
-                if (file_exists($targetPath)) {
-                    if (!$this->option('force')) {
-
-
-                        $choice = $this->choice(
-                            "File already exists: {$relativePath}. What do you want to do?",
-                            ['skip', 'overwrite', 'overwrite-all'],
-                            'skip',
-                        );
-
-                        if ($choice === 'skip') {
-                            $this->line("<comment>Skipped:</comment> {$relativePath}");
-                            $results['skipped_files']++;
-                            continue;
-                        }
-                        if ($choice === 'overwrite-all') {
-                            // Set force option for remaining files
-                            $this->input->setOption('force', true);
-                        }
-                    }
-
-                    $this->line("<comment>Overwriting:</comment> {$relativePath}");
-                    $results['overwritten_files']++;
-                } else {
-                    $this->line("<info>Copying:</info> {$relativePath}");
-                    $results['copied_files']++;
-                }
-
-                if (!copy($sourcePath, $targetPath)) {
-                    throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
-                }
-
-            }
-        }
-
-        return $results;
-    }
-
-    protected function mergeResults(array $a, array $b): array
-    {
-        foreach (['created_dirs', 'copied_files', 'skipped_files', 'overwritten_files'] as $key) {
-            $a[$key] = ($a[$key] ?? 0) + ($b[$key] ?? 0);
-        }
-        return $a;
+        return $this->publishConfigDirectory($sourceDir, $targetDir);
     }
 
     /**
@@ -253,7 +181,10 @@ class NoerdInstallCommand extends Command
 
             $this->line('<info>Frontend assets setup completed successfully.</info>');
         } catch (Exception $e) {
-            $this->warn('Frontend assets setup failed: ' . $e->getMessage());
+            // Surface the failure loudly — a broken frontend scaffold must not
+            // end in a green "Application ready!" message.
+            $this->error('Frontend assets setup failed: ' . $e->getMessage());
+            $this->error('Fix the issue and re-run: php artisan noerd:update');
         }
     }
 
@@ -298,11 +229,17 @@ class NoerdInstallCommand extends Command
 
         $this->line('<comment>Installing npm packages...</comment>');
 
-        $command = 'cd ' . base_path() . ' && npm install ' . implode(' ', $packages) . ' --save-dev';
-        exec($command, $output, $returnCode);
+        // Process handles the working directory and argument escaping — the
+        // previous string-built `cd <path> && npm install ...` broke on paths
+        // with spaces and discarded npm's diagnostics on failure.
+        $result = \Illuminate\Support\Facades\Process::path(base_path())
+            ->timeout(300)
+            ->run(array_merge(['npm', 'install'], $packages, ['--save-dev']));
 
-        if ($returnCode !== 0) {
-            $this->warn('Failed to install npm packages. You may need to run the following manually:');
+        if ($result->failed()) {
+            $this->warn('Failed to install npm packages:');
+            $this->warn(mb_trim($result->errorOutput() ?: $result->output()));
+            $this->warn('You may need to run the following manually:');
             $this->warn('npm install ' . implode(' ', $packages) . ' --save-dev');
         } else {
             $this->line('<info>NPM packages installed successfully.</info>');
@@ -408,17 +345,7 @@ class NoerdInstallCommand extends Command
      */
     protected function displaySummary(array $results): void
     {
-        $this->line('');
-        $this->info('Installation Summary:');
-        $this->table(
-            ['Operation', 'Count'],
-            [
-                ['Directories created', $results['created_dirs']],
-                ['Files copied', $results['copied_files']],
-                ['Files overwritten', $results['overwritten_files']],
-                ['Files skipped', $results['skipped_files']],
-            ],
-        );
+        $this->displayPublishSummary($results);
     }
 
     /**
@@ -505,15 +432,57 @@ class NoerdInstallCommand extends Command
         }
 
         if (file_exists($targetPath)) {
-            if (!$this->option('force')) {
-                if (!$this->confirm('config/noerd.php already exists. Do you want to overwrite it?', false)) {
-                    $this->line('<comment>Skipped config/noerd.php publishing.</comment>');
+            $this->refreshExistingNoerdConfig($sourcePath, $targetPath);
 
-                    return;
-                }
-            }
-            $this->line('<comment>Overwriting config/noerd.php...</comment>');
+            return;
         }
+
+        if (copy($sourcePath, $targetPath)) {
+            $this->line('<info>Published config/noerd.php successfully.</info>');
+        } else {
+            $this->warn('Failed to publish config/noerd.php');
+        }
+    }
+
+    /**
+     * An existing config/noerd.php belongs to the host — never clobber it
+     * silently. The stub is diffed against it: missing top-level keys are
+     * reported (the documented contract is that noerd:update carries new keys
+     * into existing installations), and an overwrite — via --force or an
+     * explicit confirmation — first writes a one-generation .bak backup.
+     */
+    protected function refreshExistingNoerdConfig(string $sourcePath, string $targetPath): void
+    {
+        $missing = [];
+        try {
+            $stub = require $sourcePath;
+            $current = require $targetPath;
+            if (is_array($stub) && is_array($current)) {
+                $missing = array_keys(array_diff_key($stub, $current));
+            }
+        } catch (Exception) {
+            // A config that cannot be evaluated is treated as customized.
+        }
+
+        if (!$this->option('force')) {
+            if ($missing === []) {
+                $this->line('<comment>config/noerd.php already exists and declares every stub key — left untouched.</comment>');
+
+                return;
+            }
+
+            $this->warn('config/noerd.php is missing new top-level keys: ' . implode(', ', $missing));
+
+            if (!$this->input->isInteractive()
+                || !$this->confirm('Overwrite config/noerd.php with the current stub (a .bak backup is written)?', false)) {
+                $this->line('<comment>Skipped config/noerd.php publishing. Add the missing keys manually (see stubs/noerd.php.stub).</comment>');
+
+                return;
+            }
+        }
+
+        @copy($targetPath, $targetPath . '.bak');
+        $this->line('<comment>Overwriting config/noerd.php (backup: config/noerd.php.bak)...</comment>');
 
         if (copy($sourcePath, $targetPath)) {
             $this->line('<info>Published config/noerd.php successfully.</info>');
@@ -644,7 +613,7 @@ class NoerdInstallCommand extends Command
     protected function setupExistingAdminUser(): void
     {
         $users = NoerdUser::all();
-        $adminUsers = $users->filter(fn(NoerdUser $user) => $user->isAdmin());
+        $adminUsers = $users->filter(fn(NoerdUser $user) => $user->isAdminOfAnyTenant());
 
         if ($adminUsers->isNotEmpty()) {
             $this->line('<comment>Admin user(s) already exist:</comment>');
@@ -666,7 +635,7 @@ class NoerdInstallCommand extends Command
 
         // Build options for choice prompt
         $options = $users->mapWithKeys(function (NoerdUser $user) {
-            $adminTag = $user->isAdmin() ? ' [ADMIN]' : '';
+            $adminTag = $user->isAdminOfAnyTenant() ? ' [ADMIN]' : '';
             return [$user->id => "{$user->name} ({$user->email}){$adminTag}"];
         })->toArray();
 
@@ -680,7 +649,7 @@ class NoerdInstallCommand extends Command
         $selectedUserId = array_search($selectedUserId, $options);
         $selectedUser = NoerdUser::find($selectedUserId);
 
-        if ($selectedUser->isAdmin()) {
+        if ($selectedUser->isAdminOfAnyTenant()) {
             $this->line("<comment>User '{$selectedUser->name}' is already an admin.</comment>");
             return;
         }
@@ -774,32 +743,7 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        $this->line('Running npm run build...');
-        $this->newLine();
-
-        $process = proc_open(
-            'npm run build',
-            [
-                0 => STDIN,
-                1 => STDOUT,
-                2 => STDERR,
-            ],
-            $pipes,
-            base_path(),
-        );
-
-        if (is_resource($process)) {
-            $exitCode = proc_close($process);
-
-            $this->newLine();
-            if ($exitCode === 0) {
-                $this->info('Frontend assets compiled successfully!');
-            } else {
-                $this->warn('npm run build finished with errors. You may need to run it manually.');
-            }
-        } else {
-            $this->warn('Could not execute npm run build. Please run it manually.');
-        }
+        $this->executeNpmBuild();
     }
 
     /**

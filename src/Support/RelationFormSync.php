@@ -40,17 +40,11 @@ final class RelationFormSync
      */
     public static function rendered(array $layoutFields, string $formKey): bool
     {
-        foreach ($layoutFields as $field) {
-            if (($field['type'] ?? '') === 'block' && self::rendered($field['fields'] ?? [], $formKey)) {
-                return true;
-            }
-
-            if (str_starts_with($field['name'] ?? '', 'detailData.' . $formKey . '.')) {
-                return true;
-            }
-        }
-
-        return false;
+        // The walk stops (returns false) on the first matching field.
+        return !LayoutFields::walk(
+            $layoutFields,
+            fn(array $field): ?bool => str_starts_with($field['name'] ?? '', 'detailData.' . $formKey . '.') ? false : null,
+        );
     }
 
     /**

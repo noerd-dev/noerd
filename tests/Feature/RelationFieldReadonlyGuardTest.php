@@ -71,3 +71,17 @@ describe('Relation field readonly server guards', function (): void {
             ->assertNotDispatched('setFieldValue');
     });
 });
+
+it('rejects client writes to the mount-established field identity', function (): void {
+    $props = [
+        'relationType' => 'readonlyGuardRelation',
+        'fieldName' => 'detailData.guard_id',
+        'label' => 'Guard',
+    ];
+
+    expect(fn() => Livewire::test('noerd-relation-field', $props)->set('fieldName', 'detailData.other_id'))
+        ->toThrow(Exception::class);
+
+    expect(fn() => Livewire::test('noerd-relation-field', $props)->set('detailRoute', 'evil.route'))
+        ->toThrow(Exception::class);
+});

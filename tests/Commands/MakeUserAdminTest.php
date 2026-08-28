@@ -15,7 +15,7 @@ it('successfully makes a user admin', function (): void {
     $tenant = $user->tenants->first();
 
     // Ensure user is not admin initially
-    expect($user->isAdmin())->toBeFalse();
+    expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
@@ -29,7 +29,7 @@ it('successfully makes a user admin', function (): void {
 
     // Verify user is now admin
     $user->refresh();
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
 
     // Verify ADMIN profile was created
     $adminProfile = Profile::where('tenant_id', $tenant->id)
@@ -67,7 +67,7 @@ it('handles user with multiple tenants', function (): void {
     $user->tenants()->attach($tenant1->id, ['profile_id' => $profile1->id]);
     $user->tenants()->attach($tenant2->id, ['profile_id' => $profile2->id]);
 
-    expect($user->isAdmin())->toBeFalse();
+    expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
@@ -80,7 +80,7 @@ it('handles user with multiple tenants', function (): void {
 
     // Verify user is now admin
     $user->refresh();
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
 
     // Verify both tenants have admin profiles
     expect(Profile::where('tenant_id', $tenant1->id)->where('key', 'ADMIN')->exists())->toBeTrue();
@@ -91,7 +91,7 @@ it('recognizes user who is already admin but ensures tenant assignment', functio
     // Create an admin user
     $user = NoerdUser::factory()->adminUser()->create();
 
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
 
     // Run the command - should warn but continue to ensure tenant assignment
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
@@ -127,7 +127,7 @@ it('handles existing admin profile correctly', function (): void {
     // Attach user to tenant with user profile
     $user->tenants()->attach($tenant->id, ['profile_id' => $userProfile->id]);
 
-    expect($user->isAdmin())->toBeFalse();
+    expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
@@ -139,7 +139,7 @@ it('handles existing admin profile correctly', function (): void {
 
     // Verify user is now admin
     $user->refresh();
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
 });
 
 it('fails with invalid user id', function (): void {
@@ -177,7 +177,7 @@ it('handles user with partial admin access correctly', function (): void {
     $user->tenants()->attach($tenant2->id, ['profile_id' => $userProfile2->id]);
 
     // User should already be admin due to first tenant
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
 
     // Command should continue and grant admin on the second tenant too
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
@@ -209,7 +209,7 @@ it('provides detailed summary output', function (): void {
 it('verifies admin status after completion', function (): void {
     $user = NoerdUser::factory()->withExampleTenant()->create();
 
-    expect($user->isAdmin())->toBeFalse();
+    expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput("✅ User {$user->name} is now an admin with access to Setup!")
@@ -217,7 +217,7 @@ it('verifies admin status after completion', function (): void {
 
     // Double-check the user can now access setup
     $user->refresh();
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
     expect($user->profiles->where('key', 'ADMIN')->count())->toBeGreaterThan(0);
     expect($user->selected_tenant_id)->not->toBeNull();
 });

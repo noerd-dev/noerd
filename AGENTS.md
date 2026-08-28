@@ -62,10 +62,12 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 
 ## Code style
 
-- Laravel Pint with the `pint.json` in this repository (PER preset + project rules):
-  `vendor/bin/pint --dirty` after `composer require laravel/pint --dev` in a standalone checkout, or
-  from the host project's root (`vendor/bin/pint app-modules/noerd/...`) — the host ships an
-  identical config, both runs must produce the same result.
+- Laravel Pint with the `pint.json` in this repository (PER preset + project rules). Pint is a
+  dev dependency: run `composer lint` (check) / `vendor/bin/pint --dirty` (fix) from the PACKAGE
+  root, and CI enforces `pint --test`. NEVER rely on the host root's `vendor/bin/pint --dirty` for
+  files in this repository — the submodule's files are not part of the host's git working tree, so
+  a host `--dirty` run silently skips every one of them. A host-root run must name the paths
+  explicitly (`vendor/bin/pint app-modules/noerd/...`); the configs are identical.
 - PHP 8.3+, strict comparisons, explicit return types, constructor property promotion, `$guarded`
   instead of `$fillable`, Eloquent models never stored as Livewire properties.
 - Comments, Artisan prompts, docs and commit messages are written in English.

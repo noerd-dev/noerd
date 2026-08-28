@@ -1,16 +1,23 @@
 <?php
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Services\RelationBoxRegistry;
 
 new class extends Component {
+    // Established by the hosting page at mount; a client UPDATE must never
+    // repoint the box at another model or widen its tile list.
+    #[Locked]
     public string $modelClass = '';
 
+    #[Locked]
     public mixed $modelId = null;
 
     /** @var array<int, array<string, mixed>> */
+    #[Locked]
     public array $relations = [];
 
     /** @var array<int, array{label: string, heroicon: string, component: string, route: string, count: int, arguments: array<string, mixed>}> */
@@ -57,6 +64,39 @@ new class extends Component {
     }
 
     /**
+     * Whether $method is a genuine Eloquent relation on $model — decided by its
+     * DECLARED RETURN TYPE, never by calling it. $relations arrives as mount
+     * arguments, which the modal stack and the generic component page take from
+     * the client (#[Locked] guards updates, not mount), so a bare
+     * method_exists() check here was an arbitrary no-argument method call on an
+     * arbitrary model: `relation: 'delete'` deleted the record.
+     */
+    private function isRelationMethod(Model $model, string $method): bool
+    {
+        if ($method === '' || ! method_exists($model, $method)) {
+            return false;
+        }
+
+        try {
+            $reflection = new ReflectionMethod($model, $method);
+        } catch (ReflectionException) {
+            return false;
+        }
+
+        if (! $reflection->isPublic() || $reflection->isStatic() || $reflection->getNumberOfRequiredParameters() > 0) {
+            return false;
+        }
+
+        $returnType = $reflection->getReturnType();
+
+        if (! $returnType instanceof ReflectionNamedType || $returnType->isBuiltin()) {
+            return false;
+        }
+
+        return is_a($returnType->getName(), Relation::class, true);
+    }
+
+    /**
      * @param  array<string, mixed>  $tile
      * @return array{label: string, heroicon: string, component: string, route: string, count: int, arguments: array<string, mixed>}|null
      */
@@ -73,7 +113,7 @@ new class extends Component {
 
         $count = match (true) {
             $countResolver instanceof Closure => (int) $countResolver($model),
-            $relationName && method_exists($model, $relationName) => $model->{$relationName}()->count(),
+            is_string($relationName) && $this->isRelationMethod($model, $relationName) => $model->{$relationName}()->count(),
             default => 0,
         };
 

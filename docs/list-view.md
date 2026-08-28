@@ -86,7 +86,7 @@ columns:
 |----------|-------------|---------|
 | `field` | Model attribute name | |
 | `label` | Column header (translation key) | |
-| `width` | Column width as CSS percentage | `10` |
+| `width` | Relative column weight — widths are normalised across all columns (a column with `width: 2` is twice as wide as one with `width: 1`) | `1` |
 | `minWidth` | Minimum width in pixels (`min-width`) | none |
 | `align` | Text alignment (`left`, `right`; `number`/`currency` auto-align right) | `left` |
 | `type` | Display type (see Column Types below) | `text` |

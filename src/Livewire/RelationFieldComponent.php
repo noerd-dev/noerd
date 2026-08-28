@@ -16,38 +16,53 @@ use RuntimeException;
  */
 abstract class RelationFieldComponent extends Component
 {
+    // Everything below except $value/$displayTitle is mount-established
+    // identity/config — #[Locked], so a crafted update can never repoint the
+    // field at another form key, list, detail target or event.
+    #[Locked]
     public string $relationType = '';
 
+    #[Locked]
     public string $fieldName = '';
 
+    #[Locked]
     public string $label = '';
 
     public mixed $value = null;
 
+    #[Locked]
     public bool $required = false;
 
     #[Locked]
     public bool $readonly = false;
 
     /** Optional YAML `helpText`, rendered as a tooltip next to the label. */
+    #[Locked]
     public string $helpText = '';
 
+    #[Locked]
     public mixed $modelId = null;
 
     /** Row number supplied by the detail block in themes that number their rows. */
+    #[Locked]
     public ?int $number = null;
 
     /** Theme the owning detail block renders in — selects the element template. */
+    #[Locked]
     public string $theme = 'default';
 
     public string $displayTitle = '';
 
+    #[Locked]
     public string $listComponent = '';
 
+    #[Locked]
     public ?string $detailComponent = null;
 
+    #[Locked]
     public ?string $detailRoute = null;
 
+    #[Locked]
     public ?string $legacySelectEvent = null;
 
     public function mount(

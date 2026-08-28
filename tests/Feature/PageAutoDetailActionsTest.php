@@ -34,12 +34,24 @@ it('auto-renders YAML actions without a detail-actions include in the blade', fu
 });
 
 it('auto-renders YAML actions on a real detail component', function (): void {
-    $component = Livewire::test('noerd::noerd-user-detail')->assertOk();
+    // $pageLayout is locked against client updates (it drives validation and
+    // nested component mounts), so the action is contributed the supported
+    // server-side way: through the layout-override hook, which is exactly how a
+    // real installation adds actions to a shipped detail.
+    app()->instance(\Noerd\Helpers\StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
+        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+        {
+            if ($component === 'noerd-user-detail') {
+                $config['actions'] = [syntheticProbeAction()];
+            }
 
-    $component
-        ->set('pageLayout', array_merge($component->get('pageLayout'), [
-            'actions' => [syntheticProbeAction()],
-        ]))
+            return $config;
+        }
+    });
+    \Noerd\Helpers\StaticConfigHelper::flushRuntimeCaches();
+
+    Livewire::test('noerd::noerd-user-detail')
+        ->assertOk()
         ->assertSee('Synthetic Probe Action')
         ->assertSeeHtml('wire:click="doProbe"');
 });

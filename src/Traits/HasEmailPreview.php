@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\HtmlString;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Mail\EmailPreviewTestMail;
 
 trait HasEmailPreview
 {
@@ -79,9 +80,9 @@ trait HasEmailPreview
             $data['email_subject'] ?? 'Test Email',
         );
 
-        Mail::html($html, function ($message) use ($email, $subject): void {
-            $message->to($email)->subject($subject);
-        });
+        // Queued: a synchronous SMTP send would block the Livewire response.
+        // On the default sync queue driver the behavior is unchanged.
+        Mail::to($email)->queue(new EmailPreviewTestMail($html, $subject));
 
         $cooldown = 60;
         Cache::put($this->getTestEmailCacheKey(), now()->timestamp + $cooldown, $cooldown);

@@ -4,7 +4,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "postbuild": "php ../../artisan vendor:publish --tag=noerd-assets --force --ansi"
+        "postbuild": "test -f ../../artisan && php ../../artisan vendor:publish --tag=noerd-assets --force --ansi || true"
     },
     "dependencies": {
         "@alpinejs/sort": "^3.15.2",

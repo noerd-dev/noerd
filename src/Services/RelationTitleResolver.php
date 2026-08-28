@@ -5,6 +5,7 @@ namespace Noerd\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Noerd\Helpers\TenantHelper;
 
 /**
  * Resolves the display title for a foreign-key list cell (`relationBadge`): a
@@ -28,7 +29,7 @@ final class RelationTitleResolver
             return null;
         }
 
-        $key = $fkColumn . '|' . $id;
+        $key = $this->memoKey($fkColumn, $id);
 
         return $this->titles[$key] ??= $this->resolve($fkColumn, $id);
     }
@@ -51,7 +52,7 @@ final class RelationTitleResolver
 
         $pending = [];
         foreach ($ids as $id) {
-            if ($id === null || $id === '' || array_key_exists($fkColumn . '|' . $id, $this->titles)) {
+            if ($id === null || $id === '' || array_key_exists($this->memoKey($fkColumn, $id), $this->titles)) {
                 continue;
             }
             $pending[(string) $id] = $id;
@@ -89,8 +90,19 @@ final class RelationTitleResolver
         }
 
         foreach ($pending as $idKey => $id) {
-            $this->titles[$fkColumn . '|' . $id] = $resolved[$idKey] ?? (string) $id;
+            $this->titles[$this->memoKey($fkColumn, $id)] = $resolved[$idKey] ?? (string) $id;
         }
+    }
+
+    /**
+     * Memo key including the current tenant: the convention lookup is a raw
+     * unscoped DB read, so a memoized title must never be served to another
+     * tenant a long-lived worker later handles (defense in depth on top of the
+     * per-request reset in the provider's Octane listener).
+     */
+    private function memoKey(string $fkColumn, mixed $id): string
+    {
+        return (TenantHelper::currentTenantId() ?? 0) . '|' . $fkColumn . '|' . $id;
     }
 
     private function resolve(string $fkColumn, mixed $id): string

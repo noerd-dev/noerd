@@ -117,5 +117,7 @@ it('normalizes translated relation titles and derives default select event names
 
     expect($definition->getDetailComponent())->toBe('page-detail');
     expect($definition->getSelectEvent())->toBe('pageSelected');
-    expect($definition->resolveTitle((object) []))->toBe('Seite');
+    // Without a booted application the language fallback is 'en'; with one it
+    // follows the session language / app locale.
+    expect($definition->resolveTitle((object) []))->toBe('Page');
 });

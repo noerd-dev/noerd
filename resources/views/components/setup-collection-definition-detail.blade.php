@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\StaticConfigHelper;
@@ -11,6 +12,25 @@ use Noerd\Traits\NoerdDetail;
 
 new class extends Component
 {
+    /**
+     * Entry count for the delete confirmation. Computed (request-cached) —
+     * the previous inline @php block ran two queries on EVERY render,
+     * including every keystroke-triggered morph.
+     */
+    #[Computed]
+    public function entryCount(): int
+    {
+        if (! $this->isEditing || ! $this->modelId) {
+            return 0;
+        }
+
+        $collection = SetupCollection::where('tenant_id', Auth::user()->selected_tenant_id)
+            ->where('collection_key', mb_strtoupper($this->modelId))
+            ->first();
+
+        return $collection ? $collection->entries()->count() : 0;
+    }
+
     use NoerdDetail;
 
     public ?string $detailPrimary = 'setupCollectionDefinitionId';
@@ -331,14 +351,9 @@ new class extends Component
                             <td class="py-1 border-gray-300 border-r border-b">
                                 <select wire:model="fields.{{ $index }}.type"
                                         class="border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5">
-                                    <option value="text">Text</option>
-                                    <option value="translatableText">Translatable Text</option>
-                                    <option value="translatableTextarea">Translatable Textarea</option>
-                                    <option value="translatableRichText">Translatable RichText</option>
-                                    <option value="image">Image</option>
-                                    <option value="email">E-Mail</option>
-                                    <option value="tel">Tel</option>
-                                    <option value="checkbox">Checkbox</option>
+                                    @foreach (\Noerd\Helpers\SetupCollectionHelper::FIELD_TYPES as $typeValue => $typeLabel)
+                                        <option value="{{ $typeValue }}">{{ $typeLabel }}</option>
+                                    @endforeach
                                 </select>
                             </td>
                             <td class="py-1 border-gray-300 border-r border-b">
@@ -371,9 +386,9 @@ new class extends Component
     </div>
 
     @if($showRenameConfirmation)
-        <div class="fixed inset-0 z-50 flex items-center justify-center" x-data x-on:keydown.escape.window="$wire.skipRenameAndSave()">
-            <div class="fixed inset-0 bg-gray-800/50" wire:click="skipRenameAndSave"></div>
-            <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
+        <div class="fixed inset-0 z-50 flex items-center justify-center" x-data x-trap.noscroll="true" x-on:keydown.escape.window="$wire.skipRenameAndSave()">
+            <button type="button" class="fixed inset-0 bg-gray-800/50" aria-label="{{ __('No, skip') }}" wire:click="skipRenameAndSave"></button>
+            <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" role="dialog" aria-modal="true" aria-label="{{ __('Fields were renamed') }}">
                 <div class="text-lg font-semibold text-gray-900 mb-2">{{ __('Fields were renamed') }}</div>
                 <p class="text-sm text-gray-600 mb-4">{{ __('Would you like to update existing entries to use the new field names?') }}</p>
                 <ul class="text-sm text-gray-700 mb-4 space-y-1">
@@ -408,19 +423,7 @@ new class extends Component
                     </x-noerd::button>
                 </div>
             @endif
-            @php
-                $entryCount = 0;
-                if ($isEditing && $modelId) {
-                    $collectionKey = mb_strtoupper($modelId);
-                    $collection = SetupCollection::where('tenant_id', Auth::user()->selected_tenant_id)
-                        ->where('collection_key', $collectionKey)
-                        ->first();
-                    if ($collection) {
-                        $entryCount = $collection->entries()->count();
-                    }
-                }
-            @endphp
-            <x-noerd::delete-save-bar :showDelete="$isEditing" deleteMessage="{{ __('Really delete this collection and all :count entries?', ['count' => $entryCount]) }}" />
+            <x-noerd::delete-save-bar :showDelete="$isEditing" deleteMessage="{{ __('Really delete this collection and all :count entries?', ['count' => $this->entryCount]) }}" />
         </div>
     </x-slot:footer>
 </x-noerd::page>

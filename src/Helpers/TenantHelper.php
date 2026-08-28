@@ -140,6 +140,14 @@ class TenantHelper
      */
     public static function setSelectedApp(?string $appName): void
     {
+        // The selected app becomes a PATH SEGMENT in the config resolution
+        // (app-configs/{app}/…, navigation.yml), so it must never carry
+        // traversal or separator characters — a client-callable openApp() wrote
+        // this value straight through.
+        if ($appName !== null && ! preg_match('/^[A-Za-z0-9_-]+$/', $appName)) {
+            return;
+        }
+
         session(['noerd.selected_app' => $appName]);
     }
 

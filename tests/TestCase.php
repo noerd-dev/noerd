@@ -17,7 +17,6 @@ use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
 use Noerd\Models\NoerdUser;
 use Noerd\Providers\NoerdServiceProvider;
-use Noerd\Services\ListQueryContext;
 use NoerdModal\Providers\NoerdModalServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use PDO;
@@ -64,7 +63,6 @@ abstract class TestCase extends BaseTestCase
         $this->linkModuleIntoSkeleton();
         $this->withoutVite();
 
-        app(ListQueryContext::class)->reset();
     }
 
     protected function tearDown(): void

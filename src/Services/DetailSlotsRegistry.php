@@ -29,10 +29,6 @@ class DetailSlotsRegistry
     /** @return array<int, string> */
     public function for(string $slot): array
     {
-        $entries = $this->slots[$slot] ?? [];
-
-        usort($entries, fn(array $a, array $b): int => $a['sort'] <=> $b['sort']);
-
-        return array_column($entries, 'component');
+        return \Noerd\Support\SortedRegistrations::payloads($this->slots[$slot] ?? [], 'component');
     }
 }

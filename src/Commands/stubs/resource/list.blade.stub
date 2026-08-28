@@ -7,16 +7,9 @@ use {{ModelClass}};
 new class extends Component {
     use NoerdList;
 
+    public $listModel = {{ModelBaseName}}::class;
+
     public $detailComponent = '{{entity}}-detail';
-
-    public function with(): array
-    {
-        $rows = $this->listQuery({{ModelBaseName}}::class)->paginate($this->perPage);
-
-        return [
-            'listConfig' => $this->buildList($rows),
-        ];
-    }
 }; ?>
 
 <x-noerd::page>

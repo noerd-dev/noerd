@@ -37,7 +37,7 @@ it('creates a new admin user with command options', function (): void {
     $user = NoerdUser::where('email', 'admin@example.com')->first();
     expect($user)->not->toBeNull();
     expect($user->name)->toBe('Test Admin');
-    expect($user->isAdmin())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue();
     expect($user->super_admin)->toBeFalse();
 });
 

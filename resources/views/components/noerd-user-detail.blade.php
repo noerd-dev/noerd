@@ -65,9 +65,11 @@ new class extends Component {
         // here too, independent of the dynamic-mount guard.
         abort_unless(NoerdAuth::user()?->isAdmin(), 403);
 
+        $this->authorizeTargetUser();
+
         $this->initDetail();
 
-        $this->selectedTenant = auth()->user()->selectedTenant();
+        $this->selectedTenant = NoerdAuth::user()->selectedTenant();
         $this->userLocale = SetupLanguage::getDefaultCode();
 
         $user = new NoerdUser();
@@ -99,6 +101,38 @@ new class extends Component {
         }
     }
 
+    /**
+     * The edited account must belong to a tenant this admin administers.
+     * mount() only proves the CALLER is an admin — $modelId can still be
+     * repointed on a later request (it is a plain URL-bound property).
+     */
+    private function authorizeTargetUser(): void
+    {
+        $admin = NoerdAuth::user();
+
+        if (! $this->modelId || $admin->isSuperAdmin()) {
+            return;
+        }
+
+        $target = NoerdUser::find($this->modelId);
+
+        abort_unless($target !== null, 404);
+
+        // A super admin is never editable from a tenant admin's user screen.
+        abort_if($target->isSuperAdmin(), 403);
+
+        $adminTenantIds = $admin->adminTenants()->pluck('tenants.id');
+
+        // Editable when the account belongs to a tenant this admin administers —
+        // or when it belongs to no tenant at all (an unassigned account being
+        // granted its first access from this screen).
+        abort_unless(
+            $target->tenants()->count() === 0
+                || $target->tenants()->whereIn('tenants.id', $adminTenantIds)->exists(),
+            403,
+        );
+    }
+
     public function store(): void
     {
         foreach ($this->possibleTenants as $tenantId => $value) {
@@ -119,13 +153,14 @@ new class extends Component {
         if (! $this->modelId) {
             $userExists = NoerdUser::where('email', $this->detailData['email'])->first();
             if ($userExists) {
-                $allowedTenants = Auth::user()->adminTenants()->pluck('id');
-                foreach ($this->possibleTenants as $tenantId => $value) {
-                    $profileId = $value['selectedProfile'];
-                    if ($value['hasAccess'] && in_array($tenantId, $allowedTenants->toArray())) {
-                        $userExists->tenants()->attach($tenantId, ['profile_id' => $profileId]);
-                    }
-                }
+                // Granting access to an EXISTING account by email must obey the
+                // same limits as editing it: a super admin is never capturable
+                // this way, and a profile must belong to the tenant it is
+                // granted for (this branch returns early, so store()'s own
+                // checks below never run).
+                abort_if($userExists->isSuperAdmin(), 403);
+
+                $this->attachTenantAccess($userExists);
 
                 $this->finishStore($userExists);
 
@@ -136,17 +171,19 @@ new class extends Component {
             $this->detailData['password'] = bcrypt(Str::random(32));
         }
 
-        $userData = collect($this->detailData)->only(['name', 'email', 'password'])->toArray();
+        // $modelId is URL-bound and therefore client-writable — re-assert that the
+        // edited account is one this admin may touch before writing to it.
+        $this->authorizeTargetUser();
+
+        // 'password' is deliberately NOT writable here: an existing account's
+        // password is set through the dedicated user-update-password form (which
+        // authorizes the target itself). Only a NEW user carries the generated
+        // placeholder set above.
+        $writable = $this->modelId ? ['name', 'email'] : ['name', 'email', 'password'];
+        $userData = collect($this->detailData)->only($writable)->toArray();
         $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $userData);
 
-        $allowedTenants = Auth::user()->adminTenants()->pluck('id');
-        foreach ($this->possibleTenants as $tenantId => $value) {
-            $user->tenants()->detach($tenantId);
-            $profileId = $value['selectedProfile'];
-            if ($value['hasAccess'] && in_array($tenantId, $allowedTenants->toArray())) {
-                $user->tenants()->attach($tenantId, ['profile_id' => $profileId]);
-            }
-        }
+        $this->attachTenantAccess($user, detachFirst: true);
 
         $this->finishStore($user);
 
@@ -162,11 +199,48 @@ new class extends Component {
         }
     }
 
+    /**
+     * Apply the requested tenant access, restricted to the tenants this admin
+     * actually administers and to profiles that belong to the tenant they are
+     * granted for. Shared by both store() branches so neither can drift.
+     */
+    private function attachTenantAccess(NoerdUser $user, bool $detachFirst = false): void
+    {
+        $allowedTenants = array_map('intval', NoerdAuth::user()->adminTenants()->pluck('tenants.id')->all());
+
+        foreach ($this->possibleTenants as $tenantId => $value) {
+            // Both detach AND attach stay inside the allow-list: detaching
+            // unconditionally let an admin of one tenant strip a user from any
+            // other tenant (and, once the last one was gone, delete the account).
+            if (! in_array((int) $tenantId, $allowedTenants, true)) {
+                continue;
+            }
+
+            if ($detachFirst) {
+                $user->tenants()->detach($tenantId);
+            }
+
+            $profileId = $value['selectedProfile'] ?? null;
+            $profileBelongsToTenant = $profileId
+                && Profile::whereKey($profileId)->where('tenant_id', $tenantId)->exists();
+
+            if (($value['hasAccess'] ?? false) && $profileBelongsToTenant) {
+                $user->tenants()->detach($tenantId);
+                $user->tenants()->attach($tenantId, ['profile_id' => $profileId]);
+            }
+        }
+    }
+
     public function delete(): void
     {
-        $user = NoerdUser::find($this->modelId);
+        // Same target check as store(): $modelId is URL-bound and rewritable, so
+        // a mount-time admin check alone let any admin delete an account of
+        // another tenant — or any account with no tenants left at all.
+        $this->authorizeTargetUser();
 
-        $user->tenants()->detach(auth()->user()->selected_tenant_id);
+        $user = NoerdUser::findOrFail($this->modelId);
+
+        $user->tenants()->detach(NoerdAuth::user()->selected_tenant_id);
         $this->closeModalProcess($this->getListComponent());
 
         // If user has no more tenants, delete the user
@@ -178,7 +252,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>Benutzer</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('User') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout">

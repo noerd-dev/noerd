@@ -1,4 +1,3 @@
-<!-- Framework File -->
 @php
     // showIf/showIfNot come from the field YAML. Keep the wire path to a bare
     // property expression and escape the compared value for both the JS single-
@@ -38,6 +37,10 @@
 
     $theme = \Noerd\Helpers\ThemeHelper::fromLayout(['theme' => $theme ?? null]);
     $themeDefinition = $themeRegistry->get($theme);
+    // Save/restore the theme context around this block (mirrors NoerdPage's
+    // rendering hooks): two sibling blocks with different `theme:` keys must
+    // not leak the first block's theme into chrome rendered after it.
+    $themeContextBefore = \Noerd\Support\ThemeContext::current();
     \Noerd\Support\ThemeContext::set($theme);
     $numberedRowIndex = 0;
 
@@ -143,6 +146,9 @@
                 </div>
             @endif
         @endforeach
-        @php \Noerd\Support\FieldContext::clear(); @endphp
+        @php
+            \Noerd\Support\FieldContext::clear();
+            \Noerd\Support\ThemeContext::set($themeContextBefore);
+        @endphp
     </div>
 </div>

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -19,13 +18,13 @@ use Livewire\WithPagination;
 use LogicException;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
-use Noerd\Scopes\SearchScope;
-use Noerd\Scopes\SortScope;
 use Noerd\Services\ColumnFilterParser;
-use Noerd\Services\ListQueryContext;
 use Noerd\Services\RelationTitleResolver;
+use Noerd\Support\LayoutFields;
+use Noerd\Support\SchemaColumnCache;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -34,6 +33,7 @@ use UnitEnum;
 
 trait NoerdList
 {
+    use NoerdComponentShared;
     use RoutedModal;
     use WithoutUrlPagination;
     use WithPagination;
@@ -55,8 +55,6 @@ trait NoerdList
     protected const MAX_PER_PAGE = 200;
 
     public int $perPage = 50;
-
-    public $lastChangeTime;
 
     public string $search = '';
 
@@ -95,9 +93,6 @@ trait NoerdList
 
     public string $listId = '';
 
-    #[Url]
-    public ?string $filter = null;
-
     public array $listFilters = [];
 
     /**
@@ -112,8 +107,6 @@ trait NoerdList
     public array $listColumnFilters = [];
 
     public mixed $context = '';
-
-    public bool $disableModal = false;
 
     public bool $compact = false;
 
@@ -203,9 +196,6 @@ trait NoerdList
     /** One reusable instance of the resolved model, for table/cast introspection. */
     private ?Model $resolvedModelInstanceMemo = null;
 
-    /** @var array<string, array<string, array<string, mixed>>> Schema columns per table, keyed by column name. */
-    private static array $schemaColumnCache = [];
-
     /**
      * Whether a column field addresses a nested path rather than a real DB column — e.g. a custom
      * attribute (`custom_attributes.sap_number`) or a relation (`customer.name`). Such fields resolve at
@@ -254,7 +244,7 @@ trait NoerdList
             return;
         }
 
-        $this->perPage = session('listPerPage', 50);
+        $this->perPage = session("listPerPage.{$this->componentName()}", 50);
         $this->loadListFilters();
 
         // Column filters: a ?cf[...] URL param (shared link) wins over the session
@@ -323,6 +313,18 @@ trait NoerdList
         }
 
         $this->syncListViewParam();
+
+        // Deep-link support: ?{entity}Id=5 opens the record's modal over the
+        // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
+        // updates POST to /livewire/update and carry no page query, and the
+        // former `rendering()` hook was both accidental-initial-load-only and
+        // silently disabled by any component defining its own rendering().
+        $deepLinkId = (int) request()->query($this->getDeepLinkParam());
+        if ($deepLinkId) {
+            $this->listAction($deepLinkId);
+        } elseif (request()->query('create')) {
+            $this->listAction();
+        }
     }
 
     /**
@@ -336,7 +338,7 @@ trait NoerdList
     #[Computed]
     public function availableListViews(): array
     {
-        return StaticConfigHelper::getListViews($this->getListComponent());
+        return StaticConfigHelper::getListViews($this->listConfigComponent());
     }
 
     /**
@@ -369,19 +371,6 @@ trait NoerdList
         return $this->buildList($rows);
     }
 
-    public function rendering(): void
-    {
-        $deepLinkId = request()->query($this->getDeepLinkParam());
-
-        if ((int) $deepLinkId) {
-            $this->listAction((int) $deepLinkId);
-        }
-
-        if (request()->create) {
-            $this->listAction();
-        }
-    }
-
     /**
      * Switch the active list view and remember it per component in the session.
      * Unknown keys are ignored (e.g. a stale dropdown after a view YAML was removed).
@@ -397,13 +386,12 @@ trait NoerdList
         $this->syncListViewParam();
         $this->selectedRecordIds = [];
         $this->resetPage();
-        $this->syncListQueryContext();
     }
 
     public function updatedPerPage(): void
     {
         $this->perPage = $this->clampPerPage($this->perPage);
-        session(['listPerPage' => $this->perPage]);
+        session(["listPerPage.{$this->componentName()}" => $this->perPage]);
         $this->resetPage();
     }
 
@@ -412,18 +400,11 @@ trait NoerdList
         // A new search shrinks the result set — staying on page 3 would show an
         // empty table even though there are matches on page 1.
         $this->resetPage();
-        $this->syncListQueryContext();
     }
 
-    public function updatedSortField(): void
-    {
-        $this->syncListQueryContext();
-    }
+    public function updatedSortField(): void {}
 
-    public function updatedSortAsc(): void
-    {
-        $this->syncListQueryContext();
-    }
+    public function updatedSortAsc(): void {}
 
     public function sortBy(string $field): void
     {
@@ -454,6 +435,12 @@ trait NoerdList
         $this->persistListSort();
     }
 
+    /**
+     * The header filters live in ONE session bucket shared across lists ON
+     * PURPOSE: NoerdPage::setPreselect() seeds it from detail pages so a
+     * related list opens pre-filtered, and preselect() reads it back. Only
+     * columns whitelisted per list (getAllowedListFilterColumns) ever apply.
+     */
     public function loadListFilters(): void
     {
         $this->listFilters = session('listFilters', []);
@@ -564,7 +551,6 @@ trait NoerdList
      */
     public function findListAction(int|string $id): void
     {
-        $this->syncListQueryContext();
 
         $listData = $this->resolvedListConfig()['rows'] ?? [];
 
@@ -703,10 +689,22 @@ trait NoerdList
         }
 
         if ($this->resolvedModelClass !== null) {
-            $this->resolvedModelClass::query()
-                ->whereIn('id', $this->selectedRecordIds)
-                ->get()
-                ->each(fn($model) => $model->delete());
+            // Only rows THIS list yields may be deleted. A bare
+            // Model::query()->whereIn($selectedRecordIds) ignored the list's own
+            // narrowing (tenant scope, column filters, and any constraint a
+            // component adds), so a crafted id list reached records the list
+            // would never show.
+            $query = $this->listQuery($this->resolvedModelClass, $this->listQueryConfigName)
+                ->whereIn('id', $this->selectedRecordIds);
+
+            // listQuery() cannot see constraints a component adds in its own
+            // listData() override (e.g. "users of MY tenants"), so those lists
+            // are additionally limited to the rows currently rendered.
+            if (!$this->usesTraitListData()) {
+                $query->whereIn('id', $this->visibleRowIds() ?: [0]);
+            }
+
+            $query->get()->each(fn($model) => $model->delete());
         }
 
         $this->selectedRecordIds = [];
@@ -738,14 +736,6 @@ trait NoerdList
     }
 
     /**
-     * Get the component name (alias for getName).
-     */
-    public function getComponentName(): string
-    {
-        return $this->getName();
-    }
-
-    /**
      * Inline cell editing (editable list columns dispatch
      * `updateRow(id, column, value)` via wire:change). The base implementation
      * is a deliberate no-op — a list opts into persistence by overriding this
@@ -769,32 +759,12 @@ trait NoerdList
         return $filters;
     }
 
-    public function states(): void {}
-
-    public function listFilters(): array
-    {
-        return [];
-    }
-
-    public function listStates(): array
-    {
-        return [];
-    }
-
-    public function filters(): void {}
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
-    }
-
     public function renderingNoerdList(): void
     {
         if ($this->minimal) {
             $this->perPage = $this->minimalLimit;
         }
 
-        $this->syncListQueryContext();
     }
 
     public function exportCsv(): StreamedResponse
@@ -809,10 +779,11 @@ trait NoerdList
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
 
+            $delimiter = FormatHelper::csvDelimiter();
             fputcsv($handle, array_map(
                 fn(array $column): string => __($column['label'] ?? $column['field'] ?? ''),
                 $columns,
-            ), ';');
+            ), $delimiter);
 
             $query->lazy(200)->each(function ($row) use ($handle, $columns): void {
                 $this->prepareExportRow($row);
@@ -823,7 +794,7 @@ trait NoerdList
                         $column,
                     );
                 }
-                fputcsv($handle, $line, ';');
+                fputcsv($handle, $line, $delimiter);
             });
 
             fclose($handle);
@@ -846,17 +817,15 @@ trait NoerdList
 
     /**
      * The table's schema columns keyed by column name, introspected at most once
-     * per table and process. Backs every column-existence check in the trait:
-     * Schema::hasColumn() is NOT cached by Laravel and issues one
-     * information-schema query per call — on an 8-column list that used to mean
-     * a two-digit number of metadata queries per render.
+     * per table and process (see SchemaColumnCache) — on an 8-column list the
+     * uncached Schema::hasColumn() calls used to mean a two-digit number of
+     * metadata queries per render.
      *
      * @return array<string, array<string, mixed>>
      */
     protected static function tableColumns(string $table): array
     {
-        return self::$schemaColumnCache[$table]
-            ??= collect(Schema::getColumns($table))->keyBy('name')->all();
+        return SchemaColumnCache::columns($table);
     }
 
     /**
@@ -864,7 +833,7 @@ trait NoerdList
      */
     protected static function tableHasColumn(string $table, string $column): bool
     {
-        return array_key_exists($column, self::tableColumns($table));
+        return SchemaColumnCache::hasColumn($table, $column);
     }
 
     /**
@@ -930,7 +899,6 @@ trait NoerdList
             $this->sortField = $field;
             $this->sortAsc = $ascending;
         }
-        $this->syncListQueryContext();
     }
 
     protected function getAllowedListFilterColumns(): array
@@ -975,12 +943,13 @@ trait NoerdList
     }
 
     /**
-     * Get the detail component name.
-     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     * The name this list's YAML config resolves under: a DETAIL_COMPONENT
+     * constant (legacy custom-config opt-in) or the component's own name.
+     * Renamed from getListComponent(), which meant the OPPOSITE of
+     * NoerdPage::getListComponent() and made composing the two traits a trap.
      */
-    protected function getListComponent(): string
+    protected function listConfigComponent(): string
     {
-
         if (defined('static::DETAIL_COMPONENT')) {
             return static::DETAIL_COMPONENT;
         }
@@ -1039,15 +1008,6 @@ trait NoerdList
         $this->dispatch('closeTopModal');
     }
 
-    protected function syncListQueryContext(): void
-    {
-        app(ListQueryContext::class)->set(
-            $this->search,
-            $this->sortField,
-            $this->sortAsc,
-        );
-    }
-
     /**
      * Build a query with search, sort and column filters applied based on YAML
      * columns. Pass $configName when the list renders a custom YAML config
@@ -1064,9 +1024,7 @@ trait NoerdList
         $this->resolvedModelClass = $modelClass;
         $this->listQueryConfigName = $configName;
 
-        $query = $modelClass::query()
-            ->withoutGlobalScope(SearchScope::class)
-            ->withoutGlobalScope(SortScope::class);
+        $query = $modelClass::query();
 
         // Read-denied objects yield no rows in ANY rendering mode (page, embedded,
         // picker, minimal) — restricted data must never leave the database.
@@ -1101,7 +1059,15 @@ trait NoerdList
         $this->applyColumnFilters($query, $modelClass);
         $this->eagerLoadRelationColumns($query);
 
-        $sortField = self::tableHasColumn($table, $this->sortField) ? $this->sortField : 'id';
+        // $sortField is client-writable (sortBy() enforces isSortableColumn(),
+        // a raw property update does not). Ordering by a column the model hides
+        // — password, remember_token, api_token — turns the list into an
+        // oracle over that value, so hidden attributes are never sortable.
+        $hidden = $this->resolvedModelInstance()?->getHidden() ?? [];
+        $sortField = self::tableHasColumn($table, $this->sortField)
+            && ! in_array($this->sortField, $hidden, true)
+                ? $this->sortField
+                : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
         return $query;
@@ -1522,26 +1488,9 @@ trait NoerdList
 
         $fields = StaticConfigHelper::tryGetComponentFields($detailComponent)['fields'] ?? [];
         $map = [];
-        $this->collectSelectOptions($fields, $map);
-
-        return $this->picklistOptionCache[$detailComponent] = $map;
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $fields
-     * @param  array<string, array<int, array{value: mixed, label: string}>>  $map
-     */
-    protected function collectSelectOptions(array $fields, array &$map): void
-    {
-        foreach ($fields as $field) {
-            if (($field['type'] ?? null) === 'block') {
-                $this->collectSelectOptions($field['fields'] ?? [], $map);
-
-                continue;
-            }
-
+        LayoutFields::walk($fields, function (array $field) use (&$map): void {
             if (!isset($field['name'])) {
-                continue;
+                return;
             }
 
             // A value-storing collection select (valueField) resolves its badge
@@ -1561,16 +1510,17 @@ trait NoerdList
                     $map[Str::after($field['name'], 'detailData.')] = $options;
                 }
 
-                continue;
+                return;
             }
 
             if (($field['type'] ?? null) !== 'select' || empty($field['options'])) {
-                continue;
+                return;
             }
 
-            $key = Str::after($field['name'], 'detailData.');
-            $map[$key] = $field['options'];
-        }
+            $map[Str::after($field['name'], 'detailData.')] = $field['options'];
+        });
+
+        return $this->picklistOptionCache[$detailComponent] = $map;
     }
 
     /**
@@ -1633,10 +1583,10 @@ trait NoerdList
 
         return match ($type) {
             'bool', 'boolean' => $value ? __('Yes') : __('No'),
-            'date' => $value ? Carbon::parse($value)->format('d.m.Y') : '',
-            'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
+            'date' => FormatHelper::date($value),
+            'datetime' => FormatHelper::dateTime($value),
             'currency', 'number' => is_numeric($value)
-                ? number_format((float) $value, 2, ',', '.')
+                ? FormatHelper::decimal((float) $value)
                 : $this->neutralizeCsvFormula((string) ($value ?? '')),
             'badge' => $this->neutralizeCsvFormula(__($this->badgeLabel($value, $column['options'] ?? []))),
             default => $this->neutralizeCsvFormula((string) ($value ?? '')),
@@ -1678,11 +1628,18 @@ trait NoerdList
 
     /**
      * Get the event listeners for the component.
-     * Dynamically registers the refreshList listener based on detail component name.
+     * Dynamically registers the refreshList listener based on the config name.
+     *
+     * OVERRIDE CONTRACT: a component defining its own getListeners() replaces
+     * this set entirely and silently disconnects the framework events — always
+     * merge: `return parent-style via the trait alias + [...]` (see
+     * NoerdDetail's pageGetListeners alias for the pattern). #[On] attributes
+     * are no alternative here: the event names embed getName()/config-derived
+     * values, which attribute interpolation cannot express.
      */
     protected function getListeners(): array
     {
-        $name = $this->getListComponent();
+        $name = $this->listConfigComponent();
         $stripped = Str::afterLast($name, '.');
 
         $listeners = ['refreshList-' . $name => 'refreshList'];
@@ -1702,7 +1659,7 @@ trait NoerdList
         if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
             return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
         }
-        $name = $customName ?? $this->getListComponent();
+        $name = $customName ?? $this->listConfigComponent();
 
         // An active alternate view only applies to this component's own config,
         // never to an explicitly requested custom config. A view from another
@@ -1815,18 +1772,25 @@ trait NoerdList
     }
 
     /**
-     * Publish the current sort to the query context (for lists sorting through the global
-     * SortScope) and remember it per component, so a reload restores it. Shared by sortBy()
-     * and setSortDirection().
+     * Remember the sort per component, so a reload restores it. Shared by
+     * sortBy() and setSortDirection().
      */
     private function persistListSort(): void
     {
-        $this->syncListQueryContext();
-
         session(["listSort.{$this->componentName()}" => [
             'field' => $this->sortField,
             'asc' => $this->sortAsc,
         ]]);
+    }
+
+    /**
+     * Whether listData() is the trait's own implementation. A component that
+     * overrides it may narrow the result set in ways listQuery() cannot see.
+     */
+    private function usesTraitListData(): bool
+    {
+        return (new ReflectionMethod($this, 'listData'))->getFileName()
+            === (new ReflectionClass(NoerdList::class))->getFileName();
     }
 
     /**

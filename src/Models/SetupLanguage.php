@@ -15,11 +15,6 @@ class SetupLanguage extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-        'is_default' => 'boolean',
-    ];
-
     /**
      * Get all active languages
      */
@@ -132,5 +127,13 @@ class SetupLanguage extends Model
                 $newDefault?->update(['is_default' => true]);
             }
         });
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'is_default' => 'boolean',
+        ];
     }
 }

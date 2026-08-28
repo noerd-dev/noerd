@@ -71,9 +71,11 @@ new class extends Component {
         </div>
     @else
         @php
-            $publicApps = TenantApp::where('is_active', true)
+            // once(): the layout may render this view more than once per
+            // request — the public app tiles cannot change mid-request.
+            $publicApps = once(fn() => TenantApp::where('is_active', true)
                 ->where('is_public', true)
-                ->get();
+                ->get());
         @endphp
         @if($publicApps->count() > 1)
             <div x-show="showAppbar && (isDesktop || showSidebar)"

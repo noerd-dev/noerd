@@ -18,8 +18,20 @@ new class extends Component {
         $this->loadApps();
     }
 
+    /**
+     * Every action re-asserts super-admin access: mount() alone leaves the
+     * guarantee one refactor away from being lost, and the hydrate-time
+     * ComponentAccessHook only re-checks isAdmin(), not isSuperAdmin().
+     */
+    private function authorizeSuperAdmin(): void
+    {
+        abort_unless(\Noerd\Helpers\NoerdAuth::user()?->isSuperAdmin(), 403);
+    }
+
     public function toggleApp(int $appId): void
     {
+        $this->authorizeSuperAdmin();
+
         $tenant = TenantHelper::getSelectedTenant();
         $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->toArray();
 
@@ -35,26 +47,34 @@ new class extends Component {
 
     public function appSort(int $appId, int $newPosition): void
     {
+        $this->authorizeSuperAdmin();
+
         $tenant = TenantHelper::getSelectedTenant();
         $apps = $tenant->tenantApps()->get();
 
-        $loop = 0;
-        foreach ($apps as $app) {
-            if ($newPosition === $loop) {
-                $loop++;
+        // One transaction: an interrupted reorder must not leave duplicate
+        // sort_order values behind.
+        \Illuminate\Support\Facades\DB::transaction(function () use ($tenant, $apps, $appId, $newPosition): void {
+            $loop = 0;
+            foreach ($apps as $app) {
+                if ($newPosition === $loop) {
+                    $loop++;
+                }
+                if ($app->id === $appId) {
+                    $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $newPosition]);
+                } else {
+                    $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $loop++]);
+                }
             }
-            if ($app->id === $appId) {
-                $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $newPosition]);
-            } else {
-                $tenant->tenantApps()->updateExistingPivot($app->id, ['sort_order' => $loop++]);
-            }
-        }
+        });
 
         $this->loadApps();
     }
 
     public function toggleHidden(int $appId): void
     {
+        $this->authorizeSuperAdmin();
+
         $tenant = TenantHelper::getSelectedTenant();
         $current = $tenant->tenantApps()->where('tenant_apps.id', $appId)->first();
 

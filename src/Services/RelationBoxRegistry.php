@@ -52,8 +52,6 @@ class RelationBoxRegistry
             }
         }
 
-        usort($entries, fn(array $a, array $b): int => $a['sort'] <=> $b['sort']);
-
-        return array_column($entries, 'tile');
+        return \Noerd\Support\SortedRegistrations::payloads($entries, 'tile');
     }
 }
