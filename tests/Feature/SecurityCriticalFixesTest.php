@@ -166,10 +166,7 @@ it('reduces a detail payload to declared layout keys and always drops identity/t
         /** @param array<int, array<string, mixed>> $fields */
         public function collectKeys(array $fields): array
         {
-            $keys = [];
-            $this->collectWritableDetailDataKeys($fields, $keys);
-
-            return array_values(array_unique($keys));
+            return $this->writableKeysFromFields($fields);
         }
 
         /**

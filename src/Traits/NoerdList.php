@@ -24,6 +24,7 @@ use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\RelationTitleResolver;
+use Noerd\Support\LayoutFields;
 use Noerd\Support\SchemaColumnCache;
 use ReflectionClass;
 use ReflectionMethod;
@@ -33,6 +34,7 @@ use UnitEnum;
 
 trait NoerdList
 {
+    use NoerdComponentShared;
     use RoutedModal;
     use WithoutUrlPagination;
     use WithPagination;
@@ -106,8 +108,6 @@ trait NoerdList
     public array $listColumnFilters = [];
 
     public mixed $context = '';
-
-    public bool $disableModal = false;
 
     public bool $compact = false;
 
@@ -339,7 +339,7 @@ trait NoerdList
     #[Computed]
     public function availableListViews(): array
     {
-        return StaticConfigHelper::getListViews($this->getListComponent());
+        return StaticConfigHelper::getListViews($this->listConfigComponent());
     }
 
     /**
@@ -728,14 +728,6 @@ trait NoerdList
             ->all();
     }
 
-    /**
-     * Get the component name (alias for getName).
-     */
-    public function getComponentName(): string
-    {
-        return $this->getName();
-    }
-
     public function updateRow(): void {}
 
     #[Computed]
@@ -752,11 +744,6 @@ trait NoerdList
         }
 
         return $filters;
-    }
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
     }
 
     public function renderingNoerdList(): void
@@ -922,12 +909,13 @@ trait NoerdList
     }
 
     /**
-     * Get the detail component name.
-     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     * The name this list's YAML config resolves under: a DETAIL_COMPONENT
+     * constant (legacy custom-config opt-in) or the component's own name.
+     * Renamed from getListComponent(), which meant the OPPOSITE of
+     * NoerdPage::getListComponent() and made composing the two traits a trap.
      */
-    protected function getListComponent(): string
+    protected function listConfigComponent(): string
     {
-
         if (defined('static::DETAIL_COMPONENT')) {
             return static::DETAIL_COMPONENT;
         }
@@ -1479,26 +1467,9 @@ trait NoerdList
 
         $fields = StaticConfigHelper::tryGetComponentFields($detailComponent)['fields'] ?? [];
         $map = [];
-        $this->collectSelectOptions($fields, $map);
-
-        return $this->picklistOptionCache[$detailComponent] = $map;
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $fields
-     * @param  array<string, array<int, array{value: mixed, label: string}>>  $map
-     */
-    protected function collectSelectOptions(array $fields, array &$map): void
-    {
-        foreach ($fields as $field) {
-            if (($field['type'] ?? null) === 'block') {
-                $this->collectSelectOptions($field['fields'] ?? [], $map);
-
-                continue;
-            }
-
+        LayoutFields::walk($fields, function (array $field) use (&$map): void {
             if (!isset($field['name'])) {
-                continue;
+                return;
             }
 
             // A value-storing collection select (valueField) resolves its badge
@@ -1518,16 +1489,17 @@ trait NoerdList
                     $map[Str::after($field['name'], 'detailData.')] = $options;
                 }
 
-                continue;
+                return;
             }
 
             if (($field['type'] ?? null) !== 'select' || empty($field['options'])) {
-                continue;
+                return;
             }
 
-            $key = Str::after($field['name'], 'detailData.');
-            $map[$key] = $field['options'];
-        }
+            $map[Str::after($field['name'], 'detailData.')] = $field['options'];
+        });
+
+        return $this->picklistOptionCache[$detailComponent] = $map;
     }
 
     /**
@@ -1580,7 +1552,7 @@ trait NoerdList
         if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
             return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
         }
-        $name = $customName ?? $this->getListComponent();
+        $name = $customName ?? $this->listConfigComponent();
 
         // An active alternate view only applies to this component's own config,
         // never to an explicitly requested custom config. A view from another
@@ -1665,11 +1637,18 @@ trait NoerdList
 
     /**
      * Get the event listeners for the component.
-     * Dynamically registers the refreshList listener based on detail component name.
+     * Dynamically registers the refreshList listener based on the config name.
+     *
+     * OVERRIDE CONTRACT: a component defining its own getListeners() replaces
+     * this set entirely and silently disconnects the framework events — always
+     * merge: `return parent-style via the trait alias + [...]` (see
+     * NoerdDetail's pageGetListeners alias for the pattern). #[On] attributes
+     * are no alternative here: the event names embed getName()/config-derived
+     * values, which attribute interpolation cannot express.
      */
     protected function getListeners(): array
     {
-        $name = $this->getListComponent();
+        $name = $this->listConfigComponent();
         $stripped = Str::afterLast($name, '.');
 
         $listeners = ['refreshList-' . $name => 'refreshList'];

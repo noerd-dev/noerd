@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Support\LayoutFields;
 use Noerd\Support\RelationFormSync;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -32,24 +33,16 @@ trait NoerdDetail
 
     public function initDetail(): void
     {
-        if ($this->prepareRoutedModal()) {
-            return;
-        }
-
-        // For detail components declaring $detailModel. Loads the pageLayout first
-        // so the YAML quick-create opt-in below can be read from it.
-        if (isset($this->detailModel)) {
-            if (!$this->canReadObject()) {
-                $this->objectReadBlocked = true;
-
-                return;
+        $this->initNoerdComponent(function (): void {
+            // For detail components declaring $detailModel. Loads the pageLayout
+            // first so the YAML quick-create opt-in below can be read from it.
+            if (isset($this->detailModel)) {
+                $modelClass = $this->detailModel;
+                $this->mountDetailComponent(new $modelClass(), $modelClass);
             }
 
-            $modelClass = $this->detailModel;
-            $this->mountDetailComponent(new $modelClass(), $modelClass);
-        }
-
-        $this->resolveQuickCreate();
+            $this->resolveQuickCreate();
+        });
     }
 
     public function store(): void
@@ -267,32 +260,26 @@ trait NoerdDetail
 
         $fields = StaticConfigHelper::getComponentFields($component, $modelClass)['fields'] ?? [];
 
-        $keys = [];
-        $this->collectWritableDetailDataKeys($fields, $keys);
-
-        return array_values(array_unique($keys));
+        return $this->writableKeysFromFields($fields);
     }
 
     /**
+     * Top-level detailData keys a field layout binds (recursing into blocks).
+     *
      * @param  array<int, array<string, mixed>>  $fields
-     * @param  array<int, string>  $keys
+     * @return array<int, string>
      */
-    protected function collectWritableDetailDataKeys(array $fields, array &$keys): void
+    protected function writableKeysFromFields(array $fields): array
     {
-        foreach ($fields as $field) {
-            if (($field['type'] ?? '') === 'block') {
-                $this->collectWritableDetailDataKeys($field['fields'] ?? [], $keys);
-
-                continue;
-            }
-
+        $keys = [];
+        LayoutFields::walk($fields, function (array $field) use (&$keys): void {
             $name = $field['name'] ?? null;
-            if (! is_string($name) || ! str_starts_with($name, 'detailData.')) {
-                continue;
+            if (is_string($name) && str_starts_with($name, 'detailData.')) {
+                $keys[] = Str::before(Str::after($name, 'detailData.'), '.');
             }
+        });
 
-            $keys[] = Str::before(Str::after($name, 'detailData.'), '.');
-        }
+        return array_values(array_unique($keys));
     }
 
     /**
@@ -390,31 +377,15 @@ trait NoerdDetail
     }
 
     /**
-     * Recursively extract validation rules from fields array.
+     * Extract validation rules from the field layout (recursing into blocks).
      */
     protected function extractRulesFromFields(array $fields, array &$rules): void
     {
-        foreach ($fields as $field) {
-            if (($field['type'] ?? '') === 'block') {
-                $this->extractRulesFromFields($field['fields'] ?? [], $rules);
-
-                continue;
+        LayoutFields::walk($fields, function (array $field) use (&$rules): void {
+            if (isset($field['name']) && ($field['required'] ?? false)) {
+                $rules[$field['name']] = ['required'];
             }
-
-            if (!isset($field['name'])) {
-                continue;
-            }
-
-            $fieldRules = [];
-
-            if ($field['required'] ?? false) {
-                $fieldRules[] = 'required';
-            }
-
-            if (!empty($fieldRules)) {
-                $rules[$field['name']] = $fieldRules;
-            }
-        }
+        });
     }
 
     /**

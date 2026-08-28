@@ -20,6 +20,7 @@ use RuntimeException;
  */
 trait NoerdPage
 {
+    use NoerdComponentShared;
     use RoutedModal;
 
     public bool $showSuccessIndicator = false;
@@ -30,8 +31,6 @@ trait NoerdPage
     public int $currentTab = 1;
 
     public array $pageLayout = [];
-
-    public bool $disableModal = false;
 
     /**
      * Set when the component is rendered inside a hosting page component (e.g.
@@ -56,14 +55,6 @@ trait NoerdPage
      * afterwards so the theme never outlives the render (see renderedNoerdPage).
      */
     protected ?string $themeContextBefore = null;
-
-    /**
-     * Get the component name (alias for getName).
-     */
-    public function getComponentName(): string
-    {
-        return $this->getName();
-    }
 
     /**
      * Livewire trait mount hook (runs for every page/detail). The active tab is
@@ -125,30 +116,44 @@ trait NoerdPage
 
     public function initPage(): void
     {
+        $this->initNoerdComponent(function (): void {
+            // Pages backed by a single Eloquent model declare $detailModel — the
+            // record is loaded into $detailData exactly like a detail would.
+            if (isset($this->detailModel)) {
+                $modelClass = $this->detailModel;
+                if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
+                    return;
+                }
+            }
+
+            // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
+            // defining their layout in the component itself.
+            $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
+
+            $this->resolveQuickCreate();
+        });
+    }
+
+    /**
+     * Shared init skeleton of initPage()/initDetail()/initSettings(): routed-
+     * modal redirect, the object-read guard (canReadObject() is unrestricted
+     * for components without $detailModel and overridden by settings pages),
+     * then the component-specific loading. The three inits used to be three
+     * drifting copies of exactly this sequence.
+     */
+    protected function initNoerdComponent(callable $load): void
+    {
         if ($this->prepareRoutedModal()) {
             return;
         }
 
-        // Pages backed by a single Eloquent model declare $detailModel — the
-        // record is loaded into $detailData exactly like a detail would.
-        if (isset($this->detailModel)) {
-            if (!$this->canReadObject()) {
-                $this->objectReadBlocked = true;
+        if (!$this->canReadObject()) {
+            $this->objectReadBlocked = true;
 
-                return;
-            }
-
-            $modelClass = $this->detailModel;
-            if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
-                return;
-            }
+            return;
         }
 
-        // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
-        // defining their layout in the component itself.
-        $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
-
-        $this->resolveQuickCreate();
+        $load();
     }
 
     public function closeModalProcess(?string $source = null): void
@@ -312,11 +317,6 @@ trait NoerdPage
     public function embeddedDetailDataUpdated(array $detailData): void
     {
         $this->detailData = array_merge($this->detailData, $detailData);
-    }
-
-    public function refreshList(): void
-    {
-        $this->dispatch('$refresh');
     }
 
     /**
@@ -505,6 +505,13 @@ trait NoerdPage
      * Get the event listeners for the component: the generic list refresh plus —
      * when the page YAML declares an embedded detail — the store roundtrip events
      * scoped by the detail's full component name.
+     *
+     * OVERRIDE CONTRACT: a component defining its own getListeners() replaces
+     * this set entirely and silently disconnects the framework events — always
+     * merge: `return parent-style via the trait alias + [...]` (see
+     * NoerdDetail's pageGetListeners alias for the pattern). #[On] attributes
+     * are no alternative here: the event names embed getName()/config-derived
+     * values, which attribute interpolation cannot express.
      */
     protected function getListeners(): array
     {
