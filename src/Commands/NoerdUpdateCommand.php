@@ -64,31 +64,6 @@ class NoerdUpdateCommand extends NoerdInstallCommand
     protected function runNpmBuildWithoutPrompt(): void
     {
         $this->newLine();
-        $this->line('Running npm run build...');
-        $this->newLine();
-
-        $process = proc_open(
-            'npm run build',
-            [
-                0 => STDIN,
-                1 => STDOUT,
-                2 => STDERR,
-            ],
-            $pipes,
-            base_path(),
-        );
-
-        if (is_resource($process)) {
-            $exitCode = proc_close($process);
-
-            $this->newLine();
-            if ($exitCode === 0) {
-                $this->info('Frontend assets compiled successfully!');
-            } else {
-                $this->warn('npm run build finished with errors. You may need to run it manually.');
-            }
-        } else {
-            $this->warn('Could not execute npm run build. Please run it manually.');
-        }
+        $this->executeNpmBuild();
     }
 }

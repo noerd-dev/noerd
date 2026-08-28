@@ -14,7 +14,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>{{Model}}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('{{Model}}') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />

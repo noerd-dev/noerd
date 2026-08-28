@@ -331,14 +331,9 @@ new class extends Component
                             <td class="py-1 border-gray-300 border-r border-b">
                                 <select wire:model="fields.{{ $index }}.type"
                                         class="border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5">
-                                    <option value="text">Text</option>
-                                    <option value="translatableText">Translatable Text</option>
-                                    <option value="translatableTextarea">Translatable Textarea</option>
-                                    <option value="translatableRichText">Translatable RichText</option>
-                                    <option value="image">Image</option>
-                                    <option value="email">E-Mail</option>
-                                    <option value="tel">Tel</option>
-                                    <option value="checkbox">Checkbox</option>
+                                    @foreach (\Noerd\Helpers\SetupCollectionHelper::FIELD_TYPES as $typeValue => $typeLabel)
+                                        <option value="{{ $typeValue }}">{{ $typeLabel }}</option>
+                                    @endforeach
                                 </select>
                             </td>
                             <td class="py-1 border-gray-300 border-r border-b">

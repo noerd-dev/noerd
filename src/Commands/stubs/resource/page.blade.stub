@@ -8,7 +8,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>{{ModelBaseName}}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('{{ModelBaseName}}') }}</x-noerd::modal-title>
     </x-slot>
 
     <p class="py-8 text-sm">

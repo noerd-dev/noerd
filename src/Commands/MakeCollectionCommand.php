@@ -16,18 +16,7 @@ class MakeCollectionCommand extends Command
 
     protected $description = 'Create a new collection YML file interactively';
 
-    private array $fieldTypes = [
-        'translatableText' => 'Translatable Text',
-        'translatableTextarea' => 'Translatable Textarea',
-        'text' => 'Text',
-        'textarea' => 'Textarea',
-        'checkbox' => 'Checkbox',
-        'select' => 'Select',
-        'image' => 'Image',
-        'date' => 'Date',
-        'datetime' => 'DateTime',
-        'number' => 'Number',
-    ];
+    private array $fieldTypes = \Noerd\Helpers\SetupCollectionHelper::FIELD_TYPES;
 
     public function handle(): int
     {

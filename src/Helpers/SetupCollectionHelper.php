@@ -8,6 +8,32 @@ use Noerd\Models\SetupLanguage;
 
 class SetupCollectionHelper
 {
+    /**
+     * Field types a collection definition may use, value => display label.
+     * The single source for the noerd:make-collection prompt AND the
+     * definition editor UI — the two used to carry diverging hardcoded lists.
+     * Deliberately curated rather than derived from FieldTypeRegistry, which
+     * also contains structural and relation types that make no sense on a
+     * collection entry.
+     *
+     * @var array<string, string>
+     */
+    public const FIELD_TYPES = [
+        'text' => 'Text',
+        'textarea' => 'Textarea',
+        'translatableText' => 'Translatable Text',
+        'translatableTextarea' => 'Translatable Textarea',
+        'translatableRichText' => 'Translatable RichText',
+        'image' => 'Image',
+        'email' => 'E-Mail',
+        'tel' => 'Tel',
+        'checkbox' => 'Checkbox',
+        'select' => 'Select',
+        'date' => 'Date',
+        'datetime' => 'DateTime',
+        'number' => 'Number',
+    ];
+
     public function __construct(
         private readonly SetupCollectionDefinitionRepositoryContract $repository,
     ) {}
