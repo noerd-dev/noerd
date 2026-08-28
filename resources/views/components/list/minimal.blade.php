@@ -27,8 +27,8 @@
     $formatMinimalValue = function (mixed $value, string $type): string {
         return match ($type) {
             'currency' => is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float) $value) : (string) ($value ?? ''),
-            'date' => $value ? \Carbon\Carbon::parse($value)->format('d.m.Y') : '',
-            'datetime' => $value ? \Carbon\Carbon::parse($value)->format(app()->getLocale() === 'de' ? 'd.m.Y H:i' : 'Y-m-d H:i') : '',
+            'date' => \Noerd\Helpers\FormatHelper::date($value),
+            'datetime' => \Noerd\Helpers\FormatHelper::dateTime($value),
             'bool', 'boolean' => $value ? __('Yes') : __('No'),
             default => (string) ($value ?? ''),
         };

@@ -339,14 +339,18 @@ describe('SetupFieldTypeConverter', function (): void {
         expect($result)->toBe($input);
     });
 
-    it('extracts german value from translatable array', function (): void {
+    it('extracts the default-language value from a translatable array', function (): void {
         $reflection = new ReflectionClass(SetupFieldTypeConverter::class);
         $method = $reflection->getMethod('convertFromTranslatableField');
         $method->setAccessible(true);
 
+        // The tenant's default language wins — 'en' in the testbench setup.
         $result = $method->invoke(null, ['de' => 'Deutscher Text', 'en' => 'English Text']);
 
-        expect($result)->toBe('Deutscher Text');
+        expect($result)->toBe('English Text');
+
+        // Without a value for the default language the first entry is used.
+        expect($method->invoke(null, ['fr' => 'Texte français']))->toBe('Texte français');
     });
 
     it('returns unchanged data for non-existent collection', function (): void {

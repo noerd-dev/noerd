@@ -26,7 +26,7 @@ it('renders the user component', function () use ($testSettings): void {
 
     Livewire::test($testSettings['componentName'])
         ->assertStatus(200)
-        ->assertSeeText('Benutzer')
+        ->assertSeeText('User')
         ->assertSeeHtml('wire:model="userLocale"')
         ->assertSeeHtml('<option value="de">');
 });

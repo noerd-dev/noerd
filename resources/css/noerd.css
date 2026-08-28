@@ -6,6 +6,18 @@
  * Must be imported AFTER `@import 'tailwindcss';` so these values override
  * Tailwind's defaults.
  */
+
+/*
+ * Classes built at runtime (detail/block.blade.php derives col-span/grid-cols
+ * from the YAML `colspan`) are invisible to Tailwind's source scan — generate
+ * them explicitly instead of shipping a phantom "safelist" view.
+ */
+@source inline("{,sm:}col-span-{1..12}");
+@source inline("{,sm:}grid-cols-{1..12}");
+@source inline("min-h-36");
+@source inline("lg:ml-72");
+@source inline("bg-[#0298b0]");
+
 @theme {
     /* App-wide default text size: text-sm is the de-facto base, 14px -> 13px */
     --text-sm: 0.8125rem;

@@ -212,7 +212,7 @@
                         wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                         class="cursor-pointer px-1.5 py-0.5 text-sm"
                     >
-                        {{ app()->getLocale() === 'de' ? \Carbon\Carbon::parse($value)->format('d.m.Y H:i') : \Carbon\Carbon::parse($value)->format('Y-m-d H:i') }}
+                        {{ \Noerd\Helpers\FormatHelper::dateTime($value) }}
                     </span>
                 @endif
             @elseif ($type === 'number')

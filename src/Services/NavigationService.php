@@ -4,9 +4,16 @@ namespace Noerd\Services;
 
 use Noerd\Helpers\StaticConfigHelper;
 
+/**
+ * Splits the current app's navigation structure into the pieces the layout
+ * views consume. Registered as a singleton — the layout injects it from
+ * several views per page, and the structure itself is memoized per request
+ * in StaticConfigHelper.
+ */
 class NavigationService
 {
     private array $subMenu = [];
+
     private array $blockMenus = [];
 
     public function __construct()
@@ -17,31 +24,18 @@ class NavigationService
             return;
         }
 
-        $collection = collect($navigationStructure);
-        $result = $collection[0] ?? null;
+        $result = collect($navigationStructure)[0] ?? null;
 
         $blockMenu = [];
         foreach ($result['block_menus'] ?? [] as $menu) {
             $menu['show'] = ! session('navi_hidden_' . $menu['title']);
-            if (isset($menu['if'])) {
-                $methodName = $menu['if'];
-                if ($this->{$methodName}()) {
-                    $blockMenu[] = $menu;
-                }
-            } else {
-                $blockMenu[] = $menu;
-            }
+            $blockMenu[] = $menu;
         }
 
         if ($result) {
             $this->subMenu = $result['sub_menu'] ?? [];
             $this->blockMenus = $blockMenu;
         }
-    }
-
-    public function mainMenu(): array
-    {
-        return StaticConfigHelper::getNavigationStructure() ?? [];
     }
 
     public function subMenu(): array

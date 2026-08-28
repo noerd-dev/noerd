@@ -18,13 +18,9 @@ new class extends Component {
     public bool $multiple = false;
 
     public array $temporaryFiles = [];
-    public array $uploadErrors = [];
-    public bool $isUploading = false;
-    public int $uploadProgress = 0;
 
     public function updatedTemporaryFiles(): void
     {
-        $this->uploadErrors = [];
         if (!is_array($this->files)) {
             $this->files = [];
         }
@@ -210,15 +206,6 @@ new class extends Component {
             </div>
         </div>
     </div>
-
-    <!-- Error Messages -->
-    @if($uploadErrors)
-        <div class="mt-2 text-sm text-red-600">
-            @foreach($uploadErrors as $error)
-                <p>{{ $error }}</p>
-            @endforeach
-        </div>
-    @endif
 
     @error('temporaryFiles.*')
     <div class="mt-2 text-sm text-red-600">

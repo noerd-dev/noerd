@@ -1,4 +1,3 @@
-<!-- Framework File -->
 @php
     // showIf/showIfNot come from the field YAML. Keep the wire path to a bare
     // property expression and escape the compared value for both the JS single-

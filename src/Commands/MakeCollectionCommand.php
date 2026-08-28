@@ -49,14 +49,14 @@ class MakeCollectionCommand extends Command
         // 2. Get title (singular)
         $title = text(
             label: 'Title (singular)',
-            placeholder: 'Kunde',
+            placeholder: 'Customer',
             required: true,
         );
 
         // 3. Get titleList (plural)
         $titleList = text(
             label: 'Title list (plural)',
-            placeholder: 'Kunden',
+            placeholder: 'Customers',
             default: $title,
             required: true,
         );
@@ -74,8 +74,8 @@ class MakeCollectionCommand extends Command
         // 5. Get button text
         $buttonList = text(
             label: 'Button text (for "New Entry" button)',
-            placeholder: 'Neuer Eintrag',
-            default: 'Neuer Eintrag',
+            placeholder: 'New Entry',
+            default: 'New Entry',
             required: true,
         );
 

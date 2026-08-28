@@ -178,7 +178,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>Benutzer</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('User') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout">

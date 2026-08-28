@@ -19,12 +19,10 @@ use Livewire\WithPagination;
 use LogicException;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
-use Noerd\Scopes\SearchScope;
-use Noerd\Scopes\SortScope;
 use Noerd\Services\ColumnFilterParser;
-use Noerd\Services\ListQueryContext;
 use Noerd\Services\RelationTitleResolver;
 use ReflectionClass;
 use ReflectionMethod;
@@ -55,8 +53,6 @@ trait NoerdList
     protected const MAX_PER_PAGE = 200;
 
     public int $perPage = 50;
-
-    public $lastChangeTime;
 
     public string $search = '';
 
@@ -94,9 +90,6 @@ trait NoerdList
     public ?string $listViewParam = null;
 
     public string $listId = '';
-
-    #[Url]
-    public ?string $filter = null;
 
     public array $listFilters = [];
 
@@ -397,7 +390,6 @@ trait NoerdList
         $this->syncListViewParam();
         $this->selectedRecordIds = [];
         $this->resetPage();
-        $this->syncListQueryContext();
     }
 
     public function updatedPerPage(): void
@@ -412,17 +404,14 @@ trait NoerdList
         // A new search shrinks the result set — staying on page 3 would show an
         // empty table even though there are matches on page 1.
         $this->resetPage();
-        $this->syncListQueryContext();
     }
 
     public function updatedSortField(): void
     {
-        $this->syncListQueryContext();
     }
 
     public function updatedSortAsc(): void
     {
-        $this->syncListQueryContext();
     }
 
     public function sortBy(string $field): void
@@ -564,7 +553,6 @@ trait NoerdList
      */
     public function findListAction(int|string $id): void
     {
-        $this->syncListQueryContext();
 
         $listData = $this->resolvedListConfig()['rows'] ?? [];
 
@@ -763,20 +751,6 @@ trait NoerdList
         return $filters;
     }
 
-    public function states(): void {}
-
-    public function listFilters(): array
-    {
-        return [];
-    }
-
-    public function listStates(): array
-    {
-        return [];
-    }
-
-    public function filters(): void {}
-
     public function refreshList(): void
     {
         $this->dispatch('$refresh');
@@ -788,7 +762,6 @@ trait NoerdList
             $this->perPage = $this->minimalLimit;
         }
 
-        $this->syncListQueryContext();
     }
 
     public function exportCsv(): StreamedResponse
@@ -803,10 +776,11 @@ trait NoerdList
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
 
+            $delimiter = FormatHelper::csvDelimiter();
             fputcsv($handle, array_map(
                 fn(array $column): string => __($column['label'] ?? $column['field'] ?? ''),
                 $columns,
-            ), ';');
+            ), $delimiter);
 
             $query->lazy(200)->each(function ($row) use ($handle, $columns): void {
                 $this->prepareExportRow($row);
@@ -817,7 +791,7 @@ trait NoerdList
                         $column,
                     );
                 }
-                fputcsv($handle, $line, ';');
+                fputcsv($handle, $line, $delimiter);
             });
 
             fclose($handle);
@@ -901,7 +875,6 @@ trait NoerdList
             $this->sortField = $field;
             $this->sortAsc = $ascending;
         }
-        $this->syncListQueryContext();
     }
 
     protected function getAllowedListFilterColumns(): array
@@ -1010,15 +983,6 @@ trait NoerdList
         $this->dispatch('closeTopModal');
     }
 
-    protected function syncListQueryContext(): void
-    {
-        app(ListQueryContext::class)->set(
-            $this->search,
-            $this->sortField,
-            $this->sortAsc,
-        );
-    }
-
     /**
      * Build a query with search, sort and column filters applied based on YAML
      * columns. Pass $configName when the list renders a custom YAML config
@@ -1035,9 +999,7 @@ trait NoerdList
         $this->resolvedModelClass = $modelClass;
         $this->listQueryConfigName = $configName;
 
-        $query = $modelClass::query()
-            ->withoutGlobalScope(SearchScope::class)
-            ->withoutGlobalScope(SortScope::class);
+        $query = $modelClass::query();
 
         // Read-denied objects yield no rows in ANY rendering mode (page, embedded,
         // picker, minimal) — restricted data must never leave the database.
@@ -1657,10 +1619,10 @@ trait NoerdList
 
         return match ($type) {
             'bool', 'boolean' => $value ? __('Yes') : __('No'),
-            'date' => $value ? Carbon::parse($value)->format('d.m.Y') : '',
-            'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
+            'date' => FormatHelper::date($value),
+            'datetime' => FormatHelper::dateTime($value),
             'currency', 'number' => is_numeric($value)
-                ? number_format((float) $value, 2, ',', '.')
+                ? FormatHelper::decimal((float) $value)
                 : $this->neutralizeCsvFormula((string) ($value ?? '')),
             'badge' => $this->neutralizeCsvFormula(__($this->badgeLabel($value, $column['options'] ?? []))),
             default => $this->neutralizeCsvFormula((string) ($value ?? '')),
@@ -1809,14 +1771,11 @@ trait NoerdList
     }
 
     /**
-     * Publish the current sort to the query context (for lists sorting through the global
-     * SortScope) and remember it per component, so a reload restores it. Shared by sortBy()
-     * and setSortDirection().
+     * Remember the sort per component, so a reload restores it. Shared by
+     * sortBy() and setSortDirection().
      */
     private function persistListSort(): void
     {
-        $this->syncListQueryContext();
-
         session(["listSort.{$this->componentName()}" => [
             'field' => $this->sortField,
             'asc' => $this->sortAsc,

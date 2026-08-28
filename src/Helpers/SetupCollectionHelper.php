@@ -4,6 +4,7 @@ namespace Noerd\Helpers;
 
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Models\SetupCollection;
+use Noerd\Models\SetupLanguage;
 
 class SetupCollectionHelper
 {
@@ -110,13 +111,13 @@ class SetupCollectionHelper
             return [];
         }
 
-        $locale = session('selectedLanguage') ?? 'de';
+        $locale = session('selectedLanguage') ?? app()->getLocale();
         $options = [];
 
         foreach ($collection->entries as $entry) {
             $label = $entry->data[$displayField] ?? '';
             if (is_array($label)) {
-                $label = $label[$locale] ?? $label['de'] ?? reset($label) ?: '';
+                $label = $label[$locale] ?? $label[SetupLanguage::getDefaultCode()] ?? reset($label) ?: '';
             }
 
             $options[] = [
@@ -138,7 +139,7 @@ class SetupCollectionHelper
                 'key' => $definition->filename,
                 'title' => $definition->title ?: ucfirst($definition->filename),
                 'titleList' => $definition->titleList ?: ucfirst($definition->filename),
-                'buttonList' => 'Neuer Eintrag',
+                'buttonList' => __('New Entry'),
             ])
             ->all();
     }

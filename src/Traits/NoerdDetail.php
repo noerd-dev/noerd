@@ -295,11 +295,6 @@ trait NoerdDetail
         }
     }
 
-    protected function resolveImageFieldKey(string $fieldName): string
-    {
-        return str_replace('detailData.', '', $fieldName);
-    }
-
     /**
      * Dispatch the embedded form-state sync to the hosting page. Kept separate so
      * components with their own updatedDetailData() hook can still trigger it.

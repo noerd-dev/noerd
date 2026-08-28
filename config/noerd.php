@@ -56,6 +56,19 @@ return [
         'symbol_position' => 'after',
     ],
 
+    /*
+     * Display formats for list cells and CSV exports. Unset keys derive from
+     * the active locale: a German UI renders 31.12.2025, every other locale
+     * ISO-style 2025-12-31 (see Noerd\Helpers\FormatHelper).
+     */
+    'format' => [
+        'date' => env('NOERD_FORMAT_DATE'),
+        'datetime' => env('NOERD_FORMAT_DATETIME'),
+        'decimal_separator' => env('NOERD_FORMAT_DECIMAL_SEPARATOR'),
+        'thousands_separator' => env('NOERD_FORMAT_THOUSANDS_SEPARATOR'),
+        'csv_delimiter' => env('NOERD_CSV_DELIMITER', ';'),
+    ],
+
     'branding' => [
         'logo' => env('NOERD_LOGO', ''),
         'favicon' => env('NOERD_FAVICON', ''),

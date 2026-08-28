@@ -88,7 +88,7 @@
                 @keydown.arrow-up.prevent="moveUp()"
                 @keydown.arrow-down.prevent="moveDown()"
                 @keydown.escape="open = false"
-                placeholder="{{ __('Suchen und hinzufügen...') }}"
+                placeholder="{{ __('Search and add…') }}"
                 class="focus:ring-brand-border block h-10 w-full rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white py-2 ps-3 pe-3 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 shadow-xs focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:border-b-zinc-200 disabled:text-zinc-500 disabled:placeholder-zinc-400/70 disabled:shadow-none sm:text-sm"
             />
 

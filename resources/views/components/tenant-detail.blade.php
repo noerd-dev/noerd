@@ -46,6 +46,11 @@ new class extends Component {
         $this->storeProcess($tenant);
     }
 
+    /**
+     * Deliberate no-op override: NoerdPage::delete() would remove the tenant
+     * record, and the page shortcut (ctrl+backspace) resolves delete() via
+     * method_exists. Tenants are never deleted from this screen.
+     */
     public function delete(): void
     {
     }

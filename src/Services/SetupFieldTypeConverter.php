@@ -3,6 +3,7 @@
 namespace Noerd\Services;
 
 use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Models\SetupLanguage;
 
 class SetupFieldTypeConverter
 {
@@ -49,26 +50,16 @@ class SetupFieldTypeConverter
      */
     private static function convertToTranslatableField(mixed $value): array
     {
-        // If already in translatable format, return as-is
-        if (is_array($value) && (isset($value['de']) || isset($value['en']))) {
+        $codes = SetupLanguage::getActiveCodes() ?: ['en'];
+
+        // If already in translatable format (keyed by an active language), return as-is
+        if (is_array($value) && array_intersect($codes, array_keys($value)) !== []) {
             return $value;
         }
 
-        // Convert string to translatable format
-        if (is_string($value)) {
-            return [
-                'de' => $value,
-                'en' => $value,
-            ];
-        }
+        $stringValue = is_string($value) ? $value : (string) $value;
 
-        // Default fallback
-        $stringValue = (string) $value;
-
-        return [
-            'de' => $stringValue,
-            'en' => $stringValue,
-        ];
+        return array_fill_keys($codes, $stringValue);
     }
 
     /**
@@ -76,9 +67,9 @@ class SetupFieldTypeConverter
      */
     private static function convertFromTranslatableField(mixed $value): mixed
     {
-        // If it's a translatable array, extract the German value as default
+        // If it's a translatable array, extract the tenant's default language
         if (is_array($value)) {
-            return $value['de'] ?? $value['en'] ?? '';
+            return $value[SetupLanguage::getDefaultCode()] ?? (reset($value) ?: '');
         }
 
         return $value;

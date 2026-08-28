@@ -58,7 +58,6 @@ use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
-use Noerd\Services\ListQueryContext;
 use Noerd\Services\NavigationService;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
@@ -99,7 +98,6 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(WriteGuardHook::class);
         ComponentHookRegistry::register(ComponentAccessHook::class);
 
-        $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);
         $this->app->singleton(TopBarRegistry::class);
         $this->app->singleton(HeaderActionsRegistry::class);

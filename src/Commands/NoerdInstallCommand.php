@@ -177,14 +177,6 @@ class NoerdInstallCommand extends Command
         return $results;
     }
 
-    protected function mergeResults(array $a, array $b): array
-    {
-        foreach (['created_dirs', 'copied_files', 'skipped_files', 'overwritten_files'] as $key) {
-            $a[$key] = ($a[$key] ?? 0) + ($b[$key] ?? 0);
-        }
-        return $a;
-    }
-
     /**
      * Setup frontend assets and configuration
      */

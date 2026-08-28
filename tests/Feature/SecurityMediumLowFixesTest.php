@@ -31,6 +31,7 @@ it('neutralizes CSV formula-triggering values in the export', function (): void 
     // Ordinary text is untouched.
     expect($list->format('Acme GmbH', ['type' => 'text']))->toBe('Acme GmbH');
     // Numbers keep their formatting (a negative number is not a formula here).
+    config(['noerd.format.decimal_separator' => ',', 'noerd.format.thousands_separator' => '.']);
     expect($list->format(-5, ['type' => 'number']))->toBe('-5,00');
 });
 
