@@ -37,14 +37,14 @@ new class extends Component {
         ]);
 
         foreach ($this->temporaryFiles as $file) {
-            // Konvertiere TemporaryUploadedFile zu Array-Format für MediaUploadService
+            // Convert the TemporaryUploadedFile into the array format MediaUploadService expects
             $this->files[] = [
                 'name' => $file->getClientOriginalName(),
                 'extension' => $file->getClientOriginalExtension(),
                 'size' => $file->getSize(),
                 'path' => $file->getRealPath(),
                 'mime_type' => $file->getMimeType(),
-                // Behalte auch das Original-Objekt für die Anzeige
+                // Keep the original object as well, for display
                 '_original' => $file
             ];
         }
@@ -55,12 +55,12 @@ new class extends Component {
 
     public function removeFile($index): void
     {
-        // Lösche temporäre Datei wenn vorhanden
+        // Delete the temporary file if present
         if (is_array($this->files) && isset($this->files[$index]['_original']) && method_exists($this->files[$index]['_original'], 'delete')) {
             try {
                 $this->files[$index]['_original']->delete();
             } catch (\Exception $e) {
-                // Fehler beim Löschen ignorieren
+                // Ignore deletion errors
             }
         }
 
@@ -75,14 +75,14 @@ new class extends Component {
 
     public function clearFiles(): void
     {
-        // Lösche alle temporären Dateien
+        // Delete all temporary files
         if (is_array($this->files)) {
             foreach ($this->files as $file) {
                 if (isset($file['_original'])) {
                     try {
                         $file['_original']->delete();
                     } catch (\Exception $e) {
-                        // Fehler beim Löschen ignorieren
+                        // Ignore deletion errors
                     }
                 }
             }

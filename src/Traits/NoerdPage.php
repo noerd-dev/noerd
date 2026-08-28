@@ -319,11 +319,6 @@ trait NoerdPage
         $this->dispatch('$refresh');
     }
 
-    public function callAMethod(callable $callback)
-    {
-        return call_user_func($callback);
-    }
-
     /**
      * Open the detail of the record a relation field points at. $detailRoute is
      * the preferred target (the browser URL is rewritten to the record);

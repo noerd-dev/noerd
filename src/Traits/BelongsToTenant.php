@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Scopes\TenantScope;
 
@@ -16,12 +16,14 @@ trait BelongsToTenant
         static::addGlobalScope(new TenantScope());
 
         static::creating(function ($model): void {
-            // Resolve through noerd's own guard so a host guard's user (e.g.
-            // Nova) never stamps — or skips stamping — the tenant id.
-            $user = NoerdAuth::user();
+            // Stamp from the SAME resolver the tenant scope filters by, so a
+            // record is never written with a tenant the scope would exclude. It
+            // reads noerd's own guard, so a host guard's user (e.g. Nova) never
+            // stamps — or skips stamping — the tenant id.
+            $tenantId = TenantHelper::currentTenantId();
 
-            if ($user && $user->selected_tenant_id && ! $model->tenant_id) {
-                $model->tenant_id = $user->selected_tenant_id;
+            if ($tenantId && ! $model->tenant_id) {
+                $model->tenant_id = $tenantId;
             }
         });
     }

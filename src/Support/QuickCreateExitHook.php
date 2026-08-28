@@ -9,12 +9,11 @@ use Noerd\Traits\NoerdPage;
 
 /**
  * Makes the quick-create exit a framework default for every detail component,
- * so it no longer has to be wired per component.
+ * with no per-component wiring.
  *
  * Quick-create is a narrow modal for NEW records only (see the NoerdDetail trait).
- * Historically a detail's store() had to call storeProcess() to switch the modal
- * out of quick-create mode after saving; the ~45 details that hand-roll their
- * store() never did, so their modal stayed narrow with only the required fields.
+ * Once such a record is saved and gets its id, the modal must leave quick-create
+ * mode so the full detail renders and the panel widens.
  *
  * This global Livewire ComponentHook runs the exit after EVERY action: its call()
  * returns a finish callback that fires once the wrapped action has run — after the

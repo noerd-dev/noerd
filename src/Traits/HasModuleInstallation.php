@@ -60,16 +60,6 @@ trait HasModuleInstallation
     abstract protected function getSourceDir(): string;
 
     /**
-     * Get the navigation source folder name.
-     *
-     * @deprecated No longer needed with new app-configs structure
-     */
-    protected function getNavigationSourceFolder(): string
-    {
-        return $this->getModuleKey();
-    }
-
-    /**
      * Get additional subdirectories to copy (beyond lists and details).
      * Example: ['collections', 'forms'] for CMS
      *
@@ -276,7 +266,7 @@ trait HasModuleInstallation
                 $this->copyDirectoryContents($listsSource, $listsTarget);
             }
 
-            // Copy details (formerly models/components)
+            // Copy details
             $detailsSource = $sourceDir . DIRECTORY_SEPARATOR . 'details';
             $detailsTarget = $targetDir . DIRECTORY_SEPARATOR . 'details';
             if (is_dir($detailsSource)) {

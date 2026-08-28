@@ -272,7 +272,7 @@ class NoerdInstallCommand extends Command
      * Offer to remove the obsolete tailwind.config.js brand bridge
      *
      * Brand colors are registered as `--color-brand-*` in the package's noerd.css, so the generated
-     * config and its `@config` line in app.css are no longer needed. A host-customised config is
+     * config and its `@config` line in app.css are obsolete. A host-customised config is
      * only reported — it is never removed automatically.
      */
     protected function migrateLegacyTailwindConfig(FrontendScaffolder $scaffolder): void

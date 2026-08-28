@@ -2,10 +2,20 @@
 
 namespace Noerd\Services;
 
+use Illuminate\Support\Str;
 use Noerd\Contracts\MediaResolverContract;
 
 class NullMediaResolver implements MediaResolverContract
 {
+    private const ALLOWED_MIMES = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+    ];
+
+    private const MAX_BYTES = 10 * 1024 * 1024;
+
     public function getPreviewUrl(int $mediaId): ?string
     {
         return null;
@@ -27,7 +37,17 @@ class NullMediaResolver implements MediaResolverContract
             return null;
         }
 
-        $path = $uploadedFile->store('uploads', 'public');
+        // The fallback resolver stores to the PUBLIC disk, so anything served
+        // inline as active content (SVG, HTML) would be stored XSS on the app
+        // origin. Accept only raster images (by server-detected mime, not the
+        // client extension), cap the size, and force a safe extension + random
+        // name so the original filename can never traverse or execute.
+        $mime = $uploadedFile->getMimeType();
+        if (! isset(self::ALLOWED_MIMES[$mime]) || $uploadedFile->getSize() > self::MAX_BYTES) {
+            return null;
+        }
+
+        $path = $uploadedFile->storeAs('uploads', Str::uuid() . '.' . self::ALLOWED_MIMES[$mime], 'public');
 
         return '/storage/' . $path;
     }

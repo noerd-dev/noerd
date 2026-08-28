@@ -51,6 +51,8 @@ trait NoerdList
         'timestamp' => 'datetime',
     ];
 
+    protected const MAX_PER_PAGE = 200;
+
     public int $perPage = 50;
 
     public $lastChangeTime;
@@ -351,7 +353,7 @@ trait NoerdList
 
     public function listData(): array
     {
-        $rows = $this->listQuery($this->listModel)->paginate($this->perPage);
+        $rows = $this->listQuery($this->listModel)->paginate($this->clampPerPage($this->perPage));
 
         return $this->buildList($rows);
     }
@@ -389,6 +391,7 @@ trait NoerdList
 
     public function updatedPerPage(): void
     {
+        $this->perPage = $this->clampPerPage($this->perPage);
         session(['listPerPage' => $this->perPage]);
         $this->resetPage();
     }
@@ -665,8 +668,16 @@ trait NoerdList
             return;
         }
 
-        // Building the list query once populates resolvedModelClass for this request.
+        // Building the list query once populates resolvedModelClass and
+        // listQueryConfigName for the checks below.
         $this->resolvedListConfig();
+
+        // The method is public (Livewire-callable), but must only act when the
+        // list's YAML actually declares this bulk action — a list that never
+        // offered it can never be bulk-deleted through it.
+        if (!$this->listDeclaresBulkAction('deleteSelected')) {
+            return;
+        }
 
         // Server-side guard: the bulk-delete button is hidden for delete-denied
         // users, but the method stays directly invokable.
@@ -805,6 +816,30 @@ trait NoerdList
     public function builtListConfig(): array
     {
         return $this->builtListConfigCache ??= $this->resolvedListConfig();
+    }
+
+    /**
+     * Keep the client-controlled page size within sane bounds — an unbounded
+     * ->paginate($perPage) is a memory-exhaustion vector.
+     */
+    protected function clampPerPage(int $perPage): int
+    {
+        return max(1, min($perPage, self::MAX_PER_PAGE));
+    }
+
+    /**
+     * Whether the active list config declares a bulk action running the given
+     * method — the authorization for invoking that bulk action server-side.
+     */
+    protected function listDeclaresBulkAction(string $action): bool
+    {
+        foreach ($this->getListConfig($this->listQueryConfigName)['bulkActions'] ?? [] as $bulkAction) {
+            if (($bulkAction['action'] ?? null) === $action) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1001,12 +1036,40 @@ trait NoerdList
         }
 
         $this->applyColumnFilters($query, $modelClass);
+        $this->eagerLoadRelationColumns($query);
 
         $table = (new $modelClass())->getTable();
         $sortField = Schema::hasColumn($table, $this->sortField) ? $this->sortField : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
         return $query;
+    }
+
+    /**
+     * Eager-load the relations behind dotted relation columns
+     * (`customer.name`, `defaultDeliveryAddress.locality`) so rendering them does
+     * not lazy-load once per row. JSON-column paths (custom_attributes.x) resolve
+     * in memory and are skipped. Relation paths are validated by relationColumnPath().
+     */
+    protected function eagerLoadRelationColumns(Builder $query): void
+    {
+        $relations = [];
+
+        foreach ($this->getListConfig($this->listQueryConfigName)['columns'] ?? [] as $column) {
+            $field = $column['field'] ?? null;
+            if (! is_string($field) || ! self::isDottedField($field) || $this->isJsonColumnPath($field)) {
+                continue;
+            }
+
+            $path = $this->relationColumnPath($field);
+            if ($path !== null) {
+                $relations[$path['relation']] = true;
+            }
+        }
+
+        if ($relations !== []) {
+            $query->with(array_keys($relations));
+        }
     }
 
     /**
@@ -1467,10 +1530,24 @@ trait NoerdList
             'datetime' => $value ? Carbon::parse($value)->format('d.m.Y H:i') : '',
             'currency', 'number' => is_numeric($value)
                 ? number_format((float) $value, 2, ',', '.')
-                : (string) ($value ?? ''),
-            'badge' => __($this->badgeLabel($value, $column['options'] ?? [])),
-            default => (string) ($value ?? ''),
+                : $this->neutralizeCsvFormula((string) ($value ?? '')),
+            'badge' => $this->neutralizeCsvFormula(__($this->badgeLabel($value, $column['options'] ?? []))),
+            default => $this->neutralizeCsvFormula((string) ($value ?? '')),
         };
+    }
+
+    /**
+     * Excel/Sheets interpret a cell starting with =, +, -, @, tab or CR as a
+     * formula, so a value like `=HYPERLINK(...)` in a user-entered text field
+     * would execute on open. Prefix a single quote to keep such a value literal.
+     */
+    protected function neutralizeCsvFormula(string $value): string
+    {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 
     /**

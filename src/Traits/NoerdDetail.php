@@ -8,6 +8,8 @@ use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Support\RelationFormSync;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 /**
  * Trait for `*-detail` components: the model form on top of the NoerdPage base.
@@ -63,7 +65,7 @@ trait NoerdDetail
         $modelClass = $this->detailModel;
         $model = $modelClass::updateOrCreate(
             ['id' => $this->modelId],
-            RelationFormSync::strip($modelClass, $this->detailData),
+            $this->writableDetailData($modelClass),
         );
 
         $this->finishStore($model);
@@ -136,29 +138,18 @@ trait NoerdDetail
     #[On('setFieldValue')]
     public function setFieldValue(string $field, mixed $value, ?string $relationTitle = null): void
     {
-        if (str_starts_with($field, 'detailData.')) {
-            $key = str_replace('detailData.', '', $field);
-            $detailData = $this->detailData;
-            data_set($detailData, $key, $value);
-            $this->detailData = $detailData;
-        } else {
-            $key = $field;
-            $rootKey = Str::before($field, '.');
-
-            if (property_exists($this, $rootKey)) {
-                if ($rootKey === $field) {
-                    $this->{$field} = $value;
-                } else {
-                    $rootValue = $this->{$rootKey};
-                    data_set($rootValue, Str::after($field, $rootKey . '.'), $value);
-                    $this->{$rootKey} = $rootValue;
-                }
-            } else {
-                $detailData = $this->detailData;
-                data_set($detailData, $field, $value);
-                $this->detailData = $detailData;
-            }
+        // This is a client-dispatchable event, so it may only write into the
+        // detailData form bucket — never an arbitrary component property (modelId,
+        // detailModel, pageLayout, …). Every field component that emits it binds
+        // into detailData.* .
+        if (! str_starts_with($field, 'detailData.')) {
+            return;
         }
+
+        $key = str_replace('detailData.', '', $field);
+        $detailData = $this->detailData;
+        data_set($detailData, $key, $value);
+        $this->detailData = $detailData;
 
         if ($relationTitle !== null) {
             $relationKey = last(explode('.', $key));
@@ -183,12 +174,15 @@ trait NoerdDetail
 
     public function resolvePicklistOptions(string $picklistField): array
     {
-        if (method_exists($this, $picklistField)) {
+        // $picklistField is a public method name from the field YAML, but this is
+        // also a client-callable action — only invoke a genuine options provider
+        // (a method declaring an `array` return type), never an action like
+        // store()/delete() (which are `void`).
+        if (method_exists($this, $picklistField) && $this->returnsArray($picklistField)) {
             return $this->{$picklistField}();
         }
 
-        $registry = app(PicklistRegistry::class);
-        $provider = $registry->resolve($picklistField);
+        $provider = app(PicklistRegistry::class)->resolve($picklistField);
 
         return $provider ? $provider() : [];
     }
@@ -208,6 +202,97 @@ trait NoerdDetail
 
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+    }
+
+    protected function returnsArray(string $method): bool
+    {
+        $returnType = (new ReflectionMethod($this, $method))->getReturnType();
+
+        return $returnType instanceof ReflectionNamedType && $returnType->getName() === 'array';
+    }
+
+    /**
+     * Reduce the client-controlled $detailData to the columns the form is actually
+     * allowed to persist before mass assignment. A detail YAML is a pure model
+     * form, so only its declared fields may be written — this prevents a crafted
+     * request from injecting extra $detailData keys (roles, prices, ownership FKs,
+     * tenant_id) into a model that uses $guarded = []. Identity and tenant columns
+     * are never client-assignable regardless of the layout.
+     *
+     * @return array<string, mixed>
+     */
+    protected function writableDetailData(string $modelClass): array
+    {
+        $data = RelationFormSync::strip($modelClass, $this->detailData);
+
+        // The whitelist is derived from the YAML on disk, NOT from $this->pageLayout,
+        // which is itself a client-writable public property.
+        return $this->reduceToWritableKeys($data, $this->writableDetailDataKeys($modelClass));
+    }
+
+    /**
+     * Keep only the allowed top-level keys (when any are known) and always drop
+     * the identity/tenant/timestamp columns — those are set by the framework, not
+     * by the client payload.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<int, string>  $allowed
+     * @return array<string, mixed>
+     */
+    protected function reduceToWritableKeys(array $data, array $allowed): array
+    {
+        if ($allowed !== []) {
+            $data = array_intersect_key($data, array_flip($allowed));
+        }
+
+        unset($data['id'], $data['tenant_id'], $data['created_at'], $data['updated_at']);
+
+        return $data;
+    }
+
+    /**
+     * Top-level $detailData keys the active layout binds (recursing into blocks),
+     * read from the authoritative on-disk YAML. Empty when the component ships no
+     * field layout (e.g. legacy hand-built pages) — the caller then falls back to
+     * stripping only the identity/tenant columns.
+     *
+     * @return array<int, string>
+     */
+    protected function writableDetailDataKeys(string $modelClass): array
+    {
+        $component = $this->getDetailComponent();
+        if (Str::endsWith($component, '-page')) {
+            return [];
+        }
+
+        $fields = StaticConfigHelper::getComponentFields($component, $modelClass)['fields'] ?? [];
+
+        $keys = [];
+        $this->collectWritableDetailDataKeys($fields, $keys);
+
+        return array_values(array_unique($keys));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $fields
+     * @param  array<int, string>  $keys
+     */
+    protected function collectWritableDetailDataKeys(array $fields, array &$keys): void
+    {
+        foreach ($fields as $field) {
+            if (($field['type'] ?? '') === 'block') {
+                $this->collectWritableDetailDataKeys($field['fields'] ?? [], $keys);
+
+                continue;
+            }
+
+            $name = $field['name'] ?? null;
+            if (! is_string($name) || ! str_starts_with($name, 'detailData.')) {
+                continue;
+            }
+
+            $keys[] = Str::before(Str::after($name, 'detailData.'), '.');
+        }
     }
 
     protected function resolveImageFieldKey(string $fieldName): string

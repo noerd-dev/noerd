@@ -6,6 +6,7 @@ use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
@@ -16,7 +17,14 @@ function createUserWithSetupTenant(): NoerdUser
 {
     $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create();
-    $user->tenants()->attach($tenant->id);
+
+    // The system-settings page is admin-only and enforces it on mount, so the
+    // test user needs an ADMIN profile.
+    $adminProfile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'ADMIN',
+    ]);
+    $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
     TenantHelper::setSelectedTenantId($tenant->id);
     TenantHelper::setSelectedApp('SETUP');
 

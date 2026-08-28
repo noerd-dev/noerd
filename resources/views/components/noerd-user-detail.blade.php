@@ -60,6 +60,11 @@ new class extends Component {
 
     public function mount(): void
     {
+        // Defense in depth: this admin-only user editor can be reached outside its
+        // setup route (modal stack / generic component page). Enforce admin access
+        // here too, independent of the dynamic-mount guard.
+        abort_unless(NoerdAuth::user()?->isAdmin(), 403);
+
         $this->initDetail();
 
         $this->selectedTenant = auth()->user()->selectedTenant();

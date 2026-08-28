@@ -1,17 +1,39 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public string $password = '';
 
     /**
-     * Delete the currently authenticated user.
+     * Delete the currently authenticated user after confirming their password.
      */
     public function deleteUser(): void
     {
-        // TODO
+        $this->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = NoerdAuth::user();
+
+        if (! $user || ! Hash::check($this->password, $user->password)) {
+            $this->addError('password', __('This password does not match our records.'));
+
+            return;
+        }
+
+        NoerdAuth::guard()->logout();
+
+        $user->tenants()->detach();
+        $user->userSetting()->delete();
+        $user->delete();
+
+        session()->invalidate();
+        session()->regenerateToken();
+
+        $this->redirect('/', navigate: true);
     }
 }; ?>
 

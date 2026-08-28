@@ -2,6 +2,7 @@
 
 namespace Noerd\Traits;
 
+use Illuminate\Support\Str;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use RuntimeException;
@@ -67,14 +68,57 @@ trait NoerdSettingsPage
     protected function persistSettings(): void
     {
         $tenantId = TenantHelper::getSelectedTenantId();
+        $allowedByProperty = $this->settingsWritableKeys();
 
         foreach ($this->settingsModelMap() as $property => $modelClass) {
-            $modelClass::updateOrCreate(
-                ['tenant_id' => $tenantId],
-                collect($this->{$property})
-                    ->except(['id', 'tenant_id', 'created_at', 'updated_at'])
-                    ->toArray(),
-            );
+            $data = collect($this->{$property})
+                ->except(['id', 'tenant_id', 'created_at', 'updated_at']);
+
+            // A settings page is a pure form, so only the keys its YAML declares
+            // may be written — never an extra column injected into the client array.
+            $allowed = $allowedByProperty[$property] ?? [];
+            if ($allowed !== []) {
+                $data = $data->only($allowed);
+            }
+
+            $modelClass::updateOrCreate(['tenant_id' => $tenantId], $data->toArray());
+        }
+    }
+
+    /**
+     * Allowed top-level keys per bound property, read from the settings YAML on
+     * disk (not the client-controlled $pageLayout).
+     *
+     * @return array<string, array<int, string>>
+     */
+    protected function settingsWritableKeys(): array
+    {
+        $map = [];
+        $this->collectSettingsWritableKeys(StaticConfigHelper::getSettingsFields($this->getName())['fields'] ?? [], $map);
+
+        return $map;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $fields
+     * @param  array<string, array<int, string>>  $map
+     */
+    protected function collectSettingsWritableKeys(array $fields, array &$map): void
+    {
+        foreach ($fields as $field) {
+            if (($field['type'] ?? '') === 'block') {
+                $this->collectSettingsWritableKeys($field['fields'] ?? [], $map);
+
+                continue;
+            }
+
+            $name = $field['name'] ?? null;
+            if (! is_string($name) || ! str_contains($name, '.')) {
+                continue;
+            }
+
+            [$property, $rest] = explode('.', $name, 2);
+            $map[$property][] = Str::before($rest, '.');
         }
     }
 

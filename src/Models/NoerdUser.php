@@ -58,7 +58,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     public function adminTenants(): BelongsToMany
     {
-        // TODO
         $adminIds = Profile::where('key', 'ADMIN')->pluck('id');
 
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
