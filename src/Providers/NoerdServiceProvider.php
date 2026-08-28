@@ -34,6 +34,7 @@ use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
@@ -71,9 +72,11 @@ use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LockedPropertiesHook;
+use Noerd\Support\FieldContext;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\RelationFormPersistHook;
+use Noerd\Support\SchemaColumnCache;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\WriteGuardHook;
 use Noerd\View\Components\AppLayout;
@@ -137,17 +140,56 @@ class NoerdServiceProvider extends ServiceProvider
         // instance inside one Pest process — flush them whenever a fresh app
         // boots (a per-request no-op under FPM, where statics die anyway).
         $this->app->booted(function (): void {
-            StaticConfigHelper::flushRuntimeCaches();
-            TenantHelper::clearCache();
-            ThemeHelper::clearCache();
-            ThemeContext::clear();
-            $this->app->make(ThemeRegistry::class)->clearCache();
+            $this->flushRequestState();
+            // The schema cache survives ordinary boots (it describes database
+            // structure, not request state) — but a fresh app in a test process
+            // may point at a DIFFERENT database (testbench sqlite vs. host
+            // MySQL) whose tables share names, so it must reset here too.
+            SchemaColumnCache::clear();
         });
+
+        // Migrations change what the schema cache describes — never keep
+        // serving the pre-migration column listing.
+        Event::listen(\Illuminate\Database\Events\MigrationsEnded::class, fn() => SchemaColumnCache::clear());
+
+        // Under Octane booted() fires once per WORKER, not per request — the
+        // same flush must run before every request, or one user's memoized
+        // tenant/config/theme state leaks into the next request the worker
+        // serves. Guarded by class_exists so the listener only registers when
+        // Octane is installed. The schema cache deliberately survives requests.
+        if (class_exists(\Laravel\Octane\Events\RequestReceived::class)) {
+            Event::listen(\Laravel\Octane\Events\RequestReceived::class, function (): void {
+                $this->flushRequestState();
+                // Stateful singletons are rebuilt per request: the title
+                // resolver memoizes tenant-scoped DB values.
+                $this->app->forgetInstance(RelationTitleResolver::class);
+            });
+        }
 
         // The navigation is injected by several layout views per page — a
         // singleton keeps it at one build per request (the structure itself is
         // additionally memoized in StaticConfigHelper's runtime cache).
         $this->app->singleton(NavigationService::class);
+    }
+
+    /**
+     * Drop every request-scoped PHP static the package maintains. Runs on app
+     * boot (fresh per test in one Pest process, per-request no-op under FPM)
+     * and — via the Octane RequestReceived listener — before every Octane
+     * request. The schema column listing is deliberately not part of this
+     * flush: it describes the database structure, not request state (see the
+     * boot hook and the MigrationsEnded listener).
+     */
+    private function flushRequestState(): void
+    {
+        StaticConfigHelper::flushRuntimeCaches();
+        TenantHelper::clearCache();
+        ThemeHelper::clearCache();
+        ThemeContext::clear();
+        FieldContext::clear();
+        CurrencyHelper::clearCache();
+        DatabaseSetupCollectionDefinitionRepository::resetCache();
+        $this->app->make(ThemeRegistry::class)->clearCache();
     }
 
     public function boot(): void

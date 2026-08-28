@@ -24,6 +24,7 @@ use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\RelationTitleResolver;
+use Noerd\Support\SchemaColumnCache;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -196,9 +197,6 @@ trait NoerdList
     /** One reusable instance of the resolved model, for table/cast introspection. */
     private ?Model $resolvedModelInstanceMemo = null;
 
-    /** @var array<string, array<string, array<string, mixed>>> Schema columns per table, keyed by column name. */
-    private static array $schemaColumnCache = [];
-
     /**
      * Whether a column field addresses a nested path rather than a real DB column — e.g. a custom
      * attribute (`custom_attributes.sap_number`) or a relation (`customer.name`). Such fields resolve at
@@ -247,7 +245,7 @@ trait NoerdList
             return;
         }
 
-        $this->perPage = session('listPerPage', 50);
+        $this->perPage = session("listPerPage.{$this->componentName()}", 50);
         $this->loadListFilters();
 
         // Column filters: a ?cf[...] URL param (shared link) wins over the session
@@ -316,6 +314,18 @@ trait NoerdList
         }
 
         $this->syncListViewParam();
+
+        // Deep-link support: ?{entity}Id=5 opens the record's modal over the
+        // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
+        // updates POST to /livewire/update and carry no page query, and the
+        // former `rendering()` hook was both accidental-initial-load-only and
+        // silently disabled by any component defining its own rendering().
+        $deepLinkId = (int) request()->query($this->getDeepLinkParam());
+        if ($deepLinkId) {
+            $this->listAction($deepLinkId);
+        } elseif (request()->query('create')) {
+            $this->listAction();
+        }
     }
 
     /**
@@ -362,19 +372,6 @@ trait NoerdList
         return $this->buildList($rows);
     }
 
-    public function rendering(): void
-    {
-        $deepLinkId = request()->query($this->getDeepLinkParam());
-
-        if ((int) $deepLinkId) {
-            $this->listAction((int) $deepLinkId);
-        }
-
-        if (request()->create) {
-            $this->listAction();
-        }
-    }
-
     /**
      * Switch the active list view and remember it per component in the session.
      * Unknown keys are ignored (e.g. a stale dropdown after a view YAML was removed).
@@ -395,7 +392,7 @@ trait NoerdList
     public function updatedPerPage(): void
     {
         $this->perPage = $this->clampPerPage($this->perPage);
-        session(['listPerPage' => $this->perPage]);
+        session(["listPerPage.{$this->componentName()}" => $this->perPage]);
         $this->resetPage();
     }
 
@@ -443,6 +440,12 @@ trait NoerdList
         $this->persistListSort();
     }
 
+    /**
+     * The header filters live in ONE session bucket shared across lists ON
+     * PURPOSE: NoerdPage::setPreselect() seeds it from detail pages so a
+     * related list opens pre-filtered, and preselect() reads it back. Only
+     * columns whitelisted per list (getAllowedListFilterColumns) ever apply.
+     */
     public function loadListFilters(): void
     {
         $this->listFilters = session('listFilters', []);
@@ -1277,17 +1280,15 @@ trait NoerdList
 
     /**
      * The table's schema columns keyed by column name, introspected at most once
-     * per table and process. Backs every column-existence check in the trait:
-     * Schema::hasColumn() is NOT cached by Laravel and issues one
-     * information-schema query per call — on an 8-column list that used to mean
-     * a two-digit number of metadata queries per render.
+     * per table and process (see SchemaColumnCache) — on an 8-column list the
+     * uncached Schema::hasColumn() calls used to mean a two-digit number of
+     * metadata queries per render.
      *
      * @return array<string, array<string, mixed>>
      */
     protected static function tableColumns(string $table): array
     {
-        return self::$schemaColumnCache[$table]
-            ??= collect(Schema::getColumns($table))->keyBy('name')->all();
+        return SchemaColumnCache::columns($table);
     }
 
     /**
@@ -1295,7 +1296,7 @@ trait NoerdList
      */
     protected static function tableHasColumn(string $table, string $column): bool
     {
-        return array_key_exists($column, self::tableColumns($table));
+        return SchemaColumnCache::hasColumn($table, $column);
     }
 
     /**

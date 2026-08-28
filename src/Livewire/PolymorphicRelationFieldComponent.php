@@ -17,10 +17,17 @@ use Noerd\Support\RelationFieldDefinition;
  */
 abstract class PolymorphicRelationFieldComponent extends Component
 {
+    // Mount-established identity/config is #[Locked] — a crafted update must
+    // never repoint the field at another form key or widen the type whitelist.
+    // $value, $currentType, $selectedRelationType and $displayTitle stay
+    // mutable: they carry the user's selection.
+    #[Locked]
     public string $fieldName = '';
 
+    #[Locked]
     public string $typeField = '';
 
+    #[Locked]
     public string $label = '';
 
     public mixed $value = null;
@@ -28,22 +35,28 @@ abstract class PolymorphicRelationFieldComponent extends Component
     public ?string $currentType = null;
 
     /** @var array<int, string> */
+    #[Locked]
     public array $allowedTypes = [];
 
+    #[Locked]
     public bool $required = false;
 
     #[Locked]
     public bool $readonly = false;
 
     /** Optional YAML `helpText`, rendered as a tooltip next to the label. */
+    #[Locked]
     public string $helpText = '';
 
+    #[Locked]
     public mixed $modelId = null;
 
     /** Row number supplied by the detail block in themes that number their rows. */
+    #[Locked]
     public ?int $number = null;
 
     /** Theme the owning detail block renders in — selects the element template. */
+    #[Locked]
     public string $theme = 'default';
 
     public string $selectedRelationType = '';
