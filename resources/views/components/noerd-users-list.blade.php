@@ -37,6 +37,11 @@ new class () extends Component {
         if (in_array($userId, $allowedUserIds) === false) {
             abort(401);
         }
+
+        // A super admin is never impersonatable from a tenant-admin screen:
+        // attaching such an account to one's own tenant would otherwise be a
+        // direct path to a full takeover.
+        abort_if(NoerdUser::whereKey($userId)->value('super_admin'), 403);
         session(['impersonating_from' => NoerdAuth::id()]);
 
         // Clear tenant session so InitializeTenantSession will set the correct tenant
@@ -53,11 +58,17 @@ new class () extends Component {
 
         $rows = $this->listQuery($this->listModel)
             ->whereHas('tenants', function ($relationQuery) use ($tenants): void {
-                if (! empty($this->listFilters['tenant_id'])) {
-                    $relationQuery->where('tenant_id', $this->listFilters['tenant_id']);
-                } else {
-                    $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
-                }
+                $adminTenantIds = $tenants->pluck('id')->map(fn($id): int => (int) $id)->all();
+
+                // The header filter is client input (it round-trips through the
+                // session), so it may only ever NARROW the admin's own tenants —
+                // taking it at face value listed the users of any tenant.
+                $requested = (int) ($this->listFilters['tenant_id'] ?? 0);
+                $scope = $requested > 0
+                    ? array_values(array_intersect($adminTenantIds, [$requested]))
+                    : $adminTenantIds;
+
+                $relationQuery->whereIn('tenant_id', $scope ?: [0]);
             })
             ->with(['tenants'])
             ->paginate($this->perPage);
