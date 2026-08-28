@@ -51,7 +51,7 @@
                         'relations' => $relations ?? [],
                         'action' => $action ?? $componentAction,
                         'states' => $this->states(),
-                        'tableFilters' => $this->tableFilters(),
+                        'tableFilters' => $this->tableFilters,
                     ])
             </div>
         @endif

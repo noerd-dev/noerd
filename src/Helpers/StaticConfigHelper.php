@@ -266,6 +266,24 @@ class StaticConfigHelper
             return null;
         }
 
+        // Memoized per request: the layout injects the navigation from several
+        // views (app bar, sidebar, top bar), and building it runs the dynamic
+        // providers (collection YAML globbing) plus a Route::has() per entry.
+        // Keyed by the runtime context — app, tenant and user all shape the
+        // filtered result.
+        $cacheKey = 'navigation.' . self::runtimeContextKey();
+        if (array_key_exists($cacheKey, self::$runtimeCache)) {
+            return self::$runtimeCache[$cacheKey];
+        }
+
+        return self::$runtimeCache[$cacheKey] = self::buildNavigationStructure($currentApp);
+    }
+
+    /**
+     * @see getNavigationStructure()
+     */
+    private static function buildNavigationStructure(string $currentApp): ?array
+    {
         $yamlPath = base_path("app-configs/{$currentApp}/navigation.yml");
 
         if (!file_exists($yamlPath)) {
@@ -454,17 +472,22 @@ class StaticConfigHelper
     /**
      * Parse a YAML file through the mtime-guarded cache: an edited file (dev,
      * test fixtures) is re-parsed, an unchanged one is parsed once per process.
+     * Public so other YAML readers (e.g. the collection definition repository)
+     * share the same cache instead of re-parsing per call.
      */
-    private static function parseYamlFile(string $path): array
+    public static function parseYamlFile(string $path): array
     {
-        $mtime = @filemtime($path) ?: 0;
+        // mtime alone misses a rewrite within the same second (runtime-written
+        // test fixtures above all) — the size catches practically all of those.
+        $stat = @stat($path);
+        $version = $stat ? $stat['mtime'] . ':' . $stat['size'] : '0';
         $entry = self::$yamlCache[$path] ?? null;
-        if ($entry !== null && $entry[0] === $mtime) {
+        if ($entry !== null && $entry[0] === $version) {
             return $entry[1];
         }
 
         $parsed = Yaml::parse(file_get_contents($path) ?: '') ?: [];
-        self::$yamlCache[$path] = [$mtime, $parsed];
+        self::$yamlCache[$path] = [$version, $parsed];
 
         return $parsed;
     }
@@ -496,11 +519,8 @@ class StaticConfigHelper
         return self::$runtimeCache[$cacheKey] ??= (function (): array {
             $labels = ['setup' => __('Setup')];
 
-            $tenant = TenantHelper::getSelectedTenant();
-            if ($tenant) {
-                foreach ($tenant->tenantApps()->pluck('title', 'name') as $name => $title) {
-                    $labels[mb_strtolower((string) $name)] = (string) $title;
-                }
+            foreach (self::tenantAppRows()->pluck('title', 'name') as $name => $title) {
+                $labels[mb_strtolower((string) $name)] = (string) $title;
             }
 
             return $labels;
@@ -658,24 +678,32 @@ class StaticConfigHelper
         $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0) . '.' . (NoerdAuth::id() ?? 0);
 
         return self::$runtimeCache[$cacheKey] ??= (function (): array {
-            $tenant = TenantHelper::getSelectedTenant();
-            if (!$tenant) {
-                return ['setup'];
-            }
-
-            $tenantAppNames = $tenant->tenantApps()->pluck('name')->toArray();
-
             // 'setup' is never filtered — its routes are admin-gated by the
             // setup middleware anyway.
             $allowedFolders = ['setup'];
-            foreach ($tenantAppNames as $appName) {
+            foreach (self::tenantAppRows()->pluck('name') as $appName) {
                 if (AccessHelper::canAccessApp($appName)) {
-                    $allowedFolders[] = mb_strtolower($appName);
+                    $allowedFolders[] = mb_strtolower((string) $appName);
                 }
             }
 
             return $allowedFolders;
         })();
+    }
+
+    /**
+     * The selected tenant's active app rows, fetched ONCE per request — the
+     * allowed folders and the app labels both derive from this collection
+     * instead of issuing their own tenantApps() queries.
+     *
+     * @return \Illuminate\Support\Collection<int, TenantApp>
+     */
+    private static function tenantAppRows(): \Illuminate\Support\Collection
+    {
+        $cacheKey = 'tenantAppRows.' . (TenantHelper::getSelectedTenantId() ?? 0);
+
+        return self::$runtimeCache[$cacheKey]
+            ??= TenantHelper::getSelectedTenant()?->tenantApps()->get() ?? collect();
     }
 
     /**

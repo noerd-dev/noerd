@@ -77,17 +77,24 @@ new class extends Component {
 
         $this->detailData = $user->toArray();
 
+        // One query for the edited user's tenant assignments instead of one
+        // per admin tenant. Mounts re-run on every modal-stack update, so this
+        // loop must stay cheap.
+        $profileByTenant = $user->exists
+            ? $user->tenants->mapWithKeys(fn($tenant) => [$tenant->id => $tenant->pivot->profile_id])->all()
+            : [];
+
         foreach (auth()->user()->adminTenants as $tenant) {
             $this->possibleTenants[$tenant->id] = $tenant->toArray();
-            $userProfile = $tenant->users()->where('user_id', $user->id)->first();
-            $profileId = $userProfile?->pivot->profile_id;
+            $profileId = $profileByTenant[$tenant->id] ?? null;
 
             $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileId;
             $hasAccess = (bool) $profileId;
             $this->possibleTenants[$tenant->id]['hasAccess'] = $hasAccess;
 
             if (! $hasAccess) {
-                $this->possibleTenants[$tenant->id]['selectedProfile'] = $tenant->profiles->first()->id;
+                // A tenant without any profile row simply offers no preselect.
+                $this->possibleTenants[$tenant->id]['selectedProfile'] = $tenant->profiles->first()?->id;
             }
         }
     }

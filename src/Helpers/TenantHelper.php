@@ -8,6 +8,16 @@ use Noerd\Models\TenantApp;
 class TenantHelper
 {
     /**
+     * Request memo for getSelectedTenant(): the selected tenant is read from a
+     * dozen call sites per render (config discovery, middleware, blades) and
+     * Tenant::find() has no identity map. Flushed by the provider's booted()
+     * hook and whenever the selection changes.
+     *
+     * @var array<int, Tenant|null>
+     */
+    private static array $tenantMemo = [];
+
+    /**
      * The tenant the current request operates in — the SINGLE source both the
      * tenant scope and the tenant stamp read, so a record is never written with a
      * different tenant than the one it is later filtered by.
@@ -82,6 +92,7 @@ class TenantHelper
     public static function setSelectedTenantId(?int $tenantId): void
     {
         session(['noerd.selected_tenant_id' => $tenantId]);
+        self::clearCache();
 
         if (NoerdAuth::check()) {
             NoerdAuth::user()->setting->update(['selected_tenant_id' => $tenantId]);
@@ -89,14 +100,30 @@ class TenantHelper
     }
 
     /**
-     * Get the selected Tenant model.
+     * Get the selected Tenant model (memoized per request).
      * Works for both authenticated users and guests.
      */
     public static function getSelectedTenant(): ?Tenant
     {
         $tenantId = self::getSelectedTenantId();
 
-        return $tenantId ? Tenant::find($tenantId) : null;
+        if (!$tenantId) {
+            return null;
+        }
+
+        if (!array_key_exists($tenantId, self::$tenantMemo)) {
+            self::$tenantMemo[$tenantId] = Tenant::find($tenantId);
+        }
+
+        return self::$tenantMemo[$tenantId];
+    }
+
+    /**
+     * Drop the memoized tenant model (fresh app boot, changed selection).
+     */
+    public static function clearCache(): void
+    {
+        self::$tenantMemo = [];
     }
 
     /**

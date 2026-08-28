@@ -58,11 +58,13 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     public function adminTenants(): BelongsToMany
     {
-        $adminIds = Profile::where('key', 'ADMIN')->pluck('id');
-
+        // The admin-profile constraint is a subquery, NOT a query executed while
+        // the relation is being DEFINED — defining a relation must never hit the
+        // database (it runs on every with()/whereHas() constraint build).
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
             ->withPivot('profile_id')
-            ->wherePivotIn('profile_id', $adminIds)->with('profiles');
+            ->wherePivotIn('profile_id', Profile::query()->select('id')->where('key', 'ADMIN'))
+            ->with('profiles');
     }
 
     public function initials(): string
@@ -93,12 +95,11 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             return ['badge' => '', 'text' => ''];
         }
 
-        $profileName = '';
-        $tenant = $this->tenants->where('id', $selectedTenantId)->first();
-        if ($tenant && $tenant->pivot->profile_id) {
-            $profile = Profile::find($tenant->pivot->profile_id);
-            $profileName = $profile?->name ?? '';
-        }
+        // One joined query instead of loading the full tenants collection plus a
+        // separate Profile::find() — same tenant-profile semantics as currentProfile().
+        $profileName = (string) ($this->profiles()
+            ->where('noerd_profiles.tenant_id', $selectedTenantId)
+            ->value('name') ?? '');
 
         return ['badge' => $profileName, 'text' => ''];
     }
@@ -177,7 +178,14 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     public function getLocaleAttribute(): string
     {
-        return $this->setting->locale ?? 'en';
+        // Read-only: SetUserLocale reads this on EVERY web request — a missing
+        // settings row must not trigger the write path ($this->setting would
+        // firstOrCreate). Writers keep going through getSettingAttribute().
+        if (!$this->relationLoaded('userSetting')) {
+            $this->setRelation('userSetting', $this->userSetting()->first());
+        }
+
+        return $this->userSetting?->locale ?? 'en';
     }
 
     public function setLocaleAttribute(string $value): void
@@ -188,23 +196,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     public function preferredLocale(): string
     {
         return $this->locale;
-    }
-
-    public function toArray()
-    {
-        $tenants = $this->clients?->pluck('id') ?? [];
-        foreach ($tenants as $tenant) {
-            $array[$tenant] = true;
-        }
-
-        return [
-            'id' => $this->id,
-            'email' => $this->email,
-            'name' => $this->name,
-            'selectedTenants' => $array ?? [],
-            'tenants' => $this->tenants,
-            'is_owner' => $this->is_owner,
-        ];
     }
 
     protected static function newFactory(): NoerdUserFactory

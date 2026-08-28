@@ -25,6 +25,7 @@ use Noerd\Scopes\SearchScope;
 use Noerd\Scopes\SortScope;
 use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\ListQueryContext;
+use Noerd\Services\RelationTitleResolver;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -193,6 +194,16 @@ trait NoerdList
     /** @var array<string, mixed>|null Last buildList() result, memoized per request. */
     protected ?array $builtListConfigCache = null;
 
+    /** @var array<string, bool>|null Request cache for isJsonColumnPath(), keyed by column field. */
+    protected ?array $jsonColumnPathCache = null;
+
+    /** @var array<string, array<string, mixed>> Request memo for getListConfig() (incl. layout overrides). */
+    protected array $listConfigMemo = [];
+
+    /** One reusable instance of the resolved model, for table/cast introspection. */
+    private ?Model $resolvedModelInstanceMemo = null;
+
+    /** @var array<string, array<string, array<string, mixed>>> Schema columns per table, keyed by column name. */
     private static array $schemaColumnCache = [];
 
     /**
@@ -398,6 +409,9 @@ trait NoerdList
 
     public function updatedSearch(): void
     {
+        // A new search shrinks the result set — staying on page 3 would show an
+        // empty table even though there are matches on page 1.
+        $this->resetPage();
         $this->syncListQueryContext();
     }
 
@@ -448,6 +462,7 @@ trait NoerdList
     public function storeActiveListFilters(): void
     {
         session(['listFilters' => $this->listFilters]);
+        $this->resetPage();
     }
 
     public function clearAllListFilters(): void
@@ -492,6 +507,7 @@ trait NoerdList
      *
      * @return array<int, array{field: string, label: string, value: string}>
      */
+    #[Computed]
     public function activeColumnFilterChips(): array
     {
         $active = array_filter(
@@ -507,8 +523,9 @@ trait NoerdList
             ->filter(fn($column): bool => isset($column['field']))
             ->keyBy('field');
         $picklistOptions = $this->picklistOptionsFromDetail();
-        $schemaTypes = $this->resolvedModelClass !== null
-            ? $this->schemaColumnTypeMap((new $this->resolvedModelClass())->getTable())
+        $model = $this->resolvedModelInstance();
+        $schemaTypes = $model !== null
+            ? $this->schemaColumnTypeMap($model->getTable())
             : [];
 
         $chips = [];
@@ -693,6 +710,9 @@ trait NoerdList
         }
 
         $this->selectedRecordIds = [];
+        // The guard checks above resolved (and memoized) the pre-delete list —
+        // drop it so the re-render queries the surviving rows.
+        $this->builtListConfigCache = null;
         $this->resetPage();
     }
 
@@ -858,6 +878,14 @@ trait NoerdList
      */
     protected function resolvedListConfig(): array
     {
+        // Memoized per request: actions like toggleSelectAllVisible() resolve the
+        // list before the render does — without the memo each resolution runs the
+        // full paginated query again. Mutating actions (deleteSelected) clear the
+        // cache so their re-render queries fresh rows.
+        if ($this->builtListConfigCache !== null) {
+            return $this->builtListConfigCache;
+        }
+
         if (property_exists($this, 'listModel') && $this->listModel) {
             return $this->listData();
         }
@@ -898,7 +926,7 @@ trait NoerdList
         }
 
         $allowed = $this->getAllowedListFilterColumns();
-        $filterTypes = collect($this->tableFilters())->pluck('type', 'column')->toArray();
+        $filterTypes = collect($this->tableFilters)->pluck('type', 'column')->toArray();
 
         foreach ($this->listFilters as $key => $value) {
             if (!in_array($key, $allowed) || !$value) {
@@ -1004,10 +1032,14 @@ trait NoerdList
      */
     protected function listQuery(string $modelClass, ?string $configName = null): Builder
     {
+        if ($this->resolvedModelClass !== $modelClass || $this->listQueryConfigName !== $configName) {
+            $this->filterableColumnCache = null;
+            $this->relationColumnPathCache = null;
+            $this->jsonColumnPathCache = null;
+            $this->resolvedModelInstanceMemo = null;
+        }
         $this->resolvedModelClass = $modelClass;
         $this->listQueryConfigName = $configName;
-        $this->filterableColumnCache = null;
-        $this->relationColumnPathCache = null;
 
         $query = $modelClass::query()
             ->withoutGlobalScope(SearchScope::class)
@@ -1020,17 +1052,19 @@ trait NoerdList
         }
 
         $listConfig = $this->getListConfig($configName);
+        $table = $this->resolvedModelInstance()->getTable();
 
         if (!empty($this->search)) {
             $searchableFields = !empty($listConfig['searchableColumns'])
                 ? $listConfig['searchableColumns']
                 : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
 
-            $table = (new $modelClass())->getTable();
-            $validFields = array_filter($searchableFields, fn($f) => Schema::hasColumn($table, $f));
+            $validFields = array_filter($searchableFields, fn($f) => is_string($f) && self::tableHasColumn($table, $f));
 
             if (!empty($validFields)) {
-                $search = $this->search;
+                // Escape LIKE wildcards so a literal % or _ in the search input
+                // matches literally — same rule as ColumnFilterParser.
+                $search = addcslashes($this->search, '\\%_');
                 $query->where(function (Builder $q) use ($validFields, $search): void {
                     foreach (array_values($validFields) as $index => $field) {
                         $index === 0
@@ -1044,8 +1078,7 @@ trait NoerdList
         $this->applyColumnFilters($query, $modelClass);
         $this->eagerLoadRelationColumns($query);
 
-        $table = (new $modelClass())->getTable();
-        $sortField = Schema::hasColumn($table, $this->sortField) ? $this->sortField : 'id';
+        $sortField = self::tableHasColumn($table, $this->sortField) ? $this->sortField : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
         return $query;
@@ -1098,7 +1131,7 @@ trait NoerdList
             return $this->filterableColumnCache;
         }
 
-        $table = (new $this->resolvedModelClass())->getTable();
+        $table = $this->resolvedModelInstance()->getTable();
 
         return $this->filterableColumnCache = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
             ->pluck('field')
@@ -1106,7 +1139,7 @@ trait NoerdList
                 && $field !== 'action'
                 && (self::isDottedField($field)
                     ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
-                    : Schema::hasColumn($table, $field)))
+                    : self::tableHasColumn($table, $field)))
             ->values()
             ->all();
     }
@@ -1124,10 +1157,16 @@ trait NoerdList
             return false;
         }
 
-        $model = new $this->resolvedModelClass();
+        $this->jsonColumnPathCache ??= [];
+
+        if (array_key_exists($field, $this->jsonColumnPathCache)) {
+            return $this->jsonColumnPathCache[$field];
+        }
+
+        $model = $this->resolvedModelInstance();
         $base = Str::before($field, '.');
 
-        return Schema::hasColumn($model->getTable(), $base)
+        return $this->jsonColumnPathCache[$field] = self::tableHasColumn($model->getTable(), $base)
             && $model->hasCast($base, ['array', 'json', 'object', 'collection']);
     }
 
@@ -1173,7 +1212,7 @@ trait NoerdList
             return;
         }
 
-        $table = (new $modelClass())->getTable();
+        $table = $this->resolvedModelInstance()->getTable();
         $schemaTypes = $this->schemaColumnTypeMap($table);
         $yamlTypes = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
             ->filter(fn($column): bool => isset($column['field'], $column['type']))
@@ -1230,8 +1269,7 @@ trait NoerdList
         // With zero rows (e.g. a column filter matching nothing) no model instance can
         // be pulled from the result set — fall back to the class listQuery() resolved,
         // so bool/date columns keep their type and the filter popover keeps its UI.
-        $model = $this->resolveModelFromRows($rows)
-            ?? ($this->resolvedModelClass !== null ? new $this->resolvedModelClass() : null);
+        $model = $this->resolveModelFromRows($rows) ?? $this->resolvedModelInstance();
         if (!$model) {
             return $listSettings;
         }
@@ -1270,18 +1308,51 @@ trait NoerdList
      */
     protected function schemaColumnTypeMap(string $table): array
     {
-        $schemaColumns = self::$schemaColumnCache[$table]
-            ??= Schema::getColumns($table);
-
         $columnTypeMap = [];
-        foreach ($schemaColumns as $col) {
+        foreach (self::tableColumns($table) as $name => $col) {
             $normalized = mb_strtolower(preg_replace('/\(.*\)/', '', $col['type_name']));
             if (isset(self::COLUMN_TYPE_MAP[$normalized])) {
-                $columnTypeMap[$col['name']] = self::COLUMN_TYPE_MAP[$normalized];
+                $columnTypeMap[$name] = self::COLUMN_TYPE_MAP[$normalized];
             }
         }
 
         return $columnTypeMap;
+    }
+
+    /**
+     * The table's schema columns keyed by column name, introspected at most once
+     * per table and process. Backs every column-existence check in the trait:
+     * Schema::hasColumn() is NOT cached by Laravel and issues one
+     * information-schema query per call — on an 8-column list that used to mean
+     * a two-digit number of metadata queries per render.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    protected static function tableColumns(string $table): array
+    {
+        return self::$schemaColumnCache[$table]
+            ??= collect(Schema::getColumns($table))->keyBy('name')->all();
+    }
+
+    /**
+     * Cached replacement for Schema::hasColumn() (see tableColumns()).
+     */
+    protected static function tableHasColumn(string $table, string $column): bool
+    {
+        return array_key_exists($column, self::tableColumns($table));
+    }
+
+    /**
+     * One shared instance of the resolved model class for table-name and cast
+     * introspection — the render path asks for it many times per request.
+     */
+    protected function resolvedModelInstance(): ?Model
+    {
+        if ($this->resolvedModelClass === null) {
+            return null;
+        }
+
+        return $this->resolvedModelInstanceMemo ??= new $this->resolvedModelClass();
     }
 
     protected function resolveModelFromRows(mixed $rows): ?Model
@@ -1313,6 +1384,7 @@ trait NoerdList
 
         $listSettings = $this->applyAutoColumnTypes($listSettings, $rows);
         $listSettings = $this->applyPicklistBadges($listSettings);
+        $this->primeRelationBadgeTitles($listSettings, $rows);
 
         // Object permissions: strip the affordances the current user may not use.
         // In-memory lists (no model class) stay unrestricted.
@@ -1392,6 +1464,43 @@ trait NoerdList
         }
 
         return $listSettings;
+    }
+
+    /**
+     * Resolve the titles of every `relationBadge` column for the current page in
+     * one query per column instead of one per cell: the resolver's per-id memo is
+     * primed with a whereIn batch, so the table cells only read memoized values.
+     */
+    protected function primeRelationBadgeTitles(array $listSettings, mixed $rows): void
+    {
+        $badgeFields = [];
+        foreach ($listSettings['columns'] ?? [] as $column) {
+            if (($column['type'] ?? null) === 'relationBadge' && isset($column['field'])) {
+                $badgeFields[] = $column['field'];
+            }
+        }
+        if ($badgeFields === []) {
+            return;
+        }
+
+        if ($rows instanceof LengthAwarePaginator || $rows instanceof Paginator) {
+            $collection = $rows->getCollection();
+        } elseif ($rows instanceof Collection) {
+            $collection = $rows;
+        } elseif (is_array($rows)) {
+            $collection = collect($rows);
+        } else {
+            return;
+        }
+
+        if ($collection->isEmpty()) {
+            return;
+        }
+
+        $resolver = app(RelationTitleResolver::class);
+        foreach ($badgeFields as $field) {
+            $resolver->prime($field, $collection->map(fn($row) => data_get($row, $field))->all());
+        }
     }
 
     /**
@@ -1488,6 +1597,28 @@ trait NoerdList
      * In select mode, uses selectListConfig if set.
      */
     protected function getListConfig(?string $customName = null): array
+    {
+        // Memoized per request: the render path resolves the config from several
+        // places (query, filters, chips, bulk-action guard), and every raw
+        // resolution re-runs the layout-override hook — DB-backed in noerd-pro.
+        $memoKey = implode('|', [
+            $customName ?? '',
+            $this->listView ?? '',
+            $this->listViewApp ?? '',
+            $this->listActionMethod,
+            $this->selectListConfig ?? '',
+        ]);
+        if (array_key_exists($memoKey, $this->listConfigMemo)) {
+            return $this->listConfigMemo[$memoKey];
+        }
+
+        return $this->listConfigMemo[$memoKey] = $this->resolveListConfig($customName);
+    }
+
+    /**
+     * @see getListConfig()
+     */
+    private function resolveListConfig(?string $customName): array
     {
         if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
             return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
@@ -1615,7 +1746,7 @@ trait NoerdList
         }
 
         $table = $model->getTable();
-        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+        if (!Schema::hasTable($table) || !self::tableHasColumn($table, $column)) {
             return null;
         }
 

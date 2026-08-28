@@ -43,7 +43,7 @@
                         @blur="searchFocused = false"
                         @keydown.escape="$refs.searchInput.blur()"
                         placeholder="{{ __('Search') }}"
-                        wire:model.live="search"
+                        wire:model.live.debounce.300ms="search"
                         type="text"
                         class="!mt-0 mb-3 h-8 min-w-[200px] pr-8 lg:mb-0"
                     />

@@ -86,3 +86,34 @@ it('prefers a registered relation type over the table convention', function (): 
 
     expect(app(RelationTitleResolver::class)->title('fixture_widget_id', $widget->id))->toBe('WIDGET:Erika Musterfrau');
 });
+
+it('primes a whole page of convention-table ids with a single query', function (): void {
+    $ids = [];
+    foreach (['Alpha', 'Beta', 'Gamma'] as $name) {
+        $ids[] = DB::table('gadgets')->insertGetId(['name' => $name]);
+    }
+
+    $this->resolver->prime('gadget_id', $ids);
+
+    DB::enableQueryLog();
+    expect($this->resolver->title('gadget_id', $ids[0]))->toBe('Alpha')
+        ->and($this->resolver->title('gadget_id', $ids[1]))->toBe('Beta')
+        ->and($this->resolver->title('gadget_id', $ids[2]))->toBe('Gamma')
+        ->and(DB::getQueryLog())->toBeEmpty();
+    DB::disableQueryLog();
+});
+
+it('primes through a registered relation type and falls back per id', function (): void {
+    $widget = RelationTitleFixtureWidget::create(['name' => 'Erika Musterfrau']);
+
+    app(RelationFieldRegistry::class)->register('fixtureWidgetRelation', RelationFieldDefinition::model(
+        'fixture-widgets-list',
+        null,
+        RelationTitleFixtureWidget::class,
+    ));
+
+    $this->resolver->prime('fixture_widget_id', [$widget->id, 999999, null, '']);
+
+    expect($this->resolver->title('fixture_widget_id', $widget->id))->toBe('Erika Musterfrau')
+        ->and($this->resolver->title('fixture_widget_id', 999999))->toBe('999999');
+});

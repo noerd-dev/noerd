@@ -37,6 +37,7 @@ use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Middleware\AppAccessMiddleware;
@@ -58,6 +59,7 @@ use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\ListQueryContext;
+use Noerd\Services\NavigationService;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
@@ -137,10 +139,16 @@ class NoerdServiceProvider extends ServiceProvider
         // boots (a per-request no-op under FPM, where statics die anyway).
         $this->app->booted(function (): void {
             StaticConfigHelper::flushRuntimeCaches();
+            TenantHelper::clearCache();
             ThemeHelper::clearCache();
             ThemeContext::clear();
             $this->app->make(ThemeRegistry::class)->clearCache();
         });
+
+        // The navigation is injected by several layout views per page — a
+        // singleton keeps it at one build per request (the structure itself is
+        // additionally memoized in StaticConfigHelper's runtime cache).
+        $this->app->singleton(NavigationService::class);
     }
 
     public function boot(): void

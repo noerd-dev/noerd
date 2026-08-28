@@ -4,9 +4,9 @@ namespace Noerd\Repositories;
 
 use Illuminate\Support\Collection;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Support\SetupCollectionDefinitionData;
 use RuntimeException;
-use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
 class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefinitionRepositoryContract
@@ -59,18 +59,9 @@ class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefiniti
             return null;
         }
 
-        $content = @file_get_contents($path);
-        if ($content === false) {
-            return null;
-        }
-
         try {
-            $fields = Yaml::parse($content) ?: [];
+            $fields = StaticConfigHelper::parseYamlFile($path);
         } catch (Throwable) {
-            return null;
-        }
-
-        if (! is_array($fields)) {
             return null;
         }
 
@@ -107,12 +98,14 @@ class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefiniti
     private function loadFile(string $path): ?SetupCollectionDefinitionData
     {
         try {
-            $content = Yaml::parseFile($path);
+            // Shared mtime-guarded cache — the navigation build reads every
+            // collection YAML too, so each file parses once per process.
+            $content = StaticConfigHelper::parseYamlFile($path);
         } catch (Throwable) {
             return null;
         }
 
-        if (! is_array($content)) {
+        if ($content === []) {
             return null;
         }
 
