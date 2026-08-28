@@ -39,6 +39,40 @@ class SetupCollectionHelper
     }
 
     /**
+     * Build select options from a setup collection's entries for the current
+     * tenant: value = `data[valueField]` (or the entry id when no valueField is
+     * given), label = `data[displayField]` resolved to the active language.
+     * Shared by the `setupCollectionSelect` form element and the list picklist
+     * badges, so both always agree on values and labels.
+     *
+     * @return array<int, array{value: mixed, label: string}>
+     */
+    public static function selectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null): array
+    {
+        $collection = SetupCollection::where('collection_key', $collectionKey)->first();
+        if (! $collection) {
+            return [];
+        }
+
+        $locale = session('selectedLanguage') ?? 'de';
+        $options = [];
+
+        foreach ($collection->entries as $entry) {
+            $label = $entry->data[$displayField] ?? '';
+            if (is_array($label)) {
+                $label = $label[$locale] ?? $label['de'] ?? reset($label) ?: '';
+            }
+
+            $options[] = [
+                'value' => $valueField ? ($entry->data[$valueField] ?? '') : $entry->id,
+                'label' => (string) $label,
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
      * Instance method: resolve collection fields via the repository.
      */
     public function resolveCollectionFields(?string $collection): ?array
@@ -92,40 +126,6 @@ class SetupCollectionHelper
         }
 
         return $table;
-    }
-
-    /**
-     * Build select options from a setup collection's entries for the current
-     * tenant: value = `data[valueField]` (or the entry id when no valueField is
-     * given), label = `data[displayField]` resolved to the active language.
-     * Shared by the `setupCollectionSelect` form element and the list picklist
-     * badges, so both always agree on values and labels.
-     *
-     * @return array<int, array{value: mixed, label: string}>
-     */
-    public static function selectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null): array
-    {
-        $collection = SetupCollection::where('collection_key', $collectionKey)->first();
-        if (! $collection) {
-            return [];
-        }
-
-        $locale = session('selectedLanguage') ?? 'de';
-        $options = [];
-
-        foreach ($collection->entries as $entry) {
-            $label = $entry->data[$displayField] ?? '';
-            if (is_array($label)) {
-                $label = $label[$locale] ?? $label['de'] ?? reset($label) ?: '';
-            }
-
-            $options[] = [
-                'value' => $valueField ? ($entry->data[$valueField] ?? '') : $entry->id,
-                'label' => (string) $label,
-            ];
-        }
-
-        return $options;
     }
 
     /**

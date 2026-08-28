@@ -181,7 +181,17 @@ abstract class TestCase extends BaseTestCase
             @symlink(dirname(__DIR__), $moduleTarget);
         }
 
-        if (! file_exists(base_path('app-configs/setup/navigation.yml'))) {
+        // Like the config below, the published app-configs are refreshed when the
+        // skeleton copy no longer matches the package copy — copying only when
+        // missing would pin the suite to stale YAMLs (e.g. old navigation route
+        // names) for the lifetime of the skeleton. navigation.yml is the freshness
+        // marker; content is compared because tests that back up and restore the
+        // published file rewrite it, so mtimes carry no signal here.
+        $navigationSource = dirname(__DIR__) . '/app-configs/setup/navigation.yml';
+        $navigationTarget = base_path('app-configs/setup/navigation.yml');
+
+        if (! file_exists($navigationTarget)
+            || file_get_contents($navigationTarget) !== file_get_contents($navigationSource)) {
             File::copyDirectory(dirname(__DIR__) . '/app-configs', base_path('app-configs'));
         }
 

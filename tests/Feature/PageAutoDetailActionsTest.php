@@ -81,7 +81,7 @@ it('renders the actions exactly once with the opt-out plus an explicit include',
 
     // The label also appears in the serialized wire:snapshot (pageLayout is a
     // public property), so count the rendered button attribute instead.
-    expect(substr_count($component->html(), 'wire:click="doProbe"'))->toBe(1);
+    expect(mb_substr_count($component->html(), 'wire:click="doProbe"'))->toBe(1);
 });
 
 it('resolves url actions through the detailActionUrls convention', function (): void {

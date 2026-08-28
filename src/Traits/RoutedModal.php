@@ -58,10 +58,10 @@ trait RoutedModal
     protected function routedModalArguments(): array
     {
         $parameters = array_map(
-            fn (mixed $value): mixed => $value === 'new' ? null : $value,
+            fn(mixed $value): mixed => $value === 'new' ? null : $value,
             array_filter(
                 request()->route()?->parameters() ?? [],
-                fn (string $name): bool => property_exists($this, $name),
+                fn(string $name): bool => property_exists($this, $name),
                 ARRAY_FILTER_USE_KEY,
             ),
         );

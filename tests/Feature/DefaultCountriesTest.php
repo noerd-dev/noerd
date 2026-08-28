@@ -29,7 +29,7 @@ it('seeds the default countries with iso codes for a tenant', function (): void 
 
     expect($entries)->toHaveCount(count(DefaultCountries::COUNTRIES));
 
-    $germany = $entries->first(fn (SetupCollectionEntry $entry): bool => ($entry->data['code'] ?? null) === 'DE');
+    $germany = $entries->first(fn(SetupCollectionEntry $entry): bool => ($entry->data['code'] ?? null) === 'DE');
     expect($germany)->not->toBeNull();
     expect($germany->data['name']['de'])->toBe('Deutschland');
     expect($germany->data['name']['en'])->toBe('Germany');
@@ -42,7 +42,7 @@ it('is idempotent and preserves tenant edits', function (): void {
     $germany = SetupCollectionEntry::withoutGlobalScopes()
         ->where('setup_collection_id', $collection->id)
         ->get()
-        ->first(fn (SetupCollectionEntry $entry): bool => ($entry->data['code'] ?? null) === 'DE');
+        ->first(fn(SetupCollectionEntry $entry): bool => ($entry->data['code'] ?? null) === 'DE');
 
     $germany->update(['data' => array_merge($germany->data, ['name' => ['de' => 'BRD', 'en' => 'Germany']])]);
 
@@ -65,7 +65,7 @@ it('backfills the code onto existing name-only entries instead of duplicating th
     SetupCollectionEntry::withoutGlobalScopes()
         ->where('setup_collection_id', $collection->id)
         ->get()
-        ->each(fn (SetupCollectionEntry $entry) => $entry->update([
+        ->each(fn(SetupCollectionEntry $entry) => $entry->update([
             'data' => ['name' => $entry->data['name']],
         ]));
 
@@ -76,5 +76,5 @@ it('backfills the code onto existing name-only entries instead of duplicating th
         ->get();
 
     expect($entries)->toHaveCount(count(DefaultCountries::COUNTRIES));
-    expect($entries->every(fn (SetupCollectionEntry $entry): bool => ($entry->data['code'] ?? '') !== ''))->toBeTrue();
+    expect($entries->every(fn(SetupCollectionEntry $entry): bool => ($entry->data['code'] ?? '') !== ''))->toBeTrue();
 });

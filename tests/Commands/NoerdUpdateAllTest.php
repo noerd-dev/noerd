@@ -82,8 +82,8 @@ beforeEach(function (): void {
     // Any real update command that happens to be registered is excluded per run, so
     // the assertions hold no matter which modules the host application loads.
     $this->excluded = collect(array_keys(Artisan::all()))
-        ->filter(fn (string $name): bool => $name === 'noerd:update' || str_starts_with($name, 'noerd:update-'))
-        ->reject(fn (string $name): bool => in_array($name, ['noerd:update-all', 'noerd:update', 'noerd:update-plus'], true))
+        ->filter(fn(string $name): bool => $name === 'noerd:update' || str_starts_with($name, 'noerd:update-'))
+        ->reject(fn(string $name): bool => in_array($name, ['noerd:update-all', 'noerd:update', 'noerd:update-plus'], true))
         ->values()
         ->all();
 
@@ -95,7 +95,7 @@ beforeEach(function (): void {
     $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-zz-alpha'));
     $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-plus'));
 
-    $this->run = fn (array $parameters = []) => $this->artisan(
+    $this->run = fn(array $parameters = []) => $this->artisan(
         'noerd:update-all',
         array_merge(['--except' => $this->excluded], $parameters),
     );

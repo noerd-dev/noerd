@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * a host application may own. `tenant_apps.route` stores route names, so any
  * row still pointing at an old core name is mapped to its namespaced successor.
  */
-return new class extends Migration
-{
+return new class extends Migration {
     /** @var array<string, string> */
     private array $renames = [
         'setup' => 'noerd.setup',
