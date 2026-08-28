@@ -70,15 +70,18 @@ trait NoerdSettingsPage
         $allowedByProperty = $this->settingsWritableKeys();
 
         foreach ($this->settingsModelMap() as $property => $modelClass) {
-            $data = collect($this->{$property})
-                ->except(['id', 'tenant_id', 'created_at', 'updated_at']);
-
-            // A settings page is a pure form, so only the keys its YAML declares
-            // may be written — never an extra column injected into the client array.
+            // A settings page is a pure form, so ONLY the keys its YAML declares
+            // for this property may be written. Fails CLOSED: a property the
+            // settings YAML does not bind writes nothing at all, rather than
+            // falling through to an unfiltered mass assignment.
             $allowed = $allowedByProperty[$property] ?? [];
-            if ($allowed !== []) {
-                $data = $data->only($allowed);
+            if ($allowed === []) {
+                continue;
             }
+
+            $data = collect($this->{$property})
+                ->except(['id', 'tenant_id', 'created_at', 'updated_at'])
+                ->only($allowed);
 
             $modelClass::updateOrCreate(['tenant_id' => $tenantId], $data->toArray());
         }

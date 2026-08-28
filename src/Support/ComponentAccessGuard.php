@@ -31,6 +31,12 @@ final class ComponentAccessGuard
         'noerd::tenants-list',
         'noerd::tenant-detail',
         'noerd::create-tenant',
+        // The inner worker of create-tenant: it holds the actual tenant
+        // creation (incl. attaching the caller to the new ADMIN profile), so it
+        // must be as unreachable as its wrapper.
+        'noerd::create-new-tenant',
+        // Sets a user's password; only ever embedded in the user editor.
+        'noerd::user-update-password',
         'noerd::tenant-apps-list',
         'noerd::system-settings-page',
         'noerd::setup-collections-list',
@@ -73,6 +79,15 @@ final class ComponentAccessGuard
      * not on the admin allow-list are permitted here — they are guarded by their
      * own route middleware / object gates; this guard only closes the admin
      * bypass at the dynamic-mount seams.
+     *
+     * Matching ignores the namespace prefix: noerd registers its components with
+     * BOTH a namespace and a bare location (Livewire::addLocation), so
+     * `noerd::tenants-list` and `tenants-list` mount the very same admin screen —
+     * comparing the full name alone let the bare alias walk straight past this
+     * guard. Consequence to be aware of: a host or module component whose bare
+     * name matches one of these becomes admin-only too. That is the deliberate
+     * fail-closed choice — such a component already collides with noerd's own
+     * registration.
      */
     public static function allows(?string $componentName): bool
     {
@@ -80,11 +95,28 @@ final class ComponentAccessGuard
             return true;
         }
 
-        if (in_array($componentName, self::ADMIN_COMPONENTS, true)
-            || in_array($componentName, self::$registered, true)) {
+        $restricted = array_map(
+            static fn(string $name): string => self::normalize($name),
+            array_merge(self::ADMIN_COMPONENTS, self::$registered),
+        );
+
+        if (in_array(self::normalize($componentName), $restricted, true)) {
             return (bool) NoerdAuth::user()?->isAdmin();
         }
 
         return true;
+    }
+
+    /**
+     * The comparable identity of a component name: lowercased and stripped of
+     * any Livewire namespace prefix ('noerd::tenants-list' → 'tenants-list').
+     */
+    private static function normalize(string $componentName): string
+    {
+        $name = str_contains($componentName, '::')
+            ? mb_substr($componentName, mb_strpos($componentName, '::') + 2)
+            : $componentName;
+
+        return mb_strtolower(mb_trim($name));
     }
 }

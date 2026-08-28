@@ -49,6 +49,39 @@ it('denies a non-admin from mounting an admin component through the guard', func
     expect(ComponentAccessGuard::allows('noerd::tenant-detail'))->toBeFalse();
 });
 
+it('guards an admin component reached through its un-namespaced alias', function (): void {
+    // noerd registers its components with a namespace AND a bare location
+    // (Livewire::addLocation), so 'tenants-list' mounts the very same admin
+    // screen as 'noerd::tenants-list'. Matching the full name alone let the
+    // bare alias — dispatchable straight through the noerdModal event — walk
+    // past this guard entirely.
+    $tenant = Tenant::factory()->create();
+    $this->actingAs(makeTenantUser($tenant, admin: false));
+    TenantHelper::setSelectedTenantId($tenant->id);
+
+    foreach (['tenants-list', 'setup-languages-list', 'setup-collection-detail', 'NOERD::Tenants-List'] as $alias) {
+        expect(ComponentAccessGuard::allows($alias))->toBeFalse("alias {$alias} must stay admin-only");
+    }
+});
+
+it('rejects the bare alias at the component boot hook too', function (): void {
+    $tenant = Tenant::factory()->create();
+    $this->actingAs(makeTenantUser($tenant, admin: false));
+    TenantHelper::setSelectedTenantId($tenant->id);
+
+    // Both names resolve to the SAME compiled component; only the mount name
+    // differs, and getName() reports whichever was used.
+    $hook = new ComponentAccessHook();
+    $hook->setComponent(new class {
+        public function getName(): string
+        {
+            return 'tenants-list';
+        }
+    });
+
+    expect(fn(): mixed => $hook->boot())->toThrow(HttpException::class);
+});
+
 it('permits an admin to mount an admin component, and anyone a non-admin component', function (): void {
     $tenant = Tenant::factory()->create();
     $this->actingAs(makeTenantUser($tenant, admin: true));

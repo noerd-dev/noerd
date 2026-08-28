@@ -236,12 +236,13 @@ it('does not persist when the active layout omits the form', function (): void {
     $component = Livewire::test('zz-relation-host-detail', ['modelId' => $host->id]);
 
     // Simulate a layout override that removed the form fields; the stale
-    // hydrated values must not be written back.
-    $component
-        ->set('pageLayout', ['fields' => [['name' => 'detailData.name', 'label' => 'Name', 'type' => 'text']]])
-        ->set('detailData.zzAddress.line_1', 'Stale Value')
-        ->call('store')
-        ->assertHasNoErrors();
+    // hydrated values must not be written back. $pageLayout is locked against
+    // client updates, so the override is applied server-side — exactly where a
+    // real layout override resolver applies it.
+    $instance = $component->instance();
+    $instance->pageLayout = ['fields' => [['name' => 'detailData.name', 'label' => 'Name', 'type' => 'text']]];
+    $instance->detailData['zzAddress']['line_1'] = 'Stale Value';
+    $instance->store();
 
     expect($child->refresh()->line_1)->toBe('Original');
 });

@@ -62,6 +62,13 @@ new class extends Component {
 
     public function storeFile()
     {
+        // Validated before storing: storePublicly() keeps the client-supplied
+        // extension on a web-served disk, so an unvalidated upload was stored
+        // same-origin script execution (.html/.svg) at /storage/uploads/….
+        $this->validate([
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+        ]);
+
         $link = $this->logo->storePublicly(path: 'uploads', options: 'public');
         $this->detailData['logo'] = '/storage/' . $link;
     }
