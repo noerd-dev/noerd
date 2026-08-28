@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Contracts\DeclaresRelationForms;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Support\RelationFormDefinition;
 use Noerd\Support\RelationFormSync;
@@ -227,6 +229,23 @@ it('uses a custom persistUsing closure and honors persistWhen', function (): voi
         ->assertHasNoErrors();
 
     expect(ZzRelationSpyHost::$spy)->toBeNull();
+});
+
+it('does not persist the relation form for a write-denied user', function (): void {
+    // Covers the canWriteObject() recheck at the save boundary (DetailSaveHook):
+    // a denied user's store writes neither the host nor the related record.
+    Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => false);
+
+    $host = ZzRelationHost::create(['name' => 'Host']);
+
+    Livewire::test('zz-relation-host-detail', ['modelId' => $host->id])
+        ->set('detailData.name', 'Denied Rename')
+        ->set('detailData.zzAddress.line_1', 'Denied 1')
+        ->call('store');
+
+    expect($host->refresh()->name)->toBe('Host')
+        ->and($host->zz_child_id)->toBeNull()
+        ->and(ZzRelationChild::count())->toBe(0);
 });
 
 it('does not persist when the active layout omits the form', function (): void {
