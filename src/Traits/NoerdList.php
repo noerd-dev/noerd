@@ -93,6 +93,14 @@ trait NoerdList
 
     public string $listId = '';
 
+    /**
+     * Free-form list filter carried in the URL (?filter=…). The trait itself
+     * never reads it — consuming lists seed their own listFilters from it in
+     * mount(), which makes it part of the public API of this trait.
+     */
+    #[Url]
+    public ?string $filter = null;
+
     public array $listFilters = [];
 
     /**
@@ -785,7 +793,7 @@ trait NoerdList
                 $columns,
             ), $delimiter);
 
-            $query->lazy(200)->each(function ($row) use ($handle, $columns): void {
+            $query->lazy(200)->each(function ($row) use ($handle, $columns, $delimiter): void {
                 $this->prepareExportRow($row);
                 $line = [];
                 foreach ($columns as $column) {
