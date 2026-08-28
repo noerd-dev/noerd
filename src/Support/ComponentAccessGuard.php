@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Support;
 
+use Illuminate\Support\Str;
 use Noerd\Helpers\NoerdAuth;
 
 /**
@@ -108,15 +109,32 @@ final class ComponentAccessGuard
     }
 
     /**
-     * The comparable identity of a component name: lowercased and stripped of
-     * any Livewire namespace prefix ('noerd::tenants-list' → 'tenants-list').
+     * The comparable identity of a component name — it must collapse EVERY
+     * spelling Livewire resolves to the same component file, or the guard is
+     * bypassable by writing the name differently.
+     *
+     * Livewire's Finder strips the ⚡ marker and rewrites '/' to '.'
+     * (Finder::normalizeName), then builds the view path from the dot segments,
+     * where empty segments simply vanish — so 'x', '.x', '..x' and '/x' all
+     * load the same component. The namespace is dropped as well, because noerd
+     * registers its components both namespaced and bare (Livewire::addLocation).
      */
     private static function normalize(string $componentName): string
     {
-        $name = str_contains($componentName, '::')
-            ? mb_substr($componentName, mb_strpos($componentName, '::') + 2)
-            : $componentName;
+        $name = Str::afterLast($componentName, '::');
 
-        return mb_strtolower(mb_trim($name));
+        // Mirror Finder::normalizeName(): drop the ⚡ marker (with either
+        // variation selector) and treat slashes as dot separators.
+        $name = preg_replace('/\x{26A1}[\x{FE0E}\x{FE0F}]?/u', '', $name) ?? $name;
+        $name = str_replace(['/', '\\'], '.', $name);
+
+        // Empty segments carry no meaning for the resolver — dropping them is
+        // what makes '.tenants-list' and 'tenants-list' compare equal.
+        $segments = array_values(array_filter(
+            array_map(static fn(string $segment): string => mb_trim($segment), explode('.', $name)),
+            static fn(string $segment): bool => $segment !== '',
+        ));
+
+        return mb_strtolower(implode('.', $segments));
     }
 }

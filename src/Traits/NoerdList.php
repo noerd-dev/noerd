@@ -1053,7 +1053,15 @@ trait NoerdList
         $this->applyColumnFilters($query, $modelClass);
         $this->eagerLoadRelationColumns($query);
 
-        $sortField = self::tableHasColumn($table, $this->sortField) ? $this->sortField : 'id';
+        // $sortField is client-writable (sortBy() enforces isSortableColumn(),
+        // a raw property update does not). Ordering by a column the model hides
+        // — password, remember_token, api_token — turns the list into an
+        // oracle over that value, so hidden attributes are never sortable.
+        $hidden = $this->resolvedModelInstance()?->getHidden() ?? [];
+        $sortField = self::tableHasColumn($table, $this->sortField)
+            && ! in_array($this->sortField, $hidden, true)
+                ? $this->sortField
+                : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
         return $query;

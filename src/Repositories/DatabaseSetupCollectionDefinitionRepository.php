@@ -26,10 +26,10 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function all(?int $tenantId = null): Collection
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId = $this->scopeTenantId($tenantId);
 
         return SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId))
+            ->where('tenant_id', $tenantId)
             ->orderBy('title_list')
             ->get()
             ->map(fn(SetupCollectionDefinition $m) => $this->toData($m));
@@ -44,10 +44,10 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function findByKey(string $key, ?int $tenantId = null): ?SetupCollectionDefinitionData
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId = $this->scopeTenantId($tenantId);
 
         $model = SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId))
+            ->where('tenant_id', $tenantId)
             ->where('key', mb_strtoupper($key))
             ->first();
 
@@ -73,7 +73,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function save(SetupCollectionDefinitionData $data, ?string $originalFilename = null, ?int $tenantId = null): string
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId = $this->scopeTenantId($tenantId);
         if ($tenantId === null) {
             throw new RuntimeException('Cannot save a setup collection definition without a tenant context.');
         }
@@ -107,7 +107,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     public function copy(string $filename, ?int $tenantId = null): string
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId = $this->scopeTenantId($tenantId);
         $source = $this->findModel($filename, $tenantId);
         if (! $source) {
             throw new RuntimeException("Setup collection definition '{$filename}' not found.");
@@ -147,10 +147,21 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
         return true;
     }
 
+    /**
+     * The tenant every read is scoped to. SetupCollectionDefinition carries no
+     * BelongsToTenant, so a null tenant used to drop the filter entirely and
+     * expose every tenant's definitions (a public-app guest resolves no
+     * selected tenant at all). Reads now fail closed instead.
+     */
+    private function scopeTenantId(?int $tenantId): ?int
+    {
+        return $tenantId ?? TenantHelper::currentTenantId() ?? TenantHelper::getSelectedTenantId();
+    }
+
     private function resolveFieldsUncached(string $filename, ?int $tenantId): ?array
     {
         $query = SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId));
+            ->where('tenant_id', $tenantId);
 
         $model = (clone $query)->where('filename', $filename)->first();
 
@@ -185,10 +196,10 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     private function findModel(string $filename, ?int $tenantId): ?SetupCollectionDefinition
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId = $this->scopeTenantId($tenantId);
 
         return SetupCollectionDefinition::query()
-            ->when($tenantId !== null, fn($q) => $q->where('tenant_id', $tenantId))
+            ->where('tenant_id', $tenantId)
             ->where('filename', $filename)
             ->first();
     }
