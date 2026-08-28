@@ -6,18 +6,16 @@ use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
 
-    // TODO this should be implemented in a middleware
     public function mount(): void
     {
-        if (!TenantHelper::getSelectedTenantId()) {
-            $user = auth()->user();
-            $firstTenantId = $user->tenants->first()?->id;
-            if ($firstTenantId) {
-                TenantHelper::setSelectedTenantId($firstTenantId);
-            }
-        }
+        $user = auth()->user();
+        $selectedTenantId = TenantHelper::getSelectedTenantId();
 
-        // TODO also check if user is not anymore assigned to the tenant
+        // Fall back to an available tenant when none is selected, or when the user
+        // is no longer assigned to the currently selected one.
+        if (! $selectedTenantId || ! $user->tenants->contains('id', $selectedTenantId)) {
+            TenantHelper::setSelectedTenantId($user->tenants->first()?->id);
+        }
     }
 
     public function openApp(string $appName, string $route): void

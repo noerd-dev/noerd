@@ -48,6 +48,9 @@ beforeEach(function (): void {
         '  - name: profileData.name',
         '    label: Profile Name',
         '    type: text',
+        '  - name: profileData.key',
+        '    label: Profile Key',
+        '    type: text',
     ]));
 
     // Synthetic settings page editing TWO tenant-singleton models at once.
@@ -80,7 +83,7 @@ it('resolves the settings YAML and forces the settings theme', function (): void
     expect($layout['title'])->toBe('Settings Fixture')
         ->and($layout['theme'])->toBe('settings')
         ->and(array_column($layout['fields'], 'name'))
-        ->toBe(['detailData.currency', 'profileData.name']);
+        ->toBe(['detailData.currency', 'profileData.name', 'profileData.key']);
 
     Livewire::test('zz-settings-test-page')
         ->assertSet('pageLayout.theme', 'settings')

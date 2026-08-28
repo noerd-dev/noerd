@@ -4,6 +4,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Services\ThemeRegistry;
@@ -21,6 +22,11 @@ new class () extends Component {
 
     public function mount(): void
     {
+        // Defense in depth: these tenant-wide settings can be reached outside the
+        // setup route (modal stack / generic component page). Enforce admin access
+        // here too, independent of the dynamic-mount guard.
+        abort_unless(NoerdAuth::user()?->isAdmin(), 403);
+
         $this->clientId = auth()->user()->selected_tenant_id;
         $settings = NoerdSettings::where('tenant_id', $this->clientId)->first();
 

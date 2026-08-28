@@ -26,18 +26,40 @@ it('returns null for storeUploadedFile with null input', function (): void {
     expect($resolver->storeUploadedFile(null))->toBeNull();
 });
 
-it('stores uploaded file and returns url', function (): void {
+it('stores an allowed image under a safe generated name and returns its url', function (): void {
     $fakeFile = Mockery::mock();
-    $fakeFile->shouldReceive('store')
-        ->with('uploads', 'public')
+    $fakeFile->shouldReceive('getMimeType')->andReturn('image/jpeg');
+    $fakeFile->shouldReceive('getSize')->andReturn(1024);
+    $fakeFile->shouldReceive('storeAs')
+        ->with('uploads', Mockery::pattern('/^[0-9a-f-]+\.jpg$/'), 'public')
         ->once()
-        ->andReturn('uploads/photo.jpg');
+        ->andReturn('uploads/generated.jpg');
 
     $resolver = new NullMediaResolver();
 
-    $result = $resolver->storeUploadedFile($fakeFile);
+    expect($resolver->storeUploadedFile($fakeFile))->toBe('/storage/uploads/generated.jpg');
+});
 
-    expect($result)->toBe('/storage/uploads/photo.jpg');
+it('rejects a non-image upload (e.g. SVG) without storing it', function (): void {
+    $fakeFile = Mockery::mock();
+    $fakeFile->shouldReceive('getMimeType')->andReturn('image/svg+xml');
+    $fakeFile->shouldReceive('getSize')->andReturn(1024);
+    $fakeFile->shouldNotReceive('storeAs');
+
+    $resolver = new NullMediaResolver();
+
+    expect($resolver->storeUploadedFile($fakeFile))->toBeNull();
+});
+
+it('rejects an oversized upload without storing it', function (): void {
+    $fakeFile = Mockery::mock();
+    $fakeFile->shouldReceive('getMimeType')->andReturn('image/png');
+    $fakeFile->shouldReceive('getSize')->andReturn(20 * 1024 * 1024);
+    $fakeFile->shouldNotReceive('storeAs');
+
+    $resolver = new NullMediaResolver();
+
+    expect($resolver->storeUploadedFile($fakeFile))->toBeNull();
 });
 
 it('returns false for isAvailable', function (): void {

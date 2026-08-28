@@ -1,9 +1,12 @@
 @props(['content' => ''])
 
 @php
-    $processedContent = $content ?? '';
+    // Escape any raw HTML in the (tenant-editable) content BEFORE markdown, so an
+    // embedded <script>/<img onerror=…> renders as literal text instead of markup.
+    $processedContent = e($content ?? '');
 
     // Preserve multiple consecutive empty lines by converting them to <br> tags
+    // (our own trusted markup, added after the content was escaped).
     // 3+ newlines = 2+ empty lines, convert extra empty lines to <br>
     $processedContent = preg_replace('/\n{3,}/', "\n\n<br>\n\n", $processedContent);
 

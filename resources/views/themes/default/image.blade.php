@@ -38,11 +38,15 @@
 
     @php
         $mediaAvailable = app(\Noerd\Contracts\MediaResolverContract::class)->isAvailable();
+
+        // A string field value can reach $previewUrl — strip characters that would
+        // break out of the CSS url('…') context (quotes, parens, backslash, space).
+        $safePreviewUrl = $previewUrl !== null ? preg_replace('/[\'"()\\\\\s]/', '', (string) $previewUrl) : null;
     @endphp
 
     @if ($previewUrl)
         <div class="group relative mt-1 h-[150px] w-[150px] overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
-            <div class="absolute inset-0" style="background: url('{{ $previewUrl }}') center / cover;"></div>
+            <div class="absolute inset-0" style="background: url('{{ $safePreviewUrl }}') center / cover;"></div>
 
             @unless ($readonly)
                 <div class="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">

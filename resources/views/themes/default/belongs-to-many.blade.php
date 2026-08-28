@@ -13,7 +13,7 @@
     $required = $field['required'] ?? $required;
     $readonly = $field['readonly'] ?? false;
 
-    $options = $this->callAMethod([$this, $optionsMethod]);
+    $options = $optionsMethod && method_exists($this, $optionsMethod) ? $this->{$optionsMethod}() : [];
     $selectedIds = $this->{$name} ?? [];
 @endphp
 

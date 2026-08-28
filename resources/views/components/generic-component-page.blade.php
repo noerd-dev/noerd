@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Support\ComponentAccessGuard;
 
 new class extends Component
 {
@@ -11,6 +12,11 @@ new class extends Component
     public function mount(string $componentName): void
     {
         abort_unless(str_contains($componentName, '::'), 404);
+
+        // The component name comes from the URL and is mounted outside its own
+        // route, so the target's route middleware never runs — re-assert the
+        // admin guard here to keep admin screens unreachable this way.
+        ComponentAccessGuard::authorize($componentName);
 
         $this->componentName = $componentName;
         $this->arguments = request()->query();

@@ -206,6 +206,12 @@ class StaticConfigHelper
      */
     public static function resolveConfigPath(string $app, string $viewType, string $component): ?string
     {
+        // The app segment is a config-folder name; reject anything that could
+        // escape app-configs/ (a tampered list-view app value carrying `..` / `/`).
+        if (! preg_match('/^[A-Za-z0-9_-]+$/', $app)) {
+            return null;
+        }
+
         $dir = match ($viewType) {
             'detail' => 'details',
             'page' => 'pages',

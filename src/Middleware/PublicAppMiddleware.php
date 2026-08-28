@@ -23,17 +23,19 @@ class PublicAppMiddleware
      */
     public function handle(Request $request, Closure $next, string $appName): Response
     {
-        $isPublicApp = TenantApp::query()
+        $publicApp = TenantApp::query()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($appName)])
             ->where('is_active', true)
             ->where('is_public', true)
-            ->exists();
+            ->first();
 
-        if ($isPublicApp) {
+        if ($publicApp) {
             // Set selected_app for public (guest) access if not already set
             if (!TenantHelper::getSelectedApp()) {
                 TenantHelper::setSelectedApp(mb_strtoupper($appName));
             }
+
+            $this->resolveGuestTenant($publicApp);
 
             return $next($request);
         }
@@ -73,5 +75,34 @@ class PublicAppMiddleware
         }
 
         return $next($request);
+    }
+
+    /**
+     * Establish the tenant a guest browses a public app in. Without it the tenant
+     * scope has nothing to filter by and would have to fall back to showing every
+     * tenant's rows.
+     *
+     * Only an unambiguous assignment can be resolved here: a public app shared by
+     * SEVERAL tenants must establish the context itself (e.g. resolved from the
+     * request host) via TenantHelper::setGuestTenantId() — until it does, guest
+     * queries on tenant-owned models yield no rows instead of foreign data.
+     */
+    private function resolveGuestTenant(TenantApp $publicApp): void
+    {
+        if (NoerdAuth::check()) {
+            return;
+        }
+
+        TenantHelper::markPublicAppGuest();
+
+        if (TenantHelper::getGuestTenantId() !== null) {
+            return;
+        }
+
+        $tenantIds = $publicApp->tenants()->pluck('tenants.id');
+
+        if ($tenantIds->count() === 1) {
+            TenantHelper::setGuestTenantId((int) $tenantIds->first());
+        }
     }
 }

@@ -66,12 +66,15 @@ use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
+use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
 use Noerd\Support\FieldTypeDefinition;
+use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\ThemeContext;
+use Noerd\Support\WriteGuardHook;
 use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
@@ -90,6 +93,9 @@ class NoerdServiceProvider extends ServiceProvider
         // runs before any boot(), and the static call needs no container binding.
         ComponentHookRegistry::register(QuickCreateExitHook::class);
         ComponentHookRegistry::register(RelationFormPersistHook::class);
+        ComponentHookRegistry::register(LockedPropertiesHook::class);
+        ComponentHookRegistry::register(WriteGuardHook::class);
+        ComponentHookRegistry::register(ComponentAccessHook::class);
 
         $this->app->singleton(ListQueryContext::class);
         $this->app->singleton(DynamicNavigationRegistry::class);

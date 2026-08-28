@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\ThemeDefinition;
@@ -35,7 +36,12 @@ it('discovers the built-in settings theme as hidden with stacked full-width rows
 it('excludes hidden themes from the system settings theme picker', function (): void {
     $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create();
-    $user->tenants()->attach($tenant->id);
+    // system-settings-page is admin-only and enforces it on mount.
+    $adminProfile = Profile::factory()->create([
+        'tenant_id' => $tenant->id,
+        'key' => 'ADMIN',
+    ]);
+    $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
     TenantHelper::setSelectedTenantId($tenant->id);
     $this->actingAs($user);
 
