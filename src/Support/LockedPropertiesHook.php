@@ -38,6 +38,19 @@ class LockedPropertiesHook extends ComponentHook
         'listViewApp',
         'showMoreComponent',
         'showMoreRoute',
+        // A settings page's model map decides WHICH model persistSettings()
+        // writes and WHICH property it reads the payload from — repointing it
+        // from the client is an arbitrary-model write.
+        'settingsModels',
+        // Selects the list YAML a picker renders; a swapped config exposes
+        // columns the intended picker deliberately hides.
+        'selectListConfig',
+        // The resolved YAML layout. Written only by initPage()/initDetail()/
+        // storeProcess()/QuickCreateExitHook — never by the client. It drives
+        // validateFromLayout(), the relation-form persist decision and the
+        // embedded list/widget mounts, so a client rewrite means skipped
+        // validation and attacker-chosen nested components.
+        'pageLayout',
     ];
 
     public function update($propertyName, $fullPath, $newValue): void

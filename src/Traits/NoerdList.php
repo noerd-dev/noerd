@@ -689,10 +689,22 @@ trait NoerdList
         }
 
         if ($this->resolvedModelClass !== null) {
-            $this->resolvedModelClass::query()
-                ->whereIn('id', $this->selectedRecordIds)
-                ->get()
-                ->each(fn($model) => $model->delete());
+            // Only rows THIS list yields may be deleted. A bare
+            // Model::query()->whereIn($selectedRecordIds) ignored the list's own
+            // narrowing (tenant scope, column filters, and any constraint a
+            // component adds), so a crafted id list reached records the list
+            // would never show.
+            $query = $this->listQuery($this->resolvedModelClass, $this->listQueryConfigName)
+                ->whereIn('id', $this->selectedRecordIds);
+
+            // listQuery() cannot see constraints a component adds in its own
+            // listData() override (e.g. "users of MY tenants"), so those lists
+            // are additionally limited to the rows currently rendered.
+            if (!$this->usesTraitListData()) {
+                $query->whereIn('id', $this->visibleRowIds() ?: [0]);
+            }
+
+            $query->get()->each(fn($model) => $model->delete());
         }
 
         $this->selectedRecordIds = [];
@@ -1755,6 +1767,16 @@ trait NoerdList
             'field' => $this->sortField,
             'asc' => $this->sortAsc,
         ]]);
+    }
+
+    /**
+     * Whether listData() is the trait's own implementation. A component that
+     * overrides it may narrow the result set in ways listQuery() cannot see.
+     */
+    private function usesTraitListData(): bool
+    {
+        return (new ReflectionMethod($this, 'listData'))->getFileName()
+            === (new ReflectionClass(NoerdList::class))->getFileName();
     }
 
     /**

@@ -222,6 +222,14 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     private function activeDefinition(): ?RelationFieldDefinition
     {
+        // $selectedRelationType is client-writable by design (the user picks the
+        // type), so it must be re-checked against the field's declared
+        // whitelist — resolving it straight from the registry let a crafted
+        // update point the polymorphic FK at a model the YAML forbids.
+        if ($this->allowedTypes !== [] && ! in_array($this->selectedRelationType, $this->allowedTypes, true)) {
+            return null;
+        }
+
         if ($this->selectedRelationType === '') {
             return null;
         }

@@ -2,6 +2,8 @@
 
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
+use Noerd\Models\NoerdUser;
 
 new class extends Component {
 
@@ -13,21 +15,60 @@ new class extends Component {
 
     public bool $showSuccessIndicator = false;
 
+    /**
+     * Whether the current user may set this account's password. Drives BOTH the
+     * rendering (an unauthorized viewer simply sees no form) and the action
+     * guard below — deliberately not an abort() on render, so an admin opening
+     * a user who is not in their tenants still gets the rest of the editor.
+     */
+    public function canSetPassword(): bool
+    {
+        $admin = NoerdAuth::user();
+
+        if (! $admin?->isAdmin()) {
+            return false;
+        }
+
+        if (! $this->userId || $admin->isSuperAdmin() || (int) $this->userId === (int) $admin->id) {
+            return true;
+        }
+
+        return NoerdUser::whereKey($this->userId)
+            ->whereHas('tenants', fn($query) => $query->whereIn('tenants.id', $admin->adminTenants()->pluck('tenants.id')))
+            ->exists();
+    }
+
     public function updatePassword()
     {
+        // Re-authorized on the action, not only on mount: #[Locked] rejects a
+        // client UPDATE of $userId but does NOT protect the MOUNT arguments,
+        // which the modal stack and the generic component page take from the
+        // client. Without this check any authenticated user could mount this
+        // component for a foreign id and overwrite that account's password.
+        $this->authorizeTarget();
+
         $this->validate([
             'password' => ['required', 'string', 'confirmed'],
         ]);
 
-        $user = \Noerd\Models\NoerdUser::find($this->userId);
+        $user = NoerdUser::findOrFail($this->userId);
         $user->password = bcrypt($this->password);
         $user->save();
 
         $this->showSuccessIndicator = true;
     }
+
+    /**
+     * Only an admin may set a password, and only for a user who belongs to a
+     * tenant that admin actually administers.
+     */
+    private function authorizeTarget(): void
+    {
+        abort_unless($this->canSetPassword(), 403);
+    }
 }; ?>
 
-<section>
+<section @class(['hidden' => ! $this->canSetPassword()])>
     <header>
         <div class="text-lg font-medium text-gray-900">
             {{ __('Set Password') }}

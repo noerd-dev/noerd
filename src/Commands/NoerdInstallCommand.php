@@ -614,7 +614,7 @@ class NoerdInstallCommand extends Command
     protected function setupExistingAdminUser(): void
     {
         $users = NoerdUser::all();
-        $adminUsers = $users->filter(fn(NoerdUser $user) => $user->isAdmin());
+        $adminUsers = $users->filter(fn(NoerdUser $user) => $user->isAdminOfAnyTenant());
 
         if ($adminUsers->isNotEmpty()) {
             $this->line('<comment>Admin user(s) already exist:</comment>');
@@ -636,7 +636,7 @@ class NoerdInstallCommand extends Command
 
         // Build options for choice prompt
         $options = $users->mapWithKeys(function (NoerdUser $user) {
-            $adminTag = $user->isAdmin() ? ' [ADMIN]' : '';
+            $adminTag = $user->isAdminOfAnyTenant() ? ' [ADMIN]' : '';
             return [$user->id => "{$user->name} ({$user->email}){$adminTag}"];
         })->toArray();
 
@@ -650,7 +650,7 @@ class NoerdInstallCommand extends Command
         $selectedUserId = array_search($selectedUserId, $options);
         $selectedUser = NoerdUser::find($selectedUserId);
 
-        if ($selectedUser->isAdmin()) {
+        if ($selectedUser->isAdminOfAnyTenant()) {
             $this->line("<comment>User '{$selectedUser->name}' is already an admin.</comment>");
             return;
         }

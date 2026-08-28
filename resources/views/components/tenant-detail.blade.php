@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\Tenant;
 use Noerd\Traits\NoerdDetail;
 
@@ -23,17 +24,31 @@ new class extends Component {
             $this->modelId = (string) Auth::user()->selected_tenant_id;
         }
 
-        $user = Auth::user();
-        abort_unless(
-            $user->isSuperAdmin() || $user->adminTenants()->whereKey($this->modelId)->exists(),
-            403,
-        );
+        $this->authorizeTenant();
 
         $this->initDetail();
     }
 
+    /**
+     * The edited tenant must be one this user administers. Re-checked on every
+     * write, not only on mount: $modelId is URL-bound and therefore rewritable
+     * by the client, so a mount-time-only check let an admin of one tenant
+     * rename any other tenant in the installation.
+     */
+    private function authorizeTenant(): void
+    {
+        $user = NoerdAuth::user();
+
+        abort_unless(
+            $user?->isSuperAdmin() || (bool) $user?->adminTenants()->whereKey($this->modelId)->exists(),
+            403,
+        );
+    }
+
     public function store(): void
     {
+        $this->authorizeTenant();
+
         $this->validate([
             'detailData.name' => ['required', 'string', 'max:255', 'min:3'],
         ]);
@@ -62,6 +77,15 @@ new class extends Component {
 
     public function storeFile()
     {
+        $this->authorizeTenant();
+
+        // Validated before storing: storePublicly() keeps the client-supplied
+        // extension on a web-served disk, so an unvalidated upload was stored
+        // same-origin script execution (.html/.svg) at /storage/uploads/….
+        $this->validate([
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+        ]);
+
         $link = $this->logo->storePublicly(path: 'uploads', options: 'public');
         $this->detailData['logo'] = '/storage/' . $link;
     }

@@ -109,15 +109,43 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return $this->profiles->where('tenant_id', $selectedTenantId)->first()->key ?? null;
     }
 
-    public function isAdmin(): bool
+    /**
+     * Whether the user administers the tenant of the CURRENT request.
+     *
+     * Deliberately tenant-scoped (like currentProfile()): an ADMIN profile is
+     * granted per tenant, so counting admin profiles across all tenants made an
+     * admin of one tenant an admin of every tenant they are merely a member of —
+     * and that is the check behind SetupMiddleware and ComponentAccessGuard.
+     * Without a resolved tenant it fails closed; a super admin is unaffected.
+     */
+    public function isAdmin(?int $tenantId = null): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
         }
 
-        $adminProfilesCount = $this->profiles->where('key', 'ADMIN')->count();
+        // The tenant the request operates in — same source as currentProfile().
+        $tenantId ??= TenantHelper::getSelectedTenantId();
 
-        return (bool) $adminProfilesCount > 0;
+        if (! $tenantId) {
+            return false;
+        }
+
+        return $this->profiles
+            ->where('tenant_id', $tenantId)
+            ->where('key', 'ADMIN')
+            ->isNotEmpty();
+    }
+
+    /**
+     * Whether the user administers ANY tenant. Exclusively for contexts that
+     * have no tenant request scope — console commands and cross-tenant
+     * reporting. NEVER use it for authorization: that is isAdmin(), which is
+     * scoped to the tenant of the current request.
+     */
+    public function isAdminOfAnyTenant(): bool
+    {
+        return $this->isSuperAdmin() || $this->profiles->where('key', 'ADMIN')->isNotEmpty();
     }
 
     public function isSuperAdmin(): bool

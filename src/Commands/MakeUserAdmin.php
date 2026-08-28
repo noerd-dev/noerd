@@ -46,7 +46,7 @@ class MakeUserAdmin extends Command
         $this->info("Processing user: {$user->name} ({$user->email})");
 
         // Check if user already is admin (but continue to ensure tenant assignment)
-        $isAlreadyAdmin = $user->isAdmin();
+        $isAlreadyAdmin = $user->isAdminOfAnyTenant();
         if ($isAlreadyAdmin) {
             $this->warn('User is already an admin. Ensuring tenant assignment is correct...');
         }
@@ -126,7 +126,7 @@ class MakeUserAdmin extends Command
 
         // Verify admin status
         $user->refresh();
-        if ($user->isAdmin()) {
+        if ($user->isAdminOfAnyTenant()) {
             $this->newLine();
             if ($isAlreadyAdmin) {
                 $this->info("✅ User {$user->name} remains an admin. Tenant assignment verified.");

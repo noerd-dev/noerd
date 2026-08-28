@@ -99,6 +99,38 @@ new class extends Component {
         }
     }
 
+    /**
+     * The edited account must belong to a tenant this admin administers.
+     * mount() only proves the CALLER is an admin — $modelId can still be
+     * repointed on a later request (it is a plain URL-bound property).
+     */
+    private function authorizeTargetUser(): void
+    {
+        $admin = NoerdAuth::user();
+
+        if (! $this->modelId || $admin->isSuperAdmin()) {
+            return;
+        }
+
+        $target = NoerdUser::find($this->modelId);
+
+        abort_unless($target !== null, 404);
+
+        // A super admin is never editable from a tenant admin's user screen.
+        abort_if($target->isSuperAdmin(), 403);
+
+        $adminTenantIds = $admin->adminTenants()->pluck('tenants.id');
+
+        // Editable when the account belongs to a tenant this admin administers —
+        // or when it belongs to no tenant at all (an unassigned account being
+        // granted its first access from this screen).
+        abort_unless(
+            $target->tenants()->count() === 0
+                || $target->tenants()->whereIn('tenants.id', $adminTenantIds)->exists(),
+            403,
+        );
+    }
+
     public function store(): void
     {
         foreach ($this->possibleTenants as $tenantId => $value) {
@@ -136,14 +168,34 @@ new class extends Component {
             $this->detailData['password'] = bcrypt(Str::random(32));
         }
 
-        $userData = collect($this->detailData)->only(['name', 'email', 'password'])->toArray();
+        // $modelId is URL-bound and therefore client-writable — re-assert that the
+        // edited account is one this admin may touch before writing to it.
+        $this->authorizeTargetUser();
+
+        // 'password' is deliberately NOT writable here: an existing account's
+        // password is set through the dedicated user-update-password form (which
+        // authorizes the target itself). Only a NEW user carries the generated
+        // placeholder set above.
+        $writable = $this->modelId ? ['name', 'email'] : ['name', 'email', 'password'];
+        $userData = collect($this->detailData)->only($writable)->toArray();
         $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $userData);
 
-        $allowedTenants = Auth::user()->adminTenants()->pluck('id');
+        $allowedTenants = NoerdAuth::user()->adminTenants()->pluck('tenants.id')->all();
         foreach ($this->possibleTenants as $tenantId => $value) {
+            // Both detach AND attach stay inside the allow-list: detaching
+            // unconditionally let an admin of one tenant strip a user from any
+            // other tenant (and, once the last one was gone, delete the account).
+            if (! in_array((int) $tenantId, array_map('intval', $allowedTenants), true)) {
+                continue;
+            }
+
             $user->tenants()->detach($tenantId);
-            $profileId = $value['selectedProfile'];
-            if ($value['hasAccess'] && in_array($tenantId, $allowedTenants->toArray())) {
+
+            $profileId = $value['selectedProfile'] ?? null;
+            $profileBelongsToTenant = $profileId
+                && Profile::whereKey($profileId)->where('tenant_id', $tenantId)->exists();
+
+            if (($value['hasAccess'] ?? false) && $profileBelongsToTenant) {
                 $user->tenants()->attach($tenantId, ['profile_id' => $profileId]);
             }
         }

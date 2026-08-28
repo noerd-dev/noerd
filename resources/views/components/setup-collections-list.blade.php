@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\SetupCollectionHelper;
@@ -20,6 +21,9 @@ new class extends Component
 
     public string|int|null $collectionKey = null;
 
+    // Resolved from the collection definition at mount; never a client input
+    // (it feeds the JSON_EXTRACT search paths below).
+    #[Locked]
     public ?array $collectionLayout = null;
 
     #[Computed]
@@ -93,13 +97,23 @@ new class extends Component
         // Apply search if provided
         if (! empty($this->search)) {
             $query->where(function ($q): void {
+                $searchable = 0;
+
                 if ($this->collectionLayout && isset($this->collectionLayout['fields'])) {
                     foreach ($this->collectionLayout['fields'] as $field) {
                         $fieldName = $field['name'] ?? '';
-                        $fieldKey = str_replace('detailData.', '', $fieldName);
+                        $fieldKey = str_replace('detailData.', '', is_string($fieldName) ? $fieldName : '');
 
                         // Skip image fields for search
                         if (($field['type'] ?? '') === 'image') {
+                            continue;
+                        }
+
+                        // The key is interpolated into a JSON_EXTRACT path below,
+                        // so it must never carry anything but a plain field name —
+                        // $collectionLayout is a public property and therefore
+                        // client-writable, which made this a raw SQL injection.
+                        if (! preg_match('/^[A-Za-z0-9_]+$/', $fieldKey)) {
                             continue;
                         }
 
@@ -107,7 +121,14 @@ new class extends Component
                         $q->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}.de\") LIKE ?", ['%'.$this->search.'%'])
                             ->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}.en\") LIKE ?", ['%'.$this->search.'%'])
                             ->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}\") LIKE ?", ['%'.$this->search.'%']);
+                        $searchable++;
                     }
+                }
+
+                // No searchable field survived: an empty where-group would match
+                // EVERY row, turning a failed search into a full listing.
+                if ($searchable === 0) {
+                    $q->whereRaw('1 = 0');
                 }
             });
         }

@@ -10,8 +10,22 @@ new class extends Component {
     public string $name = '';
     public bool $showSuccess = false;
 
+    public function mount(): void
+    {
+        $this->authorizeAccess();
+    }
+
     public function createTenant()
     {
+        // Guarded on the ACTION as well as on mount: this component carries the
+        // whole tenant-creation logic while the admin/feature checks used to sit
+        // only on its wrapper (noerd::create-tenant). Reached directly — through
+        // the modal stack or the generic component page — it let any
+        // authenticated user create a tenant AND attach themselves to its ADMIN
+        // profile, and isAdmin() is not tenant-scoped, so that was a global
+        // privilege escalation.
+        $this->authorizeAccess();
+
         $this->validate([
             'name' => ['required', 'string', 'max:50', 'min:3'],
         ]);
@@ -47,6 +61,12 @@ new class extends Component {
         TenantHelper::setSelectedTenantId($tenant->id);
 
         $this->showSuccess = true;
+    }
+
+    private function authorizeAccess(): void
+    {
+        abort_unless(config('noerd.features.multi_tenant'), 404);
+        abort_unless(\Noerd\Helpers\NoerdAuth::user()?->isAdmin(), 403);
     }
 }; ?>
 

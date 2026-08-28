@@ -49,6 +49,39 @@ it('denies a non-admin from mounting an admin component through the guard', func
     expect(ComponentAccessGuard::allows('noerd::tenant-detail'))->toBeFalse();
 });
 
+it('guards an admin component reached through its un-namespaced alias', function (): void {
+    // noerd registers its components with a namespace AND a bare location
+    // (Livewire::addLocation), so 'tenants-list' mounts the very same admin
+    // screen as 'noerd::tenants-list'. Matching the full name alone let the
+    // bare alias — dispatchable straight through the noerdModal event — walk
+    // past this guard entirely.
+    $tenant = Tenant::factory()->create();
+    $this->actingAs(makeTenantUser($tenant, admin: false));
+    TenantHelper::setSelectedTenantId($tenant->id);
+
+    foreach (['tenants-list', 'setup-languages-list', 'setup-collection-detail', 'NOERD::Tenants-List'] as $alias) {
+        expect(ComponentAccessGuard::allows($alias))->toBeFalse("alias {$alias} must stay admin-only");
+    }
+});
+
+it('rejects the bare alias at the component boot hook too', function (): void {
+    $tenant = Tenant::factory()->create();
+    $this->actingAs(makeTenantUser($tenant, admin: false));
+    TenantHelper::setSelectedTenantId($tenant->id);
+
+    // Both names resolve to the SAME compiled component; only the mount name
+    // differs, and getName() reports whichever was used.
+    $hook = new ComponentAccessHook();
+    $hook->setComponent(new class {
+        public function getName(): string
+        {
+            return 'tenants-list';
+        }
+    });
+
+    expect(fn(): mixed => $hook->boot())->toThrow(HttpException::class);
+});
+
 it('permits an admin to mount an admin component, and anyone a non-admin component', function (): void {
     $tenant = Tenant::factory()->create();
     $this->actingAs(makeTenantUser($tenant, admin: true));
@@ -210,4 +243,37 @@ it('reduces a detail payload to declared layout keys and always drops identity/t
         'price' => 10,
         'custom_attributes' => ['sap' => 'A1'],
     ]);
+});
+
+it('scopes admin rights to the tenant of the current request', function (): void {
+    $administered = Tenant::factory()->create();
+    $memberOnly = Tenant::factory()->create();
+
+    $user = makeTenantUser($administered, admin: true);
+    // Same user is a plain member of a second tenant.
+    $memberProfile = Profile::factory()->create(['tenant_id' => $memberOnly->id, 'key' => 'MEMBER']);
+    $user->tenants()->attach($memberOnly->id, ['profile_id' => $memberProfile->id]);
+    $this->actingAs($user);
+
+    TenantHelper::setSelectedTenantId($administered->id);
+    expect($user->fresh()->isAdmin())->toBeTrue();
+
+    // Switching to the tenant they only belong to must NOT carry admin rights —
+    // that is what made the setup area of any co-tenant reachable.
+    TenantHelper::setSelectedTenantId($memberOnly->id);
+    expect($user->fresh()->isAdmin())->toBeFalse()
+        ->and(ComponentAccessGuard::allows('noerd::tenants-list'))->toBeFalse();
+
+    // The cross-tenant variant stays available for console/reporting contexts.
+    expect($user->fresh()->isAdminOfAnyTenant())->toBeTrue();
+});
+
+it('keeps a super admin unrestricted across tenants', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = makeTenantUser($tenant, admin: false, super: true);
+    $this->actingAs($user);
+
+    TenantHelper::setSelectedTenantId(Tenant::factory()->create()->id);
+
+    expect($user->fresh()->isAdmin())->toBeTrue();
 });
