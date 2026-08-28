@@ -24,6 +24,13 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - **Release:** tagging a version requires the `composer.json` `"version"` field to equal the tag in
   the tagged commit (`Bump version to vX.Y.Z`). That bump may be committed to `main` as part of the
   tag flow.
+- **A pushed tag is immutable — never move it.** Packagist indexes a version once and keeps the
+  commit it saw first, so re-pointing an existing tag keeps shipping the old code while the
+  repository looks correct. Consumers see no reason to update, because the version number did not
+  change. Anything that has to reach users goes into the next patch release instead. This is not
+  hypothetical: `v0.11.0` was moved to a later commit after it had been published, Packagist kept
+  serving the commit from five days earlier, and the released `v0.11.0` was therefore older than
+  `v0.10.13` — `^0.11.0` resolved to less code than `^0.10`.
 - Commit messages: one concise sentence describing the change. No generated-by footers, no
   co-author lines.
 - Do not change dependencies (`composer.json` `require`) without explicit agreement.
