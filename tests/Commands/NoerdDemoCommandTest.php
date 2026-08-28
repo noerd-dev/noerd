@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Illuminate\Console\Command;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\RequiresNoerdInstallation;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 

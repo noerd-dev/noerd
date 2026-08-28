@@ -52,6 +52,22 @@ final class ColumnFilterParser
         };
     }
 
+    /**
+     * Contains match via LIKE with an EXPLICIT escape character, so a literal
+     * % or _ in the input matches literally on every driver: sqlite has no
+     * default LIKE escape character (a backslash-escaped pattern silently
+     * matches nothing there), and a backslash escape literal is not portable
+     * into MySQL string literals — `!` is literal in both. The column name is
+     * grammar-wrapped (JSON `->` paths included); the value stays a binding.
+     */
+    public static function applyLikeContains(Builder $query, string $field, string $value, string $boolean = 'and'): void
+    {
+        $wrapped = $query->getQuery()->getGrammar()->wrap($field);
+        $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
+
+        $query->whereRaw("{$wrapped} like ? escape '!'", ['%' . $escaped . '%'], $boolean);
+    }
+
     private static function applyBool(Builder $query, string $field, string $raw): void
     {
         $value = mb_trim($raw);
@@ -105,22 +121,6 @@ final class ColumnFilterParser
         }
 
         $query->where($field, $op, $value);
-    }
-
-    /**
-     * Contains match via LIKE with an EXPLICIT escape character, so a literal
-     * % or _ in the input matches literally on every driver: sqlite has no
-     * default LIKE escape character (a backslash-escaped pattern silently
-     * matches nothing there), and a backslash escape literal is not portable
-     * into MySQL string literals — `!` is literal in both. The column name is
-     * grammar-wrapped (JSON `->` paths included); the value stays a binding.
-     */
-    public static function applyLikeContains(Builder $query, string $field, string $value, string $boolean = 'and'): void
-    {
-        $wrapped = $query->getQuery()->getGrammar()->wrap($field);
-        $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
-
-        $query->whereRaw("{$wrapped} like ? escape '!'", ['%' . $escaped . '%'], $boolean);
     }
 
     private static function parseDate(string $value): ?Carbon
