@@ -15,10 +15,13 @@ class SetupLanguage extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-        'is_default' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'is_default' => 'boolean',
+        ];
+    }
 
     /**
      * Get all active languages

@@ -9,6 +9,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\TenantFactory;
 
+/**
+ * Extends Authenticatable ON PURPOSE: optional frontend modules authenticate a
+ * tenant directly (e.g. liefertool registers an auth provider with
+ * `model => Tenant::class` for the restaurant login), so the model must
+ * satisfy the guard contract even though the core itself never logs a tenant in.
+ */
 class Tenant extends Authenticatable
 {
     use HasFactory;
@@ -23,9 +29,12 @@ class Tenant extends Authenticatable
         'updated_at',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the UUID attribute with fallback to hash for backward compatibility.
