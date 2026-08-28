@@ -62,9 +62,14 @@ $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', '
 $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':noerd']);
 ```
 
-Every noerd-based module protects its routes with `['noerd']` (plus module-specific aliases such
-as `app-access:crm`) instead of `['web', 'auth', 'verified']`. The `noerd:module` scaffolder
-generates routes with the `noerd` group.
+Every noerd-based module protects its routes with `['noerd', 'app-access:{module}']` instead of
+`['web', 'auth', 'verified']`. `app-access` is a **core** middleware alias (registered by
+`NoerdServiceProvider`, backed by `Noerd\Middleware\AppAccessMiddleware`) that takes the app key as
+its parameter: `app-access:crm` only lets requests through when the selected tenant has the CRM app
+assigned and the per-app authorization gate allows it. Without it, any authenticated user of any
+tenant app can open the module's screens. The `noerd:module` scaffolder currently generates routes
+with the `noerd` group only — add the `app-access:{module}` alias when hardening the generated
+routes (see [Creating Modules](creating-modules.md)).
 
 `Noerd\Middleware\NoerdAuthenticate` extends Laravel's `Authenticate` and pins the guest redirect
 to `route('noerd.login')`; `Noerd\Middleware\NoerdRedirectIfAuthenticated` extends
