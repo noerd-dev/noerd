@@ -54,11 +54,11 @@
         </div>
 
         @php
-            $activeColumnFilterChips = $this->activeColumnFilterChips();
+            $activeColumnFilterChips = $this->activeColumnFilterChips;
         @endphp
-        @if ($this->tableFilters() || $activeColumnFilterChips !== [])
+        @if ($this->tableFilters || $activeColumnFilterChips !== [])
             <div class="ml-4 flex flex-wrap items-center gap-1">
-                @foreach ($this->tableFilters() as $tableFilter)
+                @foreach ($this->tableFilters as $tableFilter)
                     @if (in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
                         <x-noerd::filters.date-dropdown
                             :filter="$tableFilter"

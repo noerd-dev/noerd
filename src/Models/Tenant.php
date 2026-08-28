@@ -2,7 +2,6 @@
 
 namespace Noerd\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,10 +13,6 @@ class Tenant extends Authenticatable
 {
     use HasFactory;
     use Notifiable;
-
-    protected $appends = [
-        'frontendSession',
-    ];
 
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
@@ -49,11 +44,6 @@ class Tenant extends Authenticatable
         // For backward compatibility, always use 'hash' column for existing databases
         // The accessor will still return it as 'uuid'
         $this->attributes['hash'] = $value;
-    }
-
-    public function getFrontendSessionAttribute(): int
-    {
-        return (int) Carbon::now()->addMinutes(60)->timestamp;
     }
 
     public function users(): BelongsToMany

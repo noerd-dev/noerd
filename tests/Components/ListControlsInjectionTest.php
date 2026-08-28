@@ -24,7 +24,7 @@ it('injects search and the YAML actions into a custom header of a list host', fu
     $html = Livewire::test(CustomHeaderListComponent::class)->assertOk()->html();
 
     expect($html)->toContain('Custom Header')
-        ->toContain('wire:model.live="search"')
+        ->toContain('wire:model.live.debounce.300ms="search"')
         ->toContain('$wire.listAction(null, [])')
         ->toContain('New Thing');
 });
@@ -32,7 +32,7 @@ it('injects search and the YAML actions into a custom header of a list host', fu
 it('renders the controls exactly once for a standard list', function (): void {
     $html = Livewire::test(StandardHeaderListComponent::class)->assertOk()->html();
 
-    expect(mb_substr_count($html, 'wire:model.live="search"'))->toBe(1)
+    expect(mb_substr_count($html, 'wire:model.live.debounce.300ms="search"'))->toBe(1)
         ->and(mb_substr_count($html, '$wire.listAction(null, [])'))->toBe(1);
 });
 
@@ -42,7 +42,7 @@ it('suppresses the injection with listControls=false', function (): void {
         ->html();
 
     expect($html)->toContain('Custom Header')
-        ->not->toContain('wire:model.live="search"')
+        ->not->toContain('wire:model.live.debounce.300ms="search"')
         ->not->toContain('New Thing');
 });
 
@@ -51,7 +51,7 @@ it('keeps the search but hides the actions in picker mode', function (): void {
         ->assertOk()
         ->html();
 
-    expect($html)->toContain('wire:model.live="search"')
+    expect($html)->toContain('wire:model.live.debounce.300ms="search"')
         ->not->toContain('New Thing');
 });
 
@@ -69,7 +69,7 @@ it('wraps the injected controls in the listControlsShow expression', function ()
         ->html();
 
     expect($html)->toContain('x-show="currentTab === 2"')
-        ->toContain('wire:model.live="search"');
+        ->toContain('wire:model.live.debounce.300ms="search"');
 });
 
 /**

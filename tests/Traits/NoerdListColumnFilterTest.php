@@ -755,3 +755,14 @@ class TestableColumnFilterChipListComponent extends TestableColumnFilterListComp
         ];
     }
 }
+
+it('resets pagination when the search changes', function (): void {
+    NoerdUser::factory()->count(3)->create();
+
+    $component = Livewire::test(TestableColumnFilterListComponent::class)
+        ->set('perPage', 1)
+        ->call('setPage', 2)
+        ->set('search', 'a');
+
+    expect($component->instance()->paginators['page'] ?? 1)->toBe(1);
+});
