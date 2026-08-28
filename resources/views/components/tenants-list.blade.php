@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Models\Tenant;
 use Noerd\Traits\NoerdList;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     use NoerdList;
@@ -24,8 +24,8 @@ new class extends Component {
     {
         $query = $this->listQuery($this->listModel);
 
-        if (! Auth::user()->isSuperAdmin()) {
-            $query->whereIn('id', Auth::user()->adminTenants()->pluck('tenants.id'));
+        if (! NoerdAuth::user()->isSuperAdmin()) {
+            $query->whereIn('id', NoerdAuth::user()->adminTenants()->pluck('tenants.id'));
         }
 
         $rows = $query->paginate($this->perPage);

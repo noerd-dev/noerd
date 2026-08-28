@@ -24,13 +24,12 @@ it('renders the boost guideline through blade', function (): void {
 
     $rendered = Blade::render($source);
 
-    expect($rendered)
-        ->toStartWith('## Noerd Framework')
-        ->toContain('Route modal vs. component modal')
-        ->toContain('$detailModel')
-        ->toContain('$listModel')
-        // Blade literals of the examples must survive (wrapped in @verbatim)
-        ->toContain("{{ __('Cancel') }}")
+    // Only the render mechanics are asserted — the rule texts are content:
+    // rendering must succeed non-empty, the @verbatim wrappers must be consumed
+    // and the Blade literals of the examples must survive them.
+    expect(mb_trim($rendered))->not->toBe('')
+        ->and($rendered)
+        ->toContain('{{')
         ->not->toContain('@verbatim')
         ->not->toContain('@endverbatim');
 });

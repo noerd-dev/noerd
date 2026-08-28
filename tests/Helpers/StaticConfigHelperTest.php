@@ -20,12 +20,24 @@ it('returns empty array and logs warning for non-existing table config', functio
     expect($config)->toBeArray()->toBeEmpty();
 });
 
-it('loads table config for existing list', function (): void {
-    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
+it('loads the list config from the app YAML', function (): void {
+    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
     $this->actingAs($user);
 
-    $config = StaticConfigHelper::getListConfig('setup-languages-list');
-    expect($config)->toBeArray()->and($config)->not->toBeEmpty();
+    // Fixture round-trip instead of a shipped config: proves the YAML on disk is
+    // what getListConfig() resolves for the selected app.
+    $path = base_path('app-configs/setup/lists/zz-config-probe-list.yml');
+    file_put_contents($path, "title: Zz Probe\ncolumns:\n  - field: name\n    label: Name\n");
+
+    try {
+        StaticConfigHelper::flushRuntimeCaches();
+        $config = StaticConfigHelper::getListConfig('zz-config-probe-list');
+
+        expect($config['title'])->toBe('Zz Probe')
+            ->and($config['columns'])->toHaveCount(1);
+    } finally {
+        @unlink($path);
+    }
 });
 
 it('returns empty array and logs warning for non-existing model config', function (): void {
@@ -40,20 +52,55 @@ it('returns empty array and logs warning for non-existing model config', functio
     expect($fields)->toBeArray()->toBeEmpty();
 });
 
-it('loads model config for existing component', function (): void {
-    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('noerdApp')->create();
-    $this->actingAs($user);
-
-    $fields = StaticConfigHelper::getComponentFields('noerd-user-detail');
-    expect($fields)->toBeArray()->and($fields)->not->toBeEmpty();
-});
-
-it('loads navigation structure for app', function (): void {
+it('loads the component fields from the app YAML', function (): void {
     $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
     $this->actingAs($user);
 
-    $navigation = StaticConfigHelper::getNavigationStructure();
-    expect($navigation)->toBeArray()->and($navigation)->not->toBeEmpty();
+    $path = base_path('app-configs/setup/details/zz-config-probe-detail.yml');
+    file_put_contents($path, "title: Zz Probe Detail\nfields:\n  - name: detailData.zz_probe\n    label: Probe\n    type: text\n");
+
+    try {
+        StaticConfigHelper::flushRuntimeCaches();
+        $fields = StaticConfigHelper::getComponentFields('zz-config-probe-detail');
+
+        expect($fields['title'])->toBe('Zz Probe Detail')
+            ->and(array_column($fields['fields'], 'name'))->toContain('detailData.zz_probe');
+    } finally {
+        @unlink($path);
+    }
+});
+
+it('loads the navigation structure from the app navigation YAML', function (): void {
+    $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
+    $this->actingAs($user);
+
+    // Fixture round-trip: what the shipped navigation contains is configuration,
+    // so the resolution is proven against a temporary navigation.yml.
+    $navigationPath = base_path('app-configs/setup/navigation.yml');
+    $backup = file_exists($navigationPath) ? file_get_contents($navigationPath) : null;
+    @mkdir(dirname($navigationPath), 0755, true);
+    file_put_contents($navigationPath, <<<'YAML'
+-
+  title: Setup
+  name: setup
+  block_menus:
+    -
+      title: Zz Block
+      navigations:
+        -
+          title: 'Zz Probe Entry'
+          route: noerd.setup
+YAML);
+
+    try {
+        StaticConfigHelper::flushRuntimeCaches();
+        $navigation = StaticConfigHelper::getNavigationStructure();
+
+        expect($navigation[0]['block_menus'][0]['navigations'][0]['title'])->toBe('Zz Probe Entry');
+    } finally {
+        $backup === null ? @unlink($navigationPath) : file_put_contents($navigationPath, $backup);
+        StaticConfigHelper::flushRuntimeCaches();
+    }
 });
 
 it('returns null for navigation when no app selected', function (): void {

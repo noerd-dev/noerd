@@ -12,6 +12,7 @@ use Noerd\Models\SetupLanguage;
 use Noerd\Services\SetupFieldTypeConverter;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -39,7 +40,7 @@ new class extends Component
         }
 
         // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(auth()->user()->selected_tenant_id);
+        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
 
         $entry = new SetupCollectionEntry;
         if ($this->modelId) {
@@ -83,7 +84,7 @@ new class extends Component
     {
         // Find or create the parent Collection
         $parentCollection = SetupCollection::firstOrCreate([
-            'tenant_id' => auth()->user()->selected_tenant_id,
+            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
             'collection_key' => mb_strtoupper($this->collectionKey),
         ], [
             'name' => ucfirst($this->collectionKey),
@@ -93,7 +94,7 @@ new class extends Component
         $convertedEntryData = SetupFieldTypeConverter::convertCollectionData($this->detailData, $this->collectionKey);
 
         $data = [
-            'tenant_id' => auth()->user()->selected_tenant_id,
+            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
             'setup_collection_id' => $parentCollection->id,
             'data' => $convertedEntryData,
             'sort' => (int) ($this->detailData['sort'] ?? 0),

@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -10,7 +11,7 @@ new class extends Component
     public function mount(): void
     {
         // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(auth()->user()->selected_tenant_id);
+        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
 
         $this->languages = SetupLanguage::where('is_active', true)
             ->orderBy('is_default', 'desc')

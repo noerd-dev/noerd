@@ -1,6 +1,9 @@
 <?php
 
 use Noerd\Services\NullMediaResolver;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 it('returns null for getPreviewUrl', function (): void {
     $resolver = new NullMediaResolver();

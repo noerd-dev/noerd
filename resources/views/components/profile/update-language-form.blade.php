@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public string $locale = '';
@@ -11,7 +11,7 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->locale = Auth::user()->locale ?? 'en';
+        $this->locale = NoerdAuth::user()->locale ?? 'en';
         $this->languages = SetupLanguage::getActive()
             ->map(fn (SetupLanguage $language) => [
                 'value' => $language->code,
@@ -28,7 +28,7 @@ new class extends Component {
             'locale' => ['required', 'string', "in:{$activeCodes}"],
         ]);
 
-        Auth::user()->setting->update($validated);
+        NoerdAuth::user()->setting->update($validated);
 
         $this->dispatch('language-updated');
     }

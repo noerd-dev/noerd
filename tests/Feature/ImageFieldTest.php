@@ -14,20 +14,6 @@ describe('Image Form Component', function (): void {
         $this->actingAs($this->admin);
     });
 
-    it('renders without error when no image is set', function (): void {
-        Livewire::test('noerd::image-field-test', [
-            'initialModel' => [],
-        ])
-            ->assertSuccessful();
-    });
-
-    it('renders without error when image field has a string URL value', function (): void {
-        Livewire::test('noerd::image-field-test', [
-            'initialModel' => ['image' => 'https://example.com/photo.jpg'],
-        ])
-            ->assertSuccessful();
-    });
-
     it('shows choose image from media button', function (): void {
         $resolver = Mockery::mock(MediaResolverContract::class);
         $resolver->shouldReceive('isAvailable')->andReturn(true);

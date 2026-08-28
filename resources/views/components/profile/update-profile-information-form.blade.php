@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Noerd\Models\NoerdUser;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public string $name = '';
@@ -12,13 +12,13 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->name = Auth::user()->name ?? Auth::user()->email;
-        $this->email = Auth::user()->email;
+        $this->name = NoerdAuth::user()->name ?? NoerdAuth::user()->email;
+        $this->email = NoerdAuth::user()->email;
     }
 
     public function updateProfileInformation(): void
     {
-        $user = Auth::user();
+        $user = NoerdAuth::user();
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -45,7 +45,7 @@ new class extends Component {
 
     public function sendVerification(): void
     {
-        $user = Auth::user();
+        $user = NoerdAuth::user();
 
         if ($user->hasVerifiedEmail()) {
             $path = session('url.intended', route('noerd.apps'));
@@ -86,7 +86,7 @@ new class extends Component {
                           autocomplete="username"/>
             <x-noerd::input-error class="mt-2" :messages="$errors->get('email')"/>
 
-            @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail())
+            @if (NoerdAuth::user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! NoerdAuth::user()->hasVerifiedEmail())
                 <div>
                     <p class="text-sm mt-2 text-gray-800">
                         {{ __('Your email address is unverified.') }}

@@ -2,6 +2,9 @@
 
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Support\FieldTypeDefinition;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 it('registers and resolves a field type definition', function (): void {
     $registry = new FieldTypeRegistry();

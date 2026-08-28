@@ -91,7 +91,7 @@ new class extends Component {
                         <livewire:dynamic-component :component="$topBarComponent" :key="$topBarComponent" />
                     @endforeach
 
-                    @if(auth()->user()->isAdmin())
+                    @if(NoerdAuth::user()->isAdmin())
                         <a class="shrink-0" wire:navigate href="{{route('noerd.setup')}}">
                             <x-noerd::button variant="icon" icon="cog-6-tooth" type="button">
                                 <span class="sr-only">View setup</span>
@@ -108,7 +108,7 @@ new class extends Component {
                                 <span class="absolute -inset-1.5"></span>
                                 <span class="sr-only">Open user menu</span>
                                 <div class="rounded-full text-xs bg-red-200  w-7 h-7 leading-7 text-center">
-                                    {{auth()->user()->initials()}}
+                                    {{NoerdAuth::user()->initials()}}
                                 </div>
                             </button>
                         </div>

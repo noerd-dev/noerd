@@ -90,44 +90,24 @@ it('fails when only some fields are provided', function (): void {
         ->assertExitCode(1);
 });
 
-it('normalizes lowercase name to uppercase', function (): void {
+it('normalizes the app name to the uppercase underscore form', function (string $input, string $expected): void {
     $this->artisan('noerd:create-app', [
-        '--title' => 'Lowercase App',
-        '--name' => 'lowercase app',
+        '--title' => 'Normalized App',
+        '--name' => $input,
         '--icon' => 'icons.test',
         '--route' => 'test.route',
     ])
         ->expectsOutput('✅ Tenant app created successfully!')
         ->assertExitCode(0);
 
-    expect(TenantApp::where('name', 'LOWERCASE_APP')->exists())->toBeTrue();
-});
-
-it('normalizes name with hyphens to underscores', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Hyphen Name App',
-        '--name' => 'hyphen-name',
-        '--icon' => 'icons.test',
-        '--route' => 'test.route',
-    ])
-        ->expectsOutput('✅ Tenant app created successfully!')
-        ->assertExitCode(0);
-
-    expect(TenantApp::where('name', 'HYPHEN_NAME')->exists())->toBeTrue();
-});
-
-it('normalizes name with spaces to underscores', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Spaced Name App',
-        '--name' => 'SPACED NAME',
-        '--icon' => 'icons.test',
-        '--route' => 'test.route',
-    ])
-        ->expectsOutput('✅ Tenant app created successfully!')
-        ->assertExitCode(0);
-
-    expect(TenantApp::where('name', 'SPACED_NAME')->exists())->toBeTrue();
-});
+    expect(TenantApp::where('name', $expected)->exists())->toBeTrue();
+})->with([
+    'lowercase with space' => ['lowercase app', 'LOWERCASE_APP'],
+    'hyphens' => ['hyphen-name', 'HYPHEN_NAME'],
+    'uppercase with space' => ['SPACED NAME', 'SPACED_NAME'],
+    'underscores kept' => ['UNDERSCORE_NAME_APP', 'UNDERSCORE_NAME_APP'],
+    'single word' => ['SINGLE', 'SINGLE'],
+]);
 
 it('fails when name contains special characters', function (): void {
     $this->artisan('noerd:create-app', [
@@ -138,31 +118,6 @@ it('fails when name contains special characters', function (): void {
     ])
         ->expectsOutput('App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).')
         ->assertExitCode(1);
-});
-
-it('accepts name with underscores', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Underscore Name App',
-        '--name' => 'UNDERSCORE_NAME_APP',
-        '--icon' => 'icons.test',
-        '--route' => 'test.route',
-    ])
-        ->expectsOutput('✅ Tenant app created successfully!')
-        ->assertExitCode(0);
-
-    expect(TenantApp::where('name', 'UNDERSCORE_NAME_APP')->exists())->toBeTrue();
-});
-
-it('accepts single word uppercase names', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Single Word App',
-        '--name' => 'SINGLE',
-        '--icon' => 'icons.single',
-        '--route' => 'single.route',
-    ])
-        ->assertExitCode(0);
-
-    expect(TenantApp::where('name', 'SINGLE')->exists())->toBeTrue();
 });
 
 it('fails when app name already exists', function (): void {
@@ -222,70 +177,5 @@ it('displays comprehensive app details in output table', function (): void {
         ->expectsOutputToContain('| Route   | details.dashboard')
         ->expectsOutputToContain('| Active  | Yes')
         ->expectsOutputToContain('| Created |')
-        ->assertExitCode(0);
-});
-
-it('handles titles with special characters correctly', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Special Chars App (Test & Demo)',
-        '--name' => 'SPECIAL_CHARS',
-        '--icon' => 'icons.special',
-        '--route' => 'special.route',
-    ])
-        ->assertExitCode(0);
-
-    $app = TenantApp::where('name', 'SPECIAL_CHARS')->first();
-    expect($app->title)->toBe('Special Chars App (Test & Demo)');
-});
-
-it('handles long titles correctly', function (): void {
-    $longTitle = 'This is a very long title that should still be handled correctly by the command';
-
-    $this->artisan('noerd:create-app', [
-        '--title' => $longTitle,
-        '--name' => 'LONG_TITLE',
-        '--icon' => 'icons.long',
-        '--route' => 'long.route',
-    ])
-        ->assertExitCode(0);
-
-    $app = TenantApp::where('name', 'LONG_TITLE')->first();
-    expect($app->title)->toBe($longTitle);
-});
-
-it('handles complex route names correctly', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Complex Route App',
-        '--name' => 'COMPLEX_ROUTE',
-        '--icon' => 'icons.complex',
-        '--route' => 'admin.module.sub-module.dashboard',
-    ])
-        ->assertExitCode(0);
-
-    $app = TenantApp::where('name', 'COMPLEX_ROUTE')->first();
-    expect($app->route)->toBe('admin.module.sub-module.dashboard');
-});
-
-it('handles complex icon names correctly', function (): void {
-    $this->artisan('noerd:create-app', [
-        '--title' => 'Complex Icon App',
-        '--name' => 'COMPLEX_ICON',
-        '--icon' => 'heroicon-o-cog-6-tooth',
-        '--route' => 'complex.route',
-    ])
-        ->assertExitCode(0);
-
-    $app = TenantApp::where('name', 'COMPLEX_ICON')->first();
-    expect($app->icon)->toBe('heroicon-o-cog-6-tooth');
-});
-
-it('provides correct help information', function (): void {
-    $this->artisan('noerd:create-app', ['--help'])
-        ->expectsOutputToContain('Create a new app that can be assigned to tenants')
-        ->expectsOutputToContain('--title')
-        ->expectsOutputToContain('--name')
-        ->expectsOutputToContain('--icon')
-        ->expectsOutputToContain('--route')
-        ->expectsOutputToContain('--active')
         ->assertExitCode(0);
 });

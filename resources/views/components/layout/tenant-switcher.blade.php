@@ -1,14 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public function switchTenant(int $tenantId): void
     {
-        $user = Auth::user();
+        $user = NoerdAuth::user();
         $accessToClientsIds = $user->tenants->pluck('id')->toArray();
 
         if (! in_array($tenantId, $accessToClientsIds)) {
@@ -51,10 +51,10 @@ new class extends Component {
 } ?>
 
 @php
-    $tenants = auth()->user()->tenants;
+    $tenants = NoerdAuth::user()->tenants;
     $selectedTenantId = \Noerd\Helpers\TenantHelper::getSelectedTenantId();
     $currentTenantName = $tenants->firstWhere('id', $selectedTenantId)?->name ?? __('Tenant');
-    $canCreateTenant = auth()->user()->isAdmin()
+    $canCreateTenant = NoerdAuth::user()->isAdmin()
         && config('noerd.features.multi_tenant')
         && config('noerd.features.new_tenant');
 @endphp

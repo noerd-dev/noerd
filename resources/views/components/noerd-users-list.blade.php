@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
@@ -25,11 +24,11 @@ new class () extends Component {
 
     public function loginAsUser($userId)
     {
-        if (! Auth::user()->isAdmin()) {
+        if (! NoerdAuth::user()->isAdmin()) {
             abort(401);
         }
 
-        $tenants = Auth::user()->adminTenants();
+        $tenants = NoerdAuth::user()->adminTenants();
         $allowedUserIds = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
             $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
         })->get()->pluck('id')->toArray();
@@ -54,7 +53,7 @@ new class () extends Component {
 
     public function listData(): array
     {
-        $tenants = Auth::user()->adminTenants();
+        $tenants = NoerdAuth::user()->adminTenants();
 
         $rows = $this->listQuery($this->listModel)
             ->whereHas('tenants', function ($relationQuery) use ($tenants): void {

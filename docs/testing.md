@@ -32,6 +32,14 @@ In this mode the host's `tests/Pest.php` is loaded and the package's `tests/Pest
 Every test file therefore binds its test case itself with `uses(Noerd\Tests\TestCase::class);` —
 keep that line in every new test file.
 
+The testbench skeleton (`vendor/orchestra/testbench-core/laravel`) is shared and persistent: other
+packages' suites (e.g. noerd-plus) symlink their module and publish their YAML copies into the same
+skeleton, and those files survive between runs. `Noerd\Tests\TestCase` must NOT remove foreign
+`app-modules` symlinks or `app-configs` folders — interleaved suites in the same workspace depend on
+them. Consequently, tests must never assume the skeleton contains only noerd's files: write uniquely
+named (`zz*`) runtime fixtures, clean them up in `afterEach`, and never write through the
+`app-modules/noerd` symlink (it points into the real package working tree).
+
 ## Where module tests live
 
 Tests, test traits (`tests/Traits/`), factories and seeders belong to the module

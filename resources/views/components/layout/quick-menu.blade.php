@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public $config;
@@ -22,7 +23,7 @@ new class extends Component {
 
     public function canAccess($policy)
     {
-        $user = auth()->user();
+        $user = NoerdAuth::user();
 
         // Try gate-based ability first (for abilities defined via Gate::define)
         if (Gate::has($policy)) {
@@ -35,7 +36,7 @@ new class extends Component {
 
     public function showTenantSwitcher(): bool
     {
-        $user = auth()->user();
+        $user = NoerdAuth::user();
 
         return config('noerd.features.multi_tenant')
             && ($user->tenants->count() > 1

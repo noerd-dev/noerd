@@ -3,6 +3,9 @@
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\RelationFieldDefinition;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 it('registers a relation type and exposes it via field type registry', function (): void {
     $fieldTypeRegistry = new FieldTypeRegistry();

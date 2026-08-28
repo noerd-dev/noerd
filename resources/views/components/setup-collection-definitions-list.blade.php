@@ -7,6 +7,7 @@ use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Support\SetupCollectionDefinitionData;
 use Noerd\Traits\NoerdList;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -27,7 +28,7 @@ new class extends Component
 
         $collectionMeta = DB::table('setup_collections')
             ->leftJoin('setup_collection_entries', 'setup_collection_entries.setup_collection_id', '=', 'setup_collections.id')
-            ->where('setup_collections.tenant_id', auth()->user()->selected_tenant_id)
+            ->where('setup_collections.tenant_id', NoerdAuth::user()->selected_tenant_id)
             ->select(
                 'setup_collections.collection_key',
                 DB::raw('count(setup_collection_entries.id) as entry_count'),

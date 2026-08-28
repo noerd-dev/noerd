@@ -34,9 +34,7 @@ it('displays the application ready callout with the next steps', function (): vo
     Artisan::call('test:install-ready-callout');
     $output = Artisan::output();
 
-    expect($output)
-        ->toContain('Application ready')
-        ->toContain('https://example.test/noerd-apps')
-        ->toContain('documentation')
-        ->toContain('Build something amazing!');
+    // The callout copy is content — asserted is only the functional next step:
+    // the apps-dashboard URL derived from app.url.
+    expect($output)->toContain('https://example.test/noerd-apps');
 });

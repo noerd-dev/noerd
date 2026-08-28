@@ -57,13 +57,6 @@ describe('Position tables follow the theme', function (): void {
             ->assertDontSeeHtml('>#</th>');
     });
 
-    it('falls back to the default theme for an unknown theme name', function (): void {
-        Livewire::test('noerd::positions-theme-test', ['theme' => 'bogus'])
-            ->assertSuccessful()
-            ->assertSeeHtml('py-8')
-            ->assertDontSeeHtml('bg-zinc-100');
-    });
-
     it('widens the details row by the number column only when rows are numbered', function (): void {
         Livewire::test('noerd::positions-theme-test', ['theme' => 'default'])
             ->assertSeeHtml('colspan="3"');

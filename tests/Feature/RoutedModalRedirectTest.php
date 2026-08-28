@@ -74,6 +74,20 @@ it('renders the plain full page without the modal flag', function (): void {
         ->assertOk();
 });
 
+it('drops route parameters the component does not bind from the reopen instruction', function (): void {
+    registerTestLivewireRoute('zz-routed-extra/{modelId}/{unboundParam}', 'zz-routed-modal-page', 'zz.routed.extra');
+
+    $tenant = Tenant::factory()->create();
+
+    $this->session(['_previous' => ['url' => url('/setup')]])
+        ->get(route('zz.routed.extra', ['modelId' => $tenant->id, 'unboundParam' => 'x', 'modal' => true]))
+        ->assertRedirect(url('/setup'));
+
+    $arguments = session('noerd-modal.open')['arguments'];
+    expect($arguments)->toHaveKey('modelId')
+        ->not->toHaveKey('unboundParam');
+});
+
 it('maps the new sentinel back to a null modelId in the reopen instruction', function (): void {
     $response = $this->session(['_previous' => ['url' => url('/setup')]])
         ->get(route('zz.routed.page', ['modelId' => 'new', 'modal' => true]));

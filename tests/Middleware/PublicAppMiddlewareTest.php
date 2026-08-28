@@ -154,11 +154,21 @@ describe('PublicAppMiddleware', function (): void {
             ->and(TenantHelper::currentTenantId())->toBe($tenant->id);
 
         // Tenant-owned data is now scoped to that tenant instead of spanning all.
+        // (TenantScope is jointly covered here, in SecurityCriticalFixesTest —
+        // authenticated scoping + fail-closed — and in NoerdGuardTest — stamping
+        // and guard coexistence; keep additions in one of those, not a new file.)
         $mine = SetupCollection::factory()->create(['tenant_id' => $tenant->id]);
         $other = SetupCollection::factory()->create(['tenant_id' => Tenant::factory()->create()->id]);
 
         $ids = SetupCollection::query()->pluck('id');
         expect($ids)->toContain($mine->id)->not->toContain($other->id);
+
+        // A record created in the guest context is stamped with the guest tenant
+        // by BelongsToTenant — the same resolver the scope filters by.
+        $stamped = SetupCollection::factory()->make(['tenant_id' => null]);
+        $stamped->save();
+
+        expect($stamped->refresh()->tenant_id)->toBe($tenant->id);
     });
 
     it('yields no tenant rows for a guest when the public app spans several tenants', function (): void {

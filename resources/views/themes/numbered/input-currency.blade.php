@@ -9,7 +9,7 @@
     $name = $field['name'] ?? $name;
     $readonly = $field['readonly'] ?? $readonly;
 
-    $currencyConfig = \Noerd\Helpers\CurrencyHelper::configForTenant(auth()->user()?->selected_tenant_id);
+    $currencyConfig = \Noerd\Helpers\CurrencyHelper::configForTenant(\Noerd\Helpers\NoerdAuth::user()?->selected_tenant_id);
     $symbol = $currencyConfig['symbol'] ?? '€';
     $decSep = $currencyConfig['decimal_separator'] ?? ',';
     $thousSep = $currencyConfig['thousands_separator'] ?? '.';

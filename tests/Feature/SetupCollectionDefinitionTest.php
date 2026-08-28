@@ -83,14 +83,11 @@ it('loads pageLayout with metadata fields from YAML config', function (): void {
 
     $component = Livewire::test('noerd::setup-collection-definition-detail');
 
+    // WHICH fields the meta form carries is configuration — only the mechanic
+    // (YAML resolves into a non-empty pageLayout with a fields array) is asserted.
     $pageLayout = $component->get('pageLayout');
     expect($pageLayout)->not->toBeEmpty();
-    expect($pageLayout['fields'])->toBeArray();
-
-    $fieldNames = array_column($pageLayout['fields'], 'name');
-    expect($fieldNames)->toContain('detailData.filename');
-    expect($fieldNames)->toContain('detailData.title');
-    expect($fieldNames)->toContain('detailData.titleList');
+    expect($pageLayout['fields'])->toBeArray()->not->toBeEmpty();
 });
 
 it('allows renaming the filename of an existing collection definition', function (): void {

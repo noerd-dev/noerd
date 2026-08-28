@@ -58,6 +58,10 @@ beforeEach(function (): void {
     });
 });
 
+afterEach(function (): void {
+    File::deleteDirectory(base_path('app-configs/zzguardapp'));
+});
+
 it('rejects a client update to the settings model map', function (): void {
     expect(fn() => Livewire::test('zz-guard-settings-page')->set('settingsModels', ['detailData' => Profile::class]))
         ->toThrow(CannotUpdateLockedPropertyException::class);

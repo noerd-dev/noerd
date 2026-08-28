@@ -1,6 +1,9 @@
 <?php
 
 use Noerd\Services\TopBarRegistry;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 it('starts empty so the core renders no module components of its own', function (): void {
     expect((new TopBarRegistry())->all())->toBe([]);

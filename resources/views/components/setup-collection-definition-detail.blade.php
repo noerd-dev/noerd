@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
@@ -9,6 +8,7 @@ use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Support\SetupCollectionDefinitionData;
 use Noerd\Traits\NoerdDetail;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -24,7 +24,7 @@ new class extends Component
             return 0;
         }
 
-        $collection = SetupCollection::where('tenant_id', Auth::user()->selected_tenant_id)
+        $collection = SetupCollection::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
             ->where('collection_key', mb_strtoupper($this->modelId))
             ->first();
 
@@ -161,7 +161,7 @@ new class extends Component
 
         // Update setup_collections.collection_key on rename (per-tenant scope)
         if ($isRenaming) {
-            SetupCollection::where('tenant_id', Auth::user()->selected_tenant_id)
+            SetupCollection::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
                 ->where('collection_key', mb_strtoupper($this->modelId))
                 ->update(['collection_key' => $key]);
         }
@@ -169,7 +169,7 @@ new class extends Component
         // Ensure the SetupCollection instance bucket exists so the dynamic
         // sidebar entry lists the correct name.
         SetupCollection::firstOrCreate([
-            'tenant_id' => Auth::user()->selected_tenant_id,
+            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
             'collection_key' => $key,
         ], [
             'name' => $this->detailData['titleList'],
@@ -209,7 +209,7 @@ new class extends Component
     private function renameFieldsInDatabase(): void
     {
         $collectionKey = mb_strtoupper($this->modelId);
-        $collection = SetupCollection::where('tenant_id', Auth::user()->selected_tenant_id)
+        $collection = SetupCollection::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
             ->where('collection_key', $collectionKey)
             ->first();
 
@@ -263,7 +263,7 @@ new class extends Component
         $newDefinition = $repository->find($newFilename);
         if ($newDefinition) {
             SetupCollection::firstOrCreate([
-                'tenant_id' => Auth::user()->selected_tenant_id,
+                'tenant_id' => NoerdAuth::user()->selected_tenant_id,
                 'collection_key' => $newDefinition->key,
             ], [
                 'name' => $newDefinition->titleList,
@@ -284,7 +284,7 @@ new class extends Component
 
         // Remove the instance bucket + its entries (FK cascade wipes entries).
         $collectionKey = mb_strtoupper($this->modelId);
-        $collection = SetupCollection::where('tenant_id', Auth::user()->selected_tenant_id)
+        $collection = SetupCollection::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
             ->where('collection_key', $collectionKey)
             ->first();
 

@@ -1,16 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Noerd\Models\Profile;
+use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
 
     #[Computed]
     public function userTenantAccess(): array
     {
-        $user = Auth::user();
+        $user = NoerdAuth::user();
         $tenantAccess = [];
 
         foreach ($user->tenants as $tenant) {

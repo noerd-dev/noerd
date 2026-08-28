@@ -22,7 +22,10 @@ uses(TestCase::class, RefreshDatabase::class);
  */
 beforeEach(function (): void {
     $this->fixtureDir = base_path('app-configs/setup/lists');
-    $this->moduleFixtureDir = base_path('app-modules/noerd/app-configs/setup/lists');
+    // Module-source fixtures live in a synthetic throwaway module inside the
+    // skeleton — never in app-modules/noerd, which is a SYMLINK into the real
+    // package working tree (writing there would pollute the package source).
+    $this->moduleFixtureDir = base_path('app-modules/zzfixturemodule/app-configs/setup/lists');
     $this->fixtures = [];
 
     $this->writeFixture = function (string $dir, string $file, string $yaml): void {
@@ -62,6 +65,8 @@ afterEach(function (): void {
         File::delete($fixture);
     }
     File::deleteDirectory(base_path('app-configs/zzotherapp'));
+    File::deleteDirectory(base_path('app-modules/zzfixturemodule'));
+    StaticConfigHelper::clearModuleSourceCache();
 });
 
 /**
@@ -89,12 +94,14 @@ it('discovers all views with default first and variants alphabetical', function 
 
 it('shadows a module-source variant with the project variant of the same key', function (): void {
     ($this->writeFixture)($this->moduleFixtureDir, 'zz-view-test-list--vip.yml', 'title: Module VIP View');
+    StaticConfigHelper::clearModuleSourceCache();
 
     expect(StaticConfigHelper::getListViews('zz-view-test-list')['vip']['title'])->toBe('VIP View');
 });
 
 it('discovers a module-source variant that has no project counterpart', function (): void {
     ($this->writeFixture)($this->moduleFixtureDir, 'zz-view-test-list--module.yml', 'title: Module Only View');
+    StaticConfigHelper::clearModuleSourceCache();
 
     expect(StaticConfigHelper::getListViews('zz-view-test-list')['module']['title'])->toBe('Module Only View');
 });
