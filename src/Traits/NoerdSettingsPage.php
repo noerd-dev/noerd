@@ -3,6 +3,7 @@
 namespace Noerd\Traits;
 
 use Illuminate\Support\Str;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use RuntimeException;
@@ -39,6 +40,12 @@ trait NoerdSettingsPage
             return;
         }
 
+        if (!$this->canReadObject()) {
+            $this->objectReadBlocked = true;
+
+            return;
+        }
+
         $tenantId = TenantHelper::getSelectedTenantId();
 
         foreach ($this->settingsModelMap() as $property => $modelClass) {
@@ -54,11 +61,44 @@ trait NoerdSettingsPage
 
     public function store(): void
     {
+        // Server-side guard, mirroring NoerdDetail::store(): the save button is
+        // hidden for write-denied users, but store() stays reachable directly.
+        if (!$this->canWriteObject()) {
+            return;
+        }
+
         $this->validateFromLayout();
 
         $this->persistSettings();
 
         $this->showSuccessIndicator = true;
+    }
+
+    /**
+     * Object permission checks for a settings page cover EVERY declared
+     * tenant-singleton model — NoerdPage's checks key off $detailModel, which a
+     * settings page does not declare, and would therefore never restrict.
+     */
+    public function canReadObject(): bool
+    {
+        foreach ($this->settingsModelMap() as $modelClass) {
+            if (!AccessHelper::canReadObject($modelClass)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function canWriteObject(): bool
+    {
+        foreach ($this->settingsModelMap() as $modelClass) {
+            if (!AccessHelper::canWriteObject($modelClass)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

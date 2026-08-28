@@ -71,7 +71,6 @@ use Noerd\Support\DefaultCountries;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\QuickCreateExitHook;
-use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\WriteGuardHook;
@@ -202,7 +201,6 @@ class NoerdServiceProvider extends ServiceProvider
         $themeRegistry->registerPath(__DIR__ . '/../../resources/views/themes', priority: 0);
 
         $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
-        $relationFieldRegistry = $this->app->make(RelationFieldRegistry::class);
         $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
             'noerd::components.forms.input-select',
             resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId): array {
@@ -301,33 +299,28 @@ class NoerdServiceProvider extends ServiceProvider
             ],
         ));
 
-        // Some project-level app-configs reference legal-register even when the
-        // module is not installed. Register the type so YAML stays explicit.
-        $relationFieldRegistry->register('lawRelation', RelationFieldDefinition::model(
-            listComponent: 'laws-list',
-            detailComponent: 'law-detail',
-            modelClass: 'Noerd\\LegalRegister\\Models\\Law',
-            titleResolver: 'title',
-        ));
-
         View::composer('noerd::layouts.app', function ($view): void {
             $view->with('showSidebar', !session('hide_sidebar'));
         });
 
-        // Publish public assets (fonts + built Vite assets)
-        $this->publishes([
-            __DIR__ . '/../../public' => public_path('vendor/noerd'),
-            __DIR__ . '/../../dist/build' => public_path('vendor/noerd'),
-        ], 'noerd-assets');
-
-        // Auto-publish fonts if not exists (for development convenience)
-        $this->publishFontsIfNotExists();
-
-        // Auto-publish built assets if not exists
-        $this->publishBuiltAssetsIfNotExist();
-
-        // Register commands
+        // Publishing runs ONLY in console: a live web request must never write
+        // to public/ (concurrent requests race on the copy, and a production
+        // public/ is typically not writable by the PHP user). noerd:install and
+        // noerd:update publish the assets explicitly; the auto-refresh below
+        // keeps a dev checkout current on any artisan invocation.
         if ($this->app->runningInConsole()) {
+            // Publish public assets (fonts + built Vite assets)
+            $this->publishes([
+                __DIR__ . '/../../public' => public_path('vendor/noerd'),
+                __DIR__ . '/../../dist/build' => public_path('vendor/noerd'),
+            ], 'noerd-assets');
+
+            // Auto-publish fonts if not exists (for development convenience)
+            $this->publishFontsIfNotExists();
+
+            // Auto-publish built assets if missing or stale
+            $this->publishBuiltAssetsIfNotExist();
+
             $this->commands([
                 MakeUserAdmin::class,
                 NoerdInfoCommand::class,

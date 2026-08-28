@@ -4,7 +4,6 @@ namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 
 use function Laravel\Prompts\callout;
 use function Laravel\Prompts\confirm;
@@ -20,7 +19,11 @@ use RecursiveIteratorIterator;
 
 class NoerdInstallCommand extends Command
 {
-    protected $signature = 'noerd:install {--force : Overwrite existing files without asking}';
+    protected $signature = 'noerd:install
+                            {--force : Overwrite existing files without asking}
+                            {--migrate : Run migrations without asking (required to migrate in non-interactive runs)}
+                            {--build : Run npm build without asking (required to build in non-interactive runs)}
+                            {--demo : Install the demo app without asking (required to install it in non-interactive runs)}';
 
     protected $description = 'Install noerd content to the local content directory';
 
@@ -64,6 +67,9 @@ class NoerdInstallCommand extends Command
             // Setup frontend assets and configuration
             $this->setupFrontendAssets();
 
+            // Publish fonts + built Vite assets to public/vendor/noerd
+            $this->publishNoerdAssets();
+
             // Run migrations and setup admin user
             $this->runMigrationsAndSetupAdmin();
 
@@ -83,17 +89,29 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Ask whether to install the demo app and run noerd:demo on confirmation
+     * Ask whether to install the demo app and run noerd:demo on confirmation.
+     * Non-interactive runs never install the demo implicitly — a CI/deploy
+     * invocation must opt in with --demo instead of inheriting the prompt default.
      */
     protected function installDemoApp(): void
     {
         $this->newLine();
 
-        $shouldInstallDemo = confirm(
-            label: 'Would you like to install the Demo App?',
-            default: true,
-            hint: 'DemoCustomer with lists & details',
-        );
+        $shouldInstallDemo = $this->boolOption('demo');
+
+        if (! $shouldInstallDemo && ! $this->input->isInteractive()) {
+            $this->line('<comment>Non-interactive run: skipping the demo app. Pass --demo to install it.</comment>');
+
+            return;
+        }
+
+        if (! $shouldInstallDemo) {
+            $shouldInstallDemo = confirm(
+                label: 'Would you like to install the Demo App?',
+                default: true,
+                hint: 'DemoCustomer with lists & details',
+            );
+        }
 
         if (! $shouldInstallDemo) {
             $this->line('<comment>Demo app will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
@@ -183,6 +201,29 @@ class NoerdInstallCommand extends Command
             $a[$key] = ($a[$key] ?? 0) + ($b[$key] ?? 0);
         }
         return $a;
+    }
+
+    /**
+     * Read a boolean option that may not exist on a subclass's redefined
+     * signature (NoerdUpdateCommand and test fixtures override $signature).
+     */
+    protected function boolOption(string $name): bool
+    {
+        return $this->input->hasOption($name) && (bool) $this->option($name);
+    }
+
+    /**
+     * Publish the package's public assets (fonts + built Vite bundle). Assets
+     * are published ONLY from console commands — a web request must never
+     * write to public/ (see NoerdServiceProvider).
+     */
+    protected function publishNoerdAssets(): void
+    {
+        $this->call('vendor:publish', [
+            '--tag' => 'noerd-assets',
+            '--force' => true,
+            '--no-interaction' => true,
+        ]);
     }
 
     /**
@@ -556,13 +597,20 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Setup an admin user - either create a new one or promote an existing user
+     * Setup an admin user - either create a new one or promote an existing user.
+     * Skipped in non-interactive runs: an admin needs prompted credentials, and
+     * `noerd:create-admin` accepts them as options for scripted setups.
      */
     protected function setupAdminUser(): void
     {
         $this->newLine();
         $this->info('Admin User Setup');
         $this->line('================');
+
+        if (! $this->input->isInteractive()) {
+            $this->line('<comment>Non-interactive run: skipping admin setup. Create one with: php artisan noerd:create-admin --name= --email= --password=</comment>');
+            return;
+        }
 
         $userCount = NoerdUser::count();
 
@@ -574,7 +622,9 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Create a new admin user when no users exist
+     * Create a new admin user when no users exist. Delegates to
+     * noerd:create-admin, which owns the prompts and their validation —
+     * the first user of an installation becomes super admin.
      */
     protected function setupNewAdminUser(): void
     {
@@ -585,58 +635,7 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        // Get name
-        $name = null;
-        while (empty($name)) {
-            $name = $this->ask('What is the admin user\'s name?');
-            if (empty($name)) {
-                $this->error('Name is required.');
-            }
-        }
-
-        // Get email
-        $email = null;
-        while (empty($email)) {
-            $email = $this->ask('What is the admin user\'s email?');
-            if (empty($email)) {
-                $this->error('Email is required.');
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $this->error('Please enter a valid email address.');
-                $email = null;
-            } elseif (NoerdUser::where('email', $email)->exists()) {
-                $this->error('A user with this email already exists.');
-                $email = null;
-            }
-        }
-
-        // Get password
-        $passwordValue = null;
-        while (empty($passwordValue)) {
-            $passwordValue = $this->secret('Enter a password for the admin user (minimum 8 characters)');
-            if (empty($passwordValue)) {
-                $this->error('Password is required.');
-            } elseif (mb_strlen($passwordValue) < 8) {
-                $this->error('Password must be at least 8 characters.');
-                $passwordValue = null;
-            }
-        }
-
-        // Create the user
-        $user = NoerdUser::create([
-            'name' => $name,
-            'email' => $email,
-            'password' => Hash::make($passwordValue),
-        ]);
-
-        // First user becomes Super Admin
-        $user->super_admin = true;
-        $user->save();
-
-        $this->newLine();
-        $this->info("User '{$user->name}' created successfully as Super Admin.");
-
-        // Make the user admin
-        $this->makeUserAdmin($user);
+        $this->call('noerd:create-admin', ['--super-admin' => true]);
     }
 
     /**
@@ -710,7 +709,8 @@ class NoerdInstallCommand extends Command
 
     /**
      * Run migrations and setup admin user
-     * Migrations must be run before creating an admin user
+     * Migrations must be run before creating an admin user.
+     * Non-interactive runs never migrate implicitly — opt in with --migrate.
      */
     protected function runMigrationsAndSetupAdmin(): void
     {
@@ -720,7 +720,14 @@ class NoerdInstallCommand extends Command
         $this->line('Running migrations is required before you can create an admin user.');
         $this->newLine();
 
-        if (!confirm('Would you like to run "php artisan migrate" now?', default: true)) {
+        $shouldMigrate = $this->boolOption('migrate');
+
+        if (! $shouldMigrate && ! $this->input->isInteractive()) {
+            $this->line('<comment>Non-interactive run: skipping migrations. Pass --migrate to run them.</comment>');
+            return;
+        }
+
+        if (! $shouldMigrate && !confirm('Would you like to run "php artisan migrate" now?', default: true)) {
             $this->line('<comment>Skipping migrations. You can run them manually later with: php artisan migrate</comment>');
             $this->line('<comment>Note: You will need to run migrations before creating an admin user.</comment>');
             return;
@@ -748,13 +755,21 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Ask to run npm build for frontend assets
+     * Ask to run npm build for frontend assets.
+     * Non-interactive runs never build implicitly — opt in with --build.
      */
     protected function runNpmBuild(): void
     {
         $this->newLine();
 
-        if (!confirm('Would you like to run "npm run build" to compile frontend assets?', default: true)) {
+        $shouldBuild = $this->boolOption('build');
+
+        if (! $shouldBuild && ! $this->input->isInteractive()) {
+            $this->line('<comment>Non-interactive run: skipping npm build. Pass --build to run it.</comment>');
+            return;
+        }
+
+        if (! $shouldBuild && !confirm('Would you like to run "npm run build" to compile frontend assets?', default: true)) {
             $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
             return;
         }

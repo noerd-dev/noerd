@@ -57,8 +57,10 @@ A test that asserts their current content is wrong by definition.
 
 ## Global helpers
 
-`tests/helpers.php` is autoloaded through composer (`autoload.files`), so the helpers are available
-in every host and module test. New global helpers go there, guarded with `function_exists`.
+`tests/helpers.php` is loaded by `Noerd\Tests\TestCase` (covering every suite that extends it) and
+by the host project's `tests/Pest.php`, so the helpers are available in every host and module test —
+without shipping test functions in the production composer autoload. New global helpers go there,
+guarded with `function_exists`.
 
 | Helper | Purpose |
 |--------|---------|
