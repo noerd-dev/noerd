@@ -14,8 +14,9 @@ uses(TestCase::class);
 /**
  * The noerd:module scaffolder must generate the slim list/detail syntax
  * (reference: customers-list) — not the legacy with()/DETAIL_COMPONENT pattern.
- * The stubs are rendered directly so the test never touches composer.json or
- * app-modules (the real command writes both).
+ * The stubs are rendered directly so the tests never touch the real composer.json
+ * or app-modules (the real command writes both); the composer.json update is
+ * exercised against a temporary base path.
  */
 beforeEach(function (): void {
     $this->basePath = storage_path('framework/testing/zz-make-module');
@@ -149,4 +150,37 @@ it('generates AGENTS.md and a CLAUDE.md importing it', function (): void {
         ->not->toContain('{{ModuleName}}');
 
     expect(($this->renderStub)('claude.stub'))->toBe("@AGENTS.md\n");
+});
+
+it('adds the module to the main composer.json with plain json functions', function (): void {
+    $tempBasePath = storage_path('framework/testing/zz-make-module-host');
+    File::ensureDirectoryExists($tempBasePath);
+    File::put($tempBasePath . '/composer.json', json_encode([
+        'name' => 'zz/host',
+        'require' => [
+            'zz/aaa' => '*',
+            'php' => '^8.3',
+        ],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+
+    $originalBasePath = $this->app->basePath();
+    $this->app->setBasePath($tempBasePath);
+
+    try {
+        $method = new ReflectionMethod($this->command, 'updateMainComposerJson');
+        $method->invoke($this->command);
+        // A second run must be a no-op (the requirement already exists)
+        $method->invoke($this->command);
+    } finally {
+        $this->app->setBasePath($originalBasePath);
+    }
+
+    $content = File::get($tempBasePath . '/composer.json');
+    $definition = json_decode($content, true);
+
+    expect($definition['require'])->toHaveKey('noerd/zz-widget', '*')
+        ->and(array_keys($definition['require']))->toBe(['php', 'noerd/zz-widget', 'zz/aaa'])
+        ->and($content)->toEndWith("\n");
+
+    File::deleteDirectory($tempBasePath);
 });

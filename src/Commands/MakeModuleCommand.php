@@ -2,8 +2,6 @@
 
 namespace Noerd\Commands;
 
-use Composer\Factory;
-use Composer\Json\JsonFile;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
@@ -324,11 +322,8 @@ PHP;
 
     private function updateMainComposerJson(): void
     {
-        $originalWorkingDir = getcwd();
-        chdir(base_path());
-
-        $jsonFile = new JsonFile(Factory::getComposerFile());
-        $definition = $jsonFile->read();
+        $composerJsonPath = base_path('composer.json');
+        $definition = json_decode($this->filesystem->get($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
 
         if (!isset($definition['require'])) {
             $definition['require'] = [];
@@ -340,11 +335,13 @@ PHP;
             $definition['require'][$composerName] = '*';
             $definition['require'] = $this->sortComposerPackages($definition['require']);
 
-            $jsonFile->write($definition);
+            $json = json_encode(
+                $definition,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+            );
+            $this->filesystem->put($composerJsonPath, $json . "\n");
             $this->line("<info>✓ Updated:</info> main composer.json (added {$composerName})");
         }
-
-        chdir($originalWorkingDir);
     }
 
     private function getStub(string $name): string
