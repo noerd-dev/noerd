@@ -22,7 +22,7 @@ uses(RoutePrefixCustomTestCase::class);
 
 it('applies a custom prefix from the config to the core routes', function (): void {
     expect(route('noerd.login', absolute: false))->toBe('/backend/login')
-        ->and(route('noerd-user', absolute: false))->toBe('/backend/user');
+        ->and(route('noerd.profile', absolute: false))->toBe('/backend/user');
 });
 
 it('points the /login alias at the custom prefix', function (): void {
@@ -30,6 +30,6 @@ it('points the /login alias at the custom prefix', function (): void {
 });
 
 it('keeps the setup area and the apps dashboard outside the custom prefix', function (): void {
-    expect(route('setup', absolute: false))->toBe('/setup')
-        ->and(route('noerd-apps', absolute: false))->toBe('/noerd-apps');
+    expect(route('noerd.setup', absolute: false))->toBe('/setup')
+        ->and(route('noerd.apps', absolute: false))->toBe('/noerd-apps');
 });

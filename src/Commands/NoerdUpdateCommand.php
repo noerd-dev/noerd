@@ -44,7 +44,10 @@ class NoerdUpdateCommand extends NoerdInstallCommand
             // 3. Setup frontend assets (creates what is missing, patches what exists)
             $this->setupFrontendAssets();
 
-            // 4. Optional: npm build (only if --build flag is set)
+            // 4. Refresh published fonts + built Vite assets
+            $this->publishNoerdAssets();
+
+            // 5. Optional: npm build (only if --build flag is set)
             if ($this->option('build')) {
                 $this->runNpmBuildWithoutPrompt();
             }

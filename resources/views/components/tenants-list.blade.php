@@ -10,7 +10,7 @@ new class extends Component {
 
     public $listModel = Tenant::class;
 
-    public ?string $detailRoute = 'tenant.detail';
+    public ?string $detailRoute = 'noerd.tenant.detail';
 
     public $detailComponent = 'noerd::tenant-detail';
 

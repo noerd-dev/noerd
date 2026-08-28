@@ -109,7 +109,9 @@ abstract class RelationFieldComponent extends Component
             return;
         }
 
-        if ($context && $context !== $this->fieldName) {
+        // Strict match: a picker opened without a context dispatches '' / null,
+        // which must not be adopted by every relation field on the page.
+        if ($context !== $this->fieldName) {
             return;
         }
 

@@ -1,16 +1,33 @@
 {
     "name": "noerd/noerd",
-    "description": "",
+    "description": "YAML-driven Livewire framework for multi-tenant Laravel applications: generic list, detail and page components, modals, themes, tenant apps and install/update tooling.",
     "type": "library",
+    "keywords": [
+        "laravel",
+        "livewire",
+        "framework",
+        "multi-tenant",
+        "yaml",
+        "admin",
+        "crud"
+    ],
+    "homepage": "https://noerd.dev",
+    "authors": [
+        {
+            "name": "Johannes Brock"
+        }
+    ],
     "version": "v0.11.2",
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "ext-mbstring": "*",
         "laravel/framework": "^12.0 || ^13.0",
         "livewire/livewire": "^4.0",
         "noerd/modal": "^0.3.23",
-        "wireui/heroicons": "^2.9",
-        "symfony/yaml": "^7.1 || ^8.0"
+        "symfony/polyfill-mbstring": "^1.32",
+        "symfony/yaml": "^7.1 || ^8.0",
+        "wireui/heroicons": "^2.9"
     },
     "require-dev": {
         "orchestra/testbench": "^10.6 || ^11.1",
@@ -23,7 +40,9 @@
             "Noerd\\Tests\\": "tests/",
             "Noerd\\Database\\Factories\\": "database/factories/",
             "Noerd\\Database\\Seeders\\": "database/seeders/"
-        },
+        }
+    },
+    "autoload-dev": {
         "files": [
             "tests/helpers.php"
         ]

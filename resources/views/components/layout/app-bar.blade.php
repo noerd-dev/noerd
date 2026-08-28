@@ -27,7 +27,7 @@ new class extends Component {
             @endphp
             <div class="text-xs text-center overflow-y-auto flex-1 pb-6">
                 {{-- Home --}}
-                <a wire:click="openApp('noerd-apps', 'noerd-apps')" class="cursor-pointer">
+                <a wire:click="openApp('noerd-apps', 'noerd.apps')" class="cursor-pointer">
                     <div @class([
                         '!bg-brand-primary/5 border-brand-primary!' => $selectedApp === 'noerd-apps',
                         'hover:bg-brand-navi-hover flex mt-2 h-[40px] w-[40px] rounded-full mx-auto',

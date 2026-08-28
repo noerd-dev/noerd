@@ -15,6 +15,6 @@ class NoerdRedirectIfAuthenticated extends RedirectIfAuthenticated
 {
     protected function redirectTo(Request $request): ?string
     {
-        return route('noerd-apps');
+        return route('noerd.apps');
     }
 }

@@ -6,14 +6,7 @@
 
 <td
     class="border-r border-b border-gray-300 py-1 first:pl-4 last:border-r-0 {{ $isTranslatableCell ? 'bg-sky-50 group-hover:bg-transparent' : '' }}"
-    @click="activeColumn = {{ $column }}, selectedRow = {{ $row }}"
     x-data="{ showDropdown: false }"
-    {{--
-    x-noerd::on:keydown.arrow-down.prevent="down()"
-    x-noerd::on:keydown.arrow-up.prevent="up()"
-    x-noerd::on:keydown.arrow-left.prevent="left()"
-    x-noerd::on:keydown.arrow-right.prevent="right()"
-    --}}
 >
     @if ($columnValue === 'action')
         <div class="mr-1 ml-auto flex">
@@ -107,7 +100,7 @@
     @elseif ($columnValue === 'selectAction')
         <a
             class="m-0.5 flex"
-            @click.stop="show = ! show"
+            @click.stop
             wire:navigate
             wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
         >
@@ -116,7 +109,7 @@
     @elseif ($columnValue === 'deleteAction')
         <a
             class="m-0.5 flex"
-            wire:confirm="{{ __('Are you sure you want to delete your account?') }}"
+            wire:confirm="{{ __('Are you sure you want to delete this entry?') }}"
             wire:navigate
             wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
         >

@@ -93,7 +93,7 @@ new class extends Component {
 
         @if($canCreateTenant)
             <div class="my-1 border-t border-gray-100"></div>
-            <a wire:navigate href="{{ route('create-tenant') }}"
+            <a wire:navigate href="{{ route('noerd.create-tenant') }}"
                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                role="menuitem">
                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

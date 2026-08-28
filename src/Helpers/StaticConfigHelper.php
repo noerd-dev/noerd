@@ -885,7 +885,7 @@ class StaticConfigHelper
             return true;
         }
 
-        $routeName = ($nav['route'] ?? null) === 'collections' ? 'cms.collections' : ($nav['route'] ?? '');
+        $routeName = $nav['route'] ?? '';
 
         return $routeName !== '' && Route::has($routeName);
     }

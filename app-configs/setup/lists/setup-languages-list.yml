@@ -1,7 +1,7 @@
 title: Languages
 actions:
   - label: New Language
-    route: setup-language.detail
+    route: noerd.setup-language.detail
 disableSearch: false
 columns:
   - field: code
@@ -20,4 +20,4 @@ columns:
     actions:
       - label: Edit
         heroicon: pencil-square
-        route: setup-language.detail
+        route: noerd.setup-language.detail

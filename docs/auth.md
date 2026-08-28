@@ -39,7 +39,7 @@ another user model), define the key in your `config/auth.php` and noerd will use
 
 noerd's core screens live under a configurable URL prefix (default `noerd`, set via
 `config('noerd.routes.prefix')` / `NOERD_ROUTE_PREFIX`): `/noerd/login`, `/noerd/forgot-password`,
-`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd-user`), `/noerd/no-tenant`,
+`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd.profile`), `/noerd/no-tenant`,
 `/noerd/component-page/{componentName}`. Only the URLs carry the prefix — the route names are
 stable and unaffected by a prefix change. The `/setup` area keeps its own prefix, and the apps
 dashboard stays at `/noerd-apps` (already namespaced, and the address the installer prints).
@@ -62,13 +62,18 @@ $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', '
 $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':noerd']);
 ```
 
-Every noerd-based module protects its routes with `['noerd']` (plus module-specific aliases such
-as `app-access:crm`) instead of `['web', 'auth', 'verified']`. The `noerd:module` scaffolder
-generates routes with the `noerd` group.
+Every noerd-based module protects its routes with `['noerd', 'app-access:{module}']` instead of
+`['web', 'auth', 'verified']`. `app-access` is a **core** middleware alias (registered by
+`NoerdServiceProvider`, backed by `Noerd\Middleware\AppAccessMiddleware`) that takes the app key as
+its parameter: `app-access:crm` only lets requests through when the selected tenant has the CRM app
+assigned and the per-app authorization gate allows it. Without it, any authenticated user of any
+tenant app can open the module's screens. The `noerd:module` scaffolder currently generates routes
+with the `noerd` group only — add the `app-access:{module}` alias when hardening the generated
+routes (see [Creating Modules](creating-modules.md)).
 
 `Noerd\Middleware\NoerdAuthenticate` extends Laravel's `Authenticate` and pins the guest redirect
 to `route('noerd.login')`; `Noerd\Middleware\NoerdRedirectIfAuthenticated` extends
-`RedirectIfAuthenticated` and pins the authenticated redirect to `route('noerd-apps')`. Neither the
+`RedirectIfAuthenticated` and pins the authenticated redirect to `route('noerd.apps')`. Neither the
 host's `auth`/`guest` middleware aliases nor globally registered `redirectUsing()` callbacks (e.g.
 from a starter kit's `bootstrap/app.php`) apply to noerd routes — the two stacks never redirect
 into each other.

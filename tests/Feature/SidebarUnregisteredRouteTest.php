@@ -35,14 +35,14 @@ it('renders the page and hides entries whose route is not registered', function 
   title: Setup
   name: setup
   hidden: true
-  route: setup
+  route: noerd.setup
   block_menus:
     -
       title: Administration
       navigations:
         -
           title: 'Zz Valid Entry'
-          route: users
+          route: noerd.users
           heroicon: users
         -
           title: 'Zz Stale Entry'

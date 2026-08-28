@@ -1,0 +1,25 @@
+# Keep dist installs (Packagist archives) lean: ship only what consumers need
+# at runtime. NOT excluded on purpose:
+# - demo/        -> read at runtime by noerd:demo (NoerdDemoCommand)
+# - dist/        -> the prebuilt frontend bundle published to public/vendor/noerd
+# - tests/TestCase.php, tests/helpers.php, tests/Traits/
+#                -> public test API for module developers
+#                   (`uses(Noerd\Tests\TestCase::class)` in every module test)
+/.github            export-ignore
+/docs               export-ignore
+/tests/Commands     export-ignore
+/tests/Components   export-ignore
+/tests/Feature      export-ignore
+/tests/Helpers      export-ignore
+/tests/Middleware   export-ignore
+/tests/Unit         export-ignore
+/tests/Pest.php     export-ignore
+/tests/CreateNewTenantTest.php export-ignore
+/tests/UserComponentTest.php   export-ignore
+/phpunit.xml        export-ignore
+/pint.json          export-ignore
+/vite.config.js     export-ignore
+/package.json       export-ignore
+/package-lock.json  export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore

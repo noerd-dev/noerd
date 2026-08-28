@@ -38,6 +38,55 @@ Tests, test traits (`tests/Traits/`), factories and seeders belong to the module
 (`app-modules/{module}/tests/`, `app-modules/{module}/database/`) — never to the host project.
 Run them the same way: `php artisan test --compact app-modules/{module}/tests/...`.
 
+## Module test setup
+
+Module tests run under the **host project's** test case, and every test file binds its own setup —
+there is no per-module `Pest.php`:
+
+```php
+uses(Tests\TestCase::class, RefreshDatabase::class, CreatesInventoryUser::class);
+
+beforeEach(function (): void {
+    $this->user = $this->withInventoryModule();
+    $tenant = $this->user->tenants()->firstOrFail();
+    $this->user->update(['selected_tenant_id' => $tenant->id]);
+    $this->actingAs($this->user);
+    $this->tenantId = $tenant->id;
+});
+```
+
+`Creates{Module}User` is the module's own trait in `tests/Traits/` (autoloaded via the module's
+`Noerd\{Module}\Tests\` PSR-4 entry). It builds a user whose tenant has the app — note the
+**uppercase** tenant-app name, which gates compare exactly:
+
+```php
+trait CreatesInventoryUser
+{
+    protected function withInventoryModule(): NoerdUser
+    {
+        $user = NoerdUser::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $user->tenants()->attach($tenant->id);
+
+        TenantHelper::setSelectedTenantId($tenant->id);
+        TenantHelper::setSelectedApp('INVENTORY');
+
+        $app = TenantApp::firstOrCreate(
+            ['name' => 'INVENTORY'],
+            [
+                'title' => 'Inventory',
+                'icon' => 'inventory::icons.app',
+                'route' => 'inventory',
+                'is_active' => true,
+            ],
+        );
+        $tenant->tenantApps()->syncWithoutDetaching([$app->id]);
+
+        return $user;
+    }
+}
+```
+
 ## Tests prove mechanics, not configuration
 
 The YAML files under `app-configs/` are per-installation configuration: the theme, titles, labels,
@@ -57,8 +106,10 @@ A test that asserts their current content is wrong by definition.
 
 ## Global helpers
 
-`tests/helpers.php` is autoloaded through composer (`autoload.files`), so the helpers are available
-in every host and module test. New global helpers go there, guarded with `function_exists`.
+`tests/helpers.php` is loaded by `Noerd\Tests\TestCase` (covering every suite that extends it) and
+by the host project's `tests/Pest.php`, so the helpers are available in every host and module test —
+without shipping test functions in the production composer autoload. New global helpers go there,
+guarded with `function_exists`.
 
 | Helper | Purpose |
 |--------|---------|

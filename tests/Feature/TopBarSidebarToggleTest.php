@@ -62,7 +62,7 @@ it('shows the app bar again without touching the navigation', function (): void 
 it('opens home via the sidebar home shortcut', function (): void {
     Livewire::test('noerd::layout.sidebar')
         ->call('openHome')
-        ->assertRedirect(route('noerd-apps'));
+        ->assertRedirect(route('noerd.apps'));
 
     expect(session('noerd.selected_app'))->toBe('noerd-apps');
 });

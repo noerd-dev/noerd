@@ -184,3 +184,33 @@ it('throws a clear error when settingsModels is not declared', function (): void
     expect(fn() => Livewire::test('zz-settings-undeclared-page'))
         ->toThrow('must declare its tenant-singleton models');
 });
+
+it('blocks reading when the object-read gate denies a declared settings model', function (): void {
+    Illuminate\Support\Facades\Gate::define(
+        Noerd\Helpers\AccessHelper::OBJECT_READ_GATE,
+        fn(?Illuminate\Contracts\Auth\Authenticatable $user, string $modelClass): bool => $modelClass !== NoerdSettings::class,
+    );
+
+    NoerdSettings::create(['tenant_id' => TenantHelper::getSelectedTenantId(), 'currency' => 'EUR']);
+
+    Livewire::test('zz-settings-test-page')
+        ->assertSet('objectReadBlocked', true)
+        ->assertSet('detailData', []);
+});
+
+it('ignores store() when the object-write gate denies a declared settings model', function (): void {
+    Illuminate\Support\Facades\Gate::define(
+        Noerd\Helpers\AccessHelper::OBJECT_WRITE_GATE,
+        fn(?Illuminate\Contracts\Auth\Authenticatable $user, string $modelClass): bool => $modelClass !== Profile::class,
+    );
+
+    $tenantId = TenantHelper::getSelectedTenantId();
+
+    Livewire::test('zz-settings-test-page')
+        ->set('detailData.currency', 'USD')
+        ->call('store')
+        ->assertSet('showSuccessIndicator', false);
+
+    expect(NoerdSettings::where('tenant_id', $tenantId)->exists())->toBeFalse()
+        ->and(Profile::where('tenant_id', $tenantId)->exists())->toBeFalse();
+});

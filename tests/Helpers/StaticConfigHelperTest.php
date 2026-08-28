@@ -100,10 +100,10 @@ it('hides feature-gated navigation items when the config value is false', functi
       navigations:
         -
           title: 'Zz Ungated Entry'
-          route: setup
+          route: noerd.setup
         -
           title: 'Zz Gated Entry'
-          route: setup
+          route: noerd.setup
           config: noerd.testing.synthetic_gate
 YAML);
 

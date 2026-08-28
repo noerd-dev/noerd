@@ -48,7 +48,7 @@ new class extends Component {
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $path = session('url.intended', route('noerd-apps'));
+            $path = session('url.intended', route('noerd.apps'));
 
             $this->redirect($path);
 

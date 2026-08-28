@@ -78,6 +78,11 @@ class InstallFlowOrderFixtureCommand extends NoerdInstallCommand
         static::$steps[] = 'setupFrontendAssets';
     }
 
+    protected function publishNoerdAssets(): void
+    {
+        static::$steps[] = 'publishNoerdAssets';
+    }
+
     protected function runMigrationsAndSetupAdmin(): void
     {
         static::$steps[] = 'runMigrationsAndSetupAdmin';

@@ -36,6 +36,31 @@ it('renders the app bar for an authenticated user', function (): void {
         ->assertSee('AppBar Test App');
 });
 
+it('references only registered route names in the rendered app bar', function (): void {
+    $user = NoerdUser::factory()->adminUser()->create();
+    $tenant = $user->adminTenants()->first();
+
+    $tenantApp = TenantApp::create([
+        'title' => 'AppBar Route App',
+        'name' => 'APP_BAR_ROUTE_APP',
+        'icon' => 'noerd::icons.app',
+        'route' => 'app-bar-test',
+        'is_active' => true,
+    ]);
+
+    $tenant?->tenantApps()->attach($tenantApp->id, ['is_hidden' => false]);
+    $this->actingAs($user);
+
+    $html = Livewire::test('noerd::layout.app-bar')->html();
+
+    preg_match_all("/openApp\\('[^']+', '([^']+)'\\)/", $html, $matches);
+
+    expect($matches[1])->not->toBeEmpty();
+    foreach ($matches[1] as $routeName) {
+        expect(Route::has($routeName))->toBeTrue("Route [{$routeName}] referenced in the app bar is not defined.");
+    }
+});
+
 it('sets selected app and redirects when opening an app', function (): void {
     $user = NoerdUser::factory()->adminUser()->create();
     $tenant = $user->adminTenants()->first();

@@ -735,7 +735,13 @@ trait NoerdList
             ->all();
     }
 
-    public function updateRow(): void {}
+    /**
+     * Inline cell editing (editable list columns dispatch
+     * `updateRow(id, column, value)` via wire:change). The base implementation
+     * is a deliberate no-op — a list opts into persistence by overriding this
+     * method with the same signature.
+     */
+    public function updateRow(int|string|null $id = null, ?string $column = null, mixed $value = null): void {}
 
     #[Computed]
     public function tableFilters(): array
