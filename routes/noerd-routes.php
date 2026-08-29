@@ -2,12 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Every setup page lives under /setup. Route NAMES are the public contract
-// (navigation.yml `route:` keys, tenant_apps.route, route() calls) and are all
-// namespaced under `noerd.` — a host application or another package may own
-// generic names like `users` or `tenants`, and a collision would silently
-// corrupt route:cache (last registration wins). URLs drop the redundant
-// `setup-` in favour of the group prefix.
 Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function (): void {
     Route::livewire('/', 'noerd::noerd-users-list')->name('noerd.setup');
     Route::livewire('tenant-apps', 'noerd::tenant-apps-list')->name('noerd.tenant-apps');
@@ -29,15 +23,9 @@ Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function
     Route::livewire('system-settings', 'noerd::system-settings-page')->name('noerd.system-settings');
 });
 
-// Every other core screen lives under the configurable URL prefix (default
-// /noerd) so a host application — e.g. one generated from a Laravel starter
-// kit — keeps its own /login, /dashboard etc. Route names are namespaced
-// (noerd.*) so the package never claims host route names (they would break
-// route:cache).
+// Every other core screen lives under the configurable URL prefix
 $prefix = config('noerd.routes.prefix', 'noerd');
 
-// The apps dashboard deliberately stays at its unprefixed URL — /noerd-apps
-// is already namespaced and is the address users know from the installer.
 Route::group(['middleware' => ['noerd']], function (): void {
     Route::livewire('noerd-apps', 'noerd::noerd-apps')->name('noerd.apps');
 });
@@ -54,15 +42,10 @@ Route::group(['prefix' => $prefix, 'middleware' => ['noerd-guest']], function ()
     Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('noerd.password.request');
 });
 
-// Password reset works for both guests and authenticated users
 Route::group(['prefix' => $prefix, 'middleware' => ['web']], function (): void {
     Route::livewire('reset-password/{token}', 'noerd::auth.reset-password')->name('noerd.password.reset');
 });
 
-// Convenience alias: /login keeps working on a plain noerd installation. The
-// redirect is deliberately UNNAMED and registered before the host's routes —
-// a starter kit that claims the /login URI (same method + URI, registered
-// later) simply overrides it, and no name collision can break route:cache.
 Route::middleware(['web'])->group(function () use ($prefix): void {
     Route::redirect('login', '/' . mb_trim($prefix, '/') . '/login');
 });
