@@ -188,6 +188,22 @@ it('opens the detail by route when the route exists', function (): void {
 The list dispatches the route together with the component as fallback; a list without a
 `$detailRoute` dispatches only `modalComponent` (see `ListDetailRouteFallbackTest`).
 
+## Module dependency guard
+
+Every business module ships a `ModuleBoundaryTest` calling the global helper
+`assertModuleDependenciesDeclared(dirname(__DIR__, 2))` (from `tests/helpers.php`).
+It derives the known module namespaces from the sibling `app-modules/*/composer.json`
+files and fails when a namespace of another module appears anywhere in the module
+(src, resources, routes, database, config, app-configs **and tests**) without a
+matching `require`/`require-dev` entry. Documented exceptions (e.g. a
+`class_exists()`-guarded optional integration) are passed as the second argument:
+
+```php
+assertModuleDependenciesDeclared(dirname(__DIR__, 2), ['nywerk/liefertool-shop']);
+```
+
+Add a short comment above every allowance explaining why it is legitimate.
+
 ## Factories
 
 A factory's `definition()` must produce a fully valid, persistable record: every non-relation scalar
