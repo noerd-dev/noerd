@@ -1,4 +1,7 @@
 title: Tenants
+defaultSort:
+  field: name
+  direction: asc
 columns:
   - field: name
     label: Name

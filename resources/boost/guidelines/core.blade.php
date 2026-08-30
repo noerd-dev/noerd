@@ -134,7 +134,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 - Documentation (README files, docs folders, markdown files) must always be written in English.
 - When writing tests, they must always be in PEST format.
 - YAML files must always use block style formatting. Never use flow/inline style like `{ key: value }` or `[item1, item2]`.
-- When setting default sorting in list components, always use the `setDefaultSort()` method in `mount()`. Never set `$this->sortField` or `$this->sortAsc` directly.
+- Default sorting of a list is CONFIGURATION, never component code: set a top-level `defaultSort:` block in the list YAML (`field:` plus optional `direction: asc|desc`, `desc` when omitted) — in BOTH synced copies. `mountList()` applies it while the user has not sorted the list; a session-saved user sort always wins. There is no component API for it: never set `$this->sortField`/`$this->sortAsc` and never override `mount()` for sorting.
 
 ### Config, noerd:install and noerd:update
 - Configuration keys come from the package config (`vendor/noerd/noerd/config/noerd.php`); the

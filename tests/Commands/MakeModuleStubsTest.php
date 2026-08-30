@@ -69,6 +69,7 @@ it('generates block-style YAML configs bound to detailData', function (): void {
 
     expect($listYaml)
         ->toContain('title: Widgets')
+        ->toContain("defaultSort:\n  field: name\n  direction: asc")
         ->toContain('action: listAction')
         ->not->toContain('newLabel')
         ->not->toContain('_label_');

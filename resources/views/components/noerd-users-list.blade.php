@@ -16,12 +16,6 @@ new class () extends Component {
     public $listModel = NoerdUser::class;
     public ?string $detailRoute = 'noerd.user.detail';
 
-    public function mount(): void
-    {
-        $this->mountList();
-        $this->setDefaultSort('name', true);
-    }
-
     public function loginAsUser($userId)
     {
         if (! NoerdAuth::user()->isAdmin()) {

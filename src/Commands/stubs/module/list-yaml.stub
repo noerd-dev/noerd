@@ -1,4 +1,7 @@
 title: {{ModelsTitle}}
+defaultSort:
+  field: name
+  direction: asc
 actions:
   - label: New {{ModelTitle}}
     action: listAction
