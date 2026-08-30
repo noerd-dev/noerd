@@ -590,7 +590,7 @@ with reduced opacity — e.g. "Kunden (Delivery)":
   in `::` form); an unknown key falls back to the session/default. Single-view lists never carry
   the param; embedded compact lists and pickers never read or write it.
 - Because the whole config is swapped, the view's own `searchableColumns`, `actions`,
-  `notSortableColumns` and column types all apply automatically. Layout overrides (noerd-plus) key
+  `notSortableColumns` and column types all apply automatically. DB-driven layout overrides key
   per view file (e.g. `customers-list--vip`), app-agnostic — a restriction on `vip` also hides
   every other app's `{app}::vip` entry.
 

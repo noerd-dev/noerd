@@ -273,21 +273,26 @@
                     // `wireModel` names the array property, the row id is the key,
                     // an optional `wireModelField` addresses a sub-key
                     // (e.g. permissions.{id}.read). `live: true` syncs per click.
+                    // A row that does not carry the column's field at all opts
+                    // out — the checkbox is "not applicable" there and renders
+                    // nothing (e.g. a mode toggle only some row kinds offer).
                     $checkboxModel = ($columnConfig['wireModel'] ?? '')
                         . '.' . $id
                         . (isset($columnConfig['wireModelField']) ? '.' . $columnConfig['wireModelField'] : '');
                 @endphp
-                <div class="flex items-center justify-center px-1.5" @click.stop>
-                    <input
-                        type="checkbox"
-                        @if ($columnConfig['live'] ?? false)
-                            wire:model.live="{{ $checkboxModel }}"
-                        @else
-                            wire:model="{{ $checkboxModel }}"
-                        @endif
-                        class="text-brand-primary focus:ring-brand-border h-4 w-4 cursor-pointer rounded border-gray-300"
-                    />
-                </div>
+                @if (array_key_exists($columnValue, (array) ($rowData ?? [])))
+                    <div class="flex items-center justify-center px-1.5" @click.stop>
+                        <input
+                            type="checkbox"
+                            @if ($columnConfig['live'] ?? false)
+                                wire:model.live="{{ $checkboxModel }}"
+                            @else
+                                wire:model="{{ $checkboxModel }}"
+                            @endif
+                            class="text-brand-primary focus:ring-brand-border h-4 w-4 cursor-pointer rounded border-gray-300"
+                        />
+                    </div>
+                @endif
             @elseif ($type === 'badge_with_text')
                 <div
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"

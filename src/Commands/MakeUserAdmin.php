@@ -3,8 +3,8 @@
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 
 class MakeUserAdmin extends Command
@@ -59,50 +59,31 @@ class MakeUserAdmin extends Command
             $userTenants = Tenant::all();
             foreach ($userTenants as $userTenant) {
                 if (!$user->tenants->contains($userTenant)) {
-                    $user->tenants()->attach($userTenant->id, ['profile_id' => null]);
+                    $user->tenants()->attach($userTenant->id, ['profile_key' => null]);
                 }
             }
         }
 
         $this->info("User has access to {$userTenants->count()} tenant(s).");
 
-        $adminProfilesCreated = 0;
         $adminAccessGranted = 0;
 
         foreach ($userTenants as $tenant) {
             $this->line("Processing tenant: {$tenant->name}");
 
-            // Check if admin profile exists for this tenant
-            $adminProfile = Profile::where('tenant_id', $tenant->id)
-                ->where('key', 'ADMIN')
-                ->first();
-
-            if (!$adminProfile) {
-                // Create admin profile for this tenant
-                $adminProfile = Profile::create([
-                    'tenant_id' => $tenant->id,
-                    'key' => 'ADMIN',
-                    'name' => 'Administrator',
-                ]);
-                $adminProfilesCreated++;
-                $this->info("  ✓ Created ADMIN profile for tenant: {$tenant->name}");
-            } else {
-                $this->line("  - ADMIN profile already exists for tenant: {$tenant->name}");
-            }
-
-            // Check if user already has admin profile for this tenant
-            $currentProfile = $user->tenants()
+            // Check if user already has the admin profile for this tenant
+            $membership = $user->tenants()
                 ->where('tenant_id', $tenant->id)
                 ->first();
 
-            if ($currentProfile && $currentProfile->pivot->profile_id === $adminProfile->id) {
+            if ($membership && $membership->pivot->profile_key === Profile::Admin->value) {
                 $this->line("  - User already has ADMIN access for tenant: {$tenant->name}");
                 continue;
             }
 
             // Update user's profile to admin for this tenant
             $user->tenants()->updateExistingPivot($tenant->id, [
-                'profile_id' => $adminProfile->id,
+                'profile_key' => Profile::Admin->value,
             ]);
             $adminAccessGranted++;
             $this->info("  ✓ Granted ADMIN access for tenant: {$tenant->name}");
@@ -121,7 +102,6 @@ class MakeUserAdmin extends Command
         // Summary
         $this->newLine();
         $this->info('Summary:');
-        $this->line("- ADMIN profiles created: {$adminProfilesCreated}");
         $this->line("- ADMIN access granted: {$adminAccessGranted}");
 
         // Verify admin status

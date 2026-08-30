@@ -8,10 +8,11 @@
 
 @php
     // Object permissions: hide Save/Delete for every detail at once when the
-    // current user may not write/delete the object (see the noerd.object-* gates / AccessHelper).
+    // current user may not save/delete the object (see the noerd.object-* gates /
+    // AccessHelper). canSaveObject() picks create (new record) vs. write (update).
     $barComponent = $__livewire ?? null;
     $showSave = $showSave
-        && (! $barComponent || ! method_exists($barComponent, 'canWriteObject') || $barComponent->canWriteObject());
+        && (! $barComponent || ! method_exists($barComponent, 'canSaveObject') || $barComponent->canSaveObject());
     $showDelete = $showDelete
         && (! $barComponent || ! method_exists($barComponent, 'canDeleteObject') || $barComponent->canDeleteObject());
 @endphp

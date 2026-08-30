@@ -5,9 +5,9 @@ namespace Noerd\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 
@@ -51,13 +51,8 @@ class NoerdUserFactory extends Factory
             $tenant = Tenant::factory()->create();
 
             // Create admin profile for the tenant
-            $adminProfile = Profile::factory()->create([
-                'tenant_id' => $tenant->id,
-                'key' => 'ADMIN',
-                'name' => 'Admin',
-            ]);
 
-            $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
+            $user->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
             TenantHelper::setSelectedTenantId($tenant->id);
         });
     }

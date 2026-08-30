@@ -2,7 +2,7 @@
 
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Noerd\Models\Profile;
+use Noerd\Services\ProfileRegistry;
 use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
@@ -14,14 +14,14 @@ new class extends Component {
         $tenantAccess = [];
 
         foreach ($user->tenants as $tenant) {
-            $profileId = $tenant->pivot->profile_id;
-            $profile = Profile::find($profileId);
+            $key = $tenant->pivot->profile_key;
+            $label = $key === null ? null : app(ProfileRegistry::class)->label((string) $key);
 
             $tenantAccess[] = [
                 'id' => $tenant->id,
                 'name' => $tenant->name,
-                'profile_name' => $profile ? $profile->name : __('Unbekanntes Profil'),
-                'profile_id' => $profileId,
+                'profile_name' => $label ?? __('No profile'),
+                'profile_key' => $key,
             ];
         }
 

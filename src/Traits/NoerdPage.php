@@ -189,9 +189,24 @@ trait NoerdPage
         return AccessHelper::canWriteObject($this->detailModel ?? null);
     }
 
+    public function canCreateObject(): bool
+    {
+        return AccessHelper::canCreateObject($this->detailModel ?? null);
+    }
+
     public function canDeleteObject(): bool
     {
         return AccessHelper::canDeleteObject($this->detailModel ?? null);
+    }
+
+    /**
+     * The ability governing store() in the form's CURRENT state: persisting a
+     * new record (no id yet) is create, updating an existing one is write. The
+     * chrome (save button, save shortcut, readonly fields) keys off this.
+     */
+    public function canSaveObject(): bool
+    {
+        return $this->modelId ? $this->canWriteObject() : $this->canCreateObject();
     }
 
     public function storeProcess($model): void

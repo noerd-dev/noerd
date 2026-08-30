@@ -2,8 +2,8 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
@@ -87,34 +87,6 @@ it('successfully creates a new tenant', function () use ($testSettings): void {
     expect($createdTenant->uuid)->not()->toBeNull();
 });
 
-it('creates default USER and ADMIN profiles for new tenant', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->create();
-    $tenantName = 'Test Tenant';
-
-    $this->actingAs($admin);
-
-    Livewire::test($testSettings['componentName'])
-        ->set('name', $tenantName)
-        ->call('createTenant')
-        ->assertHasNoErrors();
-
-    $createdTenant = Tenant::where('name', $tenantName)->first();
-
-    // Verify USER profile was created
-    $userProfile = Profile::where('tenant_id', $createdTenant->id)
-        ->where('key', 'USER')
-        ->first();
-    expect($userProfile)->not()->toBeNull();
-    expect($userProfile->name)->toBe('User');
-
-    // Verify ADMIN profile was created
-    $adminProfile = Profile::where('tenant_id', $createdTenant->id)
-        ->where('key', 'ADMIN')
-        ->first();
-    expect($adminProfile)->not()->toBeNull();
-    expect($adminProfile->name)->toBe('Admin');
-});
-
 it('attaches current user to new tenant as admin', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->create();
     $tenantName = 'Test Tenant';
@@ -127,17 +99,15 @@ it('attaches current user to new tenant as admin', function () use ($testSetting
         ->assertHasNoErrors();
 
     $createdTenant = Tenant::where('name', $tenantName)->first();
-    $adminProfile = Profile::where('tenant_id', $createdTenant->id)
-        ->where('key', 'ADMIN')
-        ->first();
 
-    // Verify user is attached to tenant with admin profile
+    // Verify user is attached to tenant with admin profile (fresh copy — the
+    // acting user's tenants relation was memoized before the attach)
     expect($createdTenant->users->contains($admin->id))->toBeTrue();
-    expect($admin->tenants->contains($createdTenant->id))->toBeTrue();
+    expect($admin->fresh()->tenants->contains($createdTenant->id))->toBeTrue();
 
-    // Verify the pivot table has the correct profile_id
+    // Verify the pivot table carries the admin profile key
     $pivot = $admin->tenants()->wherePivot('tenant_id', $createdTenant->id)->first();
-    expect($pivot->pivot->profile_id)->toBe($adminProfile->id);
+    expect($pivot->pivot->profile_key)->toBe(Profile::Admin->value);
 });
 
 it('copies tenant apps from current tenant to new tenant', function () use ($testSettings): void {

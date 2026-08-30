@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -13,8 +12,6 @@ it('creates a new tenant with command options', function (): void {
         '--name' => 'New Tenant',
     ])
         ->expectsOutput("Tenant 'New Tenant' created successfully.")
-        ->expectsOutput('  ✓ Created USER profile')
-        ->expectsOutput('  ✓ Created ADMIN profile')
         ->expectsOutput("✅ Tenant 'New Tenant' is ready to use!")
         ->assertExitCode(0);
 
@@ -22,29 +19,6 @@ it('creates a new tenant with command options', function (): void {
     $tenant = Tenant::where('name', 'New Tenant')->first();
     expect($tenant)->not->toBeNull();
     expect($tenant->uuid)->not->toBeNull();
-});
-
-it('creates default USER and ADMIN profiles', function (): void {
-    $this->artisan('noerd:create-tenant', [
-        '--name' => 'Profile Tenant',
-    ])
-        ->assertExitCode(0);
-
-    $tenant = Tenant::where('name', 'Profile Tenant')->first();
-
-    // Verify USER profile was created
-    $userProfile = Profile::where('tenant_id', $tenant->id)
-        ->where('key', 'USER')
-        ->first();
-    expect($userProfile)->not->toBeNull();
-    expect($userProfile->name)->toBe('User');
-
-    // Verify ADMIN profile was created
-    $adminProfile = Profile::where('tenant_id', $tenant->id)
-        ->where('key', 'ADMIN')
-        ->first();
-    expect($adminProfile)->not->toBeNull();
-    expect($adminProfile->name)->toBe('Admin');
 });
 
 it('generates unique uuid for each tenant', function (): void {

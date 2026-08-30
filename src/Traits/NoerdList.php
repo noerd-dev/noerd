@@ -1351,8 +1351,26 @@ trait NoerdList
         // In-memory lists (no model class) stay unrestricted.
         $permissionModel = $this->objectPermissionModelClass();
         $objectAccessDenied = !AccessHelper::canReadObject($permissionModel);
-        if ($objectAccessDenied || !AccessHelper::canWriteObject($permissionModel)) {
+        if ($objectAccessDenied) {
             unset($listSettings['actions']);
+        } else {
+            // "New …" buttons (action: listAction, or a route-opened record) are
+            // CREATE affordances; every other header action stays gated by write.
+            $canCreate = AccessHelper::canCreateObject($permissionModel);
+            $canWrite = AccessHelper::canWriteObject($permissionModel);
+            if (!$canCreate || !$canWrite) {
+                $listSettings['actions'] = array_values(array_filter(
+                    $listSettings['actions'] ?? [],
+                    function (array $action) use ($canCreate, $canWrite): bool {
+                        $isCreate = ($action['action'] ?? null) === 'listAction' || isset($action['route']);
+
+                        return $isCreate ? $canCreate : $canWrite;
+                    },
+                ));
+                if ($listSettings['actions'] === []) {
+                    unset($listSettings['actions']);
+                }
+            }
         }
         if (!AccessHelper::canDeleteObject($permissionModel)) {
             $listSettings['bulkActions'] = array_values(array_filter(

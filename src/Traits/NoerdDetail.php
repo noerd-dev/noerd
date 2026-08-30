@@ -47,9 +47,10 @@ trait NoerdDetail
 
     public function store(): void
     {
-        // Server-side guard: the save button is hidden for write-denied users, but
-        // store() stays reachable via the storeDetail-{name} listener and shortcut.
-        if (!$this->canWriteObject()) {
+        // Server-side guard: the save button is hidden for denied users, but
+        // store() stays reachable via the storeDetail-{name} listener and
+        // shortcut. canSaveObject() picks create (new record) or write (update).
+        if (!$this->canSaveObject()) {
             return;
         }
 

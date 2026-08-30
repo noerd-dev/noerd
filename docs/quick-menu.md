@@ -44,7 +44,8 @@ buttons:
 
 | Property | Description |
 |----------|-------------|
-| `policy` | Gate ability or policy name for access control |
+| `app` / `apps` | Tenant app name (string) or list of names (`tenant_apps.name`) the button belongs to. The button renders only when at least ONE of them is assigned to the selected tenant AND the app permission allows it (`AccessHelper::canUseApp()`). Set it on every button that opens an app's screens or shows an app's data — this replaces the removed per-module tenant gates (`canOrders` & Co.). |
+| `policy` | (optional) Gate ability or policy name for access control — only for checks beyond app usability |
 | `component` | Livewire component to render |
 
 ## Policy-Based Access Control

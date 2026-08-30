@@ -100,3 +100,41 @@ it('renders a widget without a policy key for every user', function (): void {
         ->assertCount('widgets', 1)
         ->assertSee('Test Widget');
 });
+
+it('shows only widgets whose declared app is assigned to the tenant and allowed', function (): void {
+    $tenant = \Noerd\Models\Tenant::factory()->create();
+    auth()->user()->tenants()->attach($tenant->id);
+    \Noerd\Helpers\TenantHelper::setSelectedTenantId($tenant->id);
+    foreach (['ZZ_DENIED_APP', 'ZZ_ALLOWED_APP'] as $name) {
+        $app = \Noerd\Models\TenantApp::firstOrCreate(
+            ['name' => $name],
+            ['title' => $name, 'icon' => 'noerd::icons.app', 'route' => 'zz-app-probe', 'is_active' => true],
+        );
+        $tenant->tenantApps()->syncWithoutDetaching([$app->id]);
+    }
+    \Noerd\Helpers\TenantHelper::clearCache();
+
+    Gate::define(
+        \Noerd\Helpers\AccessHelper::APP_GATE,
+        fn(?NoerdUser $user, string $appName): bool => $appName !== 'ZZ_DENIED_APP',
+    );
+
+    writeDashboardWidgetsFixture([
+        [
+            'app' => 'ZZ_DENIED_APP',
+            'component' => 'noerd::dashboard-widget-test',
+        ],
+        [
+            'app' => 'ZZ_UNASSIGNED_APP',
+            'component' => 'noerd::dashboard-widget-test',
+        ],
+        [
+            'app' => 'ZZ_ALLOWED_APP',
+            'component' => 'noerd::dashboard-widget-test',
+        ],
+    ]);
+
+    Livewire::test('noerd::layout.dashboard-widgets')
+        ->assertOk()
+        ->assertCount('widgets', 1);
+});

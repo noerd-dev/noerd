@@ -267,18 +267,34 @@ $this->app->singleton(
 - `apply()` runs for every config parse — an implementation must be fast and return the array unchanged when it stores nothing for the component
 - `filterListViews()` receives plain view keys for the current app (`default`, `vip`) and composite `{app}::{key}` keys for other apps; restrictions stored app-agnostic must match on each entry's plain `key`
 
+### Profile registry
+
+Additional user profiles (beyond the built-in `Noerd\Enums\Profile` cases) are
+registered on the `ProfileRegistry` singleton in a module ServiceProvider's
+`boot()`; the profile pickers render from the registry:
+
+```php
+app(\Noerd\Services\ProfileRegistry::class)->register('MY_PROFILE', fn(): string => __('My Profile'));
+```
+
+The registered profile's semantics come from the authorization gates the module
+defines (the core baseline treats unknown keys like User) — see
+`docs/permissions.md` ("Registering additional profiles").
+
 ### Authorization gates
 
-The generic chrome consults four **optional** Laravel gates, wrapped in `Noerd\Helpers\AccessHelper`. An undefined gate allows everything — the core ships no restrictions of its own; a project defines a gate to restrict centrally.
+The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\Helpers\AccessHelper`. An undefined gate falls back to the **profile baseline** (see `docs/permissions.md`): Admin/User profiles — and users without a profile — may do everything, ReadOnly may only read and open apps. A defined gate decides alone and is expected to incorporate the baseline itself.
 
 | Gate (constant on `AccessHelper`) | Argument | Consulted by |
 |-----------------------------------|----------|--------------|
 | `noerd.access-app` (`APP_GATE`) | `string $appName` (tenant_apps.name, any case) | App switcher, app tiles, `AppAccessMiddleware`, `PublicAppMiddleware`, allowed-app config discovery |
 | `noerd.object-read` (`OBJECT_READ_GATE`) | `class-string $modelClass` | Lists (403 + row hiding) and detail mount (denied state) |
-| `noerd.object-write` (`OBJECT_WRITE_GATE`) | `class-string $modelClass` | Detail forms render read-only, list "New …" actions hidden |
+| `noerd.object-write` (`OBJECT_WRITE_GATE`) | `class-string $modelClass` | Updating existing records: detail forms render read-only, custom list header actions hidden |
+| `noerd.object-create` (`OBJECT_CREATE_GATE`) | `class-string $modelClass` | Creating new records: store() on a new record, list "New …" actions hidden |
 | `noerd.object-delete` (`OBJECT_DELETE_GATE`) | `class-string $modelClass` | Delete buttons and bulk delete hidden/blocked |
+| `noerd.action` (`ACTION_GATE`) | `string $actionKey` (see the ActionPermissionRegistry) | `action-permission:{key}` middleware and manual `canPerformAction()` call sites |
 
-Always go through the helper (`AccessHelper::canAccessApp()`, `::canReadObject()`, `::canWriteObject()`, `::canDeleteObject()`) — it short-circuits null arguments and undefined gates.
+Always go through the helper (`AccessHelper::canAccessApp()`, `::canReadObject()`, `::canWriteObject()`, `::canCreateObject()`, `::canDeleteObject()`, `::canPerformAction()`) — it short-circuits null arguments and applies the baseline for undefined gates. Detail/page components additionally expose `canSaveObject()`, which picks create (new record, no `$modelId` yet) or write (update) for the form's current state — the save button, save shortcut and readonly rendering key off it.
 
 **Defining a gate** (e.g. in a service provider's `boot()`):
 

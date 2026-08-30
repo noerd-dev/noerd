@@ -1,15 +1,14 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\Tenant;
 use Noerd\Traits\NoerdList;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     use NoerdList;
 
     public $listModel = Tenant::class;
-
     public ?string $detailRoute = 'noerd.tenant.detail';
 
     public $detailComponent = 'noerd::tenant-detail';

@@ -20,7 +20,8 @@ widgets:
 
 | Key | Description |
 |-----|-------------|
-| `policy` | (optional) Gate ability or policy name. Checked like the quick-menu: `Gate::define`d abilities first, then policies on the `Tenant` model. A widget without `policy` is shown to every user. |
+| `app` / `apps` | Tenant app name (string) or list of names (`tenant_apps.name`) the widget belongs to. The widget renders only when at least ONE of them is assigned to the selected tenant AND the app permission allows it (`AccessHelper::canUseApp()`). Set it on every widget that shows an app's data — this replaces the removed per-module tenant gates (`canSupplat` & Co.). |
+| `policy` | (optional) Gate ability or policy name — only for checks beyond app usability. Checked like the quick-menu: `Gate::define`d abilities first, then policies on the `Tenant` model. |
 | `component` | Livewire component to render — bare (`quick-menu.open-orders` style) or namespaced (`supplat::dashboard-widgets.open-tables`). |
 | `width` | (optional) Width in app-tile units, default `1`. |
 | `height` | (optional) Height in app-tile units, default `1`. |

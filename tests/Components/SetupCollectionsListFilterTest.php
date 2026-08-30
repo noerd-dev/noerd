@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
@@ -18,16 +18,11 @@ beforeEach(function (): void {
     SetupLanguage::ensureDefaultLanguagesForTenant($this->tenant->id);
 
     // Create admin profile for the tenant
-    $adminProfile = Profile::factory()->create([
-        'tenant_id' => $this->tenant->id,
-        'key' => 'ADMIN',
-        'name' => 'Admin',
-    ]);
 
     $this->user = NoerdUser::factory()->create();
 
     // Attach user to tenant with admin profile
-    $this->user->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
+    $this->user->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
 
     // Set tenant and app via session helper
     TenantHelper::setSelectedTenantId($this->tenant->id);

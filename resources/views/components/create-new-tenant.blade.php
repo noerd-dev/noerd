@@ -1,7 +1,7 @@
 <?php
 
 use Noerd\Helpers\TenantHelper;
-use Noerd\Models\Profile;
+use Noerd\Enums\Profile;
 use Noerd\Models\Tenant;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
@@ -35,21 +35,9 @@ new class extends Component {
         $tenant->uuid = Str::uuid();
         $tenant->save();
 
-        $profile = new Profile();
-        $profile->key = 'USER';
-        $profile->name = 'User';
-        $profile->tenant_id = $tenant->id;
-        $profile->save();
-
-        $profile = new Profile();
-        $profile->key = 'ADMIN';
-        $profile->name = 'Admin';
-        $profile->tenant_id = $tenant->id;
-        $profile->save();
-
         // Default also admin
         $tenant->users()->attach(NoerdAuth::user()->id, [
-            'profile_id' => $profile->id,
+            'profile_key' => Profile::Admin->value,
         ]);
 
         $selectedTenant = TenantHelper::getSelectedTenant();

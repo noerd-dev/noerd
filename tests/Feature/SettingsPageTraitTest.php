@@ -10,7 +10,6 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdSettingsPage;
@@ -26,6 +25,8 @@ uses(TestCase::class, RefreshDatabase::class);
  */
 
 beforeEach(function (): void {
+    ensureZzSettingsProfilesTable();
+
     $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create();
     $user->tenants()->attach($tenant->id);
@@ -59,7 +60,7 @@ beforeEach(function (): void {
 
         public array $settingsModels = [
             'detailData' => NoerdSettings::class,
-            'profileData' => Profile::class,
+            'profileData' => ZzSettingsProfile::class,
         ];
 
         public array $profileData = [];
@@ -113,7 +114,7 @@ it('never consults the layout-override hook for a settings config', function ():
 it('hydrates every declared model from the tenant singleton row', function (): void {
     $tenantId = TenantHelper::getSelectedTenantId();
     NoerdSettings::create(['tenant_id' => $tenantId, 'currency' => 'USD']);
-    Profile::create(['tenant_id' => $tenantId, 'key' => 'zz', 'name' => 'Tenant Profile']);
+    ZzSettingsProfile::create(['tenant_id' => $tenantId, 'key' => 'zz', 'name' => 'Tenant Profile']);
 
     Livewire::test('zz-settings-test-page')
         ->assertSet('detailData.currency', 'USD')
@@ -123,7 +124,7 @@ it('hydrates every declared model from the tenant singleton row', function (): v
 it('stores every declared model as the tenant singleton and leaves other tenants alone', function (): void {
     $tenantId = TenantHelper::getSelectedTenantId();
     NoerdSettings::create(['tenant_id' => $tenantId, 'currency' => 'EUR']);
-    Profile::create(['tenant_id' => $tenantId, 'key' => 'zz', 'name' => 'Old Name']);
+    ZzSettingsProfile::create(['tenant_id' => $tenantId, 'key' => 'zz', 'name' => 'Old Name']);
 
     $otherTenant = Tenant::factory()->create();
     NoerdSettings::create(['tenant_id' => $otherTenant->id, 'currency' => 'GBP']);
@@ -137,7 +138,7 @@ it('stores every declared model as the tenant singleton and leaves other tenants
 
     expect(NoerdSettings::where('tenant_id', $tenantId)->count())->toBe(1)
         ->and(NoerdSettings::where('tenant_id', $tenantId)->first()->currency)->toBe('CHF')
-        ->and(Profile::where('tenant_id', $tenantId)->first()->name)->toBe('New Name')
+        ->and(ZzSettingsProfile::where('tenant_id', $tenantId)->first()->name)->toBe('New Name')
         ->and(NoerdSettings::where('tenant_id', $otherTenant->id)->first()->currency)->toBe('GBP');
 });
 
@@ -152,7 +153,7 @@ it('creates missing singleton rows on store', function (): void {
         ->assertHasNoErrors();
 
     expect(NoerdSettings::where('tenant_id', $tenantId)->first()->currency)->toBe('USD')
-        ->and(Profile::where('tenant_id', $tenantId)->first()->name)->toBe('Fresh Profile');
+        ->and(ZzSettingsProfile::where('tenant_id', $tenantId)->first()->name)->toBe('Fresh Profile');
 });
 
 it('validates required fields from the settings layout', function (): void {
@@ -201,7 +202,7 @@ it('blocks reading when the object-read gate denies a declared settings model', 
 it('ignores store() when the object-write gate denies a declared settings model', function (): void {
     Illuminate\Support\Facades\Gate::define(
         Noerd\Helpers\AccessHelper::OBJECT_WRITE_GATE,
-        fn(?Illuminate\Contracts\Auth\Authenticatable $user, string $modelClass): bool => $modelClass !== Profile::class,
+        fn(?Illuminate\Contracts\Auth\Authenticatable $user, string $modelClass): bool => $modelClass !== ZzSettingsProfile::class,
     );
 
     $tenantId = TenantHelper::getSelectedTenantId();
@@ -212,5 +213,5 @@ it('ignores store() when the object-write gate denies a declared settings model'
         ->assertSet('showSuccessIndicator', false);
 
     expect(NoerdSettings::where('tenant_id', $tenantId)->exists())->toBeFalse()
-        ->and(Profile::where('tenant_id', $tenantId)->exists())->toBeFalse();
+        ->and(ZzSettingsProfile::where('tenant_id', $tenantId)->exists())->toBeFalse();
 });

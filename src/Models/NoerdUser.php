@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\NoerdUserFactory;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Notifications\NoerdResetPassword;
+use Noerd\Services\ProfileRegistry;
 
 class NoerdUser extends Authenticatable implements HasLocalePreference
 {
@@ -45,18 +47,14 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
-            ->withPivot('profile_id');
+            ->withPivot('profile_key');
     }
 
     public function adminTenants(): BelongsToMany
     {
-        // The admin-profile constraint is a subquery, NOT a query executed while
-        // the relation is being DEFINED — defining a relation must never hit the
-        // database (it runs on every with()/whereHas() constraint build).
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
-            ->withPivot('profile_id')
-            ->wherePivotIn('profile_id', Profile::query()->select('id')->where('key', 'ADMIN'))
-            ->with('profiles');
+            ->withPivot('profile_key')
+            ->wherePivot('profile_key', Profile::Admin->value);
     }
 
     public function initials(): string
@@ -81,60 +79,62 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function getProfileForTenantAttribute(): array
     {
-        $selectedTenantId = TenantHelper::getSelectedTenantId();
+        $key = $this->currentProfileKey();
 
-        if (!$selectedTenantId) {
+        if ($key === null) {
             return ['badge' => '', 'text' => ''];
         }
 
-        // One joined query instead of loading the full tenants collection plus a
-        // separate Profile::find() — same tenant-profile semantics as currentProfile().
-        $profileName = (string) ($this->profiles()
-            ->where('noerd_profiles.tenant_id', $selectedTenantId)
-            ->value('name') ?? '');
-
-        return ['badge' => $profileName, 'text' => ''];
+        // Registered profiles (ProfileRegistry) get their translated label;
+        // an unregistered key falls back to the raw key rather than hiding.
+        return ['badge' => app(ProfileRegistry::class)->label($key) ?? $key, 'text' => ''];
     }
 
-    public function profiles(): BelongsToMany
+    /**
+     * The RAW profile key of the user in the given tenant (default: the
+     * selected tenant of the current request), read from the users_tenants
+     * pivot. Null without a tenant or assignment. Modules interpreting
+     * registered profiles read this key; the core's own baseline goes through
+     * currentProfile().
+     */
+    public function currentProfileKey(?int $tenantId = null): ?string
     {
-        return $this->belongsToMany(Profile::class, 'users_tenants', 'user_id')
-            ->withPivot('profile_id');
+        $tenantId ??= TenantHelper::getSelectedTenantId();
+
+        if (! $tenantId) {
+            return null;
+        }
+
+        $key = $this->tenants->firstWhere('id', $tenantId)?->pivot?->profile_key;
+
+        return $key === null ? null : (string) $key;
     }
 
-    public function currentProfile(): ?string
+    /**
+     * The user's built-in profile in the given tenant. Keys outside the
+     * Profile enum (module-registered profiles) resolve to null and behave
+     * like the USER default in the core's baseline.
+     */
+    public function currentProfile(?int $tenantId = null): ?Profile
     {
-        $selectedTenantId = TenantHelper::getSelectedTenantId();
+        $key = $this->currentProfileKey($tenantId);
 
-        return $this->profiles->where('tenant_id', $selectedTenantId)->first()->key ?? null;
+        return $key === null ? null : Profile::tryFrom($key);
     }
 
     /**
      * Whether the user administers the tenant of the CURRENT request.
      *
-     * Deliberately tenant-scoped (like currentProfile()): an ADMIN profile is
-     * granted per tenant, so counting admin profiles across all tenants made an
-     * admin of one tenant an admin of every tenant they are merely a member of —
-     * and that is the check behind SetupMiddleware and ComponentAccessGuard.
-     * Without a resolved tenant it fails closed; a super admin is unaffected.
+     * Deliberately tenant-scoped (like currentProfile()): the ADMIN profile is
+     * assigned per tenant, so counting admin assignments across all tenants
+     * made an admin of one tenant an admin of every tenant they are merely a
+     * member of — and that is the check behind SetupMiddleware and
+     * ComponentAccessGuard. Without a resolved tenant it fails closed; a super
+     * admin is unaffected.
      */
     public function isAdmin(?int $tenantId = null): bool
     {
-        if ($this->isSuperAdmin()) {
-            return true;
-        }
-
-        // The tenant the request operates in — same source as currentProfile().
-        $tenantId ??= TenantHelper::getSelectedTenantId();
-
-        if (! $tenantId) {
-            return false;
-        }
-
-        return $this->profiles
-            ->where('tenant_id', $tenantId)
-            ->where('key', 'ADMIN')
-            ->isNotEmpty();
+        return $this->isSuperAdmin() || $this->currentProfile($tenantId) === Profile::Admin;
     }
 
     /**
@@ -145,7 +145,8 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function isAdminOfAnyTenant(): bool
     {
-        return $this->isSuperAdmin() || $this->profiles->where('key', 'ADMIN')->isNotEmpty();
+        return $this->isSuperAdmin()
+            || $this->tenants->contains(fn($tenant): bool => $tenant->pivot->profile_key === Profile::Admin->value);
     }
 
     public function isSuperAdmin(): bool

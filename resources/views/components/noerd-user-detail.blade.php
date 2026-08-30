@@ -1,15 +1,16 @@
 <?php
 
 use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
+use Noerd\Enums\Profile;
 use Noerd\Models\SetupLanguage;
+use Noerd\Traits\AdministersNoerdUsers;
 use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
+    use AdministersNoerdUsers;
     use NoerdDetail;
 
     public ?string $detailPrimary = 'userId';
@@ -28,33 +29,6 @@ new class extends Component {
     public function localeOptions(): array
     {
         return SetupLanguage::getActive()->pluck('name', 'code')->toArray();
-    }
-
-    #[Computed]
-    public function tenantProfiles(): array
-    {
-        $profiles = Profile::where('tenant_id', NoerdAuth::user()->selected_tenant_id)->get();
-        $array = [];
-        foreach ($profiles as $profile) {
-            $array[$profile->id] = $profile->name;
-        }
-
-        return $array;
-    }
-
-    #[Computed]
-    public function assignedToCurrentTenant(): bool
-    {
-        if (! isset($this->modelId)) {
-            return false;
-        }
-
-        $user = NoerdUser::find($this->modelId);
-        if (! $user) {
-            return false;
-        }
-
-        return $user->tenants->contains(NoerdAuth::user()->selected_tenant_id);
     }
 
     public function mount(): void
@@ -82,54 +56,16 @@ new class extends Component {
         // per admin tenant. Mounts re-run on every modal-stack update, so this
         // loop must stay cheap.
         $profileByTenant = $user->exists
-            ? $user->tenants->mapWithKeys(fn($tenant) => [$tenant->id => $tenant->pivot->profile_id])->all()
+            ? $user->tenants->mapWithKeys(fn($tenant) => [$tenant->id => $tenant->pivot->profile_key])->all()
             : [];
 
         foreach (NoerdAuth::user()->adminTenants as $tenant) {
             $this->possibleTenants[$tenant->id] = $tenant->toArray();
-            $profileId = $profileByTenant[$tenant->id] ?? null;
+            $profileKey = $profileByTenant[$tenant->id] ?? null;
 
-            $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileId;
-            $hasAccess = (bool) $profileId;
-            $this->possibleTenants[$tenant->id]['hasAccess'] = $hasAccess;
-
-            if (! $hasAccess) {
-                // A tenant without any profile row simply offers no preselect.
-                $this->possibleTenants[$tenant->id]['selectedProfile'] = $tenant->profiles->first()?->id;
-            }
+            $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileKey ?? Profile::User->value;
+            $this->possibleTenants[$tenant->id]['hasAccess'] = (bool) $profileKey;
         }
-    }
-
-    /**
-     * The edited account must belong to a tenant this admin administers.
-     * mount() only proves the CALLER is an admin — $modelId can still be
-     * repointed on a later request (it is a plain URL-bound property).
-     */
-    private function authorizeTargetUser(): void
-    {
-        $admin = NoerdAuth::user();
-
-        if (! $this->modelId || $admin->isSuperAdmin()) {
-            return;
-        }
-
-        $target = NoerdUser::find($this->modelId);
-
-        abort_unless($target !== null, 404);
-
-        // A super admin is never editable from a tenant admin's user screen.
-        abort_if($target->isSuperAdmin(), 403);
-
-        $adminTenantIds = $admin->adminTenants()->pluck('tenants.id');
-
-        // Editable when the account belongs to a tenant this admin administers —
-        // or when it belongs to no tenant at all (an unassigned account being
-        // granted its first access from this screen).
-        abort_unless(
-            $target->tenants()->count() === 0
-                || $target->tenants()->whereIn('tenants.id', $adminTenantIds)->exists(),
-            403,
-        );
     }
 
     public function store(): void
@@ -200,8 +136,8 @@ new class extends Component {
 
     /**
      * Apply the requested tenant access, restricted to the tenants this admin
-     * actually administers and to profiles that belong to the tenant they are
-     * granted for. Shared by both store() branches so neither can drift.
+     * actually administers and to the fixed profile keys. Shared by both
+     * store() branches so neither can drift.
      */
     private function attachTenantAccess(NoerdUser $user, bool $detachFirst = false): void
     {
@@ -219,33 +155,18 @@ new class extends Component {
                 $user->tenants()->detach($tenantId);
             }
 
-            $profileId = $value['selectedProfile'] ?? null;
-            $profileBelongsToTenant = $profileId
-                && Profile::whereKey($profileId)->where('tenant_id', $tenantId)->exists();
+            $profile = Profile::tryFrom((string) ($value['selectedProfile'] ?? ''));
 
-            if (($value['hasAccess'] ?? false) && $profileBelongsToTenant) {
+            if (($value['hasAccess'] ?? false) && $profile !== null) {
                 $user->tenants()->detach($tenantId);
-                $user->tenants()->attach($tenantId, ['profile_id' => $profileId]);
+                $user->tenants()->attach($tenantId, ['profile_key' => $profile->value]);
             }
         }
     }
 
     public function delete(): void
     {
-        // Same target check as store(): $modelId is URL-bound and rewritable, so
-        // a mount-time admin check alone let any admin delete an account of
-        // another tenant — or any account with no tenants left at all.
-        $this->authorizeTargetUser();
-
-        $user = NoerdUser::findOrFail($this->modelId);
-
-        $user->tenants()->detach(NoerdAuth::user()->selected_tenant_id);
-        $this->closeModalProcess($this->getListComponent());
-
-        // If user has no more tenants, delete the user
-        if ($user->tenants()->count() === 0) {
-            $user->delete();
-        }
+        $this->deleteUserAccount();
     }
 } ?>
 
@@ -290,8 +211,8 @@ new class extends Component {
                                             "opacity-50" => !$tenant['hasAccess']
                                         ])
                                     >
-                                        @foreach($tenant['profiles'] as $profile)
-                                            <option value="{{$profile['id']}}">{{$profile['name']}}</option>
+                                        @foreach(app(\Noerd\Services\ProfileRegistry::class)->options() as $profileKey => $profileLabel)
+                                            <option value="{{$profileKey}}">{{$profileLabel}}</option>
                                         @endforeach
                                     </x-noerd::select-input>
                                 </div>
@@ -302,14 +223,6 @@ new class extends Component {
                 </fieldset>
                 <x-noerd::input-error :messages="$errors->get('tenantAccess')" class="mt-2"/>
             </div>
-
-            @isset($modelId)
-                <x-noerd::box>
-                    <div class="max-w-xl">
-                        <livewire:noerd::user-update-password :userId="$modelId"/>
-                    </div>
-                </x-noerd::box>
-            @endisset
         </x-slot:tab1>
     </x-noerd::tab-content>
 

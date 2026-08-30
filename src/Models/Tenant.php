@@ -4,7 +4,6 @@ namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\TenantFactory;
@@ -50,7 +49,7 @@ class Tenant extends Authenticatable
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(NoerdUser::class, 'users_tenants', 'tenant_id', 'user_id')->withPivot('profile_id');
+        return $this->belongsToMany(NoerdUser::class, 'users_tenants', 'tenant_id', 'user_id')->withPivot('profile_key');
     }
 
     public function tenantApps(): BelongsToMany
@@ -59,11 +58,6 @@ class Tenant extends Authenticatable
             ->withPivot('is_hidden', 'sort_order')
             ->where('is_active', true)
             ->orderByPivot('sort_order');
-    }
-
-    public function profiles(): HasMany
-    {
-        return $this->hasMany(Profile::class, 'tenant_id', 'id');
     }
 
     protected static function newFactory(): TenantFactory

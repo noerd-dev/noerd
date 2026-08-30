@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\Tenant;
 use Noerd\Support\ComponentAccessGuard;
@@ -26,11 +26,9 @@ function makeTenantUser(Tenant $tenant, bool $admin = false, bool $super = false
 {
     $user = NoerdUser::factory()->create(['super_admin' => $super]);
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => $admin ? 'ADMIN' : 'MEMBER',
+    $user->tenants()->attach($tenant->id, [
+        'profile_key' => $admin ? Profile::Admin->value : Profile::User->value,
     ]);
-    $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
 
     return $user;
 }
@@ -251,8 +249,7 @@ it('scopes admin rights to the tenant of the current request', function (): void
 
     $user = makeTenantUser($administered, admin: true);
     // Same user is a plain member of a second tenant.
-    $memberProfile = Profile::factory()->create(['tenant_id' => $memberOnly->id, 'key' => 'MEMBER']);
-    $user->tenants()->attach($memberOnly->id, ['profile_id' => $memberProfile->id]);
+    $user->tenants()->attach($memberOnly->id, ['profile_key' => Profile::User->value]);
     $this->actingAs($user);
 
     TenantHelper::setSelectedTenantId($administered->id);
