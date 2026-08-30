@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
@@ -15,14 +15,9 @@ uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->tenant = Tenant::factory()->create();
-    $adminProfile = Profile::factory()->create([
-        'tenant_id' => $this->tenant->id,
-        'key' => 'ADMIN',
-        'name' => 'Admin',
-    ]);
 
     $this->admin = NoerdUser::factory()->create(['super_admin' => true]);
-    $this->admin->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
+    $this->admin->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
 
     TenantHelper::setSelectedTenantId($this->tenant->id);
     TenantHelper::setSelectedApp('SETUP');
@@ -65,11 +60,7 @@ it('manages apps for the single tenant in single-tenant mode', function (): void
 it('denies access to regular admins', function (): void {
     $regularAdmin = NoerdUser::factory()->create();
     $regularAdmin->tenants()->attach($this->tenant->id, [
-        'profile_id' => Profile::factory()->create([
-            'tenant_id' => $this->tenant->id,
-            'key' => 'ADMIN',
-            'name' => 'Admin2',
-        ])->id,
+        'profile_key' => Profile::Admin->value,
     ]);
 
     $this->actingAs($regularAdmin);

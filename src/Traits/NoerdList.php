@@ -269,12 +269,6 @@ trait NoerdList
             $this->listColumnFilters = session("listColumnFilters.{$this->componentName()}", []);
         }
 
-        $savedSort = session("listSort.{$this->componentName()}");
-        if ($savedSort) {
-            $this->sortField = $savedSort['field'];
-            $this->sortAsc = $savedSort['asc'];
-        }
-
         $savedView = session("listView.{$this->componentName()}");
 
         // A ?view= URL param (shared link) wins over the session-saved view.
@@ -321,6 +315,17 @@ trait NoerdList
         }
 
         $this->syncListViewParam();
+
+        // The sort restore runs AFTER the view restore on purpose: with no
+        // session-saved sort the default comes from the ACTIVE view's YAML
+        // (`defaultSort:`), so an alternate list view brings its own order.
+        $savedSort = session("listSort.{$this->componentName()}");
+        if ($savedSort) {
+            $this->sortField = $savedSort['field'];
+            $this->sortAsc = $savedSort['asc'];
+        } else {
+            $this->applyDefaultSortFromConfig();
+        }
 
         // Deep-link support: ?{entity}Id=5 opens the record's modal over the
         // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
@@ -893,22 +898,6 @@ trait NoerdList
         return method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
     }
 
-    /**
-     * Set the default sort field and direction.
-     * Call this in mount() to configure initial sorting.
-     */
-    protected function setDefaultSort(string $field, bool $ascending = false): void
-    {
-        $savedSort = session("listSort.{$this->componentName()}");
-        if ($savedSort) {
-            $this->sortField = $savedSort['field'];
-            $this->sortAsc = $savedSort['asc'];
-        } else {
-            $this->sortField = $field;
-            $this->sortAsc = $ascending;
-        }
-    }
-
     protected function getAllowedListFilterColumns(): array
     {
         if (defined('static::ALLOWED_TABLE_FILTERS') && !empty(static::ALLOWED_TABLE_FILTERS)) {
@@ -1362,8 +1351,26 @@ trait NoerdList
         // In-memory lists (no model class) stay unrestricted.
         $permissionModel = $this->objectPermissionModelClass();
         $objectAccessDenied = !AccessHelper::canReadObject($permissionModel);
-        if ($objectAccessDenied || !AccessHelper::canWriteObject($permissionModel)) {
+        if ($objectAccessDenied) {
             unset($listSettings['actions']);
+        } else {
+            // "New …" buttons (action: listAction, or a route-opened record) are
+            // CREATE affordances; every other header action stays gated by write.
+            $canCreate = AccessHelper::canCreateObject($permissionModel);
+            $canWrite = AccessHelper::canWriteObject($permissionModel);
+            if (!$canCreate || !$canWrite) {
+                $listSettings['actions'] = array_values(array_filter(
+                    $listSettings['actions'] ?? [],
+                    function (array $action) use ($canCreate, $canWrite): bool {
+                        $isCreate = ($action['action'] ?? null) === 'listAction' || isset($action['route']);
+
+                        return $isCreate ? $canCreate : $canWrite;
+                    },
+                ));
+                if ($listSettings['actions'] === []) {
+                    unset($listSettings['actions']);
+                }
+            }
         }
         if (!AccessHelper::canDeleteObject($permissionModel)) {
             $listSettings['bulkActions'] = array_values(array_filter(
@@ -1775,6 +1782,28 @@ trait NoerdList
         [$app, $viewKey] = StaticConfigHelper::parseListViewKey($key);
         $this->listViewApp = $app;
         $this->listView = $viewKey === 'default' ? null : $viewKey;
+    }
+
+    /**
+     * Default sorting is configured in the list YAML — never in the component:
+     *
+     *   defaultSort:
+     *     field: name
+     *     direction: asc   # optional, desc when omitted
+     *
+     * Applied only while the user has not sorted the list themselves (no
+     * session entry). Without the key, lists sort by id descending.
+     */
+    private function applyDefaultSortFromConfig(): void
+    {
+        $defaultSort = $this->getListConfig()['defaultSort'] ?? null;
+
+        if (!is_array($defaultSort) || empty($defaultSort['field'])) {
+            return;
+        }
+
+        $this->sortField = (string) $defaultSort['field'];
+        $this->sortAsc = ($defaultSort['direction'] ?? 'desc') === 'asc';
     }
 
     /**

@@ -5,9 +5,9 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -106,11 +106,10 @@ it('refuses to create a tenant from the inner component for a non-admin', functi
 it('keeps the admin path working for an admin of the edited user', function (): void {
     $tenant = Tenant::factory()->create();
     $admin = NoerdUser::factory()->create();
-    $adminProfile = Profile::create(['tenant_id' => $tenant->id, 'key' => 'ADMIN', 'name' => 'Admin']);
-    $admin->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
+    $admin->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
 
     $member = NoerdUser::factory()->create(['password' => Hash::make('old')]);
-    $member->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
+    $member->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
 
     TenantHelper::setSelectedTenantId($tenant->id);
     $this->actingAs($admin);

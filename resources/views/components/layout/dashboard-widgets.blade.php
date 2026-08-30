@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Models\Tenant;
 use Symfony\Component\Yaml\Yaml;
 use Noerd\Helpers\NoerdAuth;
@@ -16,11 +17,28 @@ new class extends Component {
             ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
             : [];
 
+        // The optional `app:` (string) / `apps:` (list) key ties a widget to
+        // tenant apps: it renders only when at least one of them is assigned
+        // to the tenant AND the app permission allows it — users a restricted
+        // app denies must not see its data on the dashboard either.
         $this->widgets = array_values(array_filter(
             $config['widgets'] ?? [],
-            fn ($widget): bool => is_array($widget)
-                && isset($widget['component'])
-                && (! isset($widget['policy']) || $this->canAccess($widget['policy'])),
+            function ($widget): bool {
+                if (! is_array($widget) || ! isset($widget['component'])) {
+                    return false;
+                }
+
+                if (isset($widget['policy']) && ! $this->canAccess($widget['policy'])) {
+                    return false;
+                }
+
+                $apps = array_merge(
+                    isset($widget['app']) ? [(string) $widget['app']] : [],
+                    array_map('strval', (array) ($widget['apps'] ?? [])),
+                );
+
+                return $apps === [] || AccessHelper::canUseApp(...$apps);
+            },
         ));
     }
 

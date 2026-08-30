@@ -33,7 +33,7 @@ Every test file therefore binds its test case itself with `uses(Noerd\Tests\Test
 keep that line in every new test file.
 
 The testbench skeleton (`vendor/orchestra/testbench-core/laravel`) is shared and persistent: other
-packages' suites (e.g. noerd-plus) symlink their module and publish their YAML copies into the same
+packages' suites symlink their module and publish their YAML copies into the same
 skeleton, and those files survive between runs. `Noerd\Tests\TestCase` must NOT remove foreign
 `app-modules` symlinks or `app-configs` folders — interleaved suites in the same workspace depend on
 them. Consequently, tests must never assume the skeleton contains only noerd's files: write uniquely

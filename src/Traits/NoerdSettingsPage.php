@@ -95,6 +95,32 @@ trait NoerdSettingsPage
     }
 
     /**
+     * A settings page edits tenant singletons — saving is ALWAYS a write, even
+     * when the row does not exist yet (persistSettings() creates it lazily).
+     * NoerdPage's create/write split by $modelId must not apply here: a
+     * settings page has no $modelId, so the base canSaveObject() would fall
+     * through to the unrestricted create check.
+     */
+    public function canSaveObject(): bool
+    {
+        return $this->canWriteObject();
+    }
+
+    public function canDeleteObject(): bool
+    {
+        // Settings pages offer no delete, but the method stays consistent with
+        // the other checks: NoerdPage's version keys off the absent
+        // $detailModel and would therefore always allow.
+        foreach ($this->settingsModelMap() as $modelClass) {
+            if (!AccessHelper::canDeleteObject($modelClass)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Persist every declared settings model as the tenant's singleton row.
      * Kept separate so custom store() overrides reuse it as their tail.
      */

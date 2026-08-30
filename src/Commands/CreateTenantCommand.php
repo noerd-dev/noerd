@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 
 use function Laravel\Prompts\text;
 
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 
 class CreateTenantCommand extends Command
@@ -26,7 +25,7 @@ class CreateTenantCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Create a new tenant with default profiles';
+    protected $description = 'Create a new tenant';
 
     /**
      * Execute the console command.
@@ -82,22 +81,6 @@ class CreateTenantCommand extends Command
         $this->info("Tenant '{$tenant->name}' created successfully.");
         $this->line("  ID: {$tenant->id}");
         $this->line("  UUID: {$tenant->uuid}");
-
-        // Create default USER profile
-        Profile::create([
-            'tenant_id' => $tenant->id,
-            'key' => 'USER',
-            'name' => 'User',
-        ]);
-        $this->info('  ✓ Created USER profile');
-
-        // Create default ADMIN profile
-        Profile::create([
-            'tenant_id' => $tenant->id,
-            'key' => 'ADMIN',
-            'name' => 'Admin',
-        ]);
-        $this->info('  ✓ Created ADMIN profile');
 
         $this->newLine();
         $this->info("✅ Tenant '{$tenant->name}' is ready to use!");

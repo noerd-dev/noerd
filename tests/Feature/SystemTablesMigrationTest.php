@@ -13,7 +13,6 @@ it('creates every noerd system table', function (string $table): void {
 })->with([
     'tenant_apps',
     'tenants',
-    'noerd_profiles',
     'tenant_app',
     'noerd_users',
     'users_tenants',
@@ -37,4 +36,9 @@ it('includes the consolidated columns in the create migrations', function (strin
 
 it('no longer creates the tenant_invoices table', function (): void {
     expect(Schema::hasTable('tenant_invoices'))->toBeFalse();
+});
+
+it('no longer creates the noerd_profiles table (profiles are a fixed enum)', function (): void {
+    expect(Schema::hasTable('noerd_profiles'))->toBeFalse()
+        ->and(Schema::hasColumn('users_tenants', 'profile_key'))->toBeTrue();
 });

@@ -7,20 +7,13 @@ use Noerd\Models\NoerdUser;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\TenantFilterTrait;
 
-new class () extends Component {
+new class extends Component {
     use NoerdList;
     use TenantFilterTrait;
 
     public const DETAIL_COMPONENT = 'noerd::noerd-users-list';
-
     public $listModel = NoerdUser::class;
     public ?string $detailRoute = 'noerd.user.detail';
-
-    public function mount(): void
-    {
-        $this->mountList();
-        $this->setDefaultSort('name', true);
-    }
 
     public function loginAsUser($userId)
     {
@@ -58,10 +51,6 @@ new class () extends Component {
         $rows = $this->listQuery($this->listModel)
             ->whereHas('tenants', function ($relationQuery) use ($tenants): void {
                 $adminTenantIds = $tenants->pluck('id')->map(fn($id): int => (int) $id)->all();
-
-                // The header filter is client input (it round-trips through the
-                // session), so it may only ever NARROW the admin's own tenants —
-                // taking it at face value listed the users of any tenant.
                 $requested = (int) ($this->listFilters['tenant_id'] ?? 0);
                 $scope = $requested > 0
                     ? array_values(array_intersect($adminTenantIds, [$requested]))
@@ -74,23 +63,8 @@ new class () extends Component {
 
         return $this->buildList($rows);
     }
-
-    public function rendering(): void
-    {
-        $this->loadListFilters();
-
-        if ((int) request()->userId) {
-            $this->listAction(request()->userId);
-        }
-
-        if (request()->create) {
-            $this->listAction();
-        }
-    }
 }; ?>
 
 <x-noerd::page>
-
     <x-noerd::list />
-
 </x-noerd::page>

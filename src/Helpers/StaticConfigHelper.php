@@ -892,7 +892,7 @@ class StaticConfigHelper
 
     /**
      * All module source paths for a given app-config key. Several modules may ship
-     * configs for the SAME app folder (e.g. noerd, accounting and noerd-plus all
+     * configs for the SAME app folder (e.g. several packages may all
      * contribute to `setup`), so every existing directory is returned — in module
      * scandir order, for deterministic shadowing.
      *

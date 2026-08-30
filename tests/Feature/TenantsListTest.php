@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -14,14 +14,9 @@ uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->tenant = Tenant::factory()->create(['name' => 'My Tenant']);
-    $this->adminProfile = Profile::factory()->create([
-        'tenant_id' => $this->tenant->id,
-        'key' => 'ADMIN',
-        'name' => 'Admin',
-    ]);
 
     $this->admin = NoerdUser::factory()->create(['selected_tenant_id' => $this->tenant->id]);
-    $this->admin->tenants()->attach($this->tenant->id, ['profile_id' => $this->adminProfile->id]);
+    $this->admin->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
 
     TenantHelper::setSelectedTenantId($this->tenant->id);
     TenantHelper::setSelectedApp('SETUP');
@@ -51,7 +46,7 @@ it('lists all tenants for super admins', function (): void {
         'super_admin' => true,
         'selected_tenant_id' => $this->tenant->id,
     ]);
-    $superAdmin->tenants()->attach($this->tenant->id, ['profile_id' => $this->adminProfile->id]);
+    $superAdmin->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
 
     $this->actingAs($superAdmin);
 

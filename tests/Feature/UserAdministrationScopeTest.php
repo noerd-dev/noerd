@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -23,8 +23,7 @@ uses(TestCase::class, RefreshDatabase::class);
 function zzTenantAdmin(Tenant $tenant): NoerdUser
 {
     $user = NoerdUser::factory()->create(['super_admin' => false]);
-    $profile = Profile::create(['tenant_id' => $tenant->id, 'key' => 'ADMIN', 'name' => 'Admin']);
-    $user->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
+    $user->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
 
     return $user;
 }
@@ -97,8 +96,7 @@ it('never impersonates a super admin', function (): void {
 
 it('still administers a user of its own tenant', function (): void {
     $member = NoerdUser::factory()->create();
-    $profile = Profile::where('tenant_id', $this->tenantA->id)->first();
-    $member->tenants()->attach($this->tenantA->id, ['profile_id' => $profile->id]);
+    $member->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::User->value]);
 
     Livewire::test('noerd::noerd-user-detail', ['modelId' => $member->id])
         ->set('detailData.name', 'Renamed')

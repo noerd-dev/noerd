@@ -134,7 +134,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 - Documentation (README files, docs folders, markdown files) must always be written in English.
 - When writing tests, they must always be in PEST format.
 - YAML files must always use block style formatting. Never use flow/inline style like `{ key: value }` or `[item1, item2]`.
-- When setting default sorting in list components, always use the `setDefaultSort()` method in `mount()`. Never set `$this->sortField` or `$this->sortAsc` directly.
+- Default sorting of a list is CONFIGURATION, never component code: set a top-level `defaultSort:` block in the list YAML (`field:` plus optional `direction: asc|desc`, `desc` when omitted) — in BOTH synced copies. `mountList()` applies it while the user has not sorted the list; a session-saved user sort always wins. There is no component API for it: never set `$this->sortField`/`$this->sortAsc` and never override `mount()` for sorting.
 
 ### Config, noerd:install and noerd:update
 - Configuration keys come from the package config (`vendor/noerd/noerd/config/noerd.php`); the
@@ -183,12 +183,45 @@ protected $fillable = ['name', 'email', 'phone'];
 - No dependencies between optional modules (an optional module must never `use` classes, views or YAML of another optional module)
 - Module-specific code (e.g., in `DatabaseSeeder`) must not be placed in the main project
 
+### Permissions, Profiles & Action Checks
+
+Authorization is generic and two-staged (reference: `docs/permissions.md` and
+`docs/extension-registries.md`, "Authorization gates") — never hand-roll per-module checks:
+
+- Every user has ONE profile per tenant: the `Noerd\Enums\Profile` enum (cases Admin/User/ReadOnly),
+  stored as `users_tenants.profile_key`. Profiles are HARDCODED — no profiles table, no seeding, no
+  profile CRUD; labels come from `Profile::label()`. With no gates defined the profile is the
+  baseline: Admin = setup access + bypass, User (or no profile) = everything, ReadOnly = read only.
+  Modules may register ADDITIONAL profiles via `app(ProfileRegistry::class)->register(key, label)`
+  (their semantics come from the gates that module defines; the core treats unknown keys like User).
+- All checks go through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
+  `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`). Create
+  and write are SEPARATE abilities: `canSaveObject()` on detail/page components picks create (new
+  record) vs. write (update) — the save chrome and the store()/delete() guards (incl.
+  `WriteGuardHook` for custom overrides) key off it. Never bypass these helpers with manual
+  `isAdmin()` checks for object access.
+- Models whose data also flows through HAND-BUILT queries (dashboard counters, bespoke widgets,
+  manual listData()) opt into the query-level read guard: `use Noerd\Traits\GuardedByObjectPermission;`
+  on the model — while read is denied, every query (aggregates included) yields nothing. This is
+  DELIBERATELY opt-in per model; without the trait such queries are NOT permission-guarded
+  (reference: `docs/permissions.md`, "Query-level read guard").
+- An operation beyond CRUD ("start production run") is a NAMED ACTION: register it in the module
+  provider's `boot()` via `app(ActionPermissionRegistry::class)->register('{module}_{action}', 'Label')`
+  (snake_case keys, `[a-z0-9_]` — e.g. `production_start_run`) and guard the call site with the
+  `action-permission:{key}` route middleware or `AccessHelper::canPerformAction()`. Always register
+  what you check — an unregistered action stays invisible to authorization tooling.
+
 ### Quick-Menu Buttons Are App-Independent
 The quick-menu (`app-configs/quick-menu.yml`) is tenant scoped, not app scoped: a button renders the
 same, with the same target, no matter which app is selected in the app bar.
 
 - A quick-menu component must NEVER read `TenantHelper::getSelectedApp()` — not directly, and not
   through a helper that falls back to it. Pass the module/app explicitly instead.
+- Buttons (and dashboard widgets) declare their app(s) via the YAML `app:`/`apps:` key — rendered
+  only when one of the apps is assigned to the tenant AND the app permission allows it
+  (`AccessHelper::canUseApp()`). NEVER define a per-module "tenant has app X" gate (the removed
+  canOrders/canCms pattern) — such gates ignore the user's permissions; inside a component use
+  `AccessHelper::canUseApp(...)` directly, on routes use the `app-access:{app}` middleware.
 - If a target only makes sense per app, render one button per app the tenant runs (labelled with
   that app's tenant-app title) instead of one button that changes meaning.
 - App-specific entry points belong in the app's navigation, dashboard or header actions.

@@ -126,24 +126,20 @@ public function listData(): array
 
 ## Default Sorting
 
-To set a default sort order for a list, use the `setDefaultSort()` method in your `mount()` method:
+Default sorting is configured in the list YAML — never in the component:
 
-```php
-public function mount(): void
-{
-    $this->mountList();
-    $this->setDefaultSort('invoice_date', false);  // Sort by invoice_date descending
-}
+```yaml
+defaultSort:
+  field: invoice_date
+  direction: desc   # optional, desc when omitted
 ```
 
-The method signature is:
+- `field`: The column name to sort by
+- `direction`: `asc` (A-Z, oldest first) or `desc` (Z-A, newest first); omitted means `desc`
 
-```php
-protected function setDefaultSort(string $field, bool $ascending = false): void
-```
-
-- `$field`: The column name to sort by
-- `$ascending`: `true` for ascending (A-Z, oldest first), `false` for descending (Z-A, newest first)
+`mountList()` applies the YAML default whenever the user has not sorted the list yet; a
+user-picked sort is persisted per list in the session and always wins. See
+[List View](list-view.md) ("Default Sorting") for details.
 
 ## Not Sortable Columns
 

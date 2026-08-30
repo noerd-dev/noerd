@@ -67,8 +67,19 @@ new class extends Component {
                  const observer = new ResizeObserver(sync);
                  observer.observe($el);
                  Array.from($el.children).forEach((child) => observer.observe(child))">
+        {{-- The optional `app:` (string) / `apps:` (list) key ties a button to
+             tenant apps: it renders only when at least one of them is assigned
+             to the tenant AND the app permission allows it — users a restricted
+             app denies must not reach it through the quick-menu. --}}
         @foreach($config['buttons'] ?? [] as $button)
-            @if(!isset($button['policy']) || $this->canAccess($button['policy']))
+            @php
+                $buttonApps = array_merge(
+                    isset($button['app']) ? [(string) $button['app']] : [],
+                    array_map('strval', (array) ($button['apps'] ?? [])),
+                );
+            @endphp
+            @if((!isset($button['policy']) || $this->canAccess($button['policy']))
+                && ($buttonApps === [] || \Noerd\Helpers\AccessHelper::canUseApp(...$buttonApps)))
                 <div class="shrink-0">
                     <livewire:dynamic-component :component="$button['component']" :wire:key="'quick-menu-' . $button['component']" />
                 </div>

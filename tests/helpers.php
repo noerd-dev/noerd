@@ -281,3 +281,52 @@ if (!function_exists('assertModuleUpdateCommandPublishesConfigs')) {
         }
     }
 }
+
+if (!function_exists('createNoerdUserWithProfile')) {
+    /**
+     * A user attached to a fresh tenant under the given profile, with that
+     * tenant selected — the fixture for profile-baseline and permission tests.
+     * Pass null to attach the user without any profile.
+     */
+    function createNoerdUserWithProfile(?\Noerd\Enums\Profile $profile): \Noerd\Models\NoerdUser
+    {
+        $tenant = \Noerd\Models\Tenant::factory()->create();
+
+        $user = \Noerd\Models\NoerdUser::factory()->create();
+        $user->tenants()->attach($tenant->id, ['profile_key' => $profile?->value]);
+
+        \Noerd\Helpers\TenantHelper::setSelectedTenantId($tenant->id);
+
+        return $user;
+    }
+}
+
+if (!class_exists('ZzSettingsProfile')) {
+    /**
+     * Tenant-scoped fixture model for settings-page tests — a dedicated zz
+     * table, so the tests depend on no real domain model.
+     */
+    class ZzSettingsProfile extends \Illuminate\Database\Eloquent\Model
+    {
+        protected $table = 'zz_settings_profiles';
+
+        protected $guarded = [];
+    }
+}
+
+if (!function_exists('ensureZzSettingsProfilesTable')) {
+    function ensureZzSettingsProfilesTable(): void
+    {
+        if (\Illuminate\Support\Facades\Schema::hasTable('zz_settings_profiles')) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Schema::create('zz_settings_profiles', function ($table): void {
+            $table->id();
+            $table->unsignedBigInteger('tenant_id')->nullable();
+            $table->string('key')->nullable();
+            $table->string('name')->nullable();
+            $table->timestamps();
+        });
+    }
+}

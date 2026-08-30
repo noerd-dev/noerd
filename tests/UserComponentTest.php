@@ -3,8 +3,8 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Notifications\NoerdResetPassword;
 use Noerd\Tests\TestCase;
@@ -48,11 +48,6 @@ it('successfully creates a new user', function () use ($testSettings): void {
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $this->actingAs($admin);
 
@@ -63,7 +58,7 @@ it('successfully creates a new user', function () use ($testSettings): void {
         ->set('detailData.name', $userName)
         ->set('detailData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -81,18 +76,13 @@ it('updates an existing user', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $existingUser = NoerdUser::factory()->create([
         'name' => 'Old Name',
         'email' => 'old@example.com',
     ]);
 
-    $existingUser->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
+    $existingUser->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
 
     $this->actingAs($admin);
 
@@ -104,7 +94,7 @@ it('updates an existing user', function () use ($testSettings): void {
         ->set('detailData.name', $newName)
         ->set('detailData.email', $newEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -119,11 +109,6 @@ it('handles existing user with same email', function () use ($testSettings): voi
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     // Create an existing user
     $existingUser = NoerdUser::factory()->create([
@@ -137,7 +122,7 @@ it('handles existing user with same email', function () use ($testSettings): voi
         ->set('detailData.name', 'New User')
         ->set('detailData.email', 'existing@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -151,24 +136,9 @@ it('manages tenant access correctly', function () use ($testSettings): void {
     $tenant2 = Tenant::factory()->create();
 
     // Add admin access to second tenant
-    $adminProfile = Profile::factory()->create([
-        'tenant_id' => $tenant2->id,
-        'key' => 'ADMIN',
-        'name' => 'Admin',
-    ]);
-    $admin->tenants()->attach($tenant2->id, ['profile_id' => $adminProfile->id]);
+    $admin->tenants()->attach($tenant2->id, ['profile_key' => Profile::Admin->value]);
 
-    $profile1 = Profile::factory()->create([
-        'tenant_id' => $tenant1->id,
-        'key' => 'USER',
-        'name' => 'User 1',
-    ]);
 
-    $profile2 = Profile::factory()->create([
-        'tenant_id' => $tenant2->id,
-        'key' => 'USER',
-        'name' => 'User 2',
-    ]);
 
     $user = NoerdUser::factory()->create();
 
@@ -179,7 +149,7 @@ it('manages tenant access correctly', function () use ($testSettings): void {
         ->set('detailData.name', $user->name)
         ->set('detailData.email', $user->email)
         ->set("possibleTenants.{$tenant1->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant1->id}.selectedProfile", $profile1->id)
+        ->set("possibleTenants.{$tenant1->id}.selectedProfile", Profile::User->value)
         ->set("possibleTenants.{$tenant2->id}.hasAccess", false)
         ->call('store')
         ->assertHasNoErrors();
@@ -204,33 +174,10 @@ it('requires at least one tenant access', function () use ($testSettings): void 
         ->assertHasErrors(['tenantAccess']);
 });
 
-it('computes tenant profiles correctly', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $tenant = $admin->tenants->first();
-
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'name' => 'Test Profile',
-    ]);
-
-    $this->actingAs($admin);
-
-    $component = Livewire::test($testSettings['componentName']);
-    $tenantProfiles = $component->get('tenantProfiles');
-
-    expect($tenantProfiles)->toHaveKey($profile->id);
-    expect($tenantProfiles[$profile->id])->toBe($profile->name);
-});
-
 it('sets success indicator after storing', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $this->actingAs($admin);
 
@@ -238,7 +185,7 @@ it('sets success indicator after storing', function () use ($testSettings): void
         ->set('detailData.name', 'Test User')
         ->set('detailData.email', 'test@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertSet('showSuccessIndicator', true);
 });
@@ -251,11 +198,6 @@ it('sends password reset link when creating new user', function () use ($testSet
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $this->actingAs($admin);
 
@@ -267,7 +209,7 @@ it('sends password reset link when creating new user', function () use ($testSet
         ->set('detailData.name', $userName)
         ->set('detailData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -294,18 +236,13 @@ it('does not send password reset link when updating existing user', function () 
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     // Create an existing user
     $existingUser = NoerdUser::factory()->create([
         'name' => 'Old Name',
         'email' => 'old@example.com',
     ]);
-    $existingUser->tenants()->attach($tenant->id, ['profile_id' => $profile->id]);
+    $existingUser->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
 
     $this->actingAs($admin);
 
@@ -315,7 +252,7 @@ it('does not send password reset link when updating existing user', function () 
         ->set('detailData.name', 'Updated Name')
         ->set('detailData.email', 'updated@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -328,11 +265,6 @@ it('creates user with hashed password that user cannot login with before reset',
     $tenant = $admin->tenants->first();
 
     // Create a profile for the tenant
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $this->actingAs($admin);
 
@@ -344,7 +276,7 @@ it('creates user with hashed password that user cannot login with before reset',
         ->set('detailData.name', $userName)
         ->set('detailData.email', $userEmail)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -367,11 +299,6 @@ it('does not send password reset link when the option is disabled', function () 
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $this->actingAs($admin);
 
@@ -382,7 +309,7 @@ it('does not send password reset link when the option is disabled', function () 
         ->set('detailData.email', $userEmail)
         ->set('sendPasswordResetMail', false)
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
@@ -397,11 +324,6 @@ it('stores the selected locale in the user settings when creating a new user', f
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-    $profile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'Standard User',
-    ]);
 
     $this->actingAs($admin);
 
@@ -412,7 +334,7 @@ it('stores the selected locale in the user settings when creating a new user', f
         ->set('detailData.email', $userEmail)
         ->set('userLocale', 'de')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", $profile->id)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 

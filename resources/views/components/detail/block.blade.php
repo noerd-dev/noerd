@@ -44,13 +44,17 @@
     \Noerd\Support\ThemeContext::set($theme);
     $numberedRowIndex = 0;
 
-    // Object write permission: when the hosting component denies writing, every
-    // field renders readonly/disabled. Client-side only a UX affordance — the
-    // hard boundary stays the store()/delete() guards in the traits. Nested
-    // `type: block` includes re-enter this template and recompute the flag.
+    // Object save permission: when the hosting component denies saving the
+    // form's current state (create for a new record, write for an update — see
+    // canSaveObject()), every field renders readonly/disabled. Client-side only
+    // a UX affordance — the hard boundary stays the store()/delete() guards in
+    // the traits. Nested `type: block` includes re-enter this template and
+    // recompute the flag. Bespoke components exposing only canWriteObject()
+    // keep the plain write check.
     $blockWriteDenied = isset($this)
-        && method_exists($this, 'canWriteObject')
-        && ! $this->canWriteObject();
+        && (method_exists($this, 'canSaveObject')
+            ? ! $this->canSaveObject()
+            : (method_exists($this, 'canWriteObject') && ! $this->canWriteObject()));
 @endphp
 {{-- not-last:mb-8 separates the block from custom content rendered after it
      (e.g. a tab slot); when the block is the last element the page chrome's

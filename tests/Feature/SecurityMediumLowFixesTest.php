@@ -77,6 +77,13 @@ it('WriteGuardHook skips store/delete when the object permission denies it', fun
             return false;
         }
 
+        // store() on a component without a $modelId is a CREATE — the hook
+        // derives the ability via canSaveObject(), so both must deny here.
+        public function canCreateObject(): bool
+        {
+            return false;
+        }
+
         public function canDeleteObject(): bool
         {
             return false;

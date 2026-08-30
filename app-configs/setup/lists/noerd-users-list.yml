@@ -1,4 +1,7 @@
 title: Users
+defaultSort:
+  field: name
+  direction: asc
 searchableColumns:
   - name
   - email

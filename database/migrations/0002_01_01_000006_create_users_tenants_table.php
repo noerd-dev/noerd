@@ -14,7 +14,7 @@ return new class extends Migration {
         Schema::create('users_tenants', function (Blueprint $table): void {
             $table->foreignId('user_id')->constrained('noerd_users')->cascadeOnDelete();
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->foreignId('profile_id')->nullable()->constrained('noerd_profiles');
+            $table->string('profile_key', 32)->nullable();
             $table->timestamps();
         });
     }

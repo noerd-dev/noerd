@@ -25,8 +25,8 @@ use Throwable;
  *   fires after it; the event is mapped to its listener method to recognize it.
  * - A thrown ValidationException never reaches the finish callback (the action
  *   runs before it), so nothing is persisted after failed validation.
- * - store() early-returns for write-denied users while finish callbacks still
- *   run — canWriteObject() is therefore re-checked here.
+ * - store() early-returns for save-denied users while finish callbacks still
+ *   run — the create/write ability is therefore re-checked here.
  */
 abstract class DetailSaveHook extends ComponentHook
 {
@@ -45,7 +45,12 @@ abstract class DetailSaveHook extends ComponentHook
             }
         }
 
-        return function ($return) use ($effective): void {
+        // Captured BEFORE the action runs: a successful create sets $modelId,
+        // so only the pre-store snapshot can tell create and update apart for
+        // the permission re-check below.
+        $wasCreate = empty($this->component->modelId ?? null);
+
+        return function ($return) use ($effective, $wasCreate): void {
             if (! in_array($effective, self::SAVE_ACTIONS, true)) {
                 return;
             }
@@ -66,7 +71,9 @@ abstract class DetailSaveHook extends ComponentHook
                 return;
             }
 
-            if (! $component->canWriteObject()) {
+            // Mirrors the ability that gated store(): create for a new record,
+            // write for an update (see the pre-action $wasCreate snapshot).
+            if ($wasCreate ? ! $component->canCreateObject() : ! $component->canWriteObject()) {
                 return;
             }
 

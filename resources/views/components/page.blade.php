@@ -24,9 +24,11 @@
     $pageDetailActionUrls = $pageComponent && method_exists($pageComponent, 'detailActionUrls')
         ? $pageComponent->detailActionUrls()
         : [];
-    $canWriteObject = ! $pageComponent
-        || ! method_exists($pageComponent, 'canWriteObject')
-        || $pageComponent->canWriteObject();
+    // canSaveObject() picks create (new record) vs. write (update) for the
+    // save affordances below.
+    $canSaveObject = ! $pageComponent
+        || ! method_exists($pageComponent, 'canSaveObject')
+        || $pageComponent->canSaveObject();
     $canDeleteObject = ! $pageComponent
         || ! method_exists($pageComponent, 'canDeleteObject')
         || $pageComponent->canDeleteObject();
@@ -39,7 +41,7 @@
     $bodyPadding ??= ! $isListHost;
 
     $shortcuts = [];
-    if (method_exists($__livewire ?? new stdClass(), 'store') && $canWriteObject && ! $pageObjectReadBlocked) {
+    if (method_exists($__livewire ?? new stdClass(), 'store') && $canSaveObject && ! $pageObjectReadBlocked) {
         $shortcuts['save'] = config('noerd.keyboard_shortcuts.save', 'ctrl+enter');
     }
     if (method_exists($__livewire ?? new stdClass(), 'delete') && $canDeleteObject && ! $pageObjectReadBlocked) {

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\Tenant;
@@ -131,13 +131,8 @@ describe('Translatable field marker in lists', function (): void {
         app()->forgetInstance(SetupCollectionHelper::class);
 
         $this->tenant = Tenant::factory()->create();
-        $adminProfile = Profile::factory()->create([
-            'tenant_id' => $this->tenant->id,
-            'key' => 'ADMIN',
-            'name' => 'Admin',
-        ]);
         $this->user = NoerdUser::factory()->create();
-        $this->user->tenants()->attach($this->tenant->id, ['profile_id' => $adminProfile->id]);
+        $this->user->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
         TenantHelper::setSelectedTenantId($this->tenant->id);
         TenantHelper::setSelectedApp('SETUP');
         $this->actingAs($this->user);

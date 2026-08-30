@@ -251,7 +251,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | object_catalog: cross-request cache for the custom-attribute object
-    | catalog (noerd-plus), which otherwise re-scans every module's models
+    | catalog of an extension package, which otherwise re-scans every module's models
     | and probes the schema on each list render and modal open. Invalidated
     | automatically when model files change and after migrations.
     |

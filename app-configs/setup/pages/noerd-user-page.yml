@@ -1,0 +1,8 @@
+title: User
+detail: noerd::noerd-user-detail
+tabs:
+  - number: 1
+    label: General
+  - number: 2
+    label: Password
+    requiresId: true

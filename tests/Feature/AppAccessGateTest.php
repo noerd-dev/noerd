@@ -54,3 +54,33 @@ it('hides an app from the app bar when the access gate denies it', function (): 
         ->assertSee('Allowed Probe App')
         ->assertDontSee('Denied Probe App');
 });
+
+it('canUseApp requires tenant assignment AND app permission', function (): void {
+    // No tenant selected: nothing is assigned.
+    expect(AccessHelper::canUseApp('ANYTHING'))->toBeFalse();
+
+    $user = NoerdUser::factory()->withExampleTenant()->create();
+    $this->actingAs($user);
+    $tenant = \Noerd\Helpers\TenantHelper::getSelectedTenant();
+
+    $assigned = TenantApp::create([
+        'title' => 'Assigned Probe App',
+        'name' => 'ZZ_ASSIGNED_PROBE',
+        'icon' => 'noerd::icons.app',
+        'route' => 'zz-assigned-probe',
+        'is_active' => true,
+    ]);
+    $tenant->tenantApps()->attach($assigned->id, ['is_hidden' => false]);
+    \Noerd\Helpers\TenantHelper::clearCache();
+
+    // Assigned + no denying gate: usable (case-insensitive).
+    expect(AccessHelper::canUseApp('zz_assigned_probe'))->toBeTrue()
+        // Not assigned to the tenant: unusable even though the gate would allow.
+        ->and(AccessHelper::canUseApp('ZZ_UNASSIGNED_PROBE'))->toBeFalse()
+        // One usable app out of several suffices.
+        ->and(AccessHelper::canUseApp('ZZ_UNASSIGNED_PROBE', 'ZZ_ASSIGNED_PROBE'))->toBeTrue();
+
+    // Assigned but denied by the app permission: unusable.
+    Gate::define(AccessHelper::APP_GATE, fn(?NoerdUser $u, string $appName): bool => false);
+    expect(AccessHelper::canUseApp('ZZ_ASSIGNED_PROBE'))->toBeFalse();
+});

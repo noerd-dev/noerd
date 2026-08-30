@@ -33,6 +33,6 @@ class NoerdException extends Exception
             'type' => $this->type,
             'appName' => $this->appName,
             'configFile' => $this->configFile,
-        ], $this->type === self::TYPE_APP_ACCESS_DENIED ? 403 : 500);
+        ], in_array($this->type, [self::TYPE_APP_ACCESS_DENIED, self::TYPE_APP_NOT_ASSIGNED], true) ? 403 : 500);
     }
 }

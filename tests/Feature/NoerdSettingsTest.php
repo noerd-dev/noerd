@@ -2,11 +2,11 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
@@ -20,11 +20,7 @@ function createUserWithSetupTenant(): NoerdUser
 
     // The system-settings page is admin-only and enforces it on mount, so the
     // test user needs an ADMIN profile.
-    $adminProfile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'ADMIN',
-    ]);
-    $user->tenants()->attach($tenant->id, ['profile_id' => $adminProfile->id]);
+    $user->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
     TenantHelper::setSelectedTenantId($tenant->id);
     TenantHelper::setSelectedApp('SETUP');
 

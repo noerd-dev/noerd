@@ -1,6 +1,6 @@
 # Header Actions
 
-Header actions let a module contribute small Livewire components to the header of every list and every detail view — for example the layout-editor and object-manager icons the noerd-plus module renders next to the search field. The core knows nothing about the individual actions: it only mounts what modules registered.
+Header actions let a module contribute small Livewire components to the header of every list and every detail view — for example an icon rendered next to the search field on every list. The core knows nothing about the individual actions: it only mounts what modules registered.
 
 ## Concept
 
@@ -124,15 +124,8 @@ Registered with `$registry->registerListAction('my-module::list-header-action-ex
 - Picker lists (`returnsSelection`)
 - Quick-create detail dialogs
 
-## Built-in Reference Implementations
+## Design Guidance
 
-The noerd-plus module ships four single-purpose actions — one function per component, list and detail deliberately separated:
-
-| Component | Slot | Opens |
-|-----------|------|-------|
-| `plus::list-header-action-layout-manager` | list | Layout editor for the list YAML derived from `$listModel` |
-| `plus::list-header-action-object-manager` | list | Custom-attributes manager for the model's table |
-| `plus::detail-header-action-layout-manager` | detail | Layout editor for the detail YAML derived from `$detailModel` |
-| `plus::detail-header-action-object-manager` | detail | Custom-attributes manager for the model's table |
-
-Use them as templates for your own actions.
+Keep each action a SINGLE-purpose component — one function per component, and
+register list and detail variants separately: the two slots share no markup,
+and a combined component ends up branching on its context everywhere.

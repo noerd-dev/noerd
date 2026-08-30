@@ -28,6 +28,7 @@ final class ComponentAccessGuard
      */
     private const ADMIN_COMPONENTS = [
         'noerd::noerd-users-list',
+        'noerd::noerd-user-page',
         'noerd::noerd-user-detail',
         'noerd::tenants-list',
         'noerd::tenant-detail',

@@ -102,8 +102,8 @@ NoerdAuth::check();       // bool
 NoerdAuth::broker();      // PasswordBroker for the noerd broker
 ```
 
-`TenantScope`, `BelongsToTenant`, `TenantHelper`, the noerd middleware and the noerd-plus
-permission resolvers all resolve through `NoerdAuth` — a host guard's user can never influence
+`TenantScope`, `BelongsToTenant`, `TenantHelper`, the noerd middleware and the authorization
+gates (AccessHelper) all resolve through `NoerdAuth` — a host guard's user can never influence
 (or bypass) tenant scoping or noerd permissions. Module code that only ever runs inside noerd
 routes may keep using plain `auth()->user()`.
 

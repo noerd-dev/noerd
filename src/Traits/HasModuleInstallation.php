@@ -501,9 +501,14 @@ trait HasModuleInstallation
     /**
      * Ensure a button exists in the global quick-menu config (app-configs/quick-menu.yml).
      * Rewrites any button still pointing at one of the $legacyComponents to the new
-     * component name, then prepends the button if it is not present yet.
+     * component name. An existing entry with the same component is REPLACED wholesale
+     * (stale keys like the removed per-module `policy:` gates drop off on re-install),
+     * except its `apps:` list, which is UNIONED with the new one — several modules may
+     * contribute the same button (e.g. the booking family's customer select), and the
+     * union keeps the result independent of the install order. Otherwise the button is
+     * prepended.
      *
-     * @param  array{policy: string, component: string}  $button
+     * @param  array{component: string, app?: string, apps?: string[], policy?: string}  $button
      * @param  string[]  $legacyComponents
      */
     protected function ensureQuickMenuButton(array $button, array $legacyComponents = []): void
@@ -515,29 +520,37 @@ trait HasModuleInstallation
             : [];
         $buttons = $config['buttons'] ?? [];
 
-        $changed = false;
         foreach ($buttons as $i => $existing) {
             if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
                 $buttons[$i]['component'] = $button['component'];
-                $changed = true;
             }
         }
 
-        $present = false;
-        foreach ($buttons as $existing) {
-            if (($existing['policy'] ?? null) === $button['policy']
-                && ($existing['component'] ?? null) === $button['component']) {
-                $present = true;
-                break;
+        $replaced = false;
+        foreach ($buttons as $i => $existing) {
+            if (($existing['component'] ?? null) !== ($button['component'] ?? null)) {
+                continue;
             }
+
+            $merged = $button;
+            $apps = array_values(array_unique(array_merge(
+                array_map('strval', (array) ($existing['apps'] ?? [])),
+                array_map('strval', (array) ($button['apps'] ?? [])),
+            )));
+            if ($apps !== []) {
+                $merged['apps'] = $apps;
+            }
+
+            $buttons[$i] = $merged;
+            $replaced = true;
+            break;
         }
 
-        if (!$present) {
+        if (!$replaced) {
             $buttons = [$button, ...$buttons];
-            $changed = true;
         }
 
-        if (!$changed) {
+        if ($buttons === ($config['buttons'] ?? [])) {
             $this->line('<comment>Quick-menu already contains the button.</comment>');
 
             return;
@@ -558,11 +571,13 @@ trait HasModuleInstallation
      * (app-configs/dashboard-widgets.yml). Rewrites any widget still pointing at one of
      * the $legacyComponents to the new component name, then appends the widget if it is
      * not present yet. Matches on `component` only — an installation may re-tune
-     * policy/width/height without the installer duplicating or overwriting the entry —
-     * and appends (unlike the quick-menu prepend) so the first-installed module keeps
-     * the first slot on the dashboard.
+     * width/height without the installer duplicating or overwriting the entry — and
+     * appends (unlike the quick-menu prepend) so the first-installed module keeps the
+     * first slot on the dashboard. An existing entry's access keys are migrated: a
+     * stale `policy:` (the removed per-module tenant gates would fail closed) is
+     * dropped whenever the new widget declares `app:`/`apps:`, which are copied over.
      *
-     * @param  array{policy: string, component: string, width?: int, height?: int}  $widget
+     * @param  array{component: string, app?: string, apps?: string[], policy?: string, width?: int, height?: int}  $widget
      * @param  string[]  $legacyComponents
      */
     protected function ensureDashboardWidget(array $widget, array $legacyComponents = []): void
@@ -574,32 +589,43 @@ trait HasModuleInstallation
             : [];
         $widgets = $config['widgets'] ?? [];
 
-        $changed = false;
         foreach ($widgets as $i => $existing) {
             if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
                 $widgets[$i]['component'] = $widget['component'];
-                $changed = true;
             }
         }
 
         $present = false;
-        foreach ($widgets as $existing) {
-            if (($existing['component'] ?? null) === $widget['component']) {
-                $present = true;
-                break;
+        foreach ($widgets as $i => $existing) {
+            if (($existing['component'] ?? null) !== $widget['component']) {
+                continue;
             }
+
+            $present = true;
+
+            if (isset($widget['app']) || isset($widget['apps'])) {
+                unset($widgets[$i]['policy'], $widgets[$i]['app'], $widgets[$i]['apps']);
+                foreach (['app', 'apps'] as $key) {
+                    if (isset($widget[$key])) {
+                        $widgets[$i][$key] = $widget[$key];
+                    }
+                }
+            }
+
+            break;
         }
 
         if (!$present) {
             $widgets[] = $widget;
-            $changed = true;
         }
 
-        if (!$changed) {
+        if (array_values($widgets) === array_values($config['widgets'] ?? [])) {
             $this->line('<comment>Dashboard-widgets config already contains the widget.</comment>');
 
             return;
         }
+
+        $widgets = array_values($widgets);
 
         $dir = dirname($configPath);
         if (!is_dir($dir)) {

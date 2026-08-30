@@ -117,7 +117,7 @@ component:
 - **Persistence** — `Noerd\Support\RelationFormPersistHook`, a global Livewire
   ComponentHook (registered in NoerdServiceProvider) that runs after every
   save action, whatever the component's `store()` does. It persists each form
-  only when the ACTIVE layout (including a noerd-plus DB layout override)
+  only when the ACTIVE layout (including a DB-driven layout override)
   renders the form's fields — a layout without them never overwrites the
   record with stale hydrated values — and rehydrates the form afterwards so
   the fields stay filled in the same response.
@@ -125,8 +125,8 @@ component:
   saved" hooks: save-action detection (including event-dispatched saves, which
   arrive as `__dispatch` and are mapped to their listener method), a
   validation-error guard (nothing is written back after failed validation), a
-  `canWriteObject()` guard, and fresh record loading. noerd-plus'
-  `CustomAttributePersistHook` builds on the same base.
+  `canWriteObject()` guard, and fresh record loading. Extension packages build
+  their own after-save hooks on the same base.
 
 ## Testing
 

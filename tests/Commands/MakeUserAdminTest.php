@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\Profile;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -22,7 +22,6 @@ it('successfully makes a user admin', function (): void {
         ->expectsOutput("Processing user: {$user->name} ({$user->email})")
         ->expectsOutput('User has access to 1 tenant(s).')
         ->expectsOutput("Processing tenant: {$tenant->name}")
-        ->expectsOutput("  ✓ Created ADMIN profile for tenant: {$tenant->name}")
         ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant->name}")
         ->expectsOutput("✅ User {$user->name} is now an admin with access to Setup!")
         ->assertExitCode(0);
@@ -31,18 +30,11 @@ it('successfully makes a user admin', function (): void {
     $user->refresh();
     expect($user->isAdminOfAnyTenant())->toBeTrue();
 
-    // Verify ADMIN profile was created
-    $adminProfile = Profile::where('tenant_id', $tenant->id)
-        ->where('key', 'ADMIN')
-        ->first();
-    expect($adminProfile)->not->toBeNull();
-    expect($adminProfile->name)->toBe('Administrator');
-
-    // Verify user has admin profile attached
+    // Verify user has the admin profile attached
     $userTenant = $user->tenants()
         ->where('tenant_id', $tenant->id)
         ->first();
-    expect($userTenant->pivot->profile_id)->toBe($adminProfile->id);
+    expect($userTenant->pivot->profile_key)->toBe(Profile::Admin->value);
 });
 
 it('handles user with multiple tenants', function (): void {
@@ -51,21 +43,9 @@ it('handles user with multiple tenants', function (): void {
     $tenant1 = Tenant::factory()->create(['name' => 'Tenant 1']);
     $tenant2 = Tenant::factory()->create(['name' => 'Tenant 2']);
 
-    // Create user profiles for both tenants
-    $profile1 = Profile::factory()->create([
-        'tenant_id' => $tenant1->id,
-        'key' => 'USER',
-        'name' => 'User',
-    ]);
-    $profile2 = Profile::factory()->create([
-        'tenant_id' => $tenant2->id,
-        'key' => 'USER',
-        'name' => 'User',
-    ]);
-
     // Attach user to both tenants
-    $user->tenants()->attach($tenant1->id, ['profile_id' => $profile1->id]);
-    $user->tenants()->attach($tenant2->id, ['profile_id' => $profile2->id]);
+    $user->tenants()->attach($tenant1->id, ['profile_key' => Profile::User->value]);
+    $user->tenants()->attach($tenant2->id, ['profile_key' => Profile::User->value]);
 
     expect($user->isAdminOfAnyTenant())->toBeFalse();
 
@@ -74,17 +54,14 @@ it('handles user with multiple tenants', function (): void {
         ->expectsOutput('User has access to 2 tenant(s).')
         ->expectsOutput("Processing tenant: {$tenant1->name}")
         ->expectsOutput("Processing tenant: {$tenant2->name}")
-        ->expectsOutput('- ADMIN profiles created: 2')
         ->expectsOutput('- ADMIN access granted: 2')
         ->assertExitCode(0);
 
-    // Verify user is now admin
+    // Verify user is now admin on both tenants
     $user->refresh();
-    expect($user->isAdminOfAnyTenant())->toBeTrue();
-
-    // Verify both tenants have admin profiles
-    expect(Profile::where('tenant_id', $tenant1->id)->where('key', 'ADMIN')->exists())->toBeTrue();
-    expect(Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->exists())->toBeTrue();
+    expect($user->isAdminOfAnyTenant())->toBeTrue()
+        ->and($user->isAdmin($tenant1->id))->toBeTrue()
+        ->and($user->isAdmin($tenant2->id))->toBeTrue();
 });
 
 it('recognizes user who is already admin but ensures tenant assignment', function (): void {
@@ -105,35 +82,17 @@ it('recognizes user who is already admin but ensures tenant assignment', functio
     expect($user->selected_tenant_id)->not->toBeNull();
 });
 
-it('handles existing admin profile correctly', function (): void {
-    // Create user with tenant access
+it('upgrades a USER profile to ADMIN', function (): void {
+    // Create user with tenant access under the USER profile
     $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create(['name' => 'Test Tenant']);
-
-    // Create admin profile for the tenant
-    $adminProfile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'ADMIN',
-        'name' => 'Administrator',
-    ]);
-
-    // Create user profile
-    $userProfile = Profile::factory()->create([
-        'tenant_id' => $tenant->id,
-        'key' => 'USER',
-        'name' => 'User',
-    ]);
-
-    // Attach user to tenant with user profile
-    $user->tenants()->attach($tenant->id, ['profile_id' => $userProfile->id]);
+    $user->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
 
     expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput("  - ADMIN profile already exists for tenant: {$tenant->name}")
         ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant->name}")
-        ->expectsOutput('- ADMIN profiles created: 0')
         ->expectsOutput('- ADMIN access granted: 1')
         ->assertExitCode(0);
 
@@ -160,21 +119,9 @@ it('handles user with partial admin access correctly', function (): void {
     $tenant1 = Tenant::factory()->create(['name' => 'Admin Tenant']);
     $tenant2 = Tenant::factory()->create(['name' => 'User Tenant']);
 
-    // Create profiles
-    $adminProfile1 = Profile::factory()->create([
-        'tenant_id' => $tenant1->id,
-        'key' => 'ADMIN',
-        'name' => 'Administrator',
-    ]);
-    $userProfile2 = Profile::factory()->create([
-        'tenant_id' => $tenant2->id,
-        'key' => 'USER',
-        'name' => 'User',
-    ]);
-
     // Attach user to both tenants
-    $user->tenants()->attach($tenant1->id, ['profile_id' => $adminProfile1->id]);
-    $user->tenants()->attach($tenant2->id, ['profile_id' => $userProfile2->id]);
+    $user->tenants()->attach($tenant1->id, ['profile_key' => Profile::Admin->value]);
+    $user->tenants()->attach($tenant2->id, ['profile_key' => Profile::User->value]);
 
     // User should already be admin due to first tenant
     expect($user->isAdminOfAnyTenant())->toBeTrue();
@@ -190,7 +137,5 @@ it('handles user with partial admin access correctly', function (): void {
     // Verify user now has admin on both tenants
     $user->refresh();
     $tenant2Profile = $user->tenants()->where('tenant_id', $tenant2->id)->first();
-    expect($tenant2Profile->pivot->profile_id)->toBe(
-        Profile::where('tenant_id', $tenant2->id)->where('key', 'ADMIN')->first()->id,
-    );
+    expect($tenant2Profile->pivot->profile_key)->toBe(Profile::Admin->value);
 });
