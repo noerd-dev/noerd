@@ -14,12 +14,6 @@ new class extends Component {
 
     public $detailComponent = 'noerd::tenant-detail';
 
-    public function mount(): void
-    {
-        $this->mountList();
-        $this->setDefaultSort('name', true);
-    }
-
     public function listData(): array
     {
         $query = $this->listQuery($this->listModel);

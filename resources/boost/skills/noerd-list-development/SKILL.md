@@ -51,8 +51,9 @@ new class extends Component {
 
 - Nothing else goes into a slim component. `mount()`, `listAction()`, `listData()`, `rendering()`
   come from the trait.
-- Default sort: `public function mount(): void { $this->mountList(); $this->setDefaultSort('name'); }`
-  — never set `$sortField`/`$sortAsc` directly.
+- Default sort: a `defaultSort:` block in the list YAML (`field:` + optional
+  `direction: asc|desc`, `desc` when omitted) — both synced copies, never component code. A
+  user-picked sort persists in the session and wins; never set `$sortField`/`$sortAsc` directly.
 - Custom query: override `listData()` only —
   `$rows = $this->listQuery($this->listModel)->where(...)->with(...)->paginate($this->perPage); return $this->buildList($rows);`
   Keep extra view data (e.g. a summary) in a slim `with()` that shares the query via a private

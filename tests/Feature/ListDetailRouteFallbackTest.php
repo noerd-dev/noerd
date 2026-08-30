@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 
-uses(TestCase::class);
+// RefreshDatabase: mountList() resolves the list config (YAML defaultSort),
+// and the config search roots read the active tenant apps from the database.
+uses(TestCase::class, RefreshDatabase::class);
 
 it('dispatches the route plus the component as fallback when a list declares both', function (): void {
     Livewire::test(ZzRouteFallbackListComponent::class)

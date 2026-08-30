@@ -261,21 +261,26 @@ public function with(): array
 
 ## Default Sorting
 
-To set a custom default sort order, use `setDefaultSort()` in your `mount()` method:
+Default sorting is configured in the list YAML — never in the component:
 
-```php
-public function mount(): void
-{
-    $this->mountList();
-    $this->setDefaultSort('created_at', false);  // Sort by created_at descending
-}
+```yaml
+title: Invoices
+defaultSort:
+  field: invoice_date
+  direction: desc   # optional, desc when omitted
 ```
 
-**Parameters:**
-- `$field`: Column name to sort by
-- `$ascending`: `true` for ascending (A-Z), `false` for descending (Z-A)
+**Keys:**
+- `field`: Column name to sort by
+- `direction`: `asc` (A-Z) or `desc` (Z-A); omitted means `desc`
 
-Without `setDefaultSort()`, lists default to `id` descending.
+`mountList()` applies the YAML default whenever the user has not sorted the list yet; a sort the
+user picks in the header is persisted per list in the session and always wins over the YAML
+default. Alternate list views (`--{key}.yml`) are complete standalone configs, so each view may
+bring its own `defaultSort`.
+
+Without a `defaultSort` key, lists sort by `id` descending. There is no component API for default
+sorting: never set `$sortField` / `$sortAsc` directly and never override `mount()` for sorting.
 
 See [List Search](list-search.md) for more details on search and sorting.
 
