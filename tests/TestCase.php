@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Noerd\Tests;
 
-// The global test helpers ship with the package but are NOT in the production
-// autoload (a consumer app must never load test functions per request). Loading
-// them here covers every context that runs noerd-based tests: the package's own
-// suite, host-root runs and submodule testbench suites — they all extend this
-// TestCase. Each helper is function_exists-guarded, so double-loading is safe.
-require_once __DIR__ . '/helpers.php';
-
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
@@ -22,6 +15,14 @@ use Orchestra\Testbench\TestCase as BaseTestCase;
 use PDO;
 use Throwable;
 use WireUi\Heroicons\HeroiconsServiceProvider;
+
+// The global test helpers ship with the package but are NOT in the production
+// autoload (a consumer app must never load test functions per request). Loading
+// them here covers every context that runs noerd-based tests through this
+// TestCase: the package's own suite, host-root runs and submodule testbench
+// suites. Suites that bind a different TestCase call HelperLoader::load()
+// themselves from their tests/Pest.php.
+HelperLoader::load();
 
 abstract class TestCase extends BaseTestCase
 {

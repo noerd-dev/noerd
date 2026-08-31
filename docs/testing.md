@@ -114,10 +114,25 @@ A test that asserts their current content is wrong by definition.
 
 ## Global helpers
 
-`tests/helpers.php` is loaded by `Noerd\Tests\TestCase` (covering every suite that extends it) and
-by the host project's `tests/Pest.php`, so the helpers are available in every host and module test —
-without shipping test functions in the production composer autoload. New global helpers go there,
-guarded with `function_exists`.
+`tests/helpers.php` is **not** part of the production composer autoload — a consumer app must never
+load test functions on every request — and `autoload-dev` does not help either: composer only dumps
+the dev autoload of the ROOT package, never that of a dependency. The file is therefore loaded
+explicitly, through `Noerd\Tests\HelperLoader`:
+
+- Suites binding `Noerd\Tests\TestCase` get the helpers from that class and need no call.
+- Every other suite (a module test bound to the host's `Tests\TestCase`, the host's own `Feature`
+  suite) loads them once from its `tests/Pest.php`:
+
+```php
+\Noerd\Tests\HelperLoader::load();
+```
+
+`HelperLoader` lives in the package's psr-4 map, so it resolves through the autoloader whether noerd
+is installed as a composer package (`vendor/noerd/noerd/`) or as a git submodule
+(`app-modules/noerd/`) — never hard-code either path, and never add `tests/helpers.php` to a
+project's root `composer.json`. Its own file is only read once something calls it, so nothing test
+related reaches a production request. New global helpers go into `tests/helpers.php`, guarded with
+`function_exists`.
 
 | Helper | Purpose |
 |--------|---------|

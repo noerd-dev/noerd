@@ -1087,9 +1087,11 @@ Detail components (`*-detail`) build their validation rules at runtime from the 
 test must never assume a specific field is — or is not — required.** Two global helpers support this:
 `validDetailPayload(Model::class, $overrides)` (a complete factory payload) and
 `requiredLayoutFields($component)` (the required field names from the live `pageLayout`). They live in
-the noerd package (`tests/helpers.php`), loaded by `Noerd\Tests\TestCase` and the host's
-`tests/Pest.php`, so they are available to every host and submodule test (not just the host `Feature`
-suite). When adding a new global test helper, put it there (guarded with `function_exists`).
+the noerd package (`tests/helpers.php`). They are deliberately NOT composer-autoloaded (test
+functions must never load in a production request): suites binding `Noerd\Tests\TestCase` get them
+from that class, every other `tests/Pest.php` loads them once with `\Noerd\Tests\HelperLoader::load();`
+— never a hard-coded path and never an entry in the project's root `composer.json`. When adding a new
+global test helper, put it there (guarded with `function_exists`).
 
 **Store-SUCCESS tests** — submit a COMPLETE payload sourced from the model factory and override only
 the fields the test asserts on. Never hand-pick a minimal subset (it breaks the moment a new field

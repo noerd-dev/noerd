@@ -24,7 +24,11 @@ content is wrong by definition:
 - ✓ Architecture guardrails are fine (a detail YAML has no `widgets:`/`relations:`; a page blade
   embeds the `detail:` its YAML names).
 
-## 2. Global helpers (`vendor/noerd/noerd/tests/helpers.php`, autoloaded everywhere)
+## 2. Global helpers (`tests/helpers.php` in the noerd package)
+
+Not composer-autoloaded (test code must never load in production). Suites binding
+`Noerd\Tests\TestCase` get them for free; every other `tests/Pest.php` loads them once with
+`\Noerd\Tests\HelperLoader::load();` — never a hard-coded path, never a root `composer.json` entry.
 
 | Helper | Use |
 |---|---|

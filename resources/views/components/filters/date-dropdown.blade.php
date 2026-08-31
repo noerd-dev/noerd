@@ -1,4 +1,5 @@
-@props(['filter', 'value' => ''])
+{{-- `full` switches the control to the stacked full-width layout of the filter drawer. --}}
+@props(['filter', 'value' => '', 'full' => false])
 
 @php
     $label = $value ? ($filter['options'][$value] ?? $value) : '';
@@ -6,11 +7,13 @@
     $isCustomDate = $active && !isset($filter['options'][$value]);
 @endphp
 
+{{-- The panels are anchored with `position: fixed` so they escape a horizontally scrolling
+     filter bar (an `overflow-x` ancestor clips absolutely positioned children vertically too). --}}
 <div x-data="{ open: false, showDatePicker: false, customDate: '{{ $isCustomDate ? $value : '' }}' }"
      @click.outside="open = false; showDatePicker = false"
-     class="relative mr-4">
-    <button @click="open = !open; showDatePicker = false" type="button"
-            class="{{ $active ? '!border-brand-primary !border-solid !border-2' : 'border border-dashed border-zinc-300' }} flex items-center gap-1 rounded-md px-3 h-8 py-1 text-sm leading-[1.375rem] focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
+     class="relative {{ $full ? 'w-full' : 'mr-4 shrink-0' }}">
+    <button x-ref="trigger_{{ $filter['column'] }}" @click="open = !open; showDatePicker = false" type="button"
+            class="{{ $active ? '!border-brand-primary !border-solid !border-2' : 'border border-dashed border-zinc-300' }} {{ $full ? 'w-full' : '' }} flex items-center gap-1 rounded-md px-3 h-8 py-1 text-sm leading-[1.375rem] focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
         <span>{{ $filter['label'] }}</span>
         @if($active)
             <span class="text-gray-400 mx-0.5">|</span>
@@ -22,7 +25,8 @@
     </button>
     {{-- Main dropdown --}}
     <div x-show="open" x-cloak x-transition
-         class="absolute left-0 z-50 mt-1 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden">
+         x-anchor.fixed.bottom-start.offset.4="$refs.trigger_{{ $filter['column'] }}"
+         class="z-50 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden">
         @foreach($filter['options'] ?? [] as $key => $option)
             <button type="button"
                     wire:click="$set('listFilters.{{ $filter['column'] }}', '{{ $key }}')"
@@ -43,7 +47,7 @@
         </div>
     </div>
     {{-- Date picker sub-panel --}}
-    <div x-show="open && showDatePicker" x-cloak x-transition x-anchor.right-start="$refs.dateBtn_{{ $filter['column'] }}"
+    <div x-show="open && showDatePicker" x-cloak x-transition x-anchor.fixed.right-start="$refs.dateBtn_{{ $filter['column'] }}"
          class="z-50 ml-1 w-56 rounded-md bg-white p-4 shadow-lg ring-1 ring-black/5 focus:outline-hidden">
         <input type="date" x-model="customDate"
                class="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-border" />
