@@ -14,5 +14,5 @@
           newComponent: demo-category-detail
         - title: Demo Tags
           route: demo-tags
-          heroicon: uuidtag
+          heroicon: hashtag
           newComponent: demo-tag-detail
