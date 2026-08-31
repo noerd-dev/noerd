@@ -12,7 +12,8 @@ uses(TestCase::class);
 /*
  | publishNoerdConfig() must never clobber a host's config/noerd.php silently:
  | an existing file is diffed against the stub, missing top-level keys are
- | reported, and an overwrite writes a .bak backup first.
+ | reported, and an overwrite leaves no .bak behind (the host config is under
+ | version control).
  */
 
 class ConfigPublishFixtureCommand extends NoerdInstallCommand
@@ -74,13 +75,13 @@ it('reports missing top-level keys and keeps the file without --force', function
     expect(File::get($this->configPath))->toContain("['prefix' => 'noerd']");
 });
 
-it('overwrites with --force and writes a .bak backup', function (): void {
+it('overwrites with --force without writing a .bak backup', function (): void {
     File::put($this->configPath, "<?php\n\nreturn ['routes' => ['prefix' => 'custom']];\n");
 
     $this->artisan('test:config-publish', ['--force' => true, '--no-interaction' => true])
-        ->expectsOutputToContain('backup: config/noerd.php.bak')
+        ->expectsOutputToContain('Published config/noerd.php successfully.')
         ->assertExitCode(0);
 
-    expect(File::get($this->configPath . '.bak'))->toContain("'prefix' => 'custom'")
+    expect(File::exists($this->configPath . '.bak'))->toBeFalse()
         ->and(File::get($this->configPath))->not->toContain("'prefix' => 'custom'");
 });

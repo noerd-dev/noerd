@@ -90,9 +90,8 @@ npm run build     # or: npm run dev
 ```
 
 > Installations created before the brand palette became CSS-first still carry a generated
-> `tailwind.config.js` and a `@config` line in `app.css`. `noerd:update` offers to remove both (a
-> `tailwind.config.js.bak` is kept); a config you customised yourself is only reported, never
-> touched. See [Brand](brand.md).
+> `tailwind.config.js` and a `@config` line in `app.css`. `noerd:update` offers to remove both; a
+> config you customised yourself is only reported, never touched. See [Brand](brand.md).
 
 ## Configuration
 

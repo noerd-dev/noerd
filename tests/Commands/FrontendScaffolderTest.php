@@ -359,7 +359,7 @@ describe('legacy tailwind config migration', function (): void {
             ->and($this->scaffolder->legacyTailwindConfigIsUnmodified())->toBeFalse();
     });
 
-    it('removes every @config occurrence, keeping a backup', function (): void {
+    it('removes every @config occurrence without leaving a backup', function (): void {
         // The old updateAppCss() appended its block at EOF regardless of an existing @config line,
         // so long-lived projects carry the directive twice — and possibly double-quoted.
         writeScaffoldFile('resources/css/app.css', implode(PHP_EOL, [
@@ -374,7 +374,7 @@ describe('legacy tailwind config migration', function (): void {
         $this->scaffolder->removeLegacyTailwindBridge();
 
         expect(File::exists(scaffoldPath('tailwind.config.js')))->toBeFalse()
-            ->and(File::exists(scaffoldPath('tailwind.config.js.bak')))->toBeTrue();
+            ->and(File::exists(scaffoldPath('tailwind.config.js.bak')))->toBeFalse();
 
         $css = File::get(scaffoldPath('resources/css/app.css'));
 

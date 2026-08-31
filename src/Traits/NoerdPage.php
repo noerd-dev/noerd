@@ -116,6 +116,14 @@ trait NoerdPage
 
     public function initPage(): void
     {
+        // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
+        // defining their layout in the component itself. It is loaded even when
+        // the guarded init below bails out (read-denied object, stale record id):
+        // Blade evaluates a page blade's slot content before the page chrome
+        // discards it for the denied state, so a hand-built page reading
+        // $pageLayout['detail'] must always find its layout.
+        $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
+
         $this->initNoerdComponent(function (): void {
             // Pages backed by a single Eloquent model declare $detailModel — the
             // record is loaded into $detailData exactly like a detail would.
@@ -125,10 +133,6 @@ trait NoerdPage
                     return;
                 }
             }
-
-            // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
-            // defining their layout in the component itself.
-            $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
 
             $this->resolveQuickCreate();
         });

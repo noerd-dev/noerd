@@ -10,9 +10,9 @@ use RecursiveIteratorIterator;
  * The single recursive config-publishing implementation shared by
  * noerd:install/noerd:update and the module install commands — previously two
  * divergent ~65-line copies. Existing files prompt skip/overwrite/overwrite-all
- * (or are overwritten under --force), and every overwrite first writes a
- * one-generation `.bak` next to the file, so an update can never destroy a
- * host customization irrecoverably.
+ * (or are overwritten under --force). Overwrites leave no `.bak` behind: the
+ * published configs live in the host repository, so version control is the
+ * change history.
  */
 trait PublishesConfigDirectory
 {
@@ -88,9 +88,6 @@ trait PublishesConfigDirectory
                         $this->input->setOption('force', true);
                     }
                 }
-
-                // One-generation backup so --force can always be undone.
-                @copy($targetPath, $targetPath . '.bak');
 
                 $this->line("<comment>Overwriting:</comment> {$displayPath}");
                 $results['overwritten_files']++;

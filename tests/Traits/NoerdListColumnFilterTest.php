@@ -526,6 +526,43 @@ it('renders active column filter chips in the list header', function (): void {
         ->toContain('clearColumnFilter');
 });
 
+it('renders the header filters in a clipped single-line row that collapses into a drawer', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = NoerdUser::factory()->create();
+    TenantHelper::setSelectedTenantId($tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
+    test()->actingAs($user);
+
+    $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
+        ->call('setColumnFilter', 'name', 'rot')
+        ->html();
+
+    preg_match('/<div\s+x-ref="filterRow"\s+class="([^"]*)"/', $html, $row);
+
+    expect($row[1] ?? '')->toContain('overflow-hidden')
+        ->not->toContain('flex-wrap');
+
+    // Collapsing is measured on the row and toggles the funnel button + drawer copy.
+    expect($html)->toContain('row.scrollWidth > row.clientWidth')
+        ->toContain('x-show="collapsed"')
+        ->toContain('drawerOpen = true');
+});
+
+it('renders every header filter a second time inside the drawer with distinct keys', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = NoerdUser::factory()->create();
+    TenantHelper::setSelectedTenantId($tenant->id);
+    TenantHelper::setSelectedApp('SETUP');
+    test()->actingAs($user);
+
+    $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
+        ->call('setColumnFilter', 'name', 'rot')
+        ->html();
+
+    expect(mb_substr_count($html, 'column-filter-chip-name'))->toBe(2);
+    expect($html)->toContain('drawer-column-filter-chip-name');
+});
+
 /**
  * List component with an inline YAML config over the noerd_users table.
  */

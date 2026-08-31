@@ -278,7 +278,7 @@ class NoerdInstallCommand extends Command
 
         $scaffolder->removeLegacyTailwindBridge();
 
-        $this->line('<info>Removed tailwind.config.js (backed up as tailwind.config.js.bak) and its @config line.</info>');
+        $this->line('<info>Removed tailwind.config.js and its @config line.</info>');
     }
 
     /**
@@ -448,8 +448,9 @@ class NoerdInstallCommand extends Command
      * An existing config/noerd.php belongs to the host — never clobber it
      * silently. The stub is diffed against it: missing top-level keys are
      * reported (the documented contract is that noerd:update carries new keys
-     * into existing installations), and an overwrite — via --force or an
-     * explicit confirmation — first writes a one-generation .bak backup.
+     * into existing installations), and an overwrite happens only via --force
+     * or an explicit confirmation. No .bak is written — the host config is
+     * under version control.
      */
     protected function refreshExistingNoerdConfig(string $sourcePath, string $targetPath): void
     {
@@ -474,15 +475,14 @@ class NoerdInstallCommand extends Command
             $this->warn('config/noerd.php is missing new top-level keys: ' . implode(', ', $missing));
 
             if (!$this->input->isInteractive()
-                || !$this->confirm('Overwrite config/noerd.php with the current stub (a .bak backup is written)?', false)) {
+                || !$this->confirm('Overwrite config/noerd.php with the current stub?', false)) {
                 $this->line('<comment>Skipped config/noerd.php publishing. Add the missing keys manually (see stubs/noerd.php.stub).</comment>');
 
                 return;
             }
         }
 
-        @copy($targetPath, $targetPath . '.bak');
-        $this->line('<comment>Overwriting config/noerd.php (backup: config/noerd.php.bak)...</comment>');
+        $this->line('<comment>Overwriting config/noerd.php...</comment>');
 
         if (copy($sourcePath, $targetPath)) {
             $this->line('<info>Published config/noerd.php successfully.</info>');

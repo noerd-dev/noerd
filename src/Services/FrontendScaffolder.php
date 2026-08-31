@@ -172,14 +172,14 @@ final class FrontendScaffolder
     }
 
     /**
-     * Remove the obsolete tailwind.config.js bridge, keeping a .bak copy of the config.
+     * Remove the obsolete tailwind.config.js bridge. No .bak copy is kept — the
+     * host project keeps its change history in version control.
      */
     public function removeLegacyTailwindBridge(): void
     {
         $configPath = $this->path('tailwind.config.js');
 
         if (file_exists($configPath)) {
-            copy($configPath, $configPath . '.bak');
             unlink($configPath);
         }
 
