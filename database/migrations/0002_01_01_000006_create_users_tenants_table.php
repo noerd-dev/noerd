@@ -16,6 +16,8 @@ return new class extends Migration {
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->string('profile_key', 32)->nullable();
             $table->timestamps();
+
+            $table->primary(['user_id', 'tenant_id']);
         });
     }
 

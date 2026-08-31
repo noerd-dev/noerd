@@ -44,8 +44,10 @@ return [
     ],
 
     'collections' => [
+        // 'yaml' or 'database'. The definitions UI flag that the setup
+        // navigation gates on is DERIVED from this in NoerdServiceProvider —
+        // never configure it separately.
         'mode' => env('NOERD_COLLECTIONS_MODE', 'yaml'),
-        'show_definitions_ui' => env('NOERD_COLLECTIONS_MODE', 'yaml') === 'database',
         'setup_yaml_path' => 'app-configs/setup/collections',
     ],
 

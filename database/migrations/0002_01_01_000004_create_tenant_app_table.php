@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->boolean('is_hidden')->default(false);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
+
+            $table->unique(['tenant_app_id', 'tenant_id']);
         });
     }
 

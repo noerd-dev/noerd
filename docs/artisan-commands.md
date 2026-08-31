@@ -339,6 +339,9 @@ php artisan noerd:make-dashboard --app=crm
 ## noerd:make-collection
 
 Creates a new collection YML file interactively. See [Setup Collections](setup-collections.md).
+Has no effect while `noerd.collections.mode` is `database` — the written file is not read there
+(the command warns); create the collection in Setup → Collection Definitions or import the file
+afterwards.
 
 ```bash
 php artisan noerd:make-collection
@@ -369,7 +372,9 @@ php artisan noerd:theme mytheme --module=mymodule
 ## noerd:setup-collections:import-yaml
 
 Imports setup collection definitions from YAML files into the `setup_collection_definitions` table.
-Used when switching `noerd.collections.mode` to `database`. See
+Used when switching `noerd.collections.mode` to `database`, and again whenever a module update
+ships a new collection YAML — newly published YAMLs are not picked up on their own. Idempotent:
+existing definitions are updated in place. Newly created tenants are seeded automatically. See
 [Setup Collections](setup-collections.md).
 
 ```bash

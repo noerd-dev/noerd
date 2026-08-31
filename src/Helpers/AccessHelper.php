@@ -18,8 +18,8 @@ use Noerd\Enums\Profile;
  *    apps). The core ships no finer restrictions of its own.
  *
  * Gate closures MUST accept a nullable user (`?Authenticatable $user`):
- * some call sites (public apps, config discovery) run for guests, and a
- * non-nullable closure would silently deny them. Guests are never restricted
+ * some call sites (config discovery, unauthenticated rendering) run without a
+ * user, and a non-nullable closure would silently deny them. Guests are never restricted
  * by the profile baseline either. The gate user is resolved from noerd's own
  * auth guard (see NoerdAuth), never from the host application's default guard.
  */

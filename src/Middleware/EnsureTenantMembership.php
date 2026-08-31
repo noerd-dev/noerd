@@ -21,8 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * On a revoked tenant the session falls back to another tenant the user still
  * belongs to, or to none at all (the setup middleware then routes them to the
- * no-tenant screen). Guests on public apps are untouched: their tenant lives in
- * the separate guest key.
+ * no-tenant screen).
  */
 class EnsureTenantMembership
 {

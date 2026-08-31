@@ -14,8 +14,7 @@ return new class extends Migration {
         Schema::create('tenants', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
-            $table->string('logo')->nullable();
-            $table->string('hash')->unique();
+            $table->string('uuid')->unique();
             $table->timestamps();
         });
     }

@@ -71,10 +71,10 @@ class NoerdDemoCommand extends Command
 
         // Order matters: tables referenced by foreign keys must be created first.
         $migrations = [
-            'create_demo_customers_table',
             'create_demo_categories_table',
             'create_demo_tags_table',
-            'extend_demo_customers_table',
+            'create_demo_customers_table',
+            'create_demo_customer_demo_tag_table',
         ];
 
         $timestamp = (int) date('His');

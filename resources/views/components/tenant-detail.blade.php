@@ -1,21 +1,17 @@
 <?php
 
 use Livewire\Component;
-use Livewire\WithFileUploads;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\Tenant;
 use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
     use NoerdDetail;
-    use WithFileUploads;
 
     public ?string $detailPrimary = 'tenantId';
 
     public $detailModel = Tenant::class;
     public const DETAIL_COMPONENT = 'noerd::tenant-detail';
-
-    public $logo;
 
     public function mount(): void
     {
@@ -54,7 +50,6 @@ new class extends Component {
 
         $tenant = Tenant::findOrFail($this->modelId);
         $tenant->name = $this->detailData['name'];
-        $tenant->logo = $this->detailData['logo'] ?? null;
         $tenant->save();
 
         $this->storeProcess($tenant);
@@ -67,31 +62,6 @@ new class extends Component {
      */
     public function delete(): void
     {
-    }
-
-    public function updatedLogo()
-    {
-        $this->storeFile();
-    }
-
-    public function storeFile()
-    {
-        $this->authorizeTenant();
-
-        // Validated before storing: storePublicly() keeps the client-supplied
-        // extension on a web-served disk, so an unvalidated upload was stored
-        // same-origin script execution (.html/.svg) at /storage/uploads/….
-        $this->validate([
-            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
-        ]);
-
-        $link = $this->logo->storePublicly(path: 'uploads', options: 'public');
-        $this->detailData['logo'] = '/storage/' . $link;
-    }
-
-    public function deleteImage()
-    {
-        $this->detailData['logo'] = null;
     }
 } ?>
 

@@ -6,7 +6,3 @@ fields:
     type: text
     colspan: 6
     required: true
-  - name: logo
-    label: Logo
-    type: image
-    colspan: 6

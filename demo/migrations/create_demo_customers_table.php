@@ -21,6 +21,18 @@ return new class extends Migration {
             $table->string('address')->nullable();
             $table->string('zipcode')->nullable();
             $table->string('city')->nullable();
+            $table->text('description')->nullable();
+            $table->longText('content')->nullable();
+            $table->string('status')->nullable();
+            $table->string('priority')->nullable();
+            $table->decimal('revenue', 10, 2)->nullable();
+            $table->string('brand_color', 7)->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->date('contract_start')->nullable();
+            $table->time('preferred_time')->nullable();
+            $table->unsignedBigInteger('image_id')->nullable();
+            $table->foreignId('demo_category_id')->nullable()->constrained('demo_categories')->nullOnDelete();
+            $table->json('custom_attributes')->nullable();
             $table->timestamps();
         });
     }

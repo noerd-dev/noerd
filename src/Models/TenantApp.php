@@ -10,11 +10,6 @@ class TenantApp extends Model
 {
     protected $guarded = [];
 
-    public function scopePublic(Builder $query): Builder
-    {
-        return $query->where('is_public', true);
-    }
-
     /**
      * Case-insensitive app-name match. `name` is canonically the UPPERCASE
      * module key, but historical rows exist in lowercase — every lookup
@@ -50,7 +45,6 @@ class TenantApp extends Model
     {
         return [
             'is_active' => 'boolean',
-            'is_public' => 'boolean',
         ];
     }
 }

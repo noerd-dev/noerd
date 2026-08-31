@@ -526,7 +526,7 @@ it('renders active column filter chips in the list header', function (): void {
         ->toContain('clearColumnFilter');
 });
 
-it('renders the header filters in a clipped single-line row that collapses into a drawer', function (): void {
+it('keeps the header filters on one row and moves them into a drawer below lg', function (): void {
     $tenant = Tenant::factory()->create();
     $user = NoerdUser::factory()->create();
     TenantHelper::setSelectedTenantId($tenant->id);
@@ -537,18 +537,14 @@ it('renders the header filters in a clipped single-line row that collapses into 
         ->call('setColumnFilter', 'name', 'rot')
         ->html();
 
-    preg_match('/<div\s+x-ref="filterRow"\s+class="([^"]*)"/', $html, $row);
-
-    expect($row[1] ?? '')->toContain('overflow-hidden')
+    // Below `lg` the controls become a drawer opened by the funnel button; the
+    // header row itself never wraps onto a second line.
+    expect($html)->toContain('x-data="{ drawer: false }"')
+        ->toContain('drawer = true')
         ->not->toContain('flex-wrap');
-
-    // Collapsing is measured on the row and toggles the funnel button + drawer copy.
-    expect($html)->toContain('row.scrollWidth > row.clientWidth')
-        ->toContain('x-show="collapsed"')
-        ->toContain('drawerOpen = true');
 });
 
-it('renders every header filter a second time inside the drawer with distinct keys', function (): void {
+it('renders each header filter exactly once, drawer and header row sharing the element', function (): void {
     $tenant = Tenant::factory()->create();
     $user = NoerdUser::factory()->create();
     TenantHelper::setSelectedTenantId($tenant->id);
@@ -559,8 +555,9 @@ it('renders every header filter a second time inside the drawer with distinct ke
         ->call('setColumnFilter', 'name', 'rot')
         ->html();
 
-    expect(mb_substr_count($html, 'column-filter-chip-name'))->toBe(2);
-    expect($html)->toContain('drawer-column-filter-chip-name');
+    // One chip, one wire:key — the drawer is the same container re-laid-out by CSS,
+    // not a second copy that would need its own key prefix.
+    expect(mb_substr_count($html, 'column-filter-chip-name'))->toBe(1);
 });
 
 /**

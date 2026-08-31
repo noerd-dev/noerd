@@ -1,39 +1,29 @@
-{{-- The list header's filter controls, rendered twice from list-header: once inline in the
-     header row and once inside the filter drawer that takes over when the header row runs out
-     of space. Both copies bind to the same `listFilters` properties, so either one drives the
-     list. `$keyPrefix` keeps the wire:key of the chips unique between the two copies, `$stacked`
-     switches the controls to the full-width drawer layout. --}}
-@php
-    $stacked ??= false;
-    $keyPrefix ??= '';
-@endphp
-
+{{--
+    The list header's filter controls: the YAML picklist/date filters, one chip per
+    active Excel-style column filter and the clear-all button. Rendered ONCE — below
+    `xl` they stack full-width in the filter drawer, from `xl` on they sit inline on
+    the header row. The layout switch is pure CSS, so there is no second copy and
+    hence no key prefix to keep the two apart.
+--}}
 @foreach ($tableFilters as $tableFilter)
     @if (in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
         <x-noerd::filters.date-dropdown
             :filter="$tableFilter"
-            :value="$listFilters[$tableFilter['column']] ?? ''"
-            :full="$stacked"
-        />
+            :value="$listFilters[$tableFilter['column']] ?? ''" />
     @else
         <x-noerd::filters.picklist
             :filter="$tableFilter"
-            :value="$listFilters[$tableFilter['column']] ?? ''"
-            :full="$stacked"
-        />
+            :value="$listFilters[$tableFilter['column']] ?? ''" />
     @endif
 @endforeach
 
 @foreach ($chips as $filterChip)
     <span
-        wire:key="{{ $keyPrefix }}column-filter-chip-{{ $filterChip['field'] }}"
-        @class([
-            'flex shrink-0 items-center gap-1 rounded-full bg-gray-100 py-0.5 pr-1 pl-2.5 text-xs font-normal whitespace-nowrap text-gray-700',
-            'w-full justify-start' => $stacked,
-        ])
+        wire:key="column-filter-chip-{{ $filterChip['field'] }}"
+        class="flex items-center gap-1 rounded-full bg-gray-100 py-0.5 pr-1 pl-2.5 text-xs font-normal whitespace-nowrap text-gray-700 max-xl:w-full max-xl:justify-start xl:shrink-0"
     >
         <span class="font-medium">{{ $filterChip['label'] }}:</span>
-        <span class="{{ $stacked ? 'truncate' : '' }}">{{ $filterChip['value'] }}</span>
+        <span class="truncate">{{ $filterChip['value'] }}</span>
         <button
             type="button"
             wire:click="clearColumnFilter('{{ $filterChip['field'] }}')"
@@ -46,26 +36,18 @@
 @endforeach
 
 @if ($hasClearAll)
-    @if ($stacked)
-        <x-noerd::button
-            variant="secondary"
-            size="sm"
-            icon="x-mark"
-            type="button"
-            class="w-full"
-            wire:click="clearAllListFilters"
-        >
-            {{ __('Clear all filters') }}
-        </x-noerd::button>
-    @else
-        <x-noerd::button
-            class="shrink-0"
-            variant="icon"
-            size="sm"
-            icon="x-mark"
-            type="button"
-            wire:click="clearAllListFilters"
-            :title="__('Clear all filters')"
-        />
-    @endif
+    {{-- One button in both layouts: a labelled full-width row in the drawer, a bare
+         icon button on the header row. `!my-0` cancels the button's row-centring
+         auto margin, which the drawer's flex COLUMN would otherwise stretch. --}}
+    <x-noerd::button
+        variant="secondary"
+        size="sm"
+        icon="x-mark"
+        type="button"
+        class="max-xl:!my-0 max-xl:w-full xl:shrink-0 xl:px-1.5"
+        wire:click="clearAllListFilters"
+        :title="__('Clear all filters')"
+    >
+        <span class="xl:hidden">{{ __('Clear all filters') }}</span>
+    </x-noerd::button>
 @endif

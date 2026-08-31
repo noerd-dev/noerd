@@ -108,3 +108,37 @@ it('still administers a user of its own tenant', function (): void {
     Livewire::test('noerd::noerd-users-list')->call('loginAsUser', $member->id);
     expect(NoerdAuth::id())->toBe($member->id);
 });
+
+it('lists every account in the installation for a super admin', function (): void {
+    $tenantB = Tenant::factory()->create(['name' => 'B']);
+    $foreign = NoerdUser::factory()->create();
+    $foreign->tenants()->attach($tenantB->id);
+    $orphan = NoerdUser::factory()->create();
+
+    $super = NoerdUser::factory()->create(['super_admin' => true]);
+    $super->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::Admin->value]);
+    $this->actingAs($super);
+
+    $visible = Livewire::test('noerd::noerd-users-list')->instance()->visibleRowIds();
+
+    expect($visible)->toContain($foreign->id)
+        ->toContain($orphan->id)
+        ->toContain($this->admin->id);
+});
+
+it('narrows the super admin list to the tenant chosen in the header filter', function (): void {
+    $tenantB = Tenant::factory()->create(['name' => 'B']);
+    $foreign = NoerdUser::factory()->create();
+    $foreign->tenants()->attach($tenantB->id);
+
+    $super = NoerdUser::factory()->create(['super_admin' => true]);
+    $super->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::Admin->value]);
+    $this->actingAs($super);
+
+    session(['listFilters' => ['tenant_id' => $tenantB->id]]);
+
+    $visible = Livewire::test('noerd::noerd-users-list')->instance()->visibleRowIds();
+
+    expect($visible)->toContain($foreign->id)
+        ->not->toContain($this->admin->id);
+});

@@ -59,24 +59,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Collection Definitions (shared by CMS and Setup)
+    | Collection Definitions (Setup area)
     |--------------------------------------------------------------------------
     |
-    | Controls where collection schemas are stored for BOTH the CMS module
-    | and the Setup area.
+    | Controls where the schemas of the SETUP collections are stored. The CMS
+    | module is unaffected — its collection definitions always live in the
+    | database (cms collection_definitions table).
     |
     | Supported modes:
-    |   - "yaml":     Schemas live in the module's yaml_path directory.
-    |                 The management UI is hidden. Changes must be deployed
-    |                 via committed YAML files.
-    |   - "database": Schemas live in the per-tenant collection_definitions
-    |                 (CMS) and setup_collection_definitions (Setup) tables.
-    |                 The management UI is enabled.
+    |   - "yaml":     Schemas live in setup_yaml_path as committed YAML files.
+    |                 The management UI is hidden. Changes are deployed as files.
+    |   - "database": Schemas live per tenant in setup_collection_definitions.
+    |                 The management UI is enabled, and a newly created tenant
+    |                 is seeded from the YAML source. Migrate an existing
+    |                 installation with:
+    |                 php artisan noerd:setup-collections:import-yaml --all-tenants
+    |
+    | The navigation flag noerd.collections.show_definitions_ui is DERIVED from
+    | this value at boot — do not set it here.
     |
     */
     'collections' => [
         'mode' => env('NOERD_COLLECTIONS_MODE', 'yaml'),
-        'show_definitions_ui' => env('NOERD_COLLECTIONS_MODE', 'yaml') === 'database',
         'setup_yaml_path' => 'app-configs/setup/collections',
     ],
 

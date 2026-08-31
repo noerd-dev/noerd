@@ -171,13 +171,40 @@ YAML);
 it('hides superAdmin navigation items from non-super admins', function (): void {
     $tenant = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup');
 
-    $this->actingAs($tenant->create(['super_admin' => true]));
-    $superAdmin = setupNavigationTitles();
+    // Synthetic fixture: whether any SHIPPED entry carries `superAdmin:` is
+    // configuration, so the gating MECHANIC is proven against a temporary
+    // navigation.yml instead.
+    $navigationPath = base_path('app-configs/setup/navigation.yml');
+    $backup = file_exists($navigationPath) ? file_get_contents($navigationPath) : null;
+    @mkdir(dirname($navigationPath), 0755, true);
+    file_put_contents($navigationPath, <<<'YAML'
+-
+  title: Setup
+  name: setup
+  block_menus:
+    -
+      title: Administration
+      navigations:
+        -
+          title: 'Zz Ungated Entry'
+          route: noerd.setup
+        -
+          title: 'Zz Super Admin Entry'
+          route: noerd.setup
+          superAdmin: true
+YAML);
 
-    $this->actingAs($tenant->create(['super_admin' => false]));
-    $regular = setupNavigationTitles();
+    try {
+        $this->actingAs($tenant->create(['super_admin' => true]));
+        $superAdmin = setupNavigationTitles();
 
-    expect($superAdmin)->not->toBeEmpty()
-        ->and(array_diff($regular, $superAdmin))->toBeEmpty()
-        ->and(array_diff($superAdmin, $regular))->not->toBeEmpty();
+        $this->actingAs($tenant->create(['super_admin' => false]));
+        $regular = setupNavigationTitles();
+
+        expect($superAdmin)->toBe(['Zz Ungated Entry', 'Zz Super Admin Entry'])
+            ->and($regular)->toBe(['Zz Ungated Entry']);
+    } finally {
+        $backup === null ? @unlink($navigationPath) : file_put_contents($navigationPath, $backup);
+        StaticConfigHelper::flushRuntimeCaches();
+    }
 });

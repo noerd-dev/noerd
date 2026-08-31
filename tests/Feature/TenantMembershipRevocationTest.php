@@ -68,14 +68,3 @@ it('clears the tenant entirely when the last membership is revoked', function ()
 
     expect(TenantHelper::getSelectedTenantId())->toBeNull();
 });
-
-it('leaves a guest on a public app untouched', function (): void {
-    $tenant = Tenant::factory()->create();
-    TenantHelper::setGuestTenantId($tenant->id);
-    TenantHelper::markPublicAppGuest();
-
-    zzRunMembershipMiddleware();
-
-    // The guest tenant lives in its own session key and is not a membership.
-    expect(TenantHelper::getGuestTenantId())->toBe($tenant->id);
-});

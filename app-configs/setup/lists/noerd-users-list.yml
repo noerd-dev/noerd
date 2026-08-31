@@ -18,9 +18,6 @@ columns:
   - field: profile_for_tenant
     label: Profile
     type: badge_with_text
-  - field: last_login_at
-    label: Last Login
-    type: datetime
   - field: action
     actions:
       - label: Login as user

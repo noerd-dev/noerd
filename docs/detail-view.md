@@ -472,7 +472,7 @@ Pass the values directly as props:
 | `title` | (optional) Section heading (translation key) |
 | `description` | (optional) Sub-heading text (translation key) |
 | `lazy` | (optional) Lazy-load the list (passed through to Livewire via the params array) |
-| `wireKey` | (optional) Explicit `wire:key`; defaults to a hash of component + arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
+| `wireKey` | (optional) Explicit `wire:key`; defaults to a uuid of component + arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
 
 The embedded list is always compact (no header, no pagination — only the first `perPage` rows), so use
 it for record-scoped lists.

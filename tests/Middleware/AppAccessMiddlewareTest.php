@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Noerd\Exceptions\NoerdException;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\TenantApp;
@@ -72,7 +73,7 @@ describe('AppAccessMiddleware', function (): void {
         expect($response->getContent())->toBe('OK');
     });
 
-    it('sets selected_app when access is allowed', function (): void {
+    it('sets the selected app when access is allowed', function (): void {
         $user = NoerdUser::factory()->withExampleTenant()->create();
         $tenant = $user->selectedTenant();
 
@@ -92,7 +93,7 @@ describe('AppAccessMiddleware', function (): void {
 
         $this->middleware->handle($request, fn() => response('OK'), 'media');
 
-        expect($user->fresh()->selected_app)->toBe('MEDIA');
+        expect(TenantHelper::getSelectedApp())->toBe('MEDIA');
     });
 
     it('matches app name case-insensitively', function (): void {

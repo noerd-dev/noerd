@@ -27,7 +27,7 @@ beforeEach(function (): void {
     $this->appC = TenantApp::create(['title' => 'App C', 'name' => 'APP_C', 'icon' => 'heroicon:outline:cog-6-tooth', 'route' => 'app-c.index', 'is_active' => true]);
 });
 
-it('renders the tenant-apps page for super admins', function (): void {
+it('renders the tenant-apps page for admins', function (): void {
     $this->actingAs($this->admin);
 
     $this->get('/setup/tenant-apps')
@@ -57,13 +57,31 @@ it('manages apps for the single tenant in single-tenant mode', function (): void
         ->toContain($this->appA->id);
 });
 
-it('denies access to regular admins', function (): void {
+it('allows a tenant admin to manage the apps of its own tenant', function (): void {
     $regularAdmin = NoerdUser::factory()->create();
     $regularAdmin->tenants()->attach($this->tenant->id, [
         'profile_key' => Profile::Admin->value,
     ]);
 
     $this->actingAs($regularAdmin);
+
+    Livewire::test('noerd::tenant-apps-list')
+        ->call('toggleApp', $this->appA->id)
+        ->assertOk();
+
+    expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
+        ->toContain($this->appA->id);
+});
+
+it('denies access to a member without the admin profile', function (): void {
+    // isAdmin() is scoped to the SELECTED tenant, so the guard also keeps an
+    // admin of another tenant out of this tenant's app assignment.
+    $member = NoerdUser::factory()->create();
+    $member->tenants()->attach($this->tenant->id, [
+        'profile_key' => Profile::User->value,
+    ]);
+
+    $this->actingAs($member);
 
     Livewire::test('noerd::tenant-apps-list')
         ->assertForbidden();

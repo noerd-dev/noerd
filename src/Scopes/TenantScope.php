@@ -26,10 +26,10 @@ class TenantScope implements Scope
         }
 
         // Inside a tenant context but without a resolved tenant, yield NO rows
-        // rather than every tenant's: a tenant-less account, or a guest on a
-        // public app whose tenant could not be resolved. Console commands and
-        // queue workers carry no such context and stay unscoped.
-        if (NoerdAuth::check() || TenantHelper::isPublicAppGuest()) {
+        // rather than every tenant's — a tenant-less account. Console commands,
+        // queue workers and unauthenticated requests carry no such context and
+        // stay unscoped.
+        if (NoerdAuth::check()) {
             $builder->whereRaw('1 = 0');
         }
     }

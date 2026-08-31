@@ -79,12 +79,57 @@ The chip resolves both parts for display via `NoerdList::activeColumnFilterChips
 The type resolution (explicit YAML type → DB schema type) mirrors `applyColumnFilters()`, so a chip
 always describes the filter the query actually applies.
 
+### Responsive header (the filter drawer)
+
+The generic list header is **one non-wrapping row at every viewport width** — it never breaks onto a
+second line, not even on a phone. Only two things are guaranteed a place on that row: the list title
+(with its record count and, where present, the view switcher) and the primary YAML actions. Everything
+else is *collapsible*:
+
+- the header filters and the active-filter chips
+- the search field
+- CSV export and every YAML action marked `style: secondary`
+
+Below `xl` the collapsible controls move into a drawer behind a funnel button next to the title;
+from `xl` on they sit inline on the header row.
+
+The switch is **pure CSS**. The controls are rendered exactly once: one container is the inline row
+from `xl` on (`xl:flex-row`) and the drawer panel below it (`max-xl:fixed max-xl:inset-y-0
+max-xl:right-0 max-xl:flex-col`). There is no second copy, so nothing has to keep two sets of
+`wire:key`s, Alpine states or keyboard shortcuts apart — the only JavaScript involved is
+`x-data="{ drawer: false }"`.
+
+- The order differs per layout and is expressed with flex `order-*`: in the drawer the search comes
+  first, then the filters, then the buttons; on the header row the filters lead and the search plus
+  buttons are pushed right.
+- The individual controls go full-width in the drawer through `max-xl:w-full`. `x-noerd::button`
+  centres itself with `my-auto` for the header ROW, so a stacked button cancels it with
+  `max-xl:!my-0` — in a flex COLUMN that auto margin would absorb the free vertical space.
+- The funnel carries a count badge of everything the drawer is hiding: active header filters, active
+  column-filter chips, and a non-empty search.
+- A header with nothing collapsible renders no funnel button and no drawer.
+- From `xl` on, a filter row that still outgrows its space scrolls horizontally
+  (`xl:overflow-x-auto`) rather than being hidden.
+
+What each list header actually renders is resolved ONCE by `NoerdList::headerControls()` (with
+`hasCollapsibleControls()` / `hasHeaderControls()` on top). The header, the drawer and
+`x-noerd::modal-title` all read that — never re-derive "does this list have a search field / a
+secondary action" from `$listSettings` at a call site.
+
+This is a single generic feature of `list-header.blade.php` — never rebuild a responsive header per
+module, and never add breakpoint-specific stacking to a list header.
+
 ### Architecture
 
 - Expression parsing + query application: `Noerd\Services\ColumnFilterParser` (fixed operator set, values only ever bound as parameters — user input never reaches SQL text)
 - State + whitelist: `NoerdList::$listColumnFilters`, `setColumnFilter()`, `clearColumnFilter()`, `filterableColumnFields()`, `applyColumnFilters()` (hooked inside `listQuery()`)
 - Header UI: `noerd::components.table.column-filter`, included from `table-sort.blade.php`; active-filter chips: `NoerdList::activeColumnFilterChips()`, rendered in `noerd::components.table.list-header`
-- Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Traits/NoerdListColumnFilterTest.php`
+- Responsive header: `noerd::components.table.list-header` (row + drawer) including `list-filters`,
+  `list-search` and `list-controls-secondary` (the collapsing half) plus `list-controls-primary`
+  (always visible); `NoerdList::headerControls()` resolves which of them exist. A list host with its
+  own custom header slot gets the non-collapsing `list-controls` injected by `x-noerd::modal-title`
+  instead
+- Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Traits/NoerdListColumnFilterTest.php`, `app-modules/noerd/tests/Components/ListHeaderCollapseTest.php`
 
 ## How Filters Work
 

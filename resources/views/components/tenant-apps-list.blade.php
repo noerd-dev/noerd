@@ -1,9 +1,9 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\TenantApp;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
     public array $assignedApps = [];
@@ -11,26 +11,14 @@ new class extends Component {
 
     public function mount(): void
     {
-        if (! NoerdAuth::user()->isSuperAdmin()) {
-            abort(403);
-        }
+        $this->authorizeAdmin();
 
         $this->loadApps();
     }
 
-    /**
-     * Every action re-asserts super-admin access: mount() alone leaves the
-     * guarantee one refactor away from being lost, and the hydrate-time
-     * ComponentAccessHook only re-checks isAdmin(), not isSuperAdmin().
-     */
-    private function authorizeSuperAdmin(): void
-    {
-        abort_unless(\Noerd\Helpers\NoerdAuth::user()?->isSuperAdmin(), 403);
-    }
-
     public function toggleApp(int $appId): void
     {
-        $this->authorizeSuperAdmin();
+        $this->authorizeAdmin();
 
         $tenant = TenantHelper::getSelectedTenant();
         $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->toArray();
@@ -47,7 +35,7 @@ new class extends Component {
 
     public function appSort(int $appId, int $newPosition): void
     {
-        $this->authorizeSuperAdmin();
+        $this->authorizeAdmin();
 
         $tenant = TenantHelper::getSelectedTenant();
         $apps = $tenant->tenantApps()->get();
@@ -73,7 +61,7 @@ new class extends Component {
 
     public function toggleHidden(int $appId): void
     {
-        $this->authorizeSuperAdmin();
+        $this->authorizeAdmin();
 
         $tenant = TenantHelper::getSelectedTenant();
         $current = $tenant->tenantApps()->where('tenant_apps.id', $appId)->first();
@@ -87,12 +75,23 @@ new class extends Component {
         $this->loadApps();
     }
 
+    /**
+     * The screen only ever touches the SELECTED tenant, and isAdmin() is scoped
+     * to exactly that tenant — so an admin manages their own tenant's apps and
+     * no other. Every action re-asserts it: mount() alone leaves the guarantee
+     * one refactor away from being lost.
+     */
+    private function authorizeAdmin(): void
+    {
+        abort_unless(NoerdAuth::user()?->isAdmin(), 403);
+    }
+
     private function loadApps(): void
     {
         $tenant = TenantHelper::getSelectedTenant();
         $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->toArray();
 
-        $this->assignedApps = $tenant->tenantApps()->get()->map(fn ($app) => [
+        $this->assignedApps = $tenant->tenantApps()->get()->map(fn($app) => [
             'id' => $app->id,
             'title' => $app->title,
             'icon' => $app->icon,
@@ -104,7 +103,7 @@ new class extends Component {
             ->whereNotIn('id', $assignedIds)
             ->orderBy('title')
             ->get()
-            ->map(fn ($app) => [
+            ->map(fn($app) => [
                 'id' => $app->id,
                 'title' => $app->title,
                 'icon' => $app->icon,

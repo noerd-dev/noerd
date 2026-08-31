@@ -14,11 +14,10 @@ return new class extends Migration {
         Schema::create('tenant_apps', function (Blueprint $table): void {
             $table->id();
             $table->string('title');
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('icon');
             $table->string('route');
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_public')->default(false);
             $table->timestamps();
         });
     }
