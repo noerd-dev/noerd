@@ -15,9 +15,7 @@ class TenantFactory extends Factory
     {
         return [
             'name' => $this->faker->company,
-            // Use 'hash' for backward compatibility with existing databases
-            // New projects will have 'uuid' column, but the Tenant model provides accessors
-            'hash' => Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
         ];
     }
 

@@ -118,7 +118,7 @@ login) needs no special setup:
    guard; host users keep logging in via their own stack (e.g. their own `/login`) against `web`.
 
 Both guards share the session cookie but store independent login keys
-(`login_noerd_<hash>` vs `login_web_<hash>`) and separate remember-me cookies — a user can be
+(`login_noerd_<uuid>` vs `login_web_<uuid>`) and separate remember-me cookies — a user can be
 logged in to both sides at once. noerd's logout only ends the noerd session and clears noerd's
 session state (`noerd.*` keys); the host session survives.
 

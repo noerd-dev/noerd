@@ -5,6 +5,12 @@
     'listControlsShow' => null,
     /** Relations forwarded to YAML `action:` buttons — passed through by list-header. */
     'listRelations' => [],
+    /**
+     * Keep the header on ONE non-wrapping row at every breakpoint instead of stacking
+     * below `lg`. Set by the generic list header, which collapses its overflowing
+     * controls into the filter drawer rather than onto a second line.
+     */
+    'row' => false,
 ])
 
 @php
@@ -33,19 +39,12 @@
         ? $__livewire
         : null;
 
-    $listControlsConfig = $listControlsHost?->builtListConfig() ?? [];
-    $listControlsSettings = $listControlsConfig['listSettings'] ?? [];
-    $listObjectAccessDenied = $listControlsConfig['objectAccessDenied'] ?? false;
-    $listIsPicker = $listControlsHost->returnsSelection ?? false;
-    $hasListControls = $listControlsHost !== null && (
-        (! ($listControlsSettings['disableSearch'] ?? false) && ! $listObjectAccessDenied)
-        || ($listControlsHost->enableCsvExport ?? false)
-        || (! $listIsPicker && ($listControlsSettings['actions'] ?? []) !== [])
-        || (! $listIsPicker && app(\Noerd\Services\HeaderActionsRegistry::class)->listActions() !== [])
-    );
+    // What a list header renders is resolved ONCE, on the list itself
+    // (NoerdList::headerControls()) — never re-derived from $listSettings here.
+    $hasListControls = $listControlsHost?->hasHeaderControls() ?? false;
 @endphp
-<div class="border-b border-gray-300 px-6 py-6 lg:flex">
-    <x-noerd::title>
+<div @class(['border-b border-gray-300 px-6 py-6', 'lg:flex' => ! $row])>
+    <x-noerd::title :row="$row">
         {{ $slot }}
         @if (isset($actions) || $detailHeaderActions !== [] || $hasListControls)
             <div class="ml-auto flex shrink-0 items-center gap-4" :class="isModal ? modalControlsClass : ''">
@@ -55,8 +54,6 @@
                     @endif
                     @include('noerd::components.table.list-controls', [
                         'host' => $listControlsHost,
-                        'listSettings' => $listControlsSettings,
-                        'objectAccessDenied' => $listObjectAccessDenied,
                         'listRelations' => $listRelations,
                     ])
                     @if ($listControlsShow)

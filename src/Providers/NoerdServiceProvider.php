@@ -41,13 +41,13 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Listeners\InitializeTenantSession;
+use Noerd\Listeners\RecordLogin;
 use Noerd\Middleware\ActionPermissionMiddleware;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
 use Noerd\Middleware\EnsureTenantMembership;
 use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
-use Noerd\Middleware\PublicAppMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\SetupLanguage;
@@ -80,6 +80,7 @@ use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\SchemaColumnCache;
+use Noerd\Support\SetupCollectionDefinitionImport;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\WriteGuardHook;
 use Noerd\View\Components\AppLayout;
@@ -91,6 +92,12 @@ class NoerdServiceProvider extends ServiceProvider
         // Merge module defaults so noerd.* keys resolve even when the project
         // root config/noerd.php is absent (e.g., module-only test boots).
         $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
+
+        // Derived, never configured: the definitions UI belongs to the database
+        // mode. Read from a config key of its own it silently drifted apart from
+        // the mode (published config edited without the env var), leaving the
+        // routes open while the navigation entry stayed hidden.
+        config(['noerd.collections.show_definitions_ui' => config('noerd.collections.mode') === 'database']);
 
         $this->registerNoerdGuard();
 
@@ -196,11 +203,20 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register event listeners
         Event::listen(Login::class, InitializeTenantSession::class);
+        Event::listen(Login::class, RecordLogin::class);
 
         // Create default languages and setup collections when a new tenant is created
         Tenant::created(function (Tenant $tenant): void {
             SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
             DefaultCountries::ensureForTenant($tenant->id);
+
+            // In database mode a tenant without definition rows has NO usable
+            // collections (empty sidebar, no layout for the country entries the
+            // line above just created), so a fresh tenant is seeded from the
+            // same YAML source the import command migrates from.
+            if (SetupCollectionDefinitionImport::isDatabaseMode()) {
+                SetupCollectionDefinitionImport::forTenant($tenant->id);
+            }
         });
 
         // The config search roots memoise the active/allowed app folders — a
@@ -227,7 +243,6 @@ class NoerdServiceProvider extends ServiceProvider
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('action-permission', ActionPermissionMiddleware::class);
-        $router->aliasMiddleware('public-app', PublicAppMiddleware::class);
         $router->aliasMiddleware('setup.collections.ui', EnsureSetupCollectionDefinitionsEnabled::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
 

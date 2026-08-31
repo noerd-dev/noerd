@@ -41,12 +41,10 @@ If you skip any of these steps, you can run them later with the respective [Arti
 |-------|-------------|
 | `noerd_users` | User accounts |
 | `noerd_user_settings` | User settings (language, selected tenant) |
-| `noerd_profiles` | Access profiles (ADMIN, USER, etc.). One user has one profile per tenant |
 | `noerd_settings` | Per-tenant system settings (currency, detail theme) |
 | `tenants` | Tenants / Organizations / Environments |
-| `users_tenants` | User ↔ tenant assignments |
+| `users_tenants` | User ↔ tenant assignments, incl. the user's `profile_key` for that tenant |
 | `tenant_apps` | Available apps which can be assigned to tenants (with `tenant_app` pivot) |
-| `tenant_invoices` | Tenant invoices |
 | `setup_collections` | Dynamic data collections |
 | `setup_collection_entries` | Entries in collections |
 | `setup_collection_definitions` | Collection schemas when `noerd.collections.mode` is `database` |

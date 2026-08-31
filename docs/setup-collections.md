@@ -78,8 +78,35 @@ Where collection **schemas** (the definitions above) live is controlled by
   `setup-collection-definition.detail`, gated by the `setup.collections.ui` middleware) where
   admins create and edit collection definitions at runtime.
 
+`collections.show_definitions_ui` — the flag the setup navigation gates the management entry on —
+is DERIVED from the mode when the service provider registers. Never set it in a config file: as a
+key of its own it drifted apart from the mode (a published config edited without the env var), which
+left the routes reachable while the navigation entry stayed hidden.
+
+The mode applies to the **Setup** collections only. CMS collection definitions always live in the
+database, regardless of this value.
+
 The entry **data** is always stored in the database (`setup_collections` /
 `setup_collection_entries`), regardless of the mode.
+
+### Operating in Database Mode
+
+In database mode a tenant without definition rows has no usable collections at all — an empty
+"Data Management" sidebar, and no layout for the entries it may already hold. Two things follow:
+
+- **New tenants are seeded automatically.** `Tenant::created` imports every definition from the YAML
+  source for the new tenant (`Noerd\Support\SetupCollectionDefinitionImport`), so a fresh tenant
+  starts with the same collections a YAML-mode installation has. Nothing happens in `yaml` mode.
+- **Newly shipped YAML definitions are NOT imported automatically.** When a module update publishes
+  a new collection YAML, run the import again — it is idempotent and updates existing rows in place:
+
+  ```bash
+  php artisan noerd:setup-collections:import-yaml --all-tenants
+  ```
+
+`php artisan noerd:make-collection` always writes a YAML file and therefore has no effect in
+database mode; it warns about that. Create the collection in Setup → Collection Definitions instead,
+or import the written file afterwards.
 
 ### Switching Modes
 

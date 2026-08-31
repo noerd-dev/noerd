@@ -62,7 +62,7 @@ Every check goes through `Noerd\Helpers\AccessHelper`:
 
 With NO gate defined the profile baseline applies: `User`/`Admin` (and no
 profile) → everything, `ReadOnly` → only `canReadObject`/`canAccessApp`.
-Guests are never restricted (public apps, config discovery). Null arguments
+Guests are never restricted (config discovery, unauthenticated rendering). Null arguments
 (no model/app/action known) are always allowed.
 
 Defining a gate (e.g. in a service provider's `boot()`) replaces the baseline
@@ -88,7 +88,7 @@ write.
   matching ability — enforced even for custom overrides by the global
   `WriteGuardHook`; fields render readonly, save/delete buttons and keyboard
   shortcuts are hidden.
-- **Apps:** `AppAccessMiddleware`/`PublicAppMiddleware`, the app bar, the home
+- **Apps:** `AppAccessMiddleware`, the app bar, the home
   tiles and the allowed-app config discovery all consult `canAccessApp()`.
 - **Dashboard widgets and quick-menu buttons** declare `app:` (string) or
   `apps:` (list) in their YAML — an entry renders only when one of its apps is

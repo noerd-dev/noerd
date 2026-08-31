@@ -28,25 +28,6 @@ class Tenant extends Authenticatable
         'updated_at',
     ];
 
-    /**
-     * Get the UUID attribute with fallback to hash for backward compatibility.
-     */
-    public function getUuidAttribute(): ?string
-    {
-        // New projects use 'uuid' column, old projects use 'hash' column
-        return $this->attributes['uuid'] ?? $this->attributes['hash'] ?? null;
-    }
-
-    /**
-     * Set the UUID attribute with fallback to hash for backward compatibility.
-     */
-    public function setUuidAttribute(string $value): void
-    {
-        // For backward compatibility, always use 'hash' column for existing databases
-        // The accessor will still return it as 'uuid'
-        $this->attributes['hash'] = $value;
-    }
-
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(NoerdUser::class, 'users_tenants', 'tenant_id', 'user_id')->withPivot('profile_key');

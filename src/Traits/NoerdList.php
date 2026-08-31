@@ -22,6 +22,7 @@ use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ColumnFilterParser;
+use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\SchemaColumnCache;
@@ -194,6 +195,9 @@ trait NoerdList
 
     /** @var array<string, mixed>|null Last buildList() result, memoized per request. */
     protected ?array $builtListConfigCache = null;
+
+    /** @var array<string, mixed>|null */
+    protected ?array $headerControlsCache = null;
 
     /** @var array<string, bool>|null Request cache for isJsonColumnPath(), keyed by column field. */
     protected ?array $jsonColumnPathCache = null;
@@ -557,6 +561,64 @@ trait NoerdList
     }
 
     /**
+     * The generic header controls this list actually renders, resolved ONCE so the
+     * header row, the filter drawer and modal-title cannot disagree about what
+     * exists. Every consumer reads this — never re-derive "does the list have a
+     * search field / secondary action" from $listSettings at the call site.
+     *
+     * The action indices are preserved on purpose: splitting the YAML actions into
+     * a primary and a secondary group must not renumber them, because the position
+     * in the YAML is what assigns the keyboard shortcut.
+     *
+     * @return array{search: bool, csv: bool, secondary: array<int, array<string, mixed>>, primary: array<int, array<string, mixed>>, registry: array<int, string>}
+     */
+    public function headerControls(): array
+    {
+        if ($this->headerControlsCache !== null) {
+            return $this->headerControlsCache;
+        }
+
+        $config = $this->builtListConfig();
+        $settings = $config['listSettings'] ?? [];
+
+        // A picker is reduced to selecting rows: it offers neither the YAML actions
+        // nor the module-contributed ones. A read-denied list keeps its header but
+        // loses the data affordances (buildList() already stripped the actions).
+        $isPicker = $this->returnsSelection;
+        $actions = $isPicker ? [] : ($settings['actions'] ?? []);
+
+        return $this->headerControlsCache = [
+            'search' => ! ($settings['disableSearch'] ?? false) && ! ($config['objectAccessDenied'] ?? false),
+            'csv' => $this->enableCsvExport,
+            'secondary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') === 'secondary'),
+            'primary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') !== 'secondary'),
+            'registry' => $isPicker ? [] : app(HeaderActionsRegistry::class)->listActions(),
+        ];
+    }
+
+    /**
+     * Whether anything renders in the half of the header that collapses into the
+     * filter drawer below `lg` (search, CSV export, `style: secondary` actions).
+     */
+    public function hasCollapsibleControls(): bool
+    {
+        $controls = $this->headerControls();
+
+        return $controls['search'] || $controls['csv'] || $controls['secondary'] !== [];
+    }
+
+    /**
+     * Whether the header renders any generic control at all — the question
+     * modal-title asks before it injects them into a custom header slot.
+     */
+    public function hasHeaderControls(): bool
+    {
+        $controls = $this->headerControls();
+
+        return $this->hasCollapsibleControls() || $controls['primary'] !== [] || $controls['registry'] !== [];
+    }
+
+    /**
      * Open a row by its POSITION in the current page — the keyboard path only
      * (arrow keys track a positional index, Enter submits it). Resolving the
      * position costs a full listData() round; mouse clicks know the model id
@@ -724,6 +786,7 @@ trait NoerdList
         // The guard checks above resolved (and memoized) the pre-delete list —
         // drop it so the re-render queries the surviving rows.
         $this->builtListConfigCache = null;
+        $this->headerControlsCache = null;
         $this->resetPage();
     }
 
@@ -1378,6 +1441,9 @@ trait NoerdList
                 fn(array $action): bool => ($action['action'] ?? null) !== 'deleteSelected',
             ));
         }
+
+        // buildList() REPLACES the config, so anything derived from it must go too.
+        $this->headerControlsCache = null;
 
         return $this->builtListConfigCache = [
             'listId' => $this->listId,

@@ -2,7 +2,6 @@
 
 use Livewire\Component;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Models\TenantApp;
 
 new class extends Component {
     public function openApp(string $appName, string $route): void
@@ -69,37 +68,5 @@ new class extends Component {
                 @endforeach
             </div>
         </div>
-    @else
-        @php
-            // once(): the layout may render this view more than once per
-            // request — the public app tiles cannot change mid-request.
-            $publicApps = once(fn() => TenantApp::where('is_active', true)
-                ->where('is_public', true)
-                ->get());
-        @endphp
-        @if($publicApps->count() > 1)
-            <div x-show="showAppbar && (isDesktop || showSidebar)"
-                 x-transition
-                 @class([
-                    'bg-brand-navi border-r pt-[8px] border-gray-300 my-0 transition-[width] fixed top-0 lg:top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 flex flex-col'
-                ])
-                 :style="'width: var(--sidebar-apps-width)'"
-            >
-                <div class="text-xs text-center overflow-y-auto flex-1 pb-6">
-                    @foreach($publicApps as $tenantApp)
-                        <a href="{{ route($tenantApp->route) }}" class="cursor-pointer">
-                            <div class="hover:bg-brand-navi-hover flex mt-4 h-[45px] w-[45px] rounded-sm mx-auto">
-                                @if($tenantApp->icon)
-                                    <x-noerd::app-icon
-                                        :icon="$tenantApp->icon"
-                                        class="stroke-black border-transparent hover:border-gray-500! border-l-2"/>
-                                @endif
-                            </div>
-                            <div class="text-gray-900 text-[11px] mt-1">{{$tenantApp->title}}</div>
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-        @endif
     @endauth
 </div>

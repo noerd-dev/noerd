@@ -85,7 +85,7 @@ class AppAccessMiddleware
             );
         }
 
-        // Only set selected_app if none is currently selected
+        // Only select the app when the session carries no selection yet
         if (!TenantHelper::getSelectedApp()) {
             TenantHelper::setSelectedApp(mb_strtoupper($matchingApp));
         }

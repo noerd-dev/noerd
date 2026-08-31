@@ -287,7 +287,7 @@ The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\He
 
 | Gate (constant on `AccessHelper`) | Argument | Consulted by |
 |-----------------------------------|----------|--------------|
-| `noerd.access-app` (`APP_GATE`) | `string $appName` (tenant_apps.name, any case) | App switcher, app tiles, `AppAccessMiddleware`, `PublicAppMiddleware`, allowed-app config discovery |
+| `noerd.access-app` (`APP_GATE`) | `string $appName` (tenant_apps.name, any case) | App switcher, app tiles, `AppAccessMiddleware`, allowed-app config discovery |
 | `noerd.object-read` (`OBJECT_READ_GATE`) | `class-string $modelClass` | Lists (403 + row hiding) and detail mount (denied state) |
 | `noerd.object-write` (`OBJECT_WRITE_GATE`) | `class-string $modelClass` | Updating existing records: detail forms render read-only, custom list header actions hidden |
 | `noerd.object-create` (`OBJECT_CREATE_GATE`) | `class-string $modelClass` | Creating new records: store() on a new record, list "New …" actions hidden |
@@ -310,6 +310,6 @@ Gate::define(AccessHelper::APP_GATE, function (?Authenticatable $user, string $a
 
 **Important:**
 
-- The `$user` parameter MUST be nullable (`?Authenticatable`) — some call sites (public apps, config discovery) run for guests, and a non-nullable closure silently denies every guest check
+- The `$user` parameter MUST be nullable (`?Authenticatable`) — some call sites (config discovery, unauthenticated rendering) run for guests, and a non-nullable closure silently denies every guest check
 - The gate user is resolved from noerd's own auth guard (`AccessHelper` checks via `Gate::forUser(NoerdAuth::user())`), never from the host application's default guard — see `docs/auth.md`
 - Once a gate is defined, host-app `Gate::before`/`after` hooks apply to it (standard Laravel semantics); undefined gates are never touched

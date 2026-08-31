@@ -29,10 +29,14 @@ it('injects search and the YAML actions into a custom header of a list host', fu
         ->toContain('New Thing');
 });
 
-it('renders the controls exactly once for a standard list', function (): void {
+it('renders every control exactly once for a standard list', function (): void {
     $html = Livewire::test(StandardHeaderListComponent::class)->assertOk()->html();
 
+    // The generic header renders the controls itself (:listControls="false" on its
+    // modal-title) — the counts prove the modal-title injection did not add a second
+    // copy on top, and that the drawer reuses the same elements rather than cloning them.
     expect(mb_substr_count($html, 'wire:model.live.debounce.300ms="search"'))->toBe(1)
+        ->and(mb_substr_count($html, 'wire:key="list-search"'))->toBe(1)
         ->and(mb_substr_count($html, '$wire.listAction(null, [])'))->toBe(1);
 });
 

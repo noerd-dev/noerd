@@ -21,13 +21,18 @@ new class extends Component {
             abort(401);
         }
 
-        $tenants = NoerdAuth::user()->adminTenants();
-        $allowedUserIds = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
-            $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
-        })->get()->pluck('id')->toArray();
+        // A super admin administers the installation, so every account it can
+        // see on this screen is impersonatable; a tenant admin stays confined
+        // to the members of the tenants it administers.
+        if (! NoerdAuth::user()->isSuperAdmin()) {
+            $tenants = NoerdAuth::user()->adminTenants();
+            $allowedUserIds = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
+                $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
+            })->get()->pluck('id')->toArray();
 
-        if (in_array($userId, $allowedUserIds) === false) {
-            abort(401);
+            if (in_array($userId, $allowedUserIds) === false) {
+                abort(401);
+            }
         }
 
         // A super admin is never impersonatable from a tenant-admin screen:
@@ -46,22 +51,33 @@ new class extends Component {
 
     public function listData(): array
     {
-        $tenants = NoerdAuth::user()->adminTenants();
+        $requested = (int) ($this->listFilters['tenant_id'] ?? 0);
 
-        $rows = $this->listQuery($this->listModel)
-            ->whereHas('tenants', function ($relationQuery) use ($tenants): void {
+        $query = $this->listQuery($this->listModel)->with(['tenants']);
+
+        if (NoerdAuth::user()->isSuperAdmin()) {
+            // A super admin administers the whole installation: every account is
+            // visible, including one that belongs to no tenant at all. Only the
+            // header filter narrows the list.
+            if ($requested > 0) {
+                $query->whereHas('tenants', function ($relationQuery) use ($requested): void {
+                    $relationQuery->where('tenant_id', $requested);
+                });
+            }
+        } else {
+            $tenants = NoerdAuth::user()->adminTenants();
+
+            $query->whereHas('tenants', function ($relationQuery) use ($tenants, $requested): void {
                 $adminTenantIds = $tenants->pluck('id')->map(fn($id): int => (int) $id)->all();
-                $requested = (int) ($this->listFilters['tenant_id'] ?? 0);
                 $scope = $requested > 0
                     ? array_values(array_intersect($adminTenantIds, [$requested]))
                     : $adminTenantIds;
 
                 $relationQuery->whereIn('tenant_id', $scope ?: [0]);
-            })
-            ->with(['tenants'])
-            ->paginate($this->perPage);
+            });
+        }
 
-        return $this->buildList($rows);
+        return $this->buildList($query->paginate($this->perPage));
     }
 }; ?>
 

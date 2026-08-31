@@ -8,6 +8,8 @@ use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
+use Noerd\Support\SetupCollectionDefinitionImport;
+
 class MakeCollectionCommand extends Command
 {
     protected $signature = 'noerd:make-collection
@@ -21,6 +23,16 @@ class MakeCollectionCommand extends Command
     public function handle(): int
     {
         $this->info('Creating a new collection...');
+
+        // The written file is inert while the schemas are read from the
+        // database — say so before the user fills in a whole definition.
+        if (SetupCollectionDefinitionImport::isDatabaseMode()) {
+            $this->warn('Collections run in "database" mode (noerd.collections.mode).');
+            $this->warn('This command only writes a YAML file, which is NOT read in that mode.');
+            $this->warn('Create the collection in Setup > Collection Definitions instead, or import');
+            $this->warn('the file afterwards with: php artisan noerd:setup-collections:import-yaml');
+        }
+
         $this->newLine();
 
         // 1. Get collection name

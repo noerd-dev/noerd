@@ -17,16 +17,10 @@ return new class extends Migration {
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->unsignedBigInteger('selected_tenant_id')->nullable();
-            $table->string('selected_app')->nullable();
             $table->boolean('super_admin')->default(false);
             $table->rememberToken();
             $table->string('api_token', 80)->unique()->nullable();
-            $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
-
-            $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-            $table->index('selected_tenant_id');
         });
     }
 

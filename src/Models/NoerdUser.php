@@ -5,6 +5,7 @@ namespace Noerd\Models;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,6 +49,11 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     {
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
             ->withPivot('profile_key');
+    }
+
+    public function logins(): HasMany
+    {
+        return $this->hasMany(NoerdLogin::class, 'user_id');
     }
 
     public function adminTenants(): BelongsToMany
@@ -175,8 +181,13 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return $this->userSetting;
     }
 
-    // Backward compatibility accessors/mutators using session (via TenantSessionHelper)
-
+    /**
+     * The selected tenant is NOT a column on noerd_users: the live selection is
+     * session state and its persisted counterpart is
+     * noerd_user_settings.selected_tenant_id, both owned by TenantHelper. The
+     * accessor/mutator pair keeps $user->selected_tenant_id working as the
+     * public read/write API without a second, drifting copy of the value.
+     */
     public function getSelectedTenantIdAttribute(): ?int
     {
         return TenantHelper::getSelectedTenantId();
@@ -185,16 +196,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     public function setSelectedTenantIdAttribute(?int $value): void
     {
         TenantHelper::setSelectedTenantId($value);
-    }
-
-    public function getSelectedAppAttribute(): ?string
-    {
-        return TenantHelper::getSelectedApp();
-    }
-
-    public function setSelectedAppAttribute(?string $value): void
-    {
-        TenantHelper::setSelectedApp($value);
     }
 
     public function getLocaleAttribute(): string
@@ -231,7 +232,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             'password' => 'hashed',
             'is_owner' => 'boolean',
             'super_admin' => 'boolean',
-            'last_login_at' => 'datetime',
         ];
     }
 }

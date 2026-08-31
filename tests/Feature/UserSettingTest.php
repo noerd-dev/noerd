@@ -84,7 +84,7 @@ describe('TenantSessionHelper', function (): void {
         expect($user->setting->fresh()->selected_tenant_id)->toBe($tenant->id);
     });
 
-    it('allows setting selected_app via session', function (): void {
+    it('keeps the selected app in the session', function (): void {
         TenantHelper::setSelectedApp('SETUP');
 
         expect(TenantHelper::getSelectedApp())->toBe('SETUP');
@@ -148,15 +148,6 @@ describe('User Model with TenantSessionHelper', function (): void {
         expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id);
     });
 
-    it('allows setting selected_app via user attribute using session', function (): void {
-        $user = NoerdUser::factory()->create();
-
-        $user->selected_app = 'SETUP';
-
-        expect($user->selected_app)->toBe('SETUP');
-        expect(TenantHelper::getSelectedApp())->toBe('SETUP');
-    });
-
     it('returns selectedTenant from session via User model', function (): void {
         $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
@@ -185,7 +176,7 @@ describe('UserSetting via User Factory', function (): void {
         expect($user->isAdmin())->toBeTrue();
     });
 
-    it('sets selected_app via withSelectedApp', function (): void {
+    it('sets the selected app via withSelectedApp', function (): void {
         $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
 
         expect(TenantHelper::getSelectedApp())->toBe('SETUP');

@@ -150,8 +150,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     /**
      * The tenant every read is scoped to. SetupCollectionDefinition carries no
      * BelongsToTenant, so a null tenant used to drop the filter entirely and
-     * expose every tenant's definitions (a public-app guest resolves no
-     * selected tenant at all). Reads now fail closed instead.
+     * expose every tenant's definitions. Reads now fail closed instead.
      */
     private function scopeTenantId(?int $tenantId): ?int
     {

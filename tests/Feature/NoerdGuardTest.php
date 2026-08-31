@@ -99,7 +99,7 @@ describe('login flow', function (): void {
         expect(Auth::guard('noerd')->check())->toBeTrue();
         expect(Auth::guard('noerd')->id())->toBe($user->id);
         expect(Auth::guard('web')->check())->toBeFalse();
-        expect($user->fresh()->last_login_at)->not->toBeNull();
+        expect($user->logins()->count())->toBe(1);
     });
 
     it('redirects an authenticated noerd user away from the login page', function (): void {

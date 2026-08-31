@@ -3,10 +3,8 @@
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Noerd\Models\SetupCollection;
 use Noerd\Models\Tenant;
-use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
-use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
+use Noerd\Support\SetupCollectionDefinitionImport;
 
 class ImportSetupCollectionDefinitionsCommand extends Command
 {
@@ -20,11 +18,9 @@ class ImportSetupCollectionDefinitionsCommand extends Command
 
     public function handle(): int
     {
-        $yamlPath = base_path(config('noerd.collections.setup_yaml_path', 'app-configs/setup/collections'));
-        $yamlRepo = new YamlSetupCollectionDefinitionRepository($yamlPath);
-        $dbRepo = new DatabaseSetupCollectionDefinitionRepository();
+        $yamlPath = SetupCollectionDefinitionImport::yamlPath();
 
-        $definitions = $yamlRepo->all();
+        $definitions = SetupCollectionDefinitionImport::availableDefinitions();
         if ($definitions->isEmpty()) {
             $this->warn("No YAML files found in {$yamlPath}.");
 
@@ -42,31 +38,17 @@ class ImportSetupCollectionDefinitionsCommand extends Command
         $imported = 0;
 
         foreach ($tenants as $tenant) {
-            foreach ($definitions as $definition) {
-                if ($dryRun) {
+            if ($dryRun) {
+                foreach ($definitions as $definition) {
                     $this->line("[dry-run] would import {$definition->filename} for tenant {$tenant->id}");
-
-                    continue;
                 }
 
-                $existing = $dbRepo->find($definition->filename, $tenant->id);
-                $dbRepo->save(
-                    $definition,
-                    originalFilename: $existing ? $definition->filename : null,
-                    tenantId: $tenant->id,
-                );
+                continue;
+            }
 
-                // Ensure the per-tenant SetupCollection instance bucket exists so
-                // the dynamic sidebar entry surfaces the imported definition.
-                SetupCollection::firstOrCreate([
-                    'tenant_id' => $tenant->id,
-                    'collection_key' => $definition->key,
-                ], [
-                    'name' => $definition->titleList,
-                ]);
-
+            foreach (SetupCollectionDefinitionImport::forTenant($tenant->id) as $filename) {
                 $imported++;
-                $this->line("imported {$definition->filename} for tenant {$tenant->id}");
+                $this->line("imported {$filename} for tenant {$tenant->id}");
             }
         }
 
