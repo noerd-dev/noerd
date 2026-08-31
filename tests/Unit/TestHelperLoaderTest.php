@@ -45,11 +45,11 @@ it('ships the loader and the helpers in dist archives', function (): void {
 
     $ignored = [];
     foreach ($lines as $line) {
-        $line = trim($line);
+        $line = mb_trim($line);
         if (str_starts_with($line, '#') || ! str_contains($line, 'export-ignore')) {
             continue;
         }
-        $ignored[] = ltrim((string) strtok($line, " \t"), '/');
+        $ignored[] = mb_ltrim((string) strtok($line, " \t"), '/');
     }
 
     foreach (['tests/HelperLoader.php', 'tests/helpers.php', 'tests/TestCase.php'] as $path) {
