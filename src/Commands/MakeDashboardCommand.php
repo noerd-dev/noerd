@@ -5,7 +5,9 @@ namespace Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 use Noerd\Commands\Concerns\GeneratesResourceFiles;
+use Noerd\Models\TenantApp;
 
 class MakeDashboardCommand extends Command
 {
@@ -23,10 +25,19 @@ class MakeDashboardCommand extends Command
         $this->filesystem = $filesystem;
     }
 
+    /**
+     * The route name of the dashboard generated for the given app — the target
+     * noerd:create-app stores as the app's main route.
+     */
+    public static function routeNameFor(string $app): string
+    {
+        return Str::lower($app) . '.dashboard';
+    }
+
     public function handle(): int
     {
         $result = $this->selectApp($this->option('app'));
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
@@ -40,11 +51,11 @@ class MakeDashboardCommand extends Command
             $this->line('');
             $this->info('Dashboard files created successfully!');
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error creating dashboard: ' . $e->getMessage());
 
-            return 1;
+            return self::FAILURE;
         }
     }
 
@@ -76,9 +87,15 @@ class MakeDashboardCommand extends Command
     protected function addDashboardRoute(): void
     {
         $routeFile = base_path('routes/web.php');
+
+        if (! $this->filesystem->exists($routeFile)) {
+            $this->filesystem->ensureDirectoryExists(dirname($routeFile));
+            $this->filesystem->put($routeFile, "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n");
+        }
+
         $content = $this->filesystem->get($routeFile);
 
-        $routeName = "{$this->appConfigName}.dashboard";
+        $routeName = self::routeNameFor($this->appConfigName);
 
         if (str_contains($content, "'{$routeName}'")) {
             $this->warn("Route '{$routeName}' already exists in routes/web.php — skipping.");
@@ -88,37 +105,37 @@ class MakeDashboardCommand extends Command
 
         $route = "Route::livewire('{$this->appConfigName}', '{$this->appConfigName}-dashboard')->name('{$routeName}');";
 
-        if (! $this->confirm("Add dashboard route to routes/web.php?\n  <comment>{$route}</comment>", true)) {
+        if (! $this->confirmStep("Add dashboard route to routes/web.php?\n  <comment>{$route}</comment>")) {
             return;
         }
 
-        $this->filesystem->append($routeFile, "\n{$route}\n");
-        $this->line("<info>Route added:</info> {$route}");
+        $this->appendRoute($route);
     }
 
     protected function addDashboardNavigation(): void
     {
         $navPath = base_path("app-configs/{$this->appConfigName}/navigation.yml");
+        $routeName = self::routeNameFor($this->appConfigName);
 
         if (! $this->filesystem->exists($navPath)) {
-            $this->warn("Navigation file not found: {$navPath} — skipping.");
+            $this->createDashboardNavigation($navPath, $routeName);
 
             return;
         }
 
         $content = $this->filesystem->get($navPath);
 
-        if (str_contains($content, "route: {$this->appConfigName}.dashboard")) {
+        if (str_contains($content, "route: {$routeName}")) {
             $this->warn("Dashboard navigation entry already exists in {$navPath} — skipping.");
 
             return;
         }
 
         $navEntry = "    - title: Dashboard\n"
-            . "      route: {$this->appConfigName}.dashboard\n"
+            . "      route: {$routeName}\n"
             . "      heroicon: home";
 
-        if (! $this->confirm("Add dashboard navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>", true)) {
+        if (! $this->confirmStep("Add dashboard navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>")) {
             return;
         }
 
@@ -139,5 +156,49 @@ class MakeDashboardCommand extends Command
         $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
         $this->filesystem->put($navPath, $content);
         $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
+    }
+
+    /**
+     * A freshly created app has no navigation yet: write a minimal navigation.yml
+     * whose first block lists the dashboard, so the app is usable right away and
+     * noerd:make-resource / noerd:make-page can append their entries to that block.
+     */
+    protected function createDashboardNavigation(string $navPath, string $routeName): void
+    {
+        $title = TenantApp::query()
+            ->where('name', mb_strtoupper($this->appConfigName))
+            ->value('title') ?: Str::headline($this->appConfigName);
+
+        $navigation = "- title: '" . str_replace("'", "''", $title) . "'\n"
+            . "  name: {$this->appConfigName}\n"
+            . "  route: {$routeName}\n"
+            . "  block_menus:\n"
+            . "    - title: Overview\n"
+            . "      navigations:\n"
+            . "        - title: Dashboard\n"
+            . "          route: {$routeName}\n"
+            . "          heroicon: home\n";
+
+        if (! $this->confirmStep("Create {$this->appConfigName} navigation.yml with a dashboard entry?\n<comment>{$navigation}</comment>")) {
+            return;
+        }
+
+        $this->filesystem->ensureDirectoryExists(dirname($navPath));
+        $this->filesystem->put($navPath, $navigation);
+        $this->line("<info>Created:</info> {$navPath}");
+    }
+
+    /**
+     * Confirm a scaffolding step, defaulting to yes. A non-interactive run (e.g. the
+     * call from noerd:create-app) never asks: the child command shares the caller's
+     * output style, so the question would otherwise reach the caller's prompt.
+     */
+    protected function confirmStep(string $question): bool
+    {
+        if (! $this->input->isInteractive()) {
+            return true;
+        }
+
+        return $this->confirm($question, true);
     }
 }

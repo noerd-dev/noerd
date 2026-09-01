@@ -27,7 +27,7 @@ of them at once.
 | `noerd:create-admin` | Create a new user and make them an admin |
 | `noerd:make-admin` | Make an existing user an admin on all their tenants |
 | `noerd:create-tenant` | Create a new tenant with default profiles |
-| `noerd:create-app` | Create a new app (TenantApp) that can be assigned to tenants |
+| `noerd:create-app` | Create a new app (TenantApp) with its own dashboard that can be assigned to tenants |
 | `noerd:assign-apps-to-tenant` | Assign apps to a tenant with interactive selection |
 
 ### Scaffolding
@@ -190,7 +190,9 @@ php artisan noerd:create-tenant
 ## noerd:create-app
 
 Creates a new app (TenantApp) that can be assigned to tenants. Without options the command runs as
-an interactive wizard.
+an interactive wizard. Every app comes with its own dashboard: the command runs
+`noerd:make-dashboard` for the new app and stores the generated `{app}.dashboard` route as the
+app's main route (see [Create an App](create-app.md)).
 
 ```bash
 php artisan noerd:create-app
@@ -201,7 +203,7 @@ php artisan noerd:create-app
 | `--title=` | The display title of the app |
 | `--name=` | The unique name identifier of the app (uppercase) |
 | `--icon=` | The icon identifier for the app (Heroicon, searchable in the wizard) |
-| `--route=` | The main route name for the app (e.g. `crm.index`) |
+| `--route=` | Open an existing route (e.g. `crm.index`) instead of generating a dashboard |
 | `--active=1` | Whether the app is active (`1` or `0`) |
 
 ## noerd:assign-apps-to-tenant
@@ -326,7 +328,10 @@ php artisan noerd:make-page sent-mails --app=crm
 
 ## noerd:make-dashboard
 
-Generates a dashboard Blade file for an app.
+Generates a dashboard Blade file for an app (`resources/views/components/{app}-dashboard.blade.php`),
+adds the `{app}.dashboard` route to `routes/web.php` (inside the `noerd` + `app-access:{app}`
+middleware group) and links it from the app's `navigation.yml` — creating the navigation file when
+the app has none yet. `noerd:create-app` runs this command automatically for every new app.
 
 ```bash
 php artisan noerd:make-dashboard --app=crm
