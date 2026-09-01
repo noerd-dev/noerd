@@ -32,7 +32,7 @@ final class SetupCollectionDefinitionData
         foreach ($data['fields'] ?? [] as $field) {
             $name = (string) ($field['name'] ?? '');
             $fields[] = array_merge($field, [
-                'name' => preg_replace('/^(model\.|detailData\.)/', '', $name),
+                'name' => preg_replace('/^detailData\./', '', $name),
                 'label' => (string) ($field['label'] ?? ''),
                 'type' => (string) ($field['type'] ?? 'text'),
                 'colspan' => (int) ($field['colspan'] ?? 6),

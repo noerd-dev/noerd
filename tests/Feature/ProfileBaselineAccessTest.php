@@ -129,7 +129,7 @@ it('lets a defined gate replace the baseline in both directions', function (): v
 it('renders every form field readonly for a READ_ONLY profile without any gate', function (): void {
     $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
 
-    $html = Livewire::test('noerd::write-denied-test')->assertOk()->html();
+    $html = Livewire::test('noerd-test::write-denied-test')->assertOk()->html();
 
     preg_match_all('/<input\b[^>]*>/s', $html, $matches);
     $inputs = array_values(array_filter($matches[0], fn(string $tag): bool => str_contains($tag, 'wire:model')));

@@ -57,6 +57,15 @@ class SetupLanguage extends Model
     }
 
     /**
+     * The language the setup screens currently edit: the session choice made
+     * in the language switcher, otherwise the tenant's default language.
+     */
+    public static function selectedCode(): string
+    {
+        return session('selectedLanguage') ?? static::getDefaultCode();
+    }
+
+    /**
      * Ensure default languages exist for a tenant
      */
     public static function ensureDefaultLanguagesForTenant(int $tenantId): void

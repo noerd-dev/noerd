@@ -150,7 +150,7 @@ describe('rendered output', function (): void {
     it('renders a config without a theme in the configured system theme', function (): void {
         setSystemTheme('compact');
 
-        Livewire::test('noerd::theme-setting-test', ['detailComponent' => 'zz-plain-detail'])
+        Livewire::test('noerd-test::theme-setting-test', ['detailComponent' => 'zz-plain-detail'])
             ->assertSuccessful()
             ->assertSeeHtml('data-theme="compact"');
     });
@@ -158,7 +158,7 @@ describe('rendered output', function (): void {
     it('renders the YAML theme when enforcement is off', function (): void {
         setSystemTheme('compact');
 
-        Livewire::test('noerd::theme-setting-test', ['detailComponent' => 'zz-opinionated-detail'])
+        Livewire::test('noerd-test::theme-setting-test', ['detailComponent' => 'zz-opinionated-detail'])
             ->assertSuccessful()
             ->assertSeeHtml('data-theme="numbered"');
     });
@@ -166,7 +166,7 @@ describe('rendered output', function (): void {
     it('renders the enforced theme even where the YAML deviates', function (): void {
         setSystemTheme('compact', enforced: true);
 
-        Livewire::test('noerd::theme-setting-test', ['detailComponent' => 'zz-opinionated-detail'])
+        Livewire::test('noerd-test::theme-setting-test', ['detailComponent' => 'zz-opinionated-detail'])
             ->assertSuccessful()
             ->assertSeeHtml('data-theme="compact"')
             ->assertDontSeeHtml('data-theme="numbered"');

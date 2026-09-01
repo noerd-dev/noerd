@@ -3,43 +3,15 @@
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdList;
-use Noerd\Helpers\NoerdAuth;
 
-new class extends Component
-{
+new class extends Component {
     use NoerdList;
 
     public $listModel = SetupLanguage::class;
     public ?string $detailRoute = 'noerd.setup-language.detail';
 
-    public function mount(): void
-    {
-        $this->mountList();
-
-        // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
-
-        if (request()->create) {
-            $this->listAction();
-        }
-    }
-
-    public function listData(): array
-    {
-        // Custom sort order: is_default desc, sort_order, name
-        $rows = SetupLanguage::query()
-            ->when($this->search, fn ($query) => $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('code', 'like', '%' . $this->search . '%');
-            }))
-            ->orderBy('is_default', 'desc')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate($this->perPage);
-
-        return $this->buildList($rows);
-    }
-} ?>
+    public $detailComponent = 'noerd::setup-language-detail';
+}; ?>
 
 <x-noerd::page>
     <x-noerd::list />

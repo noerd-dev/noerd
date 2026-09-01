@@ -33,7 +33,7 @@ it('renders a permitted widget with its tile-unit size', function (): void {
     writeDashboardWidgetsFixture([
         [
             'policy' => 'canWidgetTest',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
             'width' => 2,
             'height' => 2,
         ],
@@ -54,7 +54,7 @@ it('hides a widget whose policy is denied', function (): void {
     writeDashboardWidgetsFixture([
         [
             'policy' => 'canWidgetTest',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
             'width' => 2,
             'height' => 2,
         ],
@@ -78,7 +78,7 @@ it('defaults width and height to one tile unit', function (): void {
     writeDashboardWidgetsFixture([
         [
             'policy' => 'canWidgetTest',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 
@@ -91,7 +91,7 @@ it('defaults width and height to one tile unit', function (): void {
 it('renders a widget without a policy key for every user', function (): void {
     writeDashboardWidgetsFixture([
         [
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 
@@ -122,15 +122,15 @@ it('shows only widgets whose declared app is assigned to the tenant and allowed'
     writeDashboardWidgetsFixture([
         [
             'app' => 'ZZ_DENIED_APP',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
         [
             'app' => 'ZZ_UNASSIGNED_APP',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
         [
             'app' => 'ZZ_ALLOWED_APP',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 

@@ -393,7 +393,7 @@ it('shows rename confirmation when a field name is changed', function (): void {
     Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'rename_test'])
         ->set('fields.0.name', 'headline_one')
         ->call('store')
-        ->assertSet('showRenameConfirmation', true)
+        ->assertSet('renameConfirmationPending', true)
         ->assertSet('pendingRenames', ['headline1' => 'headline_one']);
 });
 
@@ -428,9 +428,9 @@ it('renames field keys in entry data when confirmed', function (): void {
     Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'rename_test'])
         ->set('fields.0.name', 'headline_one')
         ->call('store')
-        ->assertSet('showRenameConfirmation', true)
+        ->assertSet('renameConfirmationPending', true)
         ->call('confirmRenameAndSave')
-        ->assertSet('showRenameConfirmation', false);
+        ->assertSet('renameConfirmationPending', false);
 
     $entry->refresh();
     expect($entry->data)->toHaveKey('headline_one', 'Hello World');
@@ -469,9 +469,9 @@ it('skips database rename when user declines', function (): void {
     Livewire::test('noerd::setup-collection-definition-detail', ['modelId' => 'rename_test'])
         ->set('fields.0.name', 'headline_one')
         ->call('store')
-        ->assertSet('showRenameConfirmation', true)
+        ->assertSet('renameConfirmationPending', true)
         ->call('skipRenameAndSave')
-        ->assertSet('showRenameConfirmation', false);
+        ->assertSet('renameConfirmationPending', false);
 
     $entry->refresh();
     expect($entry->data)->toHaveKey('headline1', 'Hello World');

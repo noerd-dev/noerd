@@ -22,19 +22,20 @@ new class extends Component
 
     public ?string $detailPrimary = 'setupCollectionId';
 
-    // Note: This component does NOT declare $detailModel because it uses custom layout from collectionLayout
-    // instead of the standard YAML config system
+    // No $detailModel: the form layout comes from the collection definition
+    // (collectionLayout), not from a detail YAML.
 
-    public array $detailData = [];
-    public ?SetupCollectionEntry $entry = null;
     public ?array $collectionLayout = null;
     public ?string $collectionKey = null;
     public array $images = [];
 
+    /** Whether the edited entry exists — drives the delete button. */
+    public bool $entryExists = false;
+
     public function mount(mixed $model = null, ?string $collectionKey = null): void
     {
-        // Note: We don't call initDetail here because this component uses custom layout
-        // from collectionLayout instead of YAML config. The modelId is bound via $detailPrimary.
+        // initDetail() is not used: the layout is the collection definition, the
+        // modelId is bound via $detailPrimary.
         if ($model !== null) {
             $this->modelId = $model instanceof SetupCollectionEntry ? $model->id : $model;
         }
@@ -42,18 +43,14 @@ new class extends Component
         // Ensure default languages exist for current tenant
         SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
 
-        $entry = new SetupCollectionEntry;
-        if ($this->modelId) {
-            $entry = SetupCollectionEntry::find($this->modelId) ?? new SetupCollectionEntry;
-        }
-
-        $this->entry = $entry->exists ? $entry : new SetupCollectionEntry;
+        $entry = $this->modelId ? SetupCollectionEntry::find($this->modelId) : null;
+        $this->entryExists = $entry !== null;
         $this->collectionKey = $collectionKey;
 
         // A deep link passes only the entry id — derive the collection from the
         // record, otherwise the data conversion below runs without a key.
-        if (! $this->collectionKey && $this->entry->exists) {
-            $parentKey = SetupCollection::find($this->entry->setup_collection_id)?->collection_key;
+        if (! $this->collectionKey && $entry) {
+            $parentKey = SetupCollection::find($entry->setup_collection_id)?->collection_key;
             $this->collectionKey = $parentKey ? mb_strtolower($parentKey) : null;
         }
 
@@ -62,26 +59,22 @@ new class extends Component
             $this->collectionLayout = SetupCollectionHelper::getCollectionFields($this->collectionKey);
         }
 
-        // Custom mount process - don't use mountModalProcess as it requires a YAML config
-        // Instead, use the collection layout directly
         $this->pageLayout = $this->collectionLayout ?? ['fields' => []];
 
         // Load data from the JSON data field
-        if ($this->entry->exists && $this->entry->data) {
-            $rawData = is_array($this->entry->data) ? $this->entry->data : [];
-            $this->detailData = $this->collectionKey
-                ? SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey)
-                : $rawData;
-        } else {
-            $this->detailData = [];
-        }
+        $rawData = is_array($entry?->data) ? $entry->data : [];
+        $this->detailData = $this->collectionKey && $rawData !== []
+            ? SetupFieldTypeConverter::convertCollectionData($rawData, $this->collectionKey)
+            : $rawData;
 
         // Ensure sort field is available
-        $this->detailData['sort'] ??= $this->entry->sort ?? 0;
+        $this->detailData['sort'] ??= $entry?->sort ?? 0;
     }
 
     public function store(): void
     {
+        $this->validateFromLayout();
+
         // Find or create the parent Collection
         $parentCollection = SetupCollection::firstOrCreate([
             'tenant_id' => NoerdAuth::user()->selected_tenant_id,
@@ -103,10 +96,7 @@ new class extends Component
         $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->modelId], $data);
 
         $this->storeProcess($entry);
-
-        if ($entry->wasRecentlyCreated) {
-            $this->entry = $entry;
-        }
+        $this->entryExists = true;
     }
 
     public function delete(): void
@@ -134,9 +124,14 @@ new class extends Component
 
     public function openSelectMediaModal(string $fieldName): void
     {
+        $picker = app(MediaResolverContract::class)->pickerComponent();
+        if (! $picker) {
+            return;
+        }
+
         $token = uniqid('media_', true);
         $this->detailData['__mediaToken'] = $token;
-        Noerd::modal('media::media-list', ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token]);
+        Noerd::modal($picker, ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token]);
     }
 
     #[On('mediaSelected')]
@@ -157,9 +152,8 @@ new class extends Component
     #[On('setupLanguageChanged')]
     public function refresh(): void
     {
-        $this->dispatch('$refresh');
+        // The listener itself triggers the re-render that picks up the new language.
     }
-
 } ?>
 
 <x-noerd::page>
@@ -174,24 +168,14 @@ new class extends Component
     </x-slot:header>
 
     @if($collectionLayout)
-        <!-- Sort Field -->
         <div class="flex">
-            <div class="flex ml-auto items-center my-6 space-x-4">
-                <div class="flex ml-auto items-center space-x-2">
-                    <label for="sort" class="text-sm text-gray-600 font-medium">{{ __('Sort Order') }}:</label>
-                    <input
-                        wire:model="detailData.sort"
-                        id="sort"
-                        type="number"
-                        min="0"
-                        step="1"
-                        class="w-16 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                    />
-                </div>
+            <div class="flex ml-auto items-center my-6 space-x-2">
+                <x-noerd::input-label for="sort" :value="__('Sort Order')" class="pb-0" />
+                <x-noerd::text-input wire:model="detailData.sort" id="sort" type="number" min="0" step="1" class="w-16 mt-0" />
             </div>
         </div>
 
-        <x-noerd::tab-content :layout="$collectionLayout" />
+        <x-noerd::tab-content :layout="$collectionLayout" :modelId="$modelId" />
     @else
         <div class="text-center py-8">
             <p class="text-gray-500">{{ __('Collection not found') }}</p>
@@ -199,6 +183,6 @@ new class extends Component
     @endif
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($entry) && $entry->exists"/>
+        <x-noerd::delete-save-bar :showDelete="$entryExists"/>
     </x-slot:footer>
 </x-noerd::page>

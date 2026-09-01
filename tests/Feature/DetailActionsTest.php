@@ -83,7 +83,7 @@ it('hides actions until the record is saved unless requiresId is false', functio
 });
 
 it('renders a route action as an Alpine $modalRoute call with the $modelId token resolved', function (): void {
-    registerTestLivewireRoute('zz-detail-action/{modelId}', 'noerd::theme-test', 'zz.detail.action');
+    registerTestLivewireRoute('zz-detail-action/{modelId}', 'noerd-test::theme-test', 'zz.detail.action');
 
     $html = renderDetailActions([
         [
@@ -101,7 +101,7 @@ it('renders a route action as an Alpine $modalRoute call with the $modelId token
 });
 
 it('prefers route over modalComponent on the same action and keeps the component as fallback', function (): void {
-    registerTestLivewireRoute('zz-detail-action-both/{modelId}', 'noerd::theme-test', 'zz.detail.both');
+    registerTestLivewireRoute('zz-detail-action-both/{modelId}', 'noerd-test::theme-test', 'zz.detail.both');
 
     $html = renderDetailActions([
         [
@@ -141,7 +141,7 @@ it('falls back to the component branch for a route action with a modalComponent'
 });
 
 it('applies requiresId and viewExists to route actions as well', function (): void {
-    registerTestLivewireRoute('zz-detail-action-guard/{modelId}', 'noerd::theme-test', 'zz.detail.guard');
+    registerTestLivewireRoute('zz-detail-action-guard/{modelId}', 'noerd-test::theme-test', 'zz.detail.guard');
 
     $needsId = renderDetailActions([
         ['label' => 'Needs Id Route', 'route' => 'zz.detail.guard'],

@@ -21,7 +21,7 @@ it('renders a spacer as an empty grid column without rendering an input', functi
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($admin);
 
-    Livewire::test('noerd::block-spacer-test')
+    Livewire::test('noerd-test::block-spacer-test')
         ->assertSuccessful()
         ->assertSeeHtml('for="model.a"')
         ->assertSeeHtml('for="model.b"')

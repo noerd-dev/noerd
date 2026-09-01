@@ -37,7 +37,7 @@ trait RoutedModal
         }
 
         session()->flash('noerd-modal.open', [
-            'component' => $this->getName(),
+            'component' => $this->componentName(),
             'arguments' => $this->routedModalArguments(),
             'url' => request()->fullUrl(),
         ]);

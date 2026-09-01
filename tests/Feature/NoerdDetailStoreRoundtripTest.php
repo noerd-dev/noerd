@@ -23,13 +23,16 @@ class ZzStoreRoundtripComponent extends Component
 {
     use NoerdDetail;
 
-    public const COMPONENT = 'zz-store-roundtrip-page';
-
     public $detailModel = Tenant::class;
 
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-store-roundtrip-page';
     }
 }
 

@@ -341,11 +341,11 @@ The `storeActiveListFilters` method is called automatically by the UI via `wire:
 
 The `NoerdList` trait extracts allowed columns from the `tableFilters()` output. Only columns returned by the filter methods can be filtered on, preventing users from manipulating filter parameters to query arbitrary columns.
 
-You can also define `ALLOWED_TABLE_FILTERS` as a constant in your component for an explicit whitelist:
+To allow additional keys, override the whitelist on the component:
 
 ```php
-protected const ALLOWED_TABLE_FILTERS = [
-    'vehicle_id',
-    'created_at',
-];
+protected function getAllowedListFilterColumns(): array
+{
+    return ['vehicle_id', 'created_at'];
+}
 ```

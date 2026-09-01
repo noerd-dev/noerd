@@ -36,8 +36,8 @@
                 $varName = mb_substr($value, 1);
                 if ($varName === 'modelId') {
                     $resolved[$key] = $modelId;
-                } elseif (isset($this) && property_exists($this, $varName)) {
-                    $resolved[$key] = $this->{$varName};
+                } elseif (isset($__livewire) && property_exists($__livewire, $varName)) {
+                    $resolved[$key] = $__livewire->{$varName};
                 } else {
                     $resolved[$key] = null;
                 }
@@ -55,32 +55,14 @@
             <nav class="inline-block" aria-label="Tabs">
                 @foreach ($layout['tabs'] as $tab)
                     @php
-                        $showTab = true;
-                        if (isset($tab['requiresId']) && $tab['requiresId'] && !$modelId) {
-                            $showTab = false;
-                        }
-                        if (isset($tab['permission'])) {
-                            $permissionModel = $tab['permissionModel'] ?? null;
-                            $showTab = $showTab && Gate::allows($tab['permission'], $permissionModel);
-                        }
-                        if (isset($tab['viewExists']) && !View::exists($tab['viewExists'])) {
-                            $showTab = false;
-                        }
-
+                        $showTab = \Noerd\Support\TabVisibility::renders($tab, $modelId);
                         // Reactive client-side visibility — mirrors field-level showIf
                         // (Alpine x-show against a Livewire property).
-                        $tabShowIf = '';
-                        if (isset($tab['showIf'])) {
-                            if (is_string($tab['showIf'])) {
-                                $tabShowIf = 'x-show="$wire.' . $tab['showIf'] . '"';
-                            } elseif (is_array($tab['showIf'])) {
-                                $tabShowIf = 'x-show="$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'\"";
-                            }
-                        }
+                        $tabShowIf = \Noerd\Support\TabVisibility::showIfExpression($tab);
                     @endphp
                     @if ($showTab)
                         @if ($tabShowIf)
-                            <div class="inline-flex" {!! $tabShowIf !!}>
+                            <div class="inline-flex" x-show="{{ $tabShowIf }}">
                         @endif
                         @if (isset($tab['modalRoute']))
                             @php

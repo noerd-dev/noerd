@@ -60,7 +60,17 @@ new class extends Component
         // Load collection layout
         $this->collectionLayout = SetupCollectionHelper::getCollectionFields($this->collectionKey);
 
-        if (request()->create) {
+        // Every collection definition owns one bucket row per tenant.
+        if ($this->collectionKey) {
+            SetupCollection::firstOrCreate([
+                'tenant_id' => NoerdAuth::user()->selected_tenant_id,
+                'collection_key' => mb_strtoupper($this->collectionKey),
+            ], [
+                'name' => $this->collectionLayout['titleList'] ?? ucfirst($this->collectionKey),
+            ]);
+        }
+
+        if (request()->boolean('create')) {
             $this->listAction();
         }
     }
@@ -81,23 +91,23 @@ new class extends Component
             ]);
         }
 
-        // Get or create the parent collection
-        $parentCollection = SetupCollection::firstOrCreate([
-            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
-            'collection_key' => mb_strtoupper($this->collectionKey),
-        ], [
-            'name' => ucfirst($this->collectionKey),
-        ]);
+        // The bucket row is created on mount — rendering never writes.
+        $parentCollectionId = SetupCollection::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
+            ->where('collection_key', mb_strtoupper($this->collectionKey))
+            ->value('id');
 
         // Get collection entries
         $query = SetupCollectionEntry::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
-            ->where('setup_collection_id', $parentCollection->id)
+            ->where('setup_collection_id', $parentCollectionId ?? 0)
             ->orderBy('sort', 'asc')
             ->orderBy('created_at', 'desc');
 
         // Apply search if provided
         if (! empty($this->search)) {
-            $query->where(function ($q): void {
+            $escapedSearch = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $this->search) . '%';
+            $languageCodes = SetupLanguage::getActiveCodes();
+
+            $query->where(function ($q) use ($escapedSearch, $languageCodes): void {
                 $searchable = 0;
 
                 if ($this->collectionLayout && isset($this->collectionLayout['fields'])) {
@@ -118,10 +128,14 @@ new class extends Component
                             continue;
                         }
 
-                        // Search in translatable fields
-                        $q->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}.de\") LIKE ?", ['%'.$this->search.'%'])
-                            ->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}.en\") LIKE ?", ['%'.$this->search.'%'])
-                            ->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}\") LIKE ?", ['%'.$this->search.'%']);
+                        // Search the plain value and every active language of a
+                        // translatable value.
+                        $q->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}\") LIKE ? ESCAPE '!'", [$escapedSearch]);
+                        foreach ($languageCodes as $languageCode) {
+                            if (preg_match('/^[a-z]{2,5}$/i', $languageCode)) {
+                                $q->orWhereRaw("JSON_EXTRACT(data, \"$.{$fieldKey}.{$languageCode}\") LIKE ? ESCAPE '!'", [$escapedSearch]);
+                            }
+                        }
                         $searchable++;
                     }
                 }
@@ -136,9 +150,7 @@ new class extends Component
 
         $rows = $query->paginate($this->perPage);
 
-        $selectedLanguage = $this->listFilters['language']
-            ?? session('selectedLanguage')
-            ?? $this->getDefaultLanguageCode();
+        $selectedLanguage = $this->listFilters['language'] ?? SetupLanguage::selectedCode();
 
         // Transform data for display
         $rows->getCollection()->transform(function ($entry) use ($selectedLanguage) {
@@ -146,7 +158,7 @@ new class extends Component
             $transformedData = [
                 'id' => $entry->id,
                 'sort' => $entry->sort ?? 0,
-                'updated_at' => $entry->updated_at->format('d.m.Y H:i'),
+                'updated_at' => $entry->updated_at,
             ];
 
             // Add dynamic fields from YAML configuration
@@ -210,7 +222,7 @@ new class extends Component
 
         // Add standard columns
         $columns[] = ['field' => 'sort', 'label' => __('Sort Order'), 'width' => 0.5];
-        $columns[] = ['field' => 'updated_at', 'label' => __('Last Modified')];
+        $columns[] = ['field' => 'updated_at', 'label' => __('Last Modified'), 'type' => 'datetime'];
 
         return $this->buildList($rows, [
             'title' => $collectionTitle,
@@ -220,19 +232,17 @@ new class extends Component
         ]);
     }
 
+    /**
+     * The language filter follows the setup language switcher (session) and
+     * falls back to the default language — read-only, the session is written
+     * by the switcher and by storeActiveListFilters().
+     */
     public function rendering(): void
     {
         $this->loadListFilters();
 
-        $selectedLanguage = session('selectedLanguage');
-        if ($selectedLanguage && empty($this->listFilters['language'])) {
-            $this->listFilters['language'] = $selectedLanguage;
-        }
-
-        if (empty($this->listFilters['language']) && empty(session('selectedLanguage'))) {
-            $defaultCode = $this->getDefaultLanguageCode();
-            $this->listFilters['language'] = $defaultCode;
-            session(['selectedLanguage' => $defaultCode]);
+        if (empty($this->listFilters['language'])) {
+            $this->listFilters['language'] = SetupLanguage::selectedCode();
         }
     }
 } ?>

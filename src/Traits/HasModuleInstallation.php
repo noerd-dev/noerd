@@ -755,27 +755,14 @@ trait HasModuleInstallation
     }
 
     /**
-     * Derive app key from title (replace umlauts, uppercase).
+     * The tenant-app key for a module key (umlauts transliterated, uppercase).
      */
-    protected function deriveAppKey(string $title): string
+    protected function deriveAppKey(string $moduleKey): string
     {
         return mb_strtoupper(str_replace(
             ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü', ' '],
             ['AE', 'OE', 'UE', 'SS', 'AE', 'OE', 'UE', '-'],
-            $title,
-        ));
-    }
-
-    /**
-     * Derive app key from title (replace umlauts, lowercase, kebab-case).
-     * Used for folder names in app-configs.
-     */
-    protected function deriveAppKeyLower(string $title): string
-    {
-        return mb_strtolower(str_replace(
-            ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü', ' '],
-            ['ae', 'oe', 'ue', 'ss', 'ae', 'oe', 'ue', '-'],
-            $title,
+            $moduleKey,
         ));
     }
 

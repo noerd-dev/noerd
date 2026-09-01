@@ -29,7 +29,7 @@ function renderRelationLinkCell(array $columnConfig, array $rowData = ['vehicle_
 }
 
 it('renders a relation_link route cell as $modalRoute with the id from idField', function (): void {
-    registerTestLivewireRoute('zz-cell-vehicle/{modelId}', 'noerd::theme-test', 'zz.cell.vehicle');
+    registerTestLivewireRoute('zz-cell-vehicle/{modelId}', 'noerd-test::theme-test', 'zz.cell.vehicle');
 
     $html = renderRelationLinkCell([
         'route' => 'zz.cell.vehicle',
@@ -43,7 +43,7 @@ it('renders a relation_link route cell as $modalRoute with the id from idField',
 });
 
 it('defaults idParam to modelId in both route and component mode', function (): void {
-    registerTestLivewireRoute('zz-cell-default/{modelId}', 'noerd::theme-test', 'zz.cell.default');
+    registerTestLivewireRoute('zz-cell-default/{modelId}', 'noerd-test::theme-test', 'zz.cell.default');
 
     $routeHtml = renderRelationLinkCell([
         'route' => 'zz.cell.default',

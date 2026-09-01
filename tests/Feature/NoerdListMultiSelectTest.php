@@ -25,8 +25,6 @@ class ZzBulkDeleteListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-bulk-delete-list';
-
     public function with(): array
     {
         return [
@@ -39,6 +37,11 @@ class ZzBulkDeleteListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-bulk-delete-list';
     }
 
     protected function getListConfig(?string $customName = null): array
@@ -61,8 +64,6 @@ class ZzNoBulkListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-no-bulk-list';
-
     public function with(): array
     {
         return [
@@ -75,6 +76,11 @@ class ZzNoBulkListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-no-bulk-list';
     }
 
     protected function getListConfig(?string $customName = null): array
@@ -189,7 +195,7 @@ it('re-renders when the refreshList event for the list name arrives', function (
     $component = Livewire::test(ZzBulkDeleteListComponent::class);
 
     // The listener name embeds the component name (see NoerdList::getListeners()).
-    $component->dispatch('refreshList-' . $component->instance()->getName())
+    $component->dispatch('refreshList-' . $component->instance()->getComponentName())
         ->assertDispatched('$refresh');
 });
 
@@ -197,8 +203,6 @@ it('re-renders when the refreshList event for the list name arrives', function (
 class ZzNarrowedBulkListComponent extends Component
 {
     use NoerdList;
-
-    public const COMPONENT = 'zz-narrowed-bulk-list';
 
     public $listModel = NoerdUser::class;
 
@@ -216,6 +220,11 @@ class ZzNarrowedBulkListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-narrowed-bulk-list';
     }
 
     protected function getListConfig(?string $customName = null): array

@@ -26,8 +26,6 @@ class ZzDetailTraitComponent extends Component
 {
     use NoerdDetail;
 
-    public const COMPONENT = 'zz-detail-trait-detail';
-
     public $detailModel = Tenant::class;
 
     public ?string $detailPrimary = 'tenantId';
@@ -35,6 +33,11 @@ class ZzDetailTraitComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-detail-trait-detail';
     }
 }
 

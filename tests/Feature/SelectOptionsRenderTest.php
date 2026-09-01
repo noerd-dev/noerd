@@ -36,7 +36,7 @@ function zzSelectField(array $overrides = []): array
 }
 
 it('renders an empty leading option when the bound value is null', function (): void {
-    Livewire::test('noerd::theme-test', [
+    Livewire::test('noerd-test::theme-test', [
         'initialModel' => [],
         'fields' => [zzSelectField()],
     ])
@@ -44,7 +44,7 @@ it('renders an empty leading option when the bound value is null', function (): 
 });
 
 it('renders no empty option once the value matches an option', function (): void {
-    Livewire::test('noerd::theme-test', [
+    Livewire::test('noerd-test::theme-test', [
         'initialModel' => ['status' => 'beta'],
         'fields' => [zzSelectField()],
     ])
@@ -52,7 +52,7 @@ it('renders no empty option once the value matches an option', function (): void
 });
 
 it('renders the placeholder as the empty option', function (): void {
-    Livewire::test('noerd::theme-test', [
+    Livewire::test('noerd-test::theme-test', [
         'initialModel' => [],
         'fields' => [zzSelectField(['placeholder' => 'Please choose'])],
     ])
@@ -60,7 +60,7 @@ it('renders the placeholder as the empty option', function (): void {
 });
 
 it('renders a value that matches no option instead of silently showing the first one', function (): void {
-    Livewire::test('noerd::theme-test', [
+    Livewire::test('noerd-test::theme-test', [
         'initialModel' => ['status' => 'gamma'],
         'fields' => [zzSelectField()],
     ])
@@ -68,7 +68,7 @@ it('renders a value that matches no option instead of silently showing the first
 });
 
 it('applies the same option handling in every theme', function (string $theme): void {
-    Livewire::test('noerd::theme-test', [
+    Livewire::test('noerd-test::theme-test', [
         'initialModel' => [],
         'theme' => $theme,
         'fields' => [zzSelectField()],

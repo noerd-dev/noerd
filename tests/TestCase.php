@@ -64,6 +64,9 @@ abstract class TestCase extends BaseTestCase
         $this->linkModuleIntoSkeleton();
         $this->withoutVite();
 
+        // Test-only Livewire components (synthetic layouts, theme probes) live
+        // with the tests — never in the package's production namespace.
+        Livewire::addNamespace('noerd-test', viewPath: __DIR__ . '/Feature/fixtures/components');
     }
 
     protected function tearDown(): void
@@ -183,15 +186,14 @@ abstract class TestCase extends BaseTestCase
         // Like the config below, the published app-configs are refreshed when the
         // skeleton copy no longer matches the package copy — copying only when
         // missing would pin the suite to stale YAMLs (e.g. old navigation route
-        // names) for the lifetime of the skeleton. navigation.yml is the freshness
-        // marker; content is compared because tests that back up and restore the
-        // published file rewrite it, so mtimes carry no signal here.
-        $navigationSource = dirname(__DIR__) . '/app-configs/setup/navigation.yml';
-        $navigationTarget = base_path('app-configs/setup/navigation.yml');
+        // names or field defaults) for the lifetime of the skeleton. Every file
+        // of the package tree is compared by content: tests that back up and
+        // restore a published file rewrite it, so mtimes carry no signal here.
+        $configSource = dirname(__DIR__) . '/app-configs';
+        $configTarget = base_path('app-configs');
 
-        if (! file_exists($navigationTarget)
-            || file_get_contents($navigationTarget) !== file_get_contents($navigationSource)) {
-            File::copyDirectory(dirname(__DIR__) . '/app-configs', base_path('app-configs'));
+        if (! $this->publishedConfigsMatch($configSource, $configTarget)) {
+            File::copyDirectory($configSource, $configTarget);
         }
 
         // The install commands treat a published config/noerd.php as the
@@ -204,5 +206,22 @@ abstract class TestCase extends BaseTestCase
         if (! file_exists($configTarget) || filemtime($configSource) > filemtime($configTarget)) {
             File::copy($configSource, $configTarget);
         }
+    }
+
+    /**
+     * Whether every file under the package app-configs has an identical copy in
+     * the skeleton. Extra files in the skeleton (test fixtures) are ignored.
+     */
+    private function publishedConfigsMatch(string $source, string $target): bool
+    {
+        foreach (File::allFiles($source) as $file) {
+            $copy = $target . '/' . $file->getRelativePathname();
+
+            if (! file_exists($copy) || file_get_contents($copy) !== $file->getContents()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -48,7 +48,7 @@ trait NoerdSettingsPage
                     ->toArray();
             }
 
-            $this->pageLayout = StaticConfigHelper::getSettingsFields($this->getName());
+            $this->pageLayout = StaticConfigHelper::getSettingsFields($this->componentName());
         });
     }
 
@@ -157,7 +157,7 @@ trait NoerdSettingsPage
     {
         $map = [];
         LayoutFields::walk(
-            StaticConfigHelper::getSettingsFields($this->getName())['fields'] ?? [],
+            StaticConfigHelper::getSettingsFields($this->componentName())['fields'] ?? [],
             function (array $field) use (&$map): void {
                 $name = $field['name'] ?? null;
                 if (! is_string($name) || ! str_contains($name, '.')) {
@@ -185,7 +185,7 @@ trait NoerdSettingsPage
             throw new RuntimeException(sprintf(
                 'Settings page [%s] must declare its tenant-singleton models: '
                 . "`public array \$settingsModels = ['detailData' => Model::class];`.",
-                $this->getName(),
+                $this->componentName(),
             ));
         }
 

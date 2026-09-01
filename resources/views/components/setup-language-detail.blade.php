@@ -4,8 +4,7 @@ use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdDetail;
 
-new class extends Component
-{
+new class extends Component {
     use NoerdDetail;
 
     public ?string $detailPrimary = 'setupLanguageId';
@@ -16,63 +15,52 @@ new class extends Component
     {
         $this->initDetail();
 
-        $language = new SetupLanguage;
-        if ($this->modelId) {
-            $language = SetupLanguage::find($this->modelId) ?? new SetupLanguage;
+        // The next free position — computed, so not a YAML default.
+        if (! $this->modelId) {
+            $this->detailData['sort_order'] = (int) SetupLanguage::max('sort_order') + 1;
+        }
+    }
+
+    /**
+     * The last language and the only active default language stay — the
+     * delete button is hidden for them and delete() refuses.
+     */
+    public function canDeleteLanguage(): bool
+    {
+        if (! $this->modelId || ($this->detailData['is_default'] ?? false)) {
+            return false;
         }
 
-        $this->detailData = $language->toArray();
-
-        // Set defaults for new languages
-        if (! $language->exists) {
-            $this->detailData['is_active'] = true;
-            $this->detailData['is_default'] = false;
-            $this->detailData['sort_order'] = SetupLanguage::max('sort_order') + 1;
-        }
+        return SetupLanguage::count() > 1;
     }
 
     public function delete(): void
     {
-        $language = SetupLanguage::find($this->modelId);
-
-        // Prevent deleting the last language
-        if (SetupLanguage::count() <= 1) {
-            session()->flash('error', __('The last language cannot be deleted.'));
-
+        if (! $this->canDeleteLanguage()) {
             return;
         }
 
-        // Prevent deleting default language if it's the only one
-        if ($language?->is_default && SetupLanguage::where('is_active', true)->count() <= 1) {
-            session()->flash('error', __('The default language cannot be deleted while it is the only active language.'));
-
-            return;
-        }
-
-        $language?->delete();
+        SetupLanguage::find($this->modelId)?->delete();
         $this->closeModalProcess($this->getListComponent());
     }
-} ?>
+}; ?>
 
 <x-noerd::page>
     <x-slot:header>
         <x-noerd::modal-title>{{ __('Language') }}</x-noerd::modal-title>
     </x-slot:header>
 
-    <x-noerd::tab-content :layout="$pageLayout">
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
         <x-slot:tab1>
-            @if($modelId && $detailData['is_default'] ?? false)
-                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-sm text-blue-800">
-                        <x-icon name="information-circle" class="w-5 h-5 inline-block mr-1"/>
-                        {{ __('This language is set as the default language and cannot be deleted.') }}
-                    </p>
-                </div>
+            @if($modelId && ($detailData['is_default'] ?? false))
+                <x-noerd::info-box>
+                    {{ __('This language is set as the default language and cannot be deleted.') }}
+                </x-noerd::info-box>
             @endif
         </x-slot:tab1>
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($modelId) && !($detailData['is_default'] ?? false)"/>
+        <x-noerd::delete-save-bar :showDelete="$this->canDeleteLanguage()"/>
     </x-slot:footer>
 </x-noerd::page>

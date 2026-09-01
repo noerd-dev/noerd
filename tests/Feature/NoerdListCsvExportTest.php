@@ -99,8 +99,6 @@ class ZzCsvExportListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-csv-export-list';
-
     public function with(): array
     {
         return [
@@ -113,6 +111,11 @@ class ZzCsvExportListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-csv-export-list';
     }
 
     protected function getListConfig(?string $customName = null): array
