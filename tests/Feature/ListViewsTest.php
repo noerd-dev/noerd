@@ -544,13 +544,14 @@ class TestableListViewComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-view-test-list';
-
-    public const DETAIL_COMPONENT = 'zz-view-test-list';
-
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-view-test-list';
     }
 }
 
@@ -558,12 +559,13 @@ class TestableSingleViewComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-single-view-test-list';
-
-    public const DETAIL_COMPONENT = 'zz-single-view-test-list';
-
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-single-view-test-list';
     }
 }

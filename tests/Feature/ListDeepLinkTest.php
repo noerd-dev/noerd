@@ -54,8 +54,6 @@ class ZzDeepLinkProductsListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-deep-link-products-list';
-
     public $detailComponent = 'zz-deep-link-product-page';
 
     public function with(): array
@@ -67,13 +65,16 @@ class ZzDeepLinkProductsListComponent extends Component
     {
         return '<div></div>';
     }
+
+    protected function componentName(): string
+    {
+        return 'zz-deep-link-products-list';
+    }
 }
 
 class ZzDeepLinkNamespacedListComponent extends Component
 {
     use NoerdList;
-
-    public const COMPONENT = 'zz-module::zz-deep-link-customers-list';
 
     public $detailComponent = 'zz-deep-link-customer-detail';
 
@@ -85,5 +86,10 @@ class ZzDeepLinkNamespacedListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-module::zz-deep-link-customers-list';
     }
 }

@@ -11,7 +11,6 @@ new class extends Component {
     public ?string $detailPrimary = 'tenantId';
 
     public $detailModel = Tenant::class;
-    public const DETAIL_COMPONENT = 'noerd::tenant-detail';
 
     public function mount(): void
     {

@@ -1,17 +1,21 @@
 <?php
 
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Facades\Noerd;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Support\SetupCollectionDefinitionData;
 use Noerd\Traits\NoerdDetail;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
+    use NoerdDetail;
+
     /**
      * Entry count for the delete confirmation. Computed (request-cached) —
      * the previous inline @php block ran two queries on EVERY render,
@@ -31,8 +35,6 @@ new class extends Component
         return $collection ? $collection->entries()->count() : 0;
     }
 
-    use NoerdDetail;
-
     public ?string $detailPrimary = 'setupCollectionDefinitionId';
 
     public array $fields = [];
@@ -41,7 +43,8 @@ new class extends Component
 
     public array $originalFieldNames = [];
 
-    public bool $showRenameConfirmation = false;
+    /** True while the rename question is open — the next store() proceeds. */
+    public bool $renameConfirmationPending = false;
 
     public array $pendingRenames = [];
 
@@ -137,9 +140,10 @@ new class extends Component
         }
 
         // If there are renames and user hasn't confirmed yet, ask
-        if ($renames && ! $this->showRenameConfirmation) {
+        if ($renames && ! $this->renameConfirmationPending) {
             $this->pendingRenames = $renames;
-            $this->showRenameConfirmation = true;
+            $this->renameConfirmationPending = true;
+            Noerd::modal('noerd::setup-collection-rename-modal', ['renames' => $renames]);
 
             return;
         }
@@ -182,10 +186,16 @@ new class extends Component
         $this->showSuccessIndicator = true;
     }
 
+    #[On('collectionRenameConfirmed')]
+    public function renameConfirmed(bool $apply): void
+    {
+        $apply ? $this->confirmRenameAndSave() : $this->skipRenameAndSave();
+    }
+
     public function confirmRenameAndSave(): void
     {
         $this->renameFieldsInDatabase();
-        $this->showRenameConfirmation = false;
+        $this->renameConfirmationPending = false;
         $this->syncOriginalFieldNames();
         $this->store();
     }
@@ -193,7 +203,7 @@ new class extends Component
     public function skipRenameAndSave(): void
     {
         $this->pendingRenames = [];
-        $this->showRenameConfirmation = false;
+        $this->renameConfirmationPending = false;
         $this->syncOriginalFieldNames();
         $this->store();
     }
@@ -384,35 +394,6 @@ new class extends Component
             {{ __('Add field') }}
         </x-noerd::button>
     </div>
-
-    @if($showRenameConfirmation)
-        <div class="fixed inset-0 z-50 flex items-center justify-center" x-data x-trap.noscroll="true" x-on:keydown.escape.window="$wire.skipRenameAndSave()">
-            <button type="button" class="fixed inset-0 bg-gray-800/50" aria-label="{{ __('No, skip') }}" wire:click="skipRenameAndSave"></button>
-            <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" role="dialog" aria-modal="true" aria-label="{{ __('Fields were renamed') }}">
-                <div class="text-lg font-semibold text-gray-900 mb-2">{{ __('Fields were renamed') }}</div>
-                <p class="text-sm text-gray-600 mb-4">{{ __('Would you like to update existing entries to use the new field names?') }}</p>
-                <ul class="text-sm text-gray-700 mb-4 space-y-1">
-                    @foreach($pendingRenames as $oldName => $newName)
-                        <li class="flex items-center gap-2">
-                            <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{{ $oldName }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{{ $newName }}</span>
-                        </li>
-                    @endforeach
-                </ul>
-                <div class="flex justify-end gap-2">
-                    <x-noerd::button variant="secondary" wire:click="skipRenameAndSave">
-                        {{ __('No, skip') }}
-                    </x-noerd::button>
-                    <x-noerd::button variant="primary" wire:click="confirmRenameAndSave">
-                        {{ __('Yes, update') }}
-                    </x-noerd::button>
-                </div>
-            </div>
-        </div>
-    @endif
 
     <x-slot:footer>
         <div class="flex items-center w-full gap-2">

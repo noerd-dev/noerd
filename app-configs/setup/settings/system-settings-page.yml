@@ -1,0 +1,18 @@
+title: System Settings
+fields:
+  - name: detailData.currency
+    label: Currency
+    type: select
+    optionsMethod: currencyOptions
+    required: true
+    helpText: Select the currency for your company
+  - name: detailData.detail_theme
+    label: Theme
+    type: select
+    optionsMethod: themeOptions
+    required: true
+    helpText: Default theme for all detail forms. A detail configuration that defines its own theme keeps it.
+  - name: detailData.detail_theme_enforced
+    label: Enforce in Setup
+    type: checkbox
+    helpText: Apply the selected theme everywhere, even where a detail configuration defines a different one.

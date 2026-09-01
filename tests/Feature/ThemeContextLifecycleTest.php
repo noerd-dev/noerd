@@ -39,7 +39,7 @@ class ThemeContextFixturePage extends Component
         return '<div>theme-during-render:{{ \Noerd\Support\ThemeContext::current() }}</div>';
     }
 
-    public function getName(): string
+    protected function componentName(): string
     {
         return 'zz-theme-context-fixture';
     }

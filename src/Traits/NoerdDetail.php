@@ -203,7 +203,7 @@ trait NoerdDetail
     {
         $this->storeProcess($model);
 
-        $this->dispatch('detailStored-' . $this->getName(), modelId: $model->id);
+        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id);
     }
 
     protected function returnsArray(string $method): bool
@@ -298,7 +298,7 @@ trait NoerdDetail
     protected function syncEmbeddedDetailData(): void
     {
         if ($this->embedded) {
-            $this->dispatch('detailDataUpdated-' . $this->getName(), detailData: $this->syncPayload());
+            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload());
         }
     }
 
@@ -319,9 +319,9 @@ trait NoerdDetail
         }
 
         // Hand-built page components (`*-page`) ship no detail YAML — they define
-        // their layout in the component itself (legacy pages still on NoerdDetail;
-        // new pages use the NoerdPage trait and pages/{name}.yml instead). Only a
-        // DETAIL_COMPONENT constant pointing at a `*-detail` opts back into YAML.
+        // their layout in the component itself (pages use the NoerdPage trait and
+        // pages/{name}.yml). Only a getDetailComponent() override pointing at a
+        // `*-detail` opts back into YAML.
         $detailComponent = $this->getDetailComponent();
         if (!Str::endsWith($detailComponent, '-page')) {
             $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
@@ -434,7 +434,7 @@ trait NoerdDetail
     protected function getListeners(): array
     {
         return $this->pageGetListeners() + [
-            'storeDetail-' . $this->getName() => 'store',
+            'storeDetail-' . $this->componentName() => 'store',
         ];
     }
 }

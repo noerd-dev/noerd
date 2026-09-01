@@ -26,8 +26,6 @@ class ZzLayoutDefaultsComponent extends Component
 {
     use NoerdDetail;
 
-    public const COMPONENT = 'zz-layout-defaults-detail';
-
     public $detailModel = Tenant::class;
 
     public ?string $detailPrimary = 'tenantId';
@@ -40,6 +38,11 @@ class ZzLayoutDefaultsComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-layout-defaults-detail';
     }
 }
 

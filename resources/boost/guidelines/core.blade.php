@@ -1113,7 +1113,7 @@ test. A test that asserts the current content of a real YAML config is wrong by 
   X renders in theme Y" tests. If such a test exists, rewrite or delete it.
 - **DO test the mechanics with synthetic layouts and fixtures**: what must be proven is that a YAML
   change (any value) has the correct EFFECT. Use dedicated test components that receive a synthetic
-  layout (reference: `noerd::theme-test` / `noerd::theme-setting-test` + `ThemeTest` in the
+  layout (reference: `noerd-test::theme-test` / `noerd-test::theme-setting-test` + `ThemeTest` in the
   noerd module) or runtime-written fixture YAMLs under the testbench skeleton (reference:
   `StaticConfigHelperFeatureTest`, `PerAppConfigResolutionTest`), plus factories/mocks for data.
 - **The modal target is configuration too**: `route:` vs. `modalComponent:`/`component:`,

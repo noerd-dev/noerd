@@ -55,8 +55,6 @@ class ZzRouteFallbackListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-route-fallback-test-list';
-
     public $detailComponent = 'zz-fallback-detail';
 
     public ?string $detailRoute = 'zz.fallback.detail';
@@ -65,18 +63,26 @@ class ZzRouteFallbackListComponent extends Component
     {
         return '<div></div>';
     }
+
+    protected function componentName(): string
+    {
+        return 'zz-route-fallback-test-list';
+    }
 }
 
 class ZzComponentOnlyListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-component-only-test-list';
-
     public $detailComponent = 'zz-component-only-detail';
 
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-component-only-test-list';
     }
 }

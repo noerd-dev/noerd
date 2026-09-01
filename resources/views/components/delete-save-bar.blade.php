@@ -1,9 +1,7 @@
 @props([
-    'attributes' => null,
     'showDelete' => false,
     'showSave' => true,
     'deleteMessage' => null,
-    'modelId' => null,
 ])
 
 @php
@@ -44,21 +42,19 @@
         @if ($deleteMessage)
             <x-noerd::button
                 variant="danger"
-                wire:key="{{ \Illuminate\Support\Str::uuid() }}"
+                wire:key="delete-confirm"
                 wire:click="delete"
                 x-show="showButtons"
                 wire:confirm="{{ $deleteMessage }}"
-                @click="show = false"
             >
                 {{ __('Delete') }}
             </x-noerd::button>
         @else
             <x-noerd::button
                 variant="danger"
-                wire:key="{{ \Illuminate\Support\Str::uuid() }}"
+                wire:key="delete-confirm"
                 wire:click="delete"
                 x-show="showButtons"
-                @click="show = false"
             >
                 {{ __('Delete') }}
             </x-noerd::button>
@@ -71,7 +67,7 @@
         @if ($showDelete)
             <x-noerd::button
                 variant="danger"
-                wire:key="{{ \Illuminate\Support\Str::uuid() }}"
+                wire:key="delete-open"
                 x-show="! showButtons"
                 @click="showButtons = true"
             >

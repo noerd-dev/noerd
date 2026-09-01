@@ -18,11 +18,6 @@ class NoerdPageFixturePage extends Component
         return '<div></div>';
     }
 
-    public function getName(): string
-    {
-        return 'zz-fixture-page';
-    }
-
     /** @return array<string, string> */
     public function exposedListeners(): array
     {
@@ -32,6 +27,11 @@ class NoerdPageFixturePage extends Component
     public function exposedListComponent(): string
     {
         return $this->getListComponent();
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-fixture-page';
     }
 }
 
@@ -44,11 +44,6 @@ class NoerdPageFixtureDetail extends Component
         return '<div></div>';
     }
 
-    public function getName(): string
-    {
-        return 'zz-fixture-detail';
-    }
-
     /** @return array<string, string> */
     public function exposedListeners(): array
     {
@@ -58,6 +53,11 @@ class NoerdPageFixtureDetail extends Component
     public function exposedListComponent(): string
     {
         return $this->getListComponent();
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-fixture-detail';
     }
 }
 

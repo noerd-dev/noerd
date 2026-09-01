@@ -73,7 +73,7 @@ afterEach(function (): void {
 it('creates the config file with the widget when it does not exist', function (): void {
     invokeEnsureDashboardWidget([
         'policy' => 'canWidgetTest',
-        'component' => 'noerd::dashboard-widget-test',
+        'component' => 'noerd-test::dashboard-widget-test',
         'width' => 2,
         'height' => 2,
     ]);
@@ -83,7 +83,7 @@ it('creates the config file with the widget when it does not exist', function ()
     expect($config['widgets'])->toHaveCount(1)
         ->and($config['widgets'][0])->toBe([
             'policy' => 'canWidgetTest',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
             'width' => 2,
             'height' => 2,
         ]);
@@ -100,7 +100,7 @@ it('appends the widget to an existing config', function (): void {
 
     invokeEnsureDashboardWidget([
         'policy' => 'canWidgetTest',
-        'component' => 'noerd::dashboard-widget-test',
+        'component' => 'noerd-test::dashboard-widget-test',
         'width' => 2,
         'height' => 2,
     ]);
@@ -109,7 +109,7 @@ it('appends the widget to an existing config', function (): void {
 
     expect($config['widgets'])->toHaveCount(2)
         ->and($config['widgets'][0]['component'])->toBe('other::widget')
-        ->and($config['widgets'][1]['component'])->toBe('noerd::dashboard-widget-test');
+        ->and($config['widgets'][1]['component'])->toBe('noerd-test::dashboard-widget-test');
 });
 
 it('does not duplicate or overwrite an existing widget with the same component', function (): void {
@@ -117,13 +117,13 @@ it('does not duplicate or overwrite an existing widget with the same component',
     File::ensureDirectoryExists(dirname($path));
     File::put($path, Yaml::dump([
         'widgets' => [
-            ['policy' => 'canCustomized', 'component' => 'noerd::dashboard-widget-test', 'width' => 3, 'height' => 1],
+            ['policy' => 'canCustomized', 'component' => 'noerd-test::dashboard-widget-test', 'width' => 3, 'height' => 1],
         ],
     ], 10, 2));
 
     invokeEnsureDashboardWidget([
         'policy' => 'canWidgetTest',
-        'component' => 'noerd::dashboard-widget-test',
+        'component' => 'noerd-test::dashboard-widget-test',
         'width' => 2,
         'height' => 2,
     ]);
@@ -133,7 +133,7 @@ it('does not duplicate or overwrite an existing widget with the same component',
     expect($config['widgets'])->toHaveCount(1)
         ->and($config['widgets'][0])->toBe([
             'policy' => 'canCustomized',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
             'width' => 3,
             'height' => 1,
         ]);
@@ -150,7 +150,7 @@ it('rewrites legacy component names to the new component', function (): void {
 
     invokeEnsureDashboardWidget([
         'policy' => 'canWidgetTest',
-        'component' => 'noerd::dashboard-widget-test',
+        'component' => 'noerd-test::dashboard-widget-test',
         'width' => 2,
         'height' => 2,
     ], ['noerd::legacy-widget']);
@@ -158,5 +158,5 @@ it('rewrites legacy component names to the new component', function (): void {
     $config = Yaml::parseFile($path);
 
     expect($config['widgets'])->toHaveCount(1)
-        ->and($config['widgets'][0]['component'])->toBe('noerd::dashboard-widget-test');
+        ->and($config['widgets'][0]['component'])->toBe('noerd-test::dashboard-widget-test');
 });

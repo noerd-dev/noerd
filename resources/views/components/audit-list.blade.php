@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Noerd\Models\NoerdUser;
 use Noerd\Traits\BelongsToTenant;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -14,6 +15,9 @@ new class extends Component {
     public ?int $modelId = null;
 
     public array $audits = [];
+
+    /** @var array<int, string> user id => email */
+    public array $userEmails = [];
 
     public function mount(): void
     {
@@ -30,6 +34,9 @@ new class extends Component {
         $model = $this->modelClass::findOrFail($this->modelId);
 
         $this->audits = $model->audits()->latest('id')->get()->toArray();
+        $this->userEmails = NoerdUser::whereIn('id', collect($this->audits)->pluck('user_id')->filter()->unique())
+            ->pluck('email', 'id')
+            ->all();
     }
 }; ?>
 
@@ -41,7 +48,7 @@ new class extends Component {
     <x-noerd::tab-content :layout="[]" :modelId="$modelId" :showBlock="false">
         <x-slot:tab1>
             <div class="pb-8">
-                <x-noerd::audit-table :audits="$audits"/>
+                <x-noerd::audit-table :audits="$audits" :userEmails="$userEmails"/>
             </div>
         </x-slot:tab1>
     </x-noerd::tab-content>

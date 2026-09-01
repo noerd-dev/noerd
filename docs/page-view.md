@@ -88,7 +88,6 @@ new class extends Component {
     public ?string $detailPrimary = 'accountId';
 
     public $detailModel = Account::class;
-    public const LIST_COMPONENT = 'crm::accounts-list';
 }; ?>
 
 <x-noerd::page>
@@ -113,8 +112,10 @@ new class extends Component {
   `$detailModel` is set, loads the optional page YAML into `$pageLayout` and resolves quick-create.
 - The embedded detail is mounted with `embedded: true` — `x-noerd::page` then renders the detail
   chrome-less (no header/footer/scroll wrapper), the page owns all chrome.
-- `LIST_COMPONENT` is only needed for namespaced lists; a same-namespace `account-page` derives
-  `accounts-list` automatically (`getListComponent()` strips `-page` and `-detail` alike).
+- The list refreshed when the page closes is derived from the component name with its namespace
+  kept (`crm::account-page` → `crm::accounts-list`, `getListComponent()` strips `-page` and
+  `-detail` alike). A list that does not follow the plural convention overrides
+  `protected function getListComponent(): string`.
 - `$detailPrimary` binds `$modelId` to the page's URL parameter (`?accountId=5`) via the trait's
   `queryStringNoerdPage()` — never redeclare `$modelId` or add a `#[Url]` attribute. The embedded
   detail may declare the SAME alias (it does, for standalone use): an `embedded: true` instance

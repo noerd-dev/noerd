@@ -12,11 +12,12 @@ fields:
     required: true
   - name: detailData.sort_order
     label: Sort Order
-    type: text
+    type: number
     colspan: 3
   - name: detailData.is_active
     label: Active
     type: checkbox
+    default: true
     colspan: 6
   - name: detailData.is_default
     label: Default

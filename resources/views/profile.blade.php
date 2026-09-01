@@ -26,12 +26,10 @@
             </x-noerd::box>
         @endif
 
-        {{--
-        <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">
+        <x-noerd::box>
             <div class="max-w-xl">
                 <livewire:noerd::profile.delete-user-form />
             </div>
-        </div>
-        --}}
+        </x-noerd::box>
     </div>
 </x-noerd::app-layout>

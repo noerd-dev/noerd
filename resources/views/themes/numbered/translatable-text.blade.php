@@ -15,7 +15,7 @@
     $type = in_array($type, ['text', 'email', 'url', 'tel'], true) ? $type : 'text';
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
-    $selectedLang = session('selectedLanguage') ?? 'de';
+    $selectedLang = \Noerd\Models\SetupLanguage::selectedCode();
 @endphp
 
 <div wire:key="{{ $name . $selectedLang }}">

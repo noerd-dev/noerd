@@ -2,7 +2,6 @@
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Support\SetupCollectionDefinitionData;
@@ -15,12 +14,7 @@ new class extends Component
 
     public ?string $detailRoute = 'noerd.setup-collection-definition.detail';
 
-
-    public function mount(): void
-    {
-        $this->listId = Str::random();
-        $this->loadListFilters();
-    }
+    public $detailComponent = 'noerd::setup-collection-definition-detail';
 
     public function with(): array
     {
@@ -78,12 +72,12 @@ new class extends Component
 
         return [
             'listConfig' => $this->buildList($rows, [
-                'title' => 'Collection Definitions',
-                'actions' => [['label' => 'New Collection Definition', 'action' => 'listAction']],
+                'title' => __('Collection Definitions'),
+                'actions' => [['label' => __('New Collection Definition'), 'action' => 'listAction']],
                 'disableSearch' => false,
                 'columns' => [
                     ['field' => 'titleList', 'label' => __('Title (plural)')],
-                    ['field' => 'key', 'label' => 'Key'],
+                    ['field' => 'key', 'label' => __('Key')],
                     ['field' => 'fieldCount', 'label' => __('Fields')],
                     ['field' => 'entryCount', 'label' => __('Entries')],
                 ],

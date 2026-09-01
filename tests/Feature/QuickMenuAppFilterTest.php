@@ -61,7 +61,7 @@ it('hides a button whose declared app is denied by the app permission', function
     writeQuickMenuFixture([
         [
             'app' => 'ZZ_DENIED_APP',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 
@@ -74,7 +74,7 @@ it('hides a button whose declared app is not assigned to the tenant', function (
     writeQuickMenuFixture([
         [
             'app' => 'ZZ_UNASSIGNED_APP',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 
@@ -89,7 +89,7 @@ it('renders a button whose declared app is assigned and allowed', function (): v
     writeQuickMenuFixture([
         [
             'app' => 'ZZ_ALLOWED_APP',
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 
@@ -109,7 +109,7 @@ it('renders a button when ONE of its apps list is usable', function (): void {
     writeQuickMenuFixture([
         [
             'apps' => ['ZZ_DENIED_APP', 'ZZ_ALLOWED_APP'],
-            'component' => 'noerd::dashboard-widget-test',
+            'component' => 'noerd-test::dashboard-widget-test',
         ],
     ]);
 

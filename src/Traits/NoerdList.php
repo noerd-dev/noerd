@@ -417,9 +417,6 @@ trait NoerdList
         $this->resetPage();
     }
 
-    public function updatedSortField(): void {}
-
-    public function updatedSortAsc(): void {}
 
     public function sortBy(string $field): void
     {
@@ -977,16 +974,16 @@ trait NoerdList
         return method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
     }
 
+    /**
+     * Columns the header filters (listFilters) may constrain — every declared
+     * table filter column. Override to allow additional keys.
+     */
     protected function getAllowedListFilterColumns(): array
     {
-        if (defined('static::ALLOWED_TABLE_FILTERS') && !empty(static::ALLOWED_TABLE_FILTERS)) {
-            return static::ALLOWED_TABLE_FILTERS;
-        }
-
         return collect($this->tableFilters)->pluck('column')->filter()->toArray();
     }
 
-    protected function applyListFilters($query): void
+    protected function applyListFilters(Builder $query): void
     {
         if (!$this->listFilters) {
             return;
@@ -1019,23 +1016,12 @@ trait NoerdList
     }
 
     /**
-     * The name this list's YAML config resolves under: a DETAIL_COMPONENT
-     * constant (legacy custom-config opt-in) or the component's own name.
-     * Renamed from getListComponent(), which meant the OPPOSITE of
-     * NoerdPage::getListComponent() and made composing the two traits a trap.
+     * The name this list's YAML config resolves under — the component's own
+     * name. Override when a component renders another list's YAML.
      */
     protected function listConfigComponent(): string
     {
-        if (defined('static::DETAIL_COMPONENT')) {
-            return static::DETAIL_COMPONENT;
-        }
-
-        return $this->getName();
-    }
-
-    protected function componentName(): string
-    {
-        return defined('static::COMPONENT') ? static::COMPONENT : $this->getName();
+        return $this->componentName();
     }
 
     /**
@@ -1411,7 +1397,7 @@ trait NoerdList
 
     /**
      * Build complete list configuration including rows and table state.
-     * Returns all data needed for the list.index DETAIL_COMPONENT.
+     * Returns all data needed for the list view.
      *
      * @param  LengthAwarePaginator|array  $rows
      */

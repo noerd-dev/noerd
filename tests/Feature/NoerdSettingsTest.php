@@ -105,7 +105,7 @@ describe('NoerdSettings component', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->assertSet('settingsData.currency', 'EUR');
+            ->assertSet('detailData.currency', 'EUR');
     });
 
     it('can save currency setting', function (): void {
@@ -113,7 +113,7 @@ describe('NoerdSettings component', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->set('settingsData.currency', 'USD')
+            ->set('detailData.currency', 'USD')
             ->call('store');
 
         $this->assertDatabaseHas('noerd_settings', [
@@ -132,7 +132,7 @@ describe('NoerdSettings component', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->assertSet('settingsData.currency', 'GBP');
+            ->assertSet('detailData.currency', 'GBP');
     });
 
     it('validates currency must be valid', function (): void {
@@ -140,9 +140,9 @@ describe('NoerdSettings component', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->set('settingsData.currency', 'INVALID')
+            ->set('detailData.currency', 'INVALID')
             ->call('store')
-            ->assertHasErrors(['settingsData.currency']);
+            ->assertHasErrors(['detailData.currency']);
     });
 });
 
@@ -171,8 +171,8 @@ describe('Currency feature flag', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->set('settingsData.currency', 'USD')
-            ->set('settingsData.detail_theme', 'compact')
+            ->set('detailData.currency', 'USD')
+            ->set('detailData.detail_theme', 'compact')
             ->call('store')
             ->assertHasNoErrors();
 
@@ -192,8 +192,8 @@ describe('Theme setting', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->assertSet('settingsData.detail_theme', 'numbered')
-            ->assertSet('settingsData.detail_theme_enforced', false);
+            ->assertSet('detailData.detail_theme', 'numbered')
+            ->assertSet('detailData.detail_theme_enforced', false);
     });
 
     it('loads an existing setting from the database', function (): void {
@@ -207,8 +207,8 @@ describe('Theme setting', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->assertSet('settingsData.detail_theme', 'compact')
-            ->assertSet('settingsData.detail_theme_enforced', true);
+            ->assertSet('detailData.detail_theme', 'compact')
+            ->assertSet('detailData.detail_theme_enforced', true);
     });
 
     it('saves the theme and the enforce flag', function (): void {
@@ -216,8 +216,8 @@ describe('Theme setting', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->set('settingsData.detail_theme', 'numbered')
-            ->set('settingsData.detail_theme_enforced', true)
+            ->set('detailData.detail_theme', 'numbered')
+            ->set('detailData.detail_theme_enforced', true)
             ->call('store')
             ->assertHasNoErrors();
 
@@ -233,8 +233,8 @@ describe('Theme setting', function (): void {
 
         Livewire::actingAs($user)
             ->test('noerd::system-settings-page')
-            ->set('settingsData.detail_theme', 'does-not-exist')
+            ->set('detailData.detail_theme', 'does-not-exist')
             ->call('store')
-            ->assertHasErrors(['settingsData.detail_theme']);
+            ->assertHasErrors(['detailData.detail_theme']);
     });
 });

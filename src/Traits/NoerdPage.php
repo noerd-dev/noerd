@@ -73,7 +73,7 @@ trait NoerdPage
             return;
         }
 
-        $component = $this->getName();
+        $component = $this->componentName();
 
         if (session('noerd.lastDetailComponent') !== $component) {
             $this->currentTab = 1;
@@ -122,7 +122,7 @@ trait NoerdPage
         // Blade evaluates a page blade's slot content before the page chrome
         // discards it for the denied state, so a hand-built page reading
         // $pageLayout['detail'] must always find its layout.
-        $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
+        $this->pageLayout = StaticConfigHelper::getPageFields($this->componentName(), $this->detailModel ?? null);
 
         $this->initNoerdComponent(function (): void {
             // Pages backed by a single Eloquent model declare $detailModel — the
@@ -215,8 +215,8 @@ trait NoerdPage
 
     /**
      * The embedded detail component declared in the page YAML (`detail:`).
-     * Deliberately no fallback to DETAIL_COMPONENT — legacy details reusing that
-     * constant must never grow page listeners.
+     * Deliberately no fallback to the component's own name — a standalone
+     * detail must never grow page listeners.
      */
     public function embeddedDetailComponent(): ?string
     {
@@ -373,14 +373,14 @@ trait NoerdPage
             return;
         }
 
-        if (!Str::endsWith($this->getName(), '-detail')) {
+        if (!Str::endsWith($this->componentName(), '-detail')) {
             return;
         }
 
         throw new RuntimeException(sprintf(
             'Model-backed detail [%s] must declare its URL alias: `public ?string $detailPrimary = \'%sId\';` '
             . '(embedded instances skip the URL binding automatically).',
-            $this->getName(),
+            $this->componentName(),
             Str::camel(class_basename($this->detailModel)),
         ));
     }
@@ -436,14 +436,14 @@ trait NoerdPage
 
     /**
      * Resolve the quick-create runtime mode from the YAML opt-in (`quickCreate: true`,
-     * carried in pageLayout) or the legacy `public bool $quickCreateOnNew = true;`
-     * property. When opted in and no record is being edited, quick-create mode is
-     * enabled — no list/nav/blade wiring needed. The raw opt-in in pageLayout is
-     * replaced with the resolved mode so `tab-content` reads the correct value.
+     * carried in pageLayout). When opted in and no record is being edited,
+     * quick-create mode is enabled — no list/nav/blade wiring needed. The raw
+     * opt-in in pageLayout is replaced with the resolved mode so `tab-content`
+     * reads the correct value.
      */
     protected function resolveQuickCreate(): void
     {
-        $optIn = ($this->quickCreateOnNew ?? false) || ($this->pageLayout['quickCreate'] ?? false);
+        $optIn = (bool) ($this->pageLayout['quickCreate'] ?? false);
         if (!$this->modelId && $optIn) {
             $this->quickCreate = true;
         }
@@ -454,32 +454,23 @@ trait NoerdPage
     }
 
     /**
-     * Get the detail component name.
-     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     * The name this component's detail YAML resolves under — the component's
+     * own name. Override when a component renders another component's YAML.
      */
     protected function getDetailComponent(): string
     {
-        if (defined('static::DETAIL_COMPONENT')) {
-            return static::DETAIL_COMPONENT;
-        }
-
-        return $this->getName();
+        return $this->componentName();
     }
 
     /**
-     * Get the list component name.
-     * Uses LIST_COMPONENT constant if defined, otherwise derives from the component
-     * name: 'customer-detail' → 'customers-list', 'account-page' → 'accounts-list'.
-     * Namespaced list components (e.g. 'crm::accounts-list') cannot be derived —
-     * those components declare LIST_COMPONENT explicitly.
+     * The list this record belongs to (refreshed when the modal closes), derived
+     * from the component name with its namespace kept: 'customer-detail' →
+     * 'customers-list', 'crm::account-page' → 'crm::accounts-list'. Override
+     * when the list name does not follow the plural convention.
      */
     protected function getListComponent(): string
     {
-        if (defined('static::LIST_COMPONENT')) {
-            return static::LIST_COMPONENT;
-        }
-
-        $name = $this->getName();
+        $name = $this->componentName();
 
         // If this is already a list component, return as-is
         if (Str::endsWith($name, '-list')) {

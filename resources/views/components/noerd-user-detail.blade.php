@@ -17,8 +17,8 @@ new class extends Component {
 
     public $detailModel = NoerdUser::class;
 
+    /** The edited account is the administrator's own — it cannot remove itself. */
     public bool $isOwner = false;
-    public $selectedTenant;
 
     public bool $sendPasswordResetMail = true;
     public string $userLocale = 'en';
@@ -42,15 +42,10 @@ new class extends Component {
 
         $this->initDetail();
 
-        $this->selectedTenant = NoerdAuth::user()->selectedTenant();
+        $this->isOwner = $this->modelId && (int) $this->modelId === NoerdAuth::id();
         $this->userLocale = SetupLanguage::getDefaultCode();
 
-        $user = new NoerdUser();
-        if ($this->modelId) {
-            $user = NoerdUser::find($this->modelId);
-        }
-
-        $this->detailData = $user->toArray();
+        $user = $this->modelId ? NoerdUser::find($this->modelId) ?? new NoerdUser() : new NoerdUser();
 
         // One query for the edited user's tenant assignments instead of one
         // per admin tenant. Mounts re-run on every modal-stack update, so this

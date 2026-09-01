@@ -72,7 +72,7 @@ it('renders a discovered theme with its own element template and default fallbac
 
     app(ThemeRegistry::class)->registerPath($this->themesRoot);
 
-    Livewire::test('noerd::theme-test', ['initialModel' => [], 'theme' => 'clientx'])
+    Livewire::test('noerd-test::theme-test', ['initialModel' => [], 'theme' => 'clientx'])
         ->assertSuccessful()
         ->assertSeeHtml('data-theme="clientx"')
         // Text fields use the theme's own template …

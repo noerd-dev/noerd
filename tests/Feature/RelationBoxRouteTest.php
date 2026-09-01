@@ -31,7 +31,7 @@ beforeEach(function (): void {
 });
 
 it('opens a relation tile via $modalRoute without rewriting the url', function (): void {
-    registerTestLivewireRoute('zz-relation-tiles', 'noerd::theme-test', 'zz.relation.tiles');
+    registerTestLivewireRoute('zz-relation-tiles', 'noerd-test::theme-test', 'zz.relation.tiles');
 
     $html = renderRelationBox([
         [

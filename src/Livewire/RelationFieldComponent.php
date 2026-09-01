@@ -63,7 +63,7 @@ abstract class RelationFieldComponent extends Component
     public ?string $detailRoute = null;
 
     #[Locked]
-    public ?string $legacySelectEvent = null;
+    public ?string $selectEvent = null;
 
     /**
      * Livewire id of the detail/page that owns this field. Scopes the
@@ -105,7 +105,7 @@ abstract class RelationFieldComponent extends Component
         $this->listComponent = $definition->listComponent;
         $this->detailComponent = $definition->getDetailComponent();
         $this->detailRoute = $definition->detailRoute;
-        $this->legacySelectEvent = $definition->getSelectEvent();
+        $this->selectEvent = $definition->getSelectEvent();
         $this->owner = $owner;
 
         $this->resolveDisplayTitle();
@@ -139,8 +139,8 @@ abstract class RelationFieldComponent extends Component
         $this->resolveDisplayTitle();
         $this->syncParentState();
 
-        if ($this->legacySelectEvent) {
-            $this->dispatch($this->legacySelectEvent, $this->value, $this->fieldName);
+        if ($this->selectEvent) {
+            $this->dispatch($this->selectEvent, $this->value, $this->fieldName);
         }
     }
 
