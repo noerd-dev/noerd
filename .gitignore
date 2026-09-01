@@ -19,7 +19,7 @@ node_modules/
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
 # Standalone test run artifacts
 vendor/
 composer.lock

@@ -78,7 +78,7 @@ new class extends Component {
         </div>
 
         <div class="flex items-center gap-4">
-            <x-noerd::button>{{ __('Neuen Mandanten erstellen') }}</x-noerd::button>
+            <x-noerd::button>{{ __('Create New Tenant') }}</x-noerd::button>
         </div>
     </form>
 
