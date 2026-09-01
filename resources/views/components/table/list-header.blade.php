@@ -130,8 +130,16 @@
                      Visibility below `xl` is driven by opacity/visibility (not
                      `display`), so the panel can transition without a translate that
                      would push the page into horizontal overflow. --}}
+                {{-- `xl:overflow-x-auto` makes the row scroll instead of wrap, but a
+                     scroll container clips BOTH axes (CSS forces `overflow-y` to
+                     `auto` as soon as one axis is not `visible`), and the row's box
+                     is exactly as tall as its 32px controls. Without room the focus
+                     ring of the search field (`ring-2` + `ring-offset-2`) is cut down
+                     to a bare sliver on its left. `xl:p-1.5` opens 6px on every side
+                     for it; the negative margins (and the reduced `xl:ml-2.5`) cancel
+                     that padding again, so the row sits exactly where it did. --}}
                 <div
-                    class="xl:ml-4 xl:flex xl:min-w-0 xl:flex-1 xl:flex-row xl:items-center xl:gap-1 xl:overflow-x-auto
+                    class="xl:-my-1.5 xl:-mr-1.5 xl:ml-2.5 xl:flex xl:min-w-0 xl:flex-1 xl:flex-row xl:items-center xl:gap-1 xl:overflow-x-auto xl:p-1.5
                            max-xl:fixed max-xl:inset-y-0 max-xl:right-0 max-xl:z-[70] max-xl:flex max-xl:w-80 max-xl:max-w-[85vw] max-xl:flex-col max-xl:items-stretch max-xl:gap-3 max-xl:overflow-y-auto max-xl:bg-white max-xl:p-6 max-xl:text-sm max-xl:font-normal max-xl:shadow-xl max-xl:transition max-xl:duration-200"
                     x-bind:class="drawer
                         ? 'max-xl:visible max-xl:translate-x-0 max-xl:opacity-100'
