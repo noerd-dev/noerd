@@ -32,20 +32,6 @@ trait NoerdDetail
         $this->initDetail();
     }
 
-    public function initDetail(): void
-    {
-        $this->initNoerdComponent(function (): void {
-            // For detail components declaring $detailModel. Loads the pageLayout
-            // first so the YAML quick-create opt-in below can be read from it.
-            if (isset($this->detailModel)) {
-                $modelClass = $this->detailModel;
-                $this->mountDetailComponent(new $modelClass(), $modelClass);
-            }
-
-            $this->resolveQuickCreate();
-        });
-    }
-
     public function store(): void
     {
         // Server-side guard: the save button is hidden for denied users, but
@@ -192,6 +178,20 @@ trait NoerdDetail
         $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+    }
+
+    protected function initDetail(): void
+    {
+        $this->initNoerdComponent(function (): void {
+            // For detail components declaring $detailModel. Loads the pageLayout
+            // first so the YAML quick-create opt-in below can be read from it.
+            if (isset($this->detailModel)) {
+                $modelClass = $this->detailModel;
+                $this->mountDetailComponent(new $modelClass(), $modelClass);
+            }
+
+            $this->resolveQuickCreate();
+        });
     }
 
     /**

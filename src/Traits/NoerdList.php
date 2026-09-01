@@ -242,106 +242,6 @@ trait NoerdList
         $this->mountList();
     }
 
-    public function mountList(): void
-    {
-        $this->listId = Str::random();
-
-        // A list that IS a record (opened by route as a modal, e.g. the object of
-        // the custom-attribute manager) reopens as a modal over the previously
-        // visited page when its ?modal=true URL is loaded directly. Plain lists
-        // are never routed that way and fall straight through.
-        if ($this->redirectToRoutedModal()) {
-            return;
-        }
-
-        $this->perPage = session("listPerPage.{$this->componentName()}", 50);
-        $this->loadListFilters();
-
-        // Column filters: a ?cf[...] URL param (shared link) wins over the session
-        // state and is persisted. Embedded lists (compact/picker) never apply it —
-        // the param addresses the page-level list, but Livewire hydrates it on
-        // nested lists too.
-        $urlColumnFilters = (!$this->compact && !$this->returnsSelection)
-            ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && mb_trim($value) !== '')
-            : [];
-        if ($urlColumnFilters !== []) {
-            $this->listColumnFilters = $urlColumnFilters;
-            session(["listColumnFilters.{$this->componentName()}" => $urlColumnFilters]);
-        } else {
-            $this->listColumnFilters = session("listColumnFilters.{$this->componentName()}", []);
-        }
-
-        $savedView = session("listView.{$this->componentName()}");
-
-        // A ?view= URL param (shared link) wins over the session-saved view.
-        // Embedded lists (compact/picker) never apply it — the param addresses
-        // the page-level list, but Livewire hydrates it on nested lists too.
-        $urlView = (!$this->compact && !$this->returnsSelection) ? $this->listViewParam : null;
-        if ($urlView !== null && $urlView !== '') {
-            // The URL carries '--' instead of '::' as the app separator (no
-            // '%3A%3A' noise); decode it back to the composite key. A hand-typed
-            // legacy '::' still parses as-is.
-            if (!str_contains($urlView, '::') && str_contains($urlView, '--')) {
-                $urlView = Str::replaceFirst('--', '::', $urlView);
-            }
-            [$urlApp, $urlKey] = StaticConfigHelper::parseListViewKey($urlView);
-            if ($urlApp !== null && $urlApp === StaticConfigHelper::getCurrentApp()) {
-                $urlView = $urlKey;
-            }
-            if ($urlView === 'default' || array_key_exists($urlView, $this->availableListViews)) {
-                $savedView = $urlView;
-                session(["listView.{$this->componentName()}" => $urlView]);
-            }
-        }
-
-        if ($savedView) {
-            // A composite key whose app has become the current app collapses to
-            // its plain form (selected elsewhere, reopened inside that app).
-            [$savedApp, $savedKey] = StaticConfigHelper::parseListViewKey($savedView);
-            if ($savedApp !== null && $savedApp === StaticConfigHelper::getCurrentApp()) {
-                $savedView = $savedKey;
-            }
-            if ($savedView !== 'default' && array_key_exists($savedView, $this->availableListViews)) {
-                $this->applyListViewKey($savedView);
-            }
-        }
-
-        // The base view can be hidden from this user (a restricted 'default')
-        // or exist only in another allowed app: fall to the first
-        // view they are allowed to see. When every view is filtered away, the
-        // base stays — fail open.
-        if ($this->listView === null && $this->listViewApp === null
-            && $this->availableListViews !== []
-            && !array_key_exists('default', $this->availableListViews)) {
-            $this->applyListViewKey(array_key_first($this->availableListViews));
-        }
-
-        $this->syncListViewParam();
-
-        // The sort restore runs AFTER the view restore on purpose: with no
-        // session-saved sort the default comes from the ACTIVE view's YAML
-        // (`defaultSort:`), so an alternate list view brings its own order.
-        $savedSort = session("listSort.{$this->componentName()}");
-        if ($savedSort) {
-            $this->sortField = $savedSort['field'];
-            $this->sortAsc = $savedSort['asc'];
-        } else {
-            $this->applyDefaultSortFromConfig();
-        }
-
-        // Deep-link support: ?{entity}Id=5 opens the record's modal over the
-        // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
-        // updates POST to /livewire/update and carry no page query, and the
-        // former `rendering()` hook was both accidental-initial-load-only and
-        // silently disabled by any component defining its own rendering().
-        $deepLinkId = (int) request()->query($this->getDeepLinkParam());
-        if ($deepLinkId) {
-            $this->listAction($deepLinkId);
-        } elseif (request()->query('create')) {
-            $this->listAction();
-        }
-    }
-
     /**
      * All views available for this list across every allowed app: per app the
      * base config ('default') plus every "--{key}" sibling YAML. Current-app
@@ -445,17 +345,6 @@ trait NoerdList
 
         $this->sortAsc = $ascending;
         $this->persistListSort();
-    }
-
-    /**
-     * The header filters live in ONE session bucket shared across lists ON
-     * PURPOSE: NoerdPage::setPreselect() seeds it from detail pages so a
-     * related list opens pre-filtered, and preselect() reads it back. Only
-     * columns whitelisted per list (getAllowedListFilterColumns) ever apply.
-     */
-    public function loadListFilters(): void
-    {
-        $this->listFilters = session('listFilters', []);
     }
 
     public function storeActiveListFilters(): void
@@ -905,6 +794,117 @@ trait NoerdList
     protected static function tableHasColumn(string $table, string $column): bool
     {
         return SchemaColumnCache::hasColumn($table, $column);
+    }
+
+    protected function mountList(): void
+    {
+        $this->listId = Str::random();
+
+        // A list that IS a record (opened by route as a modal, e.g. the object of
+        // the custom-attribute manager) reopens as a modal over the previously
+        // visited page when its ?modal=true URL is loaded directly. Plain lists
+        // are never routed that way and fall straight through.
+        if ($this->redirectToRoutedModal()) {
+            return;
+        }
+
+        $this->perPage = session("listPerPage.{$this->componentName()}", 50);
+        $this->loadListFilters();
+
+        // Column filters: a ?cf[...] URL param (shared link) wins over the session
+        // state and is persisted. Embedded lists (compact/picker) never apply it —
+        // the param addresses the page-level list, but Livewire hydrates it on
+        // nested lists too.
+        $urlColumnFilters = (!$this->compact && !$this->returnsSelection)
+            ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && mb_trim($value) !== '')
+            : [];
+        if ($urlColumnFilters !== []) {
+            $this->listColumnFilters = $urlColumnFilters;
+            session(["listColumnFilters.{$this->componentName()}" => $urlColumnFilters]);
+        } else {
+            $this->listColumnFilters = session("listColumnFilters.{$this->componentName()}", []);
+        }
+
+        $savedView = session("listView.{$this->componentName()}");
+
+        // A ?view= URL param (shared link) wins over the session-saved view.
+        // Embedded lists (compact/picker) never apply it — the param addresses
+        // the page-level list, but Livewire hydrates it on nested lists too.
+        $urlView = (!$this->compact && !$this->returnsSelection) ? $this->listViewParam : null;
+        if ($urlView !== null && $urlView !== '') {
+            // The URL carries '--' instead of '::' as the app separator (no
+            // '%3A%3A' noise); decode it back to the composite key. A hand-typed
+            // legacy '::' still parses as-is.
+            if (!str_contains($urlView, '::') && str_contains($urlView, '--')) {
+                $urlView = Str::replaceFirst('--', '::', $urlView);
+            }
+            [$urlApp, $urlKey] = StaticConfigHelper::parseListViewKey($urlView);
+            if ($urlApp !== null && $urlApp === StaticConfigHelper::getCurrentApp()) {
+                $urlView = $urlKey;
+            }
+            if ($urlView === 'default' || array_key_exists($urlView, $this->availableListViews)) {
+                $savedView = $urlView;
+                session(["listView.{$this->componentName()}" => $urlView]);
+            }
+        }
+
+        if ($savedView) {
+            // A composite key whose app has become the current app collapses to
+            // its plain form (selected elsewhere, reopened inside that app).
+            [$savedApp, $savedKey] = StaticConfigHelper::parseListViewKey($savedView);
+            if ($savedApp !== null && $savedApp === StaticConfigHelper::getCurrentApp()) {
+                $savedView = $savedKey;
+            }
+            if ($savedView !== 'default' && array_key_exists($savedView, $this->availableListViews)) {
+                $this->applyListViewKey($savedView);
+            }
+        }
+
+        // The base view can be hidden from this user (a restricted 'default')
+        // or exist only in another allowed app: fall to the first
+        // view they are allowed to see. When every view is filtered away, the
+        // base stays — fail open.
+        if ($this->listView === null && $this->listViewApp === null
+            && $this->availableListViews !== []
+            && !array_key_exists('default', $this->availableListViews)) {
+            $this->applyListViewKey(array_key_first($this->availableListViews));
+        }
+
+        $this->syncListViewParam();
+
+        // The sort restore runs AFTER the view restore on purpose: with no
+        // session-saved sort the default comes from the ACTIVE view's YAML
+        // (`defaultSort:`), so an alternate list view brings its own order.
+        $savedSort = session("listSort.{$this->componentName()}");
+        if ($savedSort) {
+            $this->sortField = $savedSort['field'];
+            $this->sortAsc = $savedSort['asc'];
+        } else {
+            $this->applyDefaultSortFromConfig();
+        }
+
+        // Deep-link support: ?{entity}Id=5 opens the record's modal over the
+        // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
+        // updates POST to /livewire/update and carry no page query, and the
+        // former `rendering()` hook was both accidental-initial-load-only and
+        // silently disabled by any component defining its own rendering().
+        $deepLinkId = (int) request()->query($this->getDeepLinkParam());
+        if ($deepLinkId) {
+            $this->listAction($deepLinkId);
+        } elseif (request()->query('create')) {
+            $this->listAction();
+        }
+    }
+
+    /**
+     * The header filters live in ONE session bucket shared across lists ON
+     * PURPOSE: NoerdPage::setPreselect() seeds it from detail pages so a
+     * related list opens pre-filtered, and preselect() reads it back. Only
+     * columns whitelisted per list (getAllowedListFilterColumns) ever apply.
+     */
+    protected function loadListFilters(): void
+    {
+        $this->listFilters = session('listFilters', []);
     }
 
     /**

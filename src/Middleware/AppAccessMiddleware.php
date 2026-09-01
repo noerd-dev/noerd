@@ -10,6 +10,12 @@ use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Guards the routes of a tenant app (`app-access:crm` or `app-access:crm,sales`
+ * for routes shared by several apps): the tenant must run one of the apps and
+ * the user must be allowed to access it. The matching app becomes the selected
+ * app, so the navigation always shows the app the route belongs to.
+ */
 class AppAccessMiddleware
 {
     /**
@@ -19,7 +25,6 @@ class AppAccessMiddleware
      */
     public function handle(Request $request, Closure $next, string ...$appNames): Response
     {
-        $appName = implode(',', $appNames);
         $user = NoerdAuth::user();
 
         if (!$user) {
@@ -29,44 +34,25 @@ class AppAccessMiddleware
         $tenant = TenantHelper::getSelectedTenant();
 
         if (!$tenant) {
-            return redirect('/');
+            return redirect()->route('noerd.no-tenant');
         }
 
-        // In single-tenant mode, every app is assigned — but the per-app
-        // authorization gate (see AccessHelper) still applies.
-        if (!config('noerd.features.multi_tenant')) {
-            $accessible = array_filter(
-                $appNames,
-                fn(string $candidate): bool => AccessHelper::canAccessApp(mb_trim($candidate)),
-            );
-            if ($accessible === []) {
-                throw new NoerdException(
-                    NoerdException::TYPE_APP_ACCESS_DENIED,
-                    appName: mb_strtoupper(mb_trim($appNames[0])),
-                );
-            }
-
-            TenantHelper::setSelectedAppFromRoute();
-
-            return $next($request);
-        }
-
-        $appNames = array_map(
+        $appNames = array_values(array_filter(array_map(
             fn(string $name): string => mb_strtolower(mb_trim($name)),
-            explode(',', $appName),
-        );
+            $appNames,
+        )));
 
-        // ONE query for all candidates; the first candidate in route order wins,
-        // matching the old per-candidate loop (which cost one query each).
-        $assignedByLower = $tenant->tenantApps()
-            ->namedAny($appNames)
-            ->pluck('name')
-            ->keyBy(fn(string $name): string => mb_strtolower($name));
+        // In single-tenant mode every app is assigned — only the per-app
+        // authorization gate (see AccessHelper) applies.
+        $assigned = config('noerd.features.multi_tenant')
+            ? $tenant->tenantApps()->namedAny($appNames)->pluck('name')->map(fn(string $name): string => mb_strtolower($name))->all()
+            : $appNames;
 
+        // The first candidate in route order wins.
         $matchingApp = null;
         foreach ($appNames as $candidate) {
-            if ($assignedByLower->has($candidate)) {
-                $matchingApp = $assignedByLower[$candidate];
+            if (in_array($candidate, $assigned, true)) {
+                $matchingApp = $candidate;
                 break;
             }
         }
@@ -74,7 +60,7 @@ class AppAccessMiddleware
         if (!$matchingApp) {
             throw new NoerdException(
                 NoerdException::TYPE_APP_NOT_ASSIGNED,
-                appName: mb_strtoupper($appNames[0]),
+                appName: mb_strtoupper($appNames[0] ?? ''),
             );
         }
 
@@ -85,8 +71,7 @@ class AppAccessMiddleware
             );
         }
 
-        // Only select the app when the session carries no selection yet
-        if (!TenantHelper::getSelectedApp()) {
+        if (TenantHelper::getSelectedApp() !== mb_strtoupper($matchingApp)) {
             TenantHelper::setSelectedApp(mb_strtoupper($matchingApp));
         }
 

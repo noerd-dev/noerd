@@ -8,7 +8,7 @@ class NoerdUpdateCommand extends NoerdInstallCommand
 {
     protected $signature = 'noerd:update {--force : Overwrite existing files without asking} {--build : Run npm build after update}';
 
-    protected $description = 'Update noerd content files without running installation setup';
+    protected $description = 'Refresh the published setup app configs, config and frontend assets of an existing installation';
 
     public function handle(): int
     {

@@ -23,7 +23,7 @@ class RelationFieldDefinition
         public ?string $detailComponent = null,
         public ?string $detailRoute = null,
         public ?string $modelClass = null,
-        public $titleResolver = null,
+        public mixed $titleResolver = null,
         public ?string $selectEvent = null,
         public ?string $fieldComponent = null,
     ) {}

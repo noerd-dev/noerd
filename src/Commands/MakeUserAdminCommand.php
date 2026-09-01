@@ -7,7 +7,7 @@ use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 
-class MakeUserAdmin extends Command
+class MakeUserAdminCommand extends Command
 {
     /**
      * The name and signature of the console command.

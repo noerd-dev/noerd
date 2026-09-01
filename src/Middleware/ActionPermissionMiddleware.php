@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Guards a route behind a named action permission, e.g.
- * `->middleware('action-permission:production.start-run')`. The decision is
+ * `->middleware('action-permission:production_start_run')`. The decision is
  * AccessHelper::canPerformAction() — an undefined action gate falls back to
  * the profile baseline (see AccessHelper).
  */

@@ -455,7 +455,9 @@ class StaticConfigHelper
             return $entry[1];
         }
 
-        $parsed = Yaml::parse(file_get_contents($path) ?: '') ?: [];
+        $parsed = Yaml::parse(file_get_contents($path) ?: '');
+        // A scalar or empty document is no config — never let it reach an array-typed reader.
+        $parsed = is_array($parsed) ? $parsed : [];
         self::$yamlCache[$path] = [$version, $parsed];
 
         return $parsed;
@@ -800,49 +802,31 @@ class StaticConfigHelper
     }
 
     /**
-     * Process dynamic navigation blocks based on YAML configuration
+     * Resolve the `dynamic:` block menus of a navigation structure through the
+     * DynamicNavigationRegistry and apply the config/superAdmin/route filters
+     * to every block's entries.
      */
     private static function processDynamicNavigation(array $navigationStructure): array
     {
         $registry = app(DynamicNavigationRegistry::class);
 
-        // Support legacy navigation structure with block_menus at top level
-        if (isset($navigationStructure[0]['block_menus'])) {
-            foreach ($navigationStructure as $i => $appBlock) {
-                $blockMenus = $appBlock['block_menus'] ?? [];
-                foreach ($blockMenus as $j => $menu) {
-                    $dynamicType = $menu['dynamic'] ?? null;
-                    if ($dynamicType) {
-                        $provider = $registry->resolve($dynamicType);
-                        if ($provider) {
-                            $navigationStructure[$i]['block_menus'][$j]['navigations'] = $provider->items();
-                        }
-                        unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
-                    }
-
-                    // Filter navigation items by config attribute
-                    $navigations = $navigationStructure[$i]['block_menus'][$j]['navigations'] ?? [];
-                    $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::filterNavigationByConfig($navigations);
-                }
+        foreach ($navigationStructure as $i => $appBlock) {
+            if (! is_array($appBlock)) {
+                continue;
             }
 
-            return $navigationStructure;
-        }
-
-        $items = $navigationStructure['items'] ?? [];
-        if (is_array($items)) {
-            foreach ($items as $index => $item) {
-                $dynamicType = $item['dynamic'] ?? ($item['collection'] ?? null);
-                if (($item['type'] ?? null) === 'dynamic' && $dynamicType) {
+            foreach ($appBlock['block_menus'] ?? [] as $j => $menu) {
+                $dynamicType = $menu['dynamic'] ?? null;
+                if ($dynamicType) {
                     $provider = $registry->resolve($dynamicType);
                     if ($provider) {
-                        $children = $item['children'] ?? [];
-                        if (!is_array($children)) {
-                            $children = [];
-                        }
-                        $navigationStructure['items'][$index]['children'] = array_merge($children, $provider->items());
+                        $navigationStructure[$i]['block_menus'][$j]['navigations'] = $provider->items();
                     }
+                    unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
                 }
+
+                $navigations = $navigationStructure[$i]['block_menus'][$j]['navigations'] ?? [];
+                $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::filterNavigationByConfig($navigations);
             }
         }
 
@@ -904,7 +888,7 @@ class StaticConfigHelper
 
         $paths = [];
         foreach ($mapping[$appKey] ?? [] as $module) {
-            $sourcePath = base_path("app-modules/{$module}/app-configs/{$appKey}");
+            $sourcePath = base_path(config('noerd.generators.modules_path', 'app-modules') . "/{$module}/app-configs/{$appKey}");
             if (is_dir($sourcePath)) {
                 $paths[] = $sourcePath;
             }
@@ -928,7 +912,7 @@ class StaticConfigHelper
         }
 
         $mappings = [];
-        $appModulesPath = base_path('app-modules');
+        $appModulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
 
         if (!is_dir($appModulesPath)) {
             return self::$moduleSourceMappingCache[$basePath] = $mappings;

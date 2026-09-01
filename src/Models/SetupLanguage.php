@@ -95,10 +95,8 @@ class SetupLanguage extends Model
         return SetupLanguageFactory::new();
     }
 
-    protected static function boot(): void
+    protected static function booted(): void
     {
-        parent::boot();
-
         // After saving, ensure only one default per tenant
         static::saved(function (SetupLanguage $language): void {
             if ($language->is_default) {

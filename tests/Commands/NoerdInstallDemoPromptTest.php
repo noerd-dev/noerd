@@ -120,7 +120,7 @@ it('runs noerd:demo when the demo app prompt is confirmed', function (): void {
     expect(InstallDemoPromptFixtureCommand::$calledCommands)
         ->toHaveCount(1)
         ->and(InstallDemoPromptFixtureCommand::$calledCommands[0]['command'])->toBe('noerd:demo')
-        ->and(InstallDemoPromptFixtureCommand::$calledCommands[0]['arguments'])->toBe(['--force' => true]);
+        ->and(InstallDemoPromptFixtureCommand::$calledCommands[0]['arguments'])->toBe(['--force' => true, '--migrate' => false, '--seed' => false]);
 });
 
 it('skips noerd:demo when the demo app prompt is declined', function (): void {

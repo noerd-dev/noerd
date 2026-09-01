@@ -15,7 +15,7 @@ new class extends Component {
     public function mount(): void
     {
         if (! $this->modelId) {
-            $this->modelId = (string) NoerdAuth::user()->selected_tenant_id;
+            $this->modelId = NoerdAuth::user()->selected_tenant_id;
         }
 
         $this->authorizeTenant();

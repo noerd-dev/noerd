@@ -28,15 +28,6 @@ trait BelongsToTenant
         });
     }
 
-    public function initializeBelongsToTenant(): void
-    {
-        // Only add tenant_id to fillable if the model explicitly defines fillable fields
-        // If the model uses $guarded instead, we don't need to modify $fillable
-        if (! empty($this->fillable) && ! in_array('tenant_id', $this->fillable)) {
-            $this->fillable[] = 'tenant_id';
-        }
-    }
-
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);

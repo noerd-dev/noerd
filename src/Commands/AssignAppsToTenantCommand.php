@@ -12,7 +12,7 @@ use function Laravel\Prompts\select;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 
-class AssignAppsToTenant extends Command
+class AssignAppsToTenantCommand extends Command
 {
     /**
      * The name and signature of the console command.

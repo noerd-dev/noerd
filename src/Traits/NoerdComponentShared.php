@@ -4,10 +4,9 @@ namespace Noerd\Traits;
 
 /**
  * The few members NoerdList and NoerdPage genuinely share. Both traits compose
- * this one; PHP dedupes a method arriving through multiple use-paths of the
- * SAME trait, so a component may use NoerdList and NoerdPage together without
- * a collision — previously the byte-identical copies in each trait made that
- * combination a fatal conflict.
+ * this one, and PHP dedupes a method arriving through multiple use-paths of
+ * the SAME trait — a component composing NoerdList and NoerdPage only has to
+ * resolve the members both traits define themselves (mount(), getListeners()).
  */
 trait NoerdComponentShared
 {

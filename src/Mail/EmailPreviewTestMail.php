@@ -5,6 +5,8 @@ namespace Noerd\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -22,8 +24,13 @@ class EmailPreviewTestMail extends Mailable implements ShouldQueue
         private readonly string $subjectLine,
     ) {}
 
-    public function build(): self
+    public function envelope(): Envelope
     {
-        return $this->subject($this->subjectLine)->html($this->htmlContent);
+        return new Envelope(subject: $this->subjectLine);
+    }
+
+    public function content(): Content
+    {
+        return new Content(htmlString: $this->htmlContent);
     }
 }

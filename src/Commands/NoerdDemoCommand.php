@@ -15,7 +15,10 @@ class NoerdDemoCommand extends Command
 {
     use RequiresNoerdInstallation;
 
-    protected $signature = 'noerd:demo {--force : Overwrite existing files}';
+    protected $signature = 'noerd:demo
+        {--force : Overwrite existing files}
+        {--migrate : Run the demo migrations (required to migrate in non-interactive runs)}
+        {--seed : Seed the demo data (required to seed in non-interactive runs)}';
 
     protected $description = 'Install demo data (models, migrations, views, configs, routes) directly into the project';
 
@@ -236,7 +239,10 @@ ROUTE;
             return;
         }
 
-        if (! confirm('Would you like to seed demo data (sample customers, categories, tags)?', default: true)) {
+        $shouldSeed = (bool) $this->option('seed')
+            || ($this->input->isInteractive() && confirm('Would you like to seed demo data (sample customers, categories, tags)?', default: true));
+
+        if (! $shouldSeed) {
             $this->line('<comment>Skipping demo seed data. Run manually: php artisan db:seed --class=DemoSeeder</comment>');
 
             return;
@@ -249,7 +255,10 @@ ROUTE;
     {
         $this->newLine();
 
-        if (! confirm('Would you like to run migrations now?', default: true)) {
+        $shouldMigrate = (bool) $this->option('migrate')
+            || ($this->input->isInteractive() && confirm('Would you like to run migrations now?', default: true));
+
+        if (! $shouldMigrate) {
             $this->line('<comment>Skipping migrations. Run manually: php artisan migrate</comment>');
 
             return;

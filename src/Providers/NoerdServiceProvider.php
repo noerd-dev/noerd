@@ -12,7 +12,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
-use Noerd\Commands\AssignAppsToTenant;
+use Noerd\Commands\AssignAppsToTenantCommand;
 use Noerd\Commands\CreateAdminCommand;
 use Noerd\Commands\CreateTenantApp;
 use Noerd\Commands\CreateTenantCommand;
@@ -26,7 +26,7 @@ use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeThemeCommand;
-use Noerd\Commands\MakeUserAdmin;
+use Noerd\Commands\MakeUserAdminCommand;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
@@ -385,13 +385,13 @@ class NoerdServiceProvider extends ServiceProvider
             }
 
             $this->commands([
-                MakeUserAdmin::class,
+                MakeUserAdminCommand::class,
                 NoerdInfoCommand::class,
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,
                 NoerdUpdateAllCommand::class,
                 CreateTenantApp::class,
-                AssignAppsToTenant::class,
+                AssignAppsToTenantCommand::class,
                 MakeModuleCommand::class,
                 MakeResourceCommand::class,
                 MakeListCommand::class,

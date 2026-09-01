@@ -2,6 +2,7 @@
 
 namespace Noerd\Livewire;
 
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -184,7 +185,7 @@ abstract class RelationFieldComponent extends Component
      * The related Eloquent model behind the current value — for custom renderer
      * components (fieldComponent) that display more than the title.
      */
-    public function relatedModel(): mixed
+    public function relatedModel(): ?Model
     {
         if (!$this->value) {
             return null;
