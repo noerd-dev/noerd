@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Support\LayoutDefaults;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\RelationFormSync;
 use ReflectionMethod;
@@ -194,6 +195,7 @@ trait NoerdDetail
             $this->detailData = [];
         }
 
+        $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
     }
@@ -319,8 +321,38 @@ trait NoerdDetail
             $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
         }
 
+        $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+    }
+
+    /**
+     * Seed $detailData with the initial values the layout declares (an explicit
+     * `default:` on a field, or the first option of a YAML-listed select). Only
+     * null values are filled — '' , 0 and false are answers, not gaps — so the
+     * method is idempotent and never overwrites what the record or the user
+     * holds. It runs from mountDetailComponent() AND renderingNoerdDetail(),
+     * because components may replace $detailData wholesale in a custom mount().
+     */
+    protected function applyLayoutDefaults(): void
+    {
+        if ($this->objectReadBlocked) {
+            return;
+        }
+
+        $defaults = LayoutDefaults::resolve($this->pageLayout['fields'] ?? []);
+        if ($defaults === []) {
+            return;
+        }
+
+        $detailData = $this->detailData;
+        foreach ($defaults as $key => $value) {
+            if (data_get($detailData, $key) === null) {
+                data_set($detailData, $key, $value);
+            }
+        }
+
+        $this->detailData = $detailData;
     }
 
     /**

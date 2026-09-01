@@ -14,13 +14,24 @@ if (!function_exists('requiredLayoutFields')) {
      * required: true) so validation tests assert against whatever the YAML
      * currently declares required instead of hard-coding a field name.
      *
+     * Fields the layout always fills (an explicit `default:`, or the first
+     * option of a select whose options are in the YAML) are left out: the trait
+     * seeds them before every render, so they can never reach store() empty and
+     * would never produce a required error.
+     *
      * @return array<int, string>
      */
     function requiredLayoutFields($component): array
     {
         $layout = $component->get('pageLayout') ?? [];
+        $fields = $layout['fields'] ?? [];
 
-        return extractRequiredLayoutFields($layout['fields'] ?? []);
+        $defaulted = array_map(
+            static fn(string $key): string => 'detailData.' . $key,
+            array_keys(\Noerd\Support\LayoutDefaults::resolve($fields)),
+        );
+
+        return array_values(array_diff(extractRequiredLayoutFields($fields), $defaulted));
     }
 }
 

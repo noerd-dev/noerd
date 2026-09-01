@@ -550,8 +550,11 @@ new class extends Component {
 };
 ```
 
-The same applies to `mount()`: override it only for extra logic (e.g. `setPreselect()`, defaults
-for new records, relation titles) and call `$this->initDetail()` first.
+The same applies to `mount()`: override it only for extra logic (e.g. `setPreselect()`, relation
+titles) and call `$this->initDetail()` first. Initial field values are **not** such a case: they are
+configuration and belong in the YAML (`default:`, or the first option of a select) — see
+[Default Values](field-types.md#default-values). The trait applies them generically, also to a
+custom `mount()` that replaces `$detailData` wholesale.
 
 ## Key Concepts
 

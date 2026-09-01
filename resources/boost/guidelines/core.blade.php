@@ -998,6 +998,44 @@ is an unrelated concept).
 - Keep both synced copies of the detail YAML in sync (`app-configs/` and the module's `app-configs/`)
 - Reference: `docs/themes.md`
 
+### Field Defaults Are Configuration, Never `mount()` Code
+
+A form must never display a value it does not hold. A `<select>` bound to a null property has no
+matching `<option>`, so the browser shows the FIRST one by pure HTML fallback — the user sees a
+status, the component holds `null`, and `null` is what gets saved. Initial values are therefore
+declared in the YAML and applied generically by `NoerdDetail::applyLayoutDefaults()`.
+
+- **Any field** may declare `default: <value>`. It is applied while the bound value is `null` (a
+  missing key counts as null); `''`, `0` and `false` are answers and are never replaced.
+- **A `type: select` whose `options` are written in the YAML starts on its FIRST option** and
+  persists it on save — that is what makes the displayed value real. An explicit `default:` wins.
+- **Opt out with `placeholder:`** when nothing-selected is a legitimate answer: the select renders a
+  leading empty option and gets no implicit default.
+- The implicit rule never applies to `optionsMethod:` selects — the list is built from data at
+  runtime, where "the first row wins" would be arbitrary (a staff list, a person picker).
+- Defaults are re-applied before every render, so they also fill an EXISTING record whose column is
+  `NULL`, and they survive a custom `mount()` that replaces `$detailData` wholesale.
+- **NEVER hand-roll this per component** (`$this->detailData['status'] ??= 'created';` in a custom
+  `mount()`) — adding a default is a YAML change, in BOTH synced copies.
+```yaml
+- name: detailData.invoice_status
+  label: Status
+  type: select
+  options:
+    - value: created      # the default: shown AND saved
+      label: Created
+    - value: paid
+      label: Paid
+- name: detailData.size_class
+  label: Size Class
+  type: select
+  placeholder: '—'        # empty is a valid answer: no implicit default
+  options:
+    - value: micro
+      label: Micro
+```
+- Reference: `docs/field-types.md` ("Default Values")
+
 ### Empty Spacer Columns in Detail/Block Layouts
 Fields in a detail/block layout flow into a 12-column grid via auto-placement, so removing a field makes
 the following field move up into the freed slot. To keep a deliberate empty column (e.g. leave the right

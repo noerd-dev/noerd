@@ -24,7 +24,7 @@
                 editable: {{ $readonly ? 'false' : 'true' }},
                 editorProps: {
                     attributes: {
-                        class: 'rich-text focus:outline-none min-h-[150px] p-3',
+                        class: 'rich-text focus:outline-none min-h-[150px] p-3 text-base sm:text-sm',
                     },
                 },
                 onUpdate: ({ editor }) => {
