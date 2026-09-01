@@ -8,28 +8,64 @@ Zero intrusion: no traits, no base classes, no boilerplate. Just YAML configs.
 
 ![Noerd](https://noerd.dev/assets/Noerd.gif)
 
-For full documentation, visit [noerd.dev](https://noerd.dev).
+## Quickstart
+
+```bash
+# 1. Install the package and run the wizard
+composer require noerd/noerd
+php artisan noerd:install
+
+# 2. Create your first app
+php artisan noerd:create-app
+
+# 3. Create a model and its migration
+php artisan make:model Customer -m
+php artisan migrate
+
+# 4. Generate the list and detail screens for the model
+php artisan noerd:make-resource Customer
+```
+
+- `noerd:install` publishes the config and the frontend scaffold (Vite, Tailwind CSS 4), runs the
+  migrations, creates the default tenant and an admin user, and optionally installs demo data.
+- `noerd:create-app` asks for a title, a name and an icon, scaffolds a dashboard for the app and
+  offers to assign it to your tenants. Use `noerd:assign-apps-to-tenant` to change that later.
+- `noerd:make-resource` reads the model's columns and generates the list and detail components,
+  their YAML configs, the routes and the navigation entry.
+
+Log in, open the app from the app bar, and your first CRUD screen is ready.
+
+**Tip:** if you don't want to configure `$guarded` on every model, unguard globally in your
+`AppServiceProvider`:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+
+public function boot(): void
+{
+    Model::unguard();
+}
+```
 
 ## Key Features
 
-- **Business Apps** – Build self-contained apps (Accounting, CMS, Booking, Production Planning, …) and assign them per tenant or per user
-- **List Views** – Sortable, searchable, paginated tables — configured in a single YAML file ([list view](docs/list-view.md), [list filters](docs/list-filters.md), [list search](docs/list-search.md))
-- **Detail Views** – Tabbed forms with embedded related lists, built-in validation, and dynamic field layouts ([detail view](docs/detail-view.md))
-- **Smart Field Types** – Text, date, file, image, rich text, **relations**, and dynamic **picklists** ([field types](docs/field-types.md), [relation fields](docs/relation-field-types.md))
-- **Setup Collections** – Manage lookup tables (categories, countries, templates) via YAML — no migrations or models required ([setup collections](docs/setup-collections.md))
-- **Hierarchical Navigation** – Nested menu groups with Heroicons, defined in YAML ([navigation](docs/navigation.md))
+- **Business Apps** – Build self-contained apps (Accounting, CMS, Booking, Production Planning, …), each with its own dashboard and navigation, and assign them per tenant
+- **List Views** – Sortable, searchable, paginated tables with Excel-style column filters, bulk actions and a card grid mode — configured in a single YAML file
+- **Detail Views & Pages** – Tabbed forms with validation, embedded related lists, a relation overview and selectable form themes
+- **Smart Field Types** – Text, date, file, image, rich text, **relations** and dynamic **picklists** — extendable with your own field types
+- **Setup Collections** – Manage lookup tables (categories, countries, templates) via YAML — no migrations or models required
+- **Hierarchical Navigation** – Nested menu groups with Heroicons, defined in YAML
 - **Multi-Tenant Architecture** – Complete data isolation with per-tenant app assignment
-- **Multi-Language** – Translation management baked in
-- **UI Building Blocks** – Reusable [modal](docs/modal.md), [banner](docs/banner.md), and [quick menu](docs/quick-menu.md) components
+- **Permissions** – Profiles per tenant, app and object gates, named actions
+- **Multi-Language** – Translatable admin panel with built-in language management
+- **UI Building Blocks** – Modals, dashboard widgets, header actions, quick menu, banners and keyboard shortcuts
+- **AI-Ready** – Ships a Laravel Boost guideline and skills so AI assistants build on noerd the right way
 
 ## Documentation
 
-- Getting started: [Installation](docs/installation.md) · [Creating Apps](docs/create-app.md) · [Creating Modules](docs/creating-modules.md) · [Example Application](docs/example-application.md)
-- Lists: [List View](docs/list-view.md) · [List Search](docs/list-search.md) · [List Filters](docs/list-filters.md)
-- Forms: [Detail View](docs/detail-view.md) · [Page View](docs/page-view.md) · [Field Types](docs/field-types.md) · [Relation Field Types](docs/relation-field-types.md) · [Relation Forms](docs/relation-forms.md)
-- UI & layout: [Modal System](docs/modal.md) · [Themes](docs/themes.md) · [Brand](docs/brand.md) · [Navigation](docs/navigation.md) · [Header Actions](docs/header-actions.md) · [Dashboard Widgets](docs/dashboard-widgets.md) · [Quick Menu](docs/quick-menu.md) · [Banner](docs/banner.md) · [Keyboard Shortcuts](docs/keyboard-shortcuts.md)
-- Extending: [Extension Registries](docs/extension-registries.md) · [Reusable Traits](docs/traits.md) · [Setup Collections](docs/setup-collections.md) · [Artisan Commands](docs/artisan-commands.md)
-- Developing: [Testing](docs/testing.md) · [AI Agents](docs/ai-agents.md) (Laravel Boost guideline + skills shipped with the package, `AGENTS.md` for contributors)
+The full documentation lives at **[noerd.dev/docs](https://noerd.dev/docs/)** — installation,
+apps and modules, lists, forms, field types, modals, themes, permissions, Artisan commands and
+testing.
 
 ## Demo
 
@@ -42,35 +78,7 @@ https://demo.noerd.dev
 - PHP 8.3+
 - Laravel 12 or 13
 - Livewire 4+
-
-## Quickstart
-
-```bash
-# 1. Install the package
-composer require noerd/noerd
-php artisan noerd:install
-
-# 2. Create a model and migration
-php artisan make:model Customer -m
-
-# 3. Generate list, detail, YAML configs, navigation entry, and routes
-php artisan noerd:make-resource Customer
-```
-
-The installation wizard guides you through creating an admin user and an initial tenant.
-
-### Recommended Configuration
-
-If you don't want to configure `$guarded` on every model individually, unguard globally in your `AppServiceProvider`:
-
-```php
-use Illuminate\Database\Eloquent\Model;
-
-public function boot(): void
-{
-    Model::unguard();
-}
-```
+- Node.js `^20.19 || >=22.12` and npm (for the frontend build)
 
 ## YAML in Action
 
@@ -114,34 +122,15 @@ fields:
     colspan: 6
 ```
 
-## Apps & Navigation
+## Need Help?
 
-Noerd is built around **apps** — each with its own navigation YAML and assignable per tenant.
+If you spot a bug or something does not work as documented, please
+[open an issue](https://github.com/noerd-dev/noerd/issues) with the steps to reproduce it, the
+noerd version and the Laravel version — we are happy to help.
 
-```bash
-# Create a new app
-php artisan noerd:create-app
+## Contributing
 
-# Assign apps to tenants
-php artisan noerd:assign-apps-to-tenant
-```
-
-See [creating apps](docs/create-app.md) and [all artisan commands](docs/artisan-commands.md).
-
-## Auto installed packages
-
-### Composer
-
-- `wireui/heroicons` — Heroicon SVG components
-- `pestphp/pest` (dev) — Testing framework
-
-### NPM
-
-- `@tiptap/core` — Rich text editor core
-
-## Installation as Submodule to contribute
-
-If you want to contribute to the development of Noerd, you can install it as a git submodule:
+To work on noerd itself, install it as a git submodule of your project:
 
 ```bash
 git submodule add git@github.com:noerd-dev/noerd.git app-modules/noerd
@@ -171,4 +160,9 @@ composer update noerd/noerd
 php artisan noerd:install
 ```
 
-This way, you can make changes directly in `app-modules/noerd` and push them back to the Noerd repository.
+Changes you make in `app-modules/noerd` are picked up directly. Open a pull request against `main`
+— the contributor workflow is described in `AGENTS.md`.
+
+## License
+
+noerd is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
