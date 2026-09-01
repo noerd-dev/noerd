@@ -55,7 +55,7 @@ it('appends the demo route block protected by the noerd middleware group', funct
     $appended = mb_substr(File::get($routeFile), mb_strlen($before));
 
     expect($appended)
-        ->toContain("Route::group(['middleware' => ['noerd']]")
+        ->toContain("Route::group(['middleware' => ['noerd', 'app-access:demo']]")
         ->toContain("Route::livewire('demo-customers', 'demo-customers-list')")
         // A bare 'auth' middleware checks the default 'web' guard while noerd logs
         // in via its own 'noerd' guard, producing an endless login redirect loop.

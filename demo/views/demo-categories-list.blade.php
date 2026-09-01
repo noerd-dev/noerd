@@ -8,18 +8,9 @@ new class extends Component {
     use NoerdList;
 
     public $listModel = DemoCategory::class;
+    public ?string $detailRoute = 'demo-category.detail';
+
     public $detailComponent = 'demo-category-detail';
-
-    public function rendering()
-    {
-        if ((int) request()->demoCategoryId) {
-            $this->listAction(request()->demoCategoryId);
-        }
-
-        if (request()->create) {
-            $this->listAction();
-        }
-    }
 }; ?>
 
 <x-noerd::page>

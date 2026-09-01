@@ -1,9 +1,10 @@
 title: Demo Tags
+defaultSort:
+  field: name
+  direction: asc
 actions:
   - label: New Demo Tag
-    action: listAction
-disableSearch: false
+    route: demo-tag.detail
 columns:
   - field: name
     label: Name
-    type: text
