@@ -41,6 +41,7 @@ it('registers a relation type and exposes it via field type registry', function 
         'helpText' => '',
         'modelId' => 99,
         'owner' => null,
+        'errorMessages' => [],
         'theme' => 'default',
     ]);
 });

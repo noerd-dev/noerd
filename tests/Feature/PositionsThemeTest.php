@@ -66,6 +66,9 @@ describe('Position tables follow the theme', function (): void {
     });
 
     it('renders both accepted tax shapes identically', function (): void {
+        // Totals follow the active locale (German formatting here).
+        app()->setLocale('de');
+
         // The Livewire wrapper carries the component payload, which of course differs
         // between the two shapes — compare the rendered totals only, anchored on
         // stable text rather than a class attribute whose order may be re-sorted.

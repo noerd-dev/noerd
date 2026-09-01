@@ -1,37 +1,25 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
-use Noerd\Models\Tenant;
-use Symfony\Component\Yaml\Yaml;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
-    public $config;
+    /** @var array{buttons: array<int, array<string, mixed>>} */
+    public array $config = ['buttons' => []];
 
-    public function mount()
+    public function mount(): void
     {
-        // Load quick-menu configuration
         $configPath = base_path('app-configs/quick-menu.yml');
-        if (file_exists($configPath)) {
-            $content = file_get_contents($configPath);
-            $this->config = Yaml::parse($content ?: '');
-        } else {
-            $this->config = ['buttons' => []];
-        }
+        $config = file_exists($configPath) ? StaticConfigHelper::parseYamlFile($configPath) : [];
+
+        $this->config = ['buttons' => $config['buttons'] ?? []];
     }
 
-    public function canAccess($policy)
+    public function canAccess(string $policy): bool
     {
-        $user = NoerdAuth::user();
-
-        // Try gate-based ability first (for abilities defined via Gate::define)
-        if (Gate::has($policy)) {
-            return $user->can($policy);
-        }
-
-        // Fall back to policy-based ability (for abilities on model policies)
-        return $user->can($policy, Tenant::class);
+        return AccessHelper::canPassGate($policy);
     }
 
     public function showTenantSwitcher(): bool

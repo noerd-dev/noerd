@@ -37,14 +37,14 @@ new class extends Component {
 @inject('navigation', 'Noerd\Services\NavigationService')
 
 <div>
-    <!-- Mobile Overlay Background (nur <xl) -->
+    {{-- Mobile overlay background (below xl only) --}}
     <div x-show="showSidebar" x-transition.opacity class="lg:hidden fixed inset-0 z-50 bg-gray-900/80"
          @click="showSidebar = false"></div>
 
-    <!-- Mobile Close Button (nur <xl) -->
+    {{-- Mobile close button (below xl only) --}}
     <div x-show="showSidebar" x-transition class="lg:hidden fixed top-4 right-4 z-50">
         <x-noerd::button variant="icon" icon="x-mark" @click="showSidebar = false" type="button" class="bg-black/50! text-white!">
-            <span class="sr-only">Close sidebar</span>
+            <span class="sr-only">{{ __('Close sidebar') }}</span>
         </x-noerd::button>
     </div>
 

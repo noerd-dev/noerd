@@ -72,7 +72,7 @@
                 @endunless
             </span>
         </template>
-        <span x-show="selectedIds.length === 0" class="py-1 text-sm text-zinc-400"> {{ __('Keine Auswahl') }} </span>
+        <span x-show="selectedIds.length === 0" class="py-1 text-sm text-zinc-400"> {{ __('No selection') }} </span>
     </div>
 
     @unless ($readonly)
@@ -118,7 +118,7 @@
                 x-show="open && search.length > 0 && filteredOptions.length === 0"
                 class="absolute z-50 mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-500 shadow-lg"
             >
-                {{ __('Keine Ergebnisse gefunden') }}
+                {{ __('No results found') }}
             </div>
         </div>
     @endunless

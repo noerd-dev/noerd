@@ -24,7 +24,7 @@
 
     // Build options array — shared resolution with the list picklist badges.
     $options = [
-        ['value' => '', 'label' => 'Bitte wählen'],
+        ['value' => '', 'label' => __('Please select')],
         ...SetupCollectionHelper::selectOptions($collectionKey, $displayField, $valueField),
     ];
 @endphp

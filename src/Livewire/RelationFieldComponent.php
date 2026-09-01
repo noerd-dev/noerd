@@ -5,6 +5,7 @@ namespace Noerd\Livewire;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
@@ -73,6 +74,15 @@ abstract class RelationFieldComponent extends Component
      */
     #[Locked]
     public ?string $owner = null;
+
+    /**
+     * Validation messages of the owning detail for this field — reactive, so
+     * a failed store() shows them without re-mounting the field.
+     *
+     * @var array<int, string>
+     */
+    #[Reactive]
+    public array $errorMessages = [];
 
     public function mount(
         string $relationType,

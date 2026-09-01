@@ -68,6 +68,22 @@ class CurrencyHelper
         return $config;
     }
 
+    /**
+     * The ISO currency code of a tenant (`EUR` when nothing is configured).
+     */
+    public static function codeForTenant(?int $tenantId = null): string
+    {
+        $tenantId ??= NoerdAuth::user()?->selected_tenant_id;
+
+        if ($tenantId === null) {
+            return 'EUR';
+        }
+
+        $code = NoerdSettings::where('tenant_id', $tenantId)->value('currency');
+
+        return isset(self::CURRENCY_PRESETS[$code]) ? $code : 'EUR';
+    }
+
     public static function format(float $value, ?int $tenantId = null): string
     {
         $config = self::configForTenant($tenantId);

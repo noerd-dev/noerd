@@ -132,7 +132,36 @@
                             key($resolvedRendererKey ?? ($field['name'] ?? $field['type']) . '-' . ($modelId ?? 'new'))
                         )
                     @elseif($fieldTypeDefinition?->kind === 'include')
-                        @include($rendererTarget, $resolvedRendererProps)
+                        @php
+                            // An element the theme does not ship renders the default
+                            // template inside the theme's row chrome, so the form keeps
+                            // its rhythm (row number, label position) for every type.
+                            $usesThemeElement = str_starts_with((string) $rendererTarget, "themes::{$fieldTheme}.")
+                                || in_array($field['type'] ?? '', ['spacer', 'checkbox'], true);
+                            $unlabelledProps = array_merge($resolvedRendererProps, [
+                                'field' => array_merge($resolvedRendererProps['field'] ?? $field, ['label' => '', 'helpText' => null]),
+                            ]);
+                        @endphp
+                        @if (! $usesThemeElement && $fieldThemeDefinition->numbersRows)
+                            <x-noerd::detail.numbered-row :field="$field" labelTop :showError="false">
+                                @include($rendererTarget, $unlabelledProps)
+                            </x-noerd::detail.numbered-row>
+                        @elseif (! $usesThemeElement && $fieldTheme === 'compact')
+                            <div class="flex items-start gap-2">
+                                <x-noerd::input-label
+                                    for="{{ $field['name'] ?? '' }}"
+                                    :value="__($field['label'] ?? '')"
+                                    :required="$field['required'] ?? false"
+                                    :title="__($field['label'] ?? '')"
+                                    class="w-36 shrink-0 truncate pt-1 pb-0!"
+                                />
+                                <div class="min-w-0 flex-1">
+                                    @include($rendererTarget, $unlabelledProps)
+                                </div>
+                            </div>
+                        @else
+                            @include($rendererTarget, $resolvedRendererProps)
+                        @endif
                     @else
                         @php
                             $fieldType = $field['type'] ?? '';

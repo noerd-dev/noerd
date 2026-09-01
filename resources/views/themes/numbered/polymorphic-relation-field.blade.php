@@ -43,5 +43,6 @@
                 @endif
             </div>
         </div>
-    </div>
+</div>
+    <x-noerd::input-error :messages="$errorMessages" class="mt-2" />
 </x-noerd::detail.numbered-row>

@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
@@ -70,6 +71,15 @@ abstract class PolymorphicRelationFieldComponent extends Component
     /** Livewire id of the owning detail — see RelationFieldComponent::$owner. */
     #[Locked]
     public ?string $owner = null;
+
+    /**
+     * Validation messages of the owning detail for this field — reactive, so
+     * a failed store() shows them without re-mounting the field.
+     *
+     * @var array<int, string>
+     */
+    #[Reactive]
+    public array $errorMessages = [];
 
     public function mount(
         string $fieldName,

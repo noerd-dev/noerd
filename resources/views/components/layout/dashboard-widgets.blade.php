@@ -1,11 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
-use Noerd\Models\Tenant;
-use Symfony\Component\Yaml\Yaml;
-use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
     public array $widgets = [];
@@ -13,9 +10,7 @@ new class extends Component {
     public function mount(): void
     {
         $configPath = base_path('app-configs/dashboard-widgets.yml');
-        $config = file_exists($configPath)
-            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
-            : [];
+        $config = file_exists($configPath) ? StaticConfigHelper::parseYamlFile($configPath) : [];
 
         // The optional `app:` (string) / `apps:` (list) key ties a widget to
         // tenant apps: it renders only when at least one of them is assigned
@@ -44,15 +39,7 @@ new class extends Component {
 
     public function canAccess(string $policy): bool
     {
-        $user = NoerdAuth::user();
-
-        // Try gate-based ability first (for abilities defined via Gate::define)
-        if (Gate::has($policy)) {
-            return (bool) $user?->can($policy);
-        }
-
-        // Fall back to policy-based ability (for abilities on model policies)
-        return (bool) $user?->can($policy, Tenant::class);
+        return AccessHelper::canPassGate($policy);
     }
 } ?>
 

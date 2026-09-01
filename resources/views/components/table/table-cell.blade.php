@@ -121,7 +121,7 @@
         </a>
     @else
         @if ($type === 'bool' || $type === 'boolean')
-            @if ($value === true)
+            @if (\Noerd\Support\ListCellFormatter::truthy($value))
                 <div class="shrink-0 px-3 text-right">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +157,7 @@
                 </div>
             @endif
         @elseif ($type === 'inversebool')
-            @if ($value === true)
+            @if (\Noerd\Support\ListCellFormatter::truthy($value))
                 <div class="shrink-0 px-3 text-right">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -218,7 +218,7 @@
                 />
             @elseif ($type === 'currency')
                 <input
-                    type="{{ $type }}"
+                    type="text"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     @if ($readOnly ?? true) readonly @endif
                     id="cell-{{ $column }}-{{ $row }}"
@@ -227,14 +227,8 @@
                 />
             @elseif ($type === 'badge')
                 @php
-                    $badgeValue = $value instanceof \BackedEnum ? $value->value : ($value instanceof \UnitEnum ? $value->name : $value);
-                    $badgeLabel = $badgeValue;
-                    foreach (($columnConfig['options'] ?? []) as $opt) {
-                        if (isset($opt['value']) && (string) $opt['value'] === (string) $badgeValue) {
-                            $badgeLabel = $opt['label'] ?? $badgeValue;
-                            break;
-                        }
-                    }
+                    $badgeValue = \Noerd\Support\ListCellFormatter::scalar($value);
+                    $badgeLabel = \Noerd\Support\ListCellFormatter::badgeLabel($value, $columnConfig['options'] ?? []);
                 @endphp
                 <div
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
@@ -375,7 +369,8 @@
                 </div>
             @else
                 <input
-                    type="{{ $type }}"
+                    {{-- Only a real text-like input type reaches the browser; an unknown column type renders as text. --}}
+                    type="{{ in_array($type, ['text', 'email', 'tel', 'url'], true) ? $type : 'text' }}"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
                     @if ($readOnly ?? true) readonly @endif

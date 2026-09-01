@@ -19,7 +19,7 @@
 @endif
 
 @if ($hasUnlistedValue)
-    <option value="{{ $selectedValue }}">{{ __((string) $selectedValue) }}</option>
+    <option value="{{ $selectedValue }}">{{ $selectedValue }}</option>
 @endif
 
 @foreach ($options as $option)
