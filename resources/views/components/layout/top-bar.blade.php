@@ -100,32 +100,27 @@ new class extends Component {
                     @endif
 
                     <!-- Profile dropdown -->
-                    <div x-data="{ open: false }" class="relative shrink-0">
-                        <div>
-                            <button x-on:click="open = ! open" x-on:click.outside="open = false" type="button"
+                    <x-noerd::action-menu width="w-48" wrapperClass="relative shrink-0" label="Open user menu">
+                        <x-slot:trigger>
+                            <button x-on:click="open = ! open" type="button"
                                     class="relative flex rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
-                                    id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    id="user-menu-button" :aria-expanded="open" aria-haspopup="true">
                                 <span class="absolute -inset-1.5"></span>
-                                <span class="sr-only">Open user menu</span>
+                                <span class="sr-only">{{ __('Open user menu') }}</span>
                                 <div class="rounded-full text-xs bg-red-200  w-7 h-7 leading-7 text-center">
                                     {{NoerdAuth::user()->initials()}}
                                 </div>
                             </button>
-                        </div>
+                        </x-slot:trigger>
 
-                        <div x-show="open" x-transition
-                             class="absolute right-0 z-90 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                             role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button"
-                             tabindex="-1">
-                            <a wire:navigate href="{{route('noerd.profile')}}" class="block px-4 py-2 text-sm text-gray-700"
-                               role="menuitem"
-                               tabindex="-1" id="user-menu-item-0">{{__('Profile')}}</a>
+                        <x-noerd::action-menu-item :href="route('noerd.profile')" navigate>
+                            {{__('Profile')}}
+                        </x-noerd::action-menu-item>
 
-                            <a wire:navigate wire:click="logout" class="block px-4 py-2 cursor-pointer text-sm text-gray-700"
-                               role="menuitem"
-                               tabindex="-1" id="user-menu-item-2">{{__('Sign Out')}}</a>
-                        </div>
-                    </div>
+                        <x-noerd::action-menu-item wire:click="logout">
+                            {{__('Sign Out')}}
+                        </x-noerd::action-menu-item>
+                    </x-noerd::action-menu>
                 </div>
             </div>
         </div>

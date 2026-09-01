@@ -41,6 +41,15 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   magic from the frontend), and implement the modal as its OWN Livewire component. Close it with
   `wire:click="$dispatch('closeTopModal')"`. To hand results back to the opener, dispatch a custom event
   the opener listens for via `#[On('...')]`. Reference: `docs/modal.md` (opening, closing, events).
+- **Dropdown menus.** Every menu — a record's action menu, a switcher, a sort menu — uses
+  `<x-noerd::action-menu>` with `<x-noerd::action-menu-item>` entries (and
+  `<x-noerd::action-menu-separator>` between groups). NEVER hand-roll another
+  `x-data="{ open: false }"` + `role="menu"` panel: the chrome, click-outside and escape handling
+  live in the component once. The default trigger is a kebab button; the `trigger` slot replaces it
+  and toggles the menu with `@click="open = ! open"`. A menu belonging to a record goes into
+  the `actions` slot of `<x-noerd::tabs>`, which renders right-aligned inside the tab row. Only for
+  a list of choices — a popover carrying a form (filters) keeps its own Alpine scope.
+  Reference: `docs/action-menu.md`.
 - **Route modal vs. component modal.** A modal that shows ONE addressable record must be opened by
   ROUTE, not by component: `Noerd::modalRoute('{app}.{entity}.detail', ['modelId' => $id])` /
   `$modalRoute(...)`. The route is resolved to the component behind it, the browser URL is rewritten
