@@ -76,6 +76,21 @@ it('wraps the injected controls in the listControlsShow expression', function ()
         ->toContain('wire:model.live.debounce.300ms="search"');
 });
 
+it('keeps room for the focus ring inside the scrolling controls row', function (): void {
+    // `xl:overflow-x-auto` makes the header row scroll rather than wrap, and a scroll
+    // container clips BOTH axes. Without padding the row is exactly as tall as its
+    // 32px controls, so the search field's focus ring is cut down to a black sliver.
+    $html = Livewire::test(StandardHeaderListComponent::class)->assertOk()->html();
+
+    preg_match_all('/class="([^"]*xl:overflow-x-auto[^"]*)"/', $html, $matches);
+
+    expect($matches[1])->not->toBeEmpty();
+
+    foreach ($matches[1] as $classAttribute) {
+        expect($classAttribute)->toContain('xl:p-1.5');
+    }
+});
+
 /**
  * List host with its OWN header slot (the tab-panel/object-manager pattern): the
  * generic list-header never renders, so every control must come from the
