@@ -415,6 +415,19 @@ trait GeneratesResourceFiles
         return $path;
     }
 
+    /**
+     * Generated routes always sit behind the noerd auth/tenant middleware and
+     * the app gate — exactly like the routes of a shipped module.
+     */
+    protected function appendRoute(string $route): void
+    {
+        $routeFile = base_path('routes/web.php');
+        $group = "Route::middleware(['noerd', 'app-access:{$this->appConfigName}'])->group(function (): void {\n    {$route}\n});";
+
+        $this->filesystem->append($routeFile, "\n{$group}\n");
+        $this->line("<info>Route added:</info> {$route}");
+    }
+
     protected function addPageRoute(): void
     {
         $routeFile = base_path('routes/web.php');

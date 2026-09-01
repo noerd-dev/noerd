@@ -4,6 +4,7 @@ namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\multiselect;
@@ -23,7 +24,7 @@ class CreateTenantApp extends Command
                             {--title= : The display title of the app}
                             {--name= : The unique name identifier of the app}
                             {--icon= : The icon identifier for the app}
-                            {--route= : The main route name for the app}
+                            {--route= : An existing route to open instead of the generated dashboard}
                             {--active=1 : Whether the app is active (1 or 0)}';
 
     /**
@@ -31,7 +32,7 @@ class CreateTenantApp extends Command
      *
      * @var string
      */
-    protected $description = 'Create a new app that can be assigned to tenants';
+    protected $description = 'Create a new app with its own dashboard that can be assigned to tenants';
 
     /**
      * Execute the console command.
@@ -45,14 +46,13 @@ class CreateTenantApp extends Command
         $active = (bool) $this->option('active');
 
         // Interactive mode if no options provided and not in test environment
-        if ((!$title || !$name || !$icon || !$route) && !app()->runningUnitTests()) {
+        if ((!$title || !$name || !$icon) && !app()->runningUnitTests()) {
             $this->info('Creating a new tenant app...');
             $this->newLine();
 
             $title = $title ?: $this->ask('App Title (display name)');
             $name = $this->normalizeAppName($name ?: $this->ask('App Name (unique identifier, e.g., CMS, MEDIA)'));
             $icon = $icon ?: $this->askForIcon();
-            $route = $route ?: $this->ask('App Route (main route name, e.g., cms.pages, media.dashboard)');
         }
 
         // Normalize name if provided via option
@@ -61,8 +61,8 @@ class CreateTenantApp extends Command
         }
 
         // Validate required fields
-        if (!$title || !$name || !$icon || !$route) {
-            $this->error('All fields (title, name, icon, route) are required.');
+        if (!$title || !$name || !$icon) {
+            $this->error('All fields (title, name, icon) are required.');
             return self::FAILURE;
         }
 
@@ -78,6 +78,11 @@ class CreateTenantApp extends Command
             return self::FAILURE;
         }
 
+        // Every app ships its own dashboard: the app tile opens the generated
+        // dashboard route unless the caller points it at an existing route.
+        $generateDashboard = !$route;
+        $route = $route ?: MakeDashboardCommand::routeNameFor($name);
+
         // Create the tenant app
         try {
             $tenantApp = TenantApp::create([
@@ -87,6 +92,14 @@ class CreateTenantApp extends Command
                 'route' => $route,
                 'is_active' => $active,
             ]);
+
+            if ($generateDashboard) {
+                $this->newLine();
+                $this->call('noerd:make-dashboard', [
+                    '--app' => Str::lower($name),
+                    '--no-interaction' => true,
+                ]);
+            }
 
             $this->newLine();
             $this->info("✅ Tenant app created successfully!");
