@@ -29,7 +29,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>Home</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Home') }}</x-noerd::modal-title>
     </x-slot:header>
 
     @php
@@ -70,7 +70,7 @@ new class extends Component {
 
                         @if(!$tenantApp->is_active)
                             <div class="text-xs text-gray-400 mt-1">
-                                Inaktiv
+                                {{ __('Inactive') }}
                             </div>
                         @endif
                     </div>

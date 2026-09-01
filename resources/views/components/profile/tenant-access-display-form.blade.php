@@ -33,7 +33,7 @@ new class extends Component {
 <section>
     <header>
         <div class="text-lg font-medium text-gray-900">
-            {{ __('Mandanten-Zugriff') }}
+            {{ __('Tenant Access') }}
         </div>
 
         <p class="mt-1 text-sm text-gray-600">
