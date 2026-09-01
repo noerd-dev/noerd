@@ -35,6 +35,7 @@ class RelationFieldRegistry
                     'helpText' => $field['helpText'] ?? '',
                     'modelId' => $modelId,
                     'owner' => $component instanceof Component ? $component->getId() : null,
+                    'errorMessages' => $component instanceof Component ? $component->getErrorBag()->get($fieldName) : [],
                 ];
 
                 // Only themes that number their rows put a number on the field.
@@ -73,6 +74,7 @@ class RelationFieldRegistry
                     'helpText' => $field['helpText'] ?? '',
                     'modelId' => $modelId,
                     'owner' => $component instanceof Component ? $component->getId() : null,
+                    'errorMessages' => $component instanceof Component ? $component->getErrorBag()->get($fieldName) : [],
                 ];
 
                 // Only themes that number their rows put a number on the field.

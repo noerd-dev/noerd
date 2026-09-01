@@ -3,6 +3,7 @@
     'name' => '',
     'label' => '',
     'readonly' => false,
+    'placeholder' => null,
     'live' => false,
     'required' => false,
 ])
@@ -11,6 +12,7 @@
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? $readonly;
+    $placeholder = $field['placeholder'] ?? $placeholder;
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 @endphp
@@ -25,7 +27,7 @@
             type="text"
             id="{{ $name }}"
             name="{{ $name }}"
-            placeholder="#000000"
+            placeholder="{{ $placeholder ? __($placeholder) : '#000000' }}"
             maxlength="7"
             @if ($live)
                 wire:model.live.debounce="{{ $name }}"

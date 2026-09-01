@@ -78,10 +78,58 @@ document.addEventListener('alpine:init', () => {
     Alpine.plugin(sort);
     Alpine.plugin(focus);
 
-    // Alpine Stores
-    Alpine.store('globalState', {
-        open: true,
-    });
+    // Currency input: the bound value stays a plain number, the field shows it
+    // formatted with the tenant's separators and accepts either notation.
+    Alpine.data('noerdCurrency', ({ name, decSep, thousSep }) => ({
+        rawValue: null,
+        init() {
+            this.rawValue = this.$wire.get(name);
+            this.$nextTick(() => this.showFormatted());
+        },
+        formatDisplay(val) {
+            let num = parseFloat(val);
+            if (isNaN(num)) num = 0;
+            const parts = num.toFixed(2).split('.');
+            const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousSep);
+            return intPart + decSep + parts[1];
+        },
+        parseInput(val) {
+            if (typeof val === 'number') return val;
+            let cleaned = String(val).replace(/\s/g, '');
+            if (decSep === ',') {
+                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+            } else {
+                cleaned = cleaned.replace(/,/g, '');
+            }
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        },
+        showFormatted() {
+            this.$refs.input.value = this.formatDisplay(this.rawValue);
+        },
+        onFocus(e) {
+            const num = parseFloat(this.rawValue);
+            e.target.value = isNaN(num) ? '' : num.toFixed(2).replace('.', decSep);
+            this.$nextTick(() => e.target.select());
+        },
+        onBlur(e) {
+            const parsed = this.parseInput(e.target.value);
+            this.rawValue = parsed;
+            this.$wire.set(name, parsed);
+            this.showFormatted();
+        },
+    }));
+
+    // Date/time inputs only hold the part the control can show: a datetime
+    // string from the model is trimmed to its date (10) or time (5) prefix.
+    Alpine.data('noerdDateInput', ({ name, length }) => ({
+        init() {
+            const value = this.$wire.get(name);
+            if (value && value.length > length) {
+                this.$wire.set(name, value.substring(0, length), false);
+            }
+        },
+    }));
 
     Alpine.data('noerdCodeSnippet', () => ({
         copied: false,

@@ -3,7 +3,8 @@
     'field' => null,
     'name' => '',
     'label' => '',
-    'value' => '',
+    'placeholder' => null,
+    'live' => false,
     'readonly' => false,
     'required' => false,
     'rows' => 8,
@@ -12,7 +13,8 @@
 @php
     $name = $field['name'] ?? $name;
     $label = $field['label'] ?? $label;
-    $value = $field['value'] ?? $value;
+    $placeholder = $field['placeholder'] ?? $placeholder;
+    $live = $field['live'] ?? $live;
     $readonly = $field['readonly'] ?? $readonly;
     $required = $field['required'] ?? $required;
     $rows = $field['rows'] ?? $rows;
@@ -24,19 +26,23 @@
         :value="__($label)"
         :required="$required"
         :title="__($label)"
-        class="w-36 shrink-0 truncate pt-1 !pb-0"
+        class="w-36 shrink-0 truncate pt-1 pb-0!"
     />
 
     <div class="min-w-0 flex-1">
         <textarea
-            placeholder="{{ $value }}"
-            wire:model="{{ $name }}"
+            @if ($placeholder) placeholder="{{ __($placeholder) }}" @endif
+            @if ($live)
+                wire:model.live.debounce="{{ $name }}"
+            @else
+                wire:model="{{ $name }}"
+            @endif
+            id="{{ $name }}"
             name="{{ $name }}"
             rows="{{ $rows }}"
             class="focus:ring-brand-border block w-full appearance-none rounded-sm border border-zinc-200 bg-white py-1 ps-2 pe-2 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 focus:ring-1 focus:outline-none sm:text-sm"
             {{ $readonly ? 'readonly' : '' }}
-            {{ $attributes->merge(['class' => '']) }}
-        ></textarea>
+            ></textarea>
 
         <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
     </div>

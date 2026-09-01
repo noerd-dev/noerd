@@ -4,6 +4,7 @@ namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Gate;
 use Noerd\Enums\Profile;
+use Noerd\Models\Tenant;
 
 /**
  * Authorization checks for the generic noerd chrome, layered in two stages:
@@ -127,6 +128,22 @@ final class AccessHelper
      *
      * @param  string|null  $actionKey  null/'' (no action known) is allowed
      */
+    /**
+     * A host-defined gate or policy ability (YAML `policy:` key of quick-menu
+     * buttons and dashboard widgets): a `Gate::define()`d ability is checked as
+     * such, anything else against the Tenant policy.
+     */
+    public static function canPassGate(string $ability): bool
+    {
+        $user = NoerdAuth::user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return Gate::has($ability) ? $user->can($ability) : $user->can($ability, Tenant::class);
+    }
+
     public static function canPerformAction(?string $actionKey): bool
     {
         if ($actionKey === null || $actionKey === '') {

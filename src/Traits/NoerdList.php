@@ -2,7 +2,6 @@
 
 namespace Noerd\Traits;
 
-use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -25,12 +24,12 @@ use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\LayoutFields;
+use Noerd\Support\ListCellFormatter;
 use Noerd\Support\SchemaColumnCache;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
-use UnitEnum;
 
 trait NoerdList
 {
@@ -1661,13 +1660,13 @@ trait NoerdList
         $type = $column['type'] ?? 'text';
 
         return match ($type) {
-            'bool', 'boolean' => $value ? __('Yes') : __('No'),
+            'bool', 'boolean' => ListCellFormatter::truthy($value) ? __('Yes') : __('No'),
             'date' => FormatHelper::date($value),
             'datetime' => FormatHelper::dateTime($value),
             'currency', 'number' => is_numeric($value)
                 ? FormatHelper::decimal((float) $value)
                 : $this->neutralizeCsvFormula((string) ($value ?? '')),
-            'badge' => $this->neutralizeCsvFormula(__($this->badgeLabel($value, $column['options'] ?? []))),
+            'badge' => $this->neutralizeCsvFormula(ListCellFormatter::format($value, $column)),
             default => $this->neutralizeCsvFormula((string) ($value ?? '')),
         };
     }
@@ -1687,22 +1686,11 @@ trait NoerdList
     }
 
     /**
-     * Resolve a picklist value to its option label (untranslated); falls back to
-     * the raw value when no option matches.
-     *
      * @param  array<int, array{value: mixed, label: string}>  $options
      */
     protected function badgeLabel(mixed $value, array $options): string
     {
-        $value = $value instanceof BackedEnum ? $value->value : ($value instanceof UnitEnum ? $value->name : $value);
-
-        foreach ($options as $option) {
-            if (isset($option['value']) && (string) $option['value'] === (string) $value) {
-                return (string) ($option['label'] ?? $value);
-            }
-        }
-
-        return (string) ($value ?? '');
+        return ListCellFormatter::badgeLabel($value, $options);
     }
 
     /**
