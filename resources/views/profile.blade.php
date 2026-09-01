@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-noerd::app-layout>
     <div class="p-8">
         <x-noerd::box>
             <div class="max-w-xl">
@@ -34,4 +34,4 @@
         </div>
         --}}
     </div>
-</x-app-layout>
+</x-noerd::app-layout>

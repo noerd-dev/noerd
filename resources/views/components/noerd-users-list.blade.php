@@ -11,28 +11,31 @@ new class extends Component {
     use NoerdList;
     use TenantFilterTrait;
 
-    public const DETAIL_COMPONENT = 'noerd::noerd-users-list';
     public $listModel = NoerdUser::class;
     public ?string $detailRoute = 'noerd.user.detail';
 
-    public function loginAsUser($userId)
+    public $detailComponent = 'noerd::noerd-user-page';
+
+    public function loginAsUser(int $userId): void
     {
         if (! NoerdAuth::user()->isAdmin()) {
-            abort(401);
+            abort(403);
         }
+
+        // Impersonation never nests: a second hop would overwrite the origin
+        // and strand the original admin in the impersonated account.
+        abort_if(session()->has('impersonating_from'), 403);
 
         // A super admin administers the installation, so every account it can
         // see on this screen is impersonatable; a tenant admin stays confined
         // to the members of the tenants it administers.
         if (! NoerdAuth::user()->isSuperAdmin()) {
-            $tenants = NoerdAuth::user()->adminTenants();
-            $allowedUserIds = NoerdUser::whereHas('tenants', function ($relationQuery) use ($tenants): void {
-                $relationQuery->whereIn('tenant_id', $tenants->pluck('id'));
-            })->get()->pluck('id')->toArray();
+            $tenantIds = NoerdAuth::user()->adminTenants()->pluck('tenants.id');
+            $isMember = NoerdUser::whereKey($userId)
+                ->whereHas('tenants', fn($relationQuery) => $relationQuery->whereIn('tenant_id', $tenantIds))
+                ->exists();
 
-            if (in_array($userId, $allowedUserIds) === false) {
-                abort(401);
-            }
+            abort_unless($isMember, 403);
         }
 
         // A super admin is never impersonatable from a tenant-admin screen:
@@ -46,7 +49,7 @@ new class extends Component {
 
         NoerdAuth::guard()->loginUsingId($userId);
 
-        return redirect('/');
+        $this->redirect('/');
     }
 
     public function listData(): array

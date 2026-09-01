@@ -21,15 +21,12 @@ trait ShowFromFilterTrait
     {
         return match ($value) {
             'today' => Carbon::today()->toDateString(),
-            'this_week' => Carbon::today()->subDays(7)->toDateString(),
+            'this_week' => Carbon::today()->startOfWeek()->toDateString(),
             'this_quarter' => Carbon::today()->firstOfQuarter()->toDateString(),
             'last_quarter' => Carbon::today()->subQuarter()->firstOfQuarter()->toDateString(),
             'this_month' => Carbon::today()->startOfMonth()->toDateString(),
             'last_month' => Carbon::today()->subMonth()->startOfMonth()->toDateString(),
             'this_year' => Carbon::today()->startOfYear()->toDateString(),
-            'one_week' => Carbon::today()->subWeek()->toDateString(),
-            'one_month' => Carbon::today()->subMonth()->toDateString(),
-            'one_year' => Carbon::today()->subYear()->toDateString(),
             default => $this->resolveCustomDate($value),
         };
     }

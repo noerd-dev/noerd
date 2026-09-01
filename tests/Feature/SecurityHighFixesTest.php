@@ -33,6 +33,62 @@ it('setFieldValue writes into detailData but ignores any other property', functi
     expect($component->relationTitles['customer_id'])->toBe('Acme');
 });
 
+it('setFieldValue addressed to another owner leaves the detail untouched', function (): void {
+    $component = new class {
+        use NoerdDetail;
+
+        public function getId(): string
+        {
+            return 'owner-a';
+        }
+    };
+
+    $component->setFieldValue('detailData.name', 'Foreign', null, 'owner-b');
+    expect($component->detailData)->not->toHaveKey('name');
+
+    $component->setFieldValue('detailData.name', 'Mine', null, 'owner-a');
+    expect($component->detailData['name'])->toBe('Mine');
+});
+
+// ---------------------------------------------------------------------------
+// A row click only reaches PUBLIC methods through listActionMethod
+// ---------------------------------------------------------------------------
+
+it('openListRow ignores a listActionMethod that names a non-public method', function (): void {
+    $component = new class {
+        use NoerdList;
+
+        public bool $publicHit = false;
+
+        public bool $protectedHit = false;
+
+        public function listAction(mixed $modelId = null, array $relations = []): void
+        {
+            $this->publicHit = true;
+        }
+
+        public function skipRender(): void {}
+
+        protected function internalReset(mixed $modelId = null): void
+        {
+            $this->protectedHit = true;
+        }
+    };
+
+    $component->listActionMethod = 'internalReset';
+    $component->openListRow(1);
+    expect($component->protectedHit)->toBeFalse();
+
+    $component->listActionMethod = 'listAction';
+    $component->openListRow(1);
+    expect($component->publicHit)->toBeTrue();
+});
+
+it('keeps finishStore and storeProcess out of the client-callable surface', function (): void {
+    expect((new ReflectionMethod(NoerdDetail::class, 'finishStore'))->isPublic())->toBeFalse()
+        ->and((new ReflectionMethod(Noerd\Traits\NoerdPage::class, 'storeProcess'))->isPublic())->toBeFalse();
+});
+
 // ---------------------------------------------------------------------------
 // resolvePicklistOptions never invokes a side-effecting method
 // ---------------------------------------------------------------------------

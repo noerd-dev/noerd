@@ -22,7 +22,7 @@
         <div
             x-show="$wire.showSuccessIndicator"
             x-transition.out.opacity.duration.1000ms
-            x-noerd::effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
+            x-effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
             class="mt-2 mr-2 flex"
         >
             <div class="ml-auto flex">

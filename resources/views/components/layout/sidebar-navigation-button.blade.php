@@ -19,7 +19,7 @@ new class extends Component {
     $naviModalRoute = $naviModalRoute && \Illuminate\Support\Facades\Route::has($naviModalRoute) ? $naviModalRoute : null;
     $naviModalComponent = $navi['component'] ?? null;
     $opensAsModal = $naviModalRoute || $naviModalComponent;
-    $naviArguments = $arguments ?? [];
+    $naviArguments = is_array($navi['arguments'] ?? null) ? $navi['arguments'] : [];
 
     // The primary `route:` may belong to an optional module. A stale navigation
     // entry must never take the whole page down, so a route-only entry whose

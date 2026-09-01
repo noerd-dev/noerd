@@ -18,6 +18,8 @@ class SetupMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = NoerdAuth::user();
+        abort_unless($user, 403);
+
         if (! TenantHelper::getSelectedTenantId()) {
             $firstTenantId = $user->tenants->first()?->id;
 
@@ -28,11 +30,13 @@ class SetupMiddleware
             TenantHelper::setSelectedTenantId($firstTenantId);
         }
 
-        TenantHelper::setSelectedApp('SETUP');
-
+        // Authorization comes before the session switch: a denied user must
+        // not be left with the setup app selected.
         if (! $user->isAdmin()) {
-            abort(401);
+            abort(403);
         }
+
+        TenantHelper::setSelectedApp('SETUP');
 
         return $next($request);
     }

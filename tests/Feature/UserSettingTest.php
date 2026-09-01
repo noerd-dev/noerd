@@ -138,14 +138,50 @@ describe('TenantSessionHelper', function (): void {
 });
 
 describe('User Model with TenantSessionHelper', function (): void {
-    it('allows setting selected_tenant_id via user attribute using session', function (): void {
+    it('persists selected_tenant_id of another user without touching the session', function (): void {
+        $admin = NoerdUser::factory()->create();
+        $adminTenant = Tenant::factory()->create();
+        $this->actingAs($admin);
+        TenantHelper::setSelectedTenantId($adminTenant->id);
+
         $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
 
         $user->selected_tenant_id = $tenant->id;
 
         expect($user->selected_tenant_id)->toBe($tenant->id);
+        expect($user->fresh()->userSetting->selected_tenant_id)->toBe($tenant->id);
+        expect(TenantHelper::getSelectedTenantId())->toBe($adminTenant->id);
+    });
+
+    it('treats the tenant session as its own while nobody is authenticated', function (): void {
+        $user = NoerdUser::factory()->create();
+        $tenant = Tenant::factory()->create();
+
+        $user->selected_tenant_id = $tenant->id;
+
+        expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id)
+            ->and($user->fresh()->userSetting->selected_tenant_id)->toBe($tenant->id);
+    });
+
+    it('syncs the session when the authenticated user selects a tenant via the attribute', function (): void {
+        $user = NoerdUser::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $this->actingAs($user);
+
+        $user->selected_tenant_id = $tenant->id;
+
+        expect($user->selected_tenant_id)->toBe($tenant->id);
         expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id);
+        expect($user->fresh()->userSetting->selected_tenant_id)->toBe($tenant->id);
+    });
+
+    it('persists a selection assigned before the first save', function (): void {
+        $tenant = Tenant::factory()->create();
+
+        $user = NoerdUser::factory()->create(['selected_tenant_id' => $tenant->id]);
+
+        expect($user->fresh()->userSetting->selected_tenant_id)->toBe($tenant->id);
     });
 
     it('returns selectedTenant from session via User model', function (): void {

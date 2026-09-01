@@ -62,7 +62,6 @@
 
         // List-view switcher: only on full list pages — never compact/embedded lists or pickers
         $listViews = (! $compact && ! $returnsSelection
-                && ($this->selectListConfig ?? null) === null
                 && ($this->listActionMethod ?? 'listAction') !== 'selectAction')
             ? $this->availableListViews
             : [];

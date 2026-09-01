@@ -2,6 +2,7 @@
 
 namespace Noerd\Providers;
 
+use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -173,8 +174,10 @@ class NoerdServiceProvider extends ServiceProvider
             Event::listen(\Laravel\Octane\Events\RequestReceived::class, function (): void {
                 $this->flushRequestState();
                 // Stateful singletons are rebuilt per request: the title
-                // resolver memoizes tenant-scoped DB values.
+                // resolver memoizes tenant-scoped DB values, the navigation
+                // service bakes the user's menu into its constructor.
                 $this->app->forgetInstance(RelationTitleResolver::class);
+                $this->app->forgetInstance(NavigationService::class);
             });
         }
 
@@ -188,7 +191,7 @@ class NoerdServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
-        Blade::component('app-layout', AppLayout::class);
+        Blade::component('noerd::app-layout', AppLayout::class);
         Livewire::addNamespace('noerd', viewPath: __DIR__ . '/../../resources/views/components');
         // The un-namespaced location is load-bearing public API: the generic
         // relation field components resolve by their bare names
@@ -203,6 +206,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register event listeners
         Event::listen(Login::class, InitializeTenantSession::class);
+        Event::listen(Authenticated::class, InitializeTenantSession::class);
         Event::listen(Login::class, RecordLogin::class);
 
         // Create default languages and setup collections when a new tenant is created
@@ -371,11 +375,14 @@ class NoerdServiceProvider extends ServiceProvider
                 __DIR__ . '/../../dist/build' => public_path('vendor/noerd'),
             ], 'noerd-assets');
 
-            // Auto-publish fonts if not exists (for development convenience)
-            $this->publishFontsIfNotExists();
-
-            // Auto-publish built assets if missing or stale
-            $this->publishBuiltAssetsIfNotExist();
+            // Dev-checkout convenience only: keep the published fonts and the
+            // built bundle current on any artisan call. Never on other
+            // environments — queue workers and schedulers must not write into
+            // public/; there noerd:install / noerd:update publish explicitly.
+            if ($this->app->environment('local')) {
+                $this->publishFontsIfNotExists();
+                $this->publishBuiltAssetsIfNotExist();
+            }
 
             $this->commands([
                 MakeUserAdmin::class,

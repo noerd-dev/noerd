@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
@@ -12,7 +13,7 @@ new class extends Component {
 }; ?>
 
 <div>
-    @auth
+    @if (NoerdAuth::check())
         <div x-show="showAppbar && (isDesktop || showSidebar)"
              x-transition
              @class([
@@ -68,5 +69,5 @@ new class extends Component {
                 @endforeach
             </div>
         </div>
-    @endauth
+    @endif
 </div>

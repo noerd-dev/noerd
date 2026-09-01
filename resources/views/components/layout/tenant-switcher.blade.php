@@ -21,7 +21,11 @@ new class extends Component {
         $referer = request()->header('Referer');
 
         if ($referer) {
-            $path = parse_url($referer, PHP_URL_PATH);
+            // Only the PATH (+ query) of the referer is ever redirected to — the
+            // header is client-supplied, so its origin is never trusted.
+            $path = (string) parse_url($referer, PHP_URL_PATH);
+            $query = parse_url($referer, PHP_URL_QUERY);
+            $sameSiteUrl = '/' . ltrim($path, '/') . ($query ? '?' . $query : '');
             $segments = explode('/', mb_trim($path, '/'));
             $appPrefix = $segments[0] ?? null;
 
@@ -31,8 +35,8 @@ new class extends Component {
                 // URL prefix (user, no-tenant, ...).
                 $systemPaths = ['setup', 'noerd-apps', mb_trim(config('noerd.routes.prefix', 'noerd'), '/')];
 
-                if (in_array($appPrefix, $systemPaths)) {
-                    $redirectUrl = $referer;
+                if (in_array($appPrefix, $systemPaths, true)) {
+                    $redirectUrl = $sameSiteUrl;
                 } else {
                     $newTenant = Tenant::find($tenantId);
                     $hasApp = $newTenant?->tenantApps()
@@ -40,7 +44,7 @@ new class extends Component {
                         ->exists();
 
                     if ($hasApp) {
-                        $redirectUrl = $referer;
+                        $redirectUrl = $sameSiteUrl;
                     }
                 }
             }

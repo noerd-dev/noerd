@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Attributes\Locked;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
@@ -38,7 +39,7 @@ new class extends Component {
             ->exists();
     }
 
-    public function updatePassword()
+    public function updatePassword(): void
     {
         // Re-authorized on the action, not only on mount: #[Locked] rejects a
         // client UPDATE of $userId but does NOT protect the MOUNT arguments,
@@ -48,7 +49,7 @@ new class extends Component {
         $this->authorizeTarget();
 
         $this->validate([
-            'password' => ['required', 'string', 'confirmed'],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
         $user = NoerdUser::findOrFail($this->userId);
@@ -117,7 +118,7 @@ new class extends Component {
 
             <div x-show="$wire.showSuccessIndicator"
                  x-transition.out.opacity.duration.1000ms
-                 x-noerd::effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
+                 x-effect="if($wire.showSuccessIndicator) setTimeout(() => $wire.showSuccessIndicator = false, 3000)"
                  class="flex mt-2 mr-2">
                 <div class="flex ml-auto">
                     <div class="shrink-0">

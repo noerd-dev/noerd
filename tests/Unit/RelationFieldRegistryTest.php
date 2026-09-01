@@ -40,6 +40,7 @@ it('registers a relation type and exposes it via field type registry', function 
         'readonly' => false,
         'helpText' => '',
         'modelId' => 99,
+        'owner' => null,
         'theme' => 'default',
     ]);
 });
