@@ -56,6 +56,7 @@ it('generates a slim list component', function (): void {
 
     expect($content)
         ->toContain('public $listModel = Widget::class;')
+        ->toContain("public ?string \$detailRoute = 'zz-widget.widget.detail';")
         ->toContain("public \$detailComponent = 'zz-widget::widget-detail';")
         ->toContain('<x-noerd::list/>')
         ->not->toContain('function listAction')
@@ -70,7 +71,7 @@ it('generates block-style YAML configs bound to detailData', function (): void {
     expect($listYaml)
         ->toContain('title: Widgets')
         ->toContain("defaultSort:\n  field: name\n  direction: asc")
-        ->toContain('action: listAction')
+        ->toContain('route: zz-widget.widget.detail')
         ->not->toContain('newLabel')
         ->not->toContain('_label_');
 
@@ -91,7 +92,55 @@ it('generates a tenant-scoped model', function (): void {
 
     expect($model)
         ->toContain('use Noerd\Traits\BelongsToTenant;')
-        ->toContain('use BelongsToTenant;');
+        ->toContain('use BelongsToTenant;')
+        ->toContain("protected \$table = 'zz_widget_widgets';")
+        ->toContain('protected $guarded = [];');
+});
+
+it('generates a prefixed migration with a custom_attributes column', function (): void {
+    File::ensureDirectoryExists("{$this->basePath}/database/migrations");
+
+    $method = new ReflectionMethod($this->command, 'createMigration');
+    $method->invoke($this->command);
+
+    $migration = File::get(File::files("{$this->basePath}/database/migrations")[0]->getPathname());
+
+    expect($migration)
+        ->toContain("Schema::create('zz_widget_widgets'")
+        ->toContain("\$table->json('custom_attributes')->nullable();");
+});
+
+it('generates guarded, namespaced routes and a matching navigation', function (): void {
+    $routes = ($this->renderStub)('routes.stub');
+    $navigation = ($this->renderStub)('navigation.stub');
+
+    expect($routes)
+        ->toContain("['noerd', 'app-access:zz-widget']")
+        ->toContain("Route::livewire('zz-widget', 'zz-widget::widgets-list')->name('zz-widget');")
+        ->toContain("Route::livewire('zz-widget/widget/{modelId}', 'zz-widget::widget-detail')->name('zz-widget.widget.detail');");
+
+    expect($navigation)
+        ->toContain('route: zz-widget.widgets')
+        ->toContain('newRoute: zz-widget.widget.detail')
+        ->toContain('newComponent: zz-widget::widget-detail');
+});
+
+it('generates a composer.json requiring the scaffolding core version', function (): void {
+    $composer = json_decode(($this->renderStub)('composer.stub'), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($composer['require']['noerd/noerd'])->toMatch('/^\^\d+\.\d+$/')
+        ->and($composer['autoload']['psr-4'])->toHaveKey('Noerd\\ZzWidget\\Tests\\')
+        ->and($composer)->not->toHaveKey('license');
+});
+
+it('generates the app icon the install command references', function (): void {
+    File::ensureDirectoryExists("{$this->basePath}/resources/views/components/icons");
+
+    $method = new ReflectionMethod($this->command, 'createAppIcon');
+    $method->invoke($this->command);
+
+    expect(File::exists("{$this->basePath}/resources/views/components/icons/app.blade.php"))->toBeTrue()
+        ->and(($this->renderStub)('install-command.stub'))->toContain("return 'zz-widget::icons.app';");
 });
 
 it('generates only a de.json translation with English-text keys', function (): void {

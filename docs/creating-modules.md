@@ -31,71 +31,32 @@ php artisan noerd:install-{module-name}
 ```
 
 Never register the app manually via `noerd:create-app` — the generated install command does all of
-it and stays re-runnable. Before the `composer update`, check that the generated module's
-`composer.json` constraint for `noerd/noerd` covers the core version you actually have installed
-(`composer show noerd/noerd`) and widen it if needed — otherwise Composer refuses the resolution or
-silently keeps an older core.
+it and stays re-runnable.
 
-## Hardening the scaffold
+## What the scaffold gives you
 
-The generated module works out of the box, but every shipped noerd module applies four conventions
-on top. Do this before your first migrate:
+The generated module already follows every convention the shipped modules use — there is nothing to
+"harden" before the first migrate:
 
-### Routes
+- **Routes** (`routes/{module}-routes.php`): one group behind `['noerd', 'app-access:{module}']`
+  (tenant must have the app assigned, see [Authentication](auth.md)), namespaced component
+  references and the route **naming convention** that route modals, `newRoute:` navigation entries
+  and relation fields depend on — `{module}` (dashboard), `{module}.{entities}` (list) and
+  `{module}.{entity}.detail` (single record). The list component declares the record route as the
+  preferred target and keeps the component as the fallback (`$detailRoute` + `$detailComponent`).
+- **Table name**: prefixed with the module key (`inventory_items`, like `crm_contracts`,
+  `hr_employees`) so two modules can never collide; the model sets `$table` explicitly. Every
+  table carries `tenant_id` and a nullable `custom_attributes` JSON column (see
+  [Custom Attributes](#custom-attributes)).
+- **Tenant app**: the app's `name` is the **UPPERCASE** module key (`INVENTORY`) — gates and test
+  traits compare it exactly; `getAppRoute()` returns the module key so the app tile opens the
+  dashboard route; the app icon lives in `resources/views/components/icons/app.blade.php`.
+- **Composer**: `noerd/noerd` is required at the core version the module was scaffolded with, and
+  the `Noerd\{Module}\Tests\` namespace autoloads the module's own test traits.
 
-Replace the generated route group with the standard form — the `app-access:{module}` core
-middleware (tenant must have the app assigned, see [Authentication](auth.md)), namespaced component
-references, and the route **naming convention** that route modals, `newRoute:` navigation entries
-and relation fields depend on: `{module}.{entities}` for lists, `{module}.{entity}.detail` for a
-single record.
-
-```php
-Route::group(['middleware' => ['noerd', 'app-access:inventory']], function (): void {
-    Route::livewire('inventory', 'inventory::items-list')->name('inventory');
-    Route::livewire('inventory/items', 'inventory::items-list')->name('inventory.items');
-    Route::livewire('inventory/item/{modelId}', 'inventory::item-detail')->name('inventory.item.detail');
-});
-```
-
-On the generated list component, declare the record route as the preferred target and keep the
-component as the fallback:
-
-```php
-public ?string $detailRoute = 'inventory.item.detail';
-public $detailComponent = 'inventory::item-detail';
-```
-
-### Table names
-
-Module tables are prefixed with the module key (`crm_contracts`, `hr_employees`) so two modules can
-never collide — rename the generated table in the migration and set the explicit `$table` on the
-model. Every table carries `tenant_id` and a nullable `custom_attributes` JSON column (see
-[Custom Attributes](#custom-attributes)).
-
-### Tenant-app name and route
-
-The tenant app's `name` is the **UPPERCASE** module key (`CRM`, `HR`) — gates and test traits
-compare it exactly. In the generated install command, return the uppercase name from
-`getModuleName()` / `getDefaultAppTitle()`, and return the module key (`'inventory'`, not
-`'inventory.index'`) from `getAppRoute()` so the app tile opens the dashboard route.
-
-### Test autoloading
-
-Add the tests namespace to the module's `composer.json` so the module's own test traits autoload:
-
-```json
-"autoload": {
-    "psr-4": {
-        "Noerd\\Inventory\\": "src/",
-        "Noerd\\Inventory\\Tests\\": "tests/",
-        "Noerd\\Inventory\\Database\\Factories\\": "database/factories/",
-        "Noerd\\Inventory\\Database\\Seeders\\": "database/seeders/"
-    }
-}
-```
-
-Run `composer update noerd/{module-name}` again after editing the module's `composer.json` — a
-plain `dump-autoload` does not refresh the package metadata Composer cached at install time.
+Adapt the generated model, migration and YAML to your domain and run
+`composer update noerd/{module-name}` again after editing the module's `composer.json` — a plain
+`dump-autoload` does not refresh the package metadata Composer cached at install time.
 
 ## Install and update commands (required)
 

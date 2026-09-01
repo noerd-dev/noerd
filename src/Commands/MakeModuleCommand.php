@@ -46,7 +46,7 @@ class MakeModuleCommand extends Command
     {
         // Ensure noerd:install has been run first
         if (!$this->ensureNoerdInstalled()) {
-            return 1;
+            return self::FAILURE;
         }
 
         // Get module name
@@ -80,7 +80,7 @@ class MakeModuleCommand extends Command
         if ($this->filesystem->isDirectory($this->basePath)) {
             $this->error("Module directory already exists: {$this->basePath}");
 
-            return 1;
+            return self::FAILURE;
         }
 
         try {
@@ -92,6 +92,7 @@ class MakeModuleCommand extends Command
             $this->createRoutes();
             $this->createModel();
             $this->createMigration();
+            $this->createAppIcon();
             $this->createLivewireComponents();
             $this->createYamlConfigurations();
             $this->createTranslations();
@@ -107,11 +108,11 @@ class MakeModuleCommand extends Command
             $this->line("  2. php artisan noerd:install-{$this->moduleName}");
             $this->line("  3. Add \"noerd/{$this->moduleName}\" to the packages in boost.json and run php artisan boost:update (optional, for AI agents)");
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error creating module: ' . $e->getMessage());
 
-            return 1;
+            return self::FAILURE;
         }
     }
 
@@ -121,7 +122,7 @@ class MakeModuleCommand extends Command
             'src/Providers',
             'src/Models',
             'src/Commands',
-            'resources/views/components',
+            'resources/views/components/icons',
             'resources/lang',
             'resources/boost/guidelines',
             'database/migrations',
@@ -132,6 +133,7 @@ class MakeModuleCommand extends Command
             'tests/Components',
             "app-configs/{$this->moduleName}/lists",
             "app-configs/{$this->moduleName}/details",
+            "app-configs/{$this->moduleName}/pages",
         ];
 
         foreach ($directories as $dir) {
@@ -192,64 +194,24 @@ class MakeModuleCommand extends Command
 
     private function createModel(): void
     {
-        $content = <<<PHP
-<?php
-
-namespace Noerd\\{$this->moduleNameStudly}\\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Noerd\Traits\BelongsToTenant;
-
-class {$this->modelNameStudly} extends Model
-{
-    use BelongsToTenant;
-
-    protected \$guarded = ['id'];
-
-    protected \$casts = [
-        'is_active' => 'boolean',
-    ];
-}
-PHP;
-
+        $content = $this->getStub('model.stub');
         $this->filesystem->put("{$this->basePath}/src/Models/{$this->modelNameStudly}.php", $content);
         $this->line('<info>✓ Created:</info> Model');
     }
 
     private function createMigration(): void
     {
-        $table = Str::snake($this->modelNamePlural);
-        $timestamp = date('Y_m_d_His');
-        $content = <<<PHP
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('{$table}', function (Blueprint \$table) {
-            \$table->id();
-            \$table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            \$table->string('name');
-            \$table->boolean('is_active')->default(true);
-            \$table->timestamps();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('{$table}');
-    }
-};
-PHP;
-
-        $filename = "{$timestamp}_create_{$table}_table.php";
+        $content = $this->getStub('migration.stub');
+        $filename = date('Y_m_d_His') . "_create_{$this->tableName()}_table.php";
         $this->filesystem->put("{$this->basePath}/database/migrations/{$filename}", $content);
         $this->line('<info>✓ Created:</info> Migration');
+    }
+
+    private function createAppIcon(): void
+    {
+        $content = $this->getStub('icon.stub');
+        $this->filesystem->put("{$this->basePath}/resources/views/components/icons/app.blade.php", $content);
+        $this->line('<info>✓ Created:</info> app icon');
     }
 
     private function createLivewireComponents(): void
@@ -313,6 +275,7 @@ PHP;
             'database/seeders',
             'tests/Traits',
             'tests/Components',
+            "app-configs/{$this->moduleName}/pages",
         ];
 
         foreach ($dirs as $dir) {
@@ -358,25 +321,56 @@ PHP;
             [
                 '{{module-name}}',
                 '{{ModuleName}}',
+                '{{MODULE_KEY}}',
                 '{{model}}',
                 '{{Model}}',
                 '{{models}}',
                 '{{Models}}',
                 '{{ModelTitle}}',
                 '{{ModelsTitle}}',
+                '{{table}}',
+                '{{noerd-constraint}}',
             ],
             [
                 $this->moduleName,
                 $this->moduleNameStudly,
+                Str::upper($this->moduleName),
                 $this->modelName,
                 $this->modelNameStudly,
                 $this->modelNamePlural,
                 Str::studly($this->modelNamePlural),
-                ucfirst($this->modelName),
-                ucfirst($this->modelNamePlural),
+                Str::headline($this->modelName),
+                Str::headline($this->modelNamePlural),
+                $this->tableName(),
+                $this->noerdConstraint(),
             ],
             $content,
         );
+    }
+
+    /**
+     * Module tables are prefixed with the module key so two modules never collide.
+     */
+    private function tableName(): string
+    {
+        return Str::snake(str_replace('-', '_', $this->moduleName)) . '_' . Str::snake($this->modelNamePlural);
+    }
+
+    /**
+     * The generated module requires the core version it was scaffolded with
+     * (caret on major.minor, e.g. `^0.14`), read from the package's own
+     * composer.json so the constraint never lags behind a release.
+     */
+    private function noerdConstraint(): string
+    {
+        $composer = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/composer.json'), true);
+        $version = mb_ltrim((string) ($composer['version'] ?? ''), 'v');
+
+        if (! preg_match('/^(\d+)\.(\d+)/', $version, $matches)) {
+            return '*';
+        }
+
+        return "^{$matches[1]}.{$matches[2]}";
     }
 
     private function sortComposerPackages(array $packages): array

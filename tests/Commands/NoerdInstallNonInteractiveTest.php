@@ -33,7 +33,7 @@ class InstallNonInteractiveFixtureCommand extends NoerdInstallCommand
                             {--build : Run npm build without asking}
                             {--demo : Install the demo app without asking}';
 
-    public function handle()
+    public function handle(): int
     {
         $this->runMigrationsAndSetupAdmin();
         $this->installDemoApp();

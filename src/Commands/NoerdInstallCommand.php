@@ -28,7 +28,7 @@ class NoerdInstallCommand extends Command
 
     protected $description = 'Install noerd content to the local content directory';
 
-    public function handle()
+    public function handle(): int
     {
         $this->info('Installing noerd content...');
 
@@ -37,7 +37,7 @@ class NoerdInstallCommand extends Command
 
         if (!is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
-            return 1;
+            return self::FAILURE;
         }
 
         // Create target directory if it doesn't exist
@@ -45,7 +45,7 @@ class NoerdInstallCommand extends Command
 
             if (!mkdir($targetDir, 0755, true)) {
                 $this->error("Failed to create target directory: {$targetDir}");
-                return 1;
+                return self::FAILURE;
             }
 
             $this->info("Created target directory: {$targetDir}");
@@ -82,10 +82,10 @@ class NoerdInstallCommand extends Command
 
             $this->displayApplicationReady();
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error installing noerd content: ' . $e->getMessage());
-            return 1;
+            return self::FAILURE;
         }
     }
 

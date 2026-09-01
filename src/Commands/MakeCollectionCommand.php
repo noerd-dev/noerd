@@ -8,7 +8,9 @@ use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
+use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Support\SetupCollectionDefinitionImport;
+use Symfony\Component\Yaml\Yaml;
 
 class MakeCollectionCommand extends Command
 {
@@ -16,9 +18,9 @@ class MakeCollectionCommand extends Command
                             {name? : The collection name (kebab-case, e.g. "customers")}
                             {--app=setup : The target app folder in app-configs}';
 
-    protected $description = 'Create a new collection YML file interactively';
+    protected $description = 'Create a new collection YAML file interactively';
 
-    private array $fieldTypes = \Noerd\Helpers\SetupCollectionHelper::FIELD_TYPES;
+    private array $fieldTypes = SetupCollectionHelper::FIELD_TYPES;
 
     public function handle(): int
     {
@@ -107,7 +109,7 @@ class MakeCollectionCommand extends Command
 
         if (empty($fields)) {
             $this->warn('No fields added. Adding a default title field.');
-            $fields[] = ['name' => 'model.title', 'label' => 'Title', 'type' => 'translatableText', 'colspan' => 6];
+            $fields[] = ['name' => 'detailData.title', 'label' => 'Title', 'type' => 'translatableText', 'colspan' => 6];
         }
 
         // Build the collection array
@@ -117,7 +119,6 @@ class MakeCollectionCommand extends Command
             'key' => $key,
             'buttonList' => $buttonList,
             'description' => $description,
-            'hasPage' => false,
             'fields' => $fields,
         ];
 
@@ -144,7 +145,6 @@ class MakeCollectionCommand extends Command
             }
         }
 
-        // Generate YAML with inline field format
         $yaml = $this->generateYaml($collection);
 
         file_put_contents($targetFile, $yaml);
@@ -174,7 +174,7 @@ class MakeCollectionCommand extends Command
 
         $name = text(
             label: 'Field name',
-            placeholder: 'model.name',
+            placeholder: 'detailData.name',
             required: true,
             validate: function (string $value) {
                 if (! preg_match('/^[a-z][a-z0-9_.]*$/i', $value)) {
@@ -221,24 +221,7 @@ class MakeCollectionCommand extends Command
 
     private function generateYaml(array $collection): string
     {
-        $lines = [];
-        $lines[] = "title: '{$collection['title']}'";
-        $lines[] = "titleList: '{$collection['titleList']}'";
-        $lines[] = "key: '{$collection['key']}'";
-        $lines[] = "buttonList: '{$collection['buttonList']}'";
-        $lines[] = "description: '{$collection['description']}'";
-        $lines[] = 'hasPage: ' . ($collection['hasPage'] ? 'true' : 'false');
-        $lines[] = 'fields:';
-
-        foreach ($collection['fields'] as $field) {
-            $parts = [];
-            $parts[] = "name: {$field['name']}";
-            $parts[] = "label: {$field['label']}";
-            $parts[] = "type: {$field['type']}";
-            $parts[] = "colspan: {$field['colspan']}";
-            $lines[] = '  - { ' . implode(', ', $parts) . ' }';
-        }
-
-        return implode("\n", $lines) . "\n";
+        // Block style throughout — flow style (`{ key: value }`) is never written.
+        return Yaml::dump($collection, 4, 2);
     }
 }

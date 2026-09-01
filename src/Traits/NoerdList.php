@@ -1644,7 +1644,7 @@ trait NoerdList
     {
         // Memoized per request: the render path resolves the config from several
         // places (query, filters, chips, bulk-action guard), and every raw
-        // resolution re-runs the layout-override hook — DB-backed in noerd-pro.
+        // resolution re-runs the layout-override hook (an extension may back it by DB).
         $memoKey = implode('|', [
             $customName ?? '',
             $this->listView ?? '',

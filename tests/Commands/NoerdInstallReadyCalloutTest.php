@@ -16,7 +16,7 @@ class InstallReadyCalloutFixtureCommand extends NoerdInstallCommand
 {
     protected $signature = 'test:install-ready-callout';
 
-    public function handle()
+    public function handle(): int
     {
         $this->displayApplicationReady();
 

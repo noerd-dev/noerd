@@ -30,7 +30,7 @@ app-modules/{module}/
 ├── database/{migrations,factories,seeders}/
 ├── resources/boost/guidelines/core.blade.php   # module-specific agent rules (Boost)
 ├── resources/lang/de.json           # English key → German
-├── resources/views/components/      # *-list.blade.php, *-detail.blade.php, *-page.blade.php, *-modal.blade.php (flat)
+├── resources/views/components/      # *-list.blade.php, *-detail.blade.php, *-page.blade.php, *-modal.blade.php (flat), icons/app.blade.php
 ├── routes/{module}-routes.php
 ├── src/{Commands,Models,Providers}/
 ├── tests/                           # Pest, incl. tests/Traits
@@ -64,17 +64,15 @@ flat in `lists/`. Block-style YAML only. Navigation icons are heroicons:
 ```yaml
 - title: Module
   name: module
-  route: module.index
+  route: module
   block_menus:
     - title: Overview
       navigations:
         - title: Things
           route: module.things
           heroicon: cube
-        - title: New Thing
-          heroicon: plus
-          modalRoute: module.thing.detail      # opens the route modal (plain `route:` navigates)
-          newRoute: module.thing.detail
+          newRoute: module.thing.detail        # the "+" opens an empty record as a route modal
+          newComponent: module::thing-detail   # fallback when the route is not registered
 ```
 
 ## 4. Translations

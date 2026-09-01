@@ -129,7 +129,7 @@ module, and never add breakpoint-specific stacking to a list header.
   (always visible); `NoerdList::headerControls()` resolves which of them exist. A list host with its
   own custom header slot gets the non-collapsing `list-controls` injected by `x-noerd::modal-title`
   instead
-- Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Traits/NoerdListColumnFilterTest.php`, `app-modules/noerd/tests/Components/ListHeaderCollapseTest.php`
+- Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Feature/NoerdListColumnFilterTest.php`, `app-modules/noerd/tests/Components/ListHeaderCollapseTest.php`
 
 ## How Filters Work
 

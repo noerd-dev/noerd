@@ -1,17 +1,29 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Traits\NoerdPage;
+use {{ModelClass}};
 
 new class extends Component {
-    //
-} ?>
+    use NoerdPage;
+
+    public ?string $detailPrimary = '{{entity}}Id';
+
+    public $detailModel = {{ModelBaseName}}::class;
+}; ?>
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>{{ __('{{ModelBaseName}}') }}</x-noerd::modal-title>
-    </x-slot>
+        <x-noerd::modal-title>{{ __('{{ModelTitle}}') }}</x-noerd::modal-title>
+    </x-slot:header>
 
-    <p class="py-8 text-sm">
-        {{ModelBaseName}} page content.
-    </p>
+    <x-noerd::detail-relations :layout="$pageLayout" :modelId="$modelId" :modelClass="{{ModelBaseName}}::class"/>
+
+    <x-noerd::detail-grid :layout="$pageLayout" :modelId="$modelId">
+        @livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))
+    </x-noerd::detail-grid>
+
+    <x-slot:footer>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
+    </x-slot:footer>
 </x-noerd::page>

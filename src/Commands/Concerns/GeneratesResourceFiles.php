@@ -6,6 +6,9 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+
+use function Laravel\Prompts\select;
+
 use Noerd\Models\TenantApp;
 
 trait GeneratesResourceFiles
@@ -46,8 +49,8 @@ trait GeneratesResourceFiles
         'text' => 'text',
         'longtext' => 'text',
         'mediumtext' => 'text',
-        'tinyint' => 'boolean',
-        'boolean' => 'boolean',
+        'tinyint' => 'bool',
+        'boolean' => 'bool',
         'integer' => 'number',
         'bigint' => 'number',
         'smallint' => 'number',
@@ -68,8 +71,6 @@ trait GeneratesResourceFiles
     protected string $entity;
 
     protected string $entities;
-
-    protected string $entityCamel;
 
     protected ?string $appName = null;
 
@@ -129,9 +130,9 @@ trait GeneratesResourceFiles
             return $candidates[0];
         }
 
-        return $this->choice(
-            "Multiple models found for \"{$name}\". Which one should be used?",
-            $candidates,
+        return select(
+            label: "Multiple models found for \"{$name}\". Which one should be used?",
+            options: $candidates,
         );
     }
 
@@ -145,7 +146,7 @@ trait GeneratesResourceFiles
             if ($resolved === null) {
                 $this->error("No model class found for \"{$this->modelClass}\" in App\\Models or module namespaces.");
 
-                return 1;
+                return self::FAILURE;
             }
 
             $this->modelClass = $resolved;
@@ -154,7 +155,7 @@ trait GeneratesResourceFiles
         if (! class_exists($this->modelClass)) {
             $this->error("Class {$this->modelClass} does not exist.");
 
-            return 1;
+            return self::FAILURE;
         }
 
         $instance = new $this->modelClass();
@@ -162,25 +163,23 @@ trait GeneratesResourceFiles
         if (! $instance instanceof Model) {
             $this->error("{$this->modelClass} is not an Eloquent Model.");
 
-            return 1;
+            return self::FAILURE;
         }
 
         $this->modelBaseName = class_basename($this->modelClass);
         $this->entity = Str::kebab($this->modelBaseName);
         $this->entities = Str::plural($this->entity);
-        $this->entityCamel = Str::camel($this->modelBaseName);
         $this->tableName = $instance->getTable();
 
         $this->appName = $this->detectModuleName();
 
-        return 0;
+        return self::SUCCESS;
     }
 
     protected function initializeFromEntity(string $entity): void
     {
         $this->entity = Str::kebab($entity);
         $this->entities = Str::plural($this->entity);
-        $this->entityCamel = Str::camel($entity);
         $this->modelBaseName = Str::studly($entity);
 
         $resolved = $this->resolveModelClass($this->modelBaseName);
@@ -197,7 +196,7 @@ trait GeneratesResourceFiles
                 $this->appName = $this->appConfigName;
             }
 
-            return 0;
+            return self::SUCCESS;
         }
 
         $apps = TenantApp::where('is_active', true)->pluck('title', 'name')->toArray();
@@ -205,19 +204,17 @@ trait GeneratesResourceFiles
         if (empty($apps)) {
             $this->error('No active apps found in tenant_apps.');
 
-            return 1;
+            return self::FAILURE;
         }
 
-        $appChoices = array_values($apps);
-        $selectedTitle = $this->choice('Which app should this resource belong to?', $appChoices);
-        $selectedName = array_search($selectedTitle, $apps);
-        $this->appConfigName = Str::lower($selectedName);
+        $selectedName = select(label: 'Which app should this resource belong to?', options: $apps);
+        $this->appConfigName = Str::lower((string) $selectedName);
 
         if (! $this->appName) {
             $this->appName = $this->appConfigName;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 
     protected function readColumns(): int
@@ -227,7 +224,7 @@ trait GeneratesResourceFiles
         } catch (Exception $e) {
             $this->error("Could not read columns for table '{$this->tableName}': " . $e->getMessage());
 
-            return 1;
+            return self::FAILURE;
         }
 
         $this->columns = array_filter(
@@ -238,10 +235,10 @@ trait GeneratesResourceFiles
         if (empty($this->columns)) {
             $this->error('No columns found after filtering.');
 
-            return 1;
+            return self::FAILURE;
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 
     protected function detectModuleName(): ?string
@@ -278,31 +275,23 @@ trait GeneratesResourceFiles
 
         $content = $this->filesystem->get($path);
 
-        $translationPrefix = Str::snake($this->appConfigName ?? '') . '_' . Str::snake(str_replace('-', '_', $this->entity));
-
-        $content = str_replace(
+        return str_replace(
             [
                 '{{ModelClass}}',
                 '{{ModelBaseName}}',
+                '{{ModelTitle}}',
                 '{{entity}}',
                 '{{entities}}',
-                '{{entityCamel}}',
-                '{{translationPrefix}}',
             ],
             [
                 $this->modelClass ?? '',
                 $this->modelBaseName,
+                Str::headline($this->entity),
                 $this->entity,
                 $this->entities,
-                $this->entityCamel,
-                $translationPrefix,
             ],
             $content,
         );
-
-        $content = preg_replace('/^use\s*;\s*\n/m', '', $content);
-
-        return $content;
     }
 
     protected function generateListYaml(): string
@@ -311,10 +300,16 @@ trait GeneratesResourceFiles
         $entitiesHeadline = Str::headline($this->entities);
         $entityHeadline = Str::headline($this->entity);
         $lines[] = "title: {$entitiesHeadline}";
+        $lines[] = 'defaultSort:';
+        $lines[] = '  field: id';
+        $lines[] = '  direction: desc';
         $lines[] = 'actions:';
         $lines[] = "  - label: New {$entityHeadline}";
-        $lines[] = '    action: listAction';
-        $lines[] = "component: {$this->entity}-detail";
+        if ($this->detailRouteName !== null) {
+            $lines[] = "    route: {$this->detailRouteName}";
+        } else {
+            $lines[] = '    action: listAction';
+        }
         $lines[] = 'columns:';
 
         $listColumns = array_filter(
@@ -408,8 +403,32 @@ trait GeneratesResourceFiles
             return '';
         }
 
+        $stub = isset($this->modelClass) ? 'page.blade.stub' : 'page-plain.blade.stub';
+
         $this->filesystem->ensureDirectoryExists(dirname($path));
-        $this->filesystem->put($path, $this->processStub('page.blade.stub'));
+        $this->filesystem->put($path, $this->processStub($stub));
+        $this->line("<info>Created:</info> {$path}");
+
+        return $path;
+    }
+
+    /**
+     * A model-backed page embeds its detail through the page YAML (`detail:`).
+     */
+    protected function createPageYaml(): string
+    {
+        if (! isset($this->modelClass)) {
+            return '';
+        }
+
+        $path = base_path("app-configs/{$this->appConfigName}/pages/{$this->entity}-page.yml");
+
+        if ($this->checkFileExists($path)) {
+            return '';
+        }
+
+        $this->filesystem->ensureDirectoryExists(dirname($path));
+        $this->filesystem->put($path, "title: " . Str::headline($this->entity) . "\ndetail: {$this->entity}-detail\n");
         $this->line("<info>Created:</info> {$path}");
 
         return $path;
@@ -447,8 +466,7 @@ trait GeneratesResourceFiles
             return;
         }
 
-        $this->filesystem->append($routeFile, "\n{$route}\n");
-        $this->line("<info>Route added:</info> {$route}");
+        $this->appendRoute($route);
     }
 
     protected function createListYaml(): string
@@ -502,8 +520,7 @@ trait GeneratesResourceFiles
             return;
         }
 
-        $this->filesystem->append($routeFile, "\n{$listRoute}\n");
-        $this->line("<info>Route added:</info> {$listRoute}");
+        $this->appendRoute($listRoute);
     }
 
     /** Returns true when the detail route exists afterwards (added now or already present). */
@@ -527,8 +544,7 @@ trait GeneratesResourceFiles
             return false;
         }
 
-        $this->filesystem->append($routeFile, "\n{$detailRoute}\n");
-        $this->line("<info>Route added:</info> {$detailRoute}");
+        $this->appendRoute($detailRoute);
         $this->detailRouteName = $detailRouteName;
 
         return true;
@@ -602,21 +618,6 @@ trait GeneratesResourceFiles
                 continue;
             }
 
-            $settingsPos = mb_strpos($content, '_nav_settings');
-            if ($settingsPos !== false) {
-                $beforeSettings = mb_substr($content, 0, $settingsPos);
-                $lastTitlePos = mb_strrpos($beforeSettings, '    - title:');
-                if ($lastTitlePos !== false) {
-                    $newContent = mb_substr($content, 0, $lastTitlePos)
-                        . $navEntry . "\n"
-                        . mb_substr($content, $lastTitlePos);
-                    $this->filesystem->put($navPath, $newContent);
-                    $this->line("<info>Navigation added to:</info> {$navPath}");
-
-                    continue;
-                }
-            }
-
             $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
             $this->filesystem->put($navPath, $content);
             $this->line("<info>Navigation added to:</info> {$navPath}");
@@ -644,7 +645,7 @@ trait GeneratesResourceFiles
     protected function guessColumnWidth(string $yamlType): int
     {
         return match ($yamlType) {
-            'boolean' => 5,
+            'bool' => 5,
             'number' => 8,
             'date', 'datetime' => 10,
             default => 15,

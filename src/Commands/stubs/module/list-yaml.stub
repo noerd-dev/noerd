@@ -4,7 +4,7 @@ defaultSort:
   direction: asc
 actions:
   - label: New {{ModelTitle}}
-    action: listAction
+    route: {{module-name}}.{{model}}.detail
 columns:
   - field: name
     label: Name

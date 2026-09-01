@@ -8,7 +8,7 @@ by `php artisan boost:update` (add `noerd/{{module-name}}` to the `packages` arr
 
 ## Layout
 
-- `app-configs/{{module-name}}/` — YAML templates (lists/, details/, navigation.yml); the installed
+- `app-configs/{{module-name}}/` — YAML templates (lists/, details/, pages/, navigation.yml); the installed
   copy lives in the host's `app-configs/{{module-name}}/` — change both
 - `resources/views/components/` — Livewire single-file components (`{{models}}-list.blade.php`,
   `{{model}}-detail.blade.php`), flat, Livewire namespace `{{module-name}}::`
@@ -24,7 +24,8 @@ by `php artisan boost:update` (add `noerd/{{module-name}}` to the `packages` arr
 
 - Tests: `php artisan test --compact app-modules/{{module-name}}/tests` (Pest; tests prove
   mechanics, never the current YAML configuration)
-- Format with the host project's `vendor/bin/pint --dirty` from the project root
+- Format with Pint from the host project root, naming the module path explicitly
+  (`vendor/bin/pint app-modules/{{module-name}}`) — a plain `--dirty` run skips files of a git submodule
 - Keep the module independent of other optional modules; project-specific fields go into
   `custom_attributes`, never into module code or module YAML
 - When a feature changes: update the YAML in both places, `resources/lang/de.json`, the tests and

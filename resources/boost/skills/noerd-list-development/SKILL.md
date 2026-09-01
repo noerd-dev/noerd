@@ -46,11 +46,13 @@ new class extends Component {
     public $detailComponent = 'module::thing-detail';        // fallback when the route is missing
 }; ?>
 
-<x-noerd::list/>
+<x-noerd::page>
+    <x-noerd::list/>
+</x-noerd::page>
 ```
 
-- Nothing else goes into a slim component. `mount()`, `listAction()`, `listData()`, `rendering()`
-  come from the trait.
+- Nothing else goes into a slim component. `mount()`, `listAction()`, `listData()`,
+  `renderingNoerdList()` come from the trait.
 - Default sort: a `defaultSort:` block in the list YAML (`field:` + optional
   `direction: asc|desc`, `desc` when omitted) — both synced copies, never component code. A
   user-picked sort persists in the session and wins; never set `$sortField`/`$sortAsc` directly.

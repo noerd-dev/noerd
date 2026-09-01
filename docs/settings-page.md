@@ -8,8 +8,8 @@ component only declares which models the page edits.
 Settings pages differ from details/pages in four hard rules:
 
 1. **Always YAML-configured** — the layout comes exclusively from
-   `settings/{component}.yml`. The noerd-pro layout manager never applies (no tenant or
-   per-user overrides), and there is no `custom_attributes` object manager.
+   `settings/{component}.yml`. Layout overrides never apply (no tenant or per-user
+   overrides), and there is no `custom_attributes` object manager.
 2. **No grid** — every field renders stacked, full width, in the built-in `settings`
    theme. A `theme:` key in the YAML is ignored; the tenant-wide form theme (even an
    enforced one) does not apply either.

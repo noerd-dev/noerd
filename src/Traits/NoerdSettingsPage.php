@@ -18,8 +18,8 @@ use RuntimeException;
  * - it may edit SEVERAL tenant-singleton models at once, declared as
  *   `public array $settingsModels = ['detailData' => Model::class, ...];`
  *   where each key is the public array property the YAML fields bind to,
- * - its layout always comes from the settings YAML — the noerd-pro layout
- *   manager never applies and there is no custom_attributes object manager,
+ * - its layout always comes from the settings YAML — layout overrides never
+ *   apply and there is no custom_attributes object manager,
  * - it always renders in the built-in `settings` theme (fields stacked
  *   vertically, full width — no grid).
  *

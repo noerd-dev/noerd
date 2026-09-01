@@ -18,7 +18,7 @@ class InstallDemoPromptFixtureCommand extends NoerdInstallCommand
     public static array $calledCommands = [];
     protected $signature = 'test:install-demo-prompt {--force : Overwrite existing files}';
 
-    public function handle()
+    public function handle(): int
     {
         $this->installDemoApp();
 

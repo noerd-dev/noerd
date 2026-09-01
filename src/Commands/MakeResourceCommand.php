@@ -11,7 +11,7 @@ class MakeResourceCommand extends Command
 {
     use GeneratesResourceFiles;
 
-    protected $signature = 'noerd:make-resource {model : Full model class path}';
+    protected $signature = 'noerd:make-resource {model : The model class name (e.g. Customer or App\\Models\\Customer)} {--app= : App name (e.g. crm)}';
 
     protected $description = 'Generate list/detail Blade and YAML files from an existing Eloquent model';
 
@@ -26,46 +26,47 @@ class MakeResourceCommand extends Command
     public function handle(): int
     {
         $result = $this->initializeFromModel($this->argument('model'));
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
-        $result = $this->selectApp();
-        if ($result !== 0) {
+        $result = $this->selectApp($this->option('app'));
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
         $result = $this->readColumns();
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
         try {
             $listBlade = $this->createListBlade();
             if ($listBlade === '') {
-                return 1;
+                return self::FAILURE;
             }
 
             $detailBlade = $this->createDetailBlade();
             if ($detailBlade === '') {
-                return 1;
-            }
-
-            $listYaml = $this->createListYaml();
-            if ($listYaml === '') {
-                return 1;
-            }
-
-            $detailYaml = $this->createDetailYaml();
-            if ($detailYaml === '') {
-                return 1;
+                return self::FAILURE;
             }
 
             $this->addListRoute();
 
-            // The detail route must be known before the list is annotated with it.
+            // The detail route must be known before the list YAML (its "New"
+            // action) and the list component are annotated with it.
             if ($this->addDetailRoute()) {
                 $this->annotateListDetailRoute($listBlade);
+            }
+
+            $listYaml = $this->createListYaml();
+            if ($listYaml === '') {
+                return self::FAILURE;
+            }
+
+            $detailYaml = $this->createDetailYaml();
+            if ($detailYaml === '') {
+                return self::FAILURE;
             }
 
             $this->addNavigation();
@@ -73,11 +74,11 @@ class MakeResourceCommand extends Command
             $this->line('');
             $this->info('Resource files created successfully!');
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error creating resource: ' . $e->getMessage());
 
-            return 1;
+            return self::FAILURE;
         }
     }
 }
