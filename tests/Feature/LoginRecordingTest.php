@@ -89,3 +89,28 @@ it('removes the login rows when the user is deleted', function (): void {
 
     expect(NoerdLogin::count())->toBe(0);
 });
+
+it('exposes the most recent login through the latestLogin relation', function (): void {
+    $user = NoerdUser::factory()->create();
+
+    NoerdLogin::create(['user_id' => $user->id, 'created_at' => now()->subDays(3)]);
+    $latest = NoerdLogin::create(['user_id' => $user->id, 'created_at' => now()->subHour()]);
+
+    expect($user->latestLogin()->first()->id)->toBe($latest->id);
+});
+
+it('eager-loads the last login so a list column resolves without a per-row query', function (): void {
+    $user = NoerdUser::factory()->create();
+    NoerdLogin::create(['user_id' => $user->id, 'created_at' => now()->subHour()]);
+
+    $loaded = NoerdUser::with('latestLogin')->whereKey($user->id)->sole();
+
+    expect($loaded->relationLoaded('latestLogin'))->toBeTrue();
+    expect(data_get($loaded, 'latestLogin.created_at'))->not->toBeNull();
+});
+
+it('leaves the last login empty for a user who never logged in', function (): void {
+    $user = NoerdUser::factory()->create();
+
+    expect($user->latestLogin()->first())->toBeNull();
+});
