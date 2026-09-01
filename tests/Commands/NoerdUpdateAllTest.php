@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
 use Noerd\Commands\NoerdUpdateAllCommand;
+use Noerd\Contracts\RunsAfterModuleUpdates;
 use Noerd\Tests\TestCase;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -62,6 +63,9 @@ class RecordingUpdateCommand extends Command
     }
 }
 
+/** A module update that declares it must run after the others. */
+class RecordingLastUpdateCommand extends RecordingUpdateCommand implements RunsAfterModuleUpdates {}
+
 /**
  * Fixture that pretends noerd:install has not been run yet.
  */
@@ -93,7 +97,7 @@ beforeEach(function (): void {
     // Registered out of alphabetical order on purpose: the run must sort, not follow registration.
     $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-zz-beta'));
     $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-zz-alpha'));
-    $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-plus'));
+    $kernel->registerCommand(new RecordingLastUpdateCommand('noerd:update-plus'));
 
     $this->run = fn(array $parameters = []) => $this->artisan(
         'noerd:update-all',
@@ -101,7 +105,7 @@ beforeEach(function (): void {
     );
 });
 
-it('runs the core update first, module updates alphabetically and noerd:update-plus last', function (): void {
+it('runs the core update first, module updates alphabetically and RunsAfterModuleUpdates commands last', function (): void {
     ($this->run)(['--force' => true])->assertExitCode(0);
 
     expect(UpdateAllRecorder::$calls)->toBe([

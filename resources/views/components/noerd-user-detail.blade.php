@@ -4,6 +4,7 @@ use Illuminate\Support\Str;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
+use Noerd\Rules\AtLeastOneTrue;
 use Noerd\Enums\Profile;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\AdministersNoerdUsers;
@@ -77,7 +78,7 @@ new class extends Component {
                 'email',
                 'max:255',
             ],
-            'tenantAccess' => ['array', 'min:1', new \Noerd\Rules\AtLeastOneTrue()],
+            'tenantAccess' => ['array', 'min:1', new AtLeastOneTrue()],
         ]);
 
         if (! $this->modelId) {

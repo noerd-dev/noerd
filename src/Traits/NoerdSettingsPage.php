@@ -35,23 +35,6 @@ trait NoerdSettingsPage
         $this->initSettings();
     }
 
-    public function initSettings(): void
-    {
-        $this->initNoerdComponent(function (): void {
-            $tenantId = TenantHelper::getSelectedTenantId();
-
-            foreach ($this->settingsModelMap() as $property => $modelClass) {
-                $model = $modelClass::firstOrNew(['tenant_id' => $tenantId]);
-
-                $this->{$property} = collect($model->toArray())
-                    ->except(['created_at', 'updated_at'])
-                    ->toArray();
-            }
-
-            $this->pageLayout = StaticConfigHelper::getSettingsFields($this->componentName());
-        });
-    }
-
     public function store(): void
     {
         // Server-side guard, mirroring NoerdDetail::store(): the save button is
@@ -118,6 +101,23 @@ trait NoerdSettingsPage
         }
 
         return true;
+    }
+
+    protected function initSettings(): void
+    {
+        $this->initNoerdComponent(function (): void {
+            $tenantId = TenantHelper::getSelectedTenantId();
+
+            foreach ($this->settingsModelMap() as $property => $modelClass) {
+                $model = $modelClass::firstOrNew(['tenant_id' => $tenantId]);
+
+                $this->{$property} = collect($model->toArray())
+                    ->except(['created_at', 'updated_at'])
+                    ->toArray();
+            }
+
+            $this->pageLayout = StaticConfigHelper::getSettingsFields($this->componentName());
+        });
     }
 
     /**

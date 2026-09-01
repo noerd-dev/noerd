@@ -3,6 +3,7 @@
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Noerd\Contracts\RunsAfterModuleUpdates;
 use Noerd\Traits\RequiresNoerdInstallation;
 use Throwable;
 
@@ -11,12 +12,6 @@ class NoerdUpdateAllCommand extends Command
     use RequiresNoerdInstallation;
 
     private const CORE = 'noerd:update';
-
-    /**
-     * Runs last: noerd:update-plus re-adds the entries to app-configs/setup/navigation.yml
-     * that a preceding `noerd:update --force` overwrites with the core template.
-     */
-    private const RUN_LAST = ['noerd:update-plus'];
 
     protected $signature = 'noerd:update-all
         {--force : Overwrite existing files without asking}
@@ -82,6 +77,7 @@ class NoerdUpdateAllCommand extends Command
     private function discover(): array
     {
         $names = [];
+        $last = [];
 
         foreach ($this->getApplication()->all() as $name => $command) {
             // all() is keyed by name AND by every alias, both pointing at the same instance.
@@ -99,10 +95,15 @@ class NoerdUpdateAllCommand extends Command
             }
 
             $names[] = $name;
+
+            // A command that touches what other updates publish declares it.
+            if ($command instanceof RunsAfterModuleUpdates) {
+                $last[] = $name;
+            }
         }
 
         $core = in_array(self::CORE, $names, true) ? [self::CORE] : [];
-        $last = array_values(array_intersect(self::RUN_LAST, $names));
+        sort($last);
         // Module updates only write into their own app-configs/{key}/, so they are
         // order-independent — sorted purely for a reproducible run.
         $middle = array_values(array_diff($names, $core, $last));

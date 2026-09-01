@@ -7,6 +7,7 @@ use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\SetupCollectionDefinition;
+use Noerd\Scopes\TenantScope;
 use Noerd\Support\SetupCollectionDefinitionData;
 use RuntimeException;
 
@@ -28,7 +29,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     {
         $tenantId = $this->scopeTenantId($tenantId);
 
-        return SetupCollectionDefinition::query()
+        return SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
             ->where('tenant_id', $tenantId)
             ->orderBy('title_list')
             ->get()
@@ -46,7 +47,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     {
         $tenantId = $this->scopeTenantId($tenantId);
 
-        $model = SetupCollectionDefinition::query()
+        $model = SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
             ->where('tenant_id', $tenantId)
             ->where('key', mb_strtoupper($key))
             ->first();
@@ -148,9 +149,9 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     }
 
     /**
-     * The tenant every read is scoped to. SetupCollectionDefinition carries no
-     * BelongsToTenant, so a null tenant used to drop the filter entirely and
-     * expose every tenant's definitions. Reads now fail closed instead.
+     * The tenant every read is scoped to. The repository filters explicitly
+     * (callers may address another tenant, e.g. the import command), so the
+     * model's tenant scope is bypassed here; a null tenant fails closed.
      */
     private function scopeTenantId(?int $tenantId): ?int
     {
@@ -159,7 +160,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     private function resolveFieldsUncached(string $filename, ?int $tenantId): ?array
     {
-        $query = SetupCollectionDefinition::query()
+        $query = SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
             ->where('tenant_id', $tenantId);
 
         $model = (clone $query)->where('filename', $filename)->first();
@@ -197,7 +198,7 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     {
         $tenantId = $this->scopeTenantId($tenantId);
 
-        return SetupCollectionDefinition::query()
+        return SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
             ->where('tenant_id', $tenantId)
             ->where('filename', $filename)
             ->first();

@@ -24,10 +24,8 @@ class SetupCollectionEntry extends Model
     /**
      * Boot method to add model event listeners
      */
-    protected static function boot(): void
+    protected static function booted(): void
     {
-        parent::boot();
-
         // Apply field type conversion before saving
         static::saving(function (SetupCollectionEntry $entry): void {
             if ($entry->collection) {

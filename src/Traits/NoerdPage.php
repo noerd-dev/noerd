@@ -25,7 +25,8 @@ trait NoerdPage
 
     public bool $showSuccessIndicator = false;
 
-    public $modelId = null;
+    /** The record id; `'new'` opens an empty record (see RoutedModal). */
+    public int|string|null $modelId = null;
 
     #[Url(as: 'tab', keep: false, except: 1)]
     public int $currentTab = 1;
@@ -114,30 +115,6 @@ trait NoerdPage
         $this->initPage();
     }
 
-    public function initPage(): void
-    {
-        // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
-        // defining their layout in the component itself. It is loaded even when
-        // the guarded init below bails out (read-denied object, stale record id):
-        // Blade evaluates a page blade's slot content before the page chrome
-        // discards it for the denied state, so a hand-built page reading
-        // $pageLayout['detail'] must always find its layout.
-        $this->pageLayout = StaticConfigHelper::getPageFields($this->componentName(), $this->detailModel ?? null);
-
-        $this->initNoerdComponent(function (): void {
-            // Pages backed by a single Eloquent model declare $detailModel — the
-            // record is loaded into $detailData exactly like a detail would.
-            if (isset($this->detailModel)) {
-                $modelClass = $this->detailModel;
-                if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
-                    return;
-                }
-            }
-
-            $this->resolveQuickCreate();
-        });
-    }
-
     public function closeModalProcess(?string $source = null): void
     {
         $this->currentTab = 1;
@@ -167,7 +144,7 @@ trait NoerdPage
     {
         // Server-side guard: the delete button is hidden for delete-denied users,
         // but the method stays reachable via keyboard shortcut and direct calls.
-        if (!$this->canDeleteObject()) {
+        if (!$this->canDeleteObject() || !isset($this->detailModel)) {
             return;
         }
 
@@ -318,6 +295,30 @@ trait NoerdPage
         }
     }
 
+    protected function initPage(): void
+    {
+        // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
+        // defining their layout in the component itself. It is loaded even when
+        // the guarded init below bails out (read-denied object, stale record id):
+        // Blade evaluates a page blade's slot content before the page chrome
+        // discards it for the denied state, so a hand-built page reading
+        // $pageLayout['detail'] must always find its layout.
+        $this->pageLayout = StaticConfigHelper::getPageFields($this->componentName(), $this->detailModel ?? null);
+
+        $this->initNoerdComponent(function (): void {
+            // Pages backed by a single Eloquent model declare $detailModel — the
+            // record is loaded into $detailData exactly like a detail would.
+            if (isset($this->detailModel)) {
+                $modelClass = $this->detailModel;
+                if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
+                    return;
+                }
+            }
+
+            $this->resolveQuickCreate();
+        });
+    }
+
     protected function storeProcess(Model $model): void
     {
         $this->showSuccessIndicator = true;
@@ -416,7 +417,7 @@ trait NoerdPage
      */
     protected function loadDetailModel(Model $model, string $modelClass): bool
     {
-        if (property_exists($this, 'modelId') && $this->modelId) {
+        if ($this->modelId) {
             $model = $modelClass::find($this->modelId);
 
             if (!$model) {
@@ -507,7 +508,9 @@ trait NoerdPage
         $filters = session('listFilters', []);
         if (!empty($filters[$key])) {
             $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
-            $this->{$method}($filters[$key]);
+            if (method_exists($this, $method)) {
+                $this->{$method}($filters[$key]);
+            }
         }
     }
 

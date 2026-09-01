@@ -3,6 +3,9 @@
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Support\SetupCollectionDefinitionImport;
 
@@ -54,7 +57,7 @@ class ImportSetupCollectionDefinitionsCommand extends Command
 
         if (! $dryRun && $this->option('delete')) {
             foreach (glob($yamlPath . '/*.yml') ?: [] as $file) {
-                @unlink($file);
+                File::delete($file);
             }
             $this->info('Deleted source YAML files.');
         }
@@ -66,9 +69,9 @@ class ImportSetupCollectionDefinitionsCommand extends Command
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Tenant>
+     * @return Collection<int, Tenant>
      */
-    private function resolveTargetTenants(): \Illuminate\Support\Collection
+    private function resolveTargetTenants(): Collection
     {
         if ($this->option('all-tenants')) {
             return Tenant::all();
@@ -78,7 +81,7 @@ class ImportSetupCollectionDefinitionsCommand extends Command
             return Tenant::whereKey((int) $tenantId)->get();
         }
 
-        $current = \Noerd\Helpers\TenantHelper::getSelectedTenantId();
+        $current = TenantHelper::getSelectedTenantId();
         if ($current === null) {
             return collect();
         }

@@ -2,6 +2,8 @@
 
 namespace Noerd\Services;
 
+use Noerd\Support\SortedRegistrations;
+
 /**
  * Relation-box tiles contributed for a host model by optional modules, which
  * register themselves from their service provider's boot(). The host page's
@@ -52,6 +54,6 @@ class RelationBoxRegistry
             }
         }
 
-        return \Noerd\Support\SortedRegistrations::payloads($entries, 'tile');
+        return SortedRegistrations::payloads($entries, 'tile');
     }
 }

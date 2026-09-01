@@ -2,6 +2,8 @@
 
 namespace Noerd\Services;
 
+use Noerd\Support\SortedRegistrations;
+
 /**
  * Livewire components contributed into named detail slots by optional modules,
  * which register themselves from their service provider's boot(). A hosting
@@ -29,6 +31,6 @@ class DetailSlotsRegistry
     /** @return array<int, string> */
     public function for(string $slot): array
     {
-        return \Noerd\Support\SortedRegistrations::payloads($this->slots[$slot] ?? [], 'component');
+        return SortedRegistrations::payloads($this->slots[$slot] ?? [], 'component');
     }
 }
