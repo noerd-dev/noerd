@@ -17,8 +17,17 @@ vendor/bin/pest tests/Feature/ListViewsTest.php
 
 The suite runs on [Orchestra Testbench](https://packages.tools/testbench) with the built-in sqlite
 `:memory:` connection (`NOERD_TESTBENCH_DB`, see `phpunit.xml`). `Noerd\Tests\TestCase` links the
-package into the testbench skeleton and publishes its `app-configs` once — the same thing
-`noerd:install` does in a real project — so `StaticConfigHelper` finds the YAML files.
+package into the testbench skeleton and publishes its `app-configs` and `config/noerd.php` — the
+same thing `noerd:install` does in a real project — so `StaticConfigHelper` finds the YAML files.
+The published `app-configs` copy is compared file by file against the package on every run and
+refreshed whenever any package YAML changed, so the suite never runs against stale configs.
+`Noerd\Tests\TestCase` also registers the `noerd-test::` Livewire namespace for the fixture
+components under `tests/Feature/fixtures/components` (`noerd-test::theme-test`,
+`noerd-test::theme-setting-test`, `noerd-test::write-denied-test`, …) — synthetic components that
+receive a layout from the test instead of a shipped YAML. The package's own test trait is
+`Noerd\Tests\Traits\CreatesSetupUser` (`createUserWithSetupAccess()` — an admin user with a
+tenant, default languages and the `SETUP` app selected); it is the only trait under
+`tests/Traits/` and part of the public test API.
 
 ### From a host project
 
@@ -140,6 +149,9 @@ related reaches a production request. New global helpers go into `tests/helpers.
 | `requiredLayoutFields($component)` | The `detailData.*` names marked `required: true` in the component's live `pageLayout` (recurses into `type: block`) |
 | `registerTestLivewireRoute(string $uri, string $component, string $name)` | Registers a named `Route::livewire()` route inside a test and refreshes the name lookups |
 | `assertElementHasClasses()` / `assertNoElementHasClasses()` | DOM class assertions on rendered HTML |
+| `assertModuleDependenciesDeclared(string $moduleDir, array $allowedPackages = [])` | Fails when a module references another module's namespace without a `require` entry (see below) |
+| `assertModuleUpdateCommandPublishesConfigs(string $command, string $moduleDir, string $moduleKey)` | Standard proof for a `noerd:update-{module}` command: publishes every shipped YAML into `app-configs/{key}`, exits cleanly and `--force` restores a locally modified copy; the installed configs are snapshotted and restored |
+| `createNoerdUserWithProfile(?Profile $profile)` | A user attached to a fresh tenant under the given `Noerd\Enums\Profile` (or none), with that tenant selected — the fixture for profile and permission tests |
 
 ## Testing YAML-driven detail forms
 
@@ -152,10 +164,10 @@ rule. Nothing else in the YAML drives validation.
 use Livewire\Livewire;
 
 it('stores a task', function (): void {
-    Livewire::test('crm::task-detail')
+    Livewire::test('inventory::task-detail')
         ->set('detailData', validDetailPayload(Task::class, ['tenant_id' => $tenantId]))
         ->set('detailData.title', 'Call Jane')
-        ->call('leadSelected', $lead->id)       // relation FK via the component callback
+        ->call('itemSelected', $item->id)       // relation FK via the component callback
         ->call('store')
         ->assertHasNoErrors();
 });
@@ -163,7 +175,7 @@ it('stores a task', function (): void {
 it('updates a task', function (): void {
     $task = Task::factory()->create(['tenant_id' => $tenantId]);
 
-    Livewire::test('crm::task-detail', ['modelId' => $task->id])
+    Livewire::test('inventory::task-detail', ['modelId' => $task->id])
         ->set('detailData.title', 'New title')
         ->call('store')
         ->assertHasNoErrors();
@@ -177,7 +189,7 @@ part of `factory()->toArray()` — set them explicitly. Do not factory-seed a co
 **Validation** — derive the required fields from the live layout:
 
 ```php
-$component = Livewire::test('accounting::expense-detail')->set('detailData', [])->call('store');
+$component = Livewire::test('inventory::item-detail')->set('detailData', [])->call('store');
 $component->assertHasErrors(requiredLayoutFields($component));
 ```
 
@@ -214,10 +226,20 @@ matching `require`/`require-dev` entry. Documented exceptions (e.g. a
 `class_exists()`-guarded optional integration) are passed as the second argument:
 
 ```php
-assertModuleDependenciesDeclared(dirname(__DIR__, 2), ['nywerk/liefertool-shop']);
+assertModuleDependenciesDeclared(dirname(__DIR__, 2), ['vendor/optional-integration']);
 ```
 
 Add a short comment above every allowance explaining why it is legitimate.
+
+## Install and update commands
+
+Every module's `noerd:update-{module}` command gets one standard test built on the global helper:
+
+```php
+it('publishes the module configs', function (): void {
+    assertModuleUpdateCommandPublishesConfigs('noerd:update-inventory', dirname(__DIR__, 2), 'inventory');
+});
+```
 
 ## Factories
 

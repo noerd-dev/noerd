@@ -9,13 +9,13 @@ php artisan noerd:create-app
 ```
 
 The command asks for:
-1. **App Title** - Display name (e.g., "Customer Management")
-2. **App Name** - Unique identifier, uppercase (e.g., "CRM")
-3. **Icon** - Heroicon name (searchable)
+1. **App Title** - Display name (e.g., "Inventory Management")
+2. **App Name** - Unique identifier; normalized to uppercase with underscores (e.g., "INVENTORY")
+3. **Icon** - Heroicon name (searchable); stored as `heroicon:outline:{name}`
 
 Every app ships with its own dashboard, so there is nothing to ask about the app's route: the
 command runs `noerd:make-dashboard` for the new app and stores the generated route
-(`{app}.dashboard`, e.g. `crm.dashboard`) as the app's main route. The scaffold consists of
+(`{app}.dashboard`, e.g. `inventory.dashboard`) as the app's main route. The scaffold consists of
 
 - `resources/views/components/{app}-dashboard.blade.php` — the dashboard page (`NoerdPage`)
 - a `Route::livewire('{app}', '{app}-dashboard')->name('{app}.dashboard')` entry in `routes/web.php`,
@@ -23,19 +23,20 @@ command runs `noerd:make-dashboard` for the new app and stores the generated rou
 - `app-configs/{app}/navigation.yml` with a first block that links the dashboard (an existing
   navigation only gets the dashboard entry inserted)
 
-For non-interactive use (e.g. in install scripts), every prompt has an option:
+For non-interactive use (e.g. in install scripts), every prompt has an option (the full option
+table is in [Artisan Commands](artisan-commands.md#noerdcreate-app)):
 
 ```bash
-php artisan noerd:create-app --title="Customer Management" --name=CRM \
-    --icon=users --active=1
+php artisan noerd:create-app --title="Inventory Management" --name=INVENTORY \
+    --icon=heroicon:outline:users --active=1
 ```
 
 Pass `--route=` only when the app tile should open an existing route instead — no dashboard is
 generated then:
 
 ```bash
-php artisan noerd:create-app --title="Customer Management" --name=CRM \
-    --icon=users --route=crm.index
+php artisan noerd:create-app --title="Inventory Management" --name=INVENTORY \
+    --icon=heroicon:outline:users --route=inventory.index
 ```
 
 Within that command, you can assign that app to one or more tenants. You can also do that later with another Artisan command:

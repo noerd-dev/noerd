@@ -117,10 +117,10 @@ fields:
   # Relations
   # ===========================================
 
-  # registered relation type
-  - name: detailData.customer_id
-    label: Customer
-    type: customerRelation
+  # registered relation type (see relation-field-types.md)
+  - name: detailData.item_id
+    label: Item
+    type: itemRelation
     colspan: 6
 
   # belongsToMany - Tag-style many-to-many selection
@@ -133,12 +133,6 @@ fields:
   # ===========================================
   # Special Selects
   # ===========================================
-
-  # collection-select - CMS Collection dropdown
-  - name: detailData.collection_id
-    label: Collection
-    type: collection-select
-    colspan: 6
 
   # setupCollectionSelect - Setup Collection dropdown
   - name: detailData.country_id
@@ -293,9 +287,9 @@ fields:
 
 ## Overview
 
-| Type | Description | Component |
-|------|-------------|-----------|
-| `text` | Standard text input (also number, date, time, datetime-local) | `input.blade.php` |
+| Type | Description | Element template |
+|------|-------------|------------------|
+| `text` | Standard text input (also `number`, `date`, `time`, `datetime-local` via the fallback below) | `input.blade.php` |
 | `phone` | Phone input with a `tel:` call button (opens the local phone app, e.g. FaceTime) | `phone.blade.php` |
 | `email` | Email input with a `mailto:` button (opens the local mail client) | `email.blade.php` |
 | `currency` | Amount input formatted with the tenant's currency (symbol, separators) | `input-currency.blade.php` |
@@ -304,7 +298,7 @@ fields:
 | `select` | Dropdown with static options or a component method (`optionsMethod`) | `input-select.blade.php` |
 | `picklist` | Dropdown with dynamic options (via Livewire method) | `picklist.blade.php` |
 | `checkbox` | Boolean checkbox | `checkbox.blade.php` |
-| `*Relation` | Registered relation field type such as `customerRelation` or `pageRelation` | `noerd-relation-field.blade.php` |
+| `*Relation` | Registered relation field type such as `itemRelation` or `pageRelation` | Livewire component `noerd-relation-field` (`components/noerd-relation-field.blade.php`), markup from the theme's `relation-field.blade.php` |
 | `image` | Image selection from Media library | `image.blade.php` |
 | `file` | File upload | `file.blade.php` |
 | `richText` | TipTap WYSIWYG editor | `rich-text.blade.php` |
@@ -312,16 +306,20 @@ fields:
 | `translatableTextarea` | Multi-language textarea | `translatable-textarea.blade.php` |
 | `translatableRichText` | Multi-language rich text editor | `translatable-rich-text.blade.php` |
 | `belongsToMany` | Many-to-many tag selection with search | `belongs-to-many.blade.php` |
-| `collection-select` | CMS Collection selection | `input-collection-select.blade.php` |
 | `setupCollectionSelect` | Setup Collection selection | `setup-collection-select.blade.php` |
 | `button` | Action button | `button.blade.php` |
 | `icon` | Heroicon picker (opens the icon-picker modal) | `icon.blade.php` |
 | `spacer` | Empty grid cell reserving its `colspan` (deliberate blank column) | `spacer.blade.php` |
-| `block` | Container for nested fields | (in `block.blade.php`) |
+| `block` | Container for nested fields | (in `components/detail/block.blade.php`) |
+
+Element templates live in the theme folders (`resources/views/themes/default/` for the built-in
+defaults; see [Themes](themes.md)). Modules may register additional types through the
+`FieldTypeRegistry` (see [Custom Field Types](#custom-field-types)).
 
 **Fallback behavior:** A `type` that is not registered (and does not end in `Relation`) renders as
-a generic HTML input with that type attribute — this is how `number`, `date`, `time` and
-`datetime-local` work. Unregistered `*Relation` types throw instead (see
+the theme's `input` element with that value as the HTML `type` attribute — this is how `number`,
+`date`, `time` and `datetime-local` work (`date` values are truncated to `YYYY-MM-DD`, `time`
+values to `HH:MM`). Unregistered `*Relation` types throw instead (see
 [Relation Field Types](relation-field-types.md)).
 
 ## Common Options
@@ -339,11 +337,18 @@ These options are available for most field types:
 | `required` | bool | `false` | Show required indicator on label |
 | `readonly` | bool | `false` | Make field read-only |
 | `live` | bool | `false` | Enable real-time updates (`wire:model.live.debounce`) |
-| `placeholder` | string | - | Placeholder text (translation key); supported by text-like inputs, selects and picklists |
+| `placeholder` | string | - | Placeholder text (translation key); supported by text-like inputs (`text`, `email`, `phone`, `textarea`, …), selects and picklists |
 | `tab` | int | `1` | Tab number for multi-tab forms |
 | `showIf` | string/object | - | Condition to show the field |
 | `showIfNot` | string/object | - | Condition to hide the field |
 | `show` | bool | `true` | Statically show/hide the field |
+| `viewExists` | string | - | View name — the field is skipped when that view is not registered (safe reference to an optional module) |
+| `quickCreate` | bool | `false` | Include the field in the quick-create dialog even though it is not `required` (see [Page View](page-view.md#quick-create-lifecycle)) |
+| `theme` | string | - | Per-field theme override (see [Themes](themes.md)) |
+| `number` | int | - | Explicit row number in the `numbered` theme (defaults to auto-increment) |
+
+`readonly` is also forced onto every field while the user's object permission denies saving — see
+[Read-Only Rendering](detail-view.md#read-only-rendering-on-write-denied-objects).
 
 ### helpText
 
@@ -432,7 +437,8 @@ option, so a list that has drifted out of sync with the data never disguises one
 
 ### text
 
-Standard text input field. Also handles HTML5 input types like `number`, `date`, `time`, and `datetime-local`.
+Standard text input field. The HTML5 input types `number`, `date`, `time` and `datetime-local`
+render through the same element (see the fallback behavior in the [Overview](#overview)).
 
 **Options:**
 
@@ -442,6 +448,7 @@ Standard text input field. Also handles HTML5 input types like `number`, `date`,
 | `readonly` | bool | `false` | Make field read-only |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
+| `placeholder` | string | - | Placeholder text (translation key) |
 
 **YAML Example:**
 
@@ -485,10 +492,6 @@ Standard text input field. Also handles HTML5 input types like `number`, `date`,
   live: true
 ```
 
-**Notes:**
-- `date` type automatically truncates datetime values to date only (YYYY-MM-DD)
-- `time` type automatically truncates to HH:MM format
-
 ---
 
 ### phone
@@ -516,10 +519,6 @@ Email input (`<input type="email">`) with a trailing button that opens `mailto:{
 local mail client (e.g. Apple Mail on macOS). The link always uses the CURRENT input value —
 edited but unsaved values included. The button is hidden while the field is empty and stays
 clickable on read-only fields.
-
-`email` used to be an unregistered fallback type rendering a plain HTML email input; it is now a
-registered field type, so existing YAMLs with `type: email` get the mailto button automatically —
-no configuration change needed.
 
 **YAML Example:**
 
@@ -610,6 +609,8 @@ Multi-line text field.
 | `rows` | int | `8` | Number of visible text rows |
 | `readonly` | bool | `false` | Make field read-only |
 | `required` | bool | `false` | Show required indicator |
+| `live` | bool | `false` | Enable real-time updates |
+| `placeholder` | string | - | Placeholder text (translation key) |
 
 **YAML Example:**
 
@@ -690,7 +691,7 @@ method.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `options` | array | required* | Array of options |
-| `optionsMethod` | string | - | Alternative to `options`: name of a component method returning the options array |
+| `optionsMethod` | string | - | Alternative to `options`: name of a public component method returning a `value => label` array |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
 | `placeholder` | string | - | Label of the leading empty option — declares that "nothing selected" is a valid answer |
@@ -780,16 +781,21 @@ Dropdown with dynamically loaded options from a Livewire component method.
 **PHP Example (Livewire Component):**
 
 ```php
+use Noerd\Helpers\TenantHelper;
+
 public function getWarehouseOptions(): array
 {
-    return Warehouse::where('tenant_id', auth()->user()->selected_tenant_id)
+    return Warehouse::where('tenant_id', TenantHelper::getSelectedTenantId())
         ->pluck('name', 'id')
         ->toArray();
 }
 ```
 
 **Notes:**
-- The method must return an associative array `[id => label, ...]`
+- The method must return an associative array `[id => label, ...]` and MUST declare the `: array`
+  return type — `NoerdDetail::resolvePicklistOptions()` only invokes a component method that
+  declares it (the name is client-callable, so `void` actions such as `store()` are never invoked);
+  otherwise the `PicklistRegistry` provider of that name is used, and `[]` when neither exists
 - Useful when options depend on other model data or complex queries
 
 ---
@@ -798,19 +804,20 @@ public function getWarehouseOptions(): array
 
 ### Registered Relation Types
 
-Relations must use explicit registered field types such as `customerRelation`, `vehicleRelation`, `authorRelation` or `pageRelation`.
+Relations must use explicit registered field types such as `itemRelation`, `authorRelation` or
+`pageRelation`.
 
 **YAML Example:**
 
 ```yaml
-- name: detailData.customer_id
-  label: Customer
-  type: customerRelation
+- name: detailData.item_id
+  label: Item
+  type: itemRelation
   colspan: 6
 ```
 
 **Important:**
-- There is no generic `type: relation` — every relation field uses its registered type
+- There is no generic `type: relation` — it throws during rendering; every relation field uses its registered type
 - `modalComponent` and `relationField` are not YAML options for registered relation fields
 - The list component, detail component and display title resolver are defined centrally in the module service provider
 - Unregistered relation field types fail explicitly during rendering
@@ -843,35 +850,64 @@ Tag-style selection for many-to-many relationships with search functionality.
 **PHP Example (Livewire Component):**
 
 ```php
-public array $tagIds = [];
+<?php
 
-public function mount(Article $article): void
-{
-    $this->tagIds = $article->tags->pluck('id')->toArray();
-}
+use Livewire\Component;
+use Noerd\Traits\NoerdDetail;
 
-public function getTagOptions(): array
-{
-    return Tag::where('tenant_id', auth()->user()->selected_tenant_id)
-        ->pluck('name', 'id')
-        ->toArray();
-}
+new class extends Component {
+    use NoerdDetail;
 
-public function store(): void
-{
-    $article = Article::updateOrCreate(
-        ['id' => $this->modelId],
-        $this->detailData
-    );
+    public $detailModel = Article::class;
 
-    $article->tags()->sync($this->tagIds);
-}
+    public ?string $detailPrimary = 'articleId';
+
+    /** The tags picked in the belongsToMany field. */
+    public array $tagIds = [];
+
+    public function mount(): void
+    {
+        $this->initDetail();
+
+        if ($this->modelId) {
+            $this->tagIds = Article::find($this->modelId)?->tags()->pluck('tags.id')->all() ?? [];
+        }
+    }
+
+    public function getTagOptions(): array
+    {
+        return Tag::orderBy('name')->pluck('name', 'id')->all();
+    }
+
+    /**
+     * The trait's default store() persists the form; the many-to-many tags are
+     * the one thing the YAML cannot express, so they are synced here.
+     */
+    public function store(): void
+    {
+        if (! $this->canSaveObject()) {
+            return;
+        }
+
+        $this->validateFromLayout();
+
+        $article = Article::updateOrCreate(
+            ['id' => $this->modelId],
+            $this->writableDetailData(Article::class),
+        );
+        $article->tags()->sync($this->tagIds);
+
+        $this->finishStore($article);
+    }
+}; ?>
 ```
 
 **Notes:**
 - Features built-in search with keyboard navigation (arrow keys, Enter, Escape)
 - Selected items appear as removable tags
 - The component property must be an array of IDs (e.g., `$tagIds`)
+- The options method is resolved with `method_exists` on the detail component (no registry fallback)
+- Reference: `demo/views/demo-customer-detail.blade.php` (the shipped demo app)
 
 ---
 
@@ -879,14 +915,19 @@ public function store(): void
 
 ### image
 
-Image selection from the Media library.
+Image selection from the media library, or a plain upload when no media library is installed.
+The element resolves everything through `Noerd\Contracts\MediaResolverContract` (see
+[Extension Registries](extension-registries.md#mediaresolvercontract)): `isAvailable()` decides
+between the picker button and a plain file input, `getPreviewUrl()` renders the thumbnail of a
+numeric value, a string value is used as the preview URL directly.
 
 **Options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `name` | string | required | Field name (stores Media ID or URL) |
+| `name` | string | required | Field name (stores the media ID or a URL) |
 | `label` | string | required | Translation key |
+| `readonly` | bool | `false` | Hide the picker, upload and delete affordances |
 
 **YAML Example:**
 
@@ -897,33 +938,58 @@ Image selection from the Media library.
   colspan: 6
 ```
 
-**PHP Example (Livewire Component):**
+**PHP Example (Livewire Component):** the element calls three methods on the hosting detail —
+`openSelectMediaModal($field)`, `deleteImage($field)` and, for the plain-upload fallback, a
+`wire:model.live` binding to `imageUploads.{field}`. The picker is the component returned by
+`MediaResolverContract::pickerComponent()`, opened with `selectMode`/`selectContext`/`selectToken`;
+it answers with the `mediaSelected` event. The token ties the answer to the field that opened the
+picker:
 
 ```php
+use Livewire\Attributes\On;
+use Noerd\Contracts\MediaResolverContract;
+use Noerd\Facades\Noerd;
+
 public function openSelectMediaModal(string $fieldName): void
 {
-    Noerd::modal('media-list', [
-        'context' => $fieldName,
-        'listActionMethod' => 'selectAction',
-    ]);
+    $picker = app(MediaResolverContract::class)->pickerComponent();
+    if (! $picker) {
+        return;
+    }
+
+    $token = uniqid('media_', true);
+    $this->detailData['__mediaToken'] = $token;
+    Noerd::modal($picker, ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token]);
 }
 
 #[On('mediaSelected')]
-public function mediaSelected($mediaId, $context): void
+public function mediaSelected(int $mediaId, ?string $fieldName = 'image', ?string $token = null): void
 {
-    $this->detailData[$context] = $mediaId;
+    if (($this->detailData['__mediaToken'] ?? null) !== $token) {
+        return;
+    }
+
+    $this->detailData[$fieldName ?? 'image'] = $mediaId;
+    unset($this->detailData['__mediaToken']);
 }
 
 public function deleteImage(string $fieldName): void
 {
-    $this->detailData[str_replace('detailData.', '', $fieldName)] = null;
+    $this->detailData[$fieldName] = null;
 }
 ```
 
+`$fieldName` arrives without the `detailData.` prefix. Store the media ID (as above) or the
+relative URL (`$resolver->getRelativeUrl($mediaId)`) — both render a preview. Reference:
+`resources/views/components/setup-collection-detail.blade.php` (stores the URL and handles the
+plain-upload fallback via `storeUploadedFile()`).
+
 **Notes:**
 - Shows a preview thumbnail when an image is selected
-- Includes delete button with confirmation dialog
-- Stores Media model ID as the value
+- Includes a delete button with confirmation dialog
+- Without a media library the element renders a plain `<input type="file">` bound to
+  `imageUploads.{field}` — declare `public array $imageUploads = [];` with `WithFileUploads` and
+  store the upload via `MediaResolverContract::storeUploadedFile()`
 
 ---
 
@@ -968,25 +1034,52 @@ File upload field with Livewire integration.
 **PHP Example (Livewire Component):**
 
 ```php
-use Livewire\WithFileUploads;
+<?php
 
-class DocumentDetail extends Component
-{
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Noerd\Traits\NoerdDetail;
+
+new class extends Component {
+    use NoerdDetail;
     use WithFileUploads;
 
-    public $document;
+    public $detailModel = Document::class;
+
+    public ?string $detailPrimary = 'documentId';
+
+    /** Bound by the `file` field (`name: document`) — not part of detailData. */
+    public $document = null;
 
     public function store(): void
     {
+        if (! $this->canSaveObject()) {
+            return;
+        }
+
+        $this->validateFromLayout();
         $this->validate([
-            'document' => 'required|file|mimes:pdf|max:10240',
+            'document' => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
-        $path = $this->document->store('documents');
-        // ...
+        if ($this->document) {
+            $this->detailData['path'] = $this->document->store('documents');
+        }
+
+        $document = Document::updateOrCreate(
+            ['id' => $this->modelId],
+            $this->writableDetailData(Document::class),
+        );
+
+        $this->finishStore($document);
     }
-}
+}; ?>
 ```
+
+The upload property is a plain component property (the field `name` has no `detailData.` prefix);
+only the stored path is written into `detailData` and therefore persisted by
+`writableDetailData()` — the YAML must bind `detailData.path` (e.g. with `readonly: true` or
+`show: false`) for the key to be writable.
 
 ---
 
@@ -1093,39 +1186,13 @@ Multi-language WYSIWYG editor.
 ```
 
 **Notes:**
-- All translatable fields react to `session('selectedLanguage')` (defaults to `'de'`)
+- All translatable fields edit the language returned by `SetupLanguage::selectedCode()` — the
+  session choice made in the language switcher, otherwise the tenant's default language
 - Language switching is handled globally by the application
 
 ---
 
 ## Special Types
-
-### collection-select
-
-Dropdown for selecting CMS Collection entries.
-
-**Options:**
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `readonly` | bool | `false` | Disable the select |
-| `live` | bool | `false` | Enable real-time updates |
-| `required` | bool | `false` | Show required indicator |
-
-**YAML Example:**
-
-```yaml
-- name: detailData.collection_id
-  label: Collection
-  type: collection-select
-  colspan: 6
-```
-
-**Notes:**
-- Automatically loads all CMS Collections for the current tenant
-- Includes a search button that opens a modal with collection entries
-
----
 
 ### setupCollectionSelect
 
@@ -1139,6 +1206,7 @@ Dropdown for selecting entries from a Setup Collection.
 | `displayField` | string | `name` | Field to display as option label |
 | `valueField` | string | entry id | Field stored as the value instead of the entry id |
 | `live` | bool | `false` | Enable real-time updates |
+| `readonly` | bool | `false` | Disable the select |
 | `required` | bool | `false` | Show required indicator |
 
 **YAML Example:**
@@ -1154,7 +1222,10 @@ Dropdown for selecting entries from a Setup Collection.
 
 **Notes:**
 - Supports translatable display fields
-- Automatically handles locale fallback (current → 'de' → any available)
+- Locale fallback for translatable display fields: the selected language → the tenant's default
+  language (`SetupLanguage::getDefaultCode()`) → the first available translation
+  (`SetupCollectionHelper::selectOptions()`)
+- See [Setup Collections](setup-collections.md)
 
 ---
 
@@ -1387,28 +1458,46 @@ fields:
 
 ## Component Locations
 
-All form components are located in:
-```
-app-modules/noerd/resources/views/components/forms/
-```
+Paths are relative to the noerd package root:
 
-The main rendering logic is in:
-```
-app-modules/noerd/resources/views/components/detail/block.blade.php
-```
+- Element templates of the built-in themes: `resources/views/themes/default/` (plus the elements
+  `compact/` and `numbered/` restyle) — see [Themes](themes.md)
+- Registered renderer targets (`noerd::components.forms.*`): `resources/views/components/forms/`
+  — thin shims that delegate to the theme element
+- Relation fields: `resources/views/components/noerd-relation-field.blade.php` /
+  `noerd-polymorphic-relation-field.blade.php` (Livewire components)
+- The rendering logic: `resources/views/components/detail/block.blade.php`
 
 ## Custom Field Types
 
-- Register shared field types in `NoerdServiceProvider` via `Noerd\Services\FieldTypeRegistry`
-- Register module-specific field types in the module's own service provider, for example `CmsServiceProvider`
-- In YAML you still only reference the field type:
+The YAML `type:` is resolved through the `Noerd\Services\FieldTypeRegistry` singleton — nothing
+is hardcoded. The core registers its types in `Noerd\Providers\NoerdServiceProvider`; a module
+registers additional types in its own service provider's `boot()`, and any detail YAML may then
+use them:
 
-```yaml
-- name: detailData.custom_attributes.page_id
-  label: booking_label_page
-  type: pageRelation
+```php
+use Noerd\Services\FieldTypeRegistry;
+use Noerd\Support\FieldTypeDefinition;
+
+app(FieldTypeRegistry::class)->register('rating', FieldTypeDefinition::include(
+    'inventory::components.forms.rating',
+    resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+));
 ```
 
-Use `FieldTypeDefinition::include()` for Blade partials and `FieldTypeDefinition::livewire()` for dedicated Livewire field components.
+```yaml
+- name: detailData.rating
+  label: Rating
+  type: rating
+```
 
-Registered relation types are configured through `RelationFieldRegistry` and rendered by `noerd-relation-field`.
+- `FieldTypeDefinition::include()` registers a Blade partial; `FieldTypeDefinition::livewire()` a
+  dedicated Livewire field component (with an optional `keyResolver`). The optional `resolver`
+  computes the props per render from `(array $field, $component, $detailData, $modelId)`
+- Include-kind types are themeable: a theme folder may ship an element named after the basename
+  of the target (`inventory::components.forms.rating` → `rating.blade.php`), see
+  [Themes → Element Resolution](themes.md#element-resolution)
+- Relation types are registered through the `RelationFieldRegistry` (which registers the matching
+  field type itself) and rendered by `noerd-relation-field` — see
+  [Relation Field Types](relation-field-types.md)
+- Further registries: [Extension Registries](extension-registries.md)

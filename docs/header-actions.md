@@ -4,7 +4,7 @@ Header actions let a module contribute small Livewire components to the header o
 
 ## Concept
 
-- **Separate slots for lists and details.** The registry keeps two independent lists: list actions render in the list header controls (injected by `modal-title` via `table/list-controls` for every `NoerdList` host — including custom header slots), detail actions render in the detail header (`modal-title`). An action that should appear in both contexts must be registered twice — there is no shared slot.
+- **Separate slots for lists and details.** The registry keeps two independent lists: list actions render among the list header controls (`table/list-controls-primary` in the standard list header; injected by `modal-title` for a `NoerdList` host with a custom header slot), detail actions render in the header of every `*-detail` component (`modal-title`). An action that should appear in both contexts must be registered twice — there is no shared slot.
 - **One action, one function, one Livewire component.** Every action is its own minimal Livewire component. It renders exactly one button (or nothing) and contains no logic for the other context.
 - **Actions own their visibility.** The core always mounts every registered action. The action itself decides in `mount()` whether it has something to show (permissions, current app, available configuration) and renders an empty root when hidden.
 
@@ -42,7 +42,7 @@ Every action component is mounted with the same two parameters, in both contexts
 | Param | Value |
 |-------|-------|
 | `model` | The host's declared model class (`$listModel` on lists, `$detailModel` on details) — `null` when the host declares none |
-| `component` | The host's Livewire alias, e.g. `customer::customers-list` or `customer::customer-detail` |
+| `component` | The host's Livewire alias, e.g. `inventory::items-list` or `inventory::item-detail` |
 
 Rules for the component itself:
 
@@ -60,23 +60,25 @@ Actions that need to know *what* the header shows read the host's declared Eloqu
 new class extends Component {
     use NoerdList;
 
-    public $listModel = Customer::class;
-    public $detailComponent = 'customer::customer-detail';
+    public $listModel = Item::class;
+    public ?string $detailRoute = 'inventory.item.detail';
+    public $detailComponent = 'inventory::item-detail';
 };
 
 // Detail component
 new class extends Component {
     use NoerdDetail;
 
-    public $detailModel = Customer::class;
+    public ?string $detailPrimary = 'itemId';
+    public $detailModel = Item::class;
 };
 ```
 
 - A host without the declaration passes `model: null` — an action that depends on the model must **hide** in that case. There is deliberately no fallback to guessing from the component name.
 - From the model class an action can derive everything else:
   - the table: `(new $model())->getTable()`
-  - the list component/YAML name: `StaticConfigHelper::modelToListComponent($model)` → `Customer::class` becomes `customers-list`
-  - the detail component/YAML name: `StaticConfigHelper::modelToDetailComponent($model)` → `Customer::class` becomes `customer-detail`
+  - the list component/YAML name: `StaticConfigHelper::modelToListComponent($model)` → `Item::class` becomes `items-list`
+  - the detail component/YAML name: `StaticConfigHelper::modelToDetailComponent($model)` → `Item::class` becomes `item-detail`
 
 ## Full Example
 
@@ -120,9 +122,10 @@ Registered with `$registry->registerListAction('my-module::list-header-action-ex
 
 ## Where Actions Do NOT Render
 
-- Compact/embedded lists (no header at all)
+- Compact/embedded and minimal lists (no header at all)
 - Picker lists (`returnsSelection`)
 - Quick-create detail dialogs
+- Headers of `*-page` components — the detail slot is bound to component names ending in `-detail`
 
 ## Design Guidance
 

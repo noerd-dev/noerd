@@ -41,10 +41,12 @@ use Noerd\Services\ProfileRegistry;
 app(ProfileRegistry::class)->register('MY_PROFILE', fn(): string => __('My Profile'));
 ```
 
-A registered profile's SEMANTICS come from the authorization gates the module
-defines; the core's own baseline treats unknown keys like `User`.
-`NoerdUser::currentProfileKey()` exposes the raw stored key for such modules;
-`currentProfile()` resolves only the built-in enum cases.
+`register(string $key, string|Closure $label)` accepts a translation key or a lazy label
+closure; `options()` returns `key => translated label` (built-ins first, then registered
+profiles in registration order) and `label(string $key)` a single label. A registered
+profile's SEMANTICS come from the authorization gates the module defines; the core's own
+baseline treats unknown keys like `User`. `NoerdUser::currentProfileKey()` exposes the raw
+stored key for such modules; `currentProfile()` resolves only the built-in enum cases.
 
 ## Abilities
 
@@ -59,6 +61,10 @@ Every check goes through `Noerd\Helpers\AccessHelper`:
 | `canDeleteObject($modelClass)` | `noerd.object-delete` | Delete records (delete button, bulk delete) |
 | `canPerformAction($actionKey)` | `noerd.action` | Perform a named action declared in code (see below) |
 | `canUseApp(...$appNames)` | — | Convenience for app-bound chrome: at least one of the apps is ASSIGNED to the selected tenant and `canAccessApp()` allows it. No tenant → false |
+| `canPassGate($ability)` | any | A host-defined gate or policy ability (the YAML `policy:` key of quick-menu buttons and dashboard widgets): a `Gate::define()`d ability is checked as such, anything else against the `Tenant` policy. Guests → false |
+
+The gate names are constants on `AccessHelper` (`APP_GATE`, `OBJECT_READ_GATE`,
+`OBJECT_WRITE_GATE`, `OBJECT_CREATE_GATE`, `OBJECT_DELETE_GATE`, `ACTION_GATE`).
 
 With NO gate defined the profile baseline applies: `User`/`Admin` (and no
 profile) → everything, `ReadOnly` → only `canReadObject`/`canAccessApp`.
@@ -66,8 +72,11 @@ Guests are never restricted (config discovery, unauthenticated rendering). Null 
 (no model/app/action known) are always allowed.
 
 Defining a gate (e.g. in a service provider's `boot()`) replaces the baseline
-for that ability — see `docs/extension-registries.md` ("Authorization gates")
-for the closure contract (nullable user!) and examples.
+for that ability — see [Extension Registries](extension-registries.md#authorization-gates)
+for the closure contract (nullable user!) and examples. The gate user is always resolved
+from noerd's own guard (`Gate::forUser(NoerdAuth::user())`), never from the host's default
+guard. An extension may implement these gates to provide grant-based permissions on top of
+the profiles.
 
 Detail/page components additionally expose **`canSaveObject()`**: the ability
 for the form's CURRENT state — create while the record has no `$modelId` yet,
@@ -93,9 +102,12 @@ write.
 - **Dashboard widgets and quick-menu buttons** declare `app:` (string) or
   `apps:` (list) in their YAML — an entry renders only when one of its apps is
   assigned to the tenant AND allowed (`AccessHelper::canUseApp()`, see
-  `docs/dashboard-widgets.md` and `docs/quick-menu.md`). NEVER hand-roll a
-  per-module "tenant has app X" gate for this — such gates ignore the user's
-  profile.
+  [Dashboard Widgets](dashboard-widgets.md) and [Quick Menu](quick-menu.md)). The
+  quick-menu is tenant scoped, not app scoped: a button renders the same target no
+  matter which app is selected, so a component behind it must never read
+  `TenantHelper::getSelectedApp()`. NEVER hand-roll a per-module "tenant has app X"
+  gate for this — such gates ignore the user's profile. On routes use the
+  `app-access:{app}` middleware (see [Authentication](auth.md)).
 
 ## Query-level read guard (opt-in trait)
 

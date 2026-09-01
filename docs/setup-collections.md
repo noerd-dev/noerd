@@ -14,8 +14,8 @@ That's it. No migrations, no models, no controllers required.
 | Property | Required | Description |
 |----------|----------|-------------|
 | `title` | Yes | Singular title (e.g., "Customer") |
-| `titleList` | Yes | Plural title for the list view (e.g., "Customers") |
-| `key` | Yes | Unique identifier in UPPERCASE (e.g., "CUSTOMERS") |
+| `titleList` | No | Plural title for the list view (e.g., "Customers"); defaults to the filename |
+| `key` | No | Unique identifier in UPPERCASE (e.g., "CUSTOMERS"); defaults to the UPPERCASED filename (`Noerd\Support\SetupCollectionDefinitionData`) |
 | `buttonList` | No | Button text for creating new entries |
 | `description` | No | Optional description shown in the detail view |
 | `fields` | Yes | Array of field definitions |
@@ -72,17 +72,15 @@ Where collection **schemas** (the definitions above) live is controlled by
 - **`yaml` (default):** Schemas live as committed YAML files in `setup_yaml_path`. The definitions
   management UI is hidden — changes are deployed via files.
 - **`database`:** Schemas live per tenant in the `setup_collection_definitions` table. The Setup
-  area shows a management UI (routes `setup-collection-definitions` /
-  `setup-collection-definition.detail`, gated by the `setup.collections.ui` middleware) where
+  area shows a management UI (routes `noerd.setup-collection-definitions` /
+  `noerd.setup-collection-definition.detail`, gated by the `setup.collections.ui` middleware) where
   admins create and edit collection definitions at runtime.
 
 `collections.show_definitions_ui` — the flag the setup navigation gates the management entry on —
-is DERIVED from the mode when the service provider registers. Never set it in a config file: as a
-key of its own it drifted apart from the mode (a published config edited without the env var), which
-left the routes reachable while the navigation entry stayed hidden.
+is DERIVED from the mode when the service provider registers. Never set it in a config file: the
+navigation entry and the routes must always follow the same value.
 
-The mode applies to the **Setup** collections only. CMS collection definitions always live in the
-database, regardless of this value.
+The mode applies to the **Setup** collections only.
 
 The entry **data** is always stored in the database (`setup_collections` /
 `setup_collection_entries`), regardless of the mode.
@@ -139,7 +137,8 @@ Use the `setupCollectionSelect` field type in your detail YAML files to create a
 | Option | Required | Description |
 |--------|----------|-------------|
 | `collectionKey` | Yes | The collection filename without `.yml` extension |
-| `displayField` | No | Field to display as option label (default: `name`) |
+| `displayField` | No | Field to display as option label (default: `name`); translatable values resolve to the selected language |
+| `valueField` | No | Entry field stored as the option value (e.g. `code`); without it the entry id is stored |
 | `live` | No | Enable real-time updates |
 | `required` | No | Show required indicator |
 
@@ -158,6 +157,9 @@ $tableColumns = SetupCollectionHelper::getCollectionTable('invoice_templates');
 
 // Get all available collections
 $allCollections = SetupCollectionHelper::getAllCollections();
+
+// Select options of a collection's entries (value/label pairs)
+$options = SetupCollectionHelper::selectOptions('countries', 'name', 'code');
 ```
 
 **Available Methods:**
@@ -167,6 +169,7 @@ $allCollections = SetupCollectionHelper::getAllCollections();
 | `getCollectionFields(string $collection)` | `?array` | Returns the full YAML configuration including fields |
 | `getCollectionTable(string $collection)` | `array` | Returns column definitions for list display |
 | `getAllCollections()` | `array` | Returns all collections with their metadata |
+| `selectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null)` | `array` | `[['value' => …, 'label' => …], …]` built from the current tenant's entries — the same resolution the `setupCollectionSelect` element and the list picklist badges use |
 
 The helper reads from the active storage mode transparently — the same API works in `yaml` and
 `database` mode.
@@ -180,13 +183,14 @@ All standard field types are supported in Setup Collections. See the
 - `textarea`
 - `select`, `picklist`
 - `checkbox`
-- Registered relation types such as `customerRelation` (see [Relation Field Types](relation-field-types.md))
+- Registered relation types (`{x}Relation`, see [Relation Field Types](relation-field-types.md))
 - `translatableText`, `translatableTextarea`
 - And more...
 
 ## Best Practices
 
 1. **Use UPPERCASE keys**: The `key` property should be UPPERCASE and unique (e.g., `CUSTOMERS`, `INVOICE_TEMPLATES`)
-2. **Keep collections simple**: Setup Collections are best for lookup tables with a few fields
-3. **Use meaningful names**: The filename becomes the collection identifier, so use clear, descriptive names
-4. **Localize labels**: Use English text as labels — they double as translation keys (map them in `de.json`)
+2. **Scaffold with `noerd:make-collection`**: it writes the block-style YAML for you (see [Artisan Commands](artisan-commands.md#noerdmake-collection))
+3. **Keep collections simple**: Setup Collections are best for lookup tables with a few fields
+4. **Use meaningful names**: The filename becomes the collection identifier, so use clear, descriptive names
+5. **Localize labels**: Use English text as labels — they double as translation keys (map them in `de.json`)

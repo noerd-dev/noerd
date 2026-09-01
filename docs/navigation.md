@@ -1,4 +1,4 @@
-# Create Navigation
+# Navigation
 
 Navigation is defined in YAML files. Each app has its own navigation configuration.
 
@@ -10,31 +10,33 @@ Navigation is defined in YAML files. Each app has its own navigation configurati
 app-configs/{app}/navigation.yml
 ```
 
-For example: `app-configs/accounting/navigation.yml`
+For example: `app-configs/inventory/navigation.yml` (the module ships its template at
+`app-modules/inventory/app-configs/inventory/navigation.yml` — keep both copies in sync)
 
 ## Navigation Structure
 
 ```yaml
-- title: Accounting
-  name: accounting
-  hidden: true
-  route: accounting-tool
+- title: Inventory
+  name: inventory
+  route: inventory
   block_menus:
-    - title: Customers
+    - title: Stock
       navigations:
-        - title: Customers
-          route: 'customers'
-          heroicon: 'users'
-          newComponent: 'customer-detail'
-        - title: Invoices
-          route: 'invoices'
-          heroicon: 'document-currency-euro'
-    - title: Products
+        - title: Items
+          route: inventory.items
+          heroicon: archive-box
+          newRoute: inventory.item.detail
+          newComponent: inventory::item-detail
+        - title: Categories
+          route: inventory.categories
+          heroicon: tag
+          newRoute: inventory.category.detail
+          newComponent: inventory::category-detail
+    - title: Settings
       navigations:
-        - title: Products
-          route: 'products'
-          newComponent: 'product-detail'
-          heroicon: 'archive-box'
+        - title: Settings
+          route: inventory.settings
+          heroicon: cog-6-tooth
 ```
 
 ## Top-Level Properties
@@ -47,6 +49,11 @@ For example: `app-configs/accounting/navigation.yml`
 | `hidden` | Hide the top-level menu item |
 | `block_menus` | Groups of navigation items (see below) |
 | `sub_menu` | Optional flat secondary menu |
+
+`title`, `name`, `route` and `hidden` are app metadata: `noerd:install-{module}` writes them into the
+installed copy from the app title and the "hidden app" answer given during installation plus the app
+key (`HasModuleInstallation::installAsNewApp()`), so a module template only needs sensible defaults
+there.
 
 ## Block Properties (`block_menus[]`)
 
@@ -71,7 +78,7 @@ For example: `app-configs/accounting/navigation.yml`
 | `icon` | Alternative: a noerd blade icon component name (e.g. `icons.media`) |
 | `modalRoute` | Named route opened as a MODAL instead of navigating |
 | `component` | Livewire component opened as a modal — fallback for `modalRoute` |
-| `arguments` | Arguments passed to the modal component |
+| `arguments` | Arguments passed to the modal opened by `modalRoute`/`component` — and, merged with the quick-create keys, to the "+" target |
 | `newRoute` | Named detail route opened as a modal by the "+" button (preferred) |
 | `newComponent` | Livewire component opened by the "+" button — fallback for `newRoute` |
 | `quickCreate` | With `newRoute`/`newComponent`: open the "+" target as a narrow quick-create modal (`modelId: null`, `quickCreate: true`) |
@@ -84,12 +91,16 @@ For example: `app-configs/accounting/navigation.yml`
 separate keys:
 
 ```yaml
-- title: Accounts
-  route: crm.accounts          # the list page this entry links to
-  newRoute: crm.account.detail # the "+" button opens /crm/account/new?modal=true
-  newComponent: crm::account-page  # fallback when the route is not registered
-  heroicon: 'building-office'
+- title: Items
+  route: inventory.items              # the list page this entry links to
+  newRoute: inventory.item.detail     # the "+" button opens /inventory/item/new?modal=true
+  newComponent: inventory::item-detail  # fallback when the route is not registered
+  heroicon: archive-box
 ```
+
+Route names follow the module convention (see [Creating Modules](creating-modules.md)):
+`{module}.{entities}` for the list page, `{module}.{entity}.detail` for the record, and
+`{module}::{entity}-detail` for the component fallback.
 
 `newRoute:`/`modalRoute:` win when the named route is registered; the `*Component`
 key is used otherwise, so an entry may reference a route owned by an optional module.
@@ -104,37 +115,48 @@ breaking the sidebar.
 
 ## Full Example
 
-`app-configs/accounting/navigation.yml`
+`app-configs/inventory/navigation.yml`
 
 ```yaml
-- title: Accounting
-  name: accounting
-  hidden: true
-  route: accounting-tool
+- title: Inventory
+  name: inventory
+  hidden: false
+  route: inventory
   block_menus:
-    - title: Customers
+    - title: Stock
       navigations:
-        - title: Customers
-          route: 'customers'
-          heroicon: 'users'
-          newComponent: 'customer-detail'
-        - title: Invoices
-          route: 'invoices'
-          heroicon: 'document-currency-euro'
-    - title: Finances
+        - title: Items
+          route: inventory.items
+          heroicon: archive-box
+          newRoute: inventory.item.detail
+          newComponent: inventory::item-detail
+        - title: Stock Movements
+          route: inventory.stock-movements
+          heroicon: arrows-right-left
+        - title: Import
+          component: inventory::stock-import-modal
+          arguments:
+            source: sidebar
+          heroicon: arrow-up-tray
+    - title: Reports
+      style: buttons
       navigations:
-        - title: Bank Accounts
-          route: 'accounting.bank-accounts'
-          heroicon: 'building-library'
-          newComponent: 'bank-account-detail'
-        - title: Bank Transactions
-          route: 'accounting.bank-transactions'
-          heroicon: 'banknotes'
+        - title: Low Stock
+          link: /inventory/items?view=low-stock
+          heroicon: exclamation-triangle
+        - title: Supplier Portal
+          link: https://example.com
+          external: true
+          heroicon: globe-alt
     - title: Settings
       navigations:
         - title: Settings
-          route: 'accounting-settings'
-          heroicon: 'cog-6-tooth'
+          route: inventory.settings
+          heroicon: cog-6-tooth
+        - title: Currencies
+          route: inventory.currencies
+          heroicon: currency-euro
+          config: noerd.features.currency
 ```
 
 ## Next Steps

@@ -11,7 +11,7 @@ assistant gets the same conventions the noerd core team uses, without copying an
 | `resources/boost/guidelines/core.blade.php` | The **Noerd Framework** guideline: the hard rules for lists, details/pages, modals, themes, modules, install/update commands, translations and tests. Rendered into the project's agent files by [Laravel Boost](https://github.com/laravel/boost) |
 | `resources/boost/skills/*/SKILL.md` | Task-oriented **skills** — step-by-step procedures with checklists: `noerd-list-development`, `noerd-detail-development`, `noerd-modal-development`, `noerd-module-development`, `noerd-testing` |
 | `AGENTS.md` (+ `CLAUDE.md`) | Contributor guide for working *inside* the noerd repository (workflow, tests, code style, architecture guardrails) |
-| `docs/` | This documentation — the guideline and the skills point into it (`vendor/noerd/noerd/docs/*.md`) |
+| `docs/` | This documentation — included in the Packagist dist, so the guideline and the skills can point into it (`vendor/noerd/noerd/docs/*.md`) |
 
 Laravel Boost discovers the guideline and the skills automatically in every Composer package that
 has a `resources/boost/guidelines/` or `resources/boost/skills/` folder — no service provider
@@ -38,9 +38,9 @@ registration is involved.
 php artisan boost:update
 ```
 
-Boost writes the `=== noerd/noerd rules ===` block into `CLAUDE.md` (inside the
+Boost writes the `=== noerd/noerd/core rules ===` block into `CLAUDE.md` (inside the
 `<laravel-boost-guidelines>` markers), `.cursor/rules/laravel-boost.mdc`, `.junie/guidelines.md`, …
-and copies the skills to `.claude/skills/noerd-*` (and `.ai/skills/`). Re-run `php artisan boost:update`
+and copies the skills to `.claude/skills/noerd-*`. Re-run `php artisan boost:update`
 after every noerd upgrade so the rendered rules follow the installed version.
 
 Keep your own project rules outside the Boost markers — Boost overwrites only the block between
@@ -54,6 +54,10 @@ A module created with `php artisan noerd:module` already contains:
   component names, install/update commands, test call). It is Blade-rendered by Boost, so literal
   `{{ }}` or `@directive` text must sit inside `@verbatim … @endverbatim`.
 - `AGENTS.md` and a `CLAUDE.md` that imports it (`@AGENTS.md`).
+
+A module may additionally ship Claude Code skills in a top-level `skills/{skill-name}/` folder:
+`noerd:install-{module}` / `noerd:update-{module}` (`HasModuleInstallation::publishSkills()`) link
+or copy every such folder into the project's `.claude/skills/` independently of Boost.
 
 Add `"noerd/{module}"` (the Composer package name) to the `packages` array of the host's
 `boost.json` (Boost ≥ 2; `boost:install` offers it interactively) and run `php artisan boost:update`. Skills are optional: create

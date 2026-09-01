@@ -32,34 +32,37 @@ last, so a granted app's own copy always wins. The same applies to detail and pa
 
 ## Example YAML Configuration
 
-Example: `app-configs/accounting/lists/customers-list.yml`
+Example: `app-configs/inventory/lists/items-list.yml`
 
 ```yaml
-title: Customers
+title: Items
 actions:
-  - label: New Customer
-    action: listAction
+  - label: New Item
+    route: inventory.item.detail
 disableSearch: false
 columns:
   - field: name
     label: Name
     width: 12
     type: text
-  - field: company_name
-    label: Company Name
+  - field: sku
+    label: SKU
+    width: 8
+  - field: category
+    label: Category
     width: 10
-  - field: email
-    label: Email
-    width: 12
-  - field: address
-    label: Address
-    width: 12
-  - field: zipcode
-    label: Zip Code
-    width: 10
-  - field: city
-    label: City
-    width: 10
+  - field: price
+    label: Price
+    width: 6
+    type: currency
+  - field: stock
+    label: Stock
+    width: 6
+    type: number
+  - field: is_active
+    label: Active
+    width: 4
+    type: bool
 ```
 
 ## List Properties
@@ -91,26 +94,29 @@ columns:
 | `align` | Text alignment (`left`, `right`; `number`/`currency` auto-align right) | `left` |
 | `type` | Display type (see Column Types below) | `text` |
 | `options` | `value`/`label` pairs for the `badge` type (see below) | |
-| `readOnly` | For editable cell types (`bool`, inline inputs): render read-only | `true` |
+| `readOnly` | Renders the cell input of the `text`, `id`, `date`, `number` and `currency` types read-only. Set to `false` to allow inline editing (see Inline Editing below) | `true` |
+| `wireModel` / `wireModelField` / `live` | For the `checkbox` type: the array property the checkbox binds to, an optional sub-key, and whether the binding is `wire:model.live` (see Inline Editing below) | / / `false` |
 | `translatable` | Marks the column as language-dependent — the cell gets a subtle blue background so an editor sees that the value belongs to the selected language (see [Languages](languages.md)) | `false` |
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
 | `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
 | `wireClick` / `wireClickField` | For `colored_text`: custom `wire:click` method plus the row field passed as its argument | / `id` |
 
-**Width behavior:** The `width` value is applied as `style="width: 15%;"` on the `<th>` element. If the sum of all column widths exceeds 100, the table becomes wider than its container and horizontal scrolling is enabled.
-
 ## Column Types
+
+Every rendering mode (table, card grid, widget list, CSV export) formats a cell value through the
+same `Noerd\Support\ListCellFormatter`, so a column type looks identical everywhere.
 
 | Type | Description |
 |------|-------------|
 | `text` | Default. Standard text display |
-| `date` | Formats value as date (YYYY-MM-DD) |
+| `date` | Renders an `<input type="date">` with the value as `Y-m-d` (formatted via `FormatHelper::date()` outside the table) |
 | `datetime` | Formats value as date + time (`d.m.Y H:i` in German locale, `Y-m-d H:i` otherwise) |
 | `number` | Right-aligned number, rounded to 2 decimals |
-| `currency` | Right-aligned number formatted as currency with `€` |
+| `currency` | Right-aligned number formatted through `Noerd\Helpers\CurrencyHelper::format()` |
 | `id` | Clickable ID link |
-| `bool` | Toggleable boolean: green checkmark (true), red circle (false). Clickable to toggle value |
-| `inversebool` | Green checkmark when true, nothing when false. Clickable to toggle value |
+| `bool` | Read-only icon: green checkmark (true), red circle (false) |
+| `inversebool` | Read-only icon: green checkmark when true, nothing when false |
+| `checkbox` | Editable checkbox bound to a component property via `wireModel` (see Inline Editing below) |
 | `badge` | Neutral badge; the raw value is translated to a label via the column's `options` (`value`/`label` pairs). Columns mirroring a paired detail `type: select` field get this automatically |
 | `badge_with_text` | Badge with optional text (value must be array with `badge` and `text` keys) |
 | `relationBadge` | Badge showing the display title of a foreign-key value (resolved via the registered relation types) |
@@ -145,27 +151,63 @@ columns:
     type: inversebool
 ```
 
+### Inline Editing
+
+Cells are read-only by default. Two column types opt into editing:
+
+- **`text` / `id` cells with `readOnly: false`** dispatch `updateRow($id, $column, $value)` on the
+  list component via `wire:change`. `NoerdList::updateRow()` is a deliberate no-op — a list opts
+  into persistence by overriding it with the same signature:
+
+  ```php
+  public function updateRow(int|string|null $id = null, ?string $column = null, mixed $value = null): void
+  {
+      // The column name arrives from the client — only accept what is meant to be editable.
+      if (! in_array($column, ['name', 'sku'], true)) {
+          return;
+      }
+
+      Item::query()->whereKey($id)->update([$column => $value]);
+  }
+  ```
+- **`type: checkbox`** binds the cell to an array property of the component: `wireModel` names the
+  property, the row id is the key, and an optional `wireModelField` addresses a sub-key
+  (`permissions.{id}.read`). With `live: true` the binding is `wire:model.live`, otherwise it is
+  deferred until the next request. A row that does not carry the column's field renders no checkbox.
+
+  ```yaml
+  columns:
+    - field: read
+      label: Read
+      type: checkbox
+      wireModel: permissions
+      wireModelField: read
+      live: true
+  ```
+
+`bool` and `inversebool` cells are read-only icons — use `checkbox` for a toggleable boolean.
+
 ## Livewire Component
 
 A list component declares its model as `public $listModel` and its detail target as
 `public ?string $detailRoute` (preferred) and/or `public $detailComponent` — everything
 else (query, modal opening, mounting, request handling) comes from the `NoerdList` trait.
 
-Example: `customers-list.blade.php`
+Example: `items-list.blade.php`
 
 ```php
 <?php
 
 use Livewire\Component;
 use Noerd\Traits\NoerdList;
-use Noerd\Customer\Models\Customer;
+use Noerd\Inventory\Models\Item;
 
 new class extends Component {
     use NoerdList;
 
-    public $listModel = Customer::class;
-    public ?string $detailRoute = 'customer.detail';
-    public $detailComponent = 'customer::customer-detail';
+    public $listModel = Item::class;
+    public ?string $detailRoute = 'inventory.item.detail';
+    public $detailComponent = 'inventory::item-detail';
 };
 ?>
 
@@ -188,30 +230,35 @@ See [Modal System](modal.md#route-modals).
 
 When the list needs its own query (eager loads, extra wheres, row transformations),
 override `listData()` — keep `$listModel` declared and still build the query via
-`listQuery($this->listModel)`. Example: `products-list.blade.php`
+`listQuery($this->listModel)`:
 
 ```php
 new class extends Component {
     use NoerdList;
 
-    public $listModel = Product::class;
-    public $detailComponent = 'product::product-page';
+    public $listModel = Item::class;
+    public ?string $detailRoute = 'inventory.item.detail';
+    public $detailComponent = 'inventory::item-detail';
 
     public function listData(): array
     {
         $rows = $this->listQuery($this->listModel)
-            ->whereDoesntHave('products', fn($query) => $query->withoutGlobalScopes())
-            ->with('groups')
+            ->whereNotNull('published_at')
+            ->with('category')
             ->paginate($this->perPage);
 
         foreach ($rows as $row) {
-            $row->price_preview = $row->getPriceWording() . number_format($row->getGrossPrice(), 2, ',', '.');
+            $row->price_preview = number_format($row->grossPrice(), 2, ',', '.');
         }
 
         return $this->buildList($rows);
     }
 }; ?>
 ```
+
+`listQuery()` applies search, sort and the Excel-style column filters. It does NOT apply the header
+dropdown filters (`listFilters`) — a list with such filters calls `$this->applyListFilters($query)`
+on the builder itself (see [List Filters](list-filters.md#how-filters-work)).
 
 Never leave a custom query in `with()` once `$listModel` is declared: the generic trait
 features (row click, select-all, bulk delete) resolve the list via `listData()` and would
@@ -223,7 +270,7 @@ private helper method:
 private function filteredQuery(): Builder
 {
     return $this->listQuery($this->listModel)
-        ->when($this->customerId, fn ($query) => $query->where('customer_id', $this->customerId));
+        ->when($this->categoryId, fn ($query) => $query->where('category_id', $this->categoryId));
 }
 
 public function listData(): array
@@ -236,10 +283,20 @@ public function with(): array
     return [
         'summary' => [
             'name' => __('Total'),
-            'total_gross' => $this->filteredQuery()->toBase()->sum('total_gross'),
+            'stock' => $this->filteredQuery()->toBase()->sum('stock'),
         ],
     ];
 }
+```
+
+The summary row only renders when the view hands it to the list component — keys are column
+fields, `currency` columns are formatted, everything else prints as is (`showSummary: false` in
+the YAML hides the row):
+
+```blade
+<x-noerd::page>
+    <x-noerd::list :summary="$summary" />
+</x-noerd::page>
 ```
 
 ## Key Concepts
@@ -249,25 +306,40 @@ public function with(): array
 - **$detailRoute:** Named detail route opened by `listAction()` — rewrites the browser URL to the record (preferred)
 - **$detailComponent:** The detail component opened by `listAction()` when no `$detailRoute` is registered
 - **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`
-- **listAction():** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId]`; only override it for custom behavior (extra modal arguments, no modal, …)
+- **listAction(mixed $modelId = null, array $relations = []):** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; only override it for custom behavior (extra modal arguments, no modal, …)
 - **buildList():** Generates the list configuration from the YAML
-- **request()->customerId / request()->create:** Handled by the trait's `rendering()`; override `rendering()` when the list uses its own URL parameter (e.g. `invoiceId`)
+- **Deep links:** `?{entity}Id=5` opens that record's modal over the list, `?create=1` the create modal. `mountList()` reads them once on mount; the parameter name derives from the component name (`items-list` → `itemId`, via `getDeepLinkParam()`) — no override needed
 - **`<x-noerd::list />`:** Renders the table
 - **Object permissions:** Read/write/delete denial via the optional `noerd.object-*` gates (see
   `AccessHelper` in extension-registries.md) hides rows, header actions and the delete bulk action. The permission target is the model resolved
   by `listQuery()` / the declared `$listModel`. A repository-backed list without `$listModel`
-  declares it explicitly — `public ?string $objectPermissionModel = Order::class;` — otherwise it
-  stays unrestricted (reference: the liefertool orders list)
+  declares it explicitly — `public ?string $objectPermissionModel = Item::class;` — otherwise it
+  stays unrestricted
+
+### Component API
+
+| Member | Purpose |
+|--------|---------|
+| `?string $filter` (`#[Url]`) | Free-form list filter carried as `?filter=…`. The trait never reads it — a list seeds its own `listFilters` or query from it in `mount()` |
+| `string $listActionMethod` | Public method a row click dispatches to (default `listAction`; pickers pass `selectAction`). `openListRow()` only ever calls PUBLIC methods by this name |
+| `selectAction($modelId)` | Picker row action: dispatches `noerdRelationSelected` and `{entity}Selected` (`items-list` → `itemSelected`) with `($modelId, $context)`, then `closeTopModal` |
+| `updateRow($id, $column, $value)` | Inline-editing hook — a no-op unless overridden (see Inline Editing) |
+| `refreshList()` | Re-renders the list (`$refresh`). Listens to `refreshList-{component}` (the full name incl. namespace, e.g. `inventory::items-list`) and to the name after the last dot; a detail's `closeModalProcess()` dispatches it for its paired list |
+| `exportCsv()` | Streams the CSV download (see CSV Export) |
+| `componentName()` (protected) | The name the YAML config, session keys and events resolve by — Livewire's component name; override only in unregistered test fixtures |
+| `listConfigComponent()` (protected) | The name the list YAML resolves under — override when a component renders another list's YAML |
+| `getAllowedListFilterColumns()` (protected) | Whitelist of header `listFilters` keys (see [List Filters](list-filters.md#security)) |
+| `mountList()` / `loadListFilters()` (protected) | Mount-time setup (per-page, filters, view, sort, deep links) — call `mountList()` first in a custom `mount()` |
 
 ## Default Sorting
 
 Default sorting is configured in the list YAML — never in the component:
 
 ```yaml
-title: Invoices
+title: Items
 defaultSort:
-  field: invoice_date
-  direction: desc   # optional, desc when omitted
+  field: name
+  direction: asc   # optional, desc when omitted
 ```
 
 **Keys:**
@@ -292,11 +364,11 @@ List components support multiple action buttons via the `actions` array in the Y
 
 ```yaml
 actions:
-  - label: accounting_label_import
+  - label: Import
     action: openImportModal
     heroicon: arrow-up-tray
-  - label: accounting_label_new_transaction
-    action: listAction
+  - label: New Item
+    route: inventory.item.detail
 ```
 
 | Property | Description |
@@ -315,14 +387,15 @@ actions:
 - Buttons are displayed side by side
 - No `actions` key means no button is rendered
 
-**Where the controls render (generic injection):** the header controls — search, CSV export,
-registry list actions and the YAML action buttons — are injected by `x-noerd::modal-title`
-(`noerd::components.table.list-controls`) for EVERY component using the `NoerdList` trait. This
-covers the standard list header (`list-header` contributes only title, count, view switcher and
-filter chips) AND components with their own custom `<x-slot:header>` (e.g. a list nested in tab
-panels like the object manager): wrap the custom title in `<x-noerd::modal-title>` and the
-controls appear top right automatically — never hand-roll a search field or action buttons in a
-list header. Two props on `x-noerd::modal-title` tune the injection:
+**Where the controls render:** the standard list header (`noerd::components.table.list-header`,
+rendered by `<x-noerd::list />`) draws the search field, CSV export, registry list actions and the
+YAML action buttons itself — as one responsive row whose collapsible half moves into a filter
+drawer on small screens (owner: [List Filters](list-filters.md#responsive-header-the-filter-drawer)).
+A component with its OWN custom `<x-slot:header>` (e.g. a list nested in tab panels) gets the same
+controls injected by `x-noerd::modal-title` (`noerd::components.table.list-controls`): wrap the
+custom title in `<x-noerd::modal-title>` and they appear top right automatically — never hand-roll
+a search field or action buttons in a list header. Two props on `x-noerd::modal-title` tune the
+injection:
 
 | Prop | Description |
 |------|-------------|
@@ -332,25 +405,25 @@ list header. Two props on `x-noerd::modal-title` tune the injection:
 **Standard single action (most common):**
 
 ```yaml
-title: Customers
+title: Items
 actions:
-  - label: New Customer
-    route: customer.detail
+  - label: New Item
+    route: inventory.item.detail
 ```
 
-`route:` opens the detail route as a modal and writes `/customer/new?modal=true` into the
+`route:` opens the detail route as a modal and writes `/inventory/item/new?modal=true` into the
 address bar. `action: listAction` is the component-based equivalent and stays valid for
 lists whose detail has no route.
 
 **Multiple actions with icon:**
 
 ```yaml
-title: accounting_label_bank_transactions
+title: Stock Movements
 actions:
-  - label: accounting_label_import
+  - label: Import
     action: openImportModal
     heroicon: arrow-up-tray
-  - label: accounting_label_new_transaction
+  - label: New Movement
     action: listAction
 ```
 
@@ -359,7 +432,7 @@ actions:
 ```php
 public function openImportModal(mixed $modelId = null, array $relations = []): void
 {
-    Noerd::modal('bank-transaction-import');
+    Noerd::modal('inventory::stock-import-modal');
 }
 ```
 
@@ -418,11 +491,10 @@ columns:
   ```php
   use Noerd\Facades\Noerd;
 
-  public function createTaskForSelected(): void
+  public function assignSelected(): void
   {
-      Noerd::modal('crm::task-create-modal', [
-          'targetType' => 'Account',
-          'selectedIds' => $this->selectedRecordIds,
+      Noerd::modal('inventory::assign-category-modal', [
+          'itemIds' => $this->selectedRecordIds,
       ]);
   }
   ```
@@ -433,8 +505,8 @@ job), reset it in a listener so the checkboxes clear:
 ```php
 use Livewire\Attributes\On;
 
-#[On('tasksAssigned')]
-public function onTasksAssigned(): void
+#[On('categoryAssigned')]
+public function onCategoryAssigned(): void
 {
     $this->selectedRecordIds = [];
 }
@@ -447,11 +519,11 @@ In picker mode a row click ticks the row, the top "New …" action is hidden, an
 **Cancel / Apply selection** instead of the bulk actions.
 
 ```php
-Noerd::modal('crm::accounts-list', [
+Noerd::modal('inventory::items-list', [
     'multiSelect' => true,
     'returnsSelection' => true,
     'selectedRecordIds' => $this->selectedIds,   // pre-tick the current selection
-    'context' => 'taskRecords',                  // disambiguates the result event
+    'context' => 'bundleItems',                  // disambiguates the result event
 ]);
 ```
 
@@ -462,7 +534,7 @@ filters by its `context`:
 #[On('recordsSelected')]
 public function recordsSelected(array $ids, mixed $context = null): void
 {
-    if ($context !== 'taskRecords') {
+    if ($context !== 'bundleItems') {
         return;
     }
 
@@ -491,9 +563,6 @@ public function recordsSelected(array $ids, mixed $context = null): void
   user-toggled checkbox visually checked).
 - The footer (picker confirm bar vs. bulk-action bar) is decided by `returnsSelection`: when set, the
   confirm bar wins; otherwise the YAML `bulkActions` render once at least one row is selected.
-- Reference: `app-configs/crm/lists/tasks-list.yml` (bulk `Assign to` + `Delete`),
-  `leads-list`/`accounts-list` (`createTaskForSelected`) for the page flavour;
-  `task-create-modal.blade.php` `openRecordPicker()` for the picker.
 
 ## Compact Mode (Embedded Lists)
 
@@ -516,11 +585,11 @@ The low-level flag (used internally by `<x-noerd::detail-lists>`):
 ```blade
 {{-- mx-8 cancels the disableModal -2rem breakout so the list aligns with the surrounding form --}}
 <div class="mx-8">
-    <livewire:crm::opportunities-list
-        wire:key="account-opportunities-{{ $modelId }}"
+    <livewire:inventory::items-list
+        wire:key="category-items-{{ $modelId }}"
         disableModal
         compact
-        :accountId="$modelId" />
+        :categoryId="$modelId" />
 </div>
 ```
 
@@ -547,29 +616,29 @@ Salesforce list views.
 **Naming convention** — sibling files in the same `lists/` folder, suffixed with `--{key}`:
 
 ```bash
-app-configs/customer/lists/
-├── customers-list.yml          # the default view
-├── customers-list--vip.yml     # view "VIP Customers"
-└── customers-list--inactive.yml
+app-configs/inventory/lists/
+├── items-list.yml              # the default view
+├── items-list--low-stock.yml   # view "Low Stock"
+└── items-list--archived.yml
 ```
 
-- The view key is the suffix after `--` (e.g. `vip`); `--` is therefore reserved as the view
+- The view key is the suffix after `--` (e.g. `low-stock`); `--` is therefore reserved as the view
   separator and must not appear in list names themselves.
 - Each view file is a **complete standalone list config** (title, columns, actions, …) — nothing is
   merged from the base file.
-- Views may be **project-only**: a `customers-list--vip.yml` in the project's `app-configs/` without
-  a module copy is fine. Within one app a project file shadows a module-source file with the same
-  view key.
+- Views may be **project-only**: an `items-list--low-stock.yml` in the project's `app-configs/`
+  without a module copy is fine. Within one app a project file shadows a module-source file with the
+  same view key.
 
 **Cross-app enumeration** — the dropdown lists the views of EVERY app allowed for the tenant, not
-just the session's current app. A list name that exists in several apps (e.g. `customers-list` in
-`delivery` and `customer`) yields one entry per app, each labelled with its source app rendered
-with reduced opacity — e.g. "Kunden (Delivery)":
+just the session's current app. A list name that exists in several apps (e.g. `items-list` in
+`inventory` and `warehouse`) yields one entry per app, each labelled with its source app rendered
+with reduced opacity — e.g. "Items (Warehouse)":
 
 - Every entry shows its source app label (the `TenantApp` title; `Setup` for the setup folder).
-- Current-app entries use plain view keys (`default`, `vip`); other apps' entries use composite
-  `{app}::{key}` keys (`delivery::default`, `delivery::vip`). `::` is therefore reserved and cannot
-  appear in view keys.
+- Current-app entries use plain view keys (`default`, `low-stock`); other apps' entries use composite
+  `{app}::{key}` keys (`warehouse::default`, `warehouse::low-stock`). `::` is therefore reserved and
+  cannot appear in view keys.
 - Selecting another app's view renders that app's YAML via explicit-app resolution
   (`StaticConfigHelper::getListConfigForApp()`); the session's selected app is NOT changed.
 - Ordering: current app first, then the other allowed apps; `default` leads each app group,
@@ -583,16 +652,16 @@ with reduced opacity — e.g. "Kunden (Delivery)":
 - The selected view is remembered per list in the session (`listView.{component}`) — as the
   composite `{app}::{key}` when it belongs to another app. If the view's YAML is removed, the list
   silently falls back to the default view.
-- The active view is also reflected in the URL as `?view={key}` (plain `vip`, composite
-  `{app}--vip` — `--` instead of `::` keeps `%3A%3A` encoding out of the URL — or `default` for
+- The active view is also reflected in the URL as `?view={key}` (plain `low-stock`, composite
+  `{app}--low-stock` — `--` instead of `::` keeps `%3A%3A` encoding out of the URL — or `default` for
   the standard view), so a shared link opens the same view — the default view included. On page
   load the URL param takes precedence over the session-saved view (and is persisted to the session,
   in `::` form); an unknown key falls back to the session/default. Single-view lists never carry
   the param; embedded compact lists and pickers never read or write it.
 - Because the whole config is swapped, the view's own `searchableColumns`, `actions`,
   `notSortableColumns` and column types all apply automatically. DB-driven layout overrides key
-  per view file (e.g. `customers-list--vip`), app-agnostic — a restriction on `vip` also hides
-  every other app's `{app}::vip` entry.
+  per view file (e.g. `items-list--low-stock`), app-agnostic — a restriction on `low-stock` also
+  hides every other app's `{app}::low-stock` entry.
 
 **Generic API:**
 
@@ -600,7 +669,7 @@ with reduced opacity — e.g. "Kunden (Delivery)":
 |--------|---------|
 | `?string $listView` | Active plain view key (`null` = base YAML) on the `NoerdList` trait |
 | `?string $listViewApp` | Source-app folder of the active view (`null` = current app) |
-| `?string $listViewParam` | URL-bound (`#[Url(as: 'view')]`) key of the active view incl. `'default'`; composite keys use `--` (`gastro--vip`); `null` = single-view/embedded list |
+| `?string $listViewParam` | URL-bound (`#[Url(as: 'view')]`) key of the active view incl. `'default'`; composite keys use `--` (`warehouse--low-stock`); `null` = single-view/embedded list |
 | `switchListView(string $key)` | Switch and persist the active view (`'default'` = base YAML; accepts composite keys) |
 | `availableListViews` (computed) | `['{viewKey}' => ['key' => …, 'app' => …, 'appLabel' => …, 'title' => …], …]` |
 | `StaticConfigHelper::getListViews($component)` | The underlying cross-app discovery helper |
@@ -621,7 +690,7 @@ protected function prepareCsvExport(): array
     return [
         $this->listQuery($this->listModel),   // Builder — search/sort/filters already applied
         $config['columns'] ?? [],             // columns to export (list YAML shape)
-        'customers.csv',                      // download filename
+        'items.csv',                          // download filename
     ];
 }
 ```
@@ -639,21 +708,21 @@ Any list can render its rows as a **card grid** instead of the table — purely 
 YAML, with zero changes to the component's Blade file:
 
 ```yaml
-title: POS
-description: Select a customer to start a new order.
+title: Items
+description: Pick an item to open it.
 displayMode: grid
 gridColumns: 4
 columns:
   - field: name
     label: Name
-  - field: company_name
-    label: Company
-  - field: city
-    label: City
+  - field: sku
+    label: SKU
+  - field: price
+    label: Price
+    type: currency
 searchableColumns:
   - name
-  - company_name
-  - city
+  - sku
 ```
 
 Grid mode swaps only the rows block (`noerd::components.list.grid`) — the list header (title,
@@ -715,12 +784,12 @@ the embedded list this way). Mount properties:
 | `showMoreArguments` | Arguments passed to the "Show more" list (usually the same narrowing filter) |
 
 ```blade
-<livewire:crm::opportunities-list
-    wire:key="widget-opportunities-{{ $modelId }}"
+<livewire:inventory::items-list
+    wire:key="widget-items-{{ $modelId }}"
     :minimal="true"
-    :minimalColumns="['name', 'amount']"
-    :showMoreRoute="'crm.opportunities'"
-    :showMoreArguments="['accountId' => $modelId]" />
+    :minimalColumns="['name', 'price']"
+    :showMoreRoute="'inventory.items'"
+    :showMoreArguments="['categoryId' => $modelId]" />
 ```
 
 ## Next Steps

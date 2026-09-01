@@ -33,8 +33,8 @@ class Customer extends Model implements DeclaresRelationForms
 ```
 
 The form key is an alias — it does not have to match the relation name.
-Subclasses inherit declarations (crm's `Account extends Customer` gets the
-address form for free).
+Subclasses inherit declarations (a `KeyAccount extends Customer` subclass gets
+the address form for free).
 
 ```yaml
 fields:
@@ -57,7 +57,7 @@ MorphOne). When the write is domain logic, declare it:
 RelationFormDefinition::make(relation: 'defaultInvoiceAddress', fields: [...])
     ->persistWhen(fn (array $data): bool => /* has data? default: any field non-empty */)
     ->persistUsing(function (Customer $customer, array $data): void {
-        app(CustomerAddressService::class)->upsertFor(
+        app(AddressService::class)->upsertFor(
             $customer, $data, asInvoiceDefault: true, asDeliveryDefault: true,
         );
     });
@@ -89,10 +89,10 @@ with the full `detailData.{formKey}.` path.
 ## Extending a foreign model
 
 A module may attach a relation form to a model it does not own through its
-model SUBCLASS on the same table — the established shared-table pattern:
-booking-members' `CustomerBooking extends Customer` overrides
+model SUBCLASS on the same table — the established shared-table pattern: a
+payments module's `PayingCustomer extends Customer` overrides
 `relationForms()` with `parent::relationForms() + ['sepaMandate' => ...]` and
-its detail component declares `$detailModel = CustomerBooking::class`. The
+its detail component declares `$detailModel = PayingCustomer::class`. The
 backing relation itself may be registered dynamically
 (`Customer::resolveRelationUsing('sepaMandate', ...)`) — dynamic relations are
 inherited by subclasses.
@@ -125,12 +125,12 @@ component:
   saved" hooks: save-action detection (including event-dispatched saves, which
   arrive as `__dispatch` and are mapped to their listener method), a
   validation-error guard (nothing is written back after failed validation), a
-  `canWriteObject()` guard, and fresh record loading. Extension packages build
-  their own after-save hooks on the same base.
+  `canWriteObject()` guard, and fresh record loading. Modules build their own
+  after-save hooks on the same base.
 
 ## Testing
 
 Test the mechanics with synthetic fixtures (never against shipped YAMLs):
 runtime `Livewire::component()` registration with a synthetic `$pageLayout`,
 `Schema::create` fixture tables, and a fixture model implementing
-`DeclaresRelationForms`. Reference: `app-modules/noerd/tests/Feature/RelationFormSyncTest.php`.
+`DeclaresRelationForms`. Reference: `tests/Feature/RelationFormSyncTest.php`.

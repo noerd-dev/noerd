@@ -8,10 +8,11 @@ The noerd core ships a set of small traits for models, Livewire components and A
 
 **What it does:**
 
-- `bootBelongsToTenant()` adds the `Noerd\Scopes\TenantScope` global scope — when a user is authenticated and has a `selected_tenant_id`, every query gets `where {table}.tenant_id = selected_tenant_id`
-- A `creating` hook sets `$model->tenant_id` from `Auth::user()->selected_tenant_id` when the model has none yet
-- `initializeBelongsToTenant()` appends `tenant_id` to `$fillable` — only when the model explicitly defines a non-empty `$fillable`; models using `$guarded` (the noerd standard) are untouched
+- `bootBelongsToTenant()` adds the `Noerd\Scopes\TenantScope` global scope — when `TenantHelper::currentTenantId()` resolves a tenant (an authenticated noerd user with a selected tenant), every query gets `where {table}.tenant_id = {currentTenantId}`
+- A `creating` hook stamps `$model->tenant_id` from the same `TenantHelper::currentTenantId()` when the model has none yet — scope and stamp share one resolver, so a record is never written with a tenant the scope would exclude
 - `tenant(): BelongsTo` — relation to `Noerd\Models\Tenant`
+
+The trait does not touch `$fillable`; use `$guarded` (the noerd standard).
 
 ```php
 use Noerd\Traits\BelongsToTenant;
@@ -29,7 +30,7 @@ Campaign::all();                           // only the selected tenant's rows
 
 **Important:**
 
-- The scope only applies for authenticated users with a `selected_tenant_id` — unauthenticated contexts (queued jobs, commands) see all tenants; scope explicitly there
+- The scope only applies while a noerd user is authenticated with a selected tenant — unauthenticated contexts (queued jobs, commands) see all tenants; scope explicitly there. Only the noerd guard counts: a host guard's user (e.g. an admin panel on the `web` guard) never influences scoping (see [Authentication](auth.md))
 - Bypass the scope deliberately with `Model::withoutGlobalScopes()` plus an explicit `where('tenant_id', ...)`
 
 ## HasEmailPreview (Livewire components)
@@ -41,7 +42,7 @@ Campaign::all();                           // only the selected tenant's rows
 | Method | Returns |
 |--------|---------|
 | `getEmailData(): array` | The edited data; the trait reads `send_email`, `email_subject`, `email_body` from it (typically `return $this->detailData;`) |
-| `getEmailViewName(): string` | Markdown mail view used to render the preview (e.g. `cms::emails.form-confirmation`) |
+| `getEmailViewName(): string` | Markdown mail view used to render the preview (e.g. `mymodule::emails.confirmation`) |
 | `getEmailRateLimitPrefix(): string` | Cache-key prefix for the test-email cooldown (e.g. `'form-type:' . ($this->modelId ?? 'new')`) |
 | `getSampleEmailData(): array` | `placeholder => sample value` map (e.g. `['{{form_title}}' => ...]`), replaced into subject and body |
 
@@ -66,7 +67,7 @@ The rate limiting is cache-based: the cooldown key is `test-email-cooldown:{pref
                  :disabled="! $this->canSendTestEmail">{{ __('Send test email') }}</x-noerd::button>
 ```
 
-Reference: `app-modules/cms/resources/views/components/form-type-detail.blade.php`.
+The preview modal is `noerd::email-preview-modal`; the test mail is `Noerd\Mail\EmailPreviewTestMail`.
 
 ## ShowFromFilterTrait (list components)
 
@@ -114,7 +115,7 @@ new class extends Component {
 
 ## TenantFilterTrait (list components)
 
-`Noerd\Traits\TenantFilterTrait` provides a tenant dropdown for lists that show records across tenants (admin screens). `getTenantsListFilter(): array` returns a `Picklist` filter on the `tenant_id` column with one option per tenant from `Auth::user()->adminTenants`.
+`Noerd\Traits\TenantFilterTrait` provides a tenant dropdown for lists that show records across tenants (admin screens). `getTenantsListFilter(): array` returns a `Picklist` filter on the `tenant_id` column with one option per tenant from `NoerdAuth::user()?->adminTenants` (an empty picklist without an authenticated noerd user).
 
 ```php
 use Noerd\Traits\NoerdList;
@@ -179,9 +180,38 @@ The traits behind every `noerd:install-{module}` command — covered in full in 
 | Method | Description |
 |--------|-------------|
 | `runModuleInstallation(): int` | The whole flow: verifies noerd is installed, copies the app-config YAMLs, registers the tenant app, runs migrations; re-running switches to the update path |
+| `runModuleUpdate(): int` | The idempotent update path used by `noerd:update-{module}`: re-publishes the app-config YAMLs (creating a missing `app-configs/{module}/` folder) and refreshes published skills; never prompts for tenant assignment |
+| `publishSkills(bool $refreshCopies = false): void` | Links or copies the module's `skills/*` folders into the project's `.claude/skills/` (see [AI Agents](ai-agents.md)) |
 | `publishMigration(): ?string` | Publishes the module's app-registration migration stub into the project |
 | `ensureQuickMenuButton(array $button, array $legacyComponents = []): void` | Adds a quick-menu button when missing |
 | `ensureDashboardWidget(array $widget, array $legacyComponents = []): void` | Adds a dashboard widget when missing |
 | `ensureSetupNavigation(string $blockTitle, array $entry): void` | Adds an entry to the setup navigation when missing |
 
 `RequiresNoerdInstallation` contributes `ensureNoerdInstalled(): bool` (aborts with a hint when `noerd:install` has not run) and `assignAppToTenants(string $appName): void`.
+
+
+## Helpers
+
+Static helpers under `Noerd\Helpers` that the traits and components build on:
+
+- **`TenantHelper`** — the tenant/app session API. `currentTenantId()` is the authenticated noerd
+  user's selected tenant — the single resolver both `TenantScope` and the `BelongsToTenant` stamp
+  read (`null` in console, queue and guest contexts). `getSelectedTenantId()` is the session
+  selection (read-only; in a single-tenant installation it falls back to the only tenant, memoized
+  per request), `getSelectedTenant()` the memoized `Tenant` model, `setSelectedTenantId()` writes
+  the session and persists the choice on the user, `hasTenant()` checks it. `getSelectedApp()` /
+  `setSelectedApp()` / `hasApp()` hold the app selected in the sidebar (`setSelectedAppFromRoute()`
+  derives it from the current route's tenant app). `clear()` forgets both session keys,
+  `clearCache()` drops the request memos (call it in tests after mutating tenants or tenant apps).
+- **`NoerdAuth`** — guard-explicit access to the noerd user (see [Authentication](auth.md)).
+- **`AccessHelper`** — every permission check (see [Permissions](permissions.md)).
+- **`FormatHelper`** — locale-aware display formats for list cells and CSV exports:
+  `dateFormat()`, `dateTimeFormat()`, `date($value)`, `dateTime($value)`,
+  `decimal($value, $decimals = 2)`, `csvDelimiter()` — backed by `config('noerd.format.*')`.
+- **`CurrencyHelper`** — `configForTenant()`, `codeForTenant()` (ISO code, `EUR` when unset),
+  `format($value)` and `clearCache()`; the tenant's currency comes from `noerd_settings`, the
+  fallback from `config('noerd.currency')`.
+- **`IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers).
+- **`ThemeHelper`** — `forTenant()` (`['theme' => …, 'enforced' => …]` from `noerd_settings`
+  with `config('noerd.theme')` as fallback), `fromLayout($layout)` and `clearCache()` — see
+  [Themes](themes.md).

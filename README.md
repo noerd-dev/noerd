@@ -4,7 +4,8 @@
 [![Latest Stable Version](https://img.shields.io/packagist/v/noerd/noerd.svg)](https://packagist.org/packages/noerd/noerd)
 
 **Build admin panels and business apps for Laravel — without touching your production code.**
-Zero intrusion: no traits, no base classes, no boilerplate. Just YAML configs.
+Zero intrusion: noerd brings its own auth guard, routes and tables, and never modifies your
+`config/auth.php` or `.env`. Screens are slim Livewire components driven by YAML configs.
 
 ![Noerd](https://noerd.dev/assets/Noerd.gif)
 
@@ -18,7 +19,7 @@ php artisan noerd:install
 # 2. Create your first app
 php artisan noerd:create-app
 
-# 3. Create a model and its migration
+# 3. Create a model and its migration, then migrate
 php artisan make:model Customer -m
 php artisan migrate
 
@@ -26,12 +27,26 @@ php artisan migrate
 php artisan noerd:make-resource Customer
 ```
 
+The model needs a `tenant_id` column (`$table->foreignId('tenant_id')->constrained('tenants')`)
+and the `Noerd\Traits\BelongsToTenant` trait — that is all the tenant scoping there is:
+
+```php
+use Noerd\Traits\BelongsToTenant;
+
+class Customer extends Model
+{
+    use BelongsToTenant;
+
+    protected $guarded = [];
+}
+```
+
 - `noerd:install` publishes the config and the frontend scaffold (Vite, Tailwind CSS 4), runs the
   migrations, creates the default tenant and an admin user, and optionally installs demo data.
 - `noerd:create-app` asks for a title, a name and an icon, scaffolds a dashboard for the app and
   offers to assign it to your tenants. Use `noerd:assign-apps-to-tenant` to change that later.
 - `noerd:make-resource` reads the model's columns and generates the list and detail components,
-  their YAML configs, the routes and the navigation entry.
+  their YAML configs, the routes (behind `['noerd', 'app-access:{app}']`) and the navigation entry.
 
 Log in, open the app from the app bar, and your first CRUD screen is ready.
 
@@ -49,7 +64,7 @@ public function boot(): void
 
 ## Key Features
 
-- **Business Apps** – Build self-contained apps (Accounting, CMS, Booking, Production Planning, …), each with its own dashboard and navigation, and assign them per tenant
+- **Business Apps** – Build self-contained apps (sales, purchasing, HR, …), each with its own dashboard and navigation, and assign them per tenant
 - **List Views** – Sortable, searchable, paginated tables with Excel-style column filters, bulk actions and a card grid mode — configured in a single YAML file
 - **Detail Views & Pages** – Tabbed forms with validation, embedded related lists, a relation overview and selectable form themes
 - **Smart Field Types** – Text, date, file, image, rich text, **relations** and dynamic **picklists** — extendable with your own field types
@@ -69,9 +84,8 @@ testing.
 
 ## Demo
 
-A hosted demo with two pre-installed apps (a Content Management System and a Study App):
-
-https://demo.noerd.dev
+A hosted demo is available at https://demo.noerd.dev. Locally, `php artisan noerd:demo` installs
+the Demo Customers app into your project (see the Example Application page of the docs).
 
 ## Requirements
 
@@ -82,7 +96,9 @@ https://demo.noerd.dev
 
 ## YAML in Action
 
-A full CRUD screen is two YAML files. No PHP, no Blade.
+A full CRUD screen is two YAML files plus two slim components that `noerd:make-resource`
+generates for you (the list declares its model and detail route, the detail its model — nothing
+else).
 
 **`app-configs/demo/lists/customers-list.yml`**
 
@@ -90,7 +106,7 @@ A full CRUD screen is two YAML files. No PHP, no Blade.
 title: Customers
 actions:
   - label: New Customer
-    action: listAction
+    route: demo.customer.detail
 columns:
   - field: name
     label: Name

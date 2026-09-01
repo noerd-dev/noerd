@@ -1,9 +1,11 @@
 # Action Menu
 
-`x-noerd::action-menu` is the dropdown menu primitive. Every menu in the framework and in the
-modules builds on it — a record's action menu in a tab bar, the profile menu, the tenant switcher,
-the list-view switcher, the grid sort menu. Never hand-roll another `x-data="{ open: false }"`
-dropdown: the panel chrome, the click-outside and the escape key live in the component once.
+`x-noerd::action-menu` is the dropdown menu primitive for component markup — a record's action menu
+in a tab bar, the profile menu, the tenant switcher, the list-view switcher and the grid sort menu
+build on it. Never hand-roll another `x-data="{ open: false }"` dropdown: the panel chrome, the
+click-outside and the escape key live in the component once. (The per-row action dropdown of a
+list column with `actions:` is rendered by the table cell itself from the YAML — see
+[List View](list-view.md#column-properties).)
 
 ## Basic usage
 

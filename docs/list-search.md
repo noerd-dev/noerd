@@ -7,7 +7,7 @@ The search functionality allows users to filter list data by typing in a search 
 In the YAML configuration, use `disableSearch` to control the search field visibility:
 
 ```yaml
-title: Customers
+title: Items
 disableSearch: false  # Search is enabled (default)
 columns:
   - field: name
@@ -22,9 +22,9 @@ disableSearch: true
 
 ## How Search Works
 
-1. The `NoerdList` trait provides a `$search` property bound to the search input via `wire:model.live="search"`
+1. The `NoerdList` trait provides a `$search` property bound to the search input via `wire:model.live.debounce.300ms="search"` (`noerd::components.table.list-search`)
 2. When the user types, the search value is available in `$this->search`
-3. `listQuery()` applies WHERE conditions based on `searchableColumns` (or all column fields as fallback)
+3. `listQuery()` applies WHERE conditions based on `searchableColumns` (or every `columns[].field` as fallback) — only fields that are real columns of the model's table take part
 4. Filtered results are returned
 
 ## Using `listQuery()` in a List Component
@@ -36,13 +36,14 @@ The `listQuery()` method handles search and sort automatically based on YAML con
 
 use Livewire\Component;
 use Noerd\Traits\NoerdList;
-use Noerd\Customer\Models\Customer;
+use Noerd\Inventory\Models\Item;
 
 new class extends Component {
     use NoerdList;
 
-    public $listModel = Customer::class;
-    public $detailComponent = 'customer::customer-detail';
+    public $listModel = Item::class;
+    public ?string $detailRoute = 'inventory.item.detail';
+    public $detailComponent = 'inventory::item-detail';
 };
 ?>
 
@@ -53,36 +54,37 @@ new class extends Component {
 
 ## Searchable Columns Configuration
 
-By default, `listQuery()` searches across all columns defined in the YAML `columns` array. To limit search to specific fields, use `searchableColumns`:
+By default, `listQuery()` searches across the columns defined in the YAML `columns` array. To limit search to specific fields, use `searchableColumns`:
 
 ```yaml
-title: Customers
+title: Items
 searchableColumns:
   - name
-  - company_name
-  - email
-  - zipcode
+  - sku
+  - description
 columns:
   - field: name
     label: Name
     width: 15
-  - field: company_name
-    label: Company
+  - field: sku
+    label: SKU
     width: 15
 ```
 
-If `searchableColumns` is not defined, all `columns[].field` values are used as searchable fields.
+If `searchableColumns` is not defined, all `columns[].field` values are candidates. In both cases
+only **real columns of the model's table** are searched (`tableHasColumn()`): dotted fields
+(`custom_attributes.x`, `category.name`), accessors and computed fields are skipped silently.
 
 ## Architecture Overview
 
 ```
 User types in search field
         ↓
-wire:model.live="search" updates $this->search
+wire:model.live.debounce.300ms="search" updates $this->search
         ↓
-listQuery() reads searchableColumns from YAML (or all columns)
+listQuery() reads searchableColumns from YAML (or all columns) and keeps the real table columns
         ↓
-WHERE conditions applied with LIKE operators
+OR-combined "contains" conditions (ColumnFilterParser::applyLikeContains, wildcards escaped)
         ↓
 Sort applied based on $this->sortField / $this->sortAsc
         ↓
@@ -106,15 +108,17 @@ public function listData(): array
 
 ## Manual Search (Fallback)
 
-For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, use manual search inside a `listData()` override:
+For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, apply the search yourself inside a `listData()` override. Use `ColumnFilterParser::applyLikeContains()` — the same driver-portable "contains" match `listQuery()` uses, with the LIKE wildcards in the input escaped:
 
 ```php
+use Noerd\Services\ColumnFilterParser;
+
 public function listData(): array
 {
     $rows = Menu::query()
         ->when($this->search, function ($query): void {
             $query->where(function ($query): void {
-                $query->where('name', 'like', '%' . $this->search . '%');
+                ColumnFilterParser::applyLikeContains($query, 'name', $this->search);
             });
         })
         ->orderBy('sort')
@@ -126,20 +130,8 @@ public function listData(): array
 
 ## Default Sorting
 
-Default sorting is configured in the list YAML — never in the component:
-
-```yaml
-defaultSort:
-  field: invoice_date
-  direction: desc   # optional, desc when omitted
-```
-
-- `field`: The column name to sort by
-- `direction`: `asc` (A-Z, oldest first) or `desc` (Z-A, newest first); omitted means `desc`
-
-`mountList()` applies the YAML default whenever the user has not sorted the list yet; a
-user-picked sort is persisted per list in the session and always wins. See
-[List View](list-view.md) ("Default Sorting") for details.
+Default sorting is configuration (`defaultSort:` in the list YAML), never component code — see
+[List View — Default Sorting](list-view.md#default-sorting).
 
 ## Not Sortable Columns
 
@@ -163,7 +155,7 @@ Columns listed in `notSortableColumns` will display their label as plain text in
 
 The rule lives once in `NoerdList::isSortableColumn($field, $notSortableColumns)`: a column is
 sortable when it is not `action`, not listed in `notSortableColumns` and **not dotted** — a
-`custom_attributes.x` or `customer.name` path resolves at render time, so the query cannot order by
+`custom_attributes.x` or `category.name` path resolves at render time, so the query cannot order by
 it (such columns can still be filtered, see [List Filters](list-filters.md)). Lists in
 [grid mode](list-view.md#grid-mode-card-layout) render no table header and surface exactly the same
 set of columns in a sort dropdown above the cards, plus `setSortDirection()` entries for an explicit

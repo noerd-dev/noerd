@@ -50,7 +50,7 @@ no column filters.
 
 ### Behavior
 
-- Multiple column filters combine with AND — and stack with the search field and the header `listFilters`
+- Multiple column filters combine with AND — and stack with the search field and the header `listFilters` (when the list applies them, see [How Filters Work](#how-filters-work))
 - Setting or clearing a filter resets pagination to page 1
 - Filters persist per component in the session (`listColumnFilters.{component}`), like sorting
 - Filters are mirrored into the URL as `?cf[column]=expression` — a shared link reproduces the exact
@@ -129,14 +129,34 @@ module, and never add breakpoint-specific stacking to a list header.
   (always visible); `NoerdList::headerControls()` resolves which of them exist. A list host with its
   own custom header slot gets the non-collapsing `list-controls` injected by `x-noerd::modal-title`
   instead
-- Tests: `app-modules/noerd/tests/Unit/ColumnFilterParserTest.php`, `app-modules/noerd/tests/Feature/NoerdListColumnFilterTest.php`, `app-modules/noerd/tests/Components/ListHeaderCollapseTest.php`
+- Tests: `tests/Unit/ColumnFilterParserTest.php`, `tests/Feature/NoerdListColumnFilterTest.php`, `tests/Components/ListHeaderCollapseTest.php` (package root)
 
 ## How Filters Work
 
 1. A component defines filter options via `tableFilters()` (computed property)
 2. The `list-header.blade.php` template renders the filter UI (dropdowns)
-3. When a user selects a filter value, it is stored in `$listFilters`
-4. The query is filtered via `applyListFilters($query)` or custom logic in `with()`
+3. When a user selects a filter value, it is stored in `$listFilters` and persisted in the session
+   (`storeActiveListFilters()`)
+4. The component applies the filters to its query with `$this->applyListFilters($query)` — or with
+   custom logic where a dropdown value has to be transformed first
+
+`listQuery()` applies search, sort and the Excel-style column filters, but NOT the header
+`listFilters`. A list that declares header filters therefore overrides `listData()` and calls
+`applyListFilters()` on the builder:
+
+```php
+public function listData(): array
+{
+    $query = $this->listQuery($this->listModel);
+    $this->applyListFilters($query);
+
+    return $this->buildList($query->paginate($this->perPage));
+}
+```
+
+`applyListFilters()` only touches whitelisted columns (see [Security](#security)); `Picklist`
+filters become `where(column, value)`, `ShowFrom`/`ShowUntil` filters become `>=` / `<=` on the
+date columns of the [`ShowFromFilterTrait`](traits.md).
 
 ## Defining a Filter
 
@@ -146,31 +166,20 @@ Each filter is defined by a method following the naming convention `get{Name}Lis
 |-----|-------------|
 | `label` | Display label for the dropdown |
 | `column` | Database column to filter on |
-| `type` | Filter type (currently `Picklist`) |
+| `type` | `Picklist` (dropdown, default), `ShowFrom` or `ShowUntil` (date-range dropdowns provided by `ShowFromFilterTrait`) |
 | `options` | Associative array of `value => label` pairs |
 
 Example:
 
 ```php
-protected function getYearListFilter(): array
+protected function getCategoryListFilter(): array
 {
-    $filter['label'] = 'Jahr';
-    $filter['column'] = 'created_at';
-    $filter['type'] = 'Picklist';
-    $filter['options'] = [];
-
-    $years = Order::selectRaw('YEAR(created_at) as year')
-        ->where('tenant_id', auth()->user()->selected_tenant_id)
-        ->distinct()
-        ->orderBy('year', 'desc')
-        ->pluck('year')
-        ->toArray();
-
-    foreach ($years as $year) {
-        $filter['options']["{$year}-01-01"] = (string) $year;
-    }
-
-    return $filter;
+    return [
+        'label' => __('Category'),
+        'column' => 'category_id',
+        'type' => 'Picklist',
+        'options' => Category::query()->orderBy('name')->pluck('name', 'id')->toArray(),
+    ];
 }
 ```
 
@@ -180,66 +189,34 @@ Filters should be extracted into reusable traits so multiple list components can
 
 File location: `app-modules/{module}/src/Traits/{Name}FilterTrait.php`
 
-Example: `app-modules/liefertool/src/Traits/YearFilterTrait.php`
-
-The noerd module ships ready-made filter traits — `ShowFromFilterTrait` (date ranges),
+The noerd package ships ready-made filter traits — `ShowFromFilterTrait` (date ranges),
 `TenantFilterTrait` and `SetupLanguageFilterTrait` — see [Reusable Traits](traits.md).
+
+Example: `app-modules/inventory/src/Traits/CategoryFilterTrait.php`
 
 ```php
 <?php
 
-namespace Nywerk\Liefertool\Traits;
+namespace Noerd\Inventory\Traits;
 
-use Nywerk\Liefertool\Models\Order;
+use Noerd\Inventory\Models\Category;
 
-trait YearFilterTrait
+trait CategoryFilterTrait
 {
-    protected function getYearListFilter(): array
+    protected function getCategoryListFilter(): array
     {
-        $filter['label'] = 'Jahr';
-        $filter['column'] = 'created_at';
-        $filter['type'] = 'Picklist';
-        $filter['options'] = [];
-
-        $years = Order::selectRaw('YEAR(created_at) as year')
-            ->where('tenant_id', auth()->user()->selected_tenant_id)
-            ->distinct()
-            ->orderBy('year', 'desc')
-            ->pluck('year')
-            ->toArray();
-
-        foreach ($years as $year) {
-            $filter['options']["{$year}-01-01"] = (string) $year;
-        }
-
-        return $filter;
+        return [
+            'label' => __('Category'),
+            'column' => 'category_id',
+            'type' => 'Picklist',
+            'options' => Category::query()->orderBy('name')->pluck('name', 'id')->toArray(),
+        ];
     }
 }
 ```
 
-Another example: `app-modules/cms/src/Traits/LanguageFilterTrait.php`
-
-```php
-protected function getLanguageListFilter(): array
-{
-    $filter['label'] = __('Language');
-    $filter['column'] = 'language';
-    $filter['type'] = 'Picklist';
-    $filter['options'] = [];
-
-    $languages = CmsLanguage::where('tenant_id', auth()->user()->selected_tenant_id)
-        ->where('is_active', true)
-        ->orderBy('is_default', 'desc')
-        ->orderBy('name', 'asc')
-        ->get();
-
-    foreach ($languages as $language) {
-        $filter['options'][$language->code] = $language->name;
-    }
-
-    return $filter;
-}
-```
+Option values do not have to be stored values — a year filter may offer `"{$year}-01-01" => $year`
+and transform the selection into a date range in the query (see [Filter Preselection](#filter-preselection)).
 
 ## Using the Filter in a Component
 
@@ -253,13 +230,26 @@ To add filters to a list component:
 
 use Livewire\Component;
 use Noerd\Traits\NoerdList;
-use Nywerk\Liefertool\Traits\YearFilterTrait;
+use Noerd\Inventory\Models\Item;
+use Noerd\Inventory\Traits\CategoryFilterTrait;
 
 new class extends Component {
     use NoerdList;
-    use YearFilterTrait;
+    use CategoryFilterTrait;
+
+    public $listModel = Item::class;
+    public ?string $detailRoute = 'inventory.item.detail';
+    public $detailComponent = 'inventory::item-detail';
 
     // tableFilters() is auto-discovered from the trait — no override needed
+
+    public function listData(): array
+    {
+        $query = $this->listQuery($this->listModel);
+        $this->applyListFilters($query);
+
+        return $this->buildList($query->paginate($this->perPage));
+    }
 };
 ```
 
@@ -269,83 +259,93 @@ You only need to override `tableFilters()` if you want to conditionally show fil
 #[Computed]
 public function tableFilters(): array
 {
-    if (! $this->hasMultipleLanguages()) {
+    if (Category::query()->count() < 2) {
         return [];
     }
 
-    return [$this->getLanguageListFilter()];
+    return [$this->getCategoryListFilter()];
 }
 ```
 
 ## Filter Preselection
 
-You can derive filter values in the query-building method and pass them directly to the query. This is useful when the dropdown value needs to be transformed (e.g. a year selection into a date range). For model-backed lists this happens in a `listData()` override; the example below is a repository-backed list (no `$listModel`), which keeps its query in `with()`.
-
-Example from `orders-list`: When a year is selected in the dropdown, the date range is derived and passed directly to the repository. If no year is selected, the current year is used as default.
+A dropdown value does not have to be applied verbatim: derive the actual constraint in `listData()`
+and apply it to the query yourself instead of calling `applyListFilters()`. This is useful when the
+value needs to be transformed — e.g. a year selection into a date range, with the current year as
+the default while nothing is selected:
 
 ```php
-private function getDateRange(): array
+protected function getYearListFilter(): array
+{
+    $options = [];
+    foreach (range(now()->year, now()->year - 5) as $year) {
+        $options["{$year}-01-01"] = (string) $year;
+    }
+
+    return [
+        'label' => __('Year'),
+        'column' => 'created_at',
+        'type' => 'Picklist',
+        'options' => $options,
+    ];
+}
+
+private function dateRange(): array
 {
     $date = isset($this->listFilters['created_at'])
         ? Carbon::parse($this->listFilters['created_at'])
         : Carbon::today();
 
     return [
-        $date->startOfYear()->format('Y-m-d'),
-        $date->copy()->endOfYear()->format('Y-m-d'),
+        $date->copy()->startOfYear()->toDateString(),
+        $date->copy()->endOfYear()->toDateString(),
     ];
 }
 
-public function with(): array
+public function listData(): array
 {
-    [$dateFrom, $dateTo] = $this->getDateRange();
+    [$from, $until] = $this->dateRange();
 
-    $rows = $orderRepository->getOrders(
-        Auth::user()->selected_tenant_id,
-        $this->filter,
-        $this->search,
-        $this->sortField,
-        $this->sortAsc,
-        $this->customerId,
-        $dateFrom,
-        $dateTo,
-    );
+    $rows = $this->listQuery($this->listModel)
+        ->whereBetween('created_at', [$from, $until])
+        ->paginate($this->perPage);
 
-    return [
-        'listConfig' => $this->buildList($rows),
-    ];
+    return $this->buildList($rows);
 }
 ```
 
 ## Session Persistence
 
-By default, `storeActiveListFilters()` in `NoerdList` is empty. Override it in components where the selected filter should persist across page loads.
+`storeActiveListFilters()` is called by the filter UI on every change (`wire:change` on the
+dropdown). The trait implementation writes the selection to the session (`session(['listFilters' => …])`)
+and resets pagination to page 1, so the selection survives a reload. The bucket is deliberately
+shared across lists: a detail page may seed it via `NoerdPage::setPreselect()` so a related list
+opens pre-filtered — only whitelisted columns ever apply (see [Security](#security)).
 
-Example from `pages-list` (CMS language filter):
+Override it to add side effects — always keep the session write:
 
 ```php
 public function storeActiveListFilters(): void
 {
     session(['listFilters' => $this->listFilters]);
+    $this->resetPage();
 
-    // Sync with selectedLanguage for page-detail consistency
     if (! empty($this->listFilters['language'])) {
         session(['selectedLanguage' => $this->listFilters['language']]);
     }
 }
 ```
 
-The `storeActiveListFilters` method is called automatically by the UI via `wire:change="storeActiveListFilters"` on the filter dropdown.
-
 ## Security
 
 The `NoerdList` trait extracts allowed columns from the `tableFilters()` output. Only columns returned by the filter methods can be filtered on, preventing users from manipulating filter parameters to query arbitrary columns.
 
-To allow additional keys, override the whitelist on the component:
+To allow additional keys (e.g. a filter seeded via `setPreselect()` that no dropdown declares),
+override the whitelist on the component:
 
 ```php
 protected function getAllowedListFilterColumns(): array
 {
-    return ['vehicle_id', 'created_at'];
+    return ['category_id', 'created_at'];
 }
 ```

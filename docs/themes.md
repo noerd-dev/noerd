@@ -44,10 +44,12 @@ templates in `themes/numbered/` only provide the bare control.
 
 ### System-wide default (Setup → System Settings)
 
-An admin preconfigures the theme for the whole system under **Setup → Administration → System
-Settings**: a *Theme* select plus an *Enforce in Setup* checkbox. The setting is stored per tenant
-on `noerd_settings` (`detail_theme`, `detail_theme_enforced`); `config('noerd.theme')`
-(`NOERD_THEME` / `NOERD_THEME_ENFORCED`) is the fallback for installations without a row.
+An admin preconfigures the theme for the whole system under **Setup → System Settings**
+(`noerd::system-settings-page`, a [settings page](settings-page.md)): a *Theme* select plus an
+*Enforce in Setup* checkbox. The setting is stored per tenant on `noerd_settings`
+(`detail_theme`, `detail_theme_enforced`); the config array `noerd.theme` —
+`config('noerd.theme.default')` (`NOERD_THEME`) and `config('noerd.theme.enforced')`
+(`NOERD_THEME_ENFORCED`) — is the fallback for installations without a row.
 
 | System setting | YAML declares `theme:` | Rendered theme |
 |---|---|---|
@@ -69,10 +71,10 @@ configs are never affected — the `compact` flag on lists is an unrelated conce
 
 ## Theme Folders
 
-The built-in themes live in the noerd module:
+The built-in themes live in the noerd package under `resources/views/themes/`:
 
 ```
-app-modules/noerd/resources/views/themes/
+resources/views/themes/
   default/
     theme.yml
     input.blade.php
@@ -85,13 +87,16 @@ app-modules/noerd/resources/views/themes/
     setup-collection-select.blade.php
     belongs-to-many.blade.php
     color-hex.blade.php
-    file.blade.php … (every element)
+    email.blade.php, phone.blade.php, file.blade.php, image.blade.php, icon.blade.php,
+    rich-text.blade.php, translatable-*.blade.php … (every element)
     relation-field.blade.php
     polymorphic-relation-field.blade.php
   compact/
     theme.yml + the elements compact restyles
   numbered/
     theme.yml + the elements numbered restyles
+  settings/
+    theme.yml only (see settings-page.md)
 ```
 
 A theme folder does **not** have to ship every element: a missing element falls back to the
@@ -100,10 +105,21 @@ file name is the basename of the registered renderer view — `noerd::components
 → `input-currency.blade.php` — so themes can also skin include-kind field types registered by other
 modules.
 
+**Fallback chrome for missing elements.** When the fallback template is rendered in a theme that
+lays its rows out differently, the detail block (`resources/views/components/detail/block.blade.php`)
+wraps it in the theme's row chrome so the form keeps its rhythm: in a theme with `numbersRows` the
+default element renders inside `<x-noerd::detail.numbered-row>` (row number, right-aligned label),
+in `compact` inside the label-left row (`w-36` truncated label, input in the remaining width). The
+chrome renders the label; the fallback template contributes only the control (its own label and
+help text are suppressed).
+`spacer` and `checkbox` never receive this chrome. A theme therefore only needs to ship the
+elements it really restyles.
+
 ### theme.yml
 
-Every key is optional; missing keys keep the `default` theme's values. The theme name is the
-folder name.
+The theme name is the folder name. Every key is optional: a missing `label` shows the folder
+name as headline in System Settings, every other missing key keeps the value of the `default`
+theme (the constructor defaults of `Noerd\Support\ThemeDefinition`):
 
 ```yaml
 label: Compact                          # display label in System Settings
@@ -116,8 +132,9 @@ fullWidthRows: false                    # true: ignore per-field colspan (one fi
 numbersRows: false                      # true: automatic row numbering (numbered theme)
 spacerClass: h-7                        # height of the `spacer` field type
 controlClasses: 'block h-7 w-full …'    # bare control inside a position row (x-noerd::forms.control)
-controlSize: sm                         # size hint for modal chrome
+controlSize: sm                         # size hint for modal chrome (`sm` | `md`)
 buttonClasses: 'h-7 px-2.5 py-1 text-xs'  # default size of x-noerd::button under this theme
+                                        # (unset: buttons render like the default theme)
 tableClasses: 'table w-full'            # the position <table>
 headCellClasses: 'pr-2 pb-1 text-xs'    # position <th> padding
 cellClasses: 'pr-2 pt-1 align-middle'   # position <td> padding
@@ -125,6 +142,9 @@ rowClasses: w-full                      # the position <tr> (e.g. gray banding)
 sectionPadding: py-3                    # body padding of the position card
 totalsPadding: pt-2                     # vertical rhythm of the totals footer
 ```
+
+The minimal `theme.yml` of the built-in `settings` theme is three keys (`label`, `hidden`,
+`fullWidthRows`) — everything else comes from the defaults.
 
 ## Creating a New Theme
 
@@ -145,7 +165,7 @@ overrides just that element of the built-in compact theme.
 
 ### In a module
 
-Place the theme folder at `app-modules/{module}/resources/views/themes/{name}/` and register the
+Place the theme folder at `resources/views/themes/{name}/` inside the module and register the
 root in the module's service provider `boot()`:
 
 ```php
@@ -234,44 +254,16 @@ The `button` **field type** (`type: button` in a YAML) is a normal theme element
 Hand-written position (line item) tables follow the theme through the `x-noerd::positions.*`
 components and `x-noerd::forms.control` — their class strings come from the `theme.yml` values
 (`tableClasses`, `rowClasses`, `controlClasses`, …), so a theme gets position styling for free.
-
-Read the theme once from the trait and hand it down:
-
-```blade
-@php $positionsTheme = $this->detailTheme(); @endphp
-
-<x-noerd::positions.section :theme="$positionsTheme" title="Positions">
-    <x-noerd::positions.table
-        :theme="$positionsTheme"
-        :columns="[['label' => 'Quantity', 'class' => 'w-32'], 'Name', '']"
-    >
-        @foreach($model->positions as $position)
-            <livewire:module::position
-                :key="$position->id"
-                :$position
-                :theme="$positionsTheme"
-                :number="$loop->iteration"
-            />
-        @endforeach
-    </x-noerd::positions.table>
-
-    <x-noerd::positions.totals
-        :theme="$positionsTheme"
-        :net="$model->total_net"
-        :gross="$model->total_gross"
-        :taxes="$model->taxes"
-    />
-</x-noerd::positions.section>
-```
-
-See [Detail View](detail-view.md#position-tables) for the full positions component reference.
+The component reference and the Blade example live in
+[Detail View → Position Tables](detail-view.md#position-tables).
 
 ## Theme vs. Brand
 
 Two orthogonal concepts:
 
-- **Theme** (`noerd.theme`, `NOERD_THEME`): the FORM LAYOUT system documented here.
-- **Brand** (`noerd.brand`, `NOERD_BRAND`): the color palette (sidebar, appbar, `brand-*` CSS
-  variables), served by `Noerd\Services\BrandService` with the presets `default`, `sand`, `white`.
+- **Theme** (`noerd.theme.default`, `NOERD_THEME`): the FORM LAYOUT system documented here.
+- **Brand** (`noerd.brand.active`, `NOERD_BRAND`): the color palette (sidebar, appbar, `brand-*`
+  CSS variables), served by `Noerd\Services\BrandService` with the presets `default`, `sand`,
+  `white` (see [Brand](brand.md)).
 
 `NOERD_THEME` selects the form theme; `NOERD_BRAND` selects the color palette.
