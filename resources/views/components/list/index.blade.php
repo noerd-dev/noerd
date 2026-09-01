@@ -150,7 +150,7 @@
                 @keydown.window.enter="if (canHandleListKey()) { $event.preventDefault(); $wire.findListAction(selectedRow{{ $listId }}) }"
             >
                 @if (! $hideHead && ! $compact)
-                    <div>
+                    <div @class(['-mx-6 border-b border-gray-300 px-6' => ! empty($description)])>
                         @include('noerd::components.table.title-search', [
                             'description' => $description ?? '',
                         ])
