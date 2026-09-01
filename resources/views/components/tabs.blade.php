@@ -2,6 +2,13 @@
 
 @php
     /**
+     * Right-aligned chrome next to the tabs (e.g. a record's action dropdown) belongs
+     * INSIDE the bordered tab row: the wrapper is w-full/shrink-0, so a sibling placed
+     * next to <x-noerd::tabs> in a flex row gets pushed past the right edge and clipped.
+     */
+    $hasTabActions = isset($actions) && ! $actions->isEmpty();
+
+    /**
      * A list host's page body carries no chrome padding — the list brings its own
      * spacing (see x-noerd::page). A tab bar sitting ABOVE that list is the body's
      * first child though, so it would end up flush against the page header: it
@@ -120,12 +127,20 @@
                     @endif
                 @endforeach
             </nav>
+
+            @if ($hasTabActions)
+                <div class="ml-auto flex shrink-0 items-center gap-2 self-center pl-4">{{ $actions }}</div>
+            @endif
         </div>
     </div>
 @elseif (!$slot->isEmpty())
     <div class="w-full shrink-0 pb-6{{ $tabsTopPadding }}">
         <div class="flex w-full border-b border-gray-300">
             <nav class="inline-block" aria-label="Tabs">{{ $slot }}</nav>
+
+            @if ($hasTabActions)
+                <div class="ml-auto flex shrink-0 items-center gap-2 self-center pl-4">{{ $actions }}</div>
+            @endif
         </div>
     </div>
 @endif
