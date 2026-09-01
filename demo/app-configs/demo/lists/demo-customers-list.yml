@@ -1,17 +1,25 @@
 title: Demo Customers
+defaultSort:
+  field: name
+  direction: asc
 actions:
   - label: New Demo Customer
-    action: listAction
-disableSearch: false
+    route: demo-customer.detail
 columns:
   - field: name
     label: Name
-    type: text
   - field: company_name
     label: Company
-  - field: email
-    label: Email
-  - field: phone
-    label: Phone
-  - field: city
-    label: City
+  - field: status
+    label: Status
+  - field: priority
+    label: Priority
+  - field: revenue
+    label: Revenue
+    type: currency
+  - field: contract_start
+    label: Contract Start
+    type: date
+  - field: is_active
+    label: Active
+    type: bool

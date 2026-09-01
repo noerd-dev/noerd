@@ -10,19 +10,6 @@ new class extends Component {
     public $detailModel = DemoCategory::class;
 
     public ?string $detailPrimary = 'demoCategoryId';
-
-    public function store(): void
-    {
-        $this->validateFromLayout();
-
-        $demoCategory = DemoCategory::updateOrCreate(
-            ['id' => $this->modelId],
-            array_merge($this->detailData, ['tenant_id' => auth()->user()->selected_tenant_id]),
-        );
-
-        $this->storeProcess($demoCategory);
-    }
-
 }; ?>
 
 <x-noerd::page>
@@ -30,10 +17,7 @@ new class extends Component {
         <x-noerd::modal-title>{{ __('Demo Category') }}</x-noerd::modal-title>
     </x-slot:header>
 
-    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
-        <x-slot:tab1>
-        </x-slot:tab1>
-    </x-noerd::tab-content>
+    <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
 
     <x-slot:footer>
         <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
