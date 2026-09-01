@@ -105,3 +105,14 @@ it('opens the + button in the narrow panel for a quickCreate newRoute', function
         ->toContain('narrow')
         ->toContain('quickCreate');
 });
+
+it('passes the entry arguments to the modal it opens', function (): void {
+    $html = renderNavigationElement([
+        'title' => 'Accounts',
+        'component' => 'zz::accounts-list',
+        'arguments' => ['accountType' => 'vip'],
+    ]);
+
+    expect($html)->toContain('$modal(')
+        ->toContain('"accountType":"vip"');
+});

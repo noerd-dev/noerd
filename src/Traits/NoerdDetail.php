@@ -67,18 +67,6 @@ trait NoerdDetail
     }
 
     /**
-     * Shared store tail for details: run the post-store chrome and report the
-     * persisted record to a hosting page (`detailStored-{name}`). Standalone the
-     * event simply has no listener. Custom store() overrides end with this call.
-     */
-    public function finishStore(Model $model): void
-    {
-        $this->storeProcess($model);
-
-        $this->dispatch('detailStored-' . $this->getName(), modelId: $model->id);
-    }
-
-    /**
      * Livewire updated hook: an embedded detail mirrors its form state to the
      * hosting page (`detailDataUpdated-{name}`), e.g. for a live preview.
      * Components overriding this hook keep the sync via syncEmbeddedDetailData().
@@ -131,13 +119,19 @@ trait NoerdDetail
     }
 
     #[On('setFieldValue')]
-    public function setFieldValue(string $field, mixed $value, ?string $relationTitle = null): void
+    public function setFieldValue(string $field, mixed $value, ?string $relationTitle = null, ?string $owner = null): void
     {
         // This is a client-dispatchable event, so it may only write into the
         // detailData form bucket — never an arbitrary component property (modelId,
         // detailModel, pageLayout, …). Every field component that emits it binds
         // into detailData.* .
         if (! str_starts_with($field, 'detailData.')) {
+            return;
+        }
+
+        // The event is global; a field component that knows its owning detail
+        // names it, so a stacked detail sharing the field name stays untouched.
+        if ($owner !== null && $owner !== $this->getId()) {
             return;
         }
 
@@ -198,6 +192,18 @@ trait NoerdDetail
         $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+    }
+
+    /**
+     * Shared store tail for details: run the post-store chrome and report the
+     * persisted record to a hosting page (`detailStored-{name}`). Standalone the
+     * event simply has no listener. Custom store() overrides end with this call.
+     */
+    protected function finishStore(Model $model): void
+    {
+        $this->storeProcess($model);
+
+        $this->dispatch('detailStored-' . $this->getName(), modelId: $model->id);
     }
 
     protected function returnsArray(string $method): bool

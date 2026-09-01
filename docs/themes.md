@@ -79,7 +79,6 @@ app-modules/noerd/resources/views/themes/
     input-select.blade.php
     input-textarea.blade.php
     input-currency.blade.php
-    input-relation.blade.php
     checkbox.blade.php
     button.blade.php
     picklist.blade.php

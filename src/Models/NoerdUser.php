@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\NoerdUserFactory;
 use Noerd\Enums\Profile;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Notifications\NoerdResetPassword;
 use Noerd\Services\ProfileRegistry;
@@ -22,13 +23,18 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     protected $table = 'noerd_users';
 
-    protected $guarded = ['id'];
+    protected $guarded = ['id', 'super_admin', 'api_token'];
 
     protected $hidden = [
         'password',
         'remember_token',
         'api_token',
     ];
+
+    /**
+     * @var array{0: int|null}|null Selection assigned before the first save.
+     */
+    private ?array $pendingSelectedTenantId = null;
 
     /**
      * The framework notification links to route('password.reset') — a name
@@ -195,12 +201,34 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function getSelectedTenantIdAttribute(): ?int
     {
-        return TenantHelper::getSelectedTenantId();
+        // The live (session) selection only belongs to the authenticated user;
+        // any other user instance reads its persisted setting.
+        if ($this->isAuthenticatedUser()) {
+            return TenantHelper::getSelectedTenantId();
+        }
+
+        if (!$this->relationLoaded('userSetting')) {
+            $this->setRelation('userSetting', $this->userSetting()->first());
+        }
+
+        return $this->userSetting?->selected_tenant_id;
     }
 
     public function setSelectedTenantIdAttribute(?int $value): void
     {
-        TenantHelper::setSelectedTenantId($value);
+        // The settings row needs the user's id — an unsaved user (factory
+        // attributes, mass assignment before save) persists it on `saved`.
+        if (! $this->exists) {
+            $this->pendingSelectedTenantId = [$value];
+
+            return;
+        }
+
+        $this->setting->update(['selected_tenant_id' => $value]);
+
+        if ($this->isAuthenticatedUser()) {
+            TenantHelper::setSelectedTenantId($value);
+        }
     }
 
     public function getLocaleAttribute(): string
@@ -225,6 +253,17 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return $this->locale;
     }
 
+    protected static function booted(): void
+    {
+        static::saved(function (self $user): void {
+            if ($user->pendingSelectedTenantId !== null) {
+                [$value] = $user->pendingSelectedTenantId;
+                $user->pendingSelectedTenantId = null;
+                $user->selected_tenant_id = $value;
+            }
+        });
+    }
+
     protected static function newFactory(): NoerdUserFactory
     {
         return NoerdUserFactory::new();
@@ -238,5 +277,12 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             'is_owner' => 'boolean',
             'super_admin' => 'boolean',
         ];
+    }
+
+    private function isAuthenticatedUser(): bool
+    {
+        $authenticated = NoerdAuth::user();
+
+        return $authenticated !== null && $this->is($authenticated);
     }
 }

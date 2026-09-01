@@ -42,9 +42,6 @@ class LockedPropertiesHook extends ComponentHook
         // writes and WHICH property it reads the payload from — repointing it
         // from the client is an arbitrary-model write.
         'settingsModels',
-        // Selects the list YAML a picker renders; a swapped config exposes
-        // columns the intended picker deliberately hides.
-        'selectListConfig',
         // The resolved YAML layout. Written only by initPage()/initDetail()/
         // storeProcess()/QuickCreateExitHook — never by the client. It drives
         // validateFromLayout(), the relation-form persist decision and the

@@ -3,6 +3,7 @@
 namespace Noerd\Services;
 
 use Illuminate\Support\Str;
+use Livewire\Component;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\RelationFieldDefinition;
 
@@ -33,6 +34,7 @@ class RelationFieldRegistry
                     'readonly' => $field['readonly'] ?? false,
                     'helpText' => $field['helpText'] ?? '',
                     'modelId' => $modelId,
+                    'owner' => $component instanceof Component ? $component->getId() : null,
                 ];
 
                 // Only themes that number their rows put a number on the field.
@@ -70,6 +72,7 @@ class RelationFieldRegistry
                     'readonly' => $field['readonly'] ?? false,
                     'helpText' => $field['helpText'] ?? '',
                     'modelId' => $modelId,
+                    'owner' => $component instanceof Component ? $component->getId() : null,
                 ];
 
                 // Only themes that number their rows put a number on the field.

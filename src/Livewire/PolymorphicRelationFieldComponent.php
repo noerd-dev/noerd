@@ -66,6 +66,10 @@ abstract class PolymorphicRelationFieldComponent extends Component
     /**
      * @param  array<int, string>  $allowedTypes
      */
+    /** Livewire id of the owning detail — see RelationFieldComponent::$owner. */
+    #[Locked]
+    public ?string $owner = null;
+
     public function mount(
         string $fieldName,
         string $typeField,
@@ -79,7 +83,9 @@ abstract class PolymorphicRelationFieldComponent extends Component
         ?int $number = null,
         string $theme = 'default',
         string $helpText = '',
+        ?string $owner = null,
     ): void {
+        $this->owner = $owner;
         $this->fieldName = $fieldName;
         $this->typeField = $typeField;
         $this->label = $label;
@@ -97,6 +103,15 @@ abstract class PolymorphicRelationFieldComponent extends Component
         $this->resolveDisplayTitle();
     }
 
+    /**
+     * The `context` a picker opened by this field reports back with — the
+     * field name plus the owner id (see RelationFieldComponent::selectionContext()).
+     */
+    public function selectionContext(): string
+    {
+        return $this->owner ? $this->fieldName . '@' . $this->owner : $this->fieldName;
+    }
+
     #[On('noerdRelationSelected')]
     public function relationSelected(mixed $value, ?string $context = null): void
     {
@@ -105,7 +120,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
             return;
         }
 
-        if ($context !== $this->fieldName) {
+        if (! $this->acceptsSelectionContext($context)) {
             return;
         }
 
@@ -122,12 +137,14 @@ abstract class PolymorphicRelationFieldComponent extends Component
             'setFieldValue',
             field: $this->typeField,
             value: $this->currentType,
+            owner: $this->owner,
         );
         $this->dispatch(
             'setFieldValue',
             field: $this->fieldName,
             value: $this->value,
             relationTitle: $this->displayTitle,
+            owner: $this->owner,
         );
     }
 
@@ -150,8 +167,8 @@ abstract class PolymorphicRelationFieldComponent extends Component
         $this->currentType = null;
         $this->displayTitle = '';
 
-        $this->dispatch('setFieldValue', field: $this->typeField, value: null);
-        $this->dispatch('setFieldValue', field: $this->fieldName, value: null);
+        $this->dispatch('setFieldValue', field: $this->typeField, value: null, owner: $this->owner);
+        $this->dispatch('setFieldValue', field: $this->fieldName, value: null, owner: $this->owner);
     }
 
     public function clear(): void
@@ -165,8 +182,8 @@ abstract class PolymorphicRelationFieldComponent extends Component
         $this->selectedRelationType = '';
         $this->displayTitle = '';
 
-        $this->dispatch('setFieldValue', field: $this->typeField, value: null);
-        $this->dispatch('setFieldValue', field: $this->fieldName, value: null);
+        $this->dispatch('setFieldValue', field: $this->typeField, value: null, owner: $this->owner);
+        $this->dispatch('setFieldValue', field: $this->fieldName, value: null, owner: $this->owner);
     }
 
     public function openDetail(): void
@@ -218,6 +235,11 @@ abstract class PolymorphicRelationFieldComponent extends Component
             'number' => $this->number,
             'helpText' => $this->helpText,
         ];
+    }
+
+    protected function acceptsSelectionContext(?string $context): bool
+    {
+        return $context !== null && in_array($context, [$this->fieldName, $this->selectionContext()], true);
     }
 
     private function activeDefinition(): ?RelationFieldDefinition

@@ -65,6 +65,14 @@ abstract class RelationFieldComponent extends Component
     #[Locked]
     public ?string $legacySelectEvent = null;
 
+    /**
+     * Livewire id of the detail/page that owns this field. Scopes the
+     * `setFieldValue` sync and the picker context to that one component, so
+     * two stacked details sharing a field name never adopt each other's value.
+     */
+    #[Locked]
+    public ?string $owner = null;
+
     public function mount(
         string $relationType,
         string $fieldName,
@@ -76,6 +84,7 @@ abstract class RelationFieldComponent extends Component
         ?int $number = null,
         string $theme = 'default',
         string $helpText = '',
+        ?string $owner = null,
     ): void {
         $definition = app(RelationFieldRegistry::class)->resolve($relationType);
 
@@ -97,8 +106,19 @@ abstract class RelationFieldComponent extends Component
         $this->detailComponent = $definition->getDetailComponent();
         $this->detailRoute = $definition->detailRoute;
         $this->legacySelectEvent = $definition->getSelectEvent();
+        $this->owner = $owner;
 
         $this->resolveDisplayTitle();
+    }
+
+    /**
+     * The `context` a picker opened by this field reports back with. It carries
+     * the owner id so a selection only lands in the field that opened the
+     * picker; the plain field name is still accepted for custom renderers.
+     */
+    public function selectionContext(): string
+    {
+        return $this->owner ? $this->fieldName . '@' . $this->owner : $this->fieldName;
     }
 
     #[On('noerdRelationSelected')]
@@ -111,7 +131,7 @@ abstract class RelationFieldComponent extends Component
 
         // Strict match: a picker opened without a context dispatches '' / null,
         // which must not be adopted by every relation field on the page.
-        if ($context !== $this->fieldName) {
+        if (! $this->acceptsSelectionContext($context)) {
             return;
         }
 
@@ -179,6 +199,11 @@ abstract class RelationFieldComponent extends Component
         return $definition->modelClass::query()->find($this->value);
     }
 
+    protected function acceptsSelectionContext(?string $context): bool
+    {
+        return $context !== null && in_array($context, [$this->fieldName, $this->selectionContext()], true);
+    }
+
     private function resolveDisplayTitle(): void
     {
         $definition = app(RelationFieldRegistry::class)->resolve($this->relationType);
@@ -193,6 +218,7 @@ abstract class RelationFieldComponent extends Component
             field: $this->fieldName,
             value: $this->value,
             relationTitle: $this->displayTitle,
+            owner: $this->owner,
         );
     }
 }

@@ -100,7 +100,7 @@ it('denies access to non-admin users', function (): void {
     $this->actingAs($nonAdmin);
 
     $this->get('/setup/tenant-apps')
-        ->assertUnauthorized();
+        ->assertForbidden();
 });
 
 it('shows assigned and available apps', function (): void {

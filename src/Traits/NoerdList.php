@@ -65,8 +65,6 @@ trait NoerdList
 
     public string $listActionMethod = 'listAction';
 
-    public ?string $selectListConfig = null;
-
     /**
      * Active alternate list view key (the "--{key}" YAML suffix); null renders the
      * base YAML. Persisted per component in session ('listView.{component}') — as a
@@ -663,7 +661,7 @@ trait NoerdList
             return;
         }
 
-        $this->{$this->listActionMethod}($modelId);
+        $this->callRowAction($modelId);
 
         if ($this->listActionMethod === 'listAction' && $this->usesTraitListAction()) {
             $this->skipRender();
@@ -910,6 +908,24 @@ trait NoerdList
     protected static function tableHasColumn(string $table, string $column): bool
     {
         return SchemaColumnCache::hasColumn($table, $column);
+    }
+
+    /**
+     * Dispatch a row click to the configured listActionMethod. The method name
+     * is a mount argument (pickers pass `selectAction`), so it is resolved by
+     * name — but only PUBLIC methods are Livewire actions, and only those may
+     * be reached this way. Anything else is ignored instead of exposing the
+     * component's protected internals to a client-chosen name.
+     */
+    protected function callRowAction(int|string $modelId): void
+    {
+        $method = $this->listActionMethod;
+
+        if (! method_exists($this, $method) || ! (new ReflectionMethod($this, $method))->isPublic()) {
+            return;
+        }
+
+        $this->{$method}($modelId);
     }
 
     /**
@@ -1621,9 +1637,8 @@ trait NoerdList
     }
 
     /**
-     * Get list configuration from YAML.
-     * Uses self::DETAIL_COMPONENT by default, or a custom name if provided.
-     * In select mode, uses selectListConfig if set.
+     * Get list configuration from YAML — the component's own config by
+     * default, or a custom config name when provided.
      */
     protected function getListConfig(?string $customName = null): array
     {
@@ -1635,7 +1650,6 @@ trait NoerdList
             $this->listView ?? '',
             $this->listViewApp ?? '',
             $this->listActionMethod,
-            $this->selectListConfig ?? '',
         ]);
         if (array_key_exists($memoKey, $this->listConfigMemo)) {
             return $this->listConfigMemo[$memoKey];
@@ -1735,9 +1749,6 @@ trait NoerdList
      */
     private function resolveListConfig(?string $customName): array
     {
-        if ($customName === null && $this->listActionMethod === 'selectAction' && $this->selectListConfig) {
-            return StaticConfigHelper::getListConfig($this->selectListConfig, $this->listModel ?? null);
-        }
         $name = $customName ?? $this->listConfigComponent();
 
         // An active alternate view only applies to this component's own config,

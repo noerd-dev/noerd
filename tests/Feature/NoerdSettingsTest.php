@@ -21,6 +21,7 @@ function createUserWithSetupTenant(): NoerdUser
     // The system-settings page is admin-only and enforces it on mount, so the
     // test user needs an ADMIN profile.
     $user->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
+    $user->selected_tenant_id = $tenant->id;
     TenantHelper::setSelectedTenantId($tenant->id);
     TenantHelper::setSelectedApp('SETUP');
 

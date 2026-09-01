@@ -213,27 +213,6 @@ trait NoerdPage
         return $this->modelId ? $this->canWriteObject() : $this->canCreateObject();
     }
 
-    public function storeProcess($model): void
-    {
-        $this->showSuccessIndicator = true;
-
-        if ($model->wasRecentlyCreated) {
-            $this->modelId = $model->id;
-        }
-
-        // A successful quick-create reveals the full detail of the new record so
-        // the remaining fields can be completed — without closing and reopening the
-        // modal. The same component instance simply switches out of quick-create
-        // mode (its layout re-renders as the full form) and the panel is widened in
-        // place. No overlay flicker, and the record's url parameter (e.g. taskId) is
-        // kept rather than cleared.
-        if ($this->quickCreate) {
-            $this->quickCreate = false;
-            $this->pageLayout['quickCreate'] = false;
-            $this->dispatch('resizeTopModal');
-        }
-    }
-
     /**
      * The embedded detail component declared in the page YAML (`detail:`).
      * Deliberately no fallback to DETAIL_COMPONENT — legacy details reusing that
@@ -336,6 +315,27 @@ trait NoerdPage
 
         if ($id) {
             Noerd::modalFor($detailRoute, $detailComponent, ['modelId' => $id]);
+        }
+    }
+
+    protected function storeProcess(Model $model): void
+    {
+        $this->showSuccessIndicator = true;
+
+        if ($model->wasRecentlyCreated) {
+            $this->modelId = $model->id;
+        }
+
+        // A successful quick-create reveals the full detail of the new record so
+        // the remaining fields can be completed — without closing and reopening the
+        // modal. The same component instance simply switches out of quick-create
+        // mode (its layout re-renders as the full form) and the panel is widened in
+        // place. No overlay flicker, and the record's url parameter (e.g. taskId) is
+        // kept rather than cleared.
+        if ($this->quickCreate) {
+            $this->quickCreate = false;
+            $this->pageLayout['quickCreate'] = false;
+            $this->dispatch('resizeTopModal');
         }
     }
 
