@@ -15,7 +15,7 @@
     $readonly = $field['readonly'] ?? $readonly;
     $required = $field['required'] ?? $required;
     $rows = $field['rows'] ?? $rows;
-    $selectedLang = session('selectedLanguage') ?? 'de';
+    $selectedLang = \Noerd\Models\SetupLanguage::selectedCode();
     // Filter out non-scalar values that leak from parent scope via @include
     $attributes = $attributes->filter(fn($value) => is_scalar($value) || null === $value);
 @endphp

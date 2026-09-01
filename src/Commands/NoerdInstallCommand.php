@@ -4,12 +4,15 @@ namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\callout;
 use function Laravel\Prompts\confirm;
 
 use Laravel\Prompts\Elements\Link;
 use Laravel\Prompts\Elements\NumberedList;
+use Noerd\Commands\Concerns\PublishesConfigDirectory;
+use Noerd\Commands\Concerns\RunsNpmBuild;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -17,8 +20,8 @@ use Noerd\Services\FrontendScaffolder;
 
 class NoerdInstallCommand extends Command
 {
-    use \Noerd\Commands\Concerns\PublishesConfigDirectory;
-    use \Noerd\Commands\Concerns\RunsNpmBuild;
+    use PublishesConfigDirectory;
+    use RunsNpmBuild;
 
     protected $signature = 'noerd:install
                             {--force : Overwrite existing files without asking}
@@ -26,7 +29,7 @@ class NoerdInstallCommand extends Command
                             {--build : Run npm build without asking (required to build in non-interactive runs)}
                             {--demo : Install the demo app without asking (required to install it in non-interactive runs)}';
 
-    protected $description = 'Install noerd content to the local content directory';
+    protected $description = 'Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin';
 
     public function handle(): int
     {
@@ -120,7 +123,11 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        $this->call('noerd:demo', ['--force' => $this->option('force')]);
+        $this->call('noerd:demo', [
+            '--force' => $this->option('force'),
+            '--migrate' => $this->boolOption('migrate'),
+            '--seed' => $this->boolOption('migrate'),
+        ]);
     }
 
     /**
@@ -169,9 +176,6 @@ class NoerdInstallCommand extends Command
 
             // Install whatever the scaffolder added to package.json
             $this->installNpmPackages($scaffolder->missingNpmPackages());
-
-            // Retire the obsolete tailwind.config.js brand bridge
-            $this->migrateLegacyTailwindConfig($scaffolder);
 
             // Update Livewire component layout
             $this->updateLivewireConfig();
@@ -232,7 +236,7 @@ class NoerdInstallCommand extends Command
         // Process handles the working directory and argument escaping — the
         // previous string-built `cd <path> && npm install ...` broke on paths
         // with spaces and discarded npm's diagnostics on failure.
-        $result = \Illuminate\Support\Facades\Process::path(base_path())
+        $result = Process::path(base_path())
             ->timeout(300)
             ->run(array_merge(['npm', 'install'], $packages, ['--save-dev']));
 
@@ -247,52 +251,17 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Offer to remove the obsolete tailwind.config.js brand bridge
-     *
-     * Brand colors are registered as `--color-brand-*` in the package's noerd.css, so the generated
-     * config and its `@config` line in app.css are obsolete. A host-customised config is
-     * only reported — it is never removed automatically.
-     */
-    protected function migrateLegacyTailwindConfig(FrontendScaffolder $scaffolder): void
-    {
-        if (!$scaffolder->hasLegacyTailwindBridge()) {
-            return;
-        }
-
-        if (!$scaffolder->legacyTailwindConfigIsUnmodified()) {
-            $this->warn('tailwind.config.js looks customised and was left untouched.');
-            $this->warn('Brand colors now ship as --color-brand-* in noerd.css; a `colors` block in your config overrides them at build time. See docs/brand.md.');
-
-            return;
-        }
-
-        $this->line('');
-        $this->line('<comment>Found the legacy noerd tailwind.config.js brand bridge.</comment>');
-        $this->line('Brand colors now ship as --color-brand-* in noerd.css, which lets NOERD_BRAND take effect without a rebuild.');
-
-        if (!$this->option('force') && !$this->confirm('Remove tailwind.config.js and its @config line from app.css?', true)) {
-            $this->line('<comment>Kept tailwind.config.js.</comment>');
-
-            return;
-        }
-
-        $scaffolder->removeLegacyTailwindBridge();
-
-        $this->line('<info>Removed tailwind.config.js and its @config line.</info>');
-    }
-
-    /**
      * Detect the installed Node version so the scaffolder can pin compatible build tooling
      */
     protected function detectNodeVersion(): ?string
     {
-        exec('node -v 2>/dev/null', $output, $returnCode);
+        $result = Process::run('node -v');
 
-        if ($returnCode !== 0 || $output === []) {
+        if (! $result->successful() || mb_trim($result->output()) === '') {
             return null;
         }
 
-        return mb_trim((string) $output[0]);
+        return mb_trim($result->output());
     }
 
     /**

@@ -1,5 +1,10 @@
 title: Demo Customer
-description: ''
+description: 'A showcase of the field types a detail YAML can use'
+tabs:
+  - number: 1
+    label: General
+  - number: 2
+    label: Details
 fields:
   - name: detailData.name
     label: Name
@@ -15,13 +20,39 @@ fields:
     type: select
     optionsMethod: categoryOptions
     colspan: 6
+  - name: detailData.status
+    label: Status
+    type: select
+    colspan: 3
+    options:
+      - value: new
+        label: New
+      - value: in_progress
+        label: In Progress
+      - value: completed
+        label: Completed
+      - value: cancelled
+        label: Cancelled
+  - name: detailData.priority
+    label: Priority
+    type: select
+    colspan: 3
+    options:
+      - value: low
+        label: Low
+      - value: medium
+        label: Medium
+      - value: high
+        label: High
+      - value: critical
+        label: Critical
   - name: detailData.email
     label: Email
     type: email
     colspan: 6
   - name: detailData.phone
     label: Phone
-    type: text
+    type: phone
     colspan: 6
   - name: detailData.address
     label: Address
@@ -30,8 +61,47 @@ fields:
   - name: detailData.zipcode
     label: Zip Code
     type: text
-    colspan: 6
+    colspan: 2
   - name: detailData.city
     label: City
     type: text
+    colspan: 4
+  - name: tagIds
+    label: Tags
+    type: belongsToMany
+    optionsMethod: tagOptions
     colspan: 6
+  - name: detailData.is_active
+    label: Active
+    type: checkbox
+    colspan: 6
+  - name: detailData.revenue
+    label: Revenue
+    type: currency
+    colspan: 4
+    tab: 2
+  - name: detailData.contract_start
+    label: Contract Start
+    type: date
+    colspan: 4
+    tab: 2
+  - name: detailData.preferred_time
+    label: Preferred Time
+    type: time
+    colspan: 4
+    tab: 2
+  - name: detailData.brand_color
+    label: Brand Color
+    type: colorHex
+    colspan: 6
+    tab: 2
+  - name: detailData.description
+    label: Description
+    type: textarea
+    colspan: 12
+    tab: 2
+  - name: detailData.content
+    label: Notes
+    type: richText
+    colspan: 12
+    tab: 2

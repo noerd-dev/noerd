@@ -8,11 +8,14 @@
     'net' => 0,
     'gross' => 0,
     'taxes' => [],
-    'currency' => 'EUR',
-    'locale' => 'de',
+    /** Defaults: the tenant's currency setting and the active locale. */
+    'currency' => null,
+    'locale' => null,
 ])
 
 @php
+    $currency ??= \Noerd\Helpers\CurrencyHelper::codeForTenant();
+    $locale ??= app()->getLocale();
     $themeDefinition = app(\Noerd\Services\ThemeRegistry::class)->get($theme);
     $padding = $themeDefinition->totalsPadding;
 

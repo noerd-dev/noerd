@@ -28,4 +28,11 @@ interface MediaResolverContract
      * Whether the full media module is available.
      */
     public function isAvailable(): bool;
+
+    /**
+     * The list component opened as the media picker (`selectMode`,
+     * `selectContext`, `selectToken` arguments; answers with `mediaSelected`),
+     * or null when no library exists.
+     */
+    public function pickerComponent(): ?string;
 }

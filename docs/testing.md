@@ -106,7 +106,7 @@ A test that asserts their current content is wrong by definition.
   exact tab/field/column lists, which field is required, route vs. component target).
 - Prove the *effect* of a setting with a synthetic layout, a fixture YAML written at runtime under
   the testbench skeleton, factories/mocks for data and runtime-registered routes. References in
-  the package: `ThemeTest` (`noerd::theme-test` components), `StaticConfigHelperFeatureTest`,
+  the package: `ThemeTest` (`noerd-test::theme-test` components), `StaticConfigHelperFeatureTest`,
   `PerAppConfigResolutionTest`, `ListDetailRouteFallbackTest`, `DetailActionsTest`,
   `NavigationModalRouteTest`, `RelationBoxRouteTest`.
 - Architecture guardrails are fine (a detail YAML contains no `widgets:`/`relations:`; a page

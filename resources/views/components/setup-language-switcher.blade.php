@@ -2,30 +2,24 @@
 
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
     public array $languages = [];
 
+    /**
+     * Mounted inside modal headers, which re-mount on every stack update —
+     * so mount() only reads. The parent ensures the tenant's languages exist.
+     */
     public function mount(): void
     {
-        // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
-
         $this->languages = SetupLanguage::where('is_active', true)
             ->orderBy('is_default', 'desc')
             ->orderBy('sort_order')
             ->get(['code', 'name'])
             ->toArray();
-
-        if (! session('selectedLanguage')) {
-            $default = SetupLanguage::where('is_default', true)->first();
-            if ($default) {
-                session(['selectedLanguage' => $default->code]);
-            }
-        }
     }
+
 
     public function setLanguage(string $code): void
     {
@@ -41,10 +35,10 @@ new class extends Component
                 @foreach($languages as $language)
                     <a @class([
                         'cursor-pointer ml-2',
-                        'text-black underline' => session('selectedLanguage') === $language['code'],
-                        'text-gray-500' => session('selectedLanguage') !== $language['code'],
+                        'text-black underline' => SetupLanguage::selectedCode() === $language['code'],
+                        'text-gray-500' => SetupLanguage::selectedCode() !== $language['code'],
                     ]) wire:click="setLanguage('{{ $language['code'] }}')">
-                        {{ strtoupper($language['code']) }}
+                        {{ mb_strtoupper($language['code']) }}
                     </a>
                 @endforeach
             </div>

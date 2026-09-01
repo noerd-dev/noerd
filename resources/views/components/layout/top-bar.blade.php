@@ -94,7 +94,7 @@ new class extends Component {
                     @if(NoerdAuth::user()->isAdmin())
                         <a class="shrink-0" wire:navigate href="{{route('noerd.setup')}}">
                             <x-noerd::button variant="icon" icon="cog-6-tooth" type="button">
-                                <span class="sr-only">View setup</span>
+                                <span class="sr-only">{{ __('View setup') }}</span>
                             </x-noerd::button>
                         </a>
                     @endif

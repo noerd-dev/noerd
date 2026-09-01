@@ -1,9 +1,11 @@
 @props([
     'audits' => [],
+    /** user id => email; resolved here when the caller does not pass it. */
+    'userEmails' => null,
 ])
 
 @php
-    $auditUserEmails = \Noerd\Models\NoerdUser::whereIn(
+    $auditUserEmails = $userEmails ?? \Noerd\Models\NoerdUser::whereIn(
         'id',
         collect($audits)->pluck('user_id')->filter()->unique(),
     )->pluck('email', 'id');
@@ -31,20 +33,20 @@
         @foreach ($audits as $audit)
             <tr>
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
-                    {{ Carbon\Carbon::parse($audit['created_at'])->format('d.m.Y') }}
+                    {{ \Noerd\Helpers\FormatHelper::date($audit['created_at']) }}
                 </td>
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
-                    {{ Carbon\Carbon::parse($audit['created_at'])->format('H:i') }}
+                    {{ \Carbon\Carbon::parse($audit['created_at'])->format('H:i') }}
                 </td>
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
                     {{ $auditUserEmails[$audit['user_id']] ?? '' }}
                 </td>
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
-                    @foreach ($audit['new_values'] as $key => $value)
+                    @foreach ($audit['new_values'] ?? [] as $key => $value)
                         <div>
                             <code class="mr-1 rounded-sm p-0.5 text-xs font-bold">{{ $key }}</code>
                             <code class="mx-1 rounded-sm bg-red-100 p-0.5 px-1 text-xs">{{ $audit['old_values'][$key] ?? '' }}</code>
-                            to <code class="mx-1 rounded-sm bg-green-100 p-0.5 px-1 text-xs"> {{ $value }}</code>
+                            {{ __('to') }} <code class="mx-1 rounded-sm bg-green-100 p-0.5 px-1 text-xs"> {{ $value }}</code>
                         </div>
                     @endforeach
                 </td>

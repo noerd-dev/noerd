@@ -54,7 +54,7 @@ class ZzRelationDetailPage extends Component
         return '<div></div>';
     }
 
-    public function getName(): string
+    protected function componentName(): string
     {
         return 'zz-relation-detail-page';
     }

@@ -1,39 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
-use Noerd\Helpers\NoerdAuth;
+use Noerd\Facades\Noerd;
 
 new class extends Component {
-    public string $password = '';
-
-    /**
-     * Delete the currently authenticated user after confirming their password.
-     */
-    public function deleteUser(): void
+    public function openConfirmation(): void
     {
-        $this->validate([
-            'password' => ['required', 'string'],
-        ]);
-
-        $user = NoerdAuth::user();
-
-        if (! $user || ! Hash::check($this->password, $user->password)) {
-            $this->addError('password', __('This password does not match our records.'));
-
-            return;
-        }
-
-        NoerdAuth::guard()->logout();
-
-        $user->tenants()->detach();
-        $user->userSetting()->delete();
-        $user->delete();
-
-        session()->invalidate();
-        session()->regenerateToken();
-
-        $this->redirect('/', navigate: true);
+        Noerd::modal('noerd::delete-account-modal');
     }
 }; ?>
 
@@ -48,46 +21,7 @@ new class extends Component {
         </p>
     </header>
 
-    <x-noerd::button variant="danger" :icon="false"
-        x-data=""
-        x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-    >{{ __('Delete Account') }}</x-noerd::button>
-
-    <x-noerd::modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable>
-        <form wire:submit="deleteUser" class="p-6">
-
-            <div class="text-lg font-medium text-gray-900">
-                {{ __('Are you sure you want to delete your account?') }}
-            </div>
-
-            <p class="mt-1 text-sm text-gray-600">
-                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
-            </p>
-
-            <div class="mt-6">
-                <x-noerd::input-label for="password" value="{{ __('Password') }}" class="sr-only"/>
-
-                <x-noerd::text-input
-                    wire:model="password"
-                    id="password"
-                    name="password"
-                    type="password"
-                    class="mt-1 block w-3/4"
-                    placeholder="{{ __('Password') }}"
-                />
-
-                <x-noerd::input-error :messages="$errors->get('password')" class="mt-2"/>
-            </div>
-
-            <div class="mt-6 flex justify-end">
-                <x-noerd::button variant="ghost" x-on:click="$dispatch('close')">
-                    {{ __('Cancel') }}
-                </x-noerd::button>
-
-                <x-noerd::button variant="danger" :icon="false" class="ms-3">
-                    {{ __('Delete Account') }}
-                </x-noerd::button>
-            </div>
-        </form>
-    </x-noerd::modal>
+    <x-noerd::button variant="danger" :icon="false" wire:click="openConfirmation">
+        {{ __('Delete Account') }}
+    </x-noerd::button>
 </section>

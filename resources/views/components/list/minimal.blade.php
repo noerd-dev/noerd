@@ -24,15 +24,6 @@
 
     $hasMore = $rows instanceof \Illuminate\Pagination\LengthAwarePaginator && $rows->total() > $rows->count();
 
-    $formatMinimalValue = function (mixed $value, string $type): string {
-        return match ($type) {
-            'currency' => is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float) $value) : (string) ($value ?? ''),
-            'date' => \Noerd\Helpers\FormatHelper::date($value),
-            'datetime' => \Noerd\Helpers\FormatHelper::dateTime($value),
-            'bool', 'boolean' => $value ? __('Yes') : __('No'),
-            default => (string) ($value ?? ''),
-        };
-    };
 @endphp
 
 {{-- Break out of the embedding page's p-6 so the table sits flush to the card edges --}}
@@ -65,16 +56,8 @@
                                 @php
                                     $cellValue = $row[$column['field']] ?? null;
                                     $isBadge = ($column['type'] ?? 'text') === 'badge';
-                                    $badgeValue = $cellValue instanceof \BackedEnum ? $cellValue->value : ($cellValue instanceof \UnitEnum ? $cellValue->name : $cellValue);
-                                    $badgeLabel = $badgeValue;
-                                    if ($isBadge) {
-                                        foreach (($column['options'] ?? []) as $opt) {
-                                            if (isset($opt['value']) && (string) $opt['value'] === (string) $badgeValue) {
-                                                $badgeLabel = $opt['label'] ?? $badgeValue;
-                                                break;
-                                            }
-                                        }
-                                    }
+                                    $badgeValue = \Noerd\Support\ListCellFormatter::scalar($cellValue);
+                                    $badgeLabel = $isBadge ? \Noerd\Support\ListCellFormatter::badgeLabel($cellValue, $column['options'] ?? []) : $badgeValue;
                                 @endphp
                                 @if ($isBadge)
                                     @if ($badgeValue !== null && $badgeValue !== '')
@@ -83,7 +66,7 @@
                                         </span>
                                     @endif
                                 @else
-                                    {{ $formatMinimalValue($cellValue, $column['type'] ?? 'text') }}
+                                    {{ \Noerd\Support\ListCellFormatter::format($cellValue, $column) }}
                                 @endif
                             </td>
                         @endforeach

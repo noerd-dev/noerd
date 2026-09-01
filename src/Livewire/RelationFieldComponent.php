@@ -2,8 +2,10 @@
 
 namespace Noerd\Livewire;
 
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
@@ -63,7 +65,7 @@ abstract class RelationFieldComponent extends Component
     public ?string $detailRoute = null;
 
     #[Locked]
-    public ?string $legacySelectEvent = null;
+    public ?string $selectEvent = null;
 
     /**
      * Livewire id of the detail/page that owns this field. Scopes the
@@ -72,6 +74,15 @@ abstract class RelationFieldComponent extends Component
      */
     #[Locked]
     public ?string $owner = null;
+
+    /**
+     * Validation messages of the owning detail for this field — reactive, so
+     * a failed store() shows them without re-mounting the field.
+     *
+     * @var array<int, string>
+     */
+    #[Reactive]
+    public array $errorMessages = [];
 
     public function mount(
         string $relationType,
@@ -105,7 +116,7 @@ abstract class RelationFieldComponent extends Component
         $this->listComponent = $definition->listComponent;
         $this->detailComponent = $definition->getDetailComponent();
         $this->detailRoute = $definition->detailRoute;
-        $this->legacySelectEvent = $definition->getSelectEvent();
+        $this->selectEvent = $definition->getSelectEvent();
         $this->owner = $owner;
 
         $this->resolveDisplayTitle();
@@ -139,8 +150,8 @@ abstract class RelationFieldComponent extends Component
         $this->resolveDisplayTitle();
         $this->syncParentState();
 
-        if ($this->legacySelectEvent) {
-            $this->dispatch($this->legacySelectEvent, $this->value, $this->fieldName);
+        if ($this->selectEvent) {
+            $this->dispatch($this->selectEvent, $this->value, $this->fieldName);
         }
     }
 
@@ -184,7 +195,7 @@ abstract class RelationFieldComponent extends Component
      * The related Eloquent model behind the current value — for custom renderer
      * components (fieldComponent) that display more than the title.
      */
-    public function relatedModel(): mixed
+    public function relatedModel(): ?Model
     {
         if (!$this->value) {
             return null;

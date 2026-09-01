@@ -18,7 +18,7 @@ class DefaultCountries
 {
     public const COUNTRIES = [
         ['code' => 'DE', 'de' => 'Deutschland', 'en' => 'Germany'],
-        ['code' => 'AT', 'de' => 'Oesterreich', 'en' => 'Austria'],
+        ['code' => 'AT', 'de' => 'Österreich', 'en' => 'Austria'],
         ['code' => 'CH', 'de' => 'Schweiz', 'en' => 'Switzerland'],
         ['code' => 'NL', 'de' => 'Niederlande', 'en' => 'Netherlands'],
         ['code' => 'BE', 'de' => 'Belgien', 'en' => 'Belgium'],
@@ -28,7 +28,7 @@ class DefaultCountries
         ['code' => 'ES', 'de' => 'Spanien', 'en' => 'Spain'],
         ['code' => 'PL', 'de' => 'Polen', 'en' => 'Poland'],
         ['code' => 'CZ', 'de' => 'Tschechien', 'en' => 'Czech Republic'],
-        ['code' => 'GB', 'de' => 'Vereinigtes Koenigreich', 'en' => 'United Kingdom'],
+        ['code' => 'GB', 'de' => 'Vereinigtes Königreich', 'en' => 'United Kingdom'],
         ['code' => 'US', 'de' => 'Vereinigte Staaten', 'en' => 'United States'],
     ];
 

@@ -57,6 +57,15 @@ class SetupLanguage extends Model
     }
 
     /**
+     * The language the setup screens currently edit: the session choice made
+     * in the language switcher, otherwise the tenant's default language.
+     */
+    public static function selectedCode(): string
+    {
+        return session('selectedLanguage') ?? static::getDefaultCode();
+    }
+
+    /**
      * Ensure default languages exist for a tenant
      */
     public static function ensureDefaultLanguagesForTenant(int $tenantId): void
@@ -86,10 +95,8 @@ class SetupLanguage extends Model
         return SetupLanguageFactory::new();
     }
 
-    protected static function boot(): void
+    protected static function booted(): void
     {
-        parent::boot();
-
         // After saving, ensure only one default per tenant
         static::saved(function (SetupLanguage $language): void {
             if ($language->is_default) {

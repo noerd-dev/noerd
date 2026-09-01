@@ -8,11 +8,15 @@
         - title: Demo Customers
           route: demo-customers
           heroicon: users
+          newRoute: demo-customer.detail
+          newComponent: demo-customer-detail
         - title: Demo Categories
           route: demo-categories
           heroicon: tag
+          newRoute: demo-category.detail
           newComponent: demo-category-detail
         - title: Demo Tags
           route: demo-tags
           heroicon: hashtag
+          newRoute: demo-tag.detail
           newComponent: demo-tag-detail

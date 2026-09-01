@@ -17,6 +17,9 @@ class TenantHelper
      */
     private static array $tenantMemo = [];
 
+    /** Request memo of the single-tenant fallback (false = looked up, none). */
+    private static int|false|null $singleTenantId = null;
+
     /**
      * The tenant the current request operates in — the SINGLE source both the
      * tenant scope and the tenant stamp read, so a record is never written with a
@@ -32,17 +35,18 @@ class TenantHelper
     }
 
     /**
-     * Get the selected tenant ID from session.
+     * The tenant selected in the session. A single-tenant installation has
+     * exactly one tenant, which is the answer whenever nothing is selected —
+     * resolved read-only (memoized per request), the session is only written
+     * by setSelectedTenantId().
      */
     public static function getSelectedTenantId(): ?int
     {
         $id = session('noerd.selected_tenant_id');
 
         if (! $id && ! config('noerd.features.multi_tenant')) {
-            $id = Tenant::first()?->id;
-            if ($id) {
-                session(['noerd.selected_tenant_id' => $id]);
-            }
+            self::$singleTenantId ??= (Tenant::query()->value('id') ?? false);
+            $id = self::$singleTenantId ?: null;
         }
 
         return $id;
@@ -85,6 +89,7 @@ class TenantHelper
     public static function clearCache(): void
     {
         self::$tenantMemo = [];
+        self::$singleTenantId = null;
     }
 
     /**

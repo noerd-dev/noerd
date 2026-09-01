@@ -335,62 +335,6 @@ describe('node compatibility', function (): void {
     });
 });
 
-describe('legacy tailwind config migration', function (): void {
-    beforeEach(function (): void {
-        writeScaffoldFile(
-            'resources/css/app.css',
-            "@import 'tailwindcss';\n\n@source '../views';\n@config '../../tailwind.config.js';\n",
-        );
-
-        $this->scaffolder = new FrontendScaffolder(scaffoldPath(), 'v22.22.1');
-    });
-
-    it('detects a noerd-generated config as removable', function (): void {
-        writeScaffoldFile('tailwind.config.js', "export default {\n    theme: { extend: { colors: { 'brand-primary': process.env.VITE_BRAND_PRIMARY || '#000' } } },\n}\n");
-
-        expect($this->scaffolder->hasLegacyTailwindBridge())->toBeTrue()
-            ->and($this->scaffolder->legacyTailwindConfigIsUnmodified())->toBeTrue();
-    });
-
-    it('treats a customised config as host-owned', function (): void {
-        writeScaffoldFile('tailwind.config.js', "export default {\n    plugins: [],\n}\n");
-
-        expect($this->scaffolder->hasLegacyTailwindBridge())->toBeTrue()
-            ->and($this->scaffolder->legacyTailwindConfigIsUnmodified())->toBeFalse();
-    });
-
-    it('removes every @config occurrence without leaving a backup', function (): void {
-        // The old updateAppCss() appended its block at EOF regardless of an existing @config line,
-        // so long-lived projects carry the directive twice — and possibly double-quoted.
-        writeScaffoldFile('resources/css/app.css', implode(PHP_EOL, [
-            "@import 'tailwindcss';",
-            '@config "../../tailwind.config.js";',
-            '',
-            "@source '../views';",
-            "@config '../../tailwind.config.js';",
-        ]) . PHP_EOL);
-        writeScaffoldFile('tailwind.config.js', "export default { /* VITE_BRAND_PRIMARY */ }\n");
-
-        $this->scaffolder->removeLegacyTailwindBridge();
-
-        expect(File::exists(scaffoldPath('tailwind.config.js')))->toBeFalse()
-            ->and(File::exists(scaffoldPath('tailwind.config.js.bak')))->toBeFalse();
-
-        $css = File::get(scaffoldPath('resources/css/app.css'));
-
-        expect($css)->not->toContain('@config')
-            ->and($css)->toContain("@source '../views';")
-            ->and($css)->toContain("@import 'tailwindcss';");
-    });
-
-    it('reports no bridge when the @config line is absent', function (): void {
-        writeScaffoldFile('resources/css/app.css', "@import 'tailwindcss';\n");
-        writeScaffoldFile('tailwind.config.js', "export default { /* VITE_BRAND_PRIMARY */ }\n");
-
-        expect((new FrontendScaffolder(scaffoldPath(), 'v22.22.1'))->hasLegacyTailwindBridge())->toBeFalse();
-    });
-});
-
 it('registers a css variable for every color of the brand preset', function (): void {
     // Guards against a palette key that exists in the config but never becomes a Tailwind color:
     // the utility would then silently produce nothing.

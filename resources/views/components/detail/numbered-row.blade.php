@@ -4,6 +4,8 @@
 @props([
     'field' => null,
     'labelTop' => false,
+    /** false when the slotted element renders its own validation message */
+    'showError' => true,
 ])
 
 @php
@@ -25,11 +27,13 @@
         :required="$required"
         :helpText="$helpText"
         :title="__($label)"
-        class="!pb-0 !font-normal flex-1 min-w-0 text-right truncate {{ $labelTop ? 'pt-1' : '' }}"
+        class="pb-0! font-normal! flex-1 min-w-0 text-right truncate {{ $labelTop ? 'pt-1' : '' }}"
     />
 
     <div class="w-1/2 shrink-0">
         {{ $slot }}
-        <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
+        @if ($showError)
+            <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
+        @endif
     </div>
 </div>

@@ -56,4 +56,9 @@ class NullMediaResolver implements MediaResolverContract
     {
         return false;
     }
+
+    public function pickerComponent(): ?string
+    {
+        return null;
+    }
 }

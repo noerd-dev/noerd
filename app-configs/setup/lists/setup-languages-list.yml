@@ -1,8 +1,13 @@
 title: Languages
+defaultSort:
+  field: sort_order
+  direction: asc
+searchableColumns:
+  - name
+  - code
 actions:
   - label: New Language
     route: noerd.setup-language.detail
-disableSearch: false
 columns:
   - field: code
     label: Code
@@ -10,10 +15,10 @@ columns:
     label: Name
   - field: is_active
     label: Active
-    type: boolean
+    type: bool
   - field: is_default
     label: Default
-    type: boolean
+    type: bool
   - field: sort_order
     label: Sort Order
   - field: action

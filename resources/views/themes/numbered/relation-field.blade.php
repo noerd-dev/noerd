@@ -28,5 +28,6 @@
                 <x-noerd::icons.magnifying-glass></x-noerd::icons.magnifying-glass>
             </x-noerd::button>
         @endif
-    </div>
+</div>
+    <x-noerd::input-error :messages="$errorMessages" class="mt-2" />
 </x-noerd::detail.numbered-row>

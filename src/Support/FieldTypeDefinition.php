@@ -13,8 +13,8 @@ class FieldTypeDefinition
         public string $kind,
         public string $target,
         public array $props = [],
-        public $resolver = null,
-        public $keyResolver = null,
+        public mixed $resolver = null,
+        public mixed $keyResolver = null,
     ) {}
 
     /**

@@ -75,6 +75,9 @@ trait AdministersNoerdUsers
         // another tenant — or any account with no tenants left at all.
         $this->authorizeTargetUser();
 
+        // An administrator never removes its own access.
+        abort_if((int) $this->modelId === NoerdAuth::id(), 403);
+
         $user = NoerdUser::findOrFail($this->modelId);
 
         $user->tenants()->detach(NoerdAuth::user()->selected_tenant_id);

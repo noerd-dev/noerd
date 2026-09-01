@@ -46,27 +46,9 @@
                     continue;
                 }
 
-                $showTab = true;
-                if (isset($tab['requiresId']) && $tab['requiresId'] && !$modelId) {
-                    $showTab = false;
-                }
-                if (isset($tab['permission'])) {
-                    $permissionModel = $tab['permissionModel'] ?? null;
-                    $showTab = $showTab && Gate::allows($tab['permission'], $permissionModel);
-                }
-                if (isset($tab['viewExists']) && !View::exists($tab['viewExists'])) {
-                    $showTab = false;
-                }
-
+                $showTab = \Noerd\Support\TabVisibility::renders($tab, $modelId);
                 // Reactive client-side visibility for the panel — mirrors field-level showIf.
-                $tabShowIf = null;
-                if (isset($tab['showIf'])) {
-                    if (is_string($tab['showIf'])) {
-                        $tabShowIf = '$wire.' . $tab['showIf'];
-                    } elseif (is_array($tab['showIf'])) {
-                        $tabShowIf = '$wire.' . $tab['showIf']['field'] . " === '" . $tab['showIf']['value'] . "'";
-                    }
-                }
+                $tabShowIf = \Noerd\Support\TabVisibility::showIfExpression($tab);
             @endphp
 
             @if ($showTab)

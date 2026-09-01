@@ -92,11 +92,11 @@ php artisan noerd:update-all --force
 | `--build` | Run npm build — applies to `noerd:update` only, no module command defines it |
 | `--except=` | Skip a command; module key or full name (`--except=cms`, `--except=noerd:update`). Repeatable |
 
-**Run order:** `noerd:update` → the module updates alphabetically → `noerd:update-plus` last.
-The order matters at both ends: `noerd:update --force` republishes `app-configs/setup/navigation.yml`
-from the core template, and `noerd:update-plus` restores the entries it removes (Objects, Layouts,
-User Roles, Object Permissions, App Permissions, Recycle bin). The module updates in between only
-write into their own `app-configs/{module}/` and are sorted purely for a reproducible run.
+**Run order:** `noerd:update` → the module updates alphabetically → commands implementing
+`Noerd\Contracts\RunsAfterModuleUpdates` last. The marker is for a module update that touches what
+the core publishes (e.g. one that re-adds its entries to `app-configs/setup/navigation.yml`, which
+`noerd:update --force` rewrites from the core template). The module updates in between only write
+into their own `app-configs/{module}/` and are sorted purely for a reproducible run.
 
 **Discovery** is dynamic: every command named `noerd:update-{module}` that is registered by a loaded
 service provider takes part — nothing is hardcoded, so a newly installed module is picked up
@@ -108,7 +108,7 @@ are skipped and only missing files are copied — a useful "top up a fresh check
 
 > `noerd:update --force` does more than copy YAML: it also overwrites `config/noerd.php`, scaffolds
 > the missing frontend files (see [Installation](installation.md#frontend)), runs `npm install` for
-> any dependency it added, and removes a legacy `tailwind.config.js` brand bridge without asking.
+> any dependency it added.
 > Use `--except=noerd:update` to leave the core step out.
 
 **Failures do not abort the run.** Every command is executed, a summary table lists each one as
@@ -127,8 +127,11 @@ php artisan noerd:demo
 | Option | Description |
 |--------|-------------|
 | `--force` | Overwrite existing files |
+| `--migrate` | Run the migrations — required to migrate in non-interactive runs (interactive runs ask) |
+| `--seed` | Seed the demo data — required to seed in non-interactive runs (interactive runs ask) |
 
-This command is also offered during `noerd:install`. It can be run independently at any time.
+This command is also offered during `noerd:install` (which forwards its own `--migrate` as
+`--migrate --seed`). It can be run independently at any time.
 
 ## noerd:publish-home
 

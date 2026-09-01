@@ -92,11 +92,6 @@ final class FrontendScaffolder
     private const TAILWIND_CSS_IMPORT = "@import 'tailwindcss';";
 
     /**
-     * The Tailwind 3 config bridge noerd used to inject before the brand palette became CSS-first.
-     */
-    private const LEGACY_CONFIG_DIRECTIVE = "@config '../../tailwind.config.js';";
-
-    /**
      * @var array<int, array{file: string, action: string, detail: string}>
      */
     private array $results = [];
@@ -141,63 +136,6 @@ final class FrontendScaffolder
     public function missingNpmPackages(): array
     {
         return $this->missingNpmPackages;
-    }
-
-    /**
-     * Whether a legacy noerd-generated tailwind.config.js is still bridged into app.css.
-     *
-     * Brand colors ship as `--color-brand-*` in the package's noerd.css since the palette became
-     * CSS-first, so the generated config and its `@config` line are obsolete.
-     */
-    public function hasLegacyTailwindBridge(): bool
-    {
-        $css = $this->read(self::CSS_ENTRY);
-
-        return $css !== null
-            && $this->containsDirective($this->splitLines($css), self::LEGACY_CONFIG_DIRECTIVE)
-            && file_exists($this->path('tailwind.config.js'));
-    }
-
-    /**
-     * Whether the host still uses the tailwind.config.js exactly as noerd generated it.
-     *
-     * The `VITE_BRAND_PRIMARY` marker only ever came from noerd's own generator, so a config
-     * without it was customised by the host and must never be removed automatically.
-     */
-    public function legacyTailwindConfigIsUnmodified(): bool
-    {
-        $config = $this->read('tailwind.config.js');
-
-        return $config !== null && str_contains($config, 'VITE_BRAND_PRIMARY');
-    }
-
-    /**
-     * Remove the obsolete tailwind.config.js bridge. No .bak copy is kept — the
-     * host project keeps its change history in version control.
-     */
-    public function removeLegacyTailwindBridge(): void
-    {
-        $configPath = $this->path('tailwind.config.js');
-
-        if (file_exists($configPath)) {
-            unlink($configPath);
-        }
-
-        $css = $this->read(self::CSS_ENTRY);
-
-        if ($css === null) {
-            return;
-        }
-
-        // A project may carry the directive more than once — updateAppCss() used to append its
-        // block at EOF regardless of an existing @config line — so every occurrence is dropped.
-        $needle = $this->normalizeDirective(self::LEGACY_CONFIG_DIRECTIVE);
-        $kept = array_filter(
-            $this->splitLines($css),
-            fn(string $line): bool => $this->normalizeDirective($line) !== $needle,
-        );
-
-        $this->write(self::CSS_ENTRY, implode(PHP_EOL, $this->trimTrailingBlankLines(array_values($kept))) . PHP_EOL);
     }
 
     /**

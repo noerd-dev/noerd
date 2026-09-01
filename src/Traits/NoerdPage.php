@@ -25,7 +25,8 @@ trait NoerdPage
 
     public bool $showSuccessIndicator = false;
 
-    public $modelId = null;
+    /** The record id; `'new'` opens an empty record (see RoutedModal). */
+    public int|string|null $modelId = null;
 
     #[Url(as: 'tab', keep: false, except: 1)]
     public int $currentTab = 1;
@@ -73,7 +74,7 @@ trait NoerdPage
             return;
         }
 
-        $component = $this->getName();
+        $component = $this->componentName();
 
         if (session('noerd.lastDetailComponent') !== $component) {
             $this->currentTab = 1;
@@ -114,30 +115,6 @@ trait NoerdPage
         $this->initPage();
     }
 
-    public function initPage(): void
-    {
-        // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
-        // defining their layout in the component itself. It is loaded even when
-        // the guarded init below bails out (read-denied object, stale record id):
-        // Blade evaluates a page blade's slot content before the page chrome
-        // discards it for the denied state, so a hand-built page reading
-        // $pageLayout['detail'] must always find its layout.
-        $this->pageLayout = StaticConfigHelper::getPageFields($this->getName(), $this->detailModel ?? null);
-
-        $this->initNoerdComponent(function (): void {
-            // Pages backed by a single Eloquent model declare $detailModel — the
-            // record is loaded into $detailData exactly like a detail would.
-            if (isset($this->detailModel)) {
-                $modelClass = $this->detailModel;
-                if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
-                    return;
-                }
-            }
-
-            $this->resolveQuickCreate();
-        });
-    }
-
     public function closeModalProcess(?string $source = null): void
     {
         $this->currentTab = 1;
@@ -167,7 +144,7 @@ trait NoerdPage
     {
         // Server-side guard: the delete button is hidden for delete-denied users,
         // but the method stays reachable via keyboard shortcut and direct calls.
-        if (!$this->canDeleteObject()) {
+        if (!$this->canDeleteObject() || !isset($this->detailModel)) {
             return;
         }
 
@@ -215,8 +192,8 @@ trait NoerdPage
 
     /**
      * The embedded detail component declared in the page YAML (`detail:`).
-     * Deliberately no fallback to DETAIL_COMPONENT — legacy details reusing that
-     * constant must never grow page listeners.
+     * Deliberately no fallback to the component's own name — a standalone
+     * detail must never grow page listeners.
      */
     public function embeddedDetailComponent(): ?string
     {
@@ -318,6 +295,30 @@ trait NoerdPage
         }
     }
 
+    protected function initPage(): void
+    {
+        // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep
+        // defining their layout in the component itself. It is loaded even when
+        // the guarded init below bails out (read-denied object, stale record id):
+        // Blade evaluates a page blade's slot content before the page chrome
+        // discards it for the denied state, so a hand-built page reading
+        // $pageLayout['detail'] must always find its layout.
+        $this->pageLayout = StaticConfigHelper::getPageFields($this->componentName(), $this->detailModel ?? null);
+
+        $this->initNoerdComponent(function (): void {
+            // Pages backed by a single Eloquent model declare $detailModel — the
+            // record is loaded into $detailData exactly like a detail would.
+            if (isset($this->detailModel)) {
+                $modelClass = $this->detailModel;
+                if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
+                    return;
+                }
+            }
+
+            $this->resolveQuickCreate();
+        });
+    }
+
     protected function storeProcess(Model $model): void
     {
         $this->showSuccessIndicator = true;
@@ -373,14 +374,14 @@ trait NoerdPage
             return;
         }
 
-        if (!Str::endsWith($this->getName(), '-detail')) {
+        if (!Str::endsWith($this->componentName(), '-detail')) {
             return;
         }
 
         throw new RuntimeException(sprintf(
             'Model-backed detail [%s] must declare its URL alias: `public ?string $detailPrimary = \'%sId\';` '
             . '(embedded instances skip the URL binding automatically).',
-            $this->getName(),
+            $this->componentName(),
             Str::camel(class_basename($this->detailModel)),
         ));
     }
@@ -416,7 +417,7 @@ trait NoerdPage
      */
     protected function loadDetailModel(Model $model, string $modelClass): bool
     {
-        if (property_exists($this, 'modelId') && $this->modelId) {
+        if ($this->modelId) {
             $model = $modelClass::find($this->modelId);
 
             if (!$model) {
@@ -436,14 +437,14 @@ trait NoerdPage
 
     /**
      * Resolve the quick-create runtime mode from the YAML opt-in (`quickCreate: true`,
-     * carried in pageLayout) or the legacy `public bool $quickCreateOnNew = true;`
-     * property. When opted in and no record is being edited, quick-create mode is
-     * enabled — no list/nav/blade wiring needed. The raw opt-in in pageLayout is
-     * replaced with the resolved mode so `tab-content` reads the correct value.
+     * carried in pageLayout). When opted in and no record is being edited,
+     * quick-create mode is enabled — no list/nav/blade wiring needed. The raw
+     * opt-in in pageLayout is replaced with the resolved mode so `tab-content`
+     * reads the correct value.
      */
     protected function resolveQuickCreate(): void
     {
-        $optIn = ($this->quickCreateOnNew ?? false) || ($this->pageLayout['quickCreate'] ?? false);
+        $optIn = (bool) ($this->pageLayout['quickCreate'] ?? false);
         if (!$this->modelId && $optIn) {
             $this->quickCreate = true;
         }
@@ -454,32 +455,23 @@ trait NoerdPage
     }
 
     /**
-     * Get the detail component name.
-     * Uses DETAIL_COMPONENT constant if defined, otherwise derives from component name.
+     * The name this component's detail YAML resolves under — the component's
+     * own name. Override when a component renders another component's YAML.
      */
     protected function getDetailComponent(): string
     {
-        if (defined('static::DETAIL_COMPONENT')) {
-            return static::DETAIL_COMPONENT;
-        }
-
-        return $this->getName();
+        return $this->componentName();
     }
 
     /**
-     * Get the list component name.
-     * Uses LIST_COMPONENT constant if defined, otherwise derives from the component
-     * name: 'customer-detail' → 'customers-list', 'account-page' → 'accounts-list'.
-     * Namespaced list components (e.g. 'crm::accounts-list') cannot be derived —
-     * those components declare LIST_COMPONENT explicitly.
+     * The list this record belongs to (refreshed when the modal closes), derived
+     * from the component name with its namespace kept: 'customer-detail' →
+     * 'customers-list', 'crm::account-page' → 'crm::accounts-list'. Override
+     * when the list name does not follow the plural convention.
      */
     protected function getListComponent(): string
     {
-        if (defined('static::LIST_COMPONENT')) {
-            return static::LIST_COMPONENT;
-        }
-
-        $name = $this->getName();
+        $name = $this->componentName();
 
         // If this is already a list component, return as-is
         if (Str::endsWith($name, '-list')) {
@@ -516,7 +508,9 @@ trait NoerdPage
         $filters = session('listFilters', []);
         if (!empty($filters[$key])) {
             $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
-            $this->{$method}($filters[$key]);
+            if (method_exists($this, $method)) {
+                $this->{$method}($filters[$key]);
+            }
         }
     }
 

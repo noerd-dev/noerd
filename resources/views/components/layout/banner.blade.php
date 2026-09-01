@@ -2,7 +2,7 @@
 
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Symfony\Component\Yaml\Yaml;
+use Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
     public array $banners = [];
@@ -11,7 +11,7 @@ new class extends Component {
     public function mount(): void
     {
         $configPath = base_path('app-configs/banner.yml');
-        $config = file_exists($configPath) ? Yaml::parse(file_get_contents($configPath) ?: '') : [];
+        $config = file_exists($configPath) ? StaticConfigHelper::parseYamlFile($configPath) : [];
         $this->banners = collect($config['banners'] ?? [])
             ->filter(fn($banner) => isset($banner['priority']))
             ->sortByDesc('priority')
@@ -89,7 +89,7 @@ $styles = [
                         type="button"
                         class="absolute right-4 p-1 hover:opacity-70 transition-opacity"
                     >
-                        <span class="sr-only">Dismiss</span>
+                        <span class="sr-only">{{ __('Dismiss') }}</span>
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>

@@ -33,7 +33,7 @@ describe('Translatable field marker in detail forms', function (): void {
     });
 
     it('frames a translatable field in blue in the default theme', function (): void {
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'default',
             'fields' => $this->translatableFields,
@@ -44,7 +44,7 @@ describe('Translatable field marker in detail forms', function (): void {
     });
 
     it('frames a translatable field in blue in the compact theme and keeps the compact layout', function (): void {
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'compact',
             'fields' => $this->translatableFields,
@@ -58,7 +58,7 @@ describe('Translatable field marker in detail forms', function (): void {
     });
 
     it('frames a translatable field in blue in the numbered theme and keeps the numbered row chrome', function (): void {
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
             'fields' => $this->translatableFields,
@@ -72,7 +72,7 @@ describe('Translatable field marker in detail forms', function (): void {
     });
 
     it('does not frame a non-translatable field', function (): void {
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'compact',
             'fields' => [
@@ -85,7 +85,7 @@ describe('Translatable field marker in detail forms', function (): void {
     });
 
     it('marks the label with a hoverable affordance explaining the field is translatable', function (string $theme): void {
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => $theme,
             'fields' => $this->translatableFields,
@@ -97,7 +97,7 @@ describe('Translatable field marker in detail forms', function (): void {
     })->with(['default', 'compact', 'numbered']);
 
     it('does not mark the label of a non-translatable field', function (): void {
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'default',
             'fields' => [
@@ -111,7 +111,7 @@ describe('Translatable field marker in detail forms', function (): void {
     it('binds a translatable field to the selected language in every theme', function (string $theme): void {
         session(['selectedLanguage' => 'en']);
 
-        $html = Livewire::test('noerd::theme-test', [
+        $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => $theme,
             'fields' => $this->translatableFields,

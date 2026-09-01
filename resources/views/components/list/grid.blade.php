@@ -18,16 +18,6 @@
     ];
     $gridClass = $gridColumnClasses[(int) ($listSettings['gridColumns'] ?? 4)] ?? $gridColumnClasses[4];
 
-    // Same type handling as list/minimal.blade.php so YAML/auto column types are honored
-    $formatGridValue = function (mixed $value, array $column): string {
-        return match ($column['type'] ?? 'text') {
-            'currency' => is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float) $value) : (string) ($value ?? ''),
-            'date' => \Noerd\Helpers\FormatHelper::date($value),
-            'datetime' => \Noerd\Helpers\FormatHelper::dateTime($value),
-            'bool', 'boolean' => $value ? __('Yes') : __('No'),
-            default => (string) ($value ?? ''),
-        };
-    };
 @endphp
 
 <div class="min-w-full pb-2 align-middle">
@@ -46,20 +36,11 @@
                         if (($column['field'] ?? null) === 'action') {
                             continue;
                         }
-                        $value = data_get($row, $column['field'] ?? null);
-                        $value = $value instanceof \BackedEnum ? $value->value : ($value instanceof \UnitEnum ? $value->name : $value);
+                        $value = \Noerd\Support\ListCellFormatter::scalar(data_get($row, $column['field'] ?? null));
                         $isBadge = ($column['type'] ?? 'text') === 'badge';
-                        if ($isBadge) {
-                            $text = (string) ($value ?? '');
-                            foreach ($column['options'] ?? [] as $option) {
-                                if (isset($option['value']) && (string) $option['value'] === $text) {
-                                    $text = (string) ($option['label'] ?? $text);
-                                    break;
-                                }
-                            }
-                        } else {
-                            $text = $formatGridValue($value, $column);
-                        }
+                        $text = $isBadge
+                            ? \Noerd\Support\ListCellFormatter::badgeLabel($value, $column['options'] ?? [])
+                            : \Noerd\Support\ListCellFormatter::format($value, $column);
                         if ($text === '') {
                             continue;
                         }

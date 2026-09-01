@@ -1,9 +1,10 @@
 title: Demo Categories
+defaultSort:
+  field: name
+  direction: asc
 actions:
   - label: New Demo Category
-    action: listAction
-disableSearch: false
+    route: demo-category.detail
 columns:
   - field: name
     label: Name
-    type: text

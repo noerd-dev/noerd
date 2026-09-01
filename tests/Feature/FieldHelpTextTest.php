@@ -28,7 +28,7 @@ describe('Field helpText tooltip', function (): void {
     ];
 
     it('renders the tooltip for every field type in the [{0}] theme', function (string $theme) use ($fieldsWithHelpText): void {
-        $component = Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => $theme,
             'fields' => $fieldsWithHelpText(),
@@ -44,7 +44,7 @@ describe('Field helpText tooltip', function (): void {
     })->with(['default', 'compact', 'numbered']);
 
     it('renders no tooltip when helpText is absent in the [{0}] theme', function (string $theme): void {
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => $theme,
             'fields' => [
@@ -57,7 +57,7 @@ describe('Field helpText tooltip', function (): void {
     })->with(['default', 'compact', 'numbered']);
 
     it('treats an empty helpText as absent', function () use ($fieldsWithHelpText): void {
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'default',
             'fields' => $fieldsWithHelpText('   '),
@@ -67,7 +67,7 @@ describe('Field helpText tooltip', function (): void {
     });
 
     it('does not leak the help text to the next field', function (string $theme): void {
-        $component = Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => $theme,
             'fields' => [
@@ -88,7 +88,7 @@ describe('Field helpText tooltip', function (): void {
         app('translator')->addLines(['*.Explain this field' => 'Erkläre dieses Feld'], 'de');
         app()->setLocale('de');
 
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'default',
             'fields' => [

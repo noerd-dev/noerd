@@ -21,8 +21,8 @@ function renderLayoutTabs(array $tabs, mixed $modelId = null): string
 }
 
 beforeEach(function (): void {
-    registerTestLivewireRoute('zz-tab-record/{modelId}', 'noerd::theme-test', 'zz.tab.record');
-    registerTestLivewireRoute('zz-tab-page', 'noerd::theme-test', 'zz.tab.page');
+    registerTestLivewireRoute('zz-tab-record/{modelId}', 'noerd-test::theme-test', 'zz.tab.record');
+    registerTestLivewireRoute('zz-tab-page', 'noerd-test::theme-test', 'zz.tab.page');
 });
 
 it('renders a modalRoute tab with a full-page href and a $modalRoute click', function (): void {
@@ -157,11 +157,11 @@ it('hides a tab whose viewExists view is not registered', function (): void {
 
     $registered = renderLayoutTabs([
         [
-            'label' => 'Theme Test',
-            'component' => 'noerd::theme-test',
-            'viewExists' => 'noerd::components.theme-test',
+            'label' => 'Users',
+            'component' => 'noerd::noerd-users-list',
+            'viewExists' => 'noerd::components.noerd-users-list',
         ],
     ], 42);
 
-    expect($registered)->toContain('noerd::theme-test');
+    expect($registered)->toContain('noerd::noerd-users-list');
 });

@@ -1,31 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class AtLeastOneTrue implements Rule
+/**
+ * Passes when the value is an array with at least one element that is `true`.
+ */
+class AtLeastOneTrue implements ValidationRule
 {
-    /**
-     * Determine if the validation rule passes.
-     *
-     * @param  string  $attribute
-     * @param  mixed  $value
-     * @return bool
-     */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        // Check if the value is an array and at least one element is true
-        return is_array($value) && in_array(true, $value, true);
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return 'The :attribute must have at least one true value.';
+        if (! is_array($value) || ! in_array(true, $value, true)) {
+            $fail(__('The :attribute must have at least one true value.'));
+        }
     }
 }

@@ -26,7 +26,7 @@ it('renders phone and email inputs with tel and mailto action links', function (
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($admin);
 
-    Livewire::test('noerd::block-phone-email-test')
+    Livewire::test('noerd-test::block-phone-email-test')
         ->assertSuccessful()
         ->assertSeeHtml('type="tel"')
         ->assertSeeHtml('type="email"')
@@ -40,7 +40,7 @@ it('keeps the call link available on readonly phone fields', function (): void {
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $this->actingAs($admin);
 
-    Livewire::test('noerd::block-phone-email-test')
+    Livewire::test('noerd-test::block-phone-email-test')
         ->assertSuccessful()
         ->assertSeeHtml('wire:model="model.roPhone"')
         ->assertSeeHtml("\$wire.entangle('model.roPhone')");

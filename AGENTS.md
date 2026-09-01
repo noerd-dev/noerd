@@ -56,7 +56,7 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - **Tests prove mechanics, not configuration.** The YAML files under `app-configs/` are
   per-installation configuration: never assert their current content (titles, themes, field lists,
   route vs. component targets). Use synthetic layouts, fixture YAMLs written at runtime or the
-  `noerd::*-test` components instead (see `docs/testing.md`).
+  `noerd-test::*` fixture components under `tests/Feature/fixtures/components` instead (see `docs/testing.md`).
 - Do not run the suite against a shared database that another test run is using; Testbench's sqlite
   `:memory:` is the default for exactly that reason.
 

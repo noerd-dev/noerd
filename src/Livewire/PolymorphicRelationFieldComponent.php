@@ -3,8 +3,10 @@
 namespace Noerd\Livewire;
 
 use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
@@ -69,6 +71,15 @@ abstract class PolymorphicRelationFieldComponent extends Component
     /** Livewire id of the owning detail — see RelationFieldComponent::$owner. */
     #[Locked]
     public ?string $owner = null;
+
+    /**
+     * Validation messages of the owning detail for this field — reactive, so
+     * a failed store() shows them without re-mounting the field.
+     *
+     * @var array<int, string>
+     */
+    #[Reactive]
+    public array $errorMessages = [];
 
     public function mount(
         string $fieldName,
@@ -150,6 +161,9 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     public function updatedSelectedRelationType(string $value): void
     {
+        // The list component is memoized per request — the type just changed.
+        unset($this->activeListComponent);
+
         if ($this->readonly) {
             return;
         }
@@ -199,7 +213,8 @@ abstract class PolymorphicRelationFieldComponent extends Component
     /**
      * @return array<string, string>
      */
-    public function getTypeOptionsProperty(): array
+    #[Computed]
+    public function typeOptions(): array
     {
         $registry = app(RelationFieldRegistry::class);
         $options = ['' => __('Select Type')];
@@ -216,7 +231,8 @@ abstract class PolymorphicRelationFieldComponent extends Component
         return $options;
     }
 
-    public function getActiveListComponentProperty(): ?string
+    #[Computed]
+    public function activeListComponent(): ?string
     {
         return $this->activeDefinition()?->listComponent;
     }

@@ -2,6 +2,7 @@
 
 namespace Noerd\Support;
 
+use Illuminate\Container\Container;
 use Illuminate\Support\Str;
 
 class RelationFieldDefinition
@@ -22,7 +23,7 @@ class RelationFieldDefinition
         public ?string $detailComponent = null,
         public ?string $detailRoute = null,
         public ?string $modelClass = null,
-        public $titleResolver = null,
+        public mixed $titleResolver = null,
         public ?string $selectEvent = null,
         public ?string $fieldComponent = null,
     ) {}
@@ -71,7 +72,7 @@ class RelationFieldDefinition
             // Container-safe: this static helper also runs in pure unit tests
             // without a booted application, where neither session nor config
             // are bound — fall back to 'en' there.
-            $app = \Illuminate\Container\Container::getInstance();
+            $app = Container::getInstance();
             if ($app->bound('session.store')) {
                 $selectedLanguage = session('selectedLanguage') ?? app()->getLocale();
             } elseif ($app->bound('config')) {

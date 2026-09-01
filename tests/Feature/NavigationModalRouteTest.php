@@ -18,8 +18,8 @@ function renderNavigationElement(array $navi): string
 }
 
 beforeEach(function (): void {
-    registerTestLivewireRoute('zz-nav-accounts', 'noerd::theme-test', 'zz.nav.accounts');
-    registerTestLivewireRoute('zz-nav-account/{modelId}', 'noerd::theme-test', 'zz.nav.account.detail');
+    registerTestLivewireRoute('zz-nav-accounts', 'noerd-test::theme-test', 'zz.nav.accounts');
+    registerTestLivewireRoute('zz-nav-account/{modelId}', 'noerd-test::theme-test', 'zz.nav.account.detail');
 });
 
 it('renders the + button as $modalRoute for newRoute', function (): void {

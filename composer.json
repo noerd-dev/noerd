@@ -34,6 +34,9 @@
         "pestphp/pest": "^4.0",
         "laravel/pint": "^1.18"
     },
+    "suggest": {
+        "owen-it/laravel-auditing": "Required for the activity log modal (noerd::audit-list) of auditable models."
+    },
     "autoload": {
         "psr-4": {
             "Noerd\\": "src/",

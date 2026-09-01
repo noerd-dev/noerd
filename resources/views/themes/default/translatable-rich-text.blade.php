@@ -12,7 +12,7 @@
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? false;
     $required = $field['required'] ?? $required;
-    $selectedLang = session('selectedLanguage') ?? 'de';
+    $selectedLang = \Noerd\Models\SetupLanguage::selectedCode();
 
     // Extract the field key from dot notation (e.g., 'summaryData.content' -> 'content', 'model.content' -> 'content')
     $fieldKey = str_contains($name, '.') ? mb_substr($name, mb_strpos($name, '.') + 1) : $name;

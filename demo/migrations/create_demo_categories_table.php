@@ -13,7 +13,7 @@ return new class extends Migration {
 
         Schema::create('demo_categories', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
+            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->string('name')->nullable();
             $table->timestamps();
         });

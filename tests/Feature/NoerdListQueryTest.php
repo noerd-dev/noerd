@@ -101,8 +101,6 @@ class ZzListQueryComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-list-query';
-
     /** @var array<int, string> */
     public static array $searchable = [];
 
@@ -118,6 +116,11 @@ class ZzListQueryComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-list-query';
     }
 
     protected function getListConfig(?string $customName = null): array

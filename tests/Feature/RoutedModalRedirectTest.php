@@ -23,13 +23,16 @@ class ZzRoutedModalPageComponent extends Component
 {
     use NoerdPage;
 
-    public const COMPONENT = 'zz-routed-modal-page';
-
     public $detailModel = Tenant::class;
 
     public function render(): string
     {
         return '<div>zz-routed-modal-page</div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-routed-modal-page';
     }
 }
 

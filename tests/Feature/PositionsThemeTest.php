@@ -14,7 +14,7 @@ describe('Position tables follow the theme', function (): void {
     });
 
     it('renders the default theme unchanged', function (): void {
-        $component = Livewire::test('noerd::positions-theme-test', ['theme' => 'default'])
+        $component = Livewire::test('noerd-test::positions-theme-test', ['theme' => 'default'])
             ->assertSuccessful()
             ->assertSeeHtml('py-8')
             ->assertSeeHtml('h-10')
@@ -25,7 +25,7 @@ describe('Position tables follow the theme', function (): void {
     });
 
     it('shrinks controls and padding in the compact theme', function (): void {
-        Livewire::test('noerd::positions-theme-test', ['theme' => 'compact'])
+        Livewire::test('noerd-test::positions-theme-test', ['theme' => 'compact'])
             ->assertSuccessful()
             ->assertSeeHtml('h-7')
             ->assertSeeHtml('rounded-sm')
@@ -35,7 +35,7 @@ describe('Position tables follow the theme', function (): void {
     });
 
     it('bands the rows and numbers them in the numbered theme', function (): void {
-        $component = Livewire::test('noerd::positions-theme-test', ['theme' => 'numbered'])
+        $component = Livewire::test('noerd-test::positions-theme-test', ['theme' => 'numbered'])
             ->assertSuccessful()
             ->assertSeeHtml('bg-zinc-100')
             ->assertSeeHtml('tabular-nums')
@@ -53,24 +53,27 @@ describe('Position tables follow the theme', function (): void {
     });
 
     it('renders no number column outside a numbering theme', function (): void {
-        Livewire::test('noerd::positions-theme-test', ['theme' => 'compact'])
+        Livewire::test('noerd-test::positions-theme-test', ['theme' => 'compact'])
             ->assertDontSeeHtml('>#</th>');
     });
 
     it('widens the details row by the number column only when rows are numbered', function (): void {
-        Livewire::test('noerd::positions-theme-test', ['theme' => 'default'])
+        Livewire::test('noerd-test::positions-theme-test', ['theme' => 'default'])
             ->assertSeeHtml('colspan="3"');
 
-        Livewire::test('noerd::positions-theme-test', ['theme' => 'numbered'])
+        Livewire::test('noerd-test::positions-theme-test', ['theme' => 'numbered'])
             ->assertSeeHtml('colspan="4"');
     });
 
     it('renders both accepted tax shapes identically', function (): void {
+        // Totals follow the active locale (German formatting here).
+        app()->setLocale('de');
+
         // The Livewire wrapper carries the component payload, which of course differs
         // between the two shapes — compare the rendered totals only, anchored on
         // stable text rather than a class attribute whose order may be re-sorted.
         $renderedBlock = function (array $taxes): string {
-            $html = Livewire::test('noerd::positions-theme-test', [
+            $html = Livewire::test('noerd-test::positions-theme-test', [
                 'theme' => 'default',
                 'taxes' => $taxes,
             ])->html();

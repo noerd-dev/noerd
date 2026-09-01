@@ -20,7 +20,7 @@ describe('Image Form Component', function (): void {
         $resolver->shouldReceive('getPreviewUrl')->andReturn(null);
         app()->instance(MediaResolverContract::class, $resolver);
 
-        Livewire::test('noerd::image-field-test', [
+        Livewire::test('noerd-test::image-field-test', [
             'initialModel' => [],
         ])
             ->assertSee(__('Choose image from media'));
@@ -32,7 +32,7 @@ describe('Image Form Component', function (): void {
         $resolver->shouldReceive('getPreviewUrl')->andReturn('https://example.com/photo.jpg');
         app()->instance(MediaResolverContract::class, $resolver);
 
-        Livewire::test('noerd::image-field-test', [
+        Livewire::test('noerd-test::image-field-test', [
             'initialModel' => ['image' => 5],
         ])
             ->assertSee(__('Remove this image? The original file stays in the media library.'))

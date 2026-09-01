@@ -21,7 +21,7 @@ function renderMinimalList(array $params): string
 }
 
 it('renders show more as $modalRoute without rewriting the url', function (): void {
-    registerTestLivewireRoute('zz-show-more-list', 'noerd::theme-test', 'zz.show.more');
+    registerTestLivewireRoute('zz-show-more-list', 'noerd-test::theme-test', 'zz.show.more');
 
     $html = renderMinimalList([
         'showMoreRoute' => 'zz.show.more',
@@ -61,8 +61,6 @@ class ZzShowMoreListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-show-more-test-list';
-
     public function mount(): void
     {
         $this->minimal = true;
@@ -89,5 +87,10 @@ class ZzShowMoreListComponent extends Component
                 @include('noerd::components.list.minimal')
             </div>
         BLADE;
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-show-more-test-list';
     }
 }

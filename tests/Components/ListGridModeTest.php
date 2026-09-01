@@ -244,8 +244,6 @@ class TestableGridFilterListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'testable-grid-filter-list';
-
     /**
      * @return array<string, mixed>
      */
@@ -261,6 +259,11 @@ class TestableGridFilterListComponent extends Component
     public function render(): string
     {
         return '<div><x-noerd::list /></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'testable-grid-filter-list';
     }
 
     /**

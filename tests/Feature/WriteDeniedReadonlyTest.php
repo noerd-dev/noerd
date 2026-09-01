@@ -48,7 +48,7 @@ function tagIsInert(string $tag): bool
 }
 
 it('renders every field editable when writing is allowed', function (): void {
-    $html = Livewire::test('noerd::write-denied-test')->assertOk()->html();
+    $html = Livewire::test('noerd-test::write-denied-test')->assertOk()->html();
 
     foreach (boundInputTags($html) as $tag) {
         expect(tagIsInert($tag))->toBeFalse();
@@ -64,7 +64,7 @@ it('renders every field editable when writing is allowed', function (): void {
 it('renders every field readonly or disabled when writing is denied', function (string $theme): void {
     denyObjectWrites();
 
-    $html = Livewire::test('noerd::write-denied-test', ['theme' => $theme])->assertOk()->html();
+    $html = Livewire::test('noerd-test::write-denied-test', ['theme' => $theme])->assertOk()->html();
 
     $inputs = boundInputTags($html);
     $selects = boundSelectTags($html);
@@ -93,7 +93,7 @@ it('renders every field readonly or disabled when writing is denied', function (
 it('renders nested block fields readonly when writing is denied', function (): void {
     denyObjectWrites();
 
-    $html = Livewire::test('noerd::write-denied-test')->assertOk()->html();
+    $html = Livewire::test('noerd-test::write-denied-test')->assertOk()->html();
 
     preg_match('/<input\b[^>]*wire:model="model\.nested"[^>]*>|<input\b[^>]*>(?=[^<]*)/s', $html, $m);
     $nested = array_values(array_filter(
@@ -111,7 +111,7 @@ it('leaves components without canWriteObject untouched by a denying resolver', f
     denyObjectWrites();
 
     // theme-test renders the same detail block but exposes no canWriteObject().
-    $html = Livewire::test('noerd::theme-test')->assertOk()->html();
+    $html = Livewire::test('noerd-test::theme-test')->assertOk()->html();
 
     foreach (boundInputTags($html) as $tag) {
         expect(tagIsInert($tag))->toBeFalse();
@@ -119,7 +119,7 @@ it('leaves components without canWriteObject untouched by a denying resolver', f
 });
 
 it('keeps an explicit per-field readonly working independently of permissions', function (): void {
-    $html = Livewire::test('noerd::theme-test', ['fields' => [
+    $html = Livewire::test('noerd-test::theme-test', ['fields' => [
         ['name' => 'model.locked', 'label' => 'Locked', 'type' => 'text', 'colspan' => 6, 'readonly' => true],
     ]])->assertOk()->html();
 

@@ -150,13 +150,14 @@ class TestableNoerdListYamlSortComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-default-sort-test-list';
-
-    public const DETAIL_COMPONENT = 'zz-default-sort-test-list';
-
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-default-sort-test-list';
     }
 }
 
@@ -177,11 +178,14 @@ class TestableSelectEventPlainComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'customers-list';
-
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'customers-list';
     }
 }
 
@@ -189,11 +193,14 @@ class TestableSelectEventNamespacedComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'booking-members::customers-list';
-
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'booking-members::customers-list';
     }
 }
 
@@ -201,10 +208,13 @@ class TestableSelectEventDottedComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'booking-members::customers.customers-list';
-
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'booking-members::customers.customers-list';
     }
 }

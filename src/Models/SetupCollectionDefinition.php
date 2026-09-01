@@ -5,17 +5,15 @@ namespace Noerd\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Noerd\Traits\BelongsToTenant;
 
 class SetupCollectionDefinition extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'setup_collection_definitions';
 
     protected $guarded = [];
-
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 
     public function creator(): BelongsTo
     {

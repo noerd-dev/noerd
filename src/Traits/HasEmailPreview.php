@@ -7,6 +7,8 @@ use Illuminate\Mail\Markdown;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\HtmlString;
+use Livewire\Attributes\Computed;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Mail\EmailPreviewTestMail;
 
@@ -20,19 +22,22 @@ trait HasEmailPreview
 
     abstract public function getSampleEmailData(): array;
 
-    public function getCanShowPreviewProperty(): bool
+    #[Computed]
+    public function canShowPreview(): bool
     {
         $data = $this->getEmailData();
 
         return ! empty($data['send_email']) && ! empty($data['email_body'] ?? '');
     }
 
-    public function getCanSendTestEmailProperty(): bool
+    #[Computed]
+    public function canSendTestEmail(): bool
     {
         return ! Cache::has($this->getTestEmailCacheKey());
     }
 
-    public function getTestEmailCooldownSecondsProperty(): int
+    #[Computed]
+    public function testEmailCooldownSeconds(): int
     {
         $remaining = Cache::get($this->getTestEmailCacheKey());
 
@@ -47,15 +52,11 @@ trait HasEmailPreview
     {
         $data = $this->getEmailData();
 
-        $this->dispatch(
-            'noerdModal',
-            modalComponent: 'noerd::email-preview-modal',
-            arguments: [
-                'emailSubject' => $data['email_subject'] ?? '',
-                'sampleData' => $this->getSampleEmailData(),
-                'previewHtml' => $this->renderEmailPreview(),
-            ],
-        );
+        Noerd::modal('noerd::email-preview-modal', [
+            'emailSubject' => $data['email_subject'] ?? '',
+            'sampleData' => $this->getSampleEmailData(),
+            'previewHtml' => $this->renderEmailPreview(),
+        ]);
     }
 
     public function sendTestEmail(): void

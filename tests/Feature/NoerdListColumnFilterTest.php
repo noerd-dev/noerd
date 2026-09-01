@@ -567,8 +567,6 @@ class TestableColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'testable-column-filter-list';
-
     public function with(): array
     {
         return [
@@ -581,6 +579,11 @@ class TestableColumnFilterListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'testable-column-filter-list';
     }
 
     protected function getListConfig(?string $customName = null): array
@@ -625,8 +628,6 @@ class TestableJsonColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'testable-json-column-filter-list';
-
     public function with(): array
     {
         return [
@@ -639,6 +640,11 @@ class TestableJsonColumnFilterListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'testable-json-column-filter-list';
     }
 
     protected function getListConfig(?string $customName = null): array
@@ -708,8 +714,6 @@ class TestableRelationColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'testable-relation-column-filter-list';
-
     public function with(): array
     {
         return [
@@ -722,6 +726,11 @@ class TestableRelationColumnFilterListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'testable-relation-column-filter-list';
     }
 
     protected function getListConfig(?string $customName = null): array
@@ -778,7 +787,10 @@ class TestableColumnFilterPageRenderComponent extends TestableColumnFilterListCo
  */
 class TestableColumnFilterChipListComponent extends TestableColumnFilterListComponent
 {
-    public const COMPONENT = 'testable-column-filter-chip-list';
+    protected function componentName(): string
+    {
+        return 'testable-column-filter-chip-list';
+    }
 
     protected function getListConfig(?string $customName = null): array
     {

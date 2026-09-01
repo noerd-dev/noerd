@@ -14,7 +14,7 @@ describe('Theme system', function (): void {
     });
 
     it('emits no theme markers in the default theme', function (): void {
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'default',
         ])
@@ -25,7 +25,7 @@ describe('Theme system', function (): void {
     });
 
     it('emits the theme marker for the compact theme', function (): void {
-        $component = Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'compact',
         ])
@@ -36,7 +36,7 @@ describe('Theme system', function (): void {
     });
 
     it('renders the numbered theme with full-width gray rows and number cells', function (): void {
-        $component = Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ])
@@ -50,7 +50,7 @@ describe('Theme system', function (): void {
     });
 
     it('numbers rows automatically, skips spacers and lets an explicit number win', function (): void {
-        $component = Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ]);
@@ -71,7 +71,7 @@ describe('Theme system', function (): void {
     });
 
     it('falls back to the default theme for unknown theme names', function (): void {
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'bogus',
         ])
@@ -83,7 +83,7 @@ describe('Theme system', function (): void {
     it('honors a per-field theme override', function (): void {
         // model.plain declares theme 'default' — in the numbered theme it renders as a
         // standard label-on-top input while its siblings get the row chrome.
-        $component = Livewire::test('noerd::theme-test', [
+        $component = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ])
@@ -93,7 +93,7 @@ describe('Theme system', function (): void {
     });
 
     it('inherits the theme in nested blocks', function (): void {
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ])
@@ -103,7 +103,7 @@ describe('Theme system', function (): void {
     });
 
     it('still renders field labels in the numbered theme', function (): void {
-        Livewire::test('noerd::theme-test', [
+        Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],
             'theme' => 'numbered',
         ])

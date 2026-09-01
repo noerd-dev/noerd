@@ -11,7 +11,7 @@
     $name = $field['name'] ?? $name;
     $readonly = $field['readonly'] ?? $readonly;
     $rows = $field['rows'] ?? $rows;
-    $selectedLang = session('selectedLanguage') ?? 'de';
+    $selectedLang = \Noerd\Models\SetupLanguage::selectedCode();
 @endphp
 
 <div wire:key="{{ $name . $selectedLang }}">

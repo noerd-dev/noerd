@@ -5,6 +5,7 @@
     'label' => '',
     'type' => 'text',
     'readonly' => false,
+    'placeholder' => null,
     'live' => false,
     'required' => false,
 ])
@@ -14,6 +15,7 @@
     $label = $field['label'] ?? $label;
     $type = $field['type'] ?? $type;
     $readonly = $field['readonly'] ?? $readonly;
+    $placeholder = $field['placeholder'] ?? $placeholder;
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 @endphp
@@ -31,6 +33,7 @@
         <input
             {{ $readonly ? 'readonly' : '' }}
             autocomplete="off"
+            @if ($placeholder) placeholder="{{ __($placeholder) }}" @endif
             class="focus:ring-brand-border block h-7 w-full appearance-none rounded-sm border border-zinc-200 bg-white py-1 ps-2 pe-2 text-base text-zinc-700 placeholder-zinc-400 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 focus:ring-1 focus:outline-none sm:text-sm"
             type="{{ $type }}"
             id="{{ $name }}"
@@ -41,15 +44,9 @@
                 wire:model="{{ $name }}"
             @endif
             @if ($type === 'date')
-                x-init="
-                    let v = $wire.get('{{ $name }}');
-                    if (v && v.length > 10) $wire.set('{{ $name }}', v.substring(0, 10), false);
-                "
+                x-data="noerdDateInput({ name: @js($name), length: 10 })"
             @elseif ($type === 'time')
-                x-init="
-                    let v = $wire.get('{{ $name }}');
-                    if (v && v.length > 5) $wire.set('{{ $name }}', v.substring(0, 5), false);
-                "
+                x-data="noerdDateInput({ name: @js($name), length: 5 })"
             @endif
         />
         <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />

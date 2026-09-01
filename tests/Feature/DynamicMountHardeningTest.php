@@ -28,8 +28,6 @@ class ZzMountGuardListComponent extends Component
 {
     use NoerdList;
 
-    public const COMPONENT = 'zz-mount-guard-list';
-
     public $listModel = Profile::class;
 
     // Declared like a real list that opts into an explicit permission model —
@@ -39,6 +37,11 @@ class ZzMountGuardListComponent extends Component
     public function render(): string
     {
         return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-mount-guard-list';
     }
 
     protected function getListConfig(?string $customName = null): array

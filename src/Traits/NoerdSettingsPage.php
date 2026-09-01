@@ -35,23 +35,6 @@ trait NoerdSettingsPage
         $this->initSettings();
     }
 
-    public function initSettings(): void
-    {
-        $this->initNoerdComponent(function (): void {
-            $tenantId = TenantHelper::getSelectedTenantId();
-
-            foreach ($this->settingsModelMap() as $property => $modelClass) {
-                $model = $modelClass::firstOrNew(['tenant_id' => $tenantId]);
-
-                $this->{$property} = collect($model->toArray())
-                    ->except(['created_at', 'updated_at'])
-                    ->toArray();
-            }
-
-            $this->pageLayout = StaticConfigHelper::getSettingsFields($this->getName());
-        });
-    }
-
     public function store(): void
     {
         // Server-side guard, mirroring NoerdDetail::store(): the save button is
@@ -120,6 +103,23 @@ trait NoerdSettingsPage
         return true;
     }
 
+    protected function initSettings(): void
+    {
+        $this->initNoerdComponent(function (): void {
+            $tenantId = TenantHelper::getSelectedTenantId();
+
+            foreach ($this->settingsModelMap() as $property => $modelClass) {
+                $model = $modelClass::firstOrNew(['tenant_id' => $tenantId]);
+
+                $this->{$property} = collect($model->toArray())
+                    ->except(['created_at', 'updated_at'])
+                    ->toArray();
+            }
+
+            $this->pageLayout = StaticConfigHelper::getSettingsFields($this->componentName());
+        });
+    }
+
     /**
      * Persist every declared settings model as the tenant's singleton row.
      * Kept separate so custom store() overrides reuse it as their tail.
@@ -157,7 +157,7 @@ trait NoerdSettingsPage
     {
         $map = [];
         LayoutFields::walk(
-            StaticConfigHelper::getSettingsFields($this->getName())['fields'] ?? [],
+            StaticConfigHelper::getSettingsFields($this->componentName())['fields'] ?? [],
             function (array $field) use (&$map): void {
                 $name = $field['name'] ?? null;
                 if (! is_string($name) || ! str_contains($name, '.')) {
@@ -185,7 +185,7 @@ trait NoerdSettingsPage
             throw new RuntimeException(sprintf(
                 'Settings page [%s] must declare its tenant-singleton models: '
                 . "`public array \$settingsModels = ['detailData' => Model::class];`.",
-                $this->getName(),
+                $this->componentName(),
             ));
         }
 

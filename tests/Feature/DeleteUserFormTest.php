@@ -17,7 +17,7 @@ it('deletes the account and its tenant links after confirming the correct passwo
     $user->tenants()->attach($tenant->id);
     $this->actingAs($user);
 
-    Livewire::test('noerd::profile.delete-user-form')
+    Livewire::test('noerd::delete-account-modal')
         ->set('password', 'secret-pw')
         ->call('deleteUser')
         ->assertHasNoErrors()
@@ -27,11 +27,33 @@ it('deletes the account and its tenant links after confirming the correct passwo
     expect(DB::table('users_tenants')->where('user_id', $user->id)->count())->toBe(0);
 });
 
+it('refuses to delete the last administrator of a tenant', function (): void {
+    $tenant = Tenant::factory()->create(['name' => 'Acme']);
+    $admin = NoerdUser::factory()->create(['password' => 'secret-pw']);
+    $admin->tenants()->attach($tenant->id, ['profile_key' => Noerd\Enums\Profile::Admin->value]);
+    $this->actingAs($admin);
+
+    Livewire::test('noerd::delete-account-modal')
+        ->set('password', 'secret-pw')
+        ->call('deleteUser')
+        ->assertHasErrors('password');
+
+    expect(NoerdUser::find($admin->id))->not->toBeNull();
+});
+
+it('opens the confirmation modal from the profile form', function (): void {
+    $this->actingAs(NoerdUser::factory()->create());
+
+    Livewire::test('noerd::profile.delete-user-form')
+        ->call('openConfirmation')
+        ->assertDispatched('noerdModal');
+});
+
 it('keeps the account when the password does not match', function (): void {
     $user = NoerdUser::factory()->create(['password' => 'secret-pw']);
     $this->actingAs($user);
 
-    Livewire::test('noerd::profile.delete-user-form')
+    Livewire::test('noerd::delete-account-modal')
         ->set('password', 'wrong-pw')
         ->call('deleteUser')
         ->assertHasErrors('password');

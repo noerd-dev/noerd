@@ -30,4 +30,5 @@
             </x-noerd::button>
         @endif
     </div>
+    <x-noerd::input-error :messages="$errorMessages" class="mt-2" />
 </div>
