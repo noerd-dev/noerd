@@ -201,9 +201,9 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function getSelectedTenantIdAttribute(): ?int
     {
-        // The live (session) selection only belongs to the authenticated user;
-        // any other user instance reads its persisted setting.
-        if ($this->isAuthenticatedUser()) {
+        // The live (session) selection belongs to the authenticated user; any
+        // other user instance reads its persisted setting.
+        if ($this->ownsTenantSession()) {
             return TenantHelper::getSelectedTenantId();
         }
 
@@ -226,7 +226,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
         $this->setting->update(['selected_tenant_id' => $value]);
 
-        if ($this->isAuthenticatedUser()) {
+        if ($this->ownsTenantSession()) {
             TenantHelper::setSelectedTenantId($value);
         }
     }
@@ -279,10 +279,15 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         ];
     }
 
-    private function isAuthenticatedUser(): bool
+    /**
+     * Whether the tenant session is this user's: true for the authenticated
+     * user and while nobody is authenticated (console, a test preparing the
+     * user it is about to act as) — never for another user's instance.
+     */
+    private function ownsTenantSession(): bool
     {
         $authenticated = NoerdAuth::user();
 
-        return $authenticated !== null && $this->is($authenticated);
+        return $authenticated === null || $this->is($authenticated);
     }
 }

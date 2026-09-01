@@ -2,6 +2,7 @@
 
 namespace Noerd\Providers;
 
+use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -205,6 +206,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register event listeners
         Event::listen(Login::class, InitializeTenantSession::class);
+        Event::listen(Authenticated::class, InitializeTenantSession::class);
         Event::listen(Login::class, RecordLogin::class);
 
         // Create default languages and setup collections when a new tenant is created
