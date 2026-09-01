@@ -766,11 +766,11 @@ class NoerdInstallCommand extends Command
         callout('Application ready', [
             'You can start your local development using:',
             new NumberedList([
-                'Run: composer run dev',
+                'Run: php artisan dev',
                 'Open: ' . new Link($appsUrl) . ' and log in with your admin user',
             ]),
             'New to noerd? Check out the ' . new Link('https://noerd.dev', 'documentation') . '.',
-            'Build something amazing!',
+            'Now go build an amazing business app!',
         ]);
     }
 

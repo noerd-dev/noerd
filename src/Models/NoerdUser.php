@@ -56,6 +56,11 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return $this->hasMany(NoerdLogin::class, 'user_id');
     }
 
+    public function latestLogin(): HasOne
+    {
+        return $this->hasOne(NoerdLogin::class, 'user_id')->latestOfMany();
+    }
+
     public function adminTenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
