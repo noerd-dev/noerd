@@ -48,77 +48,63 @@
         @if ($gridSortColumns !== [])
             {{-- wire:key so the morph never pairs this Alpine dropdown with one of the keyed
                  filter chips beside it when the chip set changes (e.g. a list-view switch). --}}
-            <div
+            <x-noerd::action-menu
                 wire:key="grid-sort-{{ $listId }}"
-                x-data="{ open: false }"
-                @click.outside="open = false"
-                class="relative ml-auto"
+                width="w-56"
+                wrapperClass="relative ml-auto"
+                anchor="$refs.gridSortBtn"
+                panelClass="text-left font-normal whitespace-normal"
             >
-                <button
-                    type="button"
-                    @click="open = ! open"
-                    x-ref="gridSortBtn"
-                    :aria-expanded="open"
-                    aria-haspopup="true"
-                    title="{{ __('Sort by') }}"
-                    class="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900"
-                >
-                    @if ($gridActiveSortColumn)
-                        <x-dynamic-component
-                            :component="$sortAsc ? 'heroicons::outline.bars-arrow-up' : 'heroicons::outline.bars-arrow-down'"
-                            class="size-3.5"
-                        />
-                        <span>{{ __('Sort by') }}: {{ __($gridActiveSortColumn['label'] ?? $gridActiveSortColumn['field']) }}</span>
-                    @else
-                        <x-dynamic-component component="heroicons::outline.arrows-up-down" class="size-3.5" />
-                        <span>{{ __('Sort by') }}</span>
-                    @endif
-                </button>
+                <x-slot:trigger>
+                    <button
+                        type="button"
+                        @click="open = ! open"
+                        x-ref="gridSortBtn"
+                        :aria-expanded="open"
+                        aria-haspopup="true"
+                        title="{{ __('Sort by') }}"
+                        class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900"
+                    >
+                        @if ($gridActiveSortColumn)
+                            <x-dynamic-component
+                                :component="$sortAsc ? 'heroicons::outline.bars-arrow-up' : 'heroicons::outline.bars-arrow-down'"
+                                class="size-3.5"
+                            />
+                            <span>{{ __('Sort by') }}: {{ __($gridActiveSortColumn['label'] ?? $gridActiveSortColumn['field']) }}</span>
+                        @else
+                            <x-dynamic-component component="heroicons::outline.arrows-up-down" class="size-3.5" />
+                            <span>{{ __('Sort by') }}</span>
+                        @endif
+                    </button>
+                </x-slot:trigger>
 
-                <div
-                    x-show="open"
-                    x-cloak
-                    x-transition
-                    @click.stop
-                    @keydown.escape.stop="open = false"
-                    x-anchor.bottom-end="$refs.gridSortBtn"
-                    role="menu"
-                    aria-orientation="vertical"
-                    class="z-90 w-56 rounded-md bg-white py-1 text-left font-normal whitespace-normal shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                >
-                    @foreach ($gridSortColumns as $gridSortColumn)
-                        <button
-                            type="button"
-                            role="menuitem"
-                            wire:click="sortBy('{{ $gridSortColumn['field'] }}')"
-                            @click="open = false"
-                            class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm hover:bg-gray-50 {{ $gridSortColumn['field'] === $sortField ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }}"
-                        >
-                            <span>{{ __($gridSortColumn['label'] ?? $gridSortColumn['field']) }}</span>
-                            @if ($gridSortColumn['field'] === $sortField)
-                                <x-dynamic-component
-                                    :component="$sortAsc ? 'heroicons::outline.chevron-up' : 'heroicons::outline.chevron-down'"
-                                    class="size-3.5"
-                                />
-                            @endif
-                        </button>
-                    @endforeach
+                @foreach ($gridSortColumns as $gridSortColumn)
+                    <x-noerd::action-menu-item
+                        wire:click="sortBy('{{ $gridSortColumn['field'] }}')"
+                        :active="$gridSortColumn['field'] === $sortField"
+                        class="justify-between"
+                    >
+                        <span>{{ __($gridSortColumn['label'] ?? $gridSortColumn['field']) }}</span>
+                        @if ($gridSortColumn['field'] === $sortField)
+                            <x-dynamic-component
+                                :component="$sortAsc ? 'heroicons::outline.chevron-up' : 'heroicons::outline.chevron-down'"
+                                class="size-3.5"
+                            />
+                        @endif
+                    </x-noerd::action-menu-item>
+                @endforeach
 
-                    <div class="my-1 border-t border-gray-100"></div>
+                <x-noerd::action-menu-separator/>
 
-                    @foreach ([[true, __('Ascending')], [false, __('Descending')]] as [$gridSortAsc, $gridSortDirectionLabel])
-                        <button
-                            type="button"
-                            role="menuitem"
-                            wire:click="setSortDirection({{ $gridSortAsc ? 'true' : 'false' }})"
-                            @click="open = false"
-                            class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 {{ $sortAsc === $gridSortAsc ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }}"
-                        >
-                            {{ $gridSortDirectionLabel }}
-                        </button>
-                    @endforeach
-                </div>
-            </div>
+                @foreach ([[true, __('Ascending')], [false, __('Descending')]] as [$gridSortAsc, $gridSortDirectionLabel])
+                    <x-noerd::action-menu-item
+                        wire:click="setSortDirection({{ $gridSortAsc ? 'true' : 'false' }})"
+                        :active="$sortAsc === $gridSortAsc"
+                    >
+                        {{ $gridSortDirectionLabel }}
+                    </x-noerd::action-menu-item>
+                @endforeach
+            </x-noerd::action-menu>
         @endif
     </div>
 @endif

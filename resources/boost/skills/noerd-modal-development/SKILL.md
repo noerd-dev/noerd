@@ -9,7 +9,8 @@ metadata:
 # Noerd Modal Development
 
 Every backend modal uses the noerd modal system — never a hand-rolled `fixed inset-0` overlay or an
-Alpine `x-show` dialog inside a component. Hard rules: `noerd/noerd` Boost guideline (Core Rules,
+Alpine `x-show` dialog inside a component. A *dropdown menu* is not a modal: it uses
+`<x-noerd::action-menu>` (see `docs/action-menu.md`), and is equally never hand-rolled. Hard rules: `noerd/noerd` Boost guideline (Core Rules,
 "Route modal vs. component modal"). Full reference: `vendor/noerd/noerd/docs/modal.md`.
 
 ## 1. Route or component? (decide first)

@@ -48,44 +48,34 @@
                 <div class="min-w-0 truncate">
                     @if (count($listViews ?? []) > 1)
                         {{-- List-view switcher: pick one of several YAML views for this list --}}
-                        <div x-data="{ open: false }" class="relative">
-                            <button
-                                type="button"
-                                x-on:click="open = ! open"
-                                x-on:click.outside="open = false"
-                                class="flex items-center gap-1 rounded focus:outline-hidden"
-                                :aria-expanded="open"
-                                aria-haspopup="true"
-                                title="{{ __('Switch list view') }}"
-                            >
-                                <span class="truncate">{{ $title }}</span>
-                                @if (isset($rows) && ! is_array($rows))
-                                    <span class="font-light">({{ $rows->total() }})</span>
-                                @endif
-                                <x-noerd::icons.chevron-down class="my-auto text-gray-500" />
-                            </button>
-                            <div
-                                x-show="open"
-                                x-transition
-                                x-cloak
-                                class="absolute left-0 z-90 mt-2 w-56 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                                role="menu"
-                                aria-orientation="vertical"
-                            >
-                                @foreach ($listViews as $viewKey => $view)
-                                    <button
-                                        type="button"
-                                        role="menuitem"
-                                        wire:click="switchListView('{{ $viewKey }}')"
-                                        x-on:click="open = false"
-                                        class="block w-full px-4 py-2 text-left text-sm {{ $viewKey === $activeListView ? 'font-semibold text-gray-900' : 'font-normal text-gray-700' }} hover:bg-gray-50"
-                                    >
-                                        {{ __($view['title']) }}
-                                        <span class="opacity-50">({{ $view['appLabel'] }})</span>
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
+                        <x-noerd::action-menu align="left" width="w-56" wrapperClass="relative">
+                            <x-slot:trigger>
+                                <button
+                                    type="button"
+                                    x-on:click="open = ! open"
+                                    class="flex cursor-pointer items-center gap-1 rounded focus:outline-hidden"
+                                    :aria-expanded="open"
+                                    aria-haspopup="true"
+                                    title="{{ __('Switch list view') }}"
+                                >
+                                    <span class="truncate">{{ $title }}</span>
+                                    @if (isset($rows) && ! is_array($rows))
+                                        <span class="font-light">({{ $rows->total() }})</span>
+                                    @endif
+                                    <x-noerd::icons.chevron-down class="my-auto text-gray-500" />
+                                </button>
+                            </x-slot:trigger>
+
+                            @foreach ($listViews as $viewKey => $view)
+                                <x-noerd::action-menu-item
+                                    wire:click="switchListView('{{ $viewKey }}')"
+                                    :active="$viewKey === $activeListView"
+                                >
+                                    {{ __($view['title']) }}
+                                    <span class="opacity-50">({{ $view['appLabel'] }})</span>
+                                </x-noerd::action-menu-item>
+                            @endforeach
+                        </x-noerd::action-menu>
                     @else
                         {{ $title }}
                         @if (isset($rows) && ! is_array($rows))

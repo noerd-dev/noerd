@@ -22,6 +22,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Relation Field Types](relation-field-types.md)
 - [Relation Forms](relation-forms.md)
 - [Modal System](modal.md)
+- [Action Menu](action-menu.md)
 - [Themes](themes.md)
 - [Brand (Colors & Branding)](brand.md)
 - [Navigation](navigation.md)
