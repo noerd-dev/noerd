@@ -3,6 +3,7 @@
     'field' => null,
     'name' => '',
     'options' => [],
+    'placeholder' => null,
     'live' => false,
     'readonly' => false,
 ])
@@ -10,6 +11,7 @@
 @php
     $name = $field['name'] ?? $name;
     $options = $field['options'] ?? $options;
+    $placeholder = $field['placeholder'] ?? $placeholder;
     $live = $field['live'] ?? $live;
     $readonly = $field['readonly'] ?? $readonly;
 @endphp
@@ -25,12 +27,10 @@
         @if ($readonly) disabled @endif
         id="{{ $name }}"
     >
-        @foreach ($options as $option)
-            @isset($option['value'])
-                <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
-            @else
-                <option>{{ __($option) }}</option>
-            @endisset
-        @endforeach
+        @include('noerd::components.forms.select-options', [
+            'options' => $options,
+            'name' => $name,
+            'placeholder' => $placeholder,
+        ])
     </select>
 </x-noerd::detail.numbered-row>

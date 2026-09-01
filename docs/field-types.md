@@ -335,6 +335,7 @@ These options are available for most field types:
 | `helpText` | string | - | Explanation shown as a tooltip behind a question-mark icon next to the label (translation key) |
 | `type` | string | `text` | Field type |
 | `colspan` | int | `3` | Width in grid columns (1-12) |
+| `default` | mixed | - | Value the form starts with while the field is null (see [Default Values](#default-values)) |
 | `required` | bool | `false` | Show required indicator on label |
 | `readonly` | bool | `false` | Make field read-only |
 | `live` | bool | `false` | Enable real-time updates (`wire:model.live.debounce`) |
@@ -360,6 +361,70 @@ field type in every theme (`default`, `compact`, `numbered`).
 ```
 
 > Not to be confused with the block-level `description` (on `type: block`), which is a visible sub-heading.
+
+
+### Default Values
+
+A form must never display a value it does not hold. A `<select>` bound to a null property has no
+matching `<option>`, so the browser shows the first one by pure HTML fallback — the user sees
+"Created", the component holds `null`, and `null` is what gets saved. Defaults therefore belong to
+the layout, not to a component's `mount()`.
+
+Two rules apply, in this order:
+
+1. **`default:`** — any field may declare its initial value. It is used while the bound value is
+   `null` (a missing key counts as null); `''`, `0` and `false` are answers and are never replaced.
+2. **First option of a select** — a `type: select` whose `options` are written in the YAML starts on
+   its first option. This is what makes the displayed value real, so it is persisted on save.
+
+```yaml
+- name: detailData.invoice_status
+  label: Status
+  type: select
+  options:
+    - value: created      # <- the default: shown AND saved
+
+      label: Created
+    - value: paid
+      label: Paid
+
+- name: detailData.priority
+  label: Priority
+  type: select
+  default: normal         # <- an explicit default wins over the first option
+
+  options:
+    - value: low
+      label: Low
+    - value: normal
+      label: Normal
+
+- name: detailData.size_class
+  label: Size Class
+  type: select
+  placeholder: '—'        # <- empty is a valid answer: no implicit default
+
+  options:
+    - value: micro
+      label: Micro
+    - value: large
+      label: Large
+```
+
+The implicit first-option rule deliberately does **not** apply to:
+
+- selects using `optionsMethod:`, where the list is built from data at runtime and "the first row
+  wins" would be arbitrary (a staff list, a person picker),
+- selects declaring `placeholder:`, which renders a leading empty option and states that no
+  selection is a valid state.
+
+Defaults are applied on mount and re-applied before every render, so they also fill an **existing**
+record whose column is `NULL` — such a record adopts the default the next time it is saved. Never
+re-implement this per component (`$this->detailData['status'] ??= …` in a custom `mount()`); it is
+generic in `NoerdDetail::applyLayoutDefaults()`.
+
+A select whose stored value matches none of its options renders that value as its own leading
+option, so a list that has drifted out of sync with the data never disguises one status as another.
 
 ---
 
@@ -628,8 +693,13 @@ method.
 | `optionsMethod` | string | - | Alternative to `options`: name of a component method returning the options array |
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
+| `placeholder` | string | - | Label of the leading empty option — declares that "nothing selected" is a valid answer |
 
 *Either `options` or `optionsMethod` must be set.
+
+**Defaults:** a select whose options are written in the YAML starts on its **first option**, and that
+value is persisted on the first save. Declare `placeholder:` when empty is a legitimate answer, or
+`default:` to start on a different option. See [Default Values](#default-values).
 
 **Option Format:**
 ```yaml
