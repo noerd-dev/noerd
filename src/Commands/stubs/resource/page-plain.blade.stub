@@ -1,0 +1,20 @@
+<?php
+
+use Livewire\Component;
+use Noerd\Traits\NoerdPage;
+
+new class extends Component {
+    use NoerdPage;
+}; ?>
+
+<x-noerd::page>
+    <x-slot:header>
+        <x-noerd::modal-title>{{ __('{{ModelTitle}}') }}</x-noerd::modal-title>
+    </x-slot:header>
+
+    <x-noerd::tab-content :layout="[]" :modelId="null" :showBlock="false">
+        <x-slot:tab1>
+            <p class="text-sm">{{ __('{{ModelTitle}} page content.') }}</p>
+        </x-slot:tab1>
+    </x-noerd::tab-content>
+</x-noerd::page>

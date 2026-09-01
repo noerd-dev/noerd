@@ -20,7 +20,7 @@ class ConfigPublishFixtureCommand extends NoerdInstallCommand
 {
     protected $signature = 'test:config-publish {--force : Overwrite existing files}';
 
-    public function handle()
+    public function handle(): int
     {
         $this->publishNoerdConfig();
 

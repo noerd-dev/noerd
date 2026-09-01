@@ -18,7 +18,6 @@ That's it. No migrations, no models, no controllers required.
 | `key` | Yes | Unique identifier in UPPERCASE (e.g., "CUSTOMERS") |
 | `buttonList` | No | Button text for creating new entries |
 | `description` | No | Optional description shown in the detail view |
-| `hasPage` | No | Whether collection entries have a CMS page (default: false) |
 | `fields` | Yes | Array of field definitions |
 
 ## Example: Simple Collection
@@ -31,7 +30,6 @@ titleList: Customers
 key: CUSTOMERS
 buttonList: 'New Entry'
 description: ''
-hasPage: false
 fields:
   - name: detailData.name
     label: Name

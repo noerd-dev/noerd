@@ -10,7 +10,7 @@ class NoerdUpdateCommand extends NoerdInstallCommand
 
     protected $description = 'Update noerd content files without running installation setup';
 
-    public function handle()
+    public function handle(): int
     {
         $this->info('Updating noerd content...');
 
@@ -19,14 +19,14 @@ class NoerdUpdateCommand extends NoerdInstallCommand
 
         if (!is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
-            return 1;
+            return self::FAILURE;
         }
 
         // Create target directory if it doesn't exist
         if (!is_dir($targetDir)) {
             if (!mkdir($targetDir, 0755, true)) {
                 $this->error("Failed to create target directory: {$targetDir}");
-                return 1;
+                return self::FAILURE;
             }
 
             $this->info("Created target directory: {$targetDir}");
@@ -54,10 +54,10 @@ class NoerdUpdateCommand extends NoerdInstallCommand
 
             $this->info('Noerd content successfully updated!');
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error updating noerd content: ' . $e->getMessage());
-            return 1;
+            return self::FAILURE;
         }
     }
 

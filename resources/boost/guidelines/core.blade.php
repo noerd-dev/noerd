@@ -17,7 +17,7 @@ below points into that folder — read the referenced page before building the f
   as `public ?string $detailRoute = '{app}.{entity}.detail';` (preferred — opens the record as a
   route modal and rewrites the URL) plus `public $detailComponent = 'module::x-detail';` as the
   fallback, at the top of the class. The trait
-  methods (`mount()`, `listAction()`, `listData()`, `rendering()`) are always used from `NoerdList` —
+  methods (`mount()`, `listAction()`, `listData()`, `renderingNoerdList()`) are always used from `NoerdList` —
   a slim component contains nothing else (reference: `src/Commands/stubs/module/list.stub`). Only when custom
   query logic is needed, override `listData()` (reference: `docs/list-view.md`, "Custom Query Logic"): build the query
   via `$this->listQuery($this->listModel)` (chain additional wheres/eager loads and
@@ -126,7 +126,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
         route: business-hours.settings
         heroicon: cog-6-tooth
 ```
-- However, when using icons in apps (tenant_apps), always use the icons defined in the respective app. An icon looks like this, an example is noerd::icons.media:
+- However, when using icons in apps (tenant_apps), always use the icons defined in the respective app. An icon looks like this, an example is noerd::icons.app:
 ```
 <div {{ $attributes->whereDoesntStartWith('class') }} {{ $attributes->merge(['class' => 'my-auto flex-1']) }}>
     <svg class="nc-icon mx-auto" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 48 48"><title>comments</title>
@@ -269,20 +269,20 @@ tabs:
   - number: 2
     label: module_tab_settings
 fields:
-  - name: model.name
+  - name: detailData.name
     label: Name
     type: text
     colspan: 6
-  - name: model.description
+  - name: detailData.description
     label: Description
     type: textarea
     colspan: 6
-  - name: model.setting_a
+  - name: detailData.setting_a
     label: Setting A
     type: checkbox
     colspan: 6
     tab: 2
-  - name: model.setting_b
+  - name: detailData.setting_b
     label: Setting B
     type: text
     colspan: 6
@@ -336,13 +336,21 @@ component**. A hand-rolled `store()` that mass-assigns `$this->detailData` direc
 payload with `RelationFormSync::strip($modelClass, $this->detailData)`. Reference:
 `docs/relation-forms.md`.
 
-### Select Events in Detail Components
-When a detail component has a relation field that opens a list modal for selection:
+### Relation Fields and Select Events in Detail Components
+A relation field (`type: {x}Relation`) is a REGISTERED type: the owning module registers it in its
+ServiceProvider via `RelationFieldRegistry::register('customerRelation', RelationFieldDefinition::model(
+listComponent: ..., detailRoute: ..., modelClass: ..., titleResolver: ...))`; the YAML references
+that type and nothing else. The generic `type: relation` does not exist and throws during rendering.
+The field component keeps the value and the display title in sync with the detail itself
+(`detailData.{field}` + `relationTitles.{field}`), so the detail needs no code for the common case.
 
-1. **Event Handler Method**: Name follows pattern `{entity}Selected` (e.g., `customerSelected`, `bookSelected`)
+When the detail must REACT to a selection (derive further fields, load defaults):
+
+1. **Event Handler Method**: Name follows pattern `{entity}Selected` (e.g., `customerSelected`, `bookSelected`) —
+   the event name is derived from the list component (`customers-list` → `customerSelected`) unless the
+   definition sets `selectEvent`
 2. **Use relationTitles array**: Always use `$this->relationTitles['field_id']` for the display value
 3. **Never create separate properties** like `$this->customer` or `$this->book` for relation display values
-4. **YAML relationField**: Must be `relationField: relationTitles.{field_id}`
 
 **Example PHP:**
 ```php
@@ -359,9 +367,8 @@ public function customerSelected($customerId): void
 ```yaml
 - name: detailData.customer_id
   label: Customer
-  type: relation
-  relationField: relationTitles.customer_id
-  modalComponent: customers-list
+  type: customerRelation
+  colspan: 6
 ```
 
 **Reference:** `docs/relation-field-types.md`
@@ -701,7 +708,7 @@ Pass the values directly as props instead of through the layout.
 | `title` | (optional) Section heading (translation key) |
 | `description` | (optional) Sub-heading text (translation key) |
 | `lazy` | (optional) Lazy-load the list (passed through to Livewire via the params array) |
-| `wireKey` | (optional) Explicit `wire:key`; defaults to a uuid of component + arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
+| `wireKey` | (optional) Explicit `wire:key`; defaults to a hash of component + arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
 
 **Important:**
 - `<x-noerd::detail-list>` is generic and lives in the noerd module — never duplicate it per module
@@ -792,9 +799,9 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
   sync). Keys: `title`, `detail:` (the embedded detail component, e.g. `crm::account-detail`),
   `quickCreate`, `tabs`, `relations`, `widgets`. A missing page YAML is fine
   (`StaticConfigHelper::getPageFields()` is silent on miss).
-- **Detail YAMLs are pure model forms** (mandatory): only `title`, `description`, `compact`,
-  `quickCreate`, `fields` (+ form-level `tabs`). `widgets:` and `relations:` NEVER belong in a
-  detail YAML — they are page concerns. A detail opened standalone renders just the form.
+- **Detail YAMLs are pure model forms** (mandatory): only `title`, `description`, `theme`,
+  `quickCreate`, `tabs`, `fields`, `actions` and `lists`. `widgets:` and `relations:` NEVER belong in
+  a detail YAML — they are page concerns. A detail opened standalone renders just the form.
 - The save roundtrip page↔detail is generic via trait events: page `store()` dispatches
   `storeDetail-{detail}`; the detail's `store()` ends in `finishStore($model)` which dispatches
   `detailStored-{detail}`; the page adopts the id and runs the protected hook
@@ -803,7 +810,7 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
 - Embed the detail in the page blade via
   `@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))` —
   `x-noerd::page` renders embedded components chrome-less automatically.
-- Reference: `docs/page-view.md` and the `page.blade.stub` rendered by `noerd:make-resource`
+- Reference: `docs/page-view.md` and the `page.blade.stub` rendered by `noerd:make-page`
   (`src/Commands/stubs/resource/page.blade.stub`).
 
 ### Settings Pages (NoerdSettingsPage)
@@ -833,8 +840,8 @@ YAML — never hand-written fields, never `NoerdDetail` with a bespoke tenant-ke
   types, `tab:`, `required:`, `showIf`/`showIfNot`, `helpText` as detail YAMLs. `colspan` is
   irrelevant: settings pages have NO grid, every field renders as a stacked full-width row in the
   built-in hidden `settings` theme. A `theme:` key in the YAML and the tenant-wide theme setting
-  (even enforced) are both ignored, and the noerd-pro layout manager NEVER applies — settings pages
-  can have no layout overrides. There is also no `custom_attributes` object manager.
+  (even enforced) are both ignored, and layout overrides NEVER apply — settings pages have no
+  layout overrides at all. There is also no `custom_attributes` object manager.
 - No `$detailPrimary`, no `$modelId`, no delete: the URL stays clean, the singleton row is created
   on first save via `updateOrCreate(['tenant_id' => …])` (stripping id/tenant_id/timestamps).
 - Blade skeleton: `<x-noerd::page>` + `<x-noerd::modal-title>` header +
@@ -931,7 +938,7 @@ fields:
     theme: default   # per-field override
 ```
 
-The legacy `view:` / boolean `compact:` keys are REMOVED — always use `theme:`.
+There is no `view:` or boolean `compact:` key on a detail YAML — the form layout is always `theme:`.
 
 **System-wide default (Setup → System Settings):** an admin preconfigures the theme for the whole
 system there; it is stored per tenant on `noerd_settings` (`detail_theme`, `detail_theme_enforced`),

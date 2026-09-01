@@ -2,14 +2,13 @@
     "name": "noerd/{{module-name}}",
     "description": "",
     "type": "library",
-    "version": "0.1.0",
-    "license": "proprietary",
     "require": {
-        "noerd/noerd": "^0.10"
+        "noerd/noerd": "{{noerd-constraint}}"
     },
     "autoload": {
         "psr-4": {
             "Noerd\\{{ModuleName}}\\": "src/",
+            "Noerd\\{{ModuleName}}\\Tests\\": "tests/",
             "Noerd\\{{ModuleName}}\\Database\\Factories\\": "database/factories/",
             "Noerd\\{{ModuleName}}\\Database\\Seeders\\": "database/seeders/"
         }

@@ -7,7 +7,7 @@ tests, translations) come from the `noerd/noerd` guideline — this block only a
 to this module.
 
 ### Purpose
-- Describe what the module manages here (main model: `{{Model}}`, table `{{models}}`).
+- Describe what the module manages here (main model: `{{Model}}`, table `{{table}}`).
 
 ### Structure
 - Models: `src/Models/` (`{{Model}}`), `$guarded = []`, `BelongsToTenant`
@@ -16,7 +16,10 @@ to this module.
 - YAML: `app-configs/{{module-name}}/lists/{{models}}-list.yml`,
   `app-configs/{{module-name}}/details/{{model}}-detail.yml`, `app-configs/{{module-name}}/navigation.yml`
   — keep the module copy and the installed project copy (`app-configs/{{module-name}}/…`) in sync
-- Routes: `routes/{{module-name}}-routes.php` (`{{module-name}}.index`)
+- Routes: `routes/{{module-name}}-routes.php` — middleware `['noerd', 'app-access:{{module-name}}']`, names
+  `{{module-name}}` (dashboard), `{{module-name}}.{{models}}` (list) and `{{module-name}}.{{model}}.detail` (record route used by
+  route modals)
+- Tenant app name is `{{MODULE_KEY}}` (uppercase) — gates and test traits compare exactly
 - Translations: `resources/lang/de.json` (English keys)
 - Migrations / factories / seeders / tests live inside the module
 

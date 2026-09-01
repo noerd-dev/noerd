@@ -26,17 +26,17 @@ class MakeListCommand extends Command
     public function handle(): int
     {
         $result = $this->initializeFromModel($this->argument('model'));
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
         $result = $this->selectApp($this->option('app'));
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
         $result = $this->readColumns();
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
@@ -52,11 +52,11 @@ class MakeListCommand extends Command
             $this->line('');
             $this->info('List files created successfully!');
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error creating list: ' . $e->getMessage());
 
-            return 1;
+            return self::FAILURE;
         }
     }
 }

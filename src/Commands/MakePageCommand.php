@@ -28,12 +28,14 @@ class MakePageCommand extends Command
         $this->initializeFromEntity($this->argument('name'));
 
         $result = $this->selectApp($this->option('app'));
-        if ($result !== 0) {
+        if ($result !== self::SUCCESS) {
             return $result;
         }
 
         try {
             $this->createPageBlade();
+
+            $this->createPageYaml();
 
             $this->addPageRoute();
 
@@ -42,11 +44,11 @@ class MakePageCommand extends Command
             $this->line('');
             $this->info('Page files created successfully!');
 
-            return 0;
+            return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error creating page: ' . $e->getMessage());
 
-            return 1;
+            return self::FAILURE;
         }
     }
 }

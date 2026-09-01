@@ -3,6 +3,7 @@
 namespace Noerd\{{ModuleName}}\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Noerd\{{ModuleName}}\Commands\{{ModuleName}}InstallCommand;
 use Noerd\{{ModuleName}}\Commands\{{ModuleName}}UpdateCommand;
 
@@ -10,23 +11,12 @@ class {{ModuleName}}ServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Load migrations
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-
-        // Load views with namespace
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', '{{module-name}}');
-
-        // Register Livewire component namespace and location
-        \Livewire\Livewire::addNamespace('{{module-name}}', viewPath: __DIR__ . '/../../resources/views/components');
-        \Livewire\Livewire::addLocation(viewPath: __DIR__ . '/../../resources/views/components');
-
-        // Load JSON translations
+        Livewire::addNamespace('{{module-name}}', viewPath: __DIR__ . '/../../resources/views/components');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
-
-        // Load routes
         $this->loadRoutesFrom(__DIR__ . '/../../routes/{{module-name}}-routes.php');
 
-        // Register commands
         if ($this->app->runningInConsole()) {
             $this->commands([
                 {{ModuleName}}InstallCommand::class,

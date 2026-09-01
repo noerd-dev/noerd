@@ -84,9 +84,7 @@ fields:
     required: true
   - name: detailData.customer_id
     label: Customer
-    type: relation
-    relationField: relationTitles.customer_id
-    modalComponent: customers-list
+    type: customerRelation         # a registered relation type (RelationFieldRegistry), never `relation`
     colspan: 6
   - name: detailData.active
     label: Active
@@ -96,8 +94,10 @@ fields:
 ```
 
 - Field names always carry the `detailData.` prefix; `required: true` is the only validation source.
-- Relation field → handler `{entity}Selected($id)` on the component sets
-  `$this->detailData['x_id']` and `$this->relationTitles['x_id']`; never add a display property.
+- Relation field → the field component syncs `detailData.x_id` and `relationTitles.x_id` itself; a
+  `{entity}Selected($id)` handler on the component is only needed to REACT to the selection (derive
+  further fields) and then writes `$this->detailData['x_id']` / `$this->relationTitles['x_id']`;
+  never add a display property.
 - Use `type: spacer` to keep an empty grid cell; use `type: block` for nested groups.
 - Tabs: `<x-noerd::tab-content>` renders them for you; hand-rolled panels must use
   `<x-noerd::tab-panels>` / `<x-noerd::tab-panel>`.

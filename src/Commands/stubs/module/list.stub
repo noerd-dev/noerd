@@ -8,9 +8,10 @@ new class extends Component {
     use NoerdList;
 
     public $listModel = {{Model}}::class;
+    public ?string $detailRoute = '{{module-name}}.{{model}}.detail';
+
     public $detailComponent = '{{module-name}}::{{model}}-detail';
-};
-?>
+}; ?>
 
 <x-noerd::page>
     <x-noerd::list/>

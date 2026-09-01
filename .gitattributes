@@ -2,12 +2,12 @@
 # at runtime. NOT excluded on purpose:
 # - demo/        -> read at runtime by noerd:demo (NoerdDemoCommand)
 # - dist/        -> the prebuilt frontend bundle published to public/vendor/noerd
+# - docs/        -> the Boost guideline and skills point agents at docs/*.md
 # - tests/TestCase.php, tests/HelperLoader.php, tests/helpers.php, tests/Traits/
 #                -> public test API for module developers
 #                   (`uses(Noerd\Tests\TestCase::class)` in every module test,
 #                    `Noerd\Tests\HelperLoader::load()` for suites that don't)
 /.github            export-ignore
-/docs               export-ignore
 /tests/Commands     export-ignore
 /tests/Components   export-ignore
 /tests/Feature      export-ignore

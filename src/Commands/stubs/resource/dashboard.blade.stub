@@ -1,41 +1,31 @@
 <?php
 
 use Livewire\Component;
-use Noerd\Traits\NoerdDetail;
+use Noerd\Traits\NoerdPage;
 
 new class extends Component {
-    use NoerdDetail;
-
-    public function mount(): void
-    {
-        $this->initDetail();
-    }
-
-    public function with(): array
-    {
-        return [];
-    }
+    use NoerdPage;
 }; ?>
 
 <x-noerd::page>
 
     <div class="mb-12">
         <div class="font-semibold text-sm border-b border-gray-300 pb-2">
-            Section 1
+            {{ __('Section 1') }}
         </div>
         <div class="flex">
-            <x-noerd::dashboard-card heroicon="rectangle-stack" title="Card 1" />
-            <x-noerd::dashboard-card heroicon="chart-bar" title="Card 2" />
+            <x-noerd::dashboard-card heroicon="rectangle-stack" :title="__('Card 1')" />
+            <x-noerd::dashboard-card heroicon="chart-bar" :title="__('Card 2')" />
         </div>
     </div>
 
     <div class="mb-12">
         <div class="font-semibold text-sm border-b border-gray-300 pb-2">
-            Section 2
+            {{ __('Section 2') }}
         </div>
         <div class="flex">
-            <x-noerd::dashboard-card heroicon="plus-circle" title="Card 3" />
-            <x-noerd::dashboard-card heroicon="cog-6-tooth" title="Card 4" />
+            <x-noerd::dashboard-card heroicon="plus-circle" :title="__('Card 3')" />
+            <x-noerd::dashboard-card heroicon="cog-6-tooth" :title="__('Card 4')" />
         </div>
     </div>
 
