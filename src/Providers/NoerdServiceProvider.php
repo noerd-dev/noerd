@@ -39,6 +39,7 @@ use Noerd\Commands\SuperAdminCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
@@ -54,6 +55,7 @@ use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
+use Noerd\Models\NoerdSettings;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -437,6 +439,8 @@ class NoerdServiceProvider extends ServiceProvider
         ThemeContext::clear();
         FieldContext::clear();
         CurrencyHelper::clearCache();
+        FormatHelper::clearCache();
+        NoerdSettings::clearCache();
         DatabaseSetupCollectionDefinitionRepository::resetCache();
         $this->app->make(ThemeRegistry::class)->clearCache();
     }

@@ -191,15 +191,16 @@
                     />
                 </a>
             @elseif ($type === 'date')
+                {{-- Rendered as text, not as <input type="date">: the browser would
+                     localise a date input by ITS locale, the list follows the user's. --}}
                 @if ($value)
-                    <input
-                        type="{{ $type }}"
+                    <span
                         wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-                        @if ($readOnly ?? true) readonly @endif
                         id="cell-{{ $column }}-{{ $row }}"
-                        class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                        value="{{ $value instanceof \Illuminate\Support\Carbon ? $value->format('Y-m-d') : $value }}"
-                    />
+                        class="cursor-pointer px-1.5 py-0.5 text-sm"
+                    >
+                        {{ \Noerd\Helpers\FormatHelper::date($value) }}
+                    </span>
                 @endif
             @elseif ($type === 'datetime')
                 @if ($value)
@@ -212,12 +213,12 @@
                 @endif
             @elseif ($type === 'number')
                 <input
-                    type="{{ $type }}"
+                    type="text"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     @if ($readOnly ?? true) readonly @endif
                     id="cell-{{ $column }}-{{ $row }}"
-                    class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5  @if(in_array($type, ['number'])) text-right @endif"
-                    value="{{ round((float)$value,2) }}"
+                    class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
+                    value="{{ is_numeric($value) ? \Noerd\Helpers\FormatHelper::number((float) $value, 2) : ($value ?? '') }}"
                 />
             @elseif ($type === 'currency')
                 <input

@@ -18,6 +18,12 @@
             </div>
         </x-noerd::box>
 
+        <x-noerd::box>
+            <div class="max-w-xl">
+                <livewire:noerd::profile.update-locale-form />
+            </div>
+        </x-noerd::box>
+
         @if (config('noerd.features.multi_tenant'))
             <x-noerd::box>
                 <div class="max-w-xl">

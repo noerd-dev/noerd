@@ -7,6 +7,7 @@ use Noerd\Models\NoerdUser;
 use Noerd\Rules\AtLeastOneTrue;
 use Noerd\Enums\Profile;
 use Noerd\Models\SetupLanguage;
+use Noerd\Support\Locales;
 use Noerd\Traits\AdministersNoerdUsers;
 use Noerd\Traits\NoerdDetail;
 
@@ -23,6 +24,7 @@ new class extends Component {
 
     public bool $sendPasswordResetMail = true;
     public string $userLocale = 'en';
+    public string $userFormatLocale = Locales::DEFAULT;
 
     public array $tenantAccess = [];
     public array $possibleTenants = [];
@@ -30,6 +32,17 @@ new class extends Component {
     public function localeOptions(): array
     {
         return SetupLanguage::getActive()->pluck('name', 'code')->toArray();
+    }
+
+    /**
+     * The formatting locale (numbers, dates, amounts) — separate from the
+     * interface language above.
+     *
+     * @return array<string, string>
+     */
+    public function formatLocaleOptions(): array
+    {
+        return Locales::options();
     }
 
     public function mount(): void
@@ -45,6 +58,7 @@ new class extends Component {
 
         $this->isOwner = $this->modelId && (int) $this->modelId === NoerdAuth::id();
         $this->userLocale = SetupLanguage::getDefaultCode();
+        $this->userFormatLocale = Locales::defaultFor($this->userLocale);
 
         $user = $this->modelId ? NoerdUser::find($this->modelId) ?? new NoerdUser() : new NoerdUser();
 
@@ -120,6 +134,7 @@ new class extends Component {
 
         if ($user->wasRecentlyCreated) {
             $user->locale = $this->userLocale;
+            $user->format_locale = Locales::isSupported($this->userFormatLocale) ? $this->userFormatLocale : Locales::defaultFor($this->userLocale);
 
             if ($this->sendPasswordResetMail) {
                 // Send password reset link instead of generated password

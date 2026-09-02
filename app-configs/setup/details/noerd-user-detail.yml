@@ -12,3 +12,8 @@ fields:
     type: select
     optionsMethod: localeOptions
     showIfNot: modelId
+  - name: userFormatLocale
+    label: Locale
+    type: select
+    optionsMethod: formatLocaleOptions
+    showIfNot: modelId

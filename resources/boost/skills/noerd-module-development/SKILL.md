@@ -93,6 +93,11 @@ No `use` of another optional module's classes/views/YAML; tests, traits (`tests/
 factories, seeders and migrations live inside the module; no module-specific code in the host
 project's `DatabaseSeeder`. Models use `$guarded`, never `$fillable`.
 
+Amounts, numbers and dates are never hard-coded (`number_format(..., ',', '.')`, `€`, `d.m.Y`):
+backend UI → `CurrencyHelper::format()` / `FormatHelper::date()`; documents (PDF, receipt, customer
+e-mail) → `CurrencyHelper::formatForDocument($x, $model->tenant_id)` / `FormatHelper::documentDate()`;
+payment payloads → `CurrencyHelper::codeForTenant()`. See `docs/formatting.md`.
+
 ## 7. Agent-readable guidelines for the module
 
 - `resources/boost/guidelines/core.blade.php` — module rules (purpose, YAML locations, component

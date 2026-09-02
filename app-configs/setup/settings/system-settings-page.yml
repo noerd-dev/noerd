@@ -5,7 +5,13 @@ fields:
     type: select
     optionsMethod: currencyOptions
     required: true
-    helpText: Select the currency for your company
+    helpText: Currency for the tenant
+  - name: detailData.locale
+    label: Locale
+    type: select
+    optionsMethod: localeOptions
+    required: true
+    helpText: Number and date format for documents (PDFs, receipts, e-mails)
   - name: detailData.detail_theme
     label: Theme
     type: select

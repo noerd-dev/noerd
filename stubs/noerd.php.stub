@@ -89,15 +89,14 @@ return [
     | Currency
     |--------------------------------------------------------------------------
     |
-    | Configure how currency values are formatted throughout the application.
-    | Used as the fallback when no tenant currency is selected in Setup.
+    | The installation-wide default currency (ISO 4217, one of
+    | Noerd\Helpers\CurrencyHelper::CURRENCIES). A tenant overrides it in
+    | Setup → System Settings; every amount in the system is an amount in the
+    | tenant currency.
     |
     */
     'currency' => [
-        'symbol' => '€',
-        'decimal_separator' => ',',
-        'thousands_separator' => '.',
-        'symbol_position' => 'after', // 'before' or 'after'
+        'default' => env('NOERD_CURRENCY', 'EUR'),
     ],
 
     /*
@@ -105,12 +104,15 @@ return [
     | Display Formats
     |--------------------------------------------------------------------------
     |
-    | Formats for list cells and CSV exports. Unset keys derive from the active
-    | locale: a German UI renders 31.12.2025, every other locale ISO-style
-    | 2025-12-31 (see Noerd\Helpers\FormatHelper).
+    | Number, date and currency FORMATTING (ICU). The locale is resolved per
+    | reader: the user's profile locale → the tenant locale (Setup → System
+    | Settings, also used for every document) → `locale` below → the default
+    | locale of the interface language (Noerd\Support\Locales). The remaining
+    | keys pin a format for the whole installation and win over the locale.
     |
     */
     'format' => [
+        'locale' => env('NOERD_FORMAT_LOCALE'),
         'date' => env('NOERD_FORMAT_DATE'),
         'datetime' => env('NOERD_FORMAT_DATETIME'),
         'decimal_separator' => env('NOERD_FORMAT_DECIMAL_SEPARATOR'),

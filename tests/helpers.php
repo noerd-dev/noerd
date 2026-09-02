@@ -343,3 +343,14 @@ if (! function_exists('ensureZzSettingsProfilesTable')) {
         });
     }
 }
+
+if (! function_exists('zzNormalizeSpaces')) {
+    /**
+     * ICU separates symbols and groups with U+00A0 / U+202F: collapse every
+     * kind of space to a plain one so assertions read like the screen.
+     */
+    function zzNormalizeSpaces(string $value): string
+    {
+        return (string) preg_replace('/[\s\x{00a0}\x{202f}]+/u', ' ', $value);
+    }
+}

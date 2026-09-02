@@ -16,7 +16,7 @@
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 
-    $currencyConfig = \Noerd\Helpers\CurrencyHelper::configForTenant(\Noerd\Helpers\NoerdAuth::user()?->selected_tenant_id);
+    $currencyConfig = \Noerd\Helpers\CurrencyHelper::configForTenant();
     $symbol = $currencyConfig['symbol'] ?? '€';
     $decSep = $currencyConfig['decimal_separator'] ?? ',';
     $thousSep = $currencyConfig['thousands_separator'] ?? '.';

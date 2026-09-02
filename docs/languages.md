@@ -13,6 +13,21 @@ Languages can be extended with any language you like — **entirely from your ow
 without a single change to the Noerd framework or its modules**. The optional CMS module ships its
 own, independent language management for its content; see its documentation.
 
+## Language vs. locale
+
+A language is not a number format. Noerd keeps the two apart:
+
+| | Language | Locale |
+|---|---|---|
+| **Decides** | Translation strings, translatable fields | How `1234.56`, the 3rd of September and an amount are written |
+| **List** | Per tenant, extensible (Setup → Languages) | Fixed in the core (`Noerd\Support\Locales::SUPPORTED`, e.g. `de-DE`, `en-US`) |
+| **Per user** | Profile → Language | Profile → Locale (backend UI: lists, details, dashboards) |
+| **Per tenant** | Default language for new users | Setup → System Settings → Locale (documents: PDFs, receipts, customer e-mails) |
+
+A user may combine German as the language with `en-US` as the locale and gets German labels with
+`$1,234.56` and `09/03/2026`. Everything about locales and the currency lives in
+[Currency, Numbers & Dates](formatting.md).
+
 ---
 
 ## 1. Adding an interface language (e.g. Danish)

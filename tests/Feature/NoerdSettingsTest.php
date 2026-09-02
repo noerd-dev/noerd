@@ -6,12 +6,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Support\Locales;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -72,6 +74,10 @@ fields:
     label: Zz Currency
     type: select
     optionsMethod: currencyOptions
+  - name: detailData.locale
+    label: Zz Locale
+    type: select
+    optionsMethod: localeOptions
   - name: detailData.detail_theme
     label: Zz Theme
     type: select
@@ -234,5 +240,65 @@ describe('Theme setting', function (): void {
             ->set('detailData.detail_theme', 'does-not-exist')
             ->call('store')
             ->assertHasErrors(['detailData.detail_theme']);
+    });
+});
+
+describe('Tenant locale setting', function (): void {
+    it('defaults to the locale of the interface language when no setting exists', function (): void {
+        $user = createUserWithSetupTenant();
+        app()->setLocale('de');
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->assertSet('detailData.locale', 'de-DE');
+    });
+
+    it('loads an existing locale from the database', function (): void {
+        $user = createUserWithSetupTenant();
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'locale' => 'en-GB']);
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->assertSet('detailData.locale', 'en-GB');
+    });
+
+    it('saves the locale and makes it the document locale at once', function (): void {
+        withZzSettingsLayout(function (): void {
+            $user = createUserWithSetupTenant();
+
+            Livewire::actingAs($user)
+                ->test('noerd::system-settings-page')
+                ->set('detailData.locale', 'en-US')
+                ->call('store')
+                ->assertHasNoErrors();
+
+            $this->assertDatabaseHas('noerd_settings', [
+                'tenant_id' => $user->selected_tenant_id,
+                'locale' => 'en-US',
+            ]);
+
+            expect(FormatHelper::tenantLocale($user->selected_tenant_id))->toBe('en-US');
+        });
+    });
+
+    it('rejects a locale outside the fixed list', function (): void {
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->set('detailData.locale', 'xx-XX')
+            ->call('store')
+            ->assertHasErrors(['detailData.locale']);
+    });
+
+    it('offers exactly the supported locales', function (): void {
+        $user = createUserWithSetupTenant();
+
+        $options = Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->instance()
+            ->localeOptions();
+
+        expect(array_keys($options))->toBe(Locales::SUPPORTED);
     });
 });
