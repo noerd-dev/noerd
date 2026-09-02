@@ -82,16 +82,15 @@ The package's own stylesheet (`resources/css/noerd.css`, imported into `resource
 block. That block exists purely to **register** the Tailwind utilities: `bg-brand-primary` compiles
 to `background-color: var(--color-brand-primary)`, never to a literal value.
 
-`cssCustomProperties()` is emitted by the app layout
-(`app-modules/noerd/resources/views/layouts/app.blade.php`) inside the `:root { … }` style block and
+`cssCustomProperties()` is emitted by the app layout (`resources/views/layouts/app.blade.php`
+in the package, rendered as `noerd::layouts.app`) inside the `:root { … }` style block and
 re-declares the same custom properties, so the resolved values take effect at runtime. The effective
 colors therefore always come from the config, and changing `NOERD_BRAND` or an override needs **no
 CSS rebuild**.
 
-> Do not reintroduce the palette as literal values in a `tailwind.config.js` `theme.extend.colors`
+> Do not declare the palette as literal values in a `tailwind.config.js` `theme.extend.colors`
 > block. Tailwind would then compile the utilities to fixed hex values and `BrandService` could no
-> longer override them. Earlier noerd versions generated exactly such a config plus a `@config` line
-> in `app.css`; `noerd:update` offers to remove both.
+> longer override them — the installation needs no `tailwind.config.js` at all.
 
 ## Branding Assets
 

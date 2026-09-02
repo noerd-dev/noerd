@@ -10,7 +10,7 @@ noerd is a Laravel Livewire boilerplate for building admin panels and business a
 - **Multi-Tenancy** — Built on a flexible multi-tenant architecture with complete data isolation. Users can belong to multiple tenants, manage environments like development, staging, and production, and handle multiple clients or enterprise groups from a single installation.
 - **YAML-Based Configuration** — Define lists, detail views, forms, and navigation through simple YAML files. Customize your instance without touching code—just configure tables, detail-views, and navigations to fit your needs.
 - **Multi-Language Admin Panel** — A fully translatable interface with built-in language management.
-- **App Management** — Create custom business apps for purchasing, sales, or any department. Alternatively, use ready-made apps like Booking or CMS to get started quickly.
+- **App Management** — Create custom business apps for purchasing, sales, or any department, or install ready-made app modules built on noerd.
 - **AI-Powered Development** — An AI-ready boilerplate designed for rapidly building apps and tools. The YAML-driven architecture enables AI assistants to generate and modify components efficiently.
 
 ## Requirements
@@ -35,6 +35,14 @@ The install command can be run in a fresh or an existing Laravel application. Du
 
 If you skip any of these steps, you can run them later with the respective [Artisan commands](artisan-commands.md).
 
+Besides the interactive steps, `noerd:install` publishes the setup app configs to `app-configs/setup/`,
+publishes `config/noerd.php`, sets `component_layout` in `config/livewire.php` to `noerd::layouts.app`
+(publishing the Livewire config first when needed), adds an `app-modules` test suite to
+`phpunit.xml`, creates the `app-modules/` directory, scaffolds the frontend (see below) and publishes
+the public assets to `public/vendor/noerd` (`vendor:publish --tag=noerd-assets`). Non-interactive
+runs (CI) pass `--force --migrate --build --demo` explicitly — see
+[noerd:install](artisan-commands.md#noerdinstall).
+
 ### Created Tables
 
 | Table | Description |
@@ -49,6 +57,25 @@ If you skip any of these steps, you can run them later with the respective [Arti
 | `setup_collection_entries` | Entries in collections |
 | `setup_collection_definitions` | Collection schemas when `noerd.collections.mode` is `database` |
 | `setup_languages` | Per-tenant admin-panel languages |
+| `noerd_logins` | Login history (IP, user agent, impersonating admin) recorded on every login |
+
+The mixed table names are intentional: the tenancy tables (`tenants`, `tenant_apps`, `tenant_app`,
+`users_tenants`) and the `setup_*` tables keep their short names, everything user- and
+settings-related is prefixed `noerd_*`. Password resets use Laravel's default `password_reset_tokens`
+table, which the standard `0001_01_01_000000_create_users_table` migration of every Laravel
+application creates — noerd does not ship it.
+
+### Routes
+
+All core routes are named with the `noerd.` prefix. The `/setup` area (middleware `noerd` +
+`setup`, admins only) registers `noerd.setup`, `noerd.users`, `noerd.user.detail`, `noerd.tenants`,
+`noerd.tenant.detail`, `noerd.create-tenant`, `noerd.tenant-apps`, `noerd.setup-collections`,
+`noerd.setup-collection.detail`, `noerd.setup-collection-definitions`,
+`noerd.setup-collection-definition.detail`, `noerd.setup-languages`, `noerd.setup-language.detail`
+and `noerd.system-settings`. The apps dashboard is `noerd.apps` (`/noerd-apps`); under the
+configurable URL prefix live `noerd.profile`, `noerd.no-tenant`, `noerd.component-page` and the
+auth routes (`noerd.login`, `noerd.password.request`, `noerd.password.reset`). See
+[Authentication](auth.md#routes--url-prefix).
 
 ### Authentication
 
@@ -87,9 +114,10 @@ npm install
 npm run build     # or: npm run dev
 ```
 
-> Installations created before the brand palette became CSS-first still carry a generated
-> `tailwind.config.js` and a `@config` line in `app.css`. `noerd:update` offers to remove both; a
-> config you customised yourself is only reported, never touched. See [Brand](brand.md).
+The injected `app.css` directives reference the package by its Composer path
+(`@import '../../vendor/noerd/noerd/resources/css/noerd.css';` and matching `@source` lines) — an
+installation that loads noerd from another location (e.g. a path repository) must point them there
+itself. The brand palette is CSS-first, no `tailwind.config.js` is needed (see [Brand](brand.md)).
 
 ## Configuration
 
@@ -98,8 +126,16 @@ npm run build     # or: npm run dev
 - `features.multi_tenant` (`NOERD_MULTI_TENANT`) — tenant switcher and multi-tenant UI. Enabled
   by default; `noerd:install` does not write this flag to `.env` — set `NOERD_MULTI_TENANT=false`
   yourself to disable it
+- `features.new_tenant` (`NOERD_NEW_TENANT_FEATURE_ENABLED`) — lets admins create further tenants
+  from the tenant switcher / quick menu
 - `features.currency` (`NOERD_CURRENCY_ENABLED`) — set to `false` to hide currency-related UI on
   installations that don't need it
+- `currency.*` — `symbol`, `decimal_separator`, `thousands_separator`, `symbol_position` — the
+  installation-wide fallback for currency rendering (a tenant may override the currency in
+  Setup → System Settings)
+- `format.*` — `date`, `datetime`, `decimal_separator`, `thousands_separator` (`NOERD_FORMAT_*`)
+  and `csv_delimiter` (`NOERD_CSV_DELIMITER`, default `;`) for list cells and CSV exports; unset
+  keys derive from the active locale
 - `auth.guard` (`NOERD_AUTH_GUARD`) / `auth.set_as_default` (`NOERD_AUTH_DEFAULT`) — noerd's
   dedicated auth guard (see [Authentication](auth.md))
 - `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))

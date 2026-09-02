@@ -27,8 +27,8 @@ another user model), define the key in your `config/auth.php` and noerd will use
 ```
 
 - `guard` — the guard noerd registers and authenticates against. Setting `NOERD_AUTH_GUARD=web`
-  restores the legacy behavior: the guard already exists, nothing is injected, and noerd runs on
-  the host's default guard exactly as before.
+  makes noerd run on the host's `web` guard: that guard already exists, so nothing is injected and
+  noerd authenticates against the host's user provider.
 - `model` — the Authenticatable backing the noerd user provider.
 - `set_as_default` — when `true`, noerd also flips `auth.defaults.guard` / `auth.defaults.passwords`
   to the noerd guard at runtime. This is an escape hatch for hosts that still protect routes with
@@ -58,18 +58,28 @@ route. Because it is unnamed and registered before the host's routes, a starter 
 `NoerdServiceProvider` registers two shared route middleware groups:
 
 ```php
-$router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', 'verified']);
+$router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', 'verified', EnsureTenantMembership::class]);
 $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':noerd']);
 ```
+
+`Noerd\Middleware\EnsureTenantMembership` re-checks on every request that the user still belongs
+to the tenant selected in the session; a revoked membership falls back to another tenant of the
+user (or to none, which routes them to the no-tenant screen) instead of keeping the revoked
+tenant's data in scope until the next login.
 
 Every noerd-based module protects its routes with `['noerd', 'app-access:{module}']` instead of
 `['web', 'auth', 'verified']`. `app-access` is a **core** middleware alias (registered by
 `NoerdServiceProvider`, backed by `Noerd\Middleware\AppAccessMiddleware`) that takes the app key as
-its parameter: `app-access:crm` only lets requests through when the selected tenant has the CRM app
-assigned and the per-app authorization gate allows it. Without it, any authenticated user of any
-tenant app can open the module's screens. The `noerd:module` scaffolder currently generates routes
-with the `noerd` group only — add the `app-access:{module}` alias when hardening the generated
-routes (see [Creating Modules](creating-modules.md)).
+its parameter: `app-access:inventory` only lets requests through when the selected tenant has the
+`inventory` app assigned and the per-app authorization gate allows it; it also selects that app in
+the session, so a deep link always lands in the right app. Without it, any authenticated user of
+any tenant app can open the module's screens. The `noerd:module` scaffolder and the
+`noerd:make-*` generators emit routes wrapped in `['noerd', 'app-access:{app}']` (see
+[Creating Modules](creating-modules.md)). Two further aliases exist: `setup` (the `/setup` area,
+admin only) and `action-permission:{key}` (see [Permissions](permissions.md)).
+
+`Noerd\Middleware\SetUserLocale` is pushed onto the global `web` group and applies the noerd
+user's UI language on every request, including Livewire updates (see [Languages](languages.md)).
 
 `Noerd\Middleware\NoerdAuthenticate` extends Laravel's `Authenticate` and pins the guest redirect
 to `route('noerd.login')`; `Noerd\Middleware\NoerdRedirectIfAuthenticated` extends
@@ -118,9 +128,15 @@ login) needs no special setup:
    guard; host users keep logging in via their own stack (e.g. their own `/login`) against `web`.
 
 Both guards share the session cookie but store independent login keys
-(`login_noerd_<uuid>` vs `login_web_<uuid>`) and separate remember-me cookies — a user can be
+(`login_noerd_<sha1>` vs `login_web_<sha1>`) and separate remember-me cookies — a user can be
 logged in to both sides at once. noerd's logout only ends the noerd session and clears noerd's
-session state (`noerd.*` keys); the host session survives.
+session state (the `noerd` session key and `impersonating_from`); the host session survives.
+
+Whenever the noerd guard adopts a user — the `Login` event and every `Authenticated` event
+(session-resumed requests, `actingAs()` in tests) — the `Noerd\Listeners\InitializeTenantSession`
+listener seeds the tenant session from the user's persisted tenant selection (or the first tenant
+the user belongs to) if no tenant is selected yet; `Login` additionally records the login in
+`noerd_logins`.
 
 **Caveat — packages with their own guard list:** packages that resolve the acting user from a
 configured guard list (e.g. `owen-it/laravel-auditing` via `config/audit.php` → `user.guards`)
@@ -131,22 +147,10 @@ table, keyed by email. If a host user and a noerd user share the same email addr
 reset on one side invalidates the other side's pending token. Define `auth.passwords.noerd_users`
 with your own `table` in `config/auth.php` to separate them.
 
-## Upgrading existing installations
-
-Before this guard existed, `noerd:install` wrote `AUTH_MODEL=Noerd\Models\NoerdUser` to `.env` and
-noerd ran on the host's default `web` guard. After updating:
-
-- The default `guard => 'noerd'` takes effect immediately. Sessions are stored per guard name, so
-  every user is logged out **once** and simply logs in again — no data changes.
-- Remember-me cookies are also per guard name and are re-issued on the next "remember" login.
-- A stale `AUTH_MODEL` entry in `.env` is harmless and can be removed.
-- To defer the switch, set `NOERD_AUTH_GUARD=web` — this restores the previous behavior unchanged
-  (the legacy `.env` `AUTH_MODEL` hijack keeps working where the host's `config/auth.php` reads it).
-
 ## Testing
 
-The test environments point `auth.defaults.guard` at the noerd guard (see
-`app-modules/noerd/tests/TestCase.php` and the host `tests/TestCase.php`), so guard-less
-`actingAs($user)` calls authenticate on the same guard the `noerd` route group checks. Mechanics
-are covered by `app-modules/noerd/tests/Feature/NoerdGuardTest.php` — including the coexistence
-scenario (a second guard's user must never affect tenant scoping) and logout isolation.
+The package test case (`Noerd\Tests\TestCase`) points `auth.defaults.guard` at the noerd guard —
+do the same in a host's `tests/TestCase.php` — so guard-less `actingAs($user)` calls authenticate
+on the same guard the `noerd` route group checks. Mechanics are covered by
+`tests/Feature/NoerdGuardTest.php` — including the coexistence scenario (a second guard's user must
+never affect tenant scoping) and logout isolation.

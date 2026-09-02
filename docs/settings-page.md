@@ -8,13 +8,13 @@ component only declares which models the page edits.
 Settings pages differ from details/pages in four hard rules:
 
 1. **Always YAML-configured** — the layout comes exclusively from
-   `settings/{component}.yml`. Layout overrides never apply (no tenant or per-user
-   overrides), and there is no `custom_attributes` object manager.
+   `settings/{component}.yml`. Layout overrides never apply (the settings loader skips
+   the override hook entirely), and there is no `custom_attributes` object manager.
 2. **No grid** — every field renders stacked, full width, in the built-in `settings`
    theme. A `theme:` key in the YAML is ignored; the tenant-wide form theme (even an
    enforced one) does not apply either.
 3. **No URL model parameter** — a settings page never declares `$detailPrimary` and never
-   uses `$modelId`; the URL stays clean (`/liefertool-settings`, not `?settingsId=`).
+   uses `$modelId`; the URL stays clean (`/inventory/settings`, not `?settingsId=`).
 4. **No delete path** — the singleton row is created on first save
    (`updateOrCreate(['tenant_id' => …])`) and never deleted from the page.
 
@@ -57,28 +57,41 @@ keys are declared on the component. A settings page may edit SEVERAL models at o
 
 ```php
 public array $settingsModels = [
-    'detailData' => LiefertoolSettings::class,
-    'coredata' => Coredata::class,
+    'detailData' => InventorySettings::class,
+    'notificationData' => NotificationSettings::class,
 ];
 
-public array $coredata = [];
+public array $notificationData = [];
 ```
 
 On mount each model is resolved with `firstOrNew(['tenant_id' => $tenantId])` and
 hydrated into its property; `store()` validates from the layout and persists every model
-with `updateOrCreate(['tenant_id' => $tenantId], …)` (stripping `id`, `tenant_id` and
-timestamps).
+with `updateOrCreate(['tenant_id' => $tenantId], …)`, writing only the keys the settings
+YAML binds for that property (`id`, `tenant_id` and timestamps are always stripped). Both
+are guarded: `canWriteObject()` checks the object-write gate of every declared model.
 
 ### Custom mount / store
 
 Like `NoerdDetail`, the trait methods are overridable. A custom `mount()` starts with
-`$this->initSettings()`; a custom `store()` (extra validation, cache busting) ends with
-the reusable tail:
+`$this->initSettings()` (protected); a custom `store()` (extra validation, cache busting)
+keeps the guard and ends with the reusable tail:
 
 ```php
+public function mount(): void
+{
+    $this->initSettings();
+
+    // effective defaults for a tenant without a settings row
+    $this->detailData['currency'] = $this->detailData['currency'] ?? 'EUR';
+}
+
 public function store(): void
 {
-    // ... custom validation, addError() + return on failure ...
+    if (! $this->canWriteObject()) {
+        return;
+    }
+
+    // ... custom validation ($this->validate([...])) ...
 
     $this->validateFromLayout();
 
@@ -123,6 +136,8 @@ fields:
 
 Loading goes through `StaticConfigHelper::getSettingsFields()`, which deliberately skips
 the layout-override hook and the tenant theme setting and forces `theme: settings`.
+Select options may come from component methods (`optionsMethod:` on `type: select`,
+`picklistField:` on `type: picklist`) exactly like in a detail YAML.
 
 ## The `settings` theme
 
@@ -138,7 +153,10 @@ The `settings/` folder is published by the module install/update commands exactl
 
 ## Reference
 
-In-tree reference implementations: `liefertool::liefertool-settings-page` (two models,
-two tabs, custom `store()` validation, extra Blade in a `tab2` slot) and
-`liefertool::sms-page` (the slimmest form — no methods at all). Trait mechanics are
-covered by `tests/Feature/SettingsPageTraitTest.php`.
+The shipped in-package example is the setup app's **System Settings** page
+(`noerd::system-settings-page`, `resources/views/components/system-settings-page.blade.php`
+with `app-configs/setup/settings/system-settings-page.yml`): one model (`NoerdSettings`),
+select options from component methods (`currencyOptions()`, `themeOptions()`), effective
+defaults set in a custom `mount()`, and a custom `store()` with extra validation and cache
+busting that ends in the trait tail. Trait mechanics are covered by
+`tests/Feature/SettingsPageTraitTest.php` and `tests/Feature/SettingsPageWriteGuardTest.php`.

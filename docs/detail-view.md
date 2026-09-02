@@ -1,4 +1,4 @@
-# Create a Detail View
+# Detail View
 
 Detail pages display and edit individual records with forms.
 
@@ -18,42 +18,42 @@ app-modules/{module}/resources/views/components/{name}-detail.blade.php
 
 ## YAML Configuration
 
-Example: `app-configs/accounting/details/customer-detail.yml`
+Example: `app-configs/inventory/details/item-detail.yml`
 
 ```yaml
-title: Customer Details
+title: Item
 description: ''
 tabs:
   - number: 1
     label: Master Data
-  - label: Invoices
-    component: invoices-list
+  - number: 2
+    label: Pricing
+  - label: Stock Movements
+    modalRoute: inventory.item.movements
+    component: inventory::stock-movements-list
     arguments:
-      customerId: $customerId
+      itemId: $modelId
     requiresId: true
 fields:
   - name: detailData.name
     label: Name
     type: text
     required: true
-  - name: detailData.company_name
-    label: Company Name
+  - name: detailData.sku
+    label: SKU
     type: text
-  - name: detailData.email
-    label: Email
-    type: text
-  - name: detailData.phone
-    label: Phone
-    type: text
-  - name: detailData.address
-    label: Address
-    type: text
-  - name: detailData.zipcode
-    label: Zip Code
-    type: text
-  - name: detailData.city
-    label: City
-    type: text
+  - name: detailData.description
+    label: Description
+    type: textarea
+    colspan: 12
+  - name: detailData.price
+    label: Price
+    type: currency
+    tab: 2
+  - name: detailData.is_active
+    label: Active
+    type: checkbox
+    tab: 2
 ```
 
 ## Detail Properties
@@ -73,19 +73,75 @@ fields:
 
 ## Tab Properties
 
+A tab is either a **panel** (`number:` — its fields are the YAML fields with the matching `tab:`,
+plus the Blade slots below) or a **link** that opens something else. Tabs are rendered by
+`<x-noerd::tabs>` (`resources/views/components/tabs.blade.php`).
+
 | Property | Description |
 |----------|-------------|
-| `number` | Tab index (1-based) |
+| `number` | Panel index (1-based) |
 | `label` | Tab label (translation key) |
-| `component` | Embedded Livewire component |
-| `arguments` | Arguments passed to embedded component; the `$modelId` token resolves to the current record id |
-| `requiresId` | Only show tab when editing existing record |
+| `modalRoute` | Named route opened as a MODAL via `$modalRoute(...)` instead of switching panels — for an addressable target (see [Modals](modal.md#route-modals)). The tab also carries the route's URL as `href` (cmd/ctrl-click, "open in new tab"); `routeParameters` fills the route parameters |
+| `component` | Livewire component opened as a MODAL via `$modal(...)` — it is never embedded inline. Also the fallback for a `modalRoute` that is not registered |
+| `arguments` | Arguments passed to the modal (`modalRoute` and `component`): the `$modelId` token resolves to the current record id, `$property` to any public property of the component, everything else passes through unchanged |
+| `route` | Named route the tab navigates to (`wire:navigate`); rendered active while the current request matches it |
+| `routable` | With `component`: the tab additionally links to the generic `noerd.component-page` route (`/noerd/component-page/{componentName}`) so the component is addressable as a full page |
+| `requiresId` | Only show the tab when editing an existing record |
 | `permission` | Gate ability required to see the tab; `permissionModel` (optional) is passed as the ability's model argument |
 | `viewExists` | View name — the tab is hidden when that view is not registered (safe reference to an optional module) |
 | `showIf` | Reactive client-side visibility: a `$wire` property name (string) or `{field: ..., value: ...}` |
-| `modalRoute` | Named route opened as a modal instead of switching panels (with optional `routeParameters`) |
-| `route` | Named route the tab navigates to (full page load) |
-| `routable` | With `component`: makes the tab addressable via the generic `/noerd/component-page/{componentName}` route |
+
+`requiresId`, `permission` and `viewExists` are evaluated on the server
+(`Noerd\Support\TabVisibility::renders()`), `showIf` becomes an Alpine `x-show`.
+
+### `<x-noerd::tab-content>` Slots
+
+`<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />` renders the tab bar, the
+`<x-noerd::tab-panels>` and, per panel, the YAML fields of that tab. Extra markup is added through
+named slots — no hand-rolled panels needed:
+
+| Slot / prop | Description |
+|-------------|-------------|
+| `tab{n}` | Markup rendered BELOW the YAML fields of panel `n` (`<x-slot:tab2>…</x-slot:tab2>`) |
+| `prependTab{n}` | Markup rendered ABOVE the YAML fields of panel `n` |
+| default slot | Shorthand for `tab1` — a single-tab detail passes its extra markup directly |
+| `:showBlock="false"` | Skip the YAML field block entirely and render only the slots (custom, non-YAML bodies — pass `:layout="[]"`) |
+| `:quickCreate` | Explicit override of the quick-create mode (normally read from the layout) |
+
+```blade
+<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
+    <x-slot:prependTab1>
+        <x-noerd::info-box>{{ __('Changes are applied immediately.') }}</x-noerd::info-box>
+    </x-slot:prependTab1>
+
+    <x-slot:tab2>
+        <x-noerd::detail-list component="inventory::stock-movements-list" :arguments="['itemId' => $modelId]" />
+    </x-slot:tab2>
+</x-noerd::tab-content>
+```
+
+Tabs with `component:`/`modalRoute:` open a modal and render no panel; without a `tabs:` key
+the fields render as a single panel and no tab bar. In quick-create mode only the required (or
+`quickCreate: true`) fields render as one column and every slot is skipped.
+
+### Hand-Written Tabs: `<x-noerd::tab>`
+
+`<x-noerd::tabs>` also accepts hand-written `<x-noerd::tab>` children when a page needs tabs the
+YAML cannot express. Props: `tabNumber` (panel switch), `route` + `routeParameters` (+ `active`)
+for navigation, `modalRoute` / `component` + `arguments` for a modal target, and `external` — a
+`route:` tab with `external` opens in a new browser tab (`target="_blank"`) instead of navigating
+in place:
+
+```blade
+<x-noerd::tabs>
+    <x-noerd::tab :tabNumber="1">{{ __('General') }}</x-noerd::tab>
+    <x-noerd::tab route="inventory.item.preview" :routeParameters="['modelId' => $modelId]" external>
+        {{ __('Preview') }}
+    </x-noerd::tab>
+</x-noerd::tabs>
+```
+
+`<x-noerd::tabs>` takes an optional `actions` slot rendered right-aligned in the tab bar.
 
 ### Hand-Rolled Tab Panels
 
@@ -109,7 +165,7 @@ expression for reactive visibility on top of the tab switch:
 | `name` | Property path (e.g., `detailData.name`) |
 | `label` | Field label (translation key) |
 | `helpText` | Explanation shown as a tooltip behind a question-mark icon next to the label (translation key); works in every theme |
-| `type` | Field type (text, textarea, checkbox, relation, etc.) |
+| `type` | Field type (`text`, `textarea`, `checkbox`, a registered `*Relation` type, …) |
 | `required` | Mark field as required |
 | `readonly` | Render the field read-only/disabled (also forced on every field when the user's object permission denies writing, see below) |
 | `colspan` | Grid column span (1-12) |
@@ -152,11 +208,12 @@ default with enforcement.
 
 ## Read-Only Rendering on Write-Denied Objects
 
-When the `noerd.object-write` gate (see `AccessHelper`) denies **write** for the detail's
-`$detailModel`, the whole YAML form renders read-only —
-in every theme. The mechanism is a single seam in the detail block: it consults the hosting
-component's `canWriteObject()` and forces `readonly: true` onto every field before the element
-templates and relation-field props are resolved. Text inputs/textareas get the `readonly`
+When the object gates (see `AccessHelper`) deny saving the detail's `$detailModel` — write for an
+existing record, create for a new one — the whole YAML form renders read-only, in every theme.
+The mechanism is a single seam in the detail block: it consults the hosting component's
+`canSaveObject()` (falling back to `canWriteObject()` on bespoke components that expose only that)
+and forces `readonly: true` onto every field before the element templates and relation-field props
+are resolved. Text inputs/textareas get the `readonly`
 attribute, selects/picklists/checkboxes are `disabled`, upload and picker affordances are hidden,
 the rich-text editor becomes non-editable, and `type: button` fields render disabled. Relation
 field components additionally guard their wire-reachable mutators (`clear()`, selection) on the
@@ -167,14 +224,15 @@ Notes:
 - The client-side readonly state is a UX affordance — the security boundary stays the
   `store()`/`delete()` guards in `NoerdDetail`/`NoerdPage`.
 - Hand-written markup in tab slots (custom `tab1` content, embedded components) is NOT covered by
-  the generic mechanism. Hosts with such markup consult `$this->canWriteObject()` themselves and
+  the generic mechanism. Hosts with such markup consult `$this->canSaveObject()` themselves and
   disable their controls accordingly.
-- Components without `canWriteObject()` (no `NoerdDetail`/`NoerdPage`) are never restricted.
+- Components without `canSaveObject()`/`canWriteObject()` (no `NoerdDetail`/`NoerdPage`) are
+  never restricted.
 
 ## Position Tables
 
-Documents with line items (order, quote, invoice, order confirmation, production planning) render
-their **positions** as a hand-written table, not through the YAML field grid. That table still
+Documents with line items (orders, quotes, invoices) render their **positions** as a hand-written
+table, not through the YAML field grid. That table still
 follows the active theme — never hardcode a control class string in a module again.
 
 Generic components, all in the noerd module:
@@ -227,7 +285,7 @@ unchanged.
 **Row component** — accepts the theme and its row number as props (never call `detailTheme()` here:
 a row component has no page layout of its own):
 
-```blade
+```php
 public string $theme = 'default';
 public ?int $number = null;
 
@@ -283,17 +341,17 @@ instead (otherwise the row would render twice):
 
 The explicit component also remains the right tool for hand-built (non-YAML) action layouts, and
 for a detail that must show its actions when rendered **embedded** in a hosting page (the embedded
-chrome renders only the slot, so the auto-render never runs there — see `pdm::assembly-detail`).
+chrome renders only the slot, so the auto-render never runs there).
 
 ### YAML Configuration
 
 ```yaml
-title: Lead
+title: Item
 actions:
-  - label: Transfer to Account
-    action: transferToAccount
-    heroicon: arrows-right-left
-    confirm: Transfer this lead to a new account?
+  - label: Archive
+    action: archive
+    heroicon: archive-box
+    confirm: Archive this item?
 fields:
   - name: detailData.name
     label: Name
@@ -324,9 +382,10 @@ not registered and that has no `modalComponent` is not rendered at all. See
 
 ```yaml
 actions:
-  - label: Open Account
-    route: crm.account.detail
-    modalComponent: crm::account-page   # fallback if the CRM module is absent
+  - label: Open Supplier
+    route: inventory.supplier.detail
+    modalComponent: inventory::supplier-detail   # fallback if the route is not registered
+    viewExists: inventory::components.supplier-detail
     heroicon: building-office
     arguments:
       modelId: $modelId
@@ -340,15 +399,15 @@ reload. Both keys may sit on the same action (combined with AND):
 
 ```yaml
 actions:
-  - label: Send account invitation
-    action: sendAccountInvite
-    heroicon: envelope
-    showIf: hasEmail
-    showIfNot: hasAccount
-  - label: Login as customer
-    action: loginAsCustomer
-    heroicon: arrow-right-on-rectangle
-    showIf: hasAccount
+  - label: Publish
+    action: publish
+    heroicon: check
+    showIf: hasStock
+    showIfNot: isPublished
+  - label: Unpublish
+    action: unpublish
+    heroicon: x-mark
+    showIf: isPublished
 ```
 
 The string form checks a public property for truthiness (`hasAccount`, or a dotted path into an
@@ -375,14 +434,14 @@ by convention; the YAML only names the key:
 ```php
 public function detailActionUrls(): array
 {
-    return ['tableUrl' => $this->tableUrl];
+    return ['shopUrl' => config('inventory.shop_url') . '/items/' . $this->modelId];
 }
 ```
 
 ```yaml
 actions:
-  - label: Open Table
-    url: tableUrl
+  - label: Open in Shop
+    url: shopUrl
     heroicon: arrow-top-right-on-square
 ```
 
@@ -394,7 +453,7 @@ at all, so YAML may reference a URL an installation does not provide.
 Define a public method matching each `action` on the detail component:
 
 ```php
-public function transferToAccount(): void
+public function archive(): void
 {
     // validation / business logic
 }
@@ -409,8 +468,8 @@ the `relations:` array lives in the page YAML (`pages/{entity}-page.yml`) and th
 
 ## Embedded Lists
 
-Render one or more **compact lists** below the form — e.g. the Opportunities of an Account, or one
-parts list per assembly on a vehicle. Each list renders a section heading (styled like the detail
+Render one or more **compact lists** below the form — e.g. the stock movements of an item, or one
+parts list per assembly of a product. Each list renders a section heading (styled like the detail
 block title) and the referenced list component in its
 [compact](list-view.md#compact-mode-embedded-lists), full-width variant — `compact` and
 `disableModal` are applied automatically. There are two ways to use it:
@@ -433,17 +492,17 @@ The list counterpart to `<x-noerd::tab-content>`: a single line in the Blade, fu
 
 ```yaml
 lists:
-  - title: Opportunities
-    component: crm::opportunities-list
+  - title: Stock Movements
+    component: inventory::stock-movements-list
     arguments:
-      accountId: $modelId
+      itemId: $modelId
 ```
 
 | Property | Description |
 |----------|-------------|
 | `title` | (optional) Section heading above the list (translation key), rendered via `detail.block-head` |
 | `description` | (optional) Sub-heading text (translation key) |
-| `component` | The list Livewire component to embed (e.g. `crm::opportunities-list`) |
+| `component` | The list Livewire component to embed (e.g. `inventory::stock-movements-list`) |
 | `arguments` | Arguments passed to the list; the `$modelId` token resolves to the current record id, static values pass through unchanged |
 | `lazy` | (optional) Lazy-load the list |
 
@@ -455,9 +514,9 @@ For dynamic cases that YAML cannot express — e.g. rendering one list **per rel
 Pass the values directly as props:
 
 ```blade
-@foreach ($vehicle->assemblies as $assembly)
+@foreach ($product->assemblies as $assembly)
     <x-noerd::detail-list
-        component="pdm::parts-list"
+        component="inventory::parts-list"
         :arguments="['assemblyId' => $assembly->id]"
         lazy
         :title="$assembly->name"
@@ -467,12 +526,12 @@ Pass the values directly as props:
 
 | Prop | Description |
 |------|-------------|
-| `component` | The list Livewire component to embed (e.g. `pdm::parts-list`) |
+| `component` | The list Livewire component to embed (e.g. `inventory::parts-list`) |
 | `arguments` | Array of mount params for the list (real values — no `$modelId` token resolution here) |
 | `title` | (optional) Section heading (translation key) |
 | `description` | (optional) Sub-heading text (translation key) |
 | `lazy` | (optional) Lazy-load the list (passed through to Livewire via the params array) |
-| `wireKey` | (optional) Explicit `wire:key`; defaults to a uuid of component + arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
+| `wireKey` | (optional) Explicit `wire:key`; defaults to `detail-list-{component}-` + an md5 hash of the arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
 
 The embedded list is always compact (no header, no pagination — only the first `perPage` rows), so use
 it for record-scoped lists.
@@ -484,8 +543,9 @@ A detail component declares its model as `public $detailModel` and its URL alias
 comes from the `NoerdDetail` trait.
 
 `$detailPrimary` is MANDATORY for every model-backed detail (a missing declaration
-throws on mount). It binds `$modelId` to the entity-scoped query parameter
-(`?supplierId=5`) — never redeclare `$modelId` or add a `#[Url]` attribute yourself.
+throws on mount). It binds `$modelId` (`int|string|null`, declared by `NoerdPage`) to the
+entity-scoped query parameter (`?itemId=5`) — never redeclare `$modelId` or add a `#[Url]`
+attribute yourself.
 The binding is applied by the trait (`queryStringNoerdPage()`) and automatically
 skipped when the component is mounted `embedded: true`, so a hosting page can own
 the same URL parameter without conflicts. Set `detailPrimary` only as a literal
@@ -493,26 +553,26 @@ property default (never in `mount()`): the modal system probes a fresh instance 
 collect the URL params to clear on close. Components without `$detailModel`
 (dashboards, always-embedded children) simply leave it `null` — no URL binding.
 
-Example: `supplier-detail.blade.php`
+Example: `item-detail.blade.php`
 
 ```php
 <?php
 
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
-use Noerd\Accounting\Models\Supplier;
+use Vendor\Inventory\Models\Item;
 
 new class extends Component {
     use NoerdDetail;
 
-    public $detailModel = Supplier::class;
+    public $detailModel = Item::class;
 
-    public ?string $detailPrimary = 'supplierId';
+    public ?string $detailPrimary = 'itemId';
 }; ?>
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>{{ __('Supplier') }}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Item') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
@@ -525,45 +585,75 @@ new class extends Component {
 ```
 
 The trait defaults hydrate `$detailData` from `$detailModel` on mount, validate via
-`validateFromLayout()`, persist with `updateOrCreate(['id' => $modelId], $detailData)` on
-`store()`, and delete + close the modal on `delete()`.
+`validateFromLayout()`, persist on `store()` with
+`updateOrCreate(['id' => $modelId], $this->writableDetailData($modelClass))`, and delete + close
+the modal on `delete()`. `writableDetailData()` reduces the client-controlled `$detailData` to the
+top-level keys the detail YAML on disk binds (`detailData.*`, recursing into blocks), strips the
+relation-form keys (see [Relation Forms](relation-forms.md)) and always drops `id`, `tenant_id`,
+`created_at` and `updated_at` — a crafted request can never inject columns the form does not show.
+Both `store()` and `delete()` are guarded by `canSaveObject()` / `canDeleteObject()`.
 
 ### Custom Store / Delete Logic
 
-Only when the persistence deviates from the default, override `store()` and/or `delete()` —
-always ending with the generic helpers `storeProcess($model)` / `closeModalProcess()`:
+Only when the persistence deviates from the default, override `store()` and/or `delete()`. A custom
+`store()` keeps the guard and ends with `finishStore($model)` (which runs `storeProcess()` and
+reports the saved record to a hosting page); a custom `delete()` ends with
+`closeModalProcess($this->getListComponent())`:
 
 ```php
 new class extends Component {
     use NoerdDetail;
 
-    public $detailModel = Customer::class;
+    public $detailModel = Item::class;
+
+    public ?string $detailPrimary = 'itemId';
 
     public function store(): void
     {
+        if (! $this->canSaveObject()) {
+            return;
+        }
+
         $this->validateFromLayout();
 
-        $customer = CustomerService::save($this->modelId, $this->detailData);
+        $item = Item::updateOrCreate(
+            ['id' => $this->modelId],
+            $this->writableDetailData(Item::class),
+        );
+        $item->tags()->sync($this->tagIds);
 
-        $this->storeProcess($customer);
+        $this->finishStore($item);
     }
 };
 ```
 
-The same applies to `mount()`: override it only for extra logic (e.g. `setPreselect()`, relation
-titles) and call `$this->initDetail()` first. Initial field values are **not** such a case: they are
+Reference: `demo/views/demo-customer-detail.blade.php` (the shipped demo app). `initDetail()`,
+`finishStore()`, `storeProcess()` and `writableDetailData()` are `protected` — they are called
+from inside the component, never from outside.
+
+The same applies to `mount()`: override it only for extra logic and call `$this->initDetail()`
+first. Typical additions:
+
+- `setPreselect('customer_id', $id)` / `preselect('customer_id')` — the shared `listFilters`
+  session bucket: a page seeds it so a related list opens pre-filtered, and a new record adopts
+  the value by calling the matching `customerSelected()` method when it exists
+- `openRelationDetail($detailComponent, $fieldName, $detailRoute)` — open the record a
+  `detailData` foreign key points at (route first, component as fallback)
+- `clearRelation($fieldName)` — reset a relation value and its `relationTitles` entry (relation
+  fields do this themselves; see [Relation Field Types](relation-field-types.md)) Initial field values are **not** such a case: they are
 configuration and belong in the YAML (`default:`, or the first option of a select) — see
 [Default Values](field-types.md#default-values). The trait applies them generically, also to a
 custom `mount()` that replaces `$detailData` wholesale.
 
 ## Key Concepts
 
-- **Trait:** `NoerdDetail` provides `$detailData`, `$modelId`, `$pageLayout`, and helper methods
-- **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions (layout/object manager)
+- **Trait:** `NoerdDetail` provides `$detailData`, `$modelId`, `$pageLayout`, `$relationTitles` and helper methods
+- **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions
 - **Properties:** `$detailData` (array) for form binding, `$modelId` (from trait) for the record ID
 - **mount() / store() / delete():** Provided by the trait — only override for custom behavior
-- **validateFromLayout():** Validates against YAML-defined rules
-- **$this->getListComponent():** Automatically determines the associated list component
+- **validateFromLayout():** Validates against the `required:` flags of the YAML (plus relation-form rules)
+- **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); override `protected function getListComponent(): string` when the list does not follow the plural convention
+- **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); `getDetailComponent()` is the overridable hook for a component that renders another component's detail YAML
 - The Eloquent model is **never** stored as a component property
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
 
@@ -582,8 +672,8 @@ custom `mount()` that replaces `$detailData` wholesale.
 - Lists: `{plural}-list.blade.php` (e.g., `customers-list.blade.php`)
 - Details: `{singular}-detail.blade.php` (e.g., `customer-detail.blade.php`)
 - Components live directly in the `components/` folder by default. Nested component names are
-  supported (e.g. `booking::bookings.types-list`): DETAIL YAMLs map the dots to subfolders
-  (`details/bookings/booking-detail.yml`), LIST YAMLs always stay flat in `lists/` — the dot
+  supported (e.g. `inventory::stock.movements-list`): DETAIL YAMLs map the dots to subfolders
+  (`details/stock/movement-detail.yml`), LIST YAMLs always stay flat in `lists/` — the dot
   segments are ignored for lists (see [List View](list-view.md))
 
 ## Next Steps

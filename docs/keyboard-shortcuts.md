@@ -20,10 +20,10 @@ Format: `'modifier+key'` — e.g. `'s'`, `'/'`, `'ctrl+enter'`, `'shift+k'`. Sup
 
 | Config key | Default | What it does | Where it applies |
 |------------|---------|--------------|------------------|
-| `search_focus` | `s` | Focuses the search input | Every list header (`noerd::components.table.list-controls`, injected by `modal-title`); Escape blurs the field again |
-| `new_entry` | `n` | Triggers the first action button (the "New …" button) | Every list header — see the note on per-action keys below |
-| `save` | `ctrl+enter` | Calls `store()` on the open detail/page | Every `x-noerd::page` whose component has a `store()` method |
-| `delete` | `ctrl+backspace` | Asks for confirmation, then calls `delete()` | Every `x-noerd::page` whose component has a `delete()` method |
+| `search_focus` | `s` | Focuses the search input | Every list header (`noerd::components.table.list-search`); Escape blurs the field again |
+| `new_entry` | `n` | Triggers the first action button (the "New …" button) | Every list header (`list-controls-primary` / `list-controls-secondary`) — see the note on per-action keys below |
+| `save` | `ctrl+enter` | Calls `store()` on the open detail/page | Every `x-noerd::page` whose component has a `store()` method and whose `canSaveObject()` allows it |
+| `delete` | `ctrl+backspace` | Asks for confirmation, then calls `delete()` | Every `x-noerd::page` whose component has a `delete()` method and whose `canDeleteObject()` allows it |
 
 **Per-action list shortcuts:** the list header resolves the shortcut of each action button from
 the config key `action_{action}` / `action_{route}` (e.g.
@@ -70,8 +70,8 @@ e.key.toLowerCase() === "enter" && (e.ctrlKey || e.metaKey)
 
 ### Lists (helper-driven)
 
-The list header controls (`app-modules/noerd/resources/views/components/table/list-controls.blade.php`)
-are the reference consumer — one `parse()` call feeds both the window listener and the `<kbd>` badge:
+The list header search field (`resources/views/components/table/list-search.blade.php`) is the
+reference consumer — one `parse()` call feeds both the window listener and the `<kbd>` badge:
 
 ```blade
 @php
@@ -79,13 +79,15 @@ are the reference consumer — one `parse()` call feeds both the window listener
 @endphp
 
 <div @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }">
-    <x-noerd::text-input x-ref="searchInput" wire:model.live="search" … />
+    <x-noerd::text-input x-ref="searchInput" wire:model.live.debounce.300ms="search" … />
     <kbd …>{{ $searchShortcut['badge'] }}</kbd>
 </div>
 ```
 
-The action buttons in the same file follow the identical pattern with
-`parse('action_' . ($actionItem['action'] ?? $actionItem['route']), $effectiveShortcut)`.
+The action buttons (`list-controls-primary.blade.php` / `list-controls-secondary.blade.php` in the
+same folder) follow the identical pattern with
+`parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)`, where
+`$effectiveShortcut` is the action's YAML `shortcut:` or `n` for the first action.
 
 ### Details (Alpine `noerdPage`)
 
@@ -95,16 +97,20 @@ the `noerdPage` Alpine component:
 ```blade
 @php
     $shortcuts = [];
-    if (method_exists($__livewire ?? new stdClass(), 'store')) {
+    if (method_exists($__livewire ?? new stdClass(), 'store') && $canSaveObject && ! $pageObjectReadBlocked) {
         $shortcuts['save'] = config('noerd.keyboard_shortcuts.save', 'ctrl+enter');
     }
-    if (method_exists($__livewire ?? new stdClass(), 'delete')) {
+    if (method_exists($__livewire ?? new stdClass(), 'delete') && $canDeleteObject && ! $pageObjectReadBlocked) {
         $shortcuts['delete'] = config('noerd.keyboard_shortcuts.delete', 'ctrl+backspace');
     }
 @endphp
 
 <div x-data="noerdPage({ …, shortcuts: @js($shortcuts), … })">
 ```
+
+`$canSaveObject` / `$canDeleteObject` come from the component's `canSaveObject()` /
+`canDeleteObject()` (object permissions, see [Permissions](permissions.md)): a denied ability loses
+its shortcut together with its button — hiding the button alone would leave the key live.
 
 `noerdPage` (`resources/js/noerd.js`) parses the strings client-side with the same semantics
 (`ctrl` matches Ctrl or Cmd), binds one window `keydown` listener per page, calls `$wire.store()`
@@ -136,5 +142,6 @@ the `<kbd>` badges update everywhere — no view changes needed.
 - Keys are compared lowercase; write config values in lowercase.
 - Embedded details (`embedded: true`, e.g. a detail hosted inside a `*-page`) register **no**
   shortcuts — the hosting page owns them, so save/delete never fire twice.
-- Detail shortcuts require the trait methods: `save` binds only when the component has `store()`,
-  `delete` only when it has `delete()`.
+- Detail shortcuts require the trait methods AND the permission: `save` binds only when the
+  component has `store()` and `canSaveObject()` passes, `delete` only when it has `delete()` and
+  `canDeleteObject()` passes.

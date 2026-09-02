@@ -2,12 +2,18 @@
 
 Optional modules and projects extend the noerd core through a small set of container singletons. A module registers its contribution from its service provider's `boot()` (or rebinds a contract in `register()`); the core resolves the singleton where the extension point renders. This is registration-based rather than config-based on purpose: an entry in a YAML file outlives the module that wrote it and would have to be guarded against, whereas a registration simply ceases to exist once the module is gone — no config cleanup needed.
 
-Four registries with their own documentation are not repeated here:
+Registries with their own documentation are not repeated here:
 
 - `FieldTypeRegistry` — custom form field types, see [field-types.md](field-types.md)
 - `RelationFieldRegistry` — relation field types, see [relation-field-types.md](relation-field-types.md)
 - `ThemeRegistry` — form layout themes, see [themes.md](themes.md)
 - `HeaderActionsRegistry` — list/detail header actions, see [header-actions.md](header-actions.md)
+- `ProfileRegistry` — additional user profiles, and `ActionPermissionRegistry` — named actions
+  beyond CRUD, see [permissions.md](permissions.md)
+
+Documented on this page: `TopBarRegistry`, `PicklistRegistry`, `DynamicNavigationRegistry`,
+`RelationBoxRegistry`, `DetailSlotsRegistry`, the overridable null bindings and the
+authorization gates.
 
 ## TopBarRegistry
 
@@ -61,21 +67,24 @@ Named option providers for `type: picklist` fields. A detail YAML references opt
 
 **Resolution order** — `NoerdDetail::resolvePicklistOptions(string $picklistField)`:
 
-1. A method with that name on the detail component wins (`method_exists`)
+1. A public method with that name on the detail component wins — but only when it declares an
+   `: array` return type. The name is client-callable, so only a genuine options provider is ever
+   invoked, never a `void` action such as `store()` or `delete()`
 2. Otherwise the `PicklistRegistry` provider is called
 3. Neither exists → empty options (`[]`), never an error
 
-**Registering** (booking module supplying staff options):
+**Registering** (an inventory module supplying warehouse options):
 
 ```php
+use Noerd\Helpers\TenantHelper;
 use Noerd\Services\PicklistRegistry;
 
 public function boot(): void
 {
-    app(PicklistRegistry::class)->register('staffOptions', function (): array {
-        $tenantId = auth()->user()->selected_tenant_id;
+    app(PicklistRegistry::class)->register('warehouseOptions', function (): array {
+        $tenantId = TenantHelper::getSelectedTenantId();
 
-        return ['' => __('Please select...')] + Staff::withoutGlobalScopes()
+        return ['' => __('Please select...')] + Warehouse::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->orderBy('name')
@@ -89,18 +98,18 @@ public function boot(): void
 
 ```yaml
 fields:
-  - name: detailData.staff_id
-    label: Staff
+  - name: detailData.warehouse_id
+    label: Warehouse
     type: picklist
-    picklistField: staffOptions
+    picklistField: warehouseOptions
     colspan: 6
 ```
 
 **Important:**
 
 - Provider callables run per render — keep the query cheap and tenant-scoped
-- A component method with the same name always shadows a registered provider
-- PHP code can resolve a provider directly when it needs the options outside a form: `app(PicklistRegistry::class)->resolve('staffOptions')`
+- A component method with the same name (and an `: array` return type) always shadows a registered provider
+- PHP code can resolve a provider directly when it needs the options outside a form: `app(PicklistRegistry::class)->resolve('warehouseOptions')`
 
 ## DynamicNavigationRegistry
 
@@ -156,7 +165,7 @@ $registry = $this->app->make(DynamicNavigationRegistry::class);
 $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
 ```
 
-A module registers its own provider the same way from `boot()`. Reference implementations outside the core: the reservation module (`reservation-object-types`) and the CMS module (`page-collections`, `collections`).
+A module registers its own provider the same way from `boot()` — e.g. an inventory module exposing one navigation entry per warehouse under a `warehouses` type.
 
 ## RelationBoxRegistry
 
@@ -185,26 +194,91 @@ A tile mirrors the YAML relation shape — `label` (translation key), `heroicon`
 Closures are resolved inside the relation box at render time and never become Livewire state; counts
 re-resolve on `closeTopModal` like YAML tiles.
 
-**Shipped example** — accounting plugs the party's documents into the party page's relation box
-(party never learns about accounting; `Party` has no `invoices()` relation by design):
+**Example** — an invoicing module plugs its documents into the customer page's relation box
+(the customer module never learns about invoicing; `Customer` has no `invoices()` relation by
+design):
 
 ```php
-app(RelationBoxRegistry::class)->register(Party::class, [
+use Noerd\Helpers\AccessHelper;
+use Noerd\Services\RelationBoxRegistry;
+
+app(RelationBoxRegistry::class)->register(Customer::class, [
     'label' => 'Invoices',
     'heroicon' => 'document-currency-euro',
-    'component' => 'accounting::invoices-list',
-    'arguments' => ['partyId' => '$modelId'],
-    'count' => fn(Party $party): int => Invoice::where('party_id', $party->id)->count(),
-    'visible' => fn(): bool => /* tenant has the accounting app + per-app gate */,
+    'route' => 'invoicing.invoices',
+    'component' => 'invoicing::invoices-list',
+    'arguments' => ['customerId' => '$modelId'],
+    'count' => fn(Customer $customer): int => Invoice::where('customer_id', $customer->id)->count(),
+    'visible' => fn(): bool => AccessHelper::canUseApp('INVOICING'),
 ], sort: 10);
 ```
-
-Reference: `AccountingServiceProvider::registerPartyRelationBoxTiles()`.
 
 - The count/visible closures run per render — keep the queries cheap; `BelongsToTenant` models need
   no manual tenant scoping
 - A page whose only tiles are contributed still renders its relation box — the
   `<x-noerd::detail-relations>` guard consults the registry
+
+## DetailSlotsRegistry
+
+Named extension slots inside detail forms: an optional module contributes a Livewire component to a
+slot name, the hosting detail only marks the position with `<x-noerd::detail-slot>`. The core ships
+the slot and stays agnostic of whoever fills it — a registration ceases to exist with its module.
+
+**API** (`Noerd\Services\DetailSlotsRegistry`):
+
+| Method | Description |
+|--------|-------------|
+| `register(string $slot, string $component, int $sort = 100)` | Contribute a Livewire component to a slot; lower `sort` renders first, equal sorts keep registration order |
+| `for(string $slot)` | The component names registered for a slot, sorted |
+
+**Marking a slot** in a detail blade (a slot may sit anywhere in the form — typically in a tab slot
+below the YAML fields):
+
+```blade
+<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
+    <x-slot:tab1>
+        <x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />
+    </x-slot:tab1>
+</x-noerd::tab-content>
+```
+
+**Registering** from a module service provider's `boot()`:
+
+```php
+use Noerd\Services\DetailSlotsRegistry;
+
+public function boot(): void
+{
+    app(DetailSlotsRegistry::class)->register('item-below-form', 'inventory::item-stock-levels', sort: 10);
+}
+```
+
+Every registered component is mounted with two parameters: the host's `modelId` and
+`hostComponent` — the host's Livewire component name. The latter lets a slot child defer its own
+persistence until the host actually saved, by listening for the host's
+`detailStored-{hostComponent}` event (see the [store roundtrip](page-view.md#generic-store-roundtrip)):
+
+```php
+public function getListeners(): array
+{
+    return ['detailStored-' . $this->hostComponent => 'hostStored'];
+}
+
+public function hostStored(int $modelId): void
+{
+    // persist the draft state now that the host record exists / was saved
+}
+```
+
+**Important:**
+
+- Children are mounted with stable keys (`detail-slot-{name}-{component}`) and mount-only
+  parameters, so re-renders of the host leave the child DOM untouched
+- Quick-create dialogs stay slim and render no slots; a slot outside a Livewire host renders nothing
+- Slot children holding unsaved draft state lose it when the modal stack updates (children are
+  re-mounted) — hosts should not open nested modals around a filled slot
+- The shipped host is the setup app's user detail (`noerd::noerd-user-detail`, slot
+  `user-below-form`); mechanics: `tests/Feature/DetailSlotRenderTest.php`
 
 ## Overridable Null Bindings
 
@@ -223,8 +297,9 @@ Resolves media IDs to URLs for `type: image` fields and handles plain file uploa
 | `getRelativeUrl(int $mediaId): ?string` | Relative URL (without domain) |
 | `storeUploadedFile(mixed $uploadedFile): ?string` | Store an upload, return its relative URL |
 | `isAvailable(): bool` | Whether the full media module is available |
+| `pickerComponent(): ?string` | The list component opened as the media picker (with the `selectMode`, `selectContext`, `selectToken` arguments; it answers with the `mediaSelected` event), or `null` when no library exists |
 
-**Default:** `Noerd\Services\NullMediaResolver`, bound with `singletonIf` — every ID lookup returns `null`/`false`, `isAvailable()` is `false`, and `storeUploadedFile()` falls back to a plain `store('uploads', 'public')` upload. The image field checks `isAvailable()` to decide between the media picker and the plain upload UI.
+**Default:** `Noerd\Services\NullMediaResolver`, bound with `singletonIf` — every ID lookup returns `null`/`false`, `isAvailable()` is `false`, `pickerComponent()` is `null`, and `storeUploadedFile()` falls back to a plain `store('uploads', 'public')` upload. The image field checks `isAvailable()` to decide between the media picker and the plain upload UI (see [Field Types → image](field-types.md#image)).
 
 **Rebinding** — the media module binds the real resolver in its `register()`; because the core uses `singletonIf`, the module's binding wins regardless of provider order:
 
@@ -269,17 +344,9 @@ $this->app->singleton(
 
 ### Profile registry
 
-Additional user profiles (beyond the built-in `Noerd\Enums\Profile` cases) are
-registered on the `ProfileRegistry` singleton in a module ServiceProvider's
-`boot()`; the profile pickers render from the registry:
-
-```php
-app(\Noerd\Services\ProfileRegistry::class)->register('MY_PROFILE', fn(): string => __('My Profile'));
-```
-
-The registered profile's semantics come from the authorization gates the module
-defines (the core baseline treats unknown keys like User) — see
-`docs/permissions.md` ("Registering additional profiles").
+Additional user profiles are registered on the `ProfileRegistry` singleton; their semantics come
+from the authorization gates the module defines. See
+[permissions.md → Registering additional profiles](permissions.md#registering-additional-profiles).
 
 ### Authorization gates
 
@@ -292,7 +359,7 @@ The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\He
 | `noerd.object-write` (`OBJECT_WRITE_GATE`) | `class-string $modelClass` | Updating existing records: detail forms render read-only, custom list header actions hidden |
 | `noerd.object-create` (`OBJECT_CREATE_GATE`) | `class-string $modelClass` | Creating new records: store() on a new record, list "New …" actions hidden |
 | `noerd.object-delete` (`OBJECT_DELETE_GATE`) | `class-string $modelClass` | Delete buttons and bulk delete hidden/blocked |
-| `noerd.action` (`ACTION_GATE`) | `string $actionKey` (see the ActionPermissionRegistry) | `action-permission:{key}` middleware and manual `canPerformAction()` call sites |
+| `noerd.action` (`ACTION_GATE`) | `string $actionKey` (registered in the `ActionPermissionRegistry`, see [permissions.md](permissions.md#named-action-checks)) | `action-permission:{key}` middleware and manual `canPerformAction()` call sites |
 
 Always go through the helper (`AccessHelper::canAccessApp()`, `::canReadObject()`, `::canWriteObject()`, `::canCreateObject()`, `::canDeleteObject()`, `::canPerformAction()`) — it short-circuits null arguments and applies the baseline for undefined gates. Detail/page components additionally expose `canSaveObject()`, which picks create (new record, no `$modelId` yet) or write (update) for the form's current state — the save button, save shortcut and readonly rendering key off it.
 

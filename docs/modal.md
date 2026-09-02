@@ -27,48 +27,83 @@ Add the modal component at the beginning of `<body>` (before other Livewire comp
 
 ```blade
 <body x-data>
-    <livewire:noerd-modal/> <!-- must be loaded before livewire components -->
+    <livewire:noerd-modal::noerd-modal /> <!-- must be loaded before livewire components -->
 
     {{ $slot }}
 </body>
 ```
 
+The noerd layout (`noerd::layouts.app`) already contains both. The default panel position comes from
+`config('noerd-modal.position')` (`center` or `right`, published as `config/noerd-modal.php`); every
+call may override it per modal.
+
 ## Opening Modals
 
-Use the `$modal()` Alpine magic function to open any Livewire component in a modal.
+Two families of calls exist — by **component** (`modal` / `$modal`) and by **route**
+(`modalRoute` / `$modalRoute`, see [Route Modals](#route-modals)) — each available from PHP through
+the `Noerd` facade (`Noerd\Services\NoerdManager`) and from Blade through an Alpine magic.
 
-### Syntax
+### Signatures
 
-```
-$modal(componentName, arguments?, source?)
-```
+PHP (`use Noerd\Facades\Noerd;` — must be called inside a Livewire request lifecycle):
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `componentName` | string | Name of the Livewire component |
-| `arguments` | object | Optional parameters passed to the component |
-| `source` | string | Optional source component for list refresh — defaults to the Livewire component the clicked element belongs to, so the opener refreshes itself when the modal closes. Pass it only to refresh a DIFFERENT component |
+| Method | Signature |
+|--------|-----------|
+| `Noerd::modal()` | `modal(string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $quickCreate = false): void` |
+| `Noerd::modalRoute()` | `modalRoute(string $routeName, mixed $arguments = [], ?string $position = null, ?string $size = null, ?string $fallbackComponent = null, bool $rewriteUrl = true): void` |
+| `Noerd::modalFor()` | `modalFor(?string $routeName, ?string $component, mixed $arguments = [], ?string $position = null, ?string $size = null, bool $rewriteUrl = true): void` — route when given, component otherwise |
+
+Alpine magics (`resources/js/noerd-modal.js` of `noerd/modal`):
+
+| Magic | Signature |
+|-------|-----------|
+| `$modal` | `$modal(component, args = {}, source = null, position = null, size = null)` |
+| `$modalRoute` | `$modalRoute(route, args = {}, source = null, position = null, size = null, options = {})` with `options.fallbackComponent` and `options.rewriteUrl` |
+
+| Parameter | Description |
+|-----------|-------------|
+| `component` / `route` | Livewire component name (`inventory::item-detail`) or named `Route::livewire()` route (`inventory.item.detail`) |
+| `arguments` / `args` | Parameters bound to the component's public properties. A scalar is treated as `['modelId' => $value]` |
+| `source` | Component whose `refreshList-{name}` event fires when the modal closes. PHP sets it to the current Livewire component, the magics resolve the Livewire component the clicked element belongs to — pass it only to refresh a DIFFERENT component |
+| `position` | `center` or `right`; `null` = `config('noerd-modal.position')` |
+| `size` | `default` or `narrow`; `null` = `default` |
+| `quickCreate` | PHP only: adds `quickCreate: true` to the arguments and defaults `size` to `narrow` |
+| `fallbackComponent` | Component opened when the route name is not registered (see [Fallback component](#fallback-component)) |
+| `rewriteUrl` | `false` resolves the route but keeps the browser URL (see [Suppressing the URL rewrite](#suppressing-the-url-rewrite)) |
 
 ### Basic Usage
 
+```php
+use Noerd\Facades\Noerd;
+
+// Open a component modal
+Noerd::modal('inventory::stock-import-modal', ['categoryId' => $this->modelId]);
+
+// Shorthand: a scalar argument is treated as modelId
+Noerd::modal('inventory::item-detail', 123);
+
+// Right-hand narrow panel
+Noerd::modal('inventory::item-detail', ['modelId' => 123], 'right', 'narrow');
+```
+
 ```blade
 <!-- Open without parameters -->
-<button @click="$modal('customer-detail')">
-    New Customer
+<button @click="$modal('inventory::stock-import-modal')">
+    Import
 </button>
 
-<!-- Open with parameters -->
-<button @click="$modal('customer-detail', { modelId: 123 })">
-    Edit Customer
+<!-- Open with parameters; the opening component refreshes itself on close — no source needed -->
+<button @click="$modal('inventory::item-detail', { modelId: 123 })">
+    Edit Item
 </button>
-
-<!-- The opening component refreshes itself on close — no source needed -->
 
 <!-- Open with an explicit source to refresh ANOTHER component instead -->
-<button @click="$modal('customer-detail', { modelId: 123 }, 'customers-list')">
-    Edit Customer
+<button @click="$modal('inventory::item-detail', { modelId: 123 }, 'inventory::items-list')">
+    Edit Item
 </button>
 ```
+
+Both paths dispatch the same Livewire event `noerdModal` to the modal stack component.
 
 ### Parameters in Components
 
@@ -114,7 +149,7 @@ With the `NoerdDetail` trait (automatically refreshes the source list):
 
 ```php
 // Close modal and refresh the associated list
-$this->closeModalProcess('customers-list');
+$this->closeModalProcess('inventory::items-list');
 
 // Close modal and auto-detect list component
 $this->closeModalProcess($this->getListComponent());
@@ -122,41 +157,21 @@ $this->closeModalProcess($this->getListComponent());
 
 ## Event System
 
+Events handled by the modal stack component (`noerd-modal::noerd-modal`):
+
 | Event | Description |
 |-------|-------------|
-| `noerdModal` | Opens a modal (dispatched by `$modal()`) |
-| `closeTopModal` | Closes the topmost modal |
-| `modal-closed-global` | Fired when all modals are closed |
-| `refreshList-{component}` | Refreshes a specific list component |
+| `noerdModal` | Opens a modal — dispatched by `Noerd::modal()` / `Noerd::modalRoute()` and the `$modal` / `$modalRoute` magics. Never dispatch it by hand; the facade and the magics are the API |
+| `closeTopModal` | Closes the topmost modal, restores the URL and fires `refreshList-{source}` for its source component |
+| `closeAllModals` | Closes the whole stack |
+| `resizeTopModal` | Changes the panel size of the topmost modal (`size: 'default'` or `'narrow'`) |
 
-### Dispatching Events
+Events dispatched by the modal stack:
 
-The recommended way to open a modal from a Livewire component is via the `Noerd` facade:
-
-```php
-use Noerd\Facades\Noerd;
-
-// Open a modal
-Noerd::modal('customer-detail', ['modelId' => 123]);
-
-// Shorthand: a scalar argument is treated as modelId
-Noerd::modal('customer-detail', 123);
-
-// Close the topmost modal
-$this->dispatch('closeTopModal');
-```
-
-The facade automatically sets `source` to the currently rendering Livewire component, so the source list is refreshed when the modal closes.
-
-Internally this dispatches the same `noerdModal` event — direct dispatching still works if you need full control:
-
-```php
-$this->dispatch('noerdModal',
-    modalComponent: 'customer-detail',
-    arguments: ['modelId' => 123],
-    source: 'customers-list'
-);
-```
+| Event | Description |
+|-------|-------------|
+| `modal-closed-global` | Fired when the last open modal has closed |
+| `refreshList-{component}` | Refreshes the source component (`NoerdList::refreshList()` / `NoerdPage`) — the component name after the last dot |
 
 ## Route Modals
 
@@ -167,18 +182,18 @@ rewritten to the route (plus `?modal=true`) and restored when the modal closes.
 ```php
 use Noerd\Facades\Noerd;
 
-// Opens the component behind the route and rewrites the URL to /crm/account/5?modal=true
-Noerd::modalRoute('crm.account.detail', ['modelId' => 5]);
+// Opens the component behind the route and rewrites the URL to /inventory/item/5?modal=true
+Noerd::modalRoute('inventory.item.detail', ['modelId' => 5]);
 ```
 
 ```blade
-<button @click="$modalRoute('crm.account.detail', { modelId: 5 })">Edit Account</button>
+<button @click="$modalRoute('inventory.item.detail', { modelId: 5 })">Edit Item</button>
 ```
 
 Route params are filled by name from the arguments — `modelId` by convention, but any
 property the target binds may be the record's identity (`/setup/object-manager/{table}`).
 A create modal has no record id — the conventional `{modelId}` param then carries the
-`new` sentinel (`/crm/account/new?modal=true`), which `NoerdPage::prepareRoutedModal()`
+`new` sentinel (`/inventory/item/new?modal=true`), which `NoerdPage::prepareRoutedModal()`
 maps back to `null`. Reloading such a URL reopens the record as a modal over the page the
 user last visited (`RoutedModal::redirectToRoutedModal()`, shared by `NoerdPage` and
 `NoerdList`).
@@ -206,7 +221,7 @@ longer hard-code a foreign module's component name.
   they perform one operation and close, they have no identity.
 - **Pickers** — anything opened with `listActionMethod`, `selectMode`, `selectContext`,
   `multiSelect`, `returnsSelection` or `context`. The selection is not a URL.
-- **Filtered lists** — a list narrowed by a parent record (`accountId`, `folderId`).
+- **Filtered lists** — a list narrowed by a parent record (`categoryId`, `folderId`).
   A route may be used here for decoupling, but the URL is deliberately NOT rewritten
   (see below).
 
@@ -219,14 +234,14 @@ Pass the component alongside the route and it opens when the route name is not
 registered — so a caller may reference a route owned by an optional module:
 
 ```php
-Noerd::modalFor('customer.detail', 'customer::customer-detail', ['modelId' => 5]);
+Noerd::modalFor('inventory.item.detail', 'inventory::item-detail', ['modelId' => 5]);
 ```
 
 `modalFor()` is the canonical shape: route when configured and registered, component
 otherwise. In Blade the same is expressed through the `$modalRoute` options object:
 
 ```blade
-@click="$modalRoute('customer.detail', { modelId: 5 }, null, null, null, { fallbackComponent: 'customer::customer-detail' })"
+@click="$modalRoute('inventory.item.detail', { modelId: 5 }, null, null, null, { fallbackComponent: 'inventory::item-detail' })"
 ```
 
 ### Suppressing the URL rewrite
@@ -237,7 +252,7 @@ parent record, where the list route carries no filter param and a reload would s
 the unfiltered list:
 
 ```blade
-@click="$modalRoute('crm.contacts', { accountId: 5 }, null, null, null, { rewriteUrl: false })"
+@click="$modalRoute('inventory.items', { categoryId: 5 }, null, null, null, { rewriteUrl: false })"
 ```
 
 The modal stack also guards this automatically: an argument that is neither a route
@@ -269,9 +284,9 @@ The modal system supports unlimited nested modals:
 - Closing a modal reveals the one beneath
 
 Example flow:
-1. Open `customers-list` → Click row
-2. Opens `customer-detail` (modal 1)
-3. Click "Add Address" → Opens `address-detail` (modal 2)
+1. Open `items-list` → Click row
+2. Opens `item-detail` (modal 1)
+3. Click "Add Supplier" → Opens `supplier-detail` (modal 2)
 4. Press Escape → Closes modal 2, modal 1 remains
 
 ## Fullscreen Mode

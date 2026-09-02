@@ -44,15 +44,20 @@ The generated module already follows every convention the shipped modules use �
   and relation fields depend on — `{module}` (dashboard), `{module}.{entities}` (list) and
   `{module}.{entity}.detail` (single record). The list component declares the record route as the
   preferred target and keeps the component as the fallback (`$detailRoute` + `$detailComponent`).
-- **Table name**: prefixed with the module key (`inventory_items`, like `crm_contracts`,
-  `hr_employees`) so two modules can never collide; the model sets `$table` explicitly. Every
-  table carries `tenant_id` and a nullable `custom_attributes` JSON column (see
+- **Table name**: `{module}_{entities}`, prefixed with the module key (`inventory_items`) so two
+  modules can never collide; the model sets `$table` explicitly. The generated table carries
+  `tenant_id` (the model uses `BelongsToTenant`), `name`, `is_active` and a nullable
+  `custom_attributes` JSON column that the model casts to `array` (see
   [Custom Attributes](#custom-attributes)).
 - **Tenant app**: the app's `name` is the **UPPERCASE** module key (`INVENTORY`) — gates and test
   traits compare it exactly; `getAppRoute()` returns the module key so the app tile opens the
   dashboard route; the app icon lives in `resources/views/components/icons/app.blade.php`.
-- **Composer**: `noerd/noerd` is required at the core version the module was scaffolded with, and
-  the `Noerd\{Module}\Tests\` namespace autoloads the module's own test traits.
+- **Composer**: `noerd/noerd` is required at the core version the module was scaffolded with
+  (`composer.json` `require`), and `tests/` is autoloaded PSR-4 as `Noerd\{Module}\Tests\` so the
+  module's own test traits (`tests/Traits/`) resolve without extra configuration. The command also
+  adds `noerd/{module}` to the project's root `composer.json`.
+- **Agent guidelines**: `resources/boost/guidelines/core.blade.php`, `AGENTS.md` and `CLAUDE.md`
+  (see [AI Agents](ai-agents.md)).
 
 Adapt the generated model, migration and YAML to your domain and run
 `composer update noerd/{module-name}` again after editing the module's `composer.json` — a plain
@@ -91,11 +96,11 @@ After creation, customize the module:
 
 ## Custom Attributes
 
-Modules are used across multiple projects. Some projects need project-specific fields that do not belong in the module itself. For this purpose, models support a `custom_attributes` JSON column.
+Modules are used across multiple projects. Some projects need project-specific fields that do not belong in the module itself. For this purpose, models support a `custom_attributes` JSON column — the scaffolded model and migration already ship it.
 
 **Important:** Never modify module code or YAML files for project-specific fields. Use `custom_attributes` instead.
 
-### Adding `custom_attributes` to a model
+### Adding `custom_attributes` to a model that lacks it
 
 1. Create a migration in the **project root** `database/migrations/`:
 
@@ -105,7 +110,7 @@ Schema::table('your_table', function (Blueprint $table) {
 });
 ```
 
-2. Add the cast to the model:
+2. Add the cast to the model (in the module):
 
 ```php
 protected function casts(): array
@@ -134,6 +139,7 @@ $this->detailData['custom_attributes']['my_key'];
 | `database/migrations/`, `database/factories/`, `database/seeders/` | Database migrations, factories and seeders (module-owned) |
 | `resources/boost/guidelines/core.blade.php` | Module-specific rules for AI coding agents, rendered by Laravel Boost (see [AI Agents](ai-agents.md)) |
 | `resources/lang/de.json` | Translations (English key → German) |
+| `resources/views/components/icons/app.blade.php` | The app icon shown on the apps dashboard (`getAppIcon()` returns `{module}::icons.app`) |
 | `resources/views/components/` | Livewire single-file components (`*-list.blade.php`, `*-detail.blade.php`, `*-page.blade.php`, `*-modal.blade.php`) — flat, no subfolders |
 | `routes/{module}-routes.php` | Route definitions |
 | `src/Commands/` | `{Module}InstallCommand`, `{Module}UpdateCommand` |

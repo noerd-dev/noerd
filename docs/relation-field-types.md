@@ -1,16 +1,16 @@
 # Registered Relation Field Types
 
 Relation fields are registered types. Every relation is registered in a module service provider and
-referenced in YAML with an explicit type such as `customerRelation`, `vehicleRelation`,
-`authorRelation` or `pageRelation`. The generic `type: relation` is not supported — an unregistered
-relation type fails explicitly during rendering.
+referenced in YAML with an explicit type such as `itemRelation`, `authorRelation` or
+`pageRelation`. The generic `type: relation` is not supported — it and every unregistered
+`*Relation` type throw explicitly during rendering.
 
 ## YAML Usage
 
 ```yaml
-- name: detailData.customer_id
-  label: customer_label_customer
-  type: customerRelation
+- name: detailData.item_id
+  label: Item
+  type: itemRelation
   colspan: 6
 ```
 
@@ -24,14 +24,15 @@ Register the type in the module that owns the target model:
 ```php
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\RelationFieldDefinition;
-use Noerd\Customer\Models\Customer;
+use Vendor\Inventory\Models\Item;
 
 $relationFieldRegistry = $this->app->make(RelationFieldRegistry::class);
 
-$relationFieldRegistry->register('customerRelation', RelationFieldDefinition::model(
-    listComponent: 'customers-list',
-    detailComponent: 'customer-detail',
-    modelClass: Customer::class,
+$relationFieldRegistry->register('itemRelation', RelationFieldDefinition::model(
+    listComponent: 'inventory::items-list',
+    detailComponent: 'inventory::item-detail',
+    detailRoute: 'inventory.item.detail',
+    modelClass: Item::class,
     titleResolver: 'name',
 ));
 ```
@@ -41,10 +42,10 @@ $relationFieldRegistry->register('customerRelation', RelationFieldDefinition::mo
 | Parameter | Description |
 |-----------|-------------|
 | `listComponent` | List opened in select mode (required) |
-| `detailComponent` | Detail modal opened for existing values |
+| `detailComponent` | Detail modal opened for existing values. Defaults to the singular of the list name (`inventory::items-list` → `inventory::item-detail`, `RelationFieldDefinition::getDetailComponent()`); `null` when the list name does not end in `-list` |
 | `modelClass` | Model used to hydrate the saved relation value |
 | `titleResolver` | Model attribute name or callback that returns the display title (default `'name'`) |
-| `selectEvent` | Custom selection event name; defaults to the `{entity}Selected` convention derived from the list component |
+| `selectEvent` | Custom selection event name; defaults to the `{entity}Selected` convention derived from the list component without its namespace (`inventory::items-list` → `itemSelected`) |
 | `detailRoute` | Named `Route::livewire()` route opened as a modal for existing values — preferred over `detailComponent` when the record is addressable (see [Modals](modal.md#route-modals)); `detailComponent` stays as the fallback when the route is not registered |
 | `fieldComponent` | Livewire component rendering the field in the detail form; `null` (default) uses the generic `noerd-relation-field` input. See [Custom Renderer Component](#custom-renderer-component) |
 
@@ -67,21 +68,22 @@ e.g. render an address as a clickable card — by passing its own Livewire compo
 `fieldComponent`:
 
 ```php
-$relationFieldRegistry->register('customerAddressCardRelation', RelationFieldDefinition::model(
-    listComponent: 'customer::customer-addresses-list',
-    detailComponent: 'customer::customer-address-detail',
-    detailRoute: 'customer.address.detail',
-    modelClass: CustomerAddress::class,
-    titleResolver: fn (CustomerAddress $address): string => $address->label ?? '',
-    fieldComponent: 'customer::customer-address-card-field',
+$relationFieldRegistry->register('warehouseAddressCardRelation', RelationFieldDefinition::model(
+    listComponent: 'inventory::warehouse-addresses-list',
+    detailComponent: 'inventory::warehouse-address-detail',
+    detailRoute: 'inventory.warehouse-address.detail',
+    modelClass: WarehouseAddress::class,
+    titleResolver: fn (WarehouseAddress $address): string => $address->label ?? '',
+    fieldComponent: 'inventory::warehouse-address-card-field',
 ));
 ```
 
 The component MUST extend `Noerd\Livewire\RelationFieldComponent` — it then inherits the complete
 behaviour (mount hydration, the `noerdRelationSelected` round trip, `clear()`, `openDetail()`,
 `setFieldValue` sync to the parent detail) and receives exactly the same props as the generic
-renderer (`relationType`, `fieldName`, `label`, `value`, `modelId`, `theme`, …). Only the Blade
-markup differs. The single-file component is two lines plus markup:
+renderer (`relationType`, `fieldName`, `label`, `value`, `required`, `readonly`, `helpText`,
+`modelId`, `number`, `theme`, `owner`, `errorMessages`). Only the Blade markup differs. The
+single-file component is two lines plus markup:
 
 ```blade
 <?php
@@ -90,7 +92,7 @@ new class extends \Noerd\Livewire\RelationFieldComponent {}; ?>
 
 <div>
     {{-- custom markup; open the picker exactly like the generic template: --}}
-    {{-- @click="$modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $fieldName }}', listActionMethod: 'selectAction'})" --}}
+    {{-- @click="$modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $this->selectionContext() }}', listActionMethod: 'selectAction'})" --}}
 </div>
 ```
 
@@ -132,20 +134,33 @@ Polymorphic fields render through the shared Livewire component
   custom `fieldComponent`
 - Selection uses the generic event `noerdRelationSelected`; the `{entity}Selected` event (or the
   definition's `selectEvent`) is dispatched as well, so detail components can listen with
-  `#[On('customerSelected')]`
-- The handler sets the foreign key in `detailData` and the display value in the generic
-  `relationTitles` array — never a separate display property (`$this->customer`); the YAML field
-  references it with `relationField: relationTitles.customer_id`:
+  `#[On('itemSelected')]`
+- The field component itself writes the foreign key into the owning detail's `detailData` and the
+  display title into its generic `relationTitles` array through the `setFieldValue` event
+  (`field`, `value`, `relationTitle`, `owner`) — `NoerdDetail::setFieldValue()` only accepts
+  `detailData.*` paths. A detail that needs side effects listens for the `{entity}Selected` event
+  and works with `detailData`/`relationTitles` — never a separate display property
+  (`$this->item`), and no extra YAML key:
 
   ```php
-  #[On('customerSelected')]
-  public function customerSelected(int $customerId): void
+  #[On('itemSelected')]
+  public function itemSelected(int $itemId): void
   {
-      $customer = Customer::find($customerId);
-      $this->detailData['customer_id'] = $customer->id;
-      $this->relationTitles['customer_id'] = $customer->name;
+      $item = Item::find($itemId);
+      $this->detailData['unit_price'] = $item->price;
   }
   ```
+- **Owner scoping:** the detail block passes the owning detail's Livewire id as `owner`. The
+  picker context becomes `{fieldName}@{owner}` (`RelationFieldComponent::selectionContext()`) and
+  `setFieldValue` carries the owner, so two stacked details sharing a field name never adopt each
+  other's selection. `NoerdDetail::clearRelation($fieldName)` is the server-side counterpart of
+  the field's clear button for custom markup
+- **Validation messages:** the field receives the owning detail's error bag entries for its
+  `fieldName` as the reactive `errorMessages` prop, so a failed `store()` shows them without
+  re-mounting the field
+- `openDetail()` opens the record behind the current value via `Noerd::modalFor($detailRoute,
+  $detailComponent, ['modelId' => $value])` — the route wins when registered, the component is the
+  fallback (see [Modals](modal.md#route-modals))
 - Registering a relation type automatically registers a matching field type in the
   `FieldTypeRegistry` — no separate field-type registration is needed
 - Unregistered relation types fail explicitly during rendering

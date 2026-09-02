@@ -6,35 +6,46 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 
 ## Contents
 
-- [Installation](installation.md)
-- [Authentication](auth.md)
-- [Permissions & Profiles](permissions.md)
-- [Creating Apps](create-app.md)
-- [Creating Modules](creating-modules.md)
-- [List View](list-view.md)
-- [List Search](list-search.md)
-- [List Filters](list-filters.md)
-- [Detail View](detail-view.md)
-- [Page View](page-view.md)
-- [Settings Pages](settings-page.md)
-- [Field Types](field-types.md)
-- [Languages](languages.md)
-- [Relation Field Types](relation-field-types.md)
-- [Relation Forms](relation-forms.md)
-- [Modal System](modal.md)
-- [Action Menu](action-menu.md)
-- [Themes](themes.md)
-- [Brand (Colors & Branding)](brand.md)
-- [Navigation](navigation.md)
-- [Header Actions](header-actions.md)
-- [Extension Registries](extension-registries.md)
-- [Dashboard Widgets](dashboard-widgets.md)
-- [Quick Menu](quick-menu.md)
-- [Banner](banner.md)
-- [Keyboard Shortcuts](keyboard-shortcuts.md)
-- [Setup Collections](setup-collections.md)
-- [Reusable Traits](traits.md)
-- [Artisan Commands](artisan-commands.md)
-- [Testing](testing.md)
-- [AI Agents (Boost guidelines & skills)](ai-agents.md)
-- [Example Application](example-application.md)
+### Getting started
+
+- [Installation](installation.md) — requirements, `noerd:install`, created tables, routes and the frontend scaffold
+- [Example Application](example-application.md) — the Demo Customers app installed by `noerd:demo`, as a reference
+- [Creating Apps](create-app.md) — register a tenant app with its own dashboard (`noerd:create-app`)
+- [Creating Modules](creating-modules.md) — scaffold a module with `noerd:module`, install/update commands, custom attributes
+- [Artisan Commands](artisan-commands.md) — every `noerd:*` command with its options
+
+### Building screens
+
+- [List View](list-view.md) — YAML-driven lists: columns, actions, bulk actions, grid mode, views
+- [List Search](list-search.md) — how the search field filters the list query
+- [List Filters](list-filters.md) — dropdown filters and Excel-style column filters
+- [Detail View](detail-view.md) — record forms: fields, tabs, actions, embedded lists
+- [Page View](page-view.md) — page chrome around a record: relation box, widgets, embedded detail
+- [Settings Pages](settings-page.md) — tenant-singleton forms with `NoerdSettingsPage`
+- [Field Types](field-types.md) — reference of all YAML field types and the `FieldTypeRegistry`
+- [Relation Field Types](relation-field-types.md) — registered `{x}Relation` pickers and their events
+- [Relation Forms](relation-forms.md) — editing a related model's fields inside a detail form
+- [Modal System](modal.md) — route modals vs. component modals, opening, closing, results
+- [Themes](themes.md) — form layout themes (`default`, `compact`, `numbered`) and custom themes
+- [Setup Collections](setup-collections.md) — tenant-maintained lookup tables defined in YAML or the database
+
+### Application chrome
+
+- [Navigation](navigation.md) — the per-app `navigation.yml`
+- [Header Actions](header-actions.md) — module-contributed components in list and detail headers
+- [Action Menu](action-menu.md) — the `x-noerd::action-menu` dropdown primitive
+- [Dashboard Widgets](dashboard-widgets.md) — widgets below the app tiles on the apps dashboard
+- [Quick Menu](quick-menu.md) — tenant-scoped action buttons in the header
+- [Banner](banner.md) — notification banners at the top of the application
+- [Keyboard Shortcuts](keyboard-shortcuts.md) — configurable list and detail shortcuts
+- [Brand (Colors & Branding)](brand.md) — color palette, logo, favicon, sidebar dimensions
+- [Languages](languages.md) — interface languages, translations and translatable collection values
+
+### Platform
+
+- [Authentication](auth.md) — the `noerd` guard, middleware groups and coexistence with a host auth stack
+- [Permissions & Profiles](permissions.md) — profiles, authorization gates, named actions and the query-level read guard
+- [Extension Registries](extension-registries.md) — the container singletons modules extend the core through
+- [Reusable Traits](traits.md) — `BelongsToTenant`, filter traits, install-command traits and the static helpers
+- [Testing](testing.md) — running the suite, global test helpers, testing YAML-driven components
+- [AI Agents (Boost guidelines & skills)](ai-agents.md) — the Laravel Boost guideline and skills shipped with noerd

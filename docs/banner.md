@@ -21,7 +21,7 @@ banners:
 
   - priority: 50
     type: warning
-    component: banner.demo-expiry
+    component: inventory::banner.demo-expiry
     dismissible: true
 
   - priority: 10
@@ -37,7 +37,7 @@ banners:
 | `priority` | Required — entries without a priority are ignored. The highest-priority active banner is shown |
 | `type` | Visual style: `danger`, `warning`, `info`, `success` |
 | `message` | Static text message |
-| `component` | Dynamic Livewire component (alternative to `message`) |
+| `component` | Dynamic Livewire component (alternative to `message`), namespaced: `{module}::banner.{name}` |
 | `dismissible` | Allow users to close the banner |
 
 ## Banner Types
@@ -65,22 +65,22 @@ banners:
 ```yaml
 - priority: 50
   type: warning
-  component: banner.demo-expiry
+  component: inventory::banner.demo-expiry
   dismissible: true
 ```
 
 ## Creating a Dynamic Component
 
-Components are placed in your module's views directory and referenced with the `banner.{name}`
-prefix:
+Components are placed in your module's views directory and referenced by their namespaced Livewire
+name with the `banner.` prefix:
 
 ```
-app-modules/{module}/resources/views/components/banner/{name}.blade.php
+app-modules/{module}/resources/views/components/banner/{name}.blade.php   → {module}::banner.{name}
 ```
 
 ### Example: Demo Expiry Banner
 
-`app-modules/my-module/resources/views/components/banner/demo-expiry.blade.php`
+`app-modules/inventory/resources/views/components/banner/demo-expiry.blade.php`
 
 ```php
 <?php
@@ -115,7 +115,7 @@ Translation labels use English text as the key; add the German mapping to the mo
 
 - **Single active banner:** When multiple banners are configured, only the highest-priority
   non-dismissed banner renders. Dismissing it reveals the next one
-- **Component prefix:** Use `banner.{name}` to reference components in the `banner/` subdirectory
+- **Component name:** `{module}::banner.{name}` for components in the module's `banner/` subdirectory
 - **Dismissible banners:** Users can close them; the dismissal is stored in the session
   (`dismissed_banners`) and resets on the next login/session
 - **Non-dismissible banners:** Always visible until removed from the configuration

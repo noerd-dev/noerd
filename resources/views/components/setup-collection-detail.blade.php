@@ -27,7 +27,8 @@ new class extends Component
 
     public ?array $collectionLayout = null;
     public ?string $collectionKey = null;
-    public array $images = [];
+    /** Plain uploads of the image fields (the image element binds `imageUploads.{field}`). */
+    public array $imageUploads = [];
 
     /** Whether the edited entry exists — drives the delete button. */
     public bool $entryExists = false;
@@ -106,13 +107,14 @@ new class extends Component
         $this->closeModalProcess($this->getListComponent());
     }
 
-    public function updatedImages(): void
+    public function updatedImageUploads(): void
     {
         $resolver = app(MediaResolverContract::class);
-        foreach ($this->images as $key => $image) {
-            $url = $resolver->storeUploadedFile($image);
+        foreach ($this->imageUploads as $fieldName => $uploadedFile) {
+            $url = $uploadedFile ? $resolver->storeUploadedFile($uploadedFile) : null;
             if ($url) {
-                $this->detailData[$key] = $url;
+                $this->detailData[$fieldName] = $url;
+                $this->imageUploads[$fieldName] = null;
             }
         }
     }
