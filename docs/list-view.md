@@ -94,7 +94,7 @@ columns:
 | `align` | Text alignment (`left`, `right`; `number`/`currency` auto-align right) | `left` |
 | `type` | Display type (see Column Types below) | `text` |
 | `options` | `value`/`label` pairs for the `badge` type (see below) | |
-| `readOnly` | Renders the cell input of the `text`, `id`, `date`, `number` and `currency` types read-only. Set to `false` to allow inline editing (see Inline Editing below) | `true` |
+| `readOnly` | Renders the cell input of the `text`, `id`, `number` and `currency` types read-only. Set to `false` to allow inline editing (see Inline Editing below) | `true` |
 | `wireModel` / `wireModelField` / `live` | For the `checkbox` type: the array property the checkbox binds to, an optional sub-key, and whether the binding is `wire:model.live` (see Inline Editing below) | / / `false` |
 | `translatable` | Marks the column as language-dependent — the cell gets a subtle blue background so an editor sees that the value belongs to the selected language (see [Languages](languages.md)) | `false` |
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
@@ -109,9 +109,9 @@ same `Noerd\Support\ListCellFormatter`, so a column type looks identical everywh
 | Type | Description |
 |------|-------------|
 | `text` | Default. Standard text display |
-| `date` | Renders an `<input type="date">` with the value as `Y-m-d` (formatted via `FormatHelper::date()` in the user's locale outside the table) |
+| `date` | Date in the user's locale (`03.09.2026` for `de-DE`, `09/03/2026` for `en-US`) via `FormatHelper::date()` |
 | `datetime` | Date + time in the user's locale (`03.09.2026 14:05` for `de-DE`, `09/03/2026 2:05 PM` for `en-US`), see [Currency, Numbers & Dates](formatting.md) |
-| `number` | Right-aligned number, rounded to 2 decimals |
+| `number` | Right-aligned number in the user's locale, at most 2 decimals (`FormatHelper::number()`) |
 | `currency` | Right-aligned amount in the tenant currency, written in the user's locale (`Noerd\Helpers\CurrencyHelper::format()`) |
 | `id` | Clickable ID link |
 | `bool` | Read-only icon: green checkmark (true), red circle (false) |
