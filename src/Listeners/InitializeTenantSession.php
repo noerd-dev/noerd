@@ -29,10 +29,10 @@ class InitializeTenantSession
         if (! TenantHelper::hasTenant()) {
             $savedTenantId = $user->setting->selected_tenant_id;
 
-            if ($savedTenantId && $user->tenants->contains('id', $savedTenantId)) {
+            if ($savedTenantId && $user->canAccessTenant($savedTenantId)) {
                 TenantHelper::setSelectedTenantId($savedTenantId);
             } else {
-                $firstTenant = $user->tenants->first();
+                $firstTenant = $user->accessibleTenants()->first();
                 if ($firstTenant) {
                     TenantHelper::setSelectedTenantId($firstTenant->id);
                 }

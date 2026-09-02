@@ -23,7 +23,7 @@ class SetupMiddleware
         abort_unless($user, 403);
 
         if (! TenantHelper::getSelectedTenantId()) {
-            $firstTenantId = $user->tenants->first()?->id;
+            $firstTenantId = $user->accessibleTenants()->first()?->id;
 
             if (! $firstTenantId) {
                 return redirect()->route('noerd.no-tenant');

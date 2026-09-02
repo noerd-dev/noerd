@@ -14,8 +14,8 @@ new class extends Component {
 
         // Fall back to an available tenant when none is selected, or when the user
         // is no longer assigned to the currently selected one.
-        if (! $selectedTenantId || ! $user->tenants->contains('id', $selectedTenantId)) {
-            TenantHelper::setSelectedTenantId($user->tenants->first()?->id);
+        if (! $selectedTenantId || ! $user->canAccessTenant($selectedTenantId)) {
+            TenantHelper::setSelectedTenantId($user->accessibleTenants()->first()?->id);
         }
     }
 

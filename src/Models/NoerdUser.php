@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Models;
 
 use Illuminate\Contracts\Translation\HasLocalePreference;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -94,19 +95,61 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     }
 
     /**
+     * The tenants the user may WORK IN: a super admin administers the whole
+     * installation and may enter every tenant, everybody else the tenants of
+     * their membership. The single source for the tenant switcher, the login
+     * session seed and the per-request membership check — never compare
+     * against `$user->tenants` directly for that question. Always read fresh
+     * (never the memoized relation): a membership revoked mid-request must be
+     * seen by the check that follows it.
+     *
+     * @return Collection<int, Tenant>
+     */
+    public function accessibleTenants(): Collection
+    {
+        return $this->isSuperAdmin()
+            ? Tenant::query()->orderBy('id')->get()
+            : $this->tenants()->get();
+    }
+
+    public function canAccessTenant(int $tenantId): bool
+    {
+        return $this->isSuperAdmin()
+            ? Tenant::query()->whereKey($tenantId)->exists()
+            : $this->tenants()->whereKey($tenantId)->exists();
+    }
+
+    /**
+     * The tenants the user ADMINISTERS (Setup → Users/Tenants scope): every
+     * tenant for a super admin, the ADMIN-profile memberships otherwise.
+     *
+     * @return Collection<int, Tenant>
+     */
+    public function administeredTenants(): Collection
+    {
+        return $this->isSuperAdmin()
+            ? Tenant::query()->orderBy('id')->get()
+            : $this->adminTenants;
+    }
+
+    /**
      * @return array{badge: string, text: string}
      */
     public function getProfileForTenantAttribute(): array
     {
         $key = $this->currentProfileKey();
 
-        if ($key === null) {
-            return ['badge' => '', 'text' => ''];
-        }
-
         // Registered profiles (ProfileRegistry) get their translated label;
         // an unregistered key falls back to the raw key rather than hiding.
-        return ['badge' => app(ProfileRegistry::class)->label($key) ?? $key, 'text' => ''];
+        $label = $key === null ? '' : (app(ProfileRegistry::class)->label($key) ?? $key);
+
+        // The installation-level role is visible wherever the profile is: the
+        // badge names it, the tenant profile (if any) follows as plain text.
+        if ($this->isSuperAdmin()) {
+            return ['badge' => __('Super Admin'), 'text' => $label];
+        }
+
+        return ['badge' => $label, 'text' => ''];
     }
 
     /**

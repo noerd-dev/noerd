@@ -203,6 +203,12 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
   baseline: Admin = setup access + bypass, User (or no profile) = everything, ReadOnly = read only.
   Modules may register ADDITIONAL profiles via `app(ProfileRegistry::class)->register(key, label)`
   (their semantics come from the gates that module defines; the core treats unknown keys like User).
+- ABOVE the profiles sits one installation-level flag: `noerd_users.super_admin` (`isSuperAdmin()`).
+  A super admin administers the whole installation — `isAdmin()` in every tenant, may ENTER every
+  tenant, sees every tenant and every account. It is `$guarded` and set ONLY on the console
+  (`noerd:super-admin {id|email}`, `--revoke` to withdraw), never from a screen. Whether a user may
+  WORK IN a tenant is `NoerdUser::canAccessTenant()` / `accessibleTenants()` — never compare
+  against `$user->tenants` directly for that question.
 - All checks go through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
   `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`). Create
   and write are SEPARATE abilities: `canSaveObject()` on detail/page components picks create (new

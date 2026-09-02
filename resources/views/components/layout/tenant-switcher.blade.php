@@ -8,10 +8,9 @@ use Noerd\Helpers\NoerdAuth;
 new class extends Component {
     public function switchTenant(int $tenantId): void
     {
-        $user = NoerdAuth::user();
-        $accessToClientsIds = $user->tenants->pluck('id')->toArray();
-
-        if (! in_array($tenantId, $accessToClientsIds)) {
+        // Membership for everybody, every tenant of the installation for a
+        // super admin — the same answer the per-request membership check gives.
+        if (! NoerdAuth::user()->canAccessTenant($tenantId)) {
             return;
         }
 
@@ -55,7 +54,7 @@ new class extends Component {
 } ?>
 
 @php
-    $tenants = NoerdAuth::user()->tenants;
+    $tenants = NoerdAuth::user()->accessibleTenants();
     $selectedTenantId = \Noerd\Helpers\TenantHelper::getSelectedTenantId();
     $currentTenantName = $tenants->firstWhere('id', $selectedTenantId)?->name ?? __('Tenant');
     $canCreateTenant = NoerdAuth::user()->isAdmin()

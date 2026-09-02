@@ -25,6 +25,7 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 |---------|-------------|
 | `noerd:create-admin` | Create a new user and make them an admin |
 | `noerd:make-admin` | Make an existing user an admin on all their tenants |
+| `noerd:super-admin` | Grant or revoke the installation-wide super admin flag of a user |
 | `noerd:create-tenant` | Create a new tenant |
 | `noerd:create-app` | Create a new app (TenantApp) with its own dashboard that can be assigned to tenants |
 | `noerd:assign-apps-to-tenant` | Assign apps to a tenant with interactive selection |
@@ -188,6 +189,23 @@ Makes an existing user an administrator by giving them admin profile access on a
 ```bash
 php artisan noerd:make-admin {user_id}
 ```
+
+## noerd:super-admin
+
+Grants or revokes the installation-wide super admin flag (see
+[Permissions → Super admin](permissions.md#super-admin-installation-admin)). The flag is
+`$guarded` on the model and not editable from any screen, so the console is the only way
+in — and out.
+
+```bash
+php artisan noerd:super-admin {user}            # grant — {user} is an ID or an email
+php artisan noerd:super-admin {user} --revoke   # withdraw
+```
+
+| Option | Description |
+|--------|-------------|
+| `--revoke` | Withdraw the super admin flag instead of granting it |
+| `--force` | Revoke even when the user is the last super admin of the installation (refused otherwise) |
 
 ## noerd:create-tenant
 

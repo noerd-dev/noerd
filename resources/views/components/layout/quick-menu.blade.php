@@ -27,7 +27,7 @@ new class extends Component {
         $user = NoerdAuth::user();
 
         return config('noerd.features.multi_tenant')
-            && ($user->tenants->count() > 1
+            && ($user->accessibleTenants()->count() > 1
                 || ($user->isAdmin() && config('noerd.features.new_tenant')));
     }
 } ?>
