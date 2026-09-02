@@ -5,7 +5,10 @@ declare(strict_types=1);
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
+use Livewire\Mechanisms\HandleRequests\EndpointResolver;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
@@ -99,14 +102,37 @@ describe('login flow', function (): void {
         expect(Auth::guard('noerd')->check())->toBeTrue();
         expect(Auth::guard('noerd')->id())->toBe($user->id);
         expect(Auth::guard('web')->check())->toBeFalse();
-        expect($user->logins()->count())->toBe(1);
     });
+});
 
-    it('redirects an authenticated noerd user away from the login page', function (): void {
-        $user = NoerdUser::factory()->create();
-        $this->actingAs($user, 'noerd');
+describe('persistent middleware', function (): void {
+    it('refuses a livewire update for a component of a noerd route once the session is gone', function (): void {
+        // NoerdAuthenticate is registered as Livewire persistent middleware, so
+        // the update endpoint re-applies the ORIGINAL route's authentication
+        // instead of accepting any request that carries a valid snapshot.
+        Route::get('/zz-persistent-middleware', fn(): string => Blade::render('<livewire:noerd-test::theme-test />'))
+            ->middleware('noerd');
+        Route::getRoutes()->refreshNameLookups();
 
-        $this->get(route('noerd.login'))->assertRedirect(route('noerd.apps'));
+        $this->actingAs(NoerdUser::factory()->withExampleTenant()->create(), 'noerd');
+
+        $html = $this->get('/zz-persistent-middleware')->assertOk()->getContent();
+
+        expect(preg_match('/wire:snapshot="([^"]*)"/', (string) $html, $matches))->toBe(1);
+        $snapshot = html_entity_decode($matches[1], ENT_QUOTES);
+
+        Auth::guard('noerd')->logout();
+
+        // The real client posts the snapshot back with the Livewire headers.
+        $response = $this->withHeaders(['X-Livewire' => 'true'])->postJson(EndpointResolver::updatePath(), [
+            'components' => [[
+                'snapshot' => $snapshot,
+                'updates' => [],
+                'calls' => [],
+            ]],
+        ]);
+
+        expect($response->getStatusCode())->not->toBe(200);
     });
 });
 

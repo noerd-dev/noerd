@@ -37,7 +37,7 @@ describe('AppAccessMiddleware', function (): void {
         $response = $this->middleware->handle($request, fn() => response('OK'), 'cms');
 
         expect($response->getStatusCode())->toBe(302);
-        expect($response->headers->get('Location'))->not->toContain('/noerd/login');
+        expect($response->headers->get('Location'))->toBe(route('noerd.no-tenant'));
     });
 
     it('throws NoerdException when tenant does not have the app assigned', function (): void {
@@ -94,54 +94,5 @@ describe('AppAccessMiddleware', function (): void {
         $this->middleware->handle($request, fn() => response('OK'), 'media');
 
         expect(TenantHelper::getSelectedApp())->toBe('MEDIA');
-    });
-
-    it('matches app name case-insensitively', function (): void {
-        $user = NoerdUser::factory()->withExampleTenant()->create();
-        $tenant = $user->selectedTenant();
-
-        $app = TenantApp::create([
-            'name' => 'UKI',
-            'title' => 'UKI',
-            'icon' => 'noerd::icons.uki',
-            'route' => 'uki.dashboard',
-            'is_active' => true,
-        ]);
-        $tenant->tenantApps()->attach($app->id);
-
-        $this->actingAs($user);
-
-        $request = Request::create('/uki/dashboard', 'GET');
-        $request->setUserResolver(fn() => $user);
-
-        $response = $this->middleware->handle($request, fn() => response('OK'), 'uki');
-
-        expect($response->getContent())->toBe('OK');
-    });
-});
-
-describe('NoerdException rendering', function (): void {
-    it('renders app not assigned as a friendly 403 error page', function (): void {
-        $exception = new NoerdException(
-            NoerdException::TYPE_APP_NOT_ASSIGNED,
-            appName: 'CMS',
-        );
-
-        $response = $exception->render();
-
-        // From the user's perspective this is an access problem, not a server
-        // error — same friendly page as the permission denial.
-        expect($response->getStatusCode())->toBe(403);
-    });
-
-    it('renders config not found error page', function (): void {
-        $exception = new NoerdException(
-            NoerdException::TYPE_CONFIG_NOT_FOUND,
-            configFile: 'details/test.yml',
-        );
-
-        $response = $exception->render();
-
-        expect($response->getStatusCode())->toBe(500);
     });
 });

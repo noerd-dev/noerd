@@ -40,11 +40,12 @@ describe('Relation field theme templates', function (): void {
 
     it('renders the compact template with the label to the left', function () use ($props): void {
         $component = Livewire::test('noerd-relation-field', $props + ['theme' => 'compact'])
-            ->assertSuccessful()
-            ->assertSeeHtml('h-7!')
-            ->assertSeeHtml('px-2!');
+            ->assertSuccessful();
 
         assertElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
+
+        // The select button shrinks to the compact input height on the same element.
+        assertElementHasClasses($component->html(), ['h-7!', 'px-2!']);
     });
 
     it('renders the numbered template inside the numbered row chrome', function () use ($props): void {

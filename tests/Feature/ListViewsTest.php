@@ -77,467 +77,483 @@ function zzSetupViewEntry(string $key, string $title): array
     return ['key' => $key, 'app' => 'setup', 'appLabel' => __('Setup'), 'title' => $title];
 }
 
-it('discovers only the default view when no variants exist', function (): void {
-    ($this->writeFixture)($this->fixtureDir, 'zz-single-test-list.yml', 'title: Single View');
+describe('discovery', function (): void {
+    it('discovers only the default view when no variants exist', function (): void {
+        ($this->writeFixture)($this->fixtureDir, 'zz-single-test-list.yml', 'title: Single View');
 
-    expect(StaticConfigHelper::getListViews('zz-single-test-list'))
-        ->toBe(['default' => zzSetupViewEntry('default', 'Single View')]);
-});
-
-it('discovers all views with default first and variants alphabetical', function (): void {
-    expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
-        'default' => zzSetupViewEntry('default', 'Base View'),
-        'active' => zzSetupViewEntry('active', 'Active View'),
-        'vip' => zzSetupViewEntry('vip', 'VIP View'),
-    ]);
-});
-
-it('shadows a module-source variant with the project variant of the same key', function (): void {
-    ($this->writeFixture)($this->moduleFixtureDir, 'zz-view-test-list--vip.yml', 'title: Module VIP View');
-    StaticConfigHelper::clearModuleSourceCache();
-
-    expect(StaticConfigHelper::getListViews('zz-view-test-list')['vip']['title'])->toBe('VIP View');
-});
-
-it('discovers a module-source variant that has no project counterpart', function (): void {
-    ($this->writeFixture)($this->moduleFixtureDir, 'zz-view-test-list--module.yml', 'title: Module Only View');
-    StaticConfigHelper::clearModuleSourceCache();
-
-    expect(StaticConfigHelper::getListViews('zz-view-test-list')['module']['title'])->toBe('Module Only View');
-});
-
-it('switches the active view and persists it in the session', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'vip');
-
-    expect($component->get('listView'))->toBe('vip')
-        ->and(session('listView.zz-view-test-list'))->toBe('vip');
-
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
-
-    expect($config->invoke($component->instance())['title'])->toBe('VIP View');
-});
-
-it('restores the saved view from the session on mount', function (): void {
-    session(['listView.zz-view-test-list' => 'vip']);
-
-    $component = Livewire::test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBe('vip');
-});
-
-it('falls back to the default view when the saved view no longer exists', function (): void {
-    session(['listView.zz-view-test-list' => 'gone']);
-
-    $component = Livewire::test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBeNull();
-
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
-
-    expect($config->invoke($component->instance())['title'])->toBe('Base View');
-});
-
-it('ignores switching to an unknown view', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'nope');
-
-    expect($component->get('listView'))->toBeNull()
-        ->and(session('listView.zz-view-test-list'))->toBeNull();
-});
-
-it('switches back to the default view', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'vip')
-        ->call('switchListView', 'default');
-
-    expect($component->get('listView'))->toBeNull()
-        ->and(session('listView.zz-view-test-list'))->toBe('default');
-});
-
-it('clears the selection when switching views', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->set('selectedRecordIds', [1, 2])
-        ->call('switchListView', 'vip');
-
-    expect($component->get('selectedRecordIds'))->toBe([]);
-});
-
-it('keeps the paired detail component free of the view suffix', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'vip');
-
-    $paired = new ReflectionMethod($component->instance(), 'pairedDetailComponent');
-
-    expect($paired->invoke($component->instance()))->toBe('zz-view-test-detail');
-});
-
-it('merges resolver-defined views into the discovery, files winning on key collision', function (): void {
-    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
-        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
-        {
-            return $config;
-        }
-
-        public function filterListViews(string $component, array $views): array
-        {
-            return $views;
-        }
-
-        public function listViews(string $component): array
-        {
-            return $component === 'zz-view-test-list'
-                ? ['db' => 'DB View', 'vip' => 'Must Not Shadow The File', 'default' => 'Must Not Shadow Either']
-                : [];
-        }
+        expect(StaticConfigHelper::getListViews('zz-single-test-list'))
+            ->toBe(['default' => zzSetupViewEntry('default', 'Single View')]);
     });
 
-    expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
-        'default' => zzSetupViewEntry('default', 'Base View'),
-        'active' => zzSetupViewEntry('active', 'Active View'),
-        'db' => zzSetupViewEntry('db', 'DB View'),
-        'vip' => zzSetupViewEntry('vip', 'VIP View'),
-    ]);
+    it('discovers all views with default first and variants alphabetical', function (): void {
+        expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
+            'default' => zzSetupViewEntry('default', 'Base View'),
+            'active' => zzSetupViewEntry('active', 'Active View'),
+            'vip' => zzSetupViewEntry('vip', 'VIP View'),
+        ]);
+    });
+
+    it('shadows a module-source variant with the project variant of the same key', function (): void {
+        ($this->writeFixture)($this->moduleFixtureDir, 'zz-view-test-list--vip.yml', 'title: Module VIP View');
+        StaticConfigHelper::clearModuleSourceCache();
+
+        expect(StaticConfigHelper::getListViews('zz-view-test-list')['vip']['title'])->toBe('VIP View');
+    });
+
+    it('discovers a module-source variant that has no project counterpart', function (): void {
+        ($this->writeFixture)($this->moduleFixtureDir, 'zz-view-test-list--module.yml', 'title: Module Only View');
+        StaticConfigHelper::clearModuleSourceCache();
+
+        expect(StaticConfigHelper::getListViews('zz-view-test-list')['module']['title'])->toBe('Module Only View');
+    });
+
+    it('resolves list configs flat even for nested component names', function (): void {
+        expect(StaticConfigHelper::getListConfig('setup::zzsubfolder.zz-view-test-list')['title'])->toBe('Base View')
+            ->and(StaticConfigHelper::getListViews('zzsubfolder.zz-view-test-list'))->toHaveKeys(['default', 'active', 'vip'])
+            ->and(StaticConfigHelper::resolveConfigPath('setup', 'list', 'zzsubfolder.zz-view-test-list'))
+            ->toBe("{$this->fixtureDir}/zz-view-test-list.yml");
+    });
+
+    it('parses and composes list view keys', function (): void {
+        expect(StaticConfigHelper::parseListViewKey('vip'))->toBe([null, 'vip'])
+            ->and(StaticConfigHelper::parseListViewKey('default'))->toBe([null, 'default'])
+            ->and(StaticConfigHelper::parseListViewKey('gastro::vip'))->toBe(['gastro', 'vip'])
+            ->and(StaticConfigHelper::parseListViewKey('gastro::'))->toBe(['gastro', 'default'])
+            ->and(StaticConfigHelper::composeListViewKey(null, 'vip'))->toBe('vip')
+            ->and(StaticConfigHelper::composeListViewKey(null, null))->toBe('default')
+            ->and(StaticConfigHelper::composeListViewKey('gastro', 'vip'))->toBe('gastro::vip')
+            ->and(StaticConfigHelper::composeListViewKey('gastro', null))->toBe('gastro::default');
+    });
+
+    it('renders the view switcher only when multiple views exist', function (): void {
+        $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
+
+        ($this->writeFixture)(
+            $this->fixtureDir,
+            'zz-single-view-test-list.yml',
+            "title: Single View\ncolumns:\n  - field: name\n    label: Name",
+        );
+
+        Livewire::test(TestableSingleViewRenderComponent::class)
+            ->assertDontSee('switchListView');
+
+        // A second view file for the SAME list turns the plain title into the switcher.
+        ($this->writeFixture)($this->fixtureDir, 'zz-single-view-test-list--test.yml', 'title: Test View');
+
+        Livewire::test(TestableSingleViewRenderComponent::class)
+            ->assertSee('switchListView')
+            ->assertSee('Test View');
+    });
 });
 
-it('materializes a resolver-defined view as the base config plus its override', function (): void {
-    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
-        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
-        {
-            if ($component === 'zz-view-test-list--db') {
-                $config['title'] = 'DB View';
-                $config['columns'] = [['field' => 'id', 'label' => 'Id']];
+describe('session state', function (): void {
+    it('switches the active view and persists it in the session', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'vip');
+
+        expect($component->get('listView'))->toBe('vip')
+            ->and(session('listView.zz-view-test-list'))->toBe('vip');
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('VIP View');
+    });
+
+    it('restores the saved view from the session on mount', function (): void {
+        session(['listView.zz-view-test-list' => 'vip']);
+
+        $component = Livewire::test(TestableListViewComponent::class);
+
+        expect($component->get('listView'))->toBe('vip');
+    });
+
+    it('falls back to the default view when the saved view no longer exists', function (): void {
+        session(['listView.zz-view-test-list' => 'gone']);
+
+        $component = Livewire::test(TestableListViewComponent::class);
+
+        expect($component->get('listView'))->toBeNull();
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('Base View');
+    });
+
+    it('ignores switching to an unknown view', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'nope');
+
+        expect($component->get('listView'))->toBeNull()
+            ->and(session('listView.zz-view-test-list'))->toBeNull();
+    });
+
+    it('switches back to the default view', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'vip')
+            ->call('switchListView', 'default');
+
+        expect($component->get('listView'))->toBeNull()
+            ->and(session('listView.zz-view-test-list'))->toBe('default');
+    });
+
+    it('clears the selection when switching views', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->set('selectedRecordIds', [1, 2])
+            ->call('switchListView', 'vip');
+
+        expect($component->get('selectedRecordIds'))->toBe([]);
+    });
+
+    it('keeps the paired detail component free of the view suffix', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'vip');
+
+        $paired = new ReflectionMethod($component->instance(), 'pairedDetailComponent');
+
+        expect($paired->invoke($component->instance()))->toBe('zz-view-test-detail');
+    });
+});
+
+describe('resolver-defined views', function (): void {
+    it('merges resolver-defined views into the discovery, files winning on key collision', function (): void {
+        app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
+            public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+            {
+                return $config;
             }
 
-            return $config;
-        }
+            public function filterListViews(string $component, array $views): array
+            {
+                return $views;
+            }
 
-        public function filterListViews(string $component, array $views): array
-        {
-            return $views;
-        }
+            public function listViews(string $component): array
+            {
+                return $component === 'zz-view-test-list'
+                    ? ['db' => 'DB View', 'vip' => 'Must Not Shadow The File', 'default' => 'Must Not Shadow Either']
+                    : [];
+            }
+        });
 
-        public function listViews(string $component): array
-        {
-            return $component === 'zz-view-test-list' ? ['db' => 'DB View'] : [];
-        }
+        expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
+            'default' => zzSetupViewEntry('default', 'Base View'),
+            'active' => zzSetupViewEntry('active', 'Active View'),
+            'db' => zzSetupViewEntry('db', 'DB View'),
+            'vip' => zzSetupViewEntry('vip', 'VIP View'),
+        ]);
     });
 
-    $config = StaticConfigHelper::getListConfig('zz-view-test-list--db');
+    it('materializes a resolver-defined view as the base config plus its override', function (): void {
+        app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
+            public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+            {
+                if ($component === 'zz-view-test-list--db') {
+                    $config['title'] = 'DB View';
+                    $config['columns'] = [['field' => 'id', 'label' => 'Id']];
+                }
 
-    // Base YAML keys survive, the override shaped title and columns.
-    expect($config['title'])->toBe('DB View')
-        ->and(array_column($config['columns'], 'field'))->toBe(['id']);
+                return $config;
+            }
 
-    // A missing base still yields an empty config.
-    expect(StaticConfigHelper::getListConfig('zz-does-not-exist-list--db'))->toBe([]);
-});
+            public function filterListViews(string $component, array $views): array
+            {
+                return $views;
+            }
 
-it('activates the first allowed view when the resolver hides the default', function (): void {
-    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
-        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
-        {
-            return $config;
-        }
+            public function listViews(string $component): array
+            {
+                return $component === 'zz-view-test-list' ? ['db' => 'DB View'] : [];
+            }
+        });
 
-        public function listViews(string $component): array
-        {
-            return [];
-        }
+        $config = StaticConfigHelper::getListConfig('zz-view-test-list--db');
 
-        public function filterListViews(string $component, array $views): array
-        {
-            unset($views['default']);
+        // Base YAML keys survive, the override shaped title and columns.
+        expect($config['title'])->toBe('DB View')
+            ->and(array_column($config['columns'], 'field'))->toBe(['id']);
 
-            return $views;
-        }
+        // A missing base still yields an empty config.
+        expect(StaticConfigHelper::getListConfig('zz-does-not-exist-list--db'))->toBe([]);
     });
 
-    $component = Livewire::test(TestableListViewComponent::class);
+    it('activates the first allowed view when the resolver hides the default', function (): void {
+        app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
+            public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+            {
+                return $config;
+            }
 
-    expect($component->get('listView'))->toBe('active')
-        ->and($component->instance()->availableListViews)->not->toHaveKey('default');
-});
+            public function listViews(string $component): array
+            {
+                return [];
+            }
 
-it('keeps the base view when the resolver hides every view', function (): void {
-    app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
-        public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
-        {
-            return $config;
-        }
+            public function filterListViews(string $component, array $views): array
+            {
+                unset($views['default']);
 
-        public function listViews(string $component): array
-        {
-            return [];
-        }
+                return $views;
+            }
+        });
 
-        public function filterListViews(string $component, array $views): array
-        {
-            return [];
-        }
+        $component = Livewire::test(TestableListViewComponent::class);
+
+        expect($component->get('listView'))->toBe('active')
+            ->and($component->instance()->availableListViews)->not->toHaveKey('default');
     });
 
-    $component = Livewire::test(TestableListViewComponent::class);
+    it('keeps the base view when the resolver hides every view', function (): void {
+        app()->instance(StaticConfigHelper::LAYOUT_OVERRIDES_BINDING, new class {
+            public function apply(string $viewType, string $component, array $config, ?string $modelClass = null): array
+            {
+                return $config;
+            }
 
-    expect($component->get('listView'))->toBeNull();
+            public function listViews(string $component): array
+            {
+                return [];
+            }
 
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
+            public function filterListViews(string $component, array $views): array
+            {
+                return [];
+            }
+        });
 
-    expect($config->invoke($component->instance())['title'])->toBe('Base View');
+        $component = Livewire::test(TestableListViewComponent::class);
+
+        expect($component->get('listView'))->toBeNull();
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('Base View');
+    });
 });
 
-it('renders the view switcher only when multiple views exist', function (): void {
-    $user = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $this->actingAs($user);
+describe('cross-app views', function (): void {
+    it('discovers other allowed apps views with composite keys, app labels and current app first', function (): void {
+        ($this->setUpOtherApp)();
 
-    Livewire::test('noerd::setup-languages-list')
-        ->assertDontSee('switchListView');
+        expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
+            'default' => zzSetupViewEntry('default', 'Base View'),
+            'active' => zzSetupViewEntry('active', 'Active View'),
+            'vip' => zzSetupViewEntry('vip', 'VIP View'),
+            'zzotherapp::default' => ['key' => 'default', 'app' => 'zzotherapp', 'appLabel' => 'Other App', 'title' => 'Other Base'],
+            'zzotherapp::vip' => ['key' => 'vip', 'app' => 'zzotherapp', 'appLabel' => 'Other App', 'title' => 'Other VIP'],
+        ]);
+    });
 
-    ($this->writeFixture)($this->fixtureDir, 'setup-languages-list--test.yml', 'title: Test View');
+    it('anchors the plain-key group to an explicitly passed primary app', function (): void {
+        ($this->setUpOtherApp)();
 
-    Livewire::test('noerd::setup-languages-list')
-        ->assertSee('switchListView')
-        ->assertSee('Test View');
+        $views = StaticConfigHelper::getListViews('zz-view-test-list', 'zzotherapp');
+
+        expect(array_key_first($views))->toBe('default')
+            ->and($views['default'])->toMatchArray(['app' => 'zzotherapp', 'title' => 'Other Base'])
+            ->and($views['vip'])->toMatchArray(['app' => 'zzotherapp', 'title' => 'Other VIP'])
+            ->and($views)->toHaveKeys(['setup::default', 'setup::active', 'setup::vip'])
+            ->and(session('noerd.selected_app'))->toBe('SETUP');
+    });
+
+    it('switches to another apps view and loads its config without changing the session app', function (): void {
+        ($this->setUpOtherApp)();
+
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'zzotherapp::vip');
+
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewApp'))->toBe('zzotherapp')
+            ->and(session('listView.zz-view-test-list'))->toBe('zzotherapp::vip')
+            ->and(session('noerd.selected_app'))->toBe('SETUP');
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('Other VIP');
+    });
+
+    it('switches to another apps base view', function (): void {
+        ($this->setUpOtherApp)();
+
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'zzotherapp::default');
+
+        expect($component->get('listView'))->toBeNull()
+            ->and($component->get('listViewApp'))->toBe('zzotherapp');
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('Other Base');
+    });
+
+    it('restores a composite saved view from the session on mount', function (): void {
+        ($this->setUpOtherApp)();
+        session(['listView.zz-view-test-list' => 'zzotherapp::vip']);
+
+        $component = Livewire::test(TestableListViewComponent::class);
+
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewApp'))->toBe('zzotherapp');
+    });
+
+    it('collapses a saved composite key of the current app to its plain form', function (): void {
+        ($this->setUpOtherApp)();
+        session(['listView.zz-view-test-list' => 'setup::vip']);
+
+        $component = Livewire::test(TestableListViewComponent::class);
+
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewApp'))->toBeNull();
+    });
+
+    it('materializes a foreign view without its own YAML from the foreign base config', function (): void {
+        ($this->setUpOtherApp)();
+
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'zzotherapp::vip');
+
+        File::delete(base_path('app-configs/zzotherapp/lists/zz-view-test-list--vip.yml'));
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('Other Base');
+    });
+
+    it('falls back to the default view when the foreign app config disappears mid-session', function (): void {
+        ($this->setUpOtherApp)();
+
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'zzotherapp::vip');
+
+        File::deleteDirectory(base_path('app-configs/zzotherapp'));
+
+        $config = new ReflectionMethod($component->instance(), 'getListConfig');
+
+        expect($config->invoke($component->instance())['title'])->toBe('Base View')
+            ->and($component->instance()->listView)->toBeNull()
+            ->and($component->instance()->listViewApp)->toBeNull();
+    });
 });
 
-it('discovers other allowed apps views with composite keys, app labels and current app first', function (): void {
-    ($this->setUpOtherApp)();
+describe('url param', function (): void {
+    it('applies the view URL param on mount and persists it in the session', function (): void {
+        $component = Livewire::withQueryParams(['view' => 'vip'])
+            ->test(TestableListViewComponent::class);
 
-    expect(StaticConfigHelper::getListViews('zz-view-test-list'))->toBe([
-        'default' => zzSetupViewEntry('default', 'Base View'),
-        'active' => zzSetupViewEntry('active', 'Active View'),
-        'vip' => zzSetupViewEntry('vip', 'VIP View'),
-        'zzotherapp::default' => ['key' => 'default', 'app' => 'zzotherapp', 'appLabel' => 'Other App', 'title' => 'Other Base'],
-        'zzotherapp::vip' => ['key' => 'vip', 'app' => 'zzotherapp', 'appLabel' => 'Other App', 'title' => 'Other VIP'],
-    ]);
-});
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewParam'))->toBe('vip')
+            ->and(session('listView.zz-view-test-list'))->toBe('vip');
+    });
 
-it('anchors the plain-key group to an explicitly passed primary app', function (): void {
-    ($this->setUpOtherApp)();
+    it('lets the view URL param win over a different session-saved view', function (): void {
+        session(['listView.zz-view-test-list' => 'active']);
 
-    $views = StaticConfigHelper::getListViews('zz-view-test-list', 'zzotherapp');
+        $component = Livewire::withQueryParams(['view' => 'vip'])
+            ->test(TestableListViewComponent::class);
 
-    expect(array_key_first($views))->toBe('default')
-        ->and($views['default'])->toMatchArray(['app' => 'zzotherapp', 'title' => 'Other Base'])
-        ->and($views['vip'])->toMatchArray(['app' => 'zzotherapp', 'title' => 'Other VIP'])
-        ->and($views)->toHaveKeys(['setup::default', 'setup::active', 'setup::vip'])
-        ->and(session('noerd.selected_app'))->toBe('SETUP');
-});
+        expect($component->get('listView'))->toBe('vip')
+            ->and(session('listView.zz-view-test-list'))->toBe('vip');
+    });
 
-it('switches to another apps view and loads its config without changing the session app', function (): void {
-    ($this->setUpOtherApp)();
+    it('resets a session-saved view when the URL param names the default view', function (): void {
+        session(['listView.zz-view-test-list' => 'vip']);
 
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'zzotherapp::vip');
+        $component = Livewire::withQueryParams(['view' => 'default'])
+            ->test(TestableListViewComponent::class);
 
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewApp'))->toBe('zzotherapp')
-        ->and(session('listView.zz-view-test-list'))->toBe('zzotherapp::vip')
-        ->and(session('noerd.selected_app'))->toBe('SETUP');
+        expect($component->get('listView'))->toBeNull()
+            ->and($component->get('listViewParam'))->toBe('default')
+            ->and(session('listView.zz-view-test-list'))->toBe('default');
+    });
 
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
+    it('sets the view URL param to default on mount when multiple views exist', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class);
 
-    expect($config->invoke($component->instance())['title'])->toBe('Other VIP');
-});
+        expect($component->get('listView'))->toBeNull()
+            ->and($component->get('listViewParam'))->toBe('default');
+    });
 
-it('switches to another apps base view', function (): void {
-    ($this->setUpOtherApp)();
+    it('keeps the view URL param empty on single-view lists', function (): void {
+        ($this->writeFixture)($this->fixtureDir, 'zz-single-view-test-list.yml', 'title: Single View');
 
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'zzotherapp::default');
+        $component = Livewire::test(TestableSingleViewComponent::class);
 
-    expect($component->get('listView'))->toBeNull()
-        ->and($component->get('listViewApp'))->toBe('zzotherapp');
+        expect($component->get('listViewParam'))->toBeNull();
+    });
 
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
+    it('falls back to the session-saved view when the URL param is unknown', function (): void {
+        session(['listView.zz-view-test-list' => 'active']);
 
-    expect($config->invoke($component->instance())['title'])->toBe('Other Base');
-});
+        $component = Livewire::withQueryParams(['view' => 'nope'])
+            ->test(TestableListViewComponent::class);
 
-it('restores a composite saved view from the session on mount', function (): void {
-    ($this->setUpOtherApp)();
-    session(['listView.zz-view-test-list' => 'zzotherapp::vip']);
+        expect($component->get('listView'))->toBe('active')
+            ->and($component->get('listViewParam'))->toBe('active')
+            ->and(session('listView.zz-view-test-list'))->toBe('active');
+    });
 
-    $component = Livewire::test(TestableListViewComponent::class);
+    it('applies a composite view URL param without changing the session app', function (): void {
+        ($this->setUpOtherApp)();
 
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewApp'))->toBe('zzotherapp');
-});
+        $component = Livewire::withQueryParams(['view' => 'zzotherapp--vip'])
+            ->test(TestableListViewComponent::class);
 
-it('collapses a saved composite key of the current app to its plain form', function (): void {
-    ($this->setUpOtherApp)();
-    session(['listView.zz-view-test-list' => 'setup::vip']);
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewApp'))->toBe('zzotherapp')
+            ->and($component->get('listViewParam'))->toBe('zzotherapp--vip')
+            ->and(session('listView.zz-view-test-list'))->toBe('zzotherapp::vip')
+            ->and(session('noerd.selected_app'))->toBe('SETUP');
+    });
 
-    $component = Livewire::test(TestableListViewComponent::class);
+    it('still accepts a legacy composite view URL param with a double colon', function (): void {
+        ($this->setUpOtherApp)();
 
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewApp'))->toBeNull();
-});
+        $component = Livewire::withQueryParams(['view' => 'zzotherapp::vip'])
+            ->test(TestableListViewComponent::class);
 
-it('materializes a foreign view without its own YAML from the foreign base config', function (): void {
-    ($this->setUpOtherApp)();
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewApp'))->toBe('zzotherapp')
+            ->and($component->get('listViewParam'))->toBe('zzotherapp--vip');
+    });
 
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'zzotherapp::vip');
+    it('collapses a composite view URL param of the current app to its plain form', function (): void {
+        ($this->setUpOtherApp)();
 
-    File::delete(base_path('app-configs/zzotherapp/lists/zz-view-test-list--vip.yml'));
+        $component = Livewire::withQueryParams(['view' => 'setup--vip'])
+            ->test(TestableListViewComponent::class);
 
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
+        expect($component->get('listView'))->toBe('vip')
+            ->and($component->get('listViewApp'))->toBeNull()
+            ->and($component->get('listViewParam'))->toBe('vip');
+    });
 
-    expect($config->invoke($component->instance())['title'])->toBe('Other Base');
-});
+    it('syncs the view URL param when switching views', function (): void {
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'vip');
 
-it('falls back to the default view when the foreign app config disappears mid-session', function (): void {
-    ($this->setUpOtherApp)();
+        expect($component->get('listViewParam'))->toBe('vip');
 
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'zzotherapp::vip');
+        $component->call('switchListView', 'default');
 
-    File::deleteDirectory(base_path('app-configs/zzotherapp'));
+        expect($component->get('listViewParam'))->toBe('default');
+    });
 
-    $config = new ReflectionMethod($component->instance(), 'getListConfig');
+    it('writes a composite view URL param with a double dash when switching', function (): void {
+        ($this->setUpOtherApp)();
 
-    expect($config->invoke($component->instance())['title'])->toBe('Base View')
-        ->and($component->instance()->listView)->toBeNull()
-        ->and($component->instance()->listViewApp)->toBeNull();
-});
+        $component = Livewire::test(TestableListViewComponent::class)
+            ->call('switchListView', 'zzotherapp::vip');
 
-it('applies the view URL param on mount and persists it in the session', function (): void {
-    $component = Livewire::withQueryParams(['view' => 'vip'])
-        ->test(TestableListViewComponent::class);
+        expect($component->get('listViewParam'))->toBe('zzotherapp--vip');
+    });
 
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewParam'))->toBe('vip')
-        ->and(session('listView.zz-view-test-list'))->toBe('vip');
-});
+    it('ignores the view URL param on embedded compact lists', function (): void {
+        $component = Livewire::withQueryParams(['view' => 'vip'])
+            ->test(TestableListViewComponent::class, ['compact' => true]);
 
-it('lets the view URL param win over a different session-saved view', function (): void {
-    session(['listView.zz-view-test-list' => 'active']);
-
-    $component = Livewire::withQueryParams(['view' => 'vip'])
-        ->test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBe('vip')
-        ->and(session('listView.zz-view-test-list'))->toBe('vip');
-});
-
-it('resets a session-saved view when the URL param names the default view', function (): void {
-    session(['listView.zz-view-test-list' => 'vip']);
-
-    $component = Livewire::withQueryParams(['view' => 'default'])
-        ->test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBeNull()
-        ->and($component->get('listViewParam'))->toBe('default')
-        ->and(session('listView.zz-view-test-list'))->toBe('default');
-});
-
-it('sets the view URL param to default on mount when multiple views exist', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBeNull()
-        ->and($component->get('listViewParam'))->toBe('default');
-});
-
-it('keeps the view URL param empty on single-view lists', function (): void {
-    ($this->writeFixture)($this->fixtureDir, 'zz-single-view-test-list.yml', 'title: Single View');
-
-    $component = Livewire::test(TestableSingleViewComponent::class);
-
-    expect($component->get('listViewParam'))->toBeNull();
-});
-
-it('falls back to the session-saved view when the URL param is unknown', function (): void {
-    session(['listView.zz-view-test-list' => 'active']);
-
-    $component = Livewire::withQueryParams(['view' => 'nope'])
-        ->test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBe('active')
-        ->and($component->get('listViewParam'))->toBe('active')
-        ->and(session('listView.zz-view-test-list'))->toBe('active');
-});
-
-it('applies a composite view URL param without changing the session app', function (): void {
-    ($this->setUpOtherApp)();
-
-    $component = Livewire::withQueryParams(['view' => 'zzotherapp--vip'])
-        ->test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewApp'))->toBe('zzotherapp')
-        ->and($component->get('listViewParam'))->toBe('zzotherapp--vip')
-        ->and(session('listView.zz-view-test-list'))->toBe('zzotherapp::vip')
-        ->and(session('noerd.selected_app'))->toBe('SETUP');
-});
-
-it('still accepts a legacy composite view URL param with a double colon', function (): void {
-    ($this->setUpOtherApp)();
-
-    $component = Livewire::withQueryParams(['view' => 'zzotherapp::vip'])
-        ->test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewApp'))->toBe('zzotherapp')
-        ->and($component->get('listViewParam'))->toBe('zzotherapp--vip');
-});
-
-it('collapses a composite view URL param of the current app to its plain form', function (): void {
-    ($this->setUpOtherApp)();
-
-    $component = Livewire::withQueryParams(['view' => 'setup--vip'])
-        ->test(TestableListViewComponent::class);
-
-    expect($component->get('listView'))->toBe('vip')
-        ->and($component->get('listViewApp'))->toBeNull()
-        ->and($component->get('listViewParam'))->toBe('vip');
-});
-
-it('syncs the view URL param when switching views', function (): void {
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'vip');
-
-    expect($component->get('listViewParam'))->toBe('vip');
-
-    $component->call('switchListView', 'default');
-
-    expect($component->get('listViewParam'))->toBe('default');
-});
-
-it('writes a composite view URL param with a double dash when switching', function (): void {
-    ($this->setUpOtherApp)();
-
-    $component = Livewire::test(TestableListViewComponent::class)
-        ->call('switchListView', 'zzotherapp::vip');
-
-    expect($component->get('listViewParam'))->toBe('zzotherapp--vip');
-});
-
-it('resolves list configs flat even for nested component names', function (): void {
-    expect(StaticConfigHelper::getListConfig('setup::zzsubfolder.zz-view-test-list')['title'])->toBe('Base View')
-        ->and(StaticConfigHelper::getListViews('zzsubfolder.zz-view-test-list'))->toHaveKeys(['default', 'active', 'vip'])
-        ->and(StaticConfigHelper::resolveConfigPath('setup', 'list', 'zzsubfolder.zz-view-test-list'))
-        ->toBe("{$this->fixtureDir}/zz-view-test-list.yml");
-});
-
-it('ignores the view URL param on embedded compact lists', function (): void {
-    $component = Livewire::withQueryParams(['view' => 'vip'])
-        ->test(TestableListViewComponent::class, ['compact' => true]);
-
-    expect($component->get('listView'))->toBeNull()
-        ->and($component->get('listViewParam'))->toBeNull()
-        ->and(session('listView.zz-view-test-list'))->toBeNull();
-});
-
-it('parses and composes list view keys', function (): void {
-    expect(StaticConfigHelper::parseListViewKey('vip'))->toBe([null, 'vip'])
-        ->and(StaticConfigHelper::parseListViewKey('default'))->toBe([null, 'default'])
-        ->and(StaticConfigHelper::parseListViewKey('gastro::vip'))->toBe(['gastro', 'vip'])
-        ->and(StaticConfigHelper::parseListViewKey('gastro::'))->toBe(['gastro', 'default'])
-        ->and(StaticConfigHelper::composeListViewKey(null, 'vip'))->toBe('vip')
-        ->and(StaticConfigHelper::composeListViewKey(null, null))->toBe('default')
-        ->and(StaticConfigHelper::composeListViewKey('gastro', 'vip'))->toBe('gastro::vip')
-        ->and(StaticConfigHelper::composeListViewKey('gastro', null))->toBe('gastro::default');
+        expect($component->get('listView'))->toBeNull()
+            ->and($component->get('listViewParam'))->toBeNull()
+            ->and(session('listView.zz-view-test-list'))->toBeNull();
+    });
 });
 
 class TestableListViewComponent extends Component
@@ -567,5 +583,22 @@ class TestableSingleViewComponent extends Component
     protected function componentName(): string
     {
         return 'zz-single-view-test-list';
+    }
+}
+
+/** The single-view fixture rendered through the real list Blade, so the header title renders. */
+class TestableSingleViewRenderComponent extends TestableSingleViewComponent
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function with(): array
+    {
+        return ['listConfig' => $this->buildList([['id' => 1, 'name' => 'Alice']])];
+    }
+
+    public function render(): string
+    {
+        return '<x-noerd::page><x-noerd::list /></x-noerd::page>';
     }
 }

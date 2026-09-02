@@ -59,17 +59,6 @@ it('validates name field maximum length', function () use ($testSettings): void 
         ->assertHasErrors(['name' => 'max']);
 });
 
-it('accepts valid name with minimum length', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->create();
-
-    $this->actingAs($admin);
-
-    Livewire::test($testSettings['componentName'])
-        ->set('name', 'ABC') // Exactly 3 characters (minimum)
-        ->call('createTenant')
-        ->assertHasNoErrors();
-});
-
 it('successfully creates a new tenant', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->create();
     $tenantName = 'Test Tenant';

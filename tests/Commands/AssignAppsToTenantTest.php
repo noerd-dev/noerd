@@ -31,9 +31,12 @@ beforeEach(function (): void {
         'route' => 'noerd-app-b.index',
         'is_active' => true,
     ]);
+
+    $this->assignedAppIds = fn(): array => $this->tenant->fresh()->tenantApps->pluck('id')->sort()->values()->all();
 });
 
 it('fails with non-existent tenant id', function (): void {
+    // The message is the behaviour: the operator has to see which id was wrong.
     $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => 99999])
         ->expectsOutput('Tenant with ID 99999 not found.')
         ->assertExitCode(1);
@@ -46,46 +49,30 @@ it('fails gracefully when no active apps exist', function (): void {
     $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id])
         ->expectsOutput('No active apps found.')
         ->assertExitCode(1);
+
+    expect(($this->assignedAppIds)())->toBe([]);
 });
 
-it('displays tenant information correctly', function (): void {
-    // Assign some apps for display
+it('assigns the selected apps to a tenant without any assignment yet', function (): void {
+    $this->tenant->tenantApps()->detach();
+
+    $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id])
+        ->expectsQuestion('Select apps to assign to this tenant:', [$this->noerdAppA->id, $this->noerdAppB->id])
+        ->assertExitCode(0);
+
+    expect(($this->assignedAppIds)())
+        ->toBe([$this->noerdAppA->id, $this->noerdAppB->id]);
+});
+
+it('syncs the selection onto the tenant, removing what was deselected', function (): void {
     $this->tenant->tenantApps()->attach([
         $this->noerdAppA->id,
         $this->noerdAppB->id,
     ]);
 
-    // Since we can't easily mock Laravel Prompts in tests, we'll test the output
-    // by creating a custom artisan test that bypasses prompts
-    $command = $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id]);
-
-    // The command should show tenant info and current assignments before prompting
-    $output = $command->expectsOutput("App Assignment for: {$this->tenant->name}")
-        ->expectsOutput('Use ↑/↓ to navigate, Space to select/deselect, Enter to confirm')
-        ->expectsOutput('Currently assigned apps:')
-        ->expectsOutput("  {$this->noerdAppA->title} ({$this->noerdAppA->name})")
-        ->expectsOutput("  {$this->noerdAppB->title} ({$this->noerdAppB->name})")
-        ->run();
-});
-
-it('displays message when no apps are currently assigned', function (): void {
-    // Ensure no apps are assigned
-    $this->tenant->tenantApps()->detach();
-
     $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id])
-        ->expectsOutput('No apps currently assigned to this tenant.')
-        ->run();
-});
+        ->expectsQuestion('Select apps to assign to this tenant:', [$this->noerdAppB->id])
+        ->assertExitCode(0);
 
-it('only considers active apps for assignment', function (): void {
-    // Make first app inactive
-    $this->noerdAppA->update(['is_active' => false]);
-
-    // The command should still work with remaining active apps
-    $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id])
-        ->run();
-
-    // Verify inactive apps are not available for assignment
-    expect($this->noerdAppA->fresh()->is_active)->toBeFalse();
-    expect($this->noerdAppB->fresh()->is_active)->toBeTrue();
+    expect(($this->assignedAppIds)())->toBe([$this->noerdAppB->id]);
 });

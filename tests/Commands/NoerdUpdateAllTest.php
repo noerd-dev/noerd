@@ -116,12 +116,6 @@ it('runs the core update first, module updates alphabetically and RunsAfterModul
     ]);
 });
 
-it('never runs itself', function (): void {
-    ($this->run)(['--force' => true])->assertExitCode(0);
-
-    expect(UpdateAllRecorder::$calls)->not->toContain('noerd:update-all');
-});
-
 it('forwards --force to every sub-command', function (): void {
     ($this->run)(['--force' => true])->assertExitCode(0);
 

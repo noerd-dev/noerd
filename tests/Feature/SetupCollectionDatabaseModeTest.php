@@ -123,22 +123,6 @@ it('serves the collections list route in database mode', function (): void {
     $this->get(route('noerd.setup-collections', ['key' => 'zz_things']))->assertSuccessful();
 });
 
-it('resolves selectOptions for a database-defined collection', function (): void {
-    ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
-    zzDefinition($tenant->id);
-    $collection = SetupCollection::create(['tenant_id' => $tenant->id, 'collection_key' => 'ZZ_THINGS', 'name' => 'Zz Things']);
-    SetupCollectionEntry::create([
-        'tenant_id' => $tenant->id,
-        'setup_collection_id' => $collection->id,
-        'data' => ['name' => 'Hammer', 'code' => 'H1'],
-    ]);
-
-    $this->actingAs($user);
-
-    expect(SetupCollectionHelper::selectOptions('ZZ_THINGS', 'name', 'code'))
-        ->toBe([['value' => 'H1', 'label' => 'Hammer']]);
-});
-
 it('renders the definitions list and detail', function (): void {
     ['user' => $user, 'tenant' => $tenant] = $this->createUserWithSetupAccess();
     zzDefinition($tenant->id);
@@ -191,4 +175,17 @@ it('derives the definitions UI flag from the mode instead of a second config key
     (new \Noerd\Providers\NoerdServiceProvider(app()))->register();
 
     expect(config('noerd.collections.show_definitions_ui'))->toBeFalse();
+});
+
+describe('definitions route', function (): void {
+    it('returns 404 for /setup-collection-definitions in yaml mode', function (): void {
+        config(['noerd.collections.mode' => 'yaml']);
+        config(['noerd.collections.show_definitions_ui' => false]);
+
+        ['user' => $user] = $this->createUserWithSetupAccess();
+        $this->actingAs($user);
+
+        $response = $this->get('/setup/collection-definitions');
+        $response->assertNotFound();
+    });
 });

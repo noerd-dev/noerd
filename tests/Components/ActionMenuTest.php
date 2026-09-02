@@ -21,8 +21,10 @@ it('renders a kebab trigger and a role=menu panel by default', function (): void
         ->toContain('Do It')
         ->toContain('wire:click="doIt"')
         // default trigger: kebab button with an accessible label
-        ->toContain('Actions')
-        ->toContain('right-0 origin-top-right');
+        ->toContain('Actions');
+
+    // Default alignment: the panel opens from the top right corner.
+    assertElementHasClasses($html, ['right-0', 'origin-top-right']);
 });
 
 it('replaces the default trigger with the trigger slot', function (): void {
@@ -43,17 +45,16 @@ it('replaces the default trigger with the trigger slot', function (): void {
 it('aligns the panel to the left when asked', function (): void {
     $html = Blade::render('<x-noerd::action-menu align="left">x</x-noerd::action-menu>');
 
-    expect($html)
-        ->toContain('left-0 origin-top-left')
-        ->not->toContain('right-0 origin-top-right');
+    assertElementHasClasses($html, ['left-0', 'origin-top-left']);
+    assertNoElementHasClasses($html, ['right-0', 'origin-top-right']);
 });
 
 it('anchors the panel instead of positioning it absolutely', function (): void {
     $html = Blade::render('<x-noerd::action-menu anchor="$refs.btn">x</x-noerd::action-menu>');
 
-    expect($html)
-        ->toContain('x-anchor.bottom-end="$refs.btn"')
-        ->not->toContain('absolute mt-2');
+    expect($html)->toContain('x-anchor.bottom-end="$refs.btn"');
+
+    assertNoElementHasClasses($html, ['absolute', 'mt-2']);
 });
 
 it('renders an item as a link only when a href is given', function (): void {
@@ -80,6 +81,6 @@ it('marks the active item', function (): void {
     $active = Blade::render('<x-noerd::action-menu-item :active="true">On</x-noerd::action-menu-item>');
     $inactive = Blade::render('<x-noerd::action-menu-item :active="false">Off</x-noerd::action-menu-item>');
 
-    expect($active)->toContain('font-semibold text-gray-900')
-        ->and($inactive)->toContain('font-normal text-gray-700');
+    assertElementHasClasses($active, ['font-semibold', 'text-gray-900']);
+    assertElementHasClasses($inactive, ['font-normal', 'text-gray-700']);
 });

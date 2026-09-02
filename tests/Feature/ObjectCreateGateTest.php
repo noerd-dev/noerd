@@ -9,9 +9,11 @@ use Livewire\Livewire;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Support\WriteGuardHook;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\NoerdList;
+use Noerd\Traits\NoerdPage;
 
 uses(TestCase::class, RefreshDatabase::class);
 
@@ -156,4 +158,73 @@ it('keeps every action when nothing is denied', function (): void {
     $component = Livewire::test('zz-create-gate-list');
 
     expect(listActionLabels($component))->toBe(['New Tenant', 'New Via Route', 'Import']);
+});
+
+/*
+ | WriteGuardHook applies the same abilities to a component that overrides
+ | store()/delete() itself — the guard lives in the hook, not in the trait tail.
+ */
+
+it('WriteGuardHook skips store/delete when the object permission denies it', function (): void {
+    $denied = new class {
+        use NoerdPage;
+
+        public function canWriteObject(): bool
+        {
+            return false;
+        }
+
+        // store() on a component without a $modelId is a CREATE — the hook
+        // derives the ability via canSaveObject(), so both must deny here.
+        public function canCreateObject(): bool
+        {
+            return false;
+        }
+
+        public function canDeleteObject(): bool
+        {
+            return false;
+        }
+    };
+
+    $hook = new WriteGuardHook();
+    $hook->setComponent($denied);
+
+    $storeSkipped = false;
+    $hook->call('store', [], function () use (&$storeSkipped): void {
+        $storeSkipped = true;
+    }, [], null);
+    expect($storeSkipped)->toBeTrue();
+
+    $deleteSkipped = false;
+    $hook->call('delete', [], function () use (&$deleteSkipped): void {
+        $deleteSkipped = true;
+    }, [], null);
+    expect($deleteSkipped)->toBeTrue();
+});
+
+it('WriteGuardHook lets the action run when writing is allowed', function (): void {
+    $allowed = new class {
+        use NoerdPage;
+
+        public function canWriteObject(): bool
+        {
+            return true;
+        }
+    };
+
+    $hook = new WriteGuardHook();
+    $hook->setComponent($allowed);
+
+    $skipped = false;
+    $hook->call('store', [], function () use (&$skipped): void {
+        $skipped = true;
+    }, [], null);
+    expect($skipped)->toBeFalse();
+
+    // An unrelated method is never touched.
+    $hook->call('someOtherAction', [], function () use (&$skipped): void {
+        $skipped = true;
+    }, [], null);
+    expect($skipped)->toBeFalse();
 });

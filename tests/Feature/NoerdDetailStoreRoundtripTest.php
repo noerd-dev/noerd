@@ -83,3 +83,56 @@ it('never mass-assigns identity or timestamp columns from the client payload', f
     expect($tenant->refresh()->name)->toBe('Injected')
         ->and($other->refresh()->name)->toBe('Other');
 });
+
+it('reduces a detail payload to declared layout keys and always drops identity/tenant columns', function (): void {
+    $component = new class {
+        use NoerdDetail;
+
+        /** @param array<int, array<string, mixed>> $fields */
+        public function collectKeys(array $fields): array
+        {
+            return $this->writableKeysFromFields($fields);
+        }
+
+        /**
+         * @param  array<string, mixed>  $data
+         * @param  array<int, string>  $allowed
+         */
+        public function reduce(array $data, array $allowed): array
+        {
+            return $this->reduceToWritableKeys($data, $allowed);
+        }
+    };
+
+    $fields = [
+        ['name' => 'detailData.name', 'type' => 'text'],
+        ['type' => 'block', 'fields' => [
+            ['name' => 'detailData.custom_attributes.sap', 'type' => 'text'],
+            ['name' => 'detailData.price', 'type' => 'number'],
+        ]],
+        ['name' => 'relationTitles.customer_id', 'type' => 'text'], // not detailData → ignored
+    ];
+
+    expect($component->collectKeys($fields))
+        ->toEqualCanonicalizing(['name', 'custom_attributes', 'price']);
+
+    $reduced = $component->reduce(
+        [
+            'id' => 5,
+            'tenant_id' => 99,
+            'name' => 'ok',
+            'price' => 10,
+            'is_admin' => true,      // injected, not in layout
+            'custom_attributes' => ['sap' => 'A1'],
+            'created_at' => 'now',
+            'updated_at' => 'now',
+        ],
+        ['name', 'custom_attributes', 'price'],
+    );
+
+    expect($reduced)->toBe([
+        'name' => 'ok',
+        'price' => 10,
+        'custom_attributes' => ['sap' => 'A1'],
+    ]);
+});

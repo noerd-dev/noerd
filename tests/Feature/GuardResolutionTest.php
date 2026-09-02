@@ -9,6 +9,7 @@ use Livewire\Livewire;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -102,5 +103,27 @@ it('rejects a wrong current password', function (): void {
 });
 
 it('reads the selected tenant of the noerd user in the language form', function (): void {
-    Livewire::test('noerd::profile.update-language-form')->assertOk();
+    // The picker is fed by the tenant-scoped SetupLanguage query: resolving the
+    // user through the default guard would offer the HOST user's languages.
+    $foreignTenant = Tenant::factory()->create();
+    SetupLanguage::create([
+        'tenant_id' => $foreignTenant->id,
+        'code' => 'zf',
+        'name' => 'Zz Foreign Language',
+        'is_active' => true,
+        'is_default' => true,
+        'sort_order' => 1,
+    ]);
+    SetupLanguage::create([
+        'code' => 'zm',
+        'name' => 'Zz Mine Language',
+        'is_active' => true,
+        'is_default' => true,
+        'sort_order' => 1,
+    ]);
+
+    $languages = Livewire::test('noerd::profile.update-language-form')->assertOk()->get('languages');
+
+    expect(array_column($languages, 'value'))->toContain('zm')
+        ->not->toContain('zf');
 });

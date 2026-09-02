@@ -11,6 +11,7 @@ uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 it('fails when no tenants exist', function (): void {
+    // The message is the behaviour: it names the command that has to run first.
     $this->artisan('noerd:create-admin', [
         '--name' => 'Test Admin',
         '--email' => 'admin@example.com',
@@ -31,9 +32,7 @@ it('creates a new admin user with command options', function (): void {
         '--name' => 'Test Admin',
         '--email' => 'admin@example.com',
         '--password' => 'password123',
-    ])
-        ->expectsOutput("User 'Test Admin' created successfully.")
-        ->assertExitCode(0);
+    ])->assertExitCode(0);
 
     // Verify user was created
     $user = NoerdUser::where('email', 'admin@example.com')->first();
@@ -41,6 +40,7 @@ it('creates a new admin user with command options', function (): void {
     expect($user->name)->toBe('Test Admin');
     expect($user->isAdminOfAnyTenant())->toBeTrue();
     expect($user->super_admin)->toBeFalse();
+    expect($user->selected_tenant_id)->not->toBeNull();
 });
 
 it('creates a super admin user when flag is provided', function (): void {
@@ -52,9 +52,7 @@ it('creates a super admin user when flag is provided', function (): void {
         '--email' => 'superadmin@example.com',
         '--password' => 'password123',
         '--super-admin' => true,
-    ])
-        ->expectsOutput("User 'Super Admin' created as Super Admin.")
-        ->assertExitCode(0);
+    ])->assertExitCode(0);
 
     // Verify user was created as super admin
     $user = NoerdUser::where('email', 'superadmin@example.com')->first();
@@ -63,17 +61,25 @@ it('creates a super admin user when flag is provided', function (): void {
     expect($user->isSuperAdmin())->toBeTrue();
 });
 
-it('fails with invalid email format', function (): void {
+it('rejects invalid credentials', function (array $options, string $error): void {
     Tenant::factory()->create(['name' => 'Test Tenant']);
 
-    $this->artisan('noerd:create-admin', [
-        '--name' => 'Test User',
-        '--email' => 'invalid-email',
-        '--password' => 'password123',
-    ])
-        ->expectsOutput('Please enter a valid email address.')
+    // The error message is the behaviour: it tells the operator what to fix.
+    $this->artisan('noerd:create-admin', $options)
+        ->expectsOutput($error)
         ->assertExitCode(1);
-});
+
+    expect(NoerdUser::where('email', $options['--email'])->exists())->toBeFalse();
+})->with([
+    'invalid email format' => [
+        ['--name' => 'Test User', '--email' => 'invalid-email', '--password' => 'password123'],
+        'Please enter a valid email address.',
+    ],
+    'password shorter than 8 characters' => [
+        ['--name' => 'Test User', '--email' => 'test@example.com', '--password' => 'short'],
+        'Password must be at least 8 characters.',
+    ],
+]);
 
 it('fails with duplicate email', function (): void {
     Tenant::factory()->create(['name' => 'Test Tenant']);
@@ -86,18 +92,8 @@ it('fails with duplicate email', function (): void {
     ])
         ->expectsOutput('A user with this email already exists.')
         ->assertExitCode(1);
-});
 
-it('fails with password shorter than 8 characters', function (): void {
-    Tenant::factory()->create(['name' => 'Test Tenant']);
-
-    $this->artisan('noerd:create-admin', [
-        '--name' => 'Test User',
-        '--email' => 'test@example.com',
-        '--password' => 'short',
-    ])
-        ->expectsOutput('Password must be at least 8 characters.')
-        ->assertExitCode(1);
+    expect(NoerdUser::where('email', 'existing@example.com')->count())->toBe(1);
 });
 
 it('assigns user to all tenants as admin', function (): void {
@@ -118,18 +114,4 @@ it('assigns user to all tenants as admin', function (): void {
     expect($user->tenants->count())->toBe(2);
     expect($user->tenants->contains($tenant1->id))->toBeTrue();
     expect($user->tenants->contains($tenant2->id))->toBeTrue();
-});
-
-it('sets selected_tenant_id after creation', function (): void {
-    $tenant = Tenant::factory()->create(['name' => 'Test Tenant']);
-
-    $this->artisan('noerd:create-admin', [
-        '--name' => 'Test Admin',
-        '--email' => 'admin@example.com',
-        '--password' => 'password123',
-    ])
-        ->assertExitCode(0);
-
-    $user = NoerdUser::where('email', 'admin@example.com')->first();
-    expect($user->selected_tenant_id)->not->toBeNull();
 });

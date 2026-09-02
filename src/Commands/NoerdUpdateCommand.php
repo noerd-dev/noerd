@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Exception;
+use Illuminate\Support\Facades\File;
 
 class NoerdUpdateCommand extends NoerdInstallCommand
 {

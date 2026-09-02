@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Tenant;
 use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Tests\TestCase;
 
@@ -48,24 +49,22 @@ it('renders slot components ordered by their sort value, lower first', function 
 });
 
 it('dispatches detailStored after a successful store so slot children can persist', function (): void {
-    $admin = auth()->user();
-    $tenantId = $admin->adminTenants->first()->id;
+    app(DetailSlotsRegistry::class)->register('zz-below-form', 'detail-slots-test::probe');
 
-    Livewire::test('noerd::noerd-user-detail')
-        ->set('sendPasswordResetMail', false)
-        ->set('detailData.name', 'Jane Example')
-        ->set('detailData.email', 'jane@example.com')
-        ->set('possibleTenants.' . $tenantId . '.hasAccess', true)
+    Livewire::test('noerd-test::detail-slot-host')
+        ->set('detailData', validDetailPayload(Tenant::class))
+        ->set('detailData.name', 'Zz Slot Host Tenant')
         ->call('store')
         ->assertHasNoErrors()
-        ->assertDispatched('detailStored-noerd::noerd-user-detail');
+        ->assertDispatched('detailStored-noerd-test::detail-slot-host');
 });
 
 it('does not dispatch detailStored when validation fails', function (): void {
-    Livewire::test('noerd::noerd-user-detail')
+    app(DetailSlotsRegistry::class)->register('zz-below-form', 'detail-slots-test::probe');
+
+    Livewire::test('noerd-test::detail-slot-host')
         ->set('detailData.name', '')
-        ->set('detailData.email', 'not-an-email')
         ->call('store')
         ->assertHasErrors()
-        ->assertNotDispatched('detailStored-noerd::noerd-user-detail');
+        ->assertNotDispatched('detailStored-noerd-test::detail-slot-host');
 });

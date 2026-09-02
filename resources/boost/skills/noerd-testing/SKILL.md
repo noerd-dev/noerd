@@ -54,8 +54,8 @@ keeps explicit assertions.
 **List:** create factory rows, `Livewire::test('module::things-list')->assertSee(...)`; for a
 `listData()` override assert the filter/eager-load effect, not the YAML columns.
 **Modal route fallback:** register a route with `registerTestLivewireRoute()` and assert the route
-is used; without it assert the component fallback (see noerd's `ListDetailRouteFallbackTest`,
-`DetailActionsTest`, `NavigationModalRouteTest`, `RelationBoxRouteTest`).
+is used; without it assert the component fallback (see noerd's `NoerdListModalDispatchTest`,
+`DetailActionsTest`, `NavigationModalRouteTest`, `RelationBoxTest`).
 **Install/update commands:** `artisan('noerd:install-module', ['--force' => true])` with the
 tenant assignment answered; assert YAML copies and the `tenant_apps` row (UPPERCASE key).
 

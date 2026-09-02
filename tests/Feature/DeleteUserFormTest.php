@@ -46,7 +46,7 @@ it('opens the confirmation modal from the profile form', function (): void {
 
     Livewire::test('noerd::profile.delete-user-form')
         ->call('openConfirmation')
-        ->assertDispatched('noerdModal');
+        ->assertDispatched('noerdModal', modalComponent: 'noerd::delete-account-modal');
 });
 
 it('keeps the account when the password does not match', function (): void {

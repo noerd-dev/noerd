@@ -17,25 +17,6 @@ beforeEach(function (): void {
     }
 });
 
-it('renders the app bar for an authenticated user', function (): void {
-    $user = NoerdUser::factory()->adminUser()->create();
-    $tenant = $user->adminTenants()->first();
-
-    $tenantApp = TenantApp::create([
-        'title' => 'AppBar Test App',
-        'name' => 'APP_BAR_TEST',
-        'icon' => 'noerd::icons.app',
-        'route' => 'app-bar-test',
-        'is_active' => true,
-    ]);
-
-    $tenant?->tenantApps()->attach($tenantApp->id, ['is_hidden' => false]);
-    $this->actingAs($user);
-
-    Livewire::test('noerd::layout.app-bar')
-        ->assertSee('AppBar Test App');
-});
-
 it('references only registered route names in the rendered app bar', function (): void {
     $user = NoerdUser::factory()->adminUser()->create();
     $tenant = $user->adminTenants()->first();

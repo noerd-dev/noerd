@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Auth\Events\Login;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
@@ -56,21 +55,32 @@ describe('UserSetting Model', function (): void {
         expect(UserSetting::find($settingId))->toBeNull();
     });
 
-    it('has userSetting relationship on User model', function (): void {
-        $user = NoerdUser::factory()->create();
-
-        expect($user->userSetting())->toBeInstanceOf(HasOne::class);
-    });
 });
 
 describe('TenantSessionHelper', function (): void {
-    it('allows setting selected_tenant_id via session', function (): void {
+    it('round-trips the selected tenant and app through the session', function (): void {
+        TenantHelper::clear();
+
+        expect(TenantHelper::hasTenant())->toBeFalse()
+            ->and(TenantHelper::hasApp())->toBeFalse()
+            ->and(TenantHelper::getSelectedTenant())->toBeNull()
+            ->and(TenantHelper::getSelectedTenantId())->toBeNull();
+
         $tenant = Tenant::factory()->create();
-
         TenantHelper::setSelectedTenantId($tenant->id);
+        TenantHelper::setSelectedApp('SETUP');
 
-        expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id);
-        expect(session('noerd.selected_tenant_id'))->toBe($tenant->id);
+        expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id)
+            ->and(session('noerd.selected_tenant_id'))->toBe($tenant->id)
+            ->and(TenantHelper::getSelectedApp())->toBe('SETUP')
+            ->and(session('noerd.selected_app'))->toBe('SETUP')
+            ->and(TenantHelper::hasTenant())->toBeTrue()
+            ->and(TenantHelper::hasApp())->toBeTrue();
+
+        TenantHelper::clear();
+
+        expect(TenantHelper::getSelectedTenantId())->toBeNull()
+            ->and(TenantHelper::getSelectedApp())->toBeNull();
     });
 
     it('persists selected_tenant_id to database when user is authenticated', function (): void {
@@ -84,13 +94,6 @@ describe('TenantSessionHelper', function (): void {
         expect($user->setting->fresh()->selected_tenant_id)->toBe($tenant->id);
     });
 
-    it('keeps the selected app in the session', function (): void {
-        TenantHelper::setSelectedApp('SETUP');
-
-        expect(TenantHelper::getSelectedApp())->toBe('SETUP');
-        expect(session('noerd.selected_app'))->toBe('SETUP');
-    });
-
     it('returns selected tenant model', function (): void {
         $tenant = Tenant::factory()->create();
         TenantHelper::setSelectedTenantId($tenant->id);
@@ -101,40 +104,6 @@ describe('TenantSessionHelper', function (): void {
         expect($selectedTenant->id)->toBe($tenant->id);
     });
 
-    it('returns null when no tenant is selected', function (): void {
-        TenantHelper::clear();
-
-        expect(TenantHelper::getSelectedTenant())->toBeNull();
-        expect(TenantHelper::getSelectedTenantId())->toBeNull();
-    });
-
-    it('can check if tenant is selected', function (): void {
-        TenantHelper::clear();
-        expect(TenantHelper::hasTenant())->toBeFalse();
-
-        $tenant = Tenant::factory()->create();
-        TenantHelper::setSelectedTenantId($tenant->id);
-        expect(TenantHelper::hasTenant())->toBeTrue();
-    });
-
-    it('can check if app is selected', function (): void {
-        TenantHelper::clear();
-        expect(TenantHelper::hasApp())->toBeFalse();
-
-        TenantHelper::setSelectedApp('SETUP');
-        expect(TenantHelper::hasApp())->toBeTrue();
-    });
-
-    it('can clear the session', function (): void {
-        $tenant = Tenant::factory()->create();
-        TenantHelper::setSelectedTenantId($tenant->id);
-        TenantHelper::setSelectedApp('SETUP');
-
-        TenantHelper::clear();
-
-        expect(TenantHelper::getSelectedTenantId())->toBeNull();
-        expect(TenantHelper::getSelectedApp())->toBeNull();
-    });
 });
 
 describe('User Model with TenantSessionHelper', function (): void {
@@ -193,29 +162,6 @@ describe('User Model with TenantSessionHelper', function (): void {
 
         expect($selectedTenant)->toBeInstanceOf(Tenant::class);
         expect($selectedTenant->id)->toBe($tenant->id);
-    });
-});
-
-describe('UserSetting via User Factory', function (): void {
-    it('creates user with tenant via withExampleTenant', function (): void {
-        $user = NoerdUser::factory()->withExampleTenant()->create();
-
-        expect($user->tenants)->toHaveCount(1);
-        expect(TenantHelper::getSelectedTenantId())->toBe($user->tenants->first()->id);
-    });
-
-    it('creates admin user via adminUser', function (): void {
-        $user = NoerdUser::factory()->adminUser()->create();
-
-        expect($user->tenants)->toHaveCount(1);
-        expect(TenantHelper::getSelectedTenantId())->toBe($user->tenants->first()->id);
-        expect($user->isAdmin())->toBeTrue();
-    });
-
-    it('sets the selected app via withSelectedApp', function (): void {
-        $user = NoerdUser::factory()->withExampleTenant()->withSelectedApp('setup')->create();
-
-        expect(TenantHelper::getSelectedApp())->toBe('SETUP');
     });
 });
 

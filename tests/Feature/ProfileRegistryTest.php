@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
 use Noerd\Services\ProfileRegistry;
@@ -41,8 +42,12 @@ it('renders registered profiles in the user detail picker', function (): void {
 
     $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
 
-    Livewire\Livewire::test('noerd::noerd-user-detail')
-        ->assertSee('Zz Module Profile');
+    // A synthetic detail whose profile select is fed by the registry — the
+    // shipped user editor's layout is configuration and must not be asserted.
+    Livewire::test('noerd-test::profile-picker-test')
+        ->assertOk()
+        ->assertSee('Zz Module Profile')
+        ->assertSee(Profile::ReadOnly->label());
 });
 
 it('labels the profile badge of a registered profile', function (): void {

@@ -189,6 +189,20 @@ it('clamps and persists an updated page size', function (): void {
 
     expect($component->get('perPage'))->toBe(200)
         ->and(session('listPerPage.zz-bulk-delete-list'))->toBe(200);
+
+    // The clamp itself: a client may send anything, the list keeps 1..200.
+    $list = new class {
+        use NoerdList;
+
+        public function clamp(int $perPage): int
+        {
+            return $this->clampPerPage($perPage);
+        }
+    };
+
+    expect($list->clamp(999999))->toBe(200)
+        ->and($list->clamp(0))->toBe(1)
+        ->and($list->clamp(50))->toBe(50);
 });
 
 it('re-renders when the refreshList event for the list name arrives', function (): void {

@@ -15,8 +15,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 uses(TestCase::class, RefreshDatabase::class);
 
 /*
- | CSV export mechanics of NoerdList. Formula-injection neutralisation and
- | number formatting live in SecurityMediumLowFixesTest — not repeated here.
+ | CSV export mechanics of NoerdList: the streamed response, the per-column
+ | value formatting, the formula-injection neutralisation and the read guard.
  */
 
 enum ZzCsvExportStatus: string
@@ -80,6 +80,27 @@ it('formats CSV values by column type', function (): void {
         ->and($list->format('unknown', ['type' => 'badge', 'options' => $options]))->toBe('unknown')
         // a non-numeric value in a currency column is neutralized, not formatted
         ->and($list->format('=EVIL()', ['type' => 'currency']))->toBe("'=EVIL()");
+});
+
+it('neutralizes CSV formula-triggering values in the export', function (): void {
+    $list = new class {
+        use NoerdList;
+
+        public function format(mixed $value, array $column): string
+        {
+            return $this->formatCsvValue($value, $column);
+        }
+    };
+
+    foreach (['=HYPERLINK("x")', '+1', '-cmd', '@SUM(A1)', "\tx", "\rx"] as $dangerous) {
+        expect($list->format($dangerous, ['type' => 'text']))->toStartWith("'");
+    }
+
+    // Ordinary text is untouched.
+    expect($list->format('Acme GmbH', ['type' => 'text']))->toBe('Acme GmbH');
+    // Numbers keep their formatting (a negative number is not a formula here).
+    config(['noerd.format.decimal_separator' => ',', 'noerd.format.thousands_separator' => '.']);
+    expect($list->format(-5, ['type' => 'number']))->toBe('-5,00');
 });
 
 it('refuses the export for a read-denied user', function (): void {

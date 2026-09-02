@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
 use Noerd\Commands\MakeModuleCommand;
 use Noerd\Tests\TestCase;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\Yaml\Yaml;
 
 uses(TestCase::class);
 
@@ -65,21 +67,26 @@ it('generates a slim list component', function (): void {
 });
 
 it('generates block-style YAML configs bound to detailData', function (): void {
-    $listYaml = ($this->renderStub)('list-yaml.stub');
-    $detailYaml = ($this->renderStub)('detail-yaml.stub');
+    $listYamlSource = ($this->renderStub)('list-yaml.stub');
+    $detailYamlSource = ($this->renderStub)('detail-yaml.stub');
 
-    expect($listYaml)
-        ->toContain('title: Widgets')
-        ->toContain("defaultSort:\n  field: name\n  direction: asc")
-        ->toContain('route: zz-widget.widget.detail')
-        ->not->toContain('newLabel')
-        ->not->toContain('_label_');
+    // Block style throughout — flow style (`{ key: value }`) is never written.
+    expect($listYamlSource)->not->toContain('{ ')
+        ->and($detailYamlSource)->not->toContain('{ ');
 
-    expect($detailYaml)
-        ->toContain('name: detailData.name')
-        ->toContain('name: detailData.is_active')
-        ->not->toContain('{ ')
-        ->not->toContain('_label_');
+    $listYaml = Yaml::parse($listYamlSource);
+    $detailYaml = Yaml::parse($detailYamlSource);
+
+    // The generated list points its "New …" action at the generated detail route.
+    expect($listYaml['actions'][0]['route'])->toBe('zz-widget.widget.detail');
+
+    // Every detail field binds into $detailData — the values themselves are
+    // reference configuration and may change with the stub.
+    expect($detailYaml['fields'])->not->toBeEmpty();
+
+    foreach ($detailYaml['fields'] as $field) {
+        expect($field['name'])->toStartWith('detailData.');
+    }
 });
 
 it('generates a tenant-scoped model', function (): void {
@@ -233,4 +240,31 @@ it('adds the module to the main composer.json with plain json functions', functi
         ->and($content)->toEndWith("\n");
 
     File::deleteDirectory($tempBasePath);
+});
+
+it('leaves no placeholder in a rendered stub', function (string $stub): void {
+    $content = ($this->renderStub)($stub);
+
+    // A placeholder is `{{token}}` without spaces — Blade echoes (`{{ __('…') }}`,
+    // `{{ $attributes }}`) never look like that.
+    expect($content)->not->toMatch('/\{\{[A-Za-z][A-Za-z0-9_-]*\}\}/')
+        ->and($content)->not->toContain('_label_')
+        ->and($content)->not->toBe('');
+})->with(fn(): array => array_map(
+    'basename',
+    glob(dirname(__DIR__, 2) . '/src/Commands/stubs/module/*.stub') ?: [],
+));
+
+it('generates blade files that compile', function (string $stub): void {
+    expect(fn() => Blade::compileString(($this->renderStub)($stub)))->not->toThrow(Exception::class);
+})->with(['list.stub', 'detail.stub', 'icon.stub']);
+
+it('generates YAML files that parse', function (string $stub): void {
+    expect(Yaml::parse(($this->renderStub)($stub)))->toBeArray()->not->toBeEmpty();
+})->with(['list-yaml.stub', 'detail-yaml.stub', 'navigation.stub']);
+
+it('generates a de.json translation file that parses', function (): void {
+    expect(json_decode(($this->renderStub)('lang-de.stub'), true, 512, JSON_THROW_ON_ERROR))
+        ->toBeArray()
+        ->not->toBeEmpty();
 });
