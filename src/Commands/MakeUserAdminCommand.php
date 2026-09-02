@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
@@ -31,14 +33,14 @@ class MakeUserAdminCommand extends Command
         $userId = $this->argument('user_id');
 
         // Validate user ID
-        if (!is_numeric($userId)) {
+        if (! is_numeric($userId)) {
             $this->error('User ID must be a number.');
             return self::FAILURE;
         }
 
         // Find the user
         $user = NoerdUser::find($userId);
-        if (!$user) {
+        if (! $user) {
             $this->error("User with ID {$userId} not found.");
             return self::FAILURE;
         }
@@ -58,7 +60,7 @@ class MakeUserAdminCommand extends Command
             // Assign to all tenants if no specific tenant access
             $userTenants = Tenant::all();
             foreach ($userTenants as $userTenant) {
-                if (!$user->tenants->contains($userTenant)) {
+                if (! $user->tenants->contains($userTenant)) {
                     $user->tenants()->attach($userTenant->id, ['profile_key' => null]);
                 }
             }

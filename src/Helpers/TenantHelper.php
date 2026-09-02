@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Helpers;
 
 use Noerd\Models\Tenant;
@@ -72,11 +74,11 @@ class TenantHelper
     {
         $tenantId = self::getSelectedTenantId();
 
-        if (!$tenantId) {
+        if (! $tenantId) {
             return null;
         }
 
-        if (!array_key_exists($tenantId, self::$tenantMemo)) {
+        if (! array_key_exists($tenantId, self::$tenantMemo)) {
             self::$tenantMemo[$tenantId] = Tenant::find($tenantId);
         }
 

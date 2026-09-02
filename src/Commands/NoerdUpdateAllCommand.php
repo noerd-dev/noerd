@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
@@ -27,7 +29,7 @@ class NoerdUpdateAllCommand extends Command
      */
     public function handle(): int
     {
-        if (!$this->ensureNoerdInstalled()) {
+        if (! $this->ensureNoerdInstalled()) {
             return self::FAILURE;
         }
 
@@ -53,7 +55,7 @@ class NoerdUpdateAllCommand extends Command
             $this->line("  <comment>- {$name} (skipped)</comment>");
         }
 
-        if (!$this->option('force') && !$this->confirmWithoutForce(count($queue))) {
+        if (! $this->option('force') && ! $this->confirmWithoutForce(count($queue))) {
             $this->line('Aborted.');
 
             return self::SUCCESS;
@@ -90,7 +92,7 @@ class NoerdUpdateAllCommand extends Command
                 continue;
             }
 
-            if ($name !== self::CORE && !str_starts_with($name, 'noerd:update-')) {
+            if ($name !== self::CORE && ! str_starts_with($name, 'noerd:update-')) {
                 continue;
             }
 
@@ -138,7 +140,7 @@ class NoerdUpdateAllCommand extends Command
         $this->warn('Without --force every command asks per existing file (default: skip),');
         $this->warn('and under --no-interaction all existing files are skipped — only missing files are copied.');
 
-        if (!$this->input->isInteractive()) {
+        if (! $this->input->isInteractive()) {
             return true;
         }
 

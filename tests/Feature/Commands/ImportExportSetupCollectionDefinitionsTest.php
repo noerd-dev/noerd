@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionDefinition;
 use Noerd\Models\Tenant;

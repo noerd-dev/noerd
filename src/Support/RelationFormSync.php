@@ -41,7 +41,7 @@ final class RelationFormSync
     public static function rendered(array $layoutFields, string $formKey): bool
     {
         // The walk stops (returns false) on the first matching field.
-        return !LayoutFields::walk(
+        return ! LayoutFields::walk(
             $layoutFields,
             fn(array $field): ?bool => str_starts_with($field['name'] ?? '', 'detailData.' . $formKey . '.') ? false : null,
         );

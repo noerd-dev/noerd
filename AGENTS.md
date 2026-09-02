@@ -68,7 +68,8 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
   files in this repository — the submodule's files are not part of the host's git working tree, so
   a host `--dirty` run silently skips every one of them. A host-root run must name the paths
   explicitly (`vendor/bin/pint app-modules/noerd/...`); the configs are identical.
-- PHP 8.3+, strict comparisons, explicit return types, constructor property promotion, `$guarded`
+- PHP 8.3+, `declare(strict_types=1)` in every PHP file (Pint adds it), strict comparisons, explicit
+  return types, constructor property promotion, `$guarded`
   instead of `$fillable`, Eloquent models never stored as Livewire properties.
 - Comments, Artisan prompts, docs and commit messages are written in English.
 - YAML is always block style, never flow style. Navigation icons are heroicons.

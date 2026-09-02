@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Livewire;
 
 use Illuminate\Database\Eloquent\Model;
@@ -99,7 +101,7 @@ abstract class RelationFieldComponent extends Component
     ): void {
         $definition = app(RelationFieldRegistry::class)->resolve($relationType);
 
-        if (!$definition) {
+        if (! $definition) {
             throw new RuntimeException("Relation field type [{$relationType}] is not registered.");
         }
 
@@ -168,7 +170,7 @@ abstract class RelationFieldComponent extends Component
 
     public function openDetail(): void
     {
-        if (!$this->value) {
+        if (! $this->value) {
             return;
         }
 
@@ -197,13 +199,13 @@ abstract class RelationFieldComponent extends Component
      */
     public function relatedModel(): ?Model
     {
-        if (!$this->value) {
+        if (! $this->value) {
             return null;
         }
 
         $definition = app(RelationFieldRegistry::class)->resolve($this->relationType);
 
-        if (!$definition?->modelClass || !class_exists($definition->modelClass)) {
+        if (! $definition?->modelClass || ! class_exists($definition->modelClass)) {
             return null;
         }
 

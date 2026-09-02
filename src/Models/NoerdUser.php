@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Models;
 
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -181,7 +183,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function getSettingAttribute(): UserSetting
     {
-        if (!$this->relationLoaded('userSetting') || $this->userSetting === null) {
+        if (! $this->relationLoaded('userSetting') || $this->userSetting === null) {
             $setting = $this->userSetting()->firstOrCreate(
                 ['user_id' => $this->id],
                 ['locale' => 'en'],
@@ -207,7 +209,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             return TenantHelper::getSelectedTenantId();
         }
 
-        if (!$this->relationLoaded('userSetting')) {
+        if (! $this->relationLoaded('userSetting')) {
             $this->setRelation('userSetting', $this->userSetting()->first());
         }
 
@@ -236,7 +238,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         // Read-only: SetUserLocale reads this on EVERY web request — a missing
         // settings row must not trigger the write path ($this->setting would
         // firstOrCreate). Writers keep going through getSettingAttribute().
-        if (!$this->relationLoaded('userSetting')) {
+        if (! $this->relationLoaded('userSetting')) {
             $this->setRelation('userSetting', $this->userSetting()->first());
         }
 

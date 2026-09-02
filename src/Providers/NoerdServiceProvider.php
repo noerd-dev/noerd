@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Providers;
 
 use Illuminate\Auth\Events\Authenticated;
@@ -360,7 +362,7 @@ class NoerdServiceProvider extends ServiceProvider
         ));
 
         View::composer('noerd::layouts.app', function ($view): void {
-            $view->with('showSidebar', !session('hide_sidebar'));
+            $view->with('showSidebar', ! session('hide_sidebar'));
         });
 
         // Publishing runs ONLY in console: a live web request must never write
@@ -482,7 +484,7 @@ class NoerdServiceProvider extends ServiceProvider
         $targetPath = public_path('vendor/noerd/fonts');
         $sourcePath = __DIR__ . '/../../public/fonts';
 
-        if (!File::exists($targetPath) && File::exists($sourcePath)) {
+        if (! File::exists($targetPath) && File::exists($sourcePath)) {
             File::ensureDirectoryExists(dirname($targetPath));
             File::copyDirectory($sourcePath, $targetPath);
         }
@@ -496,11 +498,11 @@ class NoerdServiceProvider extends ServiceProvider
         $targetPath = public_path('vendor/noerd/manifest.json');
         $sourcePath = __DIR__ . '/../../dist/build/manifest.json';
 
-        if (!File::exists($sourcePath)) {
+        if (! File::exists($sourcePath)) {
             return;
         }
 
-        $shouldPublish = !File::exists($targetPath)
+        $shouldPublish = ! File::exists($targetPath)
             || File::lastModified($sourcePath) > File::lastModified($targetPath);
 
         if ($shouldPublish) {

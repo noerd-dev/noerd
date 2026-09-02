@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Traits;
 
 /**
@@ -26,13 +28,13 @@ trait RoutedModal
      */
     protected function redirectToRoutedModal(): bool
     {
-        if (($this->embedded ?? false) || request()->hasHeader('X-Livewire') || !request()->boolean('modal')) {
+        if (($this->embedded ?? false) || request()->hasHeader('X-Livewire') || ! request()->boolean('modal')) {
             return false;
         }
 
         $previousUrl = session()->previousUrl();
 
-        if (!$previousUrl || $previousUrl === request()->fullUrl()) {
+        if (! $previousUrl || $previousUrl === request()->fullUrl()) {
             return false;
         }
 
@@ -66,7 +68,7 @@ trait RoutedModal
             ),
         );
 
-        if (!array_key_exists('modelId', $parameters) && property_exists($this, 'modelId')) {
+        if (! array_key_exists('modelId', $parameters) && property_exists($this, 'modelId')) {
             $parameters['modelId'] = $this->modelId;
         }
 

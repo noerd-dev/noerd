@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Gate;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Tests\TestCase;
 

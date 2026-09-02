@@ -12,7 +12,7 @@
             "spacing": "one"
         },
         "declare_parentheses": false,
-        "declare_strict_types": false,
+        "declare_strict_types": true,
         "explicit_string_variable": true,
         "final_class": false,
         "fully_qualified_strict_types": false,
@@ -76,6 +76,7 @@
                 "method_private"
             ],
             "sort_algorithm": "none"
-        }
+        },
+        "not_operator_with_successor_space": true
     }
 }

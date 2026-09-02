@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Tests\TestCase;

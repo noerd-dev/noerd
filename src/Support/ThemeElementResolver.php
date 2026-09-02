@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Support;
 
 use Illuminate\Support\Facades\View;

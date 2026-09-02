@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Traits;
 
 use Illuminate\Support\Str;
@@ -39,7 +41,7 @@ trait NoerdSettingsPage
     {
         // Server-side guard, mirroring NoerdDetail::store(): the save button is
         // hidden for write-denied users, but store() stays reachable directly.
-        if (!$this->canWriteObject()) {
+        if (! $this->canWriteObject()) {
             return;
         }
 
@@ -58,7 +60,7 @@ trait NoerdSettingsPage
     public function canReadObject(): bool
     {
         foreach ($this->settingsModelMap() as $modelClass) {
-            if (!AccessHelper::canReadObject($modelClass)) {
+            if (! AccessHelper::canReadObject($modelClass)) {
                 return false;
             }
         }
@@ -69,7 +71,7 @@ trait NoerdSettingsPage
     public function canWriteObject(): bool
     {
         foreach ($this->settingsModelMap() as $modelClass) {
-            if (!AccessHelper::canWriteObject($modelClass)) {
+            if (! AccessHelper::canWriteObject($modelClass)) {
                 return false;
             }
         }
@@ -95,7 +97,7 @@ trait NoerdSettingsPage
         // the other checks: NoerdPage's version keys off the absent
         // $detailModel and would therefore always allow.
         foreach ($this->settingsModelMap() as $modelClass) {
-            if (!AccessHelper::canDeleteObject($modelClass)) {
+            if (! AccessHelper::canDeleteObject($modelClass)) {
                 return false;
             }
         }
@@ -181,7 +183,7 @@ trait NoerdSettingsPage
      */
     protected function settingsModelMap(): array
     {
-        if (!isset($this->settingsModels) || $this->settingsModels === []) {
+        if (! isset($this->settingsModels) || $this->settingsModels === []) {
             throw new RuntimeException(sprintf(
                 'Settings page [%s] must declare its tenant-singleton models: '
                 . "`public array \$settingsModels = ['detailData' => Model::class];`.",

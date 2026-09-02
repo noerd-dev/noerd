@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Middleware;
 
 use Closure;
@@ -27,13 +29,13 @@ class AppAccessMiddleware
     {
         $user = NoerdAuth::user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('noerd.login');
         }
 
         $tenant = TenantHelper::getSelectedTenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             return redirect()->route('noerd.no-tenant');
         }
 
@@ -57,14 +59,14 @@ class AppAccessMiddleware
             }
         }
 
-        if (!$matchingApp) {
+        if (! $matchingApp) {
             throw new NoerdException(
                 NoerdException::TYPE_APP_NOT_ASSIGNED,
                 appName: mb_strtoupper($appNames[0] ?? ''),
             );
         }
 
-        if (!AccessHelper::canAccessApp($matchingApp)) {
+        if (! AccessHelper::canAccessApp($matchingApp)) {
             throw new NoerdException(
                 NoerdException::TYPE_APP_ACCESS_DENIED,
                 appName: mb_strtoupper($matchingApp),

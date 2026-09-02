@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;

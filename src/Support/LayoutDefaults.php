@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Support;
 
 /**
@@ -26,7 +28,7 @@ final class LayoutDefaults
 
         LayoutFields::walk($fields, function (array $field) use (&$defaults): void {
             $name = $field['name'] ?? null;
-            if (!is_string($name) || !str_starts_with($name, 'detailData.')) {
+            if (! is_string($name) || ! str_starts_with($name, 'detailData.')) {
                 return;
             }
 
@@ -69,7 +71,7 @@ final class LayoutDefaults
         }
 
         $options = $field['options'] ?? null;
-        if (!is_array($options) || $options === []) {
+        if (! is_array($options) || $options === []) {
             return null;
         }
 

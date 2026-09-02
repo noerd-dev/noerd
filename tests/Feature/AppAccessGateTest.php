@@ -21,7 +21,7 @@ it('allows every app when no access gate is defined', function (): void {
 });
 
 it('hides an app from the app bar when the access gate denies it', function (): void {
-    if (!Route::has('app-permission-test')) {
+    if (! Route::has('app-permission-test')) {
         Route::get('/app-permission-test', fn(): string => 'ok')->name('app-permission-test');
     }
 

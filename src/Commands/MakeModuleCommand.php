@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Commands;
 
 use Exception;
@@ -45,7 +47,7 @@ class MakeModuleCommand extends Command
     public function handle(): int
     {
         // Ensure noerd:install has been run first
-        if (!$this->ensureNoerdInstalled()) {
+        if (! $this->ensureNoerdInstalled()) {
             return self::FAILURE;
         }
 
@@ -288,13 +290,13 @@ class MakeModuleCommand extends Command
         $composerJsonPath = base_path('composer.json');
         $definition = json_decode($this->filesystem->get($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
 
-        if (!isset($definition['require'])) {
+        if (! isset($definition['require'])) {
             $definition['require'] = [];
         }
 
         $composerName = "noerd/{$this->moduleName}";
 
-        if (!isset($definition['require'][$composerName])) {
+        if (! isset($definition['require'][$composerName])) {
             $definition['require'][$composerName] = '*';
             $definition['require'] = $this->sortComposerPackages($definition['require']);
 
@@ -311,7 +313,7 @@ class MakeModuleCommand extends Command
     {
         $path = "{$this->stubPath}/{$name}";
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new Exception("Stub not found: {$name}");
         }
 

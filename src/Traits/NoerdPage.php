@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Model;
@@ -101,7 +103,7 @@ trait NoerdPage
     {
         $detailPrimary = $this->detailPrimary ?? null;
 
-        if ($this->embedded || !$detailPrimary) {
+        if ($this->embedded || ! $detailPrimary) {
             return [];
         }
 
@@ -144,7 +146,7 @@ trait NoerdPage
     {
         // Server-side guard: the delete button is hidden for delete-denied users,
         // but the method stays reachable via keyboard shortcut and direct calls.
-        if (!$this->canDeleteObject() || !isset($this->detailModel)) {
+        if (! $this->canDeleteObject() || ! isset($this->detailModel)) {
             return;
         }
 
@@ -282,7 +284,7 @@ trait NoerdPage
         $key = str_replace('detailData.', '', $fieldName);
         $id = data_get($this->detailData, $key);
 
-        if (!$id) {
+        if (! $id) {
             $lastKey = last(explode('.', $key));
             $camelKey = Str::camel($lastKey);
             if (property_exists($this, $camelKey)) {
@@ -310,7 +312,7 @@ trait NoerdPage
             // record is loaded into $detailData exactly like a detail would.
             if (isset($this->detailModel)) {
                 $modelClass = $this->detailModel;
-                if (!$this->loadDetailModel(new $modelClass(), $modelClass)) {
+                if (! $this->loadDetailModel(new $modelClass(), $modelClass)) {
                     return;
                 }
             }
@@ -353,7 +355,7 @@ trait NoerdPage
             return;
         }
 
-        if (!$this->canReadObject()) {
+        if (! $this->canReadObject()) {
             $this->objectReadBlocked = true;
 
             return;
@@ -370,11 +372,11 @@ trait NoerdPage
      */
     protected function assertDetailPrimaryDeclared(): void
     {
-        if (!isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
+        if (! isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
             return;
         }
 
-        if (!Str::endsWith($this->componentName(), '-detail')) {
+        if (! Str::endsWith($this->componentName(), '-detail')) {
             return;
         }
 
@@ -420,7 +422,7 @@ trait NoerdPage
         if ($this->modelId) {
             $model = $modelClass::find($this->modelId);
 
-            if (!$model) {
+            if (! $model) {
                 $this->modelId = null;
                 $this->dispatch('closeTopModal');
 
@@ -445,11 +447,11 @@ trait NoerdPage
     protected function resolveQuickCreate(): void
     {
         $optIn = (bool) ($this->pageLayout['quickCreate'] ?? false);
-        if (!$this->modelId && $optIn) {
+        if (! $this->modelId && $optIn) {
             $this->quickCreate = true;
         }
 
-        if (!empty($this->pageLayout)) {
+        if (! empty($this->pageLayout)) {
             $this->pageLayout['quickCreate'] = $this->quickCreate;
         }
     }
@@ -506,7 +508,7 @@ trait NoerdPage
         }
 
         $filters = session('listFilters', []);
-        if (!empty($filters[$key])) {
+        if (! empty($filters[$key])) {
             $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
             if (method_exists($this, $method)) {
                 $this->{$method}($filters[$key]);
