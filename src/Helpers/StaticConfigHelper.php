@@ -764,7 +764,7 @@ class StaticConfigHelper
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
 
         foreach ($searchFolders as $folder) {
-            if (! in_array($folder, $allowedFolders) || $folder === $currentApp) {
+            if (! in_array($folder, $allowedFolders, true) || $folder === $currentApp) {
                 continue;
             }
 

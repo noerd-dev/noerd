@@ -92,7 +92,7 @@ it('still counts a genuine relation in the relation box', function (): void {
 
 it('refuses to create a tenant from the inner component for a non-admin', function (): void {
     try {
-        Livewire::test('noerd::create-new-tenant')
+        Livewire::test('noerd::create-tenant-form')
             ->set('name', 'escalation')
             ->call('createTenant');
     } catch (Throwable) {

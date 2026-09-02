@@ -994,7 +994,7 @@ trait NoerdList
         $filterTypes = collect($this->tableFilters)->pluck('type', 'column')->toArray();
 
         foreach ($this->listFilters as $key => $value) {
-            if (! in_array($key, $allowed) || ! $value) {
+            if (! in_array((string) $key, array_map('strval', $allowed), true) || ! $value) {
                 continue;
             }
 
@@ -1342,7 +1342,7 @@ trait NoerdList
                 continue;
             }
             $type = $column['type'] ?? 'text';
-            if (in_array($type, ['number', 'currency'])) {
+            if (in_array($type, ['number', 'currency'], true)) {
                 $listSettings['columns'][$i]['align'] = 'right';
             }
         }

@@ -1,18 +1,15 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Support\LayoutState;
 
 new class extends Component {
-    public $navigation = [];
-    public $navigations = [];
+    public array $navigation = [];
+    public array $navigations = [];
 
     public function openStatus(string $title): void
     {
-        if (session('navi_hidden_' . $title)) {
-            session()->forget('navi_hidden_' . $title);
-        } else {
-            session(['navi_hidden_' . $title => true]);
-        }
+        LayoutState::setBlockMenuVisible($title, ! LayoutState::blockMenuVisible($title));
     }
 } ?>
 

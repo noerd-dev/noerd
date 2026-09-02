@@ -85,7 +85,7 @@ class CreateTenantCommand extends Command
         $this->line("  UUID: {$tenant->uuid}");
 
         $this->newLine();
-        $this->info("✅ Tenant '{$tenant->name}' is ready to use!");
+        $this->info("Tenant '{$tenant->name}' is ready to use!");
 
         return self::SUCCESS;
     }

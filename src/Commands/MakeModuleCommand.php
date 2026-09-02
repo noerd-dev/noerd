@@ -142,14 +142,14 @@ class MakeModuleCommand extends Command
             $this->filesystem->makeDirectory("{$this->basePath}/{$dir}", 0755, true);
         }
 
-        $this->line('<info>✓ Created:</info> directory structure');
+        $this->line('<info>Created:</info> directory structure');
     }
 
     private function createComposerJson(): void
     {
         $content = $this->getStub('composer.stub');
         $this->filesystem->put("{$this->basePath}/composer.json", $content);
-        $this->line('<info>✓ Created:</info> composer.json');
+        $this->line('<info>Created:</info> composer.json');
     }
 
     private function createServiceProvider(): void
@@ -157,7 +157,7 @@ class MakeModuleCommand extends Command
         $content = $this->getStub('service-provider.stub');
         $path = "{$this->basePath}/src/Providers/{$this->moduleNameStudly}ServiceProvider.php";
         $this->filesystem->put($path, $content);
-        $this->line('<info>✓ Created:</info> ServiceProvider');
+        $this->line('<info>Created:</info> ServiceProvider');
     }
 
     private function createInstallCommand(): void
@@ -165,7 +165,7 @@ class MakeModuleCommand extends Command
         $content = $this->getStub('install-command.stub');
         $path = "{$this->basePath}/src/Commands/{$this->moduleNameStudly}InstallCommand.php";
         $this->filesystem->put($path, $content);
-        $this->line('<info>✓ Created:</info> InstallCommand');
+        $this->line('<info>Created:</info> InstallCommand');
     }
 
     private function createUpdateCommand(): void
@@ -173,7 +173,7 @@ class MakeModuleCommand extends Command
         $content = $this->getStub('update-command.stub');
         $path = "{$this->basePath}/src/Commands/{$this->moduleNameStudly}UpdateCommand.php";
         $this->filesystem->put($path, $content);
-        $this->line('<info>✓ Created:</info> update command');
+        $this->line('<info>Created:</info> update command');
     }
 
     private function createAgentDocs(): void
@@ -184,21 +184,21 @@ class MakeModuleCommand extends Command
         );
         $this->filesystem->put("{$this->basePath}/AGENTS.md", $this->getStub('agents.stub'));
         $this->filesystem->put("{$this->basePath}/CLAUDE.md", $this->getStub('claude.stub'));
-        $this->line('<info>✓ Created:</info> agent guidelines (Boost guideline, AGENTS.md, CLAUDE.md)');
+        $this->line('<info>Created:</info> agent guidelines (Boost guideline, AGENTS.md, CLAUDE.md)');
     }
 
     private function createRoutes(): void
     {
         $content = $this->getStub('routes.stub');
         $this->filesystem->put("{$this->basePath}/routes/{$this->moduleName}-routes.php", $content);
-        $this->line('<info>✓ Created:</info> routes');
+        $this->line('<info>Created:</info> routes');
     }
 
     private function createModel(): void
     {
         $content = $this->getStub('model.stub');
         $this->filesystem->put("{$this->basePath}/src/Models/{$this->modelNameStudly}.php", $content);
-        $this->line('<info>✓ Created:</info> Model');
+        $this->line('<info>Created:</info> Model');
     }
 
     private function createMigration(): void
@@ -206,14 +206,14 @@ class MakeModuleCommand extends Command
         $content = $this->getStub('migration.stub');
         $filename = date('Y_m_d_His') . "_create_{$this->tableName()}_table.php";
         $this->filesystem->put("{$this->basePath}/database/migrations/{$filename}", $content);
-        $this->line('<info>✓ Created:</info> Migration');
+        $this->line('<info>Created:</info> Migration');
     }
 
     private function createAppIcon(): void
     {
         $content = $this->getStub('icon.stub');
         $this->filesystem->put("{$this->basePath}/resources/views/components/icons/app.blade.php", $content);
-        $this->line('<info>✓ Created:</info> app icon');
+        $this->line('<info>Created:</info> app icon');
     }
 
     private function createLivewireComponents(): void
@@ -232,7 +232,7 @@ class MakeModuleCommand extends Command
             $detailContent,
         );
 
-        $this->line('<info>✓ Created:</info> Livewire components');
+        $this->line('<info>Created:</info> Livewire components');
     }
 
     private function createYamlConfigurations(): void
@@ -258,7 +258,7 @@ class MakeModuleCommand extends Command
             $navContent,
         );
 
-        $this->line('<info>✓ Created:</info> YAML configurations');
+        $this->line('<info>Created:</info> YAML configurations');
     }
 
     private function createTranslations(): void
@@ -267,7 +267,7 @@ class MakeModuleCommand extends Command
         $deContent = $this->getStub('lang-de.stub');
         $this->filesystem->put("{$this->basePath}/resources/lang/de.json", $deContent);
 
-        $this->line('<info>✓ Created:</info> Translations');
+        $this->line('<info>Created:</info> Translations');
     }
 
     private function createGitkeep(): void
@@ -305,7 +305,7 @@ class MakeModuleCommand extends Command
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
             );
             $this->filesystem->put($composerJsonPath, $json . "\n");
-            $this->line("<info>✓ Updated:</info> main composer.json (added {$composerName})");
+            $this->line("<info>Updated:</info> main composer.json (added {$composerName})");
         }
     }
 

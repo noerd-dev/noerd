@@ -24,7 +24,7 @@
         :value="__($label)"
         :required="$required"
         :title="__($label)"
-        class="w-36 shrink-0 truncate !pb-0"
+        class="w-36 shrink-0 truncate pb-0!"
     />
 
     <div class="min-w-0 flex-1">
@@ -48,7 +48,7 @@
                 x-cloak
                 x-show="String(v ?? '').trim() !== ''"
                 x-bind:href="'tel:' + (String(v ?? '').trim().startsWith('+') ? '+' : '') + String(v ?? '').replace(/\D/g, '')"
-                class="!mt-0 !ml-1 inline-flex h-7 shrink-0 items-center rounded-sm border border-zinc-200 bg-white px-1.5 text-zinc-500 hover:text-zinc-700"
+                class="mt-0! ml-1! inline-flex h-7 shrink-0 items-center rounded-sm border border-zinc-200 bg-white px-1.5 text-zinc-500 hover:text-zinc-700"
                 title="{{ __('Call') }}"
             >
                 <x-icon name="phone" class="h-4 w-4" />

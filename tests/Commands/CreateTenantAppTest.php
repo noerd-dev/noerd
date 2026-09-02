@@ -53,7 +53,7 @@ it('successfully creates a app with all parameters', function (): void {
         '--icon' => 'icons.test',
         '--active' => '1',
     ])
-        ->expectsOutput('✅ Tenant app created successfully!')
+        ->expectsOutput('Tenant app created successfully!')
         ->expectsOutputToContain('Test Application')
         ->expectsOutputToContain('TEST_APP')
         ->expectsOutputToContain('icons.test')
@@ -79,7 +79,7 @@ it('scaffolds a dashboard for the new app and uses its route without asking', fu
         '--icon' => 'icons.tb',
     ])
         ->expectsOutput('Dashboard files created successfully!')
-        ->expectsOutput('✅ Tenant app created successfully!')
+        ->expectsOutput('Tenant app created successfully!')
         ->assertExitCode(0);
 
     expect(TenantApp::where('name', 'TB')->value('route'))->toBe('tb.dashboard');
@@ -218,7 +218,7 @@ it('normalizes the app name to the uppercase underscore form', function (string 
         '--name' => $input,
         '--icon' => 'icons.test',
     ])
-        ->expectsOutput('✅ Tenant app created successfully!')
+        ->expectsOutput('Tenant app created successfully!')
         ->assertExitCode(0);
 
     expect(TenantApp::where('name', $expected)->exists())->toBeTrue();
@@ -288,7 +288,7 @@ it('displays comprehensive app details in output table', function (): void {
         '--name' => 'DETAILS_APP',
         '--icon' => 'icons.details',
     ])
-        ->expectsOutput('✅ Tenant app created successfully!')
+        ->expectsOutput('Tenant app created successfully!')
         ->expectsOutputToContain('| ID      |')
         ->expectsOutputToContain('| Title   | Complete Details App')
         ->expectsOutputToContain('| Name    | DETAILS_APP')

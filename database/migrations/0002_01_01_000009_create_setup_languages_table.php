@@ -23,7 +23,6 @@ return new class extends Migration {
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
-            $table->index('tenant_id');
             $table->unique(['tenant_id', 'code']);
         });
     }

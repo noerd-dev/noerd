@@ -34,10 +34,13 @@
             ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
             : null;
         // An action either opens a named Livewire route as a modal
-        // (route:) or calls a method on the list component (action:).
+        // (route:) or calls a method on the list component (action:). The
+        // method name is interpolated into an Alpine expression, so only
+        // identifier characters of the YAML value survive.
+        $actionMethod = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($actionItem['action'] ?? ''));
         $clickExpression = isset($actionItem['route'])
             ? '$modalRoute(' . Js::from($actionItem['route']) . ', ' . Js::from($actionItem['arguments'] ?? []) . ')'
-            : '$wire.' . $actionItem['action'] . '(null, ' . Js::from($listRelations ?? []) . ')';
+            : '$wire.' . $actionMethod . '(null, ' . Js::from($listRelations ?? []) . ')';
     @endphp
     <div
         wire:key="list-secondary-action-{{ $actionIndex }}"

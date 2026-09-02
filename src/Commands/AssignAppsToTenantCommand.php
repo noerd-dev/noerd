@@ -131,7 +131,7 @@ class AssignAppsToTenantCommand extends Command
         if (! empty($currentAppIds)) {
             $this->info('Currently assigned apps:');
             foreach ($allApps->whereIn('id', $currentAppIds) as $app) {
-                $this->line("  ✓ {$app->title} ({$app->name})");
+                $this->line("  {$app->title} ({$app->name})");
             }
             $this->newLine();
         } else {
@@ -164,11 +164,11 @@ class AssignAppsToTenantCommand extends Command
             $removedApps = array_diff($currentAppIds, $selectedAppIds);
 
             $this->newLine();
-            $this->info('✅ App assignments updated successfully!');
+            $this->info('App assignments updated successfully!');
 
             if (! empty($addedApps)) {
                 $addedAppNames = TenantApp::whereIn('id', $addedApps)->pluck('title')->toArray();
-                $this->info('✓ Added apps: ' . implode(', ', $addedAppNames));
+                $this->info('Added apps: ' . implode(', ', $addedAppNames));
             }
 
             if (! empty($removedApps)) {

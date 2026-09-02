@@ -9,15 +9,18 @@
 
 @isset($tabNumber)
     <div class="inline-flex">
-        <a
-            @click.prevent="currentTab= {{ $tabNumber }}"
+        <button
+            type="button"
+            role="tab"
+            @click="currentTab = {{ $tabNumber }}"
+            :aria-selected="currentTab == {{ $tabNumber }}"
             class="mr-6 -mb-[1px] cursor-pointer border-b-2 border-transparent text-gray-600 hover:border-gray-500 focus:outline-none focus-visible:outline-none"
             :class="{'border-brand-primary! text-black!': currentTab == {{ $tabNumber }} }"
         >
             <span class="group inline-flex items-center rounded-sm border-b-2 border-transparent p-0 py-3 text-sm">
                 {{ $slot }}
             </span>
-        </a>
+        </button>
     </div>
 @endisset
 

@@ -24,8 +24,8 @@ it('successfully makes a user admin', function (): void {
         ->expectsOutput("Processing user: {$user->name} ({$user->email})")
         ->expectsOutput('User has access to 1 tenant(s).')
         ->expectsOutput("Processing tenant: {$tenant->name}")
-        ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant->name}")
-        ->expectsOutput("✅ User {$user->name} is now an admin with access to Setup!")
+        ->expectsOutput("  Granted ADMIN access for tenant: {$tenant->name}")
+        ->expectsOutput("User {$user->name} is now an admin with access to Setup!")
         ->assertExitCode(0);
 
     // Verify user is now admin
@@ -76,7 +76,7 @@ it('recognizes user who is already admin but ensures tenant assignment', functio
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput("Processing user: {$user->name} ({$user->email})")
         ->expectsOutput('User is already an admin. Ensuring tenant assignment is correct...')
-        ->expectsOutput("✅ User {$user->name} remains an admin. Tenant assignment verified.")
+        ->expectsOutput("User {$user->name} remains an admin. Tenant assignment verified.")
         ->assertExitCode(0);
 
     // Verify selected_tenant_id is set
@@ -94,7 +94,7 @@ it('upgrades a USER profile to ADMIN', function (): void {
 
     // Run the command
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
-        ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant->name}")
+        ->expectsOutput("  Granted ADMIN access for tenant: {$tenant->name}")
         ->expectsOutput('- ADMIN access granted: 1')
         ->assertExitCode(0);
 
@@ -132,8 +132,8 @@ it('handles user with partial admin access correctly', function (): void {
     $this->artisan('noerd:make-admin', ['user_id' => $user->id])
         ->expectsOutput('User is already an admin. Ensuring tenant assignment is correct...')
         ->expectsOutput("  - User already has ADMIN access for tenant: {$tenant1->name}")
-        ->expectsOutput("  ✓ Granted ADMIN access for tenant: {$tenant2->name}")
-        ->expectsOutput("✅ User {$user->name} remains an admin. Tenant assignment verified.")
+        ->expectsOutput("  Granted ADMIN access for tenant: {$tenant2->name}")
+        ->expectsOutput("User {$user->name} remains an admin. Tenant assignment verified.")
         ->assertExitCode(0);
 
     // Verify user now has admin on both tenants

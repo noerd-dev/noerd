@@ -5,7 +5,7 @@
         :required="$required"
         :helpText="$helpText"
         :title="__($label)"
-        class="w-36 shrink-0 truncate !pb-0"
+        class="w-36 shrink-0 truncate pb-0!"
     />
     <div class="min-w-0 flex-1">
         <div class="grid grid-cols-12 gap-2">
@@ -34,7 +34,8 @@
                     @if ($displayTitle && ! $readonly)
                         <button
                             wire:click="clear"
-                            class="!mt-0 !ml-1 inline-flex h-7 items-center px-2 text-zinc-400 hover:text-zinc-600"
+                            aria-label="{{ __('Clear selection') }}"
+                            class="mt-0! ml-1! inline-flex h-7 items-center px-2 text-zinc-400 hover:text-zinc-600"
                             type="button"
                         >
                             <x-noerd::icons.x-mark class="h-5 w-5"></x-noerd::icons.x-mark>
@@ -44,7 +45,8 @@
                     @if (! $readonly && $this->activeListComponent)
                         <x-noerd::button
                             @click="$modal('{{ $this->activeListComponent }}', {id: null, context: '{{ $this->selectionContext() }}', listActionMethod: 'selectAction'})"
-                            class="!mt-0 !ml-1 !h-7 rounded-sm !px-2"
+                            aria-label="{{ __('Search') }}"
+                            class="mt-0! ml-1! h-7! rounded-sm px-2!"
                             type="button"
                         >
                             <x-noerd::icons.magnifying-glass></x-noerd::icons.magnifying-glass>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
@@ -26,6 +27,13 @@ class MakeCollectionCommand extends Command
 
     public function handle(): int
     {
+        // A field-by-field wizard has no scripted form: it needs a terminal.
+        if (! $this->input->isInteractive()) {
+            $this->error('noerd:make-collection is an interactive wizard and cannot run with --no-interaction. Create the YAML file by hand or import one with noerd:setup-collections:import-yaml.');
+
+            return self::FAILURE;
+        }
+
         $this->info('Creating a new collection...');
 
         // The written file is inert while the schemas are read from the
@@ -100,7 +108,7 @@ class MakeCollectionCommand extends Command
             $field = $this->askForField(count($fields) + 1);
             if ($field) {
                 $fields[] = $field;
-                $this->line("  ✓ Added field: {$field['name']}");
+                $this->line("  Added field: {$field['name']}");
             }
 
             $addMore = confirm(
@@ -128,18 +136,14 @@ class MakeCollectionCommand extends Command
         $app = $this->option('app');
         $targetDir = base_path("app-configs/{$app}/collections");
 
-        if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true)) {
-                $this->error("Failed to create directory: {$targetDir}");
-
-                return self::FAILURE;
-            }
+        if (! File::isDirectory($targetDir)) {
+            File::ensureDirectoryExists($targetDir);
             $this->info("Created directory: app-configs/{$app}/collections/");
         }
 
         $targetFile = "{$targetDir}/{$name}.yml";
 
-        if (file_exists($targetFile)) {
+        if (File::exists($targetFile)) {
             if (! confirm("File {$name}.yml already exists. Overwrite?", false)) {
                 $this->warn('Aborted.');
 
@@ -149,10 +153,10 @@ class MakeCollectionCommand extends Command
 
         $yaml = $this->generateYaml($collection);
 
-        file_put_contents($targetFile, $yaml);
+        File::put($targetFile, $yaml);
 
         $this->newLine();
-        $this->info("✅ Collection created: app-configs/{$app}/collections/{$name}.yml");
+        $this->info("Collection created: app-configs/{$app}/collections/{$name}.yml");
 
         return self::SUCCESS;
     }

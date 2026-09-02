@@ -11,11 +11,14 @@ use Illuminate\Support\Str;
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\search;
+use function Laravel\Prompts\text;
 
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use ReflectionClass;
+use WireUi\Heroicons\HeroiconsServiceProvider;
 
-class CreateTenantApp extends Command
+class CreateTenantAppCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -47,14 +50,17 @@ class CreateTenantApp extends Command
         $route = $this->option('route');
         $active = (bool) $this->option('active');
 
-        // Interactive mode if no options provided and not in test environment
-        if ((! $title || ! $name || ! $icon) && ! app()->runningUnitTests()) {
+        // A scripted call passes every option (an empty value is a validation
+        // error, not a prompt); only an omitted option is asked for interactively.
+        $scripted = $title !== null && $name !== null && $icon !== null;
+
+        if (! $scripted && $this->input->isInteractive()) {
             $this->info('Creating a new tenant app...');
             $this->newLine();
 
-            $title = $title ?: $this->ask('App Title (display name)');
-            $name = $this->normalizeAppName($name ?: $this->ask('App Name (unique identifier, e.g., CMS, MEDIA)'));
-            $icon = $icon ?: $this->askForIcon();
+            $title ??= text(label: 'App Title (display name)', required: true);
+            $name ??= $this->normalizeAppName(text(label: 'App Name (unique identifier, e.g., CMS, MEDIA)', required: true));
+            $icon ??= $this->askForIcon();
         }
 
         // Normalize name if provided via option
@@ -104,7 +110,7 @@ class CreateTenantApp extends Command
             }
 
             $this->newLine();
-            $this->info("✅ Tenant app created successfully!");
+            $this->info('Tenant app created successfully!');
 
             $this->table(['Field', 'Value'], [
                 ['ID', $tenantApp->id],
@@ -116,7 +122,7 @@ class CreateTenantApp extends Command
                 ['Created', $tenantApp->created_at->format('Y-m-d H:i:s')],
             ]);
 
-            if (! app()->runningUnitTests()) {
+            if (! $scripted && $this->input->isInteractive()) {
                 $this->askToAssignTenants($tenantApp);
             } else {
                 $this->newLine();
@@ -132,7 +138,8 @@ class CreateTenantApp extends Command
 
     protected function askForIcon(): string
     {
-        $iconsPath = base_path('vendor/wireui/heroicons/src/views/components/outline');
+        // Resolve the heroicons package through its provider, not a hard-coded vendor path.
+        $iconsPath = dirname((new ReflectionClass(HeroiconsServiceProvider::class))->getFileName()) . '/views/components/outline';
         $icons = collect(scandir($iconsPath))
             ->filter(fn($file) => str_ends_with($file, '.blade.php'))
             ->map(fn($file) => str_replace('.blade.php', '', $file))
@@ -191,7 +198,7 @@ class CreateTenantApp extends Command
 
         if (! empty($selectedTenantIds)) {
             $tenantApp->tenants()->sync($selectedTenantIds);
-            $this->info('✅ App assigned to ' . count($selectedTenantIds) . ' tenant(s).');
+            $this->info('App assigned to ' . count($selectedTenantIds) . ' tenant(s).');
         } else {
             $this->comment('No tenants selected.');
         }

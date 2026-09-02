@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands\Concerns;
 
 use Exception;
+use Illuminate\Support\Facades\File;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -40,8 +41,8 @@ trait PublishesConfigDirectory
             return mb_substr($path, mb_strlen($targetDir) + 1) ?: $path;
         };
 
-        if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true)) {
+        if (! File::isDirectory($targetDir)) {
+            if (! File::makeDirectory($targetDir, 0755, true)) {
                 throw new Exception("Failed to create directory: {$targetDir}");
             }
             $this->line('<info>Created directory:</info> ' . $display($targetDir));
@@ -60,8 +61,8 @@ trait PublishesConfigDirectory
             $displayPath = $display($targetPath);
 
             if ($item->isDir()) {
-                if (! is_dir($targetPath)) {
-                    if (! mkdir($targetPath, 0755, true)) {
+                if (! File::isDirectory($targetPath)) {
+                    if (! File::makeDirectory($targetPath, 0755, true)) {
                         throw new Exception("Failed to create directory: {$targetPath}");
                     }
                     $this->line("<info>Created directory:</info> {$displayPath}");
@@ -71,7 +72,7 @@ trait PublishesConfigDirectory
                 continue;
             }
 
-            if (file_exists($targetPath)) {
+            if (File::exists($targetPath)) {
                 if (! $this->option('force')) {
                     $choice = $this->choice(
                         "File already exists: {$displayPath}. What do you want to do?",
@@ -98,7 +99,7 @@ trait PublishesConfigDirectory
                 $results['copied_files']++;
             }
 
-            if (! copy($sourcePath, $targetPath)) {
+            if (! File::copy($sourcePath, $targetPath)) {
                 throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
             }
         }

@@ -3,7 +3,7 @@
 use Livewire\Component;
 
 new class extends Component {
-    public $navi = [];
+    public array $navi = [];
 } ?>
 
 @php

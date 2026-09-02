@@ -16,8 +16,8 @@ class SetupLanguageFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'code' => $this->faker->unique()->languageCode(),
-            'name' => $this->faker->word(),
+            'code' => fake()->unique()->languageCode(),
+            'name' => fake()->word(),
             'is_active' => true,
             'is_default' => false,
             'sort_order' => 0,

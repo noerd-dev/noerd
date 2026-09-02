@@ -27,7 +27,6 @@ return new class extends Migration {
 
             $table->unique(['tenant_id', 'key']);
             $table->unique(['tenant_id', 'filename']);
-            $table->index('tenant_id');
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('created_by')->references('id')->on('noerd_users')->nullOnDelete();

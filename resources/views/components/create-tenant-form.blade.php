@@ -1,10 +1,11 @@
 <?php
 
-use Noerd\Helpers\TenantHelper;
-use Noerd\Enums\Profile;
-use Noerd\Models\Tenant;
+use Illuminate\Support\Str;
 use Livewire\Component;
+use Noerd\Enums\Profile;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\Tenant;
 
 new class extends Component {
     public string $name = '';
@@ -15,7 +16,7 @@ new class extends Component {
         $this->authorizeAccess();
     }
 
-    public function createTenant()
+    public function createTenant(): void
     {
         // Guarded on the ACTION as well as on mount: this component carries the
         // whole tenant-creation logic while the admin/feature checks used to sit
@@ -51,20 +52,25 @@ new class extends Component {
         $this->showSuccess = true;
     }
 
+    /**
+     * Called by the success indicator after a short delay so the user can read
+     * the confirmation before landing on the app overview of the new tenant.
+     */
+    public function goHome(): void
+    {
+        $this->redirect(route('noerd.apps'));
+    }
+
     private function authorizeAccess(): void
     {
         abort_unless(config('noerd.features.multi_tenant'), 404);
-        abort_unless(\Noerd\Helpers\NoerdAuth::user()?->isAdmin(), 403);
+        abort_unless(NoerdAuth::user()?->isAdmin(), 403);
     }
 }; ?>
 
 <section>
     <header>
-        <div class="text-lg font-medium text-gray-900">
-            {{ __('Create New Tenant') }}
-        </div>
-
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="text-sm text-gray-600">
             {{ __("A new tenant contains its own master and transactional data, but can be managed with the same users.") }}
         </p>
     </header>
@@ -84,7 +90,7 @@ new class extends Component {
 
     @if($showSuccess)
         <div class="rounded-md bg-green-50 p-4 mt-6"
-             x-init="setTimeout(() => { window.location.href = '/' }, 2000)">
+             x-init="setTimeout(() => $wire.goHome(), 1500)">
             <div class="flex">
                 <div class="shrink-0">
                     <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">

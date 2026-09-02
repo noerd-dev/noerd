@@ -19,14 +19,14 @@ class NoerdUpdateCommand extends NoerdInstallCommand
         $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
         $targetDir = base_path('app-configs/setup');
 
-        if (! is_dir($sourceDir)) {
+        if (! File::isDirectory($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
             return self::FAILURE;
         }
 
         // Create target directory if it doesn't exist
-        if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true)) {
+        if (! File::isDirectory($targetDir)) {
+            if (! File::makeDirectory($targetDir, 0755, true)) {
                 $this->error("Failed to create target directory: {$targetDir}");
                 return self::FAILURE;
             }

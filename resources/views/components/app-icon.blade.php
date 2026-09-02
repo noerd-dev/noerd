@@ -1,4 +1,4 @@
-@props(['icon', 'class' => ''])
+@props(['icon'])
 
 @if (str_starts_with($icon, 'heroicon:'))
     @php
@@ -8,12 +8,9 @@
         $name = $parts[2] ?? '';
     @endphp
     {{-- Wrap heroicon in same structure as noerd icons for consistent styling --}}
-    <div
-        {{ $attributes->whereDoesntStartWith('class') }}
-        {{ $attributes->merge(['class' => 'my-auto flex-1 ' . $class]) }}
-    >
+    <div {{ $attributes->merge(['class' => 'my-auto flex-1']) }}>
         <x-icon :name="$name" :variant="$variant" class="mx-auto h-5 w-5" style="stroke-width: 1.5" />
     </div>
 @else
-    <x-dynamic-component :component="$icon" {{ $attributes->merge(['class' => $class]) }} />
+    <x-dynamic-component :component="$icon" {{ $attributes }} />
 @endif

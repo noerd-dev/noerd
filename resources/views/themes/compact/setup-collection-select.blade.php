@@ -36,7 +36,7 @@
         :value="__($label)"
         :required="$required"
         :title="__($label)"
-        class="w-36 shrink-0 truncate !pb-0"
+        class="w-36 shrink-0 truncate pb-0!"
     />
     <div class="min-w-0 flex-1">
         <select

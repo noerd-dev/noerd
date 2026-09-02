@@ -89,8 +89,8 @@ trait RequiresNoerdInstallation
 
         // Sync the app to selected tenants
         foreach ($tenants as $tenant) {
-            $isSelected = in_array($tenant->id, $selectedTenantIds);
-            $wasAssigned = in_array($tenant->id, $currentTenantIds);
+            $isSelected = in_array((int) $tenant->id, array_map('intval', $selectedTenantIds), true);
+            $wasAssigned = in_array((int) $tenant->id, array_map('intval', $currentTenantIds), true);
 
             if ($isSelected && ! $wasAssigned) {
                 $tenant->tenantApps()->attach($app->id);

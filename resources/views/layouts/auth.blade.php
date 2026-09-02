@@ -8,6 +8,8 @@
         <link rel="icon" href="{{ config('noerd.branding.favicon') }}" />
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <link rel="stylesheet" href="{{ asset('vendor/noerd/fonts/fonts.css') }}" />
 </head>
 <body class="min-h-screen bg-white pt-[var(--environment-banner-height,0px)]">
     <livewire:noerd::layout.environment-banner />

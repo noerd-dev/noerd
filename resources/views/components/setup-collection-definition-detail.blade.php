@@ -6,6 +6,7 @@ use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
@@ -262,7 +263,7 @@ new class extends Component
 
         try {
             $newFilename = $repository->copy($this->modelId);
-        } catch (\RuntimeException) {
+        } catch (RuntimeException) {
             $this->addError('detailData.filename', __('A collection with this filename already exists.'));
 
             return;
@@ -324,22 +325,25 @@ new class extends Component
         @if(count($fields) === 0)
             <p class="text-sm text-gray-500 italic">{{ __('No fields defined yet.') }}</p>
         @else
+            @php
+                $thClass = 'border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter';
+            @endphp
             <table class="min-w-full border-separate border-spacing-0">
                 <thead>
                     <tr>
-                        <th class="border-r first:pl-6 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">
+                        <th class="border-r first:pl-6 {{ $thClass }}">
                             {{ __('Field name') }}
                         </th>
-                        <th class="border-r border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter">
+                        <th class="border-r {{ $thClass }}">
                             {{ __('Field label') }}
                         </th>
-                        <th class="border-r border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter" style="width: 200px;">
+                        <th class="border-r {{ $thClass }}" style="width: 200px;">
                             {{ __('Field type') }}
                         </th>
-                        <th class="border-r border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter" style="width: 80px;">
+                        <th class="border-r {{ $thClass }}" style="width: 80px;">
                             {{ __('Colspan') }}
                         </th>
-                        <th class="last:border-r-0 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter" style="width: 50px;">
+                        <th class="last:border-r-0 {{ $thClass }}" style="width: 50px;">
                         </th>
                     </tr>
                 </thead>
@@ -361,8 +365,8 @@ new class extends Component
                             <td class="py-1 border-gray-300 border-r border-b">
                                 <select wire:model="fields.{{ $index }}.type"
                                         class="border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5">
-                                    @foreach (\Noerd\Helpers\SetupCollectionHelper::FIELD_TYPES as $typeValue => $typeLabel)
-                                        <option value="{{ $typeValue }}">{{ $typeLabel }}</option>
+                                    @foreach (SetupCollectionHelper::FIELD_TYPES as $typeValue => $typeLabel)
+                                        <option value="{{ $typeValue }}">{{ __($typeLabel) }}</option>
                                     @endforeach
                                 </select>
                             </td>
@@ -404,7 +408,7 @@ new class extends Component
                     </x-noerd::button>
                 </div>
             @endif
-            <x-noerd::delete-save-bar :showDelete="$isEditing" deleteMessage="{{ __('Really delete this collection and all :count entries?', ['count' => $this->entryCount]) }}" />
+            <x-noerd::delete-save-bar :showDelete="$isEditing" :deleteMessage="__('Really delete this collection and all :count entries?', ['count' => $this->entryCount])" />
         </div>
     </x-slot:footer>
 </x-noerd::page>

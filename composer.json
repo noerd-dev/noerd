@@ -35,7 +35,7 @@
         "laravel/pint": "^1.18"
     },
     "suggest": {
-        "owen-it/laravel-auditing": "Required for the activity log modal (noerd::audit-list) of auditable models."
+        "owen-it/laravel-auditing": "Required for the activity log modal (noerd::audit-modal) of auditable models."
     },
     "autoload": {
         "psr-4": {
