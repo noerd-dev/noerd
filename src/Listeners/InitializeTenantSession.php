@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Listeners;
 
 use Illuminate\Auth\Events\Authenticated;

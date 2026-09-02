@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Log;
@@ -58,7 +60,7 @@ class StaticConfigHelper
         $subPath = self::componentToSubPath($component);
         $yamlPath = self::findConfigPath("details/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (!$yamlPath) {
+        if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
             Log::warning("Config file not found: details/{$subPath}.yml (app: {$currentApp})");
 
@@ -80,7 +82,7 @@ class StaticConfigHelper
         $subPath = self::componentToSubPath($component);
         $yamlPath = self::findConfigPath("details/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (!$yamlPath) {
+        if (! $yamlPath) {
             return [];
         }
 
@@ -101,7 +103,7 @@ class StaticConfigHelper
         $subPath = self::componentToSubPath($component);
         $yamlPath = self::findConfigPath("pages/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (!$yamlPath) {
+        if (! $yamlPath) {
             return [];
         }
 
@@ -122,7 +124,7 @@ class StaticConfigHelper
         $subPath = self::componentToSubPath($component);
         $yamlPath = self::findConfigPath("settings/{$subPath}.yml", self::componentOwnerApp($component));
 
-        if (!$yamlPath) {
+        if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
             Log::warning("Config file not found: settings/{$subPath}.yml (app: {$currentApp})");
 
@@ -145,7 +147,7 @@ class StaticConfigHelper
         $ownerApp = self::componentOwnerApp($tableName);
         $yamlPath = self::findConfigPath("lists/{$subPath}.yml", $ownerApp);
 
-        if (!$yamlPath) {
+        if (! $yamlPath) {
             // A "{name}--{key}" view without a YAML file of its own is a
             // resolver-defined view: it materializes as the base config with the
             // override for the full suffixed name applied on top.
@@ -154,7 +156,7 @@ class StaticConfigHelper
                 $yamlPath = self::findConfigPath("lists/{$baseSubPath}.yml", $ownerApp);
             }
 
-            if (!$yamlPath) {
+            if (! $yamlPath) {
                 $currentApp = self::getCurrentApp();
                 Log::warning("Config file not found: lists/{$subPath}.yml (app: {$currentApp})");
 
@@ -185,11 +187,11 @@ class StaticConfigHelper
         // A "{name}--{key}" view without a YAML file of its own is a
         // resolver-defined view: it materializes as the base config with the
         // override for the full suffixed name applied on top.
-        if (!$yamlPath && str_contains($tableName, '--')) {
+        if (! $yamlPath && str_contains($tableName, '--')) {
             $yamlPath = self::resolveConfigPath($app, 'list', Str::before($tableName, '--'));
         }
 
-        if (!$yamlPath) {
+        if (! $yamlPath) {
             $subPath = self::componentToListName($tableName);
             Log::warning("Config file not found: lists/{$subPath}.yml (app: {$app})");
 
@@ -252,7 +254,7 @@ class StaticConfigHelper
     {
         $currentApp = self::getCurrentApp();
 
-        if (!$currentApp) {
+        if (! $currentApp) {
             return null;
         }
 
@@ -335,7 +337,7 @@ class StaticConfigHelper
             $paths = [];
             foreach ($roots as $root) {
                 $basePath = $root . DIRECTORY_SEPARATOR . "lists/{$subPath}.yml";
-                if (!isset($paths['default']) && file_exists($basePath)) {
+                if (! isset($paths['default']) && file_exists($basePath)) {
                     $paths['default'] = $basePath;
                 }
 
@@ -398,7 +400,7 @@ class StaticConfigHelper
      */
     public static function parseListViewKey(string $key): array
     {
-        if (!str_contains($key, '::')) {
+        if (! str_contains($key, '::')) {
             return [null, $key];
         }
 
@@ -470,7 +472,7 @@ class StaticConfigHelper
     {
         $yamlPath = base_path("app-configs/{$currentApp}/navigation.yml");
 
-        if (!file_exists($yamlPath)) {
+        if (! file_exists($yamlPath)) {
             return null;
         }
 
@@ -566,8 +568,8 @@ class StaticConfigHelper
     {
         ['theme' => $theme, 'enforced' => $enforced] = ThemeHelper::forTenant();
 
-        if (!$enforced) {
-            if (!array_key_exists('theme', $config)) {
+        if (! $enforced) {
+            if (! array_key_exists('theme', $config)) {
                 $config['theme'] = $theme;
             }
 
@@ -593,7 +595,7 @@ class StaticConfigHelper
     private static function stripFieldThemes(array $fields): array
     {
         foreach ($fields as $index => $field) {
-            if (!is_array($field)) {
+            if (! is_array($field)) {
                 continue;
             }
 
@@ -627,7 +629,7 @@ class StaticConfigHelper
      */
     private static function componentOwnerApp(string $component): ?string
     {
-        if (!str_contains($component, '::')) {
+        if (! str_contains($component, '::')) {
             return null;
         }
 
@@ -762,7 +764,7 @@ class StaticConfigHelper
         $searchFolders = array_unique(array_merge($allAppFolders, $allowedFolders));
 
         foreach ($searchFolders as $folder) {
-            if (!in_array($folder, $allowedFolders) || $folder === $currentApp) {
+            if (! in_array($folder, $allowedFolders) || $folder === $currentApp) {
                 continue;
             }
 
@@ -841,11 +843,11 @@ class StaticConfigHelper
     private static function filterNavigationByConfig(array $navigations): array
     {
         return array_values(array_filter($navigations, function ($nav) {
-            if (isset($nav['config']) && !config($nav['config'])) {
+            if (isset($nav['config']) && ! config($nav['config'])) {
                 return false;
             }
 
-            if (isset($nav['superAdmin']) && $nav['superAdmin'] && !NoerdAuth::user()?->isSuperAdmin()) {
+            if (isset($nav['superAdmin']) && $nav['superAdmin'] && ! NoerdAuth::user()?->isSuperAdmin()) {
                 return false;
             }
 
@@ -865,7 +867,7 @@ class StaticConfigHelper
             return true;
         }
 
-        if (!empty($nav['modalRoute']) && Route::has($nav['modalRoute'])) {
+        if (! empty($nav['modalRoute']) && Route::has($nav['modalRoute'])) {
             return true;
         }
 
@@ -914,7 +916,7 @@ class StaticConfigHelper
         $mappings = [];
         $appModulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
 
-        if (!is_dir($appModulesPath)) {
+        if (! is_dir($appModulesPath)) {
             return self::$moduleSourceMappingCache[$basePath] = $mappings;
         }
 
@@ -925,7 +927,7 @@ class StaticConfigHelper
             }
 
             $appConfigsPath = $appModulesPath . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'app-configs';
-            if (!is_dir($appConfigsPath)) {
+            if (! is_dir($appConfigsPath)) {
                 continue;
             }
 

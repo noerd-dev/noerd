@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Livewire;
 
 use Illuminate\Support\Str;
@@ -136,7 +138,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
         }
 
         $definition = $this->activeDefinition();
-        if (!$definition) {
+        if (! $definition) {
             return;
         }
 
@@ -169,7 +171,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
         }
 
         $definition = $this->activeDefinition();
-        if (!$definition) {
+        if (! $definition) {
             return;
         }
 
@@ -203,7 +205,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
     public function openDetail(): void
     {
         $definition = $this->activeDefinition();
-        if (!$definition || !$this->value) {
+        if (! $definition || ! $this->value) {
             return;
         }
 
@@ -221,7 +223,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
         foreach ($this->allowedTypes as $type) {
             $definition = $registry->resolve($type);
-            if (!$definition) {
+            if (! $definition) {
                 continue;
             }
 
@@ -277,7 +279,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
     private function resolveRelationTypeFromModelType(?string $modelType): ?string
     {
-        if (!$modelType) {
+        if (! $modelType) {
             return null;
         }
 
@@ -295,7 +297,7 @@ abstract class PolymorphicRelationFieldComponent extends Component
     private function resolveDisplayTitle(): void
     {
         $definition = $this->activeDefinition();
-        if (!$definition || $this->value === null || $this->value === '') {
+        if (! $definition || $this->value === null || $this->value === '') {
             $this->displayTitle = '';
 
             return;

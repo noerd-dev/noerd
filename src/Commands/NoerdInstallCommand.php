@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Commands;
 
 use Exception;
@@ -38,15 +40,15 @@ class NoerdInstallCommand extends Command
         $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
         $targetDir = base_path('app-configs/setup');
 
-        if (!is_dir($sourceDir)) {
+        if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
             return self::FAILURE;
         }
 
         // Create target directory if it doesn't exist
-        if (!is_dir($targetDir)) {
+        if (! is_dir($targetDir)) {
 
-            if (!mkdir($targetDir, 0755, true)) {
+            if (! mkdir($targetDir, 0755, true)) {
                 $this->error("Failed to create target directory: {$targetDir}");
                 return self::FAILURE;
             }
@@ -271,12 +273,12 @@ class NoerdInstallCommand extends Command
     {
         $configPath = base_path('config/livewire.php');
 
-        if (!file_exists($configPath)) {
+        if (! file_exists($configPath)) {
             $this->line('<comment>Publishing Livewire config file...</comment>');
             $this->call('livewire:config', ['--no-interaction' => true]);
         }
 
-        if (!file_exists($configPath)) {
+        if (! file_exists($configPath)) {
             $this->warn('config/livewire.php could not be published, skipping Livewire layout configuration.');
 
             return;
@@ -324,7 +326,7 @@ class NoerdInstallCommand extends Command
     {
         $composerPath = base_path('composer.json');
 
-        if (!file_exists($composerPath)) {
+        if (! file_exists($composerPath)) {
             $this->warn('composer.json not found, skipping repositories update');
             return;
         }
@@ -332,7 +334,7 @@ class NoerdInstallCommand extends Command
         $composerContent = file_get_contents($composerPath);
         $composerData = json_decode($composerContent, true);
 
-        if (!$composerData) {
+        if (! $composerData) {
             $this->warn('Failed to parse composer.json, skipping repositories update');
             return;
         }
@@ -434,7 +436,7 @@ class NoerdInstallCommand extends Command
             // A config that cannot be evaluated is treated as customized.
         }
 
-        if (!$this->option('force')) {
+        if (! $this->option('force')) {
             if ($missing === []) {
                 $this->line('<comment>config/noerd.php already exists and declares every stub key — left untouched.</comment>');
 
@@ -443,8 +445,8 @@ class NoerdInstallCommand extends Command
 
             $this->warn('config/noerd.php is missing new top-level keys: ' . implode(', ', $missing));
 
-            if (!$this->input->isInteractive()
-                || !$this->confirm('Overwrite config/noerd.php with the current stub?', false)) {
+            if (! $this->input->isInteractive()
+                || ! $this->confirm('Overwrite config/noerd.php with the current stub?', false)) {
                 $this->line('<comment>Skipped config/noerd.php publishing. Add the missing keys manually (see stubs/noerd.php.stub).</comment>');
 
                 return;
@@ -467,8 +469,8 @@ class NoerdInstallCommand extends Command
     {
         $appModulesPath = base_path('app-modules');
 
-        if (!is_dir($appModulesPath)) {
-            if (!mkdir($appModulesPath, 0755, true)) {
+        if (! is_dir($appModulesPath)) {
+            if (! mkdir($appModulesPath, 0755, true)) {
                 $this->warn('Failed to create app-modules directory');
                 return;
             }
@@ -479,7 +481,7 @@ class NoerdInstallCommand extends Command
 
         $gitkeepPath = $appModulesPath . DIRECTORY_SEPARATOR . '.gitkeep';
 
-        if (!file_exists($gitkeepPath)) {
+        if (! file_exists($gitkeepPath)) {
             if (file_put_contents($gitkeepPath, '') !== false) {
                 $this->line('Created .gitkeep file in app-modules directory');
             } else {
@@ -497,7 +499,7 @@ class NoerdInstallCommand extends Command
     {
         $phpunitPath = base_path('phpunit.xml');
 
-        if (!file_exists($phpunitPath)) {
+        if (! file_exists($phpunitPath)) {
             $this->warn('phpunit.xml not found, skipping phpunit configuration.');
 
             return;
@@ -568,7 +570,7 @@ class NoerdInstallCommand extends Command
     {
         $this->line('<comment>No users found in the database.</comment>');
 
-        if (!$this->confirm('Would you like to create an admin user now?', true)) {
+        if (! $this->confirm('Would you like to create an admin user now?', true)) {
             $this->line('Skipping admin user creation. You can create one later.');
             return;
         }
@@ -590,13 +592,13 @@ class NoerdInstallCommand extends Command
                 $this->line("  - {$admin->name} ({$admin->email})");
             }
 
-            if (!$this->confirm('Would you like to make another user an admin?', false)) {
+            if (! $this->confirm('Would you like to make another user an admin?', false)) {
                 return;
             }
         } else {
             $this->line("<comment>Found {$users->count()} user(s) in the database, but none are admins.</comment>");
 
-            if (!$this->confirm('Would you like to select a user to make admin?', true)) {
+            if (! $this->confirm('Would you like to select a user to make admin?', true)) {
                 $this->line('Skipping admin setup. You can do this later using: php artisan noerd:make-admin {user_id}');
                 return;
             }
@@ -665,7 +667,7 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        if (! $shouldMigrate && !confirm('Would you like to run "php artisan migrate" now?', default: true)) {
+        if (! $shouldMigrate && ! confirm('Would you like to run "php artisan migrate" now?', default: true)) {
             $this->line('<comment>Skipping migrations. You can run them manually later with: php artisan migrate</comment>');
             $this->line('<comment>Note: You will need to run migrations before creating an admin user.</comment>');
             return;
@@ -707,7 +709,7 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        if (! $shouldBuild && !confirm('Would you like to run "npm run build" to compile frontend assets?', default: true)) {
+        if (! $shouldBuild && ! confirm('Would you like to run "npm run build" to compile frontend assets?', default: true)) {
             $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
             return;
         }
@@ -723,7 +725,7 @@ class NoerdInstallCommand extends Command
         $url = mb_rtrim((string) config('app.url'), '/');
         $appsUrl = $url . '/noerd-apps';
 
-        if (!function_exists('\Laravel\Prompts\callout')) {
+        if (! function_exists('\Laravel\Prompts\callout')) {
             $this->newLine();
             $this->info('Application ready!');
             $this->line("Open: {$appsUrl} and log in with your admin user.");

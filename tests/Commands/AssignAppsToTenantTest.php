@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;

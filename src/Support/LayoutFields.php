@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Support;
 
 /**
@@ -21,12 +23,12 @@ final class LayoutFields
     public static function walk(array $fields, callable $visitor): bool
     {
         foreach ($fields as $field) {
-            if (!is_array($field)) {
+            if (! is_array($field)) {
                 continue;
             }
 
             if (($field['type'] ?? null) === 'block') {
-                if (!self::walk($field['fields'] ?? [], $visitor)) {
+                if (! self::walk($field['fields'] ?? [], $visitor)) {
                     return false;
                 }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Traits;
 
 use Exception;
@@ -78,13 +80,13 @@ trait HasModuleInstallation
      */
     protected function runModuleUpdate(): int
     {
-        if (!$this->ensureNoerdInstalled()) {
+        if (! $this->ensureNoerdInstalled()) {
             return 1;
         }
 
         $sourceDir = $this->getSourceDir();
 
-        if (!is_dir($sourceDir)) {
+        if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
 
             return 1;
@@ -97,8 +99,8 @@ trait HasModuleInstallation
         // a migration/seeder, so runModuleInstallation() diverts here — the update would
         // otherwise dead-end with "Run the install command first" while install keeps
         // diverting back to update. Create the folder and publish the configs into it.
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+        if (! is_dir($targetDir)) {
+            if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
                 $this->error("Failed to create target directory: app-configs/{$this->getModuleKey()}/");
 
                 return 1;
@@ -119,7 +121,7 @@ trait HasModuleInstallation
                 $displayPath = $this->getModuleKey() . '/navigation.yml';
 
                 if (file_exists($navTarget)) {
-                    if (!$this->option('force')) {
+                    if (! $this->option('force')) {
                         $choice = $this->choice(
                             "File already exists: {$displayPath}. What do you want to do?",
                             ['skip', 'overwrite', 'overwrite-all'],
@@ -170,7 +172,7 @@ trait HasModuleInstallation
     protected function runModuleInstallation(): int
     {
         // Ensure noerd:install has been run first
-        if (!$this->ensureNoerdInstalled()) {
+        if (! $this->ensureNoerdInstalled()) {
             return 1;
         }
 
@@ -202,7 +204,7 @@ trait HasModuleInstallation
 
         $sourceDir = $this->getSourceDir();
 
-        if (!is_dir($sourceDir)) {
+        if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
 
             return 1;
@@ -217,8 +219,8 @@ trait HasModuleInstallation
         $targetDir = base_path('app-configs/' . $this->targetAppKey);
 
         // Create target directory if it doesn't exist
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
+        if (! is_dir($targetDir)) {
+            if (! mkdir($targetDir, 0755, true)) {
                 $this->error("Failed to create target directory: {$targetDir}");
 
                 return 1;
@@ -358,7 +360,7 @@ trait HasModuleInstallation
     {
         $stubPath = $this->getMigrationStubPath();
 
-        if (!file_exists($stubPath)) {
+        if (! file_exists($stubPath)) {
             $this->warn("Migration stub not found: {$stubPath}");
 
             return null;
@@ -370,9 +372,9 @@ trait HasModuleInstallation
 
         // Check if migration already exists (by name pattern)
         $existingMigrations = glob(database_path("migrations/*_add_{$this->getModuleKey()}_tenant_app.php"));
-        if (!empty($existingMigrations)) {
+        if (! empty($existingMigrations)) {
             $this->warn("Migration for {$this->getModuleName()} already exists.");
-            if (!$this->confirm('Do you want to create a new migration anyway?', false)) {
+            if (! $this->confirm('Do you want to create a new migration anyway?', false)) {
                 return basename($existingMigrations[0]);
             }
         }
@@ -464,7 +466,7 @@ trait HasModuleInstallation
     {
         $skillsRoot = dirname($this->getSourceDir(), 2) . '/skills';
 
-        if (!is_dir($skillsRoot)) {
+        if (! is_dir($skillsRoot)) {
             return;
         }
 
@@ -475,7 +477,7 @@ trait HasModuleInstallation
 
         $targetSkillsDir = base_path('.claude/skills');
 
-        if (!is_dir($targetSkillsDir) && !mkdir($targetSkillsDir, 0755, true) && !is_dir($targetSkillsDir)) {
+        if (! is_dir($targetSkillsDir) && ! mkdir($targetSkillsDir, 0755, true) && ! is_dir($targetSkillsDir)) {
             $this->warn('Could not create .claude/skills directory; skills not published.');
 
             return;
@@ -546,7 +548,7 @@ trait HasModuleInstallation
             break;
         }
 
-        if (!$replaced) {
+        if (! $replaced) {
             $buttons = [$button, ...$buttons];
         }
 
@@ -557,7 +559,7 @@ trait HasModuleInstallation
         }
 
         $dir = dirname($configPath);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
@@ -615,7 +617,7 @@ trait HasModuleInstallation
             break;
         }
 
-        if (!$present) {
+        if (! $present) {
             $widgets[] = $widget;
         }
 
@@ -628,7 +630,7 @@ trait HasModuleInstallation
         $widgets = array_values($widgets);
 
         $dir = dirname($configPath);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
@@ -659,7 +661,7 @@ trait HasModuleInstallation
     {
         $configPath = base_path('app-configs/setup/navigation.yml');
 
-        if (!file_exists($configPath)) {
+        if (! file_exists($configPath)) {
             $this->warn('app-configs/setup/navigation.yml not found; navigation entry was not added.');
 
             return;
@@ -687,7 +689,7 @@ trait HasModuleInstallation
             }
 
             $navigations = $block['navigations'] ?? [];
-            if (!is_array($navigations) || $navigations === []) {
+            if (! is_array($navigations) || $navigations === []) {
                 continue;
             }
 
@@ -709,7 +711,7 @@ trait HasModuleInstallation
                 continue;
             }
 
-            if ($existing === $entry && !$movedFromOtherBlock) {
+            if ($existing === $entry && ! $movedFromOtherBlock) {
                 $this->line("<comment>Setup navigation already contains:</comment> {$entry['title']}");
 
                 return;
@@ -777,7 +779,7 @@ trait HasModuleInstallation
         }
 
         if (is_dir($target)) {
-            if (!$refreshCopies) {
+            if (! $refreshCopies) {
                 $this->line("<comment>Claude skill already published:</comment> .claude/skills/{$name}");
 
                 return;
@@ -816,7 +818,7 @@ trait HasModuleInstallation
 
     private function copyDirectoryTree(string $source, string $destination): void
     {
-        if (!is_dir($destination) && !mkdir($destination, 0755, true) && !is_dir($destination)) {
+        if (! is_dir($destination) && ! mkdir($destination, 0755, true) && ! is_dir($destination)) {
             return;
         }
 
@@ -828,7 +830,7 @@ trait HasModuleInstallation
         foreach ($iterator as $item) {
             $target = $destination . '/' . $iterator->getSubPathname();
             if ($item->isDir()) {
-                if (!is_dir($target)) {
+                if (! is_dir($target)) {
                     mkdir($target, 0755, true);
                 }
             } else {
@@ -839,7 +841,7 @@ trait HasModuleInstallation
 
     private function removeDirectoryTree(string $path): void
     {
-        if (!is_dir($path) || is_link($path)) {
+        if (! is_dir($path) || is_link($path)) {
             @unlink($path);
 
             return;
@@ -849,7 +851,7 @@ trait HasModuleInstallation
                 continue;
             }
             $full = $path . '/' . $entry;
-            if (is_dir($full) && !is_link($full)) {
+            if (is_dir($full) && ! is_link($full)) {
                 $this->removeDirectoryTree($full);
             } else {
                 @unlink($full);

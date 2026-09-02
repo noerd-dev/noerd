@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Commands;
 
 use Exception;
@@ -46,7 +48,7 @@ class CreateTenantApp extends Command
         $active = (bool) $this->option('active');
 
         // Interactive mode if no options provided and not in test environment
-        if ((!$title || !$name || !$icon) && !app()->runningUnitTests()) {
+        if ((! $title || ! $name || ! $icon) && ! app()->runningUnitTests()) {
             $this->info('Creating a new tenant app...');
             $this->newLine();
 
@@ -61,13 +63,13 @@ class CreateTenantApp extends Command
         }
 
         // Validate required fields
-        if (!$title || !$name || !$icon) {
+        if (! $title || ! $name || ! $icon) {
             $this->error('All fields (title, name, icon) are required.');
             return self::FAILURE;
         }
 
         // Validate name format (uppercase, no spaces) after normalization
-        if (!preg_match('/^[A-Z_]+$/', $name)) {
+        if (! preg_match('/^[A-Z_]+$/', $name)) {
             $this->error('App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).');
             return self::FAILURE;
         }
@@ -80,7 +82,7 @@ class CreateTenantApp extends Command
 
         // Every app ships its own dashboard: the app tile opens the generated
         // dashboard route unless the caller points it at an existing route.
-        $generateDashboard = !$route;
+        $generateDashboard = ! $route;
         $route = $route ?: MakeDashboardCommand::routeNameFor($name);
 
         // Create the tenant app
@@ -114,7 +116,7 @@ class CreateTenantApp extends Command
                 ['Created', $tenantApp->created_at->format('Y-m-d H:i:s')],
             ]);
 
-            if (!app()->runningUnitTests()) {
+            if (! app()->runningUnitTests()) {
                 $this->askToAssignTenants($tenantApp);
             } else {
                 $this->newLine();
@@ -167,7 +169,7 @@ class CreateTenantApp extends Command
 
         $this->newLine();
 
-        if (!confirm('Would you like to assign this app to tenants?', default: true)) {
+        if (! confirm('Would you like to assign this app to tenants?', default: true)) {
             $this->comment('Run "php artisan noerd:assign-apps-to-tenant" later to assign.');
             return;
         }
@@ -187,7 +189,7 @@ class CreateTenantApp extends Command
             required: false,
         );
 
-        if (!empty($selectedTenantIds)) {
+        if (! empty($selectedTenantIds)) {
             $tenantApp->tenants()->sync($selectedTenantIds);
             $this->info('✅ App assigned to ' . count($selectedTenantIds) . ' tenant(s).');
         } else {

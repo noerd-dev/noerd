@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -232,8 +234,8 @@ trait NoerdList
     public function isSortableColumn(string $field, array $notSortableColumns = []): bool
     {
         return $field !== 'action'
-            && !self::isDottedField($field)
-            && !in_array($field, $notSortableColumns, true);
+            && ! self::isDottedField($field)
+            && ! in_array($field, $notSortableColumns, true);
     }
 
     public function mount(): void
@@ -291,7 +293,7 @@ trait NoerdList
      */
     public function switchListView(string $key): void
     {
-        if (!array_key_exists($key, $this->availableListViews)) {
+        if (! array_key_exists($key, $this->availableListViews)) {
             return;
         }
 
@@ -321,11 +323,11 @@ trait NoerdList
     {
         // Refuse a column the query could not order by rather than let the header appear
         // to sort and do nothing (see isSortableColumn()).
-        if (!$this->isSortableColumn($field, $this->getListConfig()['notSortableColumns'] ?? [])) {
+        if (! $this->isSortableColumn($field, $this->getListConfig()['notSortableColumns'] ?? [])) {
             return;
         }
 
-        $this->sortAsc = $this->sortField === $field ? !$this->sortAsc : true;
+        $this->sortAsc = $this->sortField === $field ? ! $this->sortAsc : true;
         $this->sortField = $field;
         $this->persistListSort();
     }
@@ -513,7 +515,7 @@ trait NoerdList
         $listData = $this->resolvedListConfig()['rows'] ?? [];
 
         $item = is_array($listData) ? ($listData[$id] ?? null) : $listData->getCollection()->get($id);
-        if (!$item) {
+        if (! $item) {
             return;
         }
 
@@ -636,13 +638,13 @@ trait NoerdList
         // The method is public (Livewire-callable), but must only act when the
         // list's YAML actually declares this bulk action — a list that never
         // offered it can never be bulk-deleted through it.
-        if (!$this->listDeclaresBulkAction('deleteSelected')) {
+        if (! $this->listDeclaresBulkAction('deleteSelected')) {
             return;
         }
 
         // Server-side guard: the bulk-delete button is hidden for delete-denied
         // users, but the method stays directly invokable.
-        if (!AccessHelper::canDeleteObject($this->objectPermissionModelClass())) {
+        if (! AccessHelper::canDeleteObject($this->objectPermissionModelClass())) {
             return;
         }
 
@@ -658,7 +660,7 @@ trait NoerdList
             // listQuery() cannot see constraints a component adds in its own
             // listData() override (e.g. "users of MY tenants"), so those lists
             // are additionally limited to the rows currently rendered.
-            if (!$this->usesTraitListData()) {
+            if (! $this->usesTraitListData()) {
                 $query->whereIn('id', $this->visibleRowIds() ?: [0]);
             }
 
@@ -814,7 +816,7 @@ trait NoerdList
         // state and is persisted. Embedded lists (compact/picker) never apply it —
         // the param addresses the page-level list, but Livewire hydrates it on
         // nested lists too.
-        $urlColumnFilters = (!$this->compact && !$this->returnsSelection)
+        $urlColumnFilters = (! $this->compact && ! $this->returnsSelection)
             ? array_filter($this->listColumnFilters, fn($value): bool => is_string($value) && mb_trim($value) !== '')
             : [];
         if ($urlColumnFilters !== []) {
@@ -829,12 +831,12 @@ trait NoerdList
         // A ?view= URL param (shared link) wins over the session-saved view.
         // Embedded lists (compact/picker) never apply it — the param addresses
         // the page-level list, but Livewire hydrates it on nested lists too.
-        $urlView = (!$this->compact && !$this->returnsSelection) ? $this->listViewParam : null;
+        $urlView = (! $this->compact && ! $this->returnsSelection) ? $this->listViewParam : null;
         if ($urlView !== null && $urlView !== '') {
             // The URL carries '--' instead of '::' as the app separator (no
             // '%3A%3A' noise); decode it back to the composite key. A hand-typed
             // legacy '::' still parses as-is.
-            if (!str_contains($urlView, '::') && str_contains($urlView, '--')) {
+            if (! str_contains($urlView, '::') && str_contains($urlView, '--')) {
                 $urlView = Str::replaceFirst('--', '::', $urlView);
             }
             [$urlApp, $urlKey] = StaticConfigHelper::parseListViewKey($urlView);
@@ -865,7 +867,7 @@ trait NoerdList
         // base stays — fail open.
         if ($this->listView === null && $this->listViewApp === null
             && $this->availableListViews !== []
-            && !array_key_exists('default', $this->availableListViews)) {
+            && ! array_key_exists('default', $this->availableListViews)) {
             $this->applyListViewKey(array_key_first($this->availableListViews));
         }
 
@@ -984,7 +986,7 @@ trait NoerdList
 
     protected function applyListFilters(Builder $query): void
     {
-        if (!$this->listFilters) {
+        if (! $this->listFilters) {
             return;
         }
 
@@ -992,7 +994,7 @@ trait NoerdList
         $filterTypes = collect($this->tableFilters)->pluck('type', 'column')->toArray();
 
         foreach ($this->listFilters as $key => $value) {
-            if (!in_array($key, $allowed) || !$value) {
+            if (! in_array($key, $allowed) || ! $value) {
                 continue;
             }
 
@@ -1089,21 +1091,21 @@ trait NoerdList
 
         // Read-denied objects yield no rows in ANY rendering mode (page, embedded,
         // picker, minimal) — restricted data must never leave the database.
-        if (!AccessHelper::canReadObject($modelClass)) {
+        if (! AccessHelper::canReadObject($modelClass)) {
             $query->whereRaw('1 = 0');
         }
 
         $listConfig = $this->getListConfig($configName);
         $table = $this->resolvedModelInstance()->getTable();
 
-        if (!empty($this->search)) {
-            $searchableFields = !empty($listConfig['searchableColumns'])
+        if (! empty($this->search)) {
+            $searchableFields = ! empty($listConfig['searchableColumns'])
                 ? $listConfig['searchableColumns']
                 : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
 
             $validFields = array_filter($searchableFields, fn($f) => is_string($f) && self::tableHasColumn($table, $f));
 
-            if (!empty($validFields)) {
+            if (! empty($validFields)) {
                 // Contains match with escaped LIKE wildcards — same rule and
                 // driver-portable escape as ColumnFilterParser.
                 $search = $this->search;
@@ -1269,7 +1271,7 @@ trait NoerdList
         $picklistFields = array_keys($this->picklistOptionsFromDetail());
 
         foreach ($this->listColumnFilters as $field => $raw) {
-            if (!in_array($field, $allowed, true) || !is_string($raw) || mb_trim($raw) === '') {
+            if (! in_array($field, $allowed, true) || ! is_string($raw) || mb_trim($raw) === '') {
                 continue;
             }
 
@@ -1277,7 +1279,7 @@ trait NoerdList
             // whereHas() subquery on the related table — a join would collide with
             // the base table's column names. JSON paths take precedence and fall
             // through to the arrow-operator branch below.
-            $relationPath = self::isDottedField($field) && !$this->isJsonColumnPath($field)
+            $relationPath = self::isDottedField($field) && ! $this->isJsonColumnPath($field)
                 ? $this->relationColumnPath($field)
                 : null;
             if ($relationPath !== null) {
@@ -1318,7 +1320,7 @@ trait NoerdList
         // be pulled from the result set — fall back to the class listQuery() resolved,
         // so bool/date columns keep their type and the filter popover keeps its UI.
         $model = $this->resolveModelFromRows($rows) ?? $this->resolvedModelInstance();
-        if (!$model) {
+        if (! $model) {
             return $listSettings;
         }
 
@@ -1414,7 +1416,7 @@ trait NoerdList
         // Object permissions: strip the affordances the current user may not use.
         // In-memory lists (no model class) stay unrestricted.
         $permissionModel = $this->objectPermissionModelClass();
-        $objectAccessDenied = !AccessHelper::canReadObject($permissionModel);
+        $objectAccessDenied = ! AccessHelper::canReadObject($permissionModel);
         if ($objectAccessDenied) {
             unset($listSettings['actions']);
         } else {
@@ -1422,7 +1424,7 @@ trait NoerdList
             // CREATE affordances; every other header action stays gated by write.
             $canCreate = AccessHelper::canCreateObject($permissionModel);
             $canWrite = AccessHelper::canWriteObject($permissionModel);
-            if (!$canCreate || !$canWrite) {
+            if (! $canCreate || ! $canWrite) {
                 $listSettings['actions'] = array_values(array_filter(
                     $listSettings['actions'] ?? [],
                     function (array $action) use ($canCreate, $canWrite): bool {
@@ -1436,7 +1438,7 @@ trait NoerdList
                 }
             }
         }
-        if (!AccessHelper::canDeleteObject($permissionModel)) {
+        if (! AccessHelper::canDeleteObject($permissionModel)) {
             $listSettings['bulkActions'] = array_values(array_filter(
                 $listSettings['bulkActions'] ?? [],
                 fn(array $action): bool => ($action['action'] ?? null) !== 'deleteSelected',
@@ -1569,7 +1571,7 @@ trait NoerdList
         $fields = StaticConfigHelper::tryGetComponentFields($detailComponent)['fields'] ?? [];
         $map = [];
         LayoutFields::walk($fields, function (array $field) use (&$map): void {
-            if (!isset($field['name'])) {
+            if (! isset($field['name'])) {
                 return;
             }
 
@@ -1578,8 +1580,8 @@ trait NoerdList
             // form element. Id-storing collection selects stay excluded (their
             // columns are FK ids, not picklist values).
             if (($field['type'] ?? null) === 'setupCollectionSelect'
-                && !empty($field['collectionKey'])
-                && !empty($field['valueField'])) {
+                && ! empty($field['collectionKey'])
+                && ! empty($field['valueField'])) {
                 $options = SetupCollectionHelper::selectOptions(
                     $field['collectionKey'],
                     $field['displayField'] ?? 'name',
@@ -1614,7 +1616,7 @@ trait NoerdList
         $prefix = Str::contains($name, '.') ? Str::beforeLast($name, '.') . '.' : '';
         $last = Str::afterLast($name, '.');
 
-        if (!Str::endsWith($last, '-list')) {
+        if (! Str::endsWith($last, '-list')) {
             return null;
         }
 
@@ -1767,7 +1769,7 @@ trait NoerdList
         }
 
         $table = $model->getTable();
-        if (!Schema::hasTable($table) || !self::tableHasColumn($table, $column)) {
+        if (! Schema::hasTable($table) || ! self::tableHasColumn($table, $column)) {
             return null;
         }
 
@@ -1785,14 +1787,14 @@ trait NoerdList
      */
     private function resolveRelatedModel(Model $model, string $method): ?Model
     {
-        if ($method === '' || !method_exists($model, $method)) {
+        if ($method === '' || ! method_exists($model, $method)) {
             return null;
         }
 
         try {
             $reflection = new ReflectionMethod($model, $method);
 
-            if (!$reflection->isPublic() || $reflection->isStatic() || $reflection->getNumberOfRequiredParameters() > 0) {
+            if (! $reflection->isPublic() || $reflection->isStatic() || $reflection->getNumberOfRequiredParameters() > 0) {
                 return null;
             }
 
@@ -1849,7 +1851,7 @@ trait NoerdList
     {
         $defaultSort = $this->getListConfig()['defaultSort'] ?? null;
 
-        if (!is_array($defaultSort) || empty($defaultSort['field'])) {
+        if (! is_array($defaultSort) || empty($defaultSort['field'])) {
             return;
         }
 

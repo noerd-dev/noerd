@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\RelationFieldDefinition;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Navigation;
 
 use Noerd\Contracts\DynamicNavigationProviderContract;

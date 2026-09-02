@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Assert;
 
-if (!function_exists('requiredLayoutFields')) {
+if (! function_exists('requiredLayoutFields')) {
     /**
      * Field names marked required in the component's pageLayout.
      *
@@ -35,7 +37,7 @@ if (!function_exists('requiredLayoutFields')) {
     }
 }
 
-if (!function_exists('extractRequiredLayoutFields')) {
+if (! function_exists('extractRequiredLayoutFields')) {
     /**
      * @param  array<int, array<string, mixed>>  $fields
      * @return array<int, string>
@@ -63,7 +65,7 @@ if (!function_exists('extractRequiredLayoutFields')) {
     }
 }
 
-if (!function_exists('validDetailPayload')) {
+if (! function_exists('validDetailPayload')) {
     /**
      * Valid detailData array sourced from the model factory, merged with overrides.
      *
@@ -87,7 +89,7 @@ if (!function_exists('validDetailPayload')) {
     }
 }
 
-if (!function_exists('registerTestLivewireRoute')) {
+if (! function_exists('registerTestLivewireRoute')) {
     /**
      * Register a named Route::livewire() route from inside a test.
      *
@@ -102,7 +104,7 @@ if (!function_exists('registerTestLivewireRoute')) {
     }
 }
 
-if (!function_exists('assertElementHasClasses')) {
+if (! function_exists('assertElementHasClasses')) {
     /**
      * Assert that ONE element in the markup carries all given CSS classes.
      *
@@ -136,7 +138,7 @@ if (!function_exists('assertElementHasClasses')) {
     }
 }
 
-if (!function_exists('assertNoElementHasClasses')) {
+if (! function_exists('assertNoElementHasClasses')) {
     /**
      * The negative counterpart of assertElementHasClasses().
      *
@@ -162,7 +164,7 @@ if (!function_exists('assertNoElementHasClasses')) {
     }
 }
 
-if (!function_exists('assertModuleDependenciesDeclared')) {
+if (! function_exists('assertModuleDependenciesDeclared')) {
     /**
      * Module-independence guard: every OTHER app module whose PSR-4 namespace
      * appears anywhere in this module (src, resources, routes, database,
@@ -199,13 +201,13 @@ if (!function_exists('assertModuleDependenciesDeclared')) {
         $violations = [];
         foreach (['src', 'resources', 'routes', 'database', 'config', 'app-configs', 'tests'] as $dir) {
             $path = $moduleDir . '/' . $dir;
-            if (!is_dir($path)) {
+            if (! is_dir($path)) {
                 continue;
             }
 
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS));
             foreach ($iterator as $file) {
-                if (!in_array($file->getExtension(), ['php', 'yml', 'yaml', 'json', 'stub'], true)) {
+                if (! in_array($file->getExtension(), ['php', 'yml', 'yaml', 'json', 'stub'], true)) {
                     continue;
                 }
                 // The boundary tests themselves name foreign namespaces as needles.
@@ -234,7 +236,7 @@ if (!function_exists('assertModuleDependenciesDeclared')) {
     }
 }
 
-if (!function_exists('assertModuleUpdateCommandPublishesConfigs')) {
+if (! function_exists('assertModuleUpdateCommandPublishesConfigs')) {
     /**
      * Standard proof for a module's noerd:update-{module} command: publishes
      * every YAML the module ships into app-configs/{key} (self-heal branch),
@@ -293,7 +295,7 @@ if (!function_exists('assertModuleUpdateCommandPublishesConfigs')) {
     }
 }
 
-if (!function_exists('createNoerdUserWithProfile')) {
+if (! function_exists('createNoerdUserWithProfile')) {
     /**
      * A user attached to a fresh tenant under the given profile, with that
      * tenant selected — the fixture for profile-baseline and permission tests.
@@ -312,7 +314,7 @@ if (!function_exists('createNoerdUserWithProfile')) {
     }
 }
 
-if (!class_exists('ZzSettingsProfile')) {
+if (! class_exists('ZzSettingsProfile')) {
     /**
      * Tenant-scoped fixture model for settings-page tests — a dedicated zz
      * table, so the tests depend on no real domain model.
@@ -325,7 +327,7 @@ if (!class_exists('ZzSettingsProfile')) {
     }
 }
 
-if (!function_exists('ensureZzSettingsProfilesTable')) {
+if (! function_exists('ensureZzSettingsProfilesTable')) {
     function ensureZzSettingsProfilesTable(): void
     {
         if (\Illuminate\Support\Facades\Schema::hasTable('zz_settings_profiles')) {

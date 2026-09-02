@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Commands;
 
 use Exception;
@@ -39,7 +41,7 @@ class AssignAppsToTenantCommand extends Command
         try {
             // Step 1: Select Tenant
             $selectedTenant = $this->selectTenant($tenantId);
-            if (!$selectedTenant) {
+            if (! $selectedTenant) {
                 return self::FAILURE;
             }
 
@@ -60,7 +62,7 @@ class AssignAppsToTenantCommand extends Command
     {
         if ($tenantId) {
             $tenant = Tenant::find($tenantId);
-            if (!$tenant) {
+            if (! $tenant) {
                 $this->error("Tenant with ID {$tenantId} not found.");
                 return null;
             }
@@ -126,7 +128,7 @@ class AssignAppsToTenantCommand extends Command
         $this->newLine();
 
         // Show current assignments
-        if (!empty($currentAppIds)) {
+        if (! empty($currentAppIds)) {
             $this->info('Currently assigned apps:');
             foreach ($allApps->whereIn('id', $currentAppIds) as $app) {
                 $this->line("  ✓ {$app->title} ({$app->name})");
@@ -164,12 +166,12 @@ class AssignAppsToTenantCommand extends Command
             $this->newLine();
             $this->info('✅ App assignments updated successfully!');
 
-            if (!empty($addedApps)) {
+            if (! empty($addedApps)) {
                 $addedAppNames = TenantApp::whereIn('id', $addedApps)->pluck('title')->toArray();
                 $this->info('✓ Added apps: ' . implode(', ', $addedAppNames));
             }
 
-            if (!empty($removedApps)) {
+            if (! empty($removedApps)) {
                 $removedAppNames = TenantApp::whereIn('id', $removedApps)->pluck('title')->toArray();
                 $this->info('✗ Removed apps: ' . implode(', ', $removedAppNames));
             }

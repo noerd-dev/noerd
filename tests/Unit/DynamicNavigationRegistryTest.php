@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Contracts\DynamicNavigationProviderContract;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Tests\TestCase;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Notifications;
 
 use Illuminate\Auth\Notifications\ResetPassword;

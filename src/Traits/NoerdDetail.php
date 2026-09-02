@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Model;
@@ -37,7 +39,7 @@ trait NoerdDetail
         // Server-side guard: the save button is hidden for denied users, but
         // store() stays reachable via the storeDetail-{name} listener and
         // shortcut. canSaveObject() picks create (new record) or write (update).
-        if (!$this->canSaveObject()) {
+        if (! $this->canSaveObject()) {
             return;
         }
 
@@ -80,12 +82,12 @@ trait NoerdDetail
                     continue;
                 }
 
-                if (!RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
+                if (! RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
                     continue;
                 }
 
                 $data = $this->detailData[$key] ?? null;
-                if (!is_array($data) || !RelationFormSync::hasFormData($definition, $data)) {
+                if (! is_array($data) || ! RelationFormSync::hasFormData($definition, $data)) {
                     continue;
                 }
 
@@ -99,7 +101,7 @@ trait NoerdDetail
             }
         }
 
-        if (!empty($rules)) {
+        if (! empty($rules)) {
             $this->validate($rules, $messages);
         }
     }
@@ -314,7 +316,7 @@ trait NoerdDetail
 
     protected function mountDetailComponent(Model $model, string $modelClass): void
     {
-        if (!$this->loadDetailModel($model, $modelClass)) {
+        if (! $this->loadDetailModel($model, $modelClass)) {
             return;
         }
 
@@ -323,7 +325,7 @@ trait NoerdDetail
         // pages/{name}.yml). Only a getDetailComponent() override pointing at a
         // `*-detail` opts back into YAML.
         $detailComponent = $this->getDetailComponent();
-        if (!Str::endsWith($detailComponent, '-page')) {
+        if (! Str::endsWith($detailComponent, '-page')) {
             $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
         }
 
@@ -372,7 +374,7 @@ trait NoerdDetail
      */
     protected function ensureRelationFormsHydrated(): void
     {
-        if (!isset($this->detailModel)) {
+        if (! isset($this->detailModel)) {
             return;
         }
 
@@ -388,7 +390,7 @@ trait NoerdDetail
                 continue;
             }
 
-            if (!RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
+            if (! RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
                 continue;
             }
 
@@ -410,7 +412,7 @@ trait NoerdDetail
      */
     protected function ensureCustomAttributesArray(): void
     {
-        if (array_key_exists('custom_attributes', $this->detailData) && !is_array($this->detailData['custom_attributes'])) {
+        if (array_key_exists('custom_attributes', $this->detailData) && ! is_array($this->detailData['custom_attributes'])) {
             $this->detailData['custom_attributes'] = [];
         }
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\ThemeDefinition;
 use Noerd\Tests\TestCase;
