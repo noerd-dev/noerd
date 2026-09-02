@@ -63,8 +63,8 @@ it('displays tenant information correctly', function (): void {
     $output = $command->expectsOutput("App Assignment for: {$this->tenant->name}")
         ->expectsOutput('Use ↑/↓ to navigate, Space to select/deselect, Enter to confirm')
         ->expectsOutput('Currently assigned apps:')
-        ->expectsOutput("  ✓ {$this->noerdAppA->title} ({$this->noerdAppA->name})")
-        ->expectsOutput("  ✓ {$this->noerdAppB->title} ({$this->noerdAppB->name})")
+        ->expectsOutput("  {$this->noerdAppA->title} ({$this->noerdAppA->name})")
+        ->expectsOutput("  {$this->noerdAppB->title} ({$this->noerdAppB->name})")
         ->run();
 });
 

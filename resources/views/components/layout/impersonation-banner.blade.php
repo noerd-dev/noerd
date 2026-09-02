@@ -16,7 +16,7 @@ new class extends Component {
         }
     }
 
-    public function stopImpersonating()
+    public function stopImpersonating(): void
     {
         $originalUserId = session('impersonating_from');
         session()->forget('impersonating_from');
@@ -26,7 +26,7 @@ new class extends Component {
 
         NoerdAuth::guard()->loginUsingId($originalUserId);
 
-        return redirect('/');
+        $this->redirect('/');
     }
 }; ?>
 

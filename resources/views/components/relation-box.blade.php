@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Js;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -123,7 +125,7 @@ new class extends Component {
             'label' => $tile['label'] ?? '',
             'heroicon' => $tile['heroicon'] ?? 'rectangle-stack',
             'component' => $tile['component'] ?? '',
-            'route' => $route && \Illuminate\Support\Facades\Route::has($route) ? $route : '',
+            'route' => $route && Route::has($route) ? $route : '',
             'count' => $count,
             'arguments' => $this->resolveArguments($tile['arguments'] ?? []),
         ];
@@ -152,16 +154,16 @@ new class extends Component {
         {{-- A tile opens the related list NARROWED by the current record, which a
              plain list route cannot express — so the route only resolves the
              component, the browser URL stays put (rewriteUrl: false). --}}
-        <a href="#/"
+        <button type="button"
            wire:key="relation-{{ $loop->index }}"
            @if ($relation['route'])
-               @click.prevent="$modalRoute({{ \Illuminate\Support\Js::from($relation['route']) }}, {{ \Illuminate\Support\Js::from($relation['arguments']) }}, null, null, null, {rewriteUrl: false, fallbackComponent: {{ \Illuminate\Support\Js::from($relation['component'] ?: null) }}})"
+               @click="$modalRoute({{ Js::from($relation['route']) }}, {{ Js::from($relation['arguments']) }}, null, null, null, {rewriteUrl: false, fallbackComponent: {{ Js::from($relation['component'] ?: null) }}})"
            @else
-               @click.prevent="$modal({{ \Illuminate\Support\Js::from($relation['component']) }}, {{ \Illuminate\Support\Js::from($relation['arguments']) }})"
+               @click="$modal({{ Js::from($relation['component']) }}, {{ Js::from($relation['arguments']) }})"
            @endif
-           class="bg-white border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer">
+           class="bg-white border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-left w-full">
             <x-icon name="{{ $relation['heroicon'] }}" class="w-5 h-5 shrink-0 text-gray-800"/>
             <span class="text-sm text-gray-600 truncate">{{ __($relation['label']) }} ({{ $relation['count'] }})</span>
-        </a>
+        </button>
     @endforeach
 </div>

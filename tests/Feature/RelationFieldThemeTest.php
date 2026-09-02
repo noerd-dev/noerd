@@ -41,8 +41,8 @@ describe('Relation field theme templates', function (): void {
     it('renders the compact template with the label to the left', function () use ($props): void {
         $component = Livewire::test('noerd-relation-field', $props + ['theme' => 'compact'])
             ->assertSuccessful()
-            ->assertSeeHtml('!h-7')
-            ->assertSeeHtml('!px-2');
+            ->assertSeeHtml('h-7!')
+            ->assertSeeHtml('px-2!');
 
         assertElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
     });

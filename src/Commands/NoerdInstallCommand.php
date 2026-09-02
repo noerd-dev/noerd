@@ -6,6 +6,7 @@ namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\callout;
@@ -40,15 +41,15 @@ class NoerdInstallCommand extends Command
         $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
         $targetDir = base_path('app-configs/setup');
 
-        if (! is_dir($sourceDir)) {
+        if (! File::isDirectory($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
             return self::FAILURE;
         }
 
         // Create target directory if it doesn't exist
-        if (! is_dir($targetDir)) {
+        if (! File::isDirectory($targetDir)) {
 
-            if (! mkdir($targetDir, 0755, true)) {
+            if (! File::makeDirectory($targetDir, 0755, true)) {
                 $this->error("Failed to create target directory: {$targetDir}");
                 return self::FAILURE;
             }
@@ -273,18 +274,18 @@ class NoerdInstallCommand extends Command
     {
         $configPath = base_path('config/livewire.php');
 
-        if (! file_exists($configPath)) {
+        if (! File::exists($configPath)) {
             $this->line('<comment>Publishing Livewire config file...</comment>');
             $this->call('livewire:config', ['--no-interaction' => true]);
         }
 
-        if (! file_exists($configPath)) {
+        if (! File::exists($configPath)) {
             $this->warn('config/livewire.php could not be published, skipping Livewire layout configuration.');
 
             return;
         }
 
-        $configContent = file_get_contents($configPath);
+        $configContent = File::get($configPath);
 
         if (str_contains($configContent, "'noerd::layouts.app'")) {
             $this->line('<comment>Livewire component_layout already set to noerd layout.</comment>');
@@ -304,7 +305,7 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        if (file_put_contents($configPath, $updated) !== false) {
+        if (File::put($configPath, $updated) !== false) {
             $this->line('<info>Updated Livewire component_layout to noerd::layouts.app.</info>');
         } else {
             $this->warn('Failed to update config/livewire.php. Please manually set component_layout to: noerd::layouts.app');
@@ -326,12 +327,12 @@ class NoerdInstallCommand extends Command
     {
         $composerPath = base_path('composer.json');
 
-        if (! file_exists($composerPath)) {
+        if (! File::exists($composerPath)) {
             $this->warn('composer.json not found, skipping repositories update');
             return;
         }
 
-        $composerContent = file_get_contents($composerPath);
+        $composerContent = File::get($composerPath);
         $composerData = json_decode($composerContent, true);
 
         if (! $composerData) {
@@ -365,7 +366,7 @@ class NoerdInstallCommand extends Command
         // Write back to composer.json with pretty formatting
         $newContent = json_encode($composerData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        if (file_put_contents($composerPath, $newContent) !== false) {
+        if (File::put($composerPath, $newContent) !== false) {
             $this->line('Added repositories configuration to composer.json');
         } else {
             $this->warn('Failed to update composer.json');
@@ -387,7 +388,7 @@ class NoerdInstallCommand extends Command
 
         $sourcePath = null;
         foreach ($possibleSources as $path) {
-            if (file_exists($path)) {
+            if (File::exists($path)) {
                 $sourcePath = $path;
                 break;
             }
@@ -402,13 +403,13 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        if (file_exists($targetPath)) {
+        if (File::exists($targetPath)) {
             $this->refreshExistingNoerdConfig($sourcePath, $targetPath);
 
             return;
         }
 
-        if (copy($sourcePath, $targetPath)) {
+        if (File::copy($sourcePath, $targetPath)) {
             $this->line('<info>Published config/noerd.php successfully.</info>');
         } else {
             $this->warn('Failed to publish config/noerd.php');
@@ -455,7 +456,7 @@ class NoerdInstallCommand extends Command
 
         $this->line('<comment>Overwriting config/noerd.php...</comment>');
 
-        if (copy($sourcePath, $targetPath)) {
+        if (File::copy($sourcePath, $targetPath)) {
             $this->line('<info>Published config/noerd.php successfully.</info>');
         } else {
             $this->warn('Failed to publish config/noerd.php');
@@ -469,8 +470,8 @@ class NoerdInstallCommand extends Command
     {
         $appModulesPath = base_path('app-modules');
 
-        if (! is_dir($appModulesPath)) {
-            if (! mkdir($appModulesPath, 0755, true)) {
+        if (! File::isDirectory($appModulesPath)) {
+            if (! File::makeDirectory($appModulesPath, 0755, true)) {
                 $this->warn('Failed to create app-modules directory');
                 return;
             }
@@ -481,8 +482,8 @@ class NoerdInstallCommand extends Command
 
         $gitkeepPath = $appModulesPath . DIRECTORY_SEPARATOR . '.gitkeep';
 
-        if (! file_exists($gitkeepPath)) {
-            if (file_put_contents($gitkeepPath, '') !== false) {
+        if (! File::exists($gitkeepPath)) {
+            if (File::put($gitkeepPath, '') !== false) {
                 $this->line('Created .gitkeep file in app-modules directory');
             } else {
                 $this->warn('Failed to create .gitkeep file');
@@ -499,13 +500,13 @@ class NoerdInstallCommand extends Command
     {
         $phpunitPath = base_path('phpunit.xml');
 
-        if (! file_exists($phpunitPath)) {
+        if (! File::exists($phpunitPath)) {
             $this->warn('phpunit.xml not found, skipping phpunit configuration.');
 
             return;
         }
 
-        $phpunitContent = file_get_contents($phpunitPath);
+        $phpunitContent = File::get($phpunitPath);
 
         // Check if the app-modules testsuite already exists
         if (str_contains($phpunitContent, './app-modules/*/tests')) {
@@ -525,7 +526,7 @@ class NoerdInstallCommand extends Command
                 $phpunitContent,
             );
 
-            if (file_put_contents($phpunitPath, $phpunitContent) !== false) {
+            if (File::put($phpunitPath, $phpunitContent) !== false) {
                 $this->line('<info>Added app-modules testsuite to phpunit.xml.</info>');
             } else {
                 $this->warn('Failed to update phpunit.xml');

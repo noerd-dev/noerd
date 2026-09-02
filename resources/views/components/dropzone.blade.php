@@ -1,9 +1,10 @@
 <?php
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Modelable;
 use Livewire\Attributes\Reactive;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component {
     use WithFileUploads;
@@ -33,7 +34,7 @@ new class extends Component {
         ]);
 
         foreach ($this->temporaryFiles as $file) {
-            // Convert the TemporaryUploadedFile into the array format MediaUploadService expects
+            // Convert the TemporaryUploadedFile into the plain array shape consumers of this component expect
             $this->files[] = [
                 'name' => $file->getClientOriginalName(),
                 'extension' => $file->getClientOriginalExtension(),
@@ -49,13 +50,13 @@ new class extends Component {
         $this->dispatch('files-updated', files: $this->files);
     }
 
-    public function removeFile($index): void
+    public function removeFile(int $index): void
     {
         // Delete the temporary file if present
         if (is_array($this->files) && isset($this->files[$index]['_original']) && method_exists($this->files[$index]['_original'], 'delete')) {
             try {
                 $this->files[$index]['_original']->delete();
-            } catch (\Exception $e) {
+            } catch (Exception) {
                 // Ignore deletion errors
             }
         }
@@ -77,7 +78,7 @@ new class extends Component {
                 if (isset($file['_original'])) {
                     try {
                         $file['_original']->delete();
-                    } catch (\Exception $e) {
+                    } catch (Exception) {
                         // Ignore deletion errors
                     }
                 }
@@ -88,7 +89,8 @@ new class extends Component {
         $this->dispatch('files-cleared');
     }
 
-    public function getAcceptAttribute(): string
+    #[Computed]
+    public function accept(): string
     {
         $mimes = [];
         foreach ($this->rules as $rule) {
@@ -102,18 +104,20 @@ new class extends Component {
         return implode(',', $mimes);
     }
 
-    public function getMaxSizeAttribute(): string
+    #[Computed]
+    public function maxSize(): string
     {
         foreach ($this->rules as $rule) {
             if (str_starts_with($rule, 'max:')) {
-                $kb = str_replace('max:', '', $rule);
+                $kb = (int) str_replace('max:', '', $rule);
+
                 return $this->formatBytes($kb * 1024);
             }
         }
         return __('unlimited');
     }
 
-    private function formatBytes($bytes): string
+    private function formatBytes(int|float $bytes): string
     {
         if ($bytes >= 1073741824) {
             return number_format($bytes / 1073741824, 2) . ' GB';
@@ -126,7 +130,7 @@ new class extends Component {
         }
     }
 
-    public function getFileDisplayName($file): string
+    public function getFileDisplayName(array $file): string
     {
         if (isset($file['_original']) && method_exists($file['_original'], 'getClientOriginalName')) {
             return $file['_original']->getClientOriginalName();
@@ -134,17 +138,17 @@ new class extends Component {
         return $file['name'] ?? __('Unknown file');
     }
 
-    public function getFileSize($file): int
+    public function getFileSize(array $file): int
     {
         if (isset($file['_original']) && method_exists($file['_original'], 'getSize')) {
             return $file['_original']->getSize();
         }
-        return $file['size'] ?? 0;
+        return (int) ($file['size'] ?? 0);
     }
 }; ?>
 
 <div class="w-full">
-    <!-- Dropzone Area -->
+    {{-- Dropzone Area --}}
     <div
         x-data="{
             isDragging: false,
@@ -159,46 +163,46 @@ new class extends Component {
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop($event)"
-        :class="{ 'border-blue-500 bg-blue-50': isDragging }"
+        :class="{ 'border-brand-primary bg-brand-primary/5': isDragging }"
         class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all duration-200 hover:border-gray-400"
     >
         <div class="text-center">
-            <!-- Upload Icon -->
+            {{-- Upload Icon --}}
             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
 
-            <!-- Upload Text -->
+            {{-- Upload Text --}}
             <p class="mt-2 text-sm text-gray-600">
-                <label for="file-upload-{{ $this->getId() }}" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
+                <label for="file-upload-{{ $this->getId() }}" class="relative cursor-pointer rounded-md font-medium text-brand-primary hover:text-brand-primary/80">
                     <span>{{ __('Select file') }}</span>
                     <input
                         id="file-upload-{{ $this->getId() }}"
                         wire:model.live="temporaryFiles"
                         type="file"
                         class="sr-only"
-                        accept="{{ $this->getAcceptAttribute() }}"
+                        accept="{{ $this->accept }}"
                         @if($multiple) multiple @endif
                     >
                 </label>
                 <span class="text-gray-500"> {{ __('or drag & drop') }}</span>
             </p>
 
-            <!-- File Info -->
+            {{-- File Info --}}
             <p class="mt-1 text-xs text-gray-500">
-                @if($this->getAcceptAttribute())
-                    {{ __('Allowed file types:') }} {{ str_replace('.', '', $this->getAcceptAttribute()) }}
+                @if($this->accept)
+                    {{ __('Allowed file types:') }} {{ str_replace('.', '', $this->accept) }}
                 @endif
-                @if($this->getMaxSizeAttribute() !== __('unlimited'))
-                    <br>{{ __('Max. file size:') }} {{ $this->getMaxSizeAttribute() }}
+                @if($this->maxSize !== __('unlimited'))
+                    <br>{{ __('Max. file size:') }} {{ $this->maxSize }}
                 @endif
             </p>
         </div>
 
-        <!-- Upload Progress -->
+        {{-- Upload Progress --}}
         <div wire:loading wire:target="temporaryFiles" class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg">
             <div class="text-center">
-                <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-8 w-8 text-brand-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -213,7 +217,7 @@ new class extends Component {
     </div>
     @enderror
 
-    <!-- File List -->
+    {{-- File List --}}
     @php($fileCount = is_array($files) ? count($files) : 0)
     @if($fileCount > 0)
         <div class="mt-4 space-y-2">
@@ -233,12 +237,12 @@ new class extends Component {
                 @foreach(is_array($files) ? $files : [] as $index => $file)
                     <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50">
                         <div class="flex items-center min-w-0 flex-1">
-                            <!-- File Icon -->
+                            {{-- File Icon --}}
                             <svg class="h-5 w-5 text-gray-400 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" />
                             </svg>
 
-                            <!-- File Info -->
+                            {{-- File Info --}}
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-gray-900 truncate">
                                     {{ $this->getFileDisplayName($file) }}
@@ -249,7 +253,7 @@ new class extends Component {
                             </div>
                         </div>
 
-                        <!-- Remove Button -->
+                        {{-- Remove Button --}}
                         <button
                             wire:click="removeFile({{ $index }})"
                             type="button"

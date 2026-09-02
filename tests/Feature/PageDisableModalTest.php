@@ -18,12 +18,12 @@ describe('Page disableModal fallback', function (): void {
     it('does not apply the breakout style by default', function (): void {
         Livewire::test('noerd::noerd-users-list')
             ->assertSuccessful()
-            ->assertDontSeeHtml('margin-left: -32px');
+            ->assertDontSeeHtml('-mx-8');
     });
 
     it('applies the breakout style when disableModal is set as a mount property', function (): void {
         Livewire::test('noerd::noerd-users-list', ['disableModal' => true])
             ->assertSuccessful()
-            ->assertSeeHtml('margin-left: -32px');
+            ->assertSeeHtml('-mx-8');
     });
 });

@@ -1,7 +1,8 @@
 <?php
 
-use Livewire\Attributes\Locked;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
@@ -9,7 +10,7 @@ use Noerd\Models\NoerdUser;
 new class extends Component {
 
     #[Locked]
-    public $userId;
+    public ?int $userId = null;
 
     public string $password = '';
     public string $password_confirmation = '';
@@ -22,6 +23,7 @@ new class extends Component {
      * guard below — deliberately not an abort() on render, so an admin opening
      * a user who is not in their tenants still gets the rest of the editor.
      */
+    #[Computed]
     public function canSetPassword(): bool
     {
         $admin = NoerdAuth::user();
@@ -30,7 +32,7 @@ new class extends Component {
             return false;
         }
 
-        if (! $this->userId || $admin->isSuperAdmin() || (int) $this->userId === (int) $admin->id) {
+        if (! $this->userId || $admin->isSuperAdmin() || $this->userId === (int) $admin->id) {
             return true;
         }
 
@@ -65,11 +67,11 @@ new class extends Component {
      */
     private function authorizeTarget(): void
     {
-        abort_unless($this->canSetPassword(), 403);
+        abort_unless($this->canSetPassword, 403);
     }
 }; ?>
 
-<section @class(['hidden' => ! $this->canSetPassword()])>
+<section @class(['hidden' => ! $this->canSetPassword])>
     <header>
         <div class="text-lg font-medium text-gray-900">
             {{ __('Set Password') }}
@@ -81,7 +83,7 @@ new class extends Component {
     </header>
 
     <form wire:submit="updatePassword" class="mt-6 space-y-6">
-        <!-- Password -->
+        {{-- Password --}}
         <div>
             <x-noerd::input-label for="password" :value="__('Password')" />
             <x-noerd::text-input
@@ -97,7 +99,7 @@ new class extends Component {
             <x-noerd::input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
-        <!-- Confirm Password -->
+        {{-- Confirm Password --}}
         <div>
             <x-noerd::input-label for="password_confirmation" :value="__('Confirm password')" />
             <x-noerd::text-input

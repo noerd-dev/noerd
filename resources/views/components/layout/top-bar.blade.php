@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
+use Noerd\Support\LayoutState;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\TopBarRegistry;
 
@@ -35,12 +36,12 @@ new class extends Component {
 
     public function setSidebarVisibility(bool $showSidebar): void
     {
-        $showSidebar ? session()->forget('hide_sidebar') : session(['hide_sidebar' => true]);
+        LayoutState::setSidebarVisible($showSidebar);
     }
 
     public function setAppbarVisibility(bool $showAppbar): void
     {
-        $showAppbar ? session()->forget('hide_appbar') : session(['hide_appbar' => true]);
+        LayoutState::setAppBarVisible($showAppbar);
     }
 } ?>
 
@@ -70,7 +71,8 @@ new class extends Component {
                         @click="if (! isDesktop) { showSidebar = ! showSidebar; showAppbar = showSidebar } else { showAppbar = ! showAppbar; $wire.setAppbarVisibility(showAppbar) }"
                     @endif
                     type="button"
-                        class="my-auto mr-6 shrink-0 text-gray-600 hover:text-gray-500">
+                    aria-label="{{ __('Toggle navigation') }}"
+                    class="my-auto mr-6 shrink-0 text-gray-600 hover:text-gray-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><title>
                             layout-left</title>
                         <g fill="currentColor" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10">
@@ -107,7 +109,7 @@ new class extends Component {
                                     id="user-menu-button" :aria-expanded="open" aria-haspopup="true">
                                 <span class="absolute -inset-1.5"></span>
                                 <span class="sr-only">{{ __('Open user menu') }}</span>
-                                <div class="rounded-full text-xs bg-red-200  w-7 h-7 leading-7 text-center">
+                                <div class="rounded-full text-xs bg-brand-primary/10 text-brand-primary w-7 h-7 leading-7 text-center">
                                     {{NoerdAuth::user()->initials()}}
                                 </div>
                             </button>

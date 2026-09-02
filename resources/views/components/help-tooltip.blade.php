@@ -1,4 +1,4 @@
-<!-- Framework File -->
+{{-- Framework File --}}
 {{-- Question-mark affordance rendered next to a field label when the YAML field
      declares `helpText:`. The panel is teleported to <body> because detail modals
      apply persistent transforms (which would make them the containing block for a

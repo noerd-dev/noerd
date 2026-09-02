@@ -200,8 +200,8 @@ Static helpers under `Noerd\Helpers` that the traits and components build on:
   selection (read-only; in a single-tenant installation it falls back to the only tenant, memoized
   per request), `getSelectedTenant()` the memoized `Tenant` model, `setSelectedTenantId()` writes
   the session and persists the choice on the user, `hasTenant()` checks it. `getSelectedApp()` /
-  `setSelectedApp()` / `hasApp()` hold the app selected in the sidebar (`setSelectedAppFromRoute()`
-  derives it from the current route's tenant app). `clear()` forgets both session keys,
+  `setSelectedApp()` / `hasApp()` hold the app selected in the sidebar (the `app-access` middleware
+  selects the route's app). `clear()` forgets both session keys,
   `clearCache()` drops the request memos (call it in tests after mutating tenants or tenant apps).
 - **`NoerdAuth`** — guard-explicit access to the noerd user (see [Authentication](auth.md)).
 - **`AccessHelper`** — every permission check (see [Permissions](permissions.md)).

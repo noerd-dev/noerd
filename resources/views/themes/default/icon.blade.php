@@ -26,6 +26,7 @@
             <button
                 type="button"
                 @click="$wire.set('{{ $name }}', null)"
+                aria-label="{{ __('Clear selection') }}"
                 class="inline-flex h-8 items-center px-2 text-zinc-400 hover:text-zinc-600"
             >
                 <x-noerd::icons.x-mark class="h-5 w-5" />

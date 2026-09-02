@@ -24,6 +24,9 @@
 
     $hasMore = $rows instanceof \Illuminate\Pagination\LengthAwarePaginator && $rows->total() > $rows->count();
 
+    // Tailwind cannot generate class names at runtime — map the YAML `align`
+    // value to a literal class so the scanner picks it up.
+    $alignClasses = ['left' => 'text-left', 'center' => 'text-center', 'right' => 'text-right'];
 @endphp
 
 {{-- Break out of the embedding page's p-6 so the table sits flush to the card edges --}}
@@ -37,7 +40,7 @@
                     @foreach ($table as $column)
                         <th
                             scope="col"
-                            class="text-{{ $column['align'] ?? 'left' }} border-b border-gray-300 bg-brand-navi/75 py-1 px-2 first:pl-4 last:pr-4 text-[11px] font-medium whitespace-nowrap text-gray-600"
+                            class="{{ $alignClasses[$column['align'] ?? 'left'] ?? 'text-left' }} border-b border-gray-300 bg-brand-navi/75 py-1 px-2 first:pl-4 last:pr-4 text-[11px] font-medium whitespace-nowrap text-gray-600"
                         >
                             {{ __($column['label'] ?? '') }}
                         </th>
@@ -52,7 +55,7 @@
                         class="hover:bg-brand-bg cursor-pointer"
                     >
                         @foreach ($table as $column)
-                            <td class="text-{{ $column['align'] ?? 'left' }} border-b border-gray-100 py-1 px-2 first:pl-4 last:pr-4 text-xs whitespace-nowrap text-gray-700">
+                            <td class="{{ $alignClasses[$column['align'] ?? 'left'] ?? 'text-left' }} border-b border-gray-100 py-1 px-2 first:pl-4 last:pr-4 text-xs whitespace-nowrap text-gray-700">
                                 @php
                                     $cellValue = $row[$column['field']] ?? null;
                                     $isBadge = ($column['type'] ?? 'text') === 'badge';

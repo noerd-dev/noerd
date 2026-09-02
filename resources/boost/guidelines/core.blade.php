@@ -570,7 +570,7 @@ List components support a **compact mode** for embedding a list inside another c
 related list rendered inside a detail view). In compact mode the list renders only the table:
 
 - the list header is hidden (title, search field and action buttons / "New …")
-- the inline title-search and description are hidden
+- the inline list description is hidden
 - the pagination footer is hidden (the "Showing 1 to N of N results" row and the per-page select)
 
 **Enabling it** — pass the `compact` attribute when embedding the list Livewire component, exactly

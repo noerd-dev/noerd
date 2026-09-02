@@ -37,7 +37,7 @@
             $condition = $action[$key];
 
             $expressions[] = is_array($condition)
-                ? $negation . "(\$wire." . $condition['field'] . " === '" . $condition['value'] . "')"
+                ? $negation . '($wire.' . $condition['field'] . ' === ' . \Illuminate\Support\Js::from($condition['value']) . ')'
                 : $negation . '$wire.' . $condition;
         }
 

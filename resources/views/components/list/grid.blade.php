@@ -50,7 +50,6 @@
                 @endphp
                 <button
                     type="button"
-                    :key="{{ $key }}"
                     wire:key="grid-{{ $listId }}-{{ $row['id'] ?? $key }}"
                     :class="{'ring-2 ring-brand-primary': selectedRow{{ $listId }} == {{ $key }} }"
                     @click="selectedRow{{ $listId }} = '{{ $key }}'"

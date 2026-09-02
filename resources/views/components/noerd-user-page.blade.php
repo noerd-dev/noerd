@@ -14,7 +14,6 @@ new class extends Component {
 
     public $detailModel = NoerdUser::class;
 
-
     public function mount(): void
     {
         // Defense in depth: this admin-only user editor can be reached outside its
@@ -28,9 +27,9 @@ new class extends Component {
     }
 
     /**
-     * The page YAML carries the embedded form; fall back to the core component
-     * so an installation that has not published pages/noerd-user-page.yml yet
-     * still renders and saves.
+     * Deliberate fallback: the page YAML names the embedded form, but an installation
+     * that has not published pages/noerd-user-page.yml yet must still render and save
+     * through the core detail component.
      */
     public function embeddedDetailComponent(): ?string
     {

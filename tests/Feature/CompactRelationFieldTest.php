@@ -31,5 +31,5 @@ it('shrinks the relation select button to match the compact input height', funct
         'theme' => 'compact',
     ])->assertOk();
 
-    assertElementHasClasses($component->html(), ['!h-7', '!px-2']);
+    assertElementHasClasses($component->html(), ['h-7!', 'px-2!']);
 });

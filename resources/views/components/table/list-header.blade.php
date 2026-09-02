@@ -147,7 +147,7 @@
                 >
                     {{-- Drawer chrome — no place on the inline row. --}}
                     <div class="flex items-center border-b border-gray-300 pb-4 max-xl:order-first xl:hidden">
-                        <span class="font-semibold text-slate-900">{{ __('Filters') }}</span>
+                        <span class="font-semibold text-zinc-900">{{ __('Filters') }}</span>
                         <button
                             type="button"
                             x-on:click="drawer = false"

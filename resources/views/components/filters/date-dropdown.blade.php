@@ -14,15 +14,13 @@
      @click.outside="open = false; showDatePicker = false"
      class="relative {{ $full ? 'w-full' : 'max-xl:w-full xl:mr-4 xl:shrink-0' }}">
     <button x-ref="trigger_{{ $filter['column'] }}" @click="open = !open; showDatePicker = false" type="button"
-            class="{{ $active ? '!border-brand-primary !border-solid !border-2' : 'border border-dashed border-zinc-300' }} {{ $full ? 'w-full' : 'max-xl:w-full' }} flex items-center gap-1 rounded-md px-3 h-8 py-1 text-sm leading-[1.375rem] focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
+            class="{{ $active ? 'border-brand-primary! border-solid! border-2!' : 'border border-dashed border-zinc-300' }} {{ $full ? 'w-full' : 'max-xl:w-full' }} flex items-center gap-1 rounded-md px-3 h-8 py-1 text-sm leading-[1.375rem] focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
         <span>{{ $filter['label'] }}</span>
         @if($active)
             <span class="text-gray-400 mx-0.5">|</span>
             <span>{{ $label }}</span>
         @endif
-        <svg class="ml-1 size-3.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-        </svg>
+        <x-icon name="chevron-down" mini class="ml-1 size-3.5 text-gray-400" />
     </button>
     {{-- Main dropdown --}}
     <div x-show="open" x-cloak x-transition
@@ -41,9 +39,7 @@
             <button type="button" @mouseenter="showDatePicker = true" x-ref="dateBtn_{{ $filter['column'] }}"
                     class="flex w-full items-center justify-between px-4 py-2 text-left text-sm {{ $isCustomDate ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}">
                 <span>{{ __('Select date') }}</span>
-                <svg class="size-3.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                </svg>
+                <x-icon name="chevron-right" mini class="size-3.5 text-gray-400" />
             </button>
         </div>
     </div>
@@ -59,7 +55,7 @@
             </button>
             <button type="button"
                     @click="if (customDate) { $wire.set('listFilters.{{ $filter['column'] }}', customDate); open = false; showDatePicker = false; $nextTick(() => $wire.storeActiveListFilters()); }"
-                    class="rounded-md bg-brand-primary px-3 py-1 text-sm text-white hover:opacity-90">
+                    class="rounded-md bg-brand-primary px-3 py-1 text-sm text-brand-primary-text hover:opacity-90">
                 {{ __('Apply') }}
             </button>
         </div>

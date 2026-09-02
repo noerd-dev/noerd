@@ -3,7 +3,7 @@
 use Livewire\Component;
 
 new class extends Component {
-    public $navi = [];
+    public array $navi = [];
 } ?>
 
 @php
@@ -77,7 +77,7 @@ new class extends Component {
     @else
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
         @click="if(! isDesktop) showSidebar = false"
-        class="{{ request()->routeIs($routeName)  ? '!border-brand-primary ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
+        class="{{ request()->routeIs($routeName)  ? 'border-brand-primary! ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset
@@ -109,6 +109,8 @@ new class extends Component {
         @endphp
         @if ($newRoute || $newComponent)
             <button x-show="showSidebar"
+                    type="button"
+                    aria-label="{{ __('New Entry') }}"
                     @if ($newRoute)
                         @click="$modalRoute({{ \Illuminate\Support\Js::from($newRoute) }}, {{ \Illuminate\Support\Js::from($newArguments) }}, null, null, {{ \Illuminate\Support\Js::from($newSize) }}, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $newComponent])) }})"
                     @else

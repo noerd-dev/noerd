@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Services;
 
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Support\LayoutState;
 
 /**
  * Splits the current app's navigation structure into the pieces the layout
@@ -26,18 +27,20 @@ class NavigationService
             return;
         }
 
-        $result = collect($navigationStructure)[0] ?? null;
+        $app = $navigationStructure[0] ?? null;
+
+        if (! is_array($app)) {
+            return;
+        }
 
         $blockMenu = [];
-        foreach ($result['block_menus'] ?? [] as $menu) {
-            $menu['show'] = ! session('navi_hidden_' . $menu['title']);
+        foreach ($app['block_menus'] ?? [] as $menu) {
+            $menu['show'] = LayoutState::blockMenuVisible((string) ($menu['title'] ?? ''));
             $blockMenu[] = $menu;
         }
 
-        if ($result) {
-            $this->subMenu = $result['sub_menu'] ?? [];
-            $this->blockMenus = $blockMenu;
-        }
+        $this->subMenu = $app['sub_menu'] ?? [];
+        $this->blockMenus = $blockMenu;
     }
 
     public function subMenu(): array

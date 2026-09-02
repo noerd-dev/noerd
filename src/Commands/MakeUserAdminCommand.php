@@ -88,7 +88,7 @@ class MakeUserAdminCommand extends Command
                 'profile_key' => Profile::Admin->value,
             ]);
             $adminAccessGranted++;
-            $this->info("  ✓ Granted ADMIN access for tenant: {$tenant->name}");
+            $this->info("  Granted ADMIN access for tenant: {$tenant->name}");
         }
 
         // Ensure selected_tenant_id is set to the first available tenant
@@ -111,12 +111,12 @@ class MakeUserAdminCommand extends Command
         if ($user->isAdminOfAnyTenant()) {
             $this->newLine();
             if ($isAlreadyAdmin) {
-                $this->info("✅ User {$user->name} remains an admin. Tenant assignment verified.");
+                $this->info("User {$user->name} remains an admin. Tenant assignment verified.");
             } else {
-                $this->info("✅ User {$user->name} is now an admin with access to Setup!");
+                $this->info("User {$user->name} is now an admin with access to Setup!");
             }
         } else {
-            $this->error("❌ Failed to make user admin. Please check the database.");
+            $this->error("Failed to make user admin. Please check the database.");
             return self::FAILURE;
         }
 

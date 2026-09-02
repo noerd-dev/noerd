@@ -12,7 +12,7 @@ return [
     | can override every part by defining it itself.
     |
     | 'guard'          Guard noerd authenticates against. Set to 'web' to
-    |                  restore the legacy behavior (host default guard).
+    |                  run on the host's default guard instead of a dedicated one.
     | 'model'          Authenticatable model backing the noerd user provider.
     | 'set_as_default' When true, noerd also becomes the app's DEFAULT guard
     |                  at runtime — escape hatch for hosts with unmigrated
@@ -247,21 +247,6 @@ return [
         */
         'search_modules' => true,
         'modules_path' => 'app-modules',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Caching
-    |--------------------------------------------------------------------------
-    |
-    | object_catalog: cross-request cache for the custom-attribute object
-    | catalog of an extension package, which otherwise re-scans every module's models
-    | and probes the schema on each list render and modal open. Invalidated
-    | automatically when model files change and after migrations.
-    |
-    */
-    'cache' => [
-        'object_catalog' => env('NOERD_OBJECT_CATALOG_CACHE', true),
     ],
 
     /*

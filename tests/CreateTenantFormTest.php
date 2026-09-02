@@ -14,10 +14,10 @@ uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 $testSettings = [
-    'componentName' => 'noerd::create-new-tenant',
+    'componentName' => 'noerd::create-tenant-form',
 ];
 
-it('renders the create-new-tenant component', function () use ($testSettings): void {
+it('renders the create-tenant-form component', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->create();
 
     $this->actingAs($admin);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\UserSetting;
 
 class UserSettingFactory extends Factory
@@ -14,8 +15,16 @@ class UserSettingFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => NoerdUser::factory(),
             'locale' => 'en',
         ];
+    }
+
+    public function forUser(NoerdUser $user): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'user_id' => $user->id,
+        ]);
     }
 
     public function withLocale(string $locale): static

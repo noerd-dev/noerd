@@ -40,7 +40,7 @@
             x-cloak
             x-show="String(v ?? '').trim() !== ''"
             x-bind:href="'tel:' + (String(v ?? '').trim().startsWith('+') ? '+' : '') + String(v ?? '').replace(/\D/g, '')"
-            class="!mt-0 !ml-1 inline-flex h-8 shrink-0 items-center rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white px-2 text-zinc-500 shadow-xs hover:text-zinc-700"
+            class="mt-0! ml-1! inline-flex h-8 shrink-0 items-center rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white px-2 text-zinc-500 shadow-xs hover:text-zinc-700"
             title="{{ __('Call') }}"
         >
             <x-icon name="phone" class="h-4 w-4" />

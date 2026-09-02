@@ -24,7 +24,7 @@
         placeholder="{{ __('Search') }}"
         wire:model.live.debounce.300ms="search"
         type="text"
-        class="!mt-0 h-8 w-full xl:min-w-[200px] xl:pr-8"
+        class="mt-0! h-8 w-full xl:min-w-[200px] xl:pr-8"
     />
     {{-- The shortcut badge only advertises a keyboard affordance, so it stays on
          keyboard widths — in the drawer it would just crowd the field. --}}

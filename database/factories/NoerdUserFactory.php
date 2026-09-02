@@ -40,10 +40,10 @@ class NoerdUserFactory extends Factory
     public function withExampleTenant(): static
     {
         return $this->afterCreating(function ($user): void {
-            $restaurant = Tenant::factory()->create();
+            $tenant = Tenant::factory()->create();
 
-            $user->tenants()->attach($restaurant->id);
-            TenantHelper::setSelectedTenantId($restaurant->id);
+            $user->tenants()->attach($tenant->id);
+            TenantHelper::setSelectedTenantId($tenant->id);
         });
     }
 

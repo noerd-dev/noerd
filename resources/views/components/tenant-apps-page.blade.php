@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
@@ -21,9 +22,9 @@ new class extends Component {
         $this->authorizeAdmin();
 
         $tenant = TenantHelper::getSelectedTenant();
-        $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->toArray();
+        $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->map(fn ($id): int => (int) $id)->all();
 
-        if (in_array($appId, $assignedIds)) {
+        if (in_array($appId, $assignedIds, true)) {
             $tenant->tenantApps()->detach($appId);
         } else {
             $maxSort = $tenant->tenantApps()->max('sort_order') ?? -1;
@@ -42,7 +43,7 @@ new class extends Component {
 
         // One transaction: an interrupted reorder must not leave duplicate
         // sort_order values behind.
-        \Illuminate\Support\Facades\DB::transaction(function () use ($tenant, $apps, $appId, $newPosition): void {
+        DB::transaction(function () use ($tenant, $apps, $appId, $newPosition): void {
             $loop = 0;
             foreach ($apps as $app) {
                 if ($newPosition === $loop) {
@@ -126,9 +127,9 @@ new class extends Component {
             <div x-sort="$wire.appSort($item, $position)" class="space-y-2">
                 @foreach($assignedApps as $app)
                     <div x-sort:item="{{ $app['id'] }}" wire:key="assigned-{{ $app['id'] }}" @class(['bg-gray-100 rounded-lg p-4 flex items-center gap-4', 'opacity-50' => $app['is_hidden']])>
-                        <a href="#/" class="cursor-grab active:cursor-grabbing">
+                        <button type="button" aria-label="{{ __('Reorder') }}" class="cursor-grab active:cursor-grabbing">
                             <x-icon name="bars-3" class="w-5 h-5 text-gray-500"/>
-                        </a>
+                        </button>
 
                         <div class="flex items-center gap-3 flex-1 min-w-0">
                             @if($app['icon'])

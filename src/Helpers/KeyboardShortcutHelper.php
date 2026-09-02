@@ -56,16 +56,16 @@ class KeyboardShortcutHelper
 
         $js = 'e.key.toLowerCase() === ' . json_encode($key);
 
-        if (in_array('ctrl', $modifiers)) {
+        if (in_array('ctrl', $modifiers, true)) {
             $js .= ' && (e.ctrlKey || e.metaKey)';
         }
-        if (in_array('shift', $modifiers)) {
+        if (in_array('shift', $modifiers, true)) {
             $js .= ' && e.shiftKey';
         }
-        if (in_array('alt', $modifiers)) {
+        if (in_array('alt', $modifiers, true)) {
             $js .= ' && e.altKey';
         }
-        if (in_array('meta', $modifiers)) {
+        if (in_array('meta', $modifiers, true)) {
             $js .= ' && e.metaKey';
         }
 
@@ -83,16 +83,16 @@ class KeyboardShortcutHelper
         $isMac = self::isMac();
         $badge = [];
 
-        if (in_array('ctrl', $modifiers)) {
+        if (in_array('ctrl', $modifiers, true)) {
             $badge[] = $isMac ? '⌘' : 'Ctrl';
         }
-        if (in_array('meta', $modifiers)) {
+        if (in_array('meta', $modifiers, true)) {
             $badge[] = $isMac ? '⌘' : 'Win';
         }
-        if (in_array('alt', $modifiers)) {
+        if (in_array('alt', $modifiers, true)) {
             $badge[] = $isMac ? '⌥' : 'Alt';
         }
-        if (in_array('shift', $modifiers)) {
+        if (in_array('shift', $modifiers, true)) {
             $badge[] = '⇧';
         }
 

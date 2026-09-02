@@ -14,7 +14,7 @@ it('creates a new tenant with command options', function (): void {
         '--name' => 'New Tenant',
     ])
         ->expectsOutput("Tenant 'New Tenant' created successfully.")
-        ->expectsOutput("✅ Tenant 'New Tenant' is ready to use!")
+        ->expectsOutput("Tenant 'New Tenant' is ready to use!")
         ->assertExitCode(0);
 
     // Verify tenant was created

@@ -37,7 +37,7 @@ class SetupFieldTypeConverter
             $currentValue = $currentData[$fieldName];
 
             // Convert based on target field type
-            if (in_array($fieldType, ['translatableText', 'translatableRichText', 'translatableTextarea'])) {
+            if (in_array($fieldType, ['translatableText', 'translatableRichText', 'translatableTextarea'], true)) {
                 $convertedData[$fieldName] = self::convertToTranslatableField($currentValue);
             } else {
                 $convertedData[$fieldName] = self::convertFromTranslatableField($currentValue);
