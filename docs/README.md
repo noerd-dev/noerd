@@ -40,6 +40,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Keyboard Shortcuts](keyboard-shortcuts.md) — configurable list and detail shortcuts
 - [Brand (Colors & Branding)](brand.md) — color palette, logo, favicon, sidebar dimensions
 - [Languages](languages.md) — interface languages, translations and translatable collection values
+- [Currency, Numbers & Dates](formatting.md) — tenant currency, tenant/user locale, `CurrencyHelper` and `FormatHelper`
 
 ### Platform
 

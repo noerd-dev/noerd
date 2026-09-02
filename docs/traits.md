@@ -205,12 +205,14 @@ Static helpers under `Noerd\Helpers` that the traits and components build on:
   `clearCache()` drops the request memos (call it in tests after mutating tenants or tenant apps).
 - **`NoerdAuth`** — guard-explicit access to the noerd user (see [Authentication](auth.md)).
 - **`AccessHelper`** — every permission check (see [Permissions](permissions.md)).
-- **`FormatHelper`** — locale-aware display formats for list cells and CSV exports:
-  `dateFormat()`, `dateTimeFormat()`, `date($value)`, `dateTime($value)`,
-  `decimal($value, $decimals = 2)`, `csvDelimiter()` — backed by `config('noerd.format.*')`.
-- **`CurrencyHelper`** — `configForTenant()`, `codeForTenant()` (ISO code, `EUR` when unset),
-  `format($value)` and `clearCache()`; the tenant's currency comes from `noerd_settings`, the
-  fallback from `config('noerd.currency')`.
+- **`FormatHelper`** — ICU formatting in the reader's locale: `locale()` / `tenantLocale()`
+  (user → tenant → config → language default), `date()`, `dateTime()`, `time()`, `decimal()`,
+  `number()`, `percent()`, the `document*()` variants for PDFs and receipts (tenant locale),
+  `withLocale()`, `csvDelimiter()` — see [Currency, Numbers & Dates](formatting.md).
+- **`CurrencyHelper`** — `codeForTenant()` (ISO code from `noerd_settings`, fallback
+  `config('noerd.currency.default')`), `format($value)` (reader's locale), `formatForDocument($value)`
+  (tenant locale), `formatIn($value, $currency)`, `symbol()`, `configForTenant()`, `options()`,
+  `clearCache()`.
 - **`IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers).
 - **`ThemeHelper`** — `forTenant()` (`['theme' => …, 'enforced' => …]` from `noerd_settings`
   with `config('noerd.theme')` as fallback), `fromLayout($layout)` and `clearCache()` — see

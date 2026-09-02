@@ -18,6 +18,7 @@ use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Notifications\NoerdResetPassword;
 use Noerd\Services\ProfileRegistry;
+use Noerd\Support\Locales;
 
 class NoerdUser extends Authenticatable implements HasLocalePreference
 {
@@ -296,6 +297,28 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     public function preferredLocale(): string
     {
         return $this->locale;
+    }
+
+    /**
+     * The user's FORMATTING locale (`en-US`): how numbers, dates and amounts
+     * are written in the backend UI. Separate from `locale`, which is the
+     * interface LANGUAGE. Null (or an unsupported value) means "use the tenant
+     * locale" — see FormatHelper::locale().
+     */
+    public function getFormatLocaleAttribute(): ?string
+    {
+        if (! $this->relationLoaded('userSetting')) {
+            $this->setRelation('userSetting', $this->userSetting()->first());
+        }
+
+        $formatLocale = $this->userSetting?->format_locale;
+
+        return Locales::isSupported($formatLocale) ? Locales::normalize($formatLocale) : null;
+    }
+
+    public function setFormatLocaleAttribute(?string $value): void
+    {
+        $this->setting->update(['format_locale' => $value]);
     }
 
     protected static function booted(): void

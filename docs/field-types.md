@@ -534,9 +534,10 @@ clickable on read-only fields.
 
 ### currency
 
-Amount input formatted with the tenant's currency: the symbol and the decimal/thousands separators
-come from the tenant setting in Setup (fallback: `config('noerd.currency')`). The value is stored
-as a plain decimal.
+Amount input in the tenant's currency (Setup → System Settings), written the way the current user's
+locale writes it: symbol, decimal and thousands separators follow `FormatHelper::locale()`, so a
+US reader types `1,234.56` and a German reader `1.234,56` for the same field. The value is stored
+as a plain decimal. See [Currency, Numbers & Dates](formatting.md).
 
 **YAML Example:**
 

@@ -156,7 +156,7 @@ The `settings/` folder is published by the module install/update commands exactl
 The shipped in-package example is the setup app's **System Settings** page
 (`noerd::system-settings-page`, `resources/views/components/system-settings-page.blade.php`
 with `app-configs/setup/settings/system-settings-page.yml`): one model (`NoerdSettings`),
-select options from component methods (`currencyOptions()`, `themeOptions()`), effective
+select options from component methods (`currencyOptions()`, `localeOptions()`, `themeOptions()`), effective
 defaults set in a custom `mount()`, and a custom `store()` with extra validation and cache
 busting that ends in the trait tail. Trait mechanics are covered by
 `tests/Feature/SettingsPageTraitTest.php` and `tests/Feature/SettingsPageWriteGuardTest.php`.

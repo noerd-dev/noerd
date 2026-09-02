@@ -109,10 +109,10 @@ same `Noerd\Support\ListCellFormatter`, so a column type looks identical everywh
 | Type | Description |
 |------|-------------|
 | `text` | Default. Standard text display |
-| `date` | Renders an `<input type="date">` with the value as `Y-m-d` (formatted via `FormatHelper::date()` outside the table) |
-| `datetime` | Formats value as date + time (`d.m.Y H:i` in German locale, `Y-m-d H:i` otherwise) |
+| `date` | Renders an `<input type="date">` with the value as `Y-m-d` (formatted via `FormatHelper::date()` in the user's locale outside the table) |
+| `datetime` | Date + time in the user's locale (`03.09.2026 14:05` for `de-DE`, `09/03/2026 2:05 PM` for `en-US`), see [Currency, Numbers & Dates](formatting.md) |
 | `number` | Right-aligned number, rounded to 2 decimals |
-| `currency` | Right-aligned number formatted through `Noerd\Helpers\CurrencyHelper::format()` |
+| `currency` | Right-aligned amount in the tenant currency, written in the user's locale (`Noerd\Helpers\CurrencyHelper::format()`) |
 | `id` | Clickable ID link |
 | `bool` | Read-only icon: green checkmark (true), red circle (false) |
 | `inversebool` | Read-only icon: green checkmark when true, nothing when false |

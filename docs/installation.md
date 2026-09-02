@@ -130,12 +130,13 @@ itself. The brand palette is CSS-first, no `tailwind.config.js` is needed (see [
   from the tenant switcher / quick menu
 - `features.currency` (`NOERD_CURRENCY_ENABLED`) — set to `false` to hide currency-related UI on
   installations that don't need it
-- `currency.*` — `symbol`, `decimal_separator`, `thousands_separator`, `symbol_position` — the
-  installation-wide fallback for currency rendering (a tenant may override the currency in
-  Setup → System Settings)
-- `format.*` — `date`, `datetime`, `decimal_separator`, `thousands_separator` (`NOERD_FORMAT_*`)
-  and `csv_delimiter` (`NOERD_CSV_DELIMITER`, default `;`) for list cells and CSV exports; unset
-  keys derive from the active locale
+- `currency.default` (`NOERD_CURRENCY`, default `EUR`) — the installation-wide default currency;
+  a tenant overrides it in Setup → System Settings
+- `format.locale` (`NOERD_FORMAT_LOCALE`) — the installation-wide fallback locale for numbers,
+  dates and amounts (user locale → tenant locale → this → interface language), plus the optional
+  pins `date`, `datetime`, `decimal_separator`, `thousands_separator` (`NOERD_FORMAT_*`) and
+  `csv_delimiter` (`NOERD_CSV_DELIMITER`, default `;`) — see
+  [Currency, Numbers & Dates](formatting.md)
 - `auth.guard` (`NOERD_AUTH_GUARD`) / `auth.set_as_default` (`NOERD_AUTH_DEFAULT`) — noerd's
   dedicated auth guard (see [Authentication](auth.md))
 - `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))

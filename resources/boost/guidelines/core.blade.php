@@ -1195,6 +1195,39 @@ every non-relation scalar column that can be `required` must be non-null and det
 via a named state or an explicit `create([...])` override. Tests that need a sparse/null record must
 pass that null explicitly.
 
+### Currency, Numbers & Dates Are Formatted by the Core, Never by Hand
+
+Every amount, number, date and time is written through ICU in a LOCALE; nothing in module code
+hard-codes a format. Three settings decide the output (reference: `docs/formatting.md`):
+the TENANT CURRENCY (Setup → System Settings, `noerd_settings.currency` — every amount in the
+system is an amount in that currency), the TENANT LOCALE (`noerd_settings.locale` — how DOCUMENTS
+are written: PDFs, receipts, customer e-mails, independent of who generates them) and the USER
+LOCALE (Profile → Locale, `noerd_user_settings.format_locale` — how the backend UI is written for
+that reader). The LANGUAGE (Setup → Languages, Profile → Language) is a separate setting and only
+selects translations; German UI + `en-US` formats is a valid combination. The locale list is fixed
+in `Noerd\Support\Locales::SUPPORTED` — never add a locale per project or tenant.
+
+- **Backend UI** (Livewire views, custom `listData()`, dashboards, widgets, relation `titleResolver`s):
+  `CurrencyHelper::format($amount)`, `FormatHelper::date()`, `dateTime()`, `time()`, `decimal()`,
+  `number()` (quantities), `percent()` — reader's locale, resolved automatically.
+- **Documents** (PDF templates, receipts, customer e-mails, ESC/POS): `CurrencyHelper::formatForDocument($amount, $model->tenant_id)`
+  and `FormatHelper::documentDate($date, $model->tenant_id)` / `documentDateTime()` / `documentDecimal()`
+  — tenant locale, never the acting user's.
+- **Public frontends** without a noerd user (shop, booking widget, table ordering): pass the tenant
+  id explicitly — `CurrencyHelper::format($amount, $tenantId)`, `FormatHelper::date($date, FormatHelper::tenantLocale($tenantId))`.
+- **Machine payloads** (PayPal/Mollie, DATEV, JSON APIs): `'currency' => CurrencyHelper::codeForTenant($tenantId)`;
+  amounts stay machine-formatted (`number_format($x, 2, '.', '')`, commented as such).
+- NEVER `number_format($x, 2, ',', '.')`, a literal `€`/`&euro;`/`'EUR'`, `->format('d.m.Y')`,
+  `Number::currency(..., in: 'EUR', locale: 'de')`, `->locale('de')` or `Carbon::setLocale()` in module
+  code, templates or translation keys (`__('Buy for :price')` with a pre-formatted `:price`, never
+  `__('Buy for :price €')`). Use `->locale(FormatHelper::locale())` when Carbon's own `isoFormat()` /
+  `translatedFormat()` is needed.
+- List columns `type: currency|date|datetime` and the detail field `type: currency` are formatted by
+  the core in the reader's locale — no per-component code. CSV exports stay plain decimals.
+- Tests normalise ICU spaces (`zzNormalizeSpaces()`) and prove mechanics with a `NoerdSettings` row
+  (`currency`, `locale`) plus the acting user's `format_locale` — a document renders in the tenant
+  locale while a list renders in the user locale. Never assert shipped YAML.
+
 ### Translations
 - Translations use English text as keys (not module-prefixed keys)
 - Only `de.json` is needed per module: `app-modules/{module}/resources/lang/de.json`

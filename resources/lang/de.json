@@ -245,7 +245,6 @@
     "Select file": "Datei auswählen",
     "Select Icon": "Symbol auswählen",
     "Select icon": "Symbol auswählen",
-    "Select the currency for your company": "Wählen Sie die Währung für Ihr Unternehmen",
     "Select Type": "Typ wählen",
     "Select your preferred language for the user interface.": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
     "selected": "ausgewählt",
@@ -331,5 +330,11 @@
     "You currently have no access to tenants.": "Sie haben derzeit keinen Zugriff auf Mandanten.",
     "You do not have permission to view this area.": "Sie haben keine Berechtigung, diesen Bereich anzuzeigen.",
     "Your email address is unverified.": "Ihre E-Mail-Adresse ist nicht verifiziert.",
-    "Zip Code": "PLZ"
+    "Zip Code": "PLZ",
+    "Currency for the tenant": "Währung für den Mandanten",
+    "Locale": "Gebietsschema",
+    "Number and date format for documents (PDFs, receipts, e-mails)": "Zahlen- und Datumsformat für Dokumente (PDFs, Belege, E-Mails)",
+    "Number, date and currency format for lists and forms. The interface language is a separate setting.": "Zahlen-, Datums- und Währungsformat für Listen und Formulare. Die Sprache der Benutzeroberfläche ist eine eigene Einstellung.",
+    "US Dollar": "US-Dollar",
+    "British Pound": "Britisches Pfund"
 }

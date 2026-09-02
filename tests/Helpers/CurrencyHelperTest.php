@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
@@ -14,12 +16,13 @@ uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     CurrencyHelper::clearCache();
+    FormatHelper::clearCache();
 });
 
 /**
- * A tenant-scoped user for the tenant-aware currency lookups.
+ * A tenant-scoped, authenticated user with an optional formatting locale.
  */
-function createCurrencyTenantUser(): NoerdUser
+function zzCurrencyUser(?string $formatLocale = null): NoerdUser
 {
     $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create();
@@ -28,109 +31,146 @@ function createCurrencyTenantUser(): NoerdUser
     $user->selected_tenant_id = $tenant->id;
     TenantHelper::setSelectedTenantId($tenant->id);
 
+    if ($formatLocale !== null) {
+        $user->setting->update(['format_locale' => $formatLocale]);
+    }
+
+    test()->actingAs($user, config('noerd.auth.guard'));
+
     return $user;
 }
 
-describe('formatting', function (): void {
-    it('formats currency with default config (German/Euro)', function (): void {
-        config()->set('noerd.currency', [
+describe('tenant currency code', function (): void {
+    it('falls back to the configured default currency when the tenant has no setting', function (): void {
+        $user = zzCurrencyUser();
+        config()->set('noerd.currency.default', 'GBP');
+
+        expect(CurrencyHelper::codeForTenant($user->selected_tenant_id))->toBe('GBP');
+    });
+
+    it('ignores an unsupported stored code', function (): void {
+        $user = zzCurrencyUser();
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'XXX']);
+
+        expect(CurrencyHelper::codeForTenant($user->selected_tenant_id))->toBe('EUR');
+    });
+
+    it('resolves every supported currency from the tenant setting', function (string $code): void {
+        $user = zzCurrencyUser();
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => $code]);
+
+        expect(CurrencyHelper::codeForTenant($user->selected_tenant_id))->toBe($code);
+    })->with(array_keys(CurrencyHelper::CURRENCIES));
+
+    it('reads the settings row once per tenant and request', function (): void {
+        $user = zzCurrencyUser();
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'USD']);
+        CurrencyHelper::clearCache();
+
+        DB::enableQueryLog();
+        CurrencyHelper::codeForTenant($user->selected_tenant_id);
+        CurrencyHelper::codeForTenant($user->selected_tenant_id);
+        CurrencyHelper::format(1.0, $user->selected_tenant_id);
+        $queries = collect(DB::getQueryLog())->filter(fn(array $query) => str_contains($query['query'], 'noerd_settings'));
+        DB::disableQueryLog();
+
+        expect($queries)->toHaveCount(1);
+    });
+
+    it('sees a saved currency without an explicit cache flush', function (): void {
+        $user = zzCurrencyUser();
+        expect(CurrencyHelper::codeForTenant($user->selected_tenant_id))->toBe('EUR');
+
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'CHF']);
+
+        expect(CurrencyHelper::codeForTenant($user->selected_tenant_id))->toBe('CHF');
+    });
+});
+
+describe('formatting for the user', function (): void {
+    it('writes the tenant currency in the reader locale', function (): void {
+        $user = zzCurrencyUser('en-US');
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'EUR']);
+
+        expect(zzNormalizeSpaces(CurrencyHelper::format(1234.56)))->toBe('€1,234.56');
+    });
+
+    it('writes the same amount differently for a German reader', function (): void {
+        $user = zzCurrencyUser('de-DE');
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'USD']);
+
+        expect(zzNormalizeSpaces(CurrencyHelper::format(1234.56)))->toBe('1.234,56 $');
+    });
+
+    it('accepts an explicit locale', function (): void {
+        $user = zzCurrencyUser('de-DE');
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'USD']);
+
+        expect(zzNormalizeSpaces(CurrencyHelper::format(1234.56, locale: 'en-US')))->toBe('$1,234.56');
+    });
+
+    it('formats an explicit currency independent of the tenant setting', function (): void {
+        zzCurrencyUser('en-GB');
+
+        expect(zzNormalizeSpaces(CurrencyHelper::formatIn(99.9, 'GBP')))->toBe('£99.90');
+    });
+});
+
+describe('formatting for documents', function (): void {
+    it('uses the tenant locale and ignores the user locale', function (): void {
+        $user = zzCurrencyUser('de-DE');
+        NoerdSettings::create([
+            'tenant_id' => $user->selected_tenant_id,
+            'currency' => 'USD',
+            'locale' => 'en-US',
+        ]);
+
+        expect(zzNormalizeSpaces(CurrencyHelper::formatForDocument(1234.56, $user->selected_tenant_id)))->toBe('$1,234.56')
+            ->and(zzNormalizeSpaces(CurrencyHelper::format(1234.56)))->toBe('1.234,56 $');
+    });
+
+    it('derives the document locale from the interface language when the tenant has none', function (): void {
+        $user = zzCurrencyUser('en-US');
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'EUR']);
+        app()->setLocale('de');
+
+        expect(zzNormalizeSpaces(CurrencyHelper::formatForDocument(1234.56, $user->selected_tenant_id)))->toBe('1.234,56 €');
+    });
+});
+
+describe('input configuration', function (): void {
+    it('describes the euro for a German reader', function (): void {
+        $user = zzCurrencyUser('de-DE');
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'EUR']);
+
+        expect(CurrencyHelper::configForTenant())->toMatchArray([
+            'code' => 'EUR',
             'symbol' => '€',
             'decimal_separator' => ',',
             'thousands_separator' => '.',
             'symbol_position' => 'after',
         ]);
-
-        expect(CurrencyHelper::format(1234.56))->toBe('1.234,56 €');
     });
 
-    it('formats currency with US format', function (): void {
-        config()->set('noerd.currency', [
+    it('describes the dollar for a US reader', function (): void {
+        $user = zzCurrencyUser('en-US');
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'currency' => 'USD']);
+
+        expect(CurrencyHelper::configForTenant())->toMatchArray([
+            'code' => 'USD',
             'symbol' => '$',
             'decimal_separator' => '.',
             'thousands_separator' => ',',
             'symbol_position' => 'before',
-        ]);
-
-        expect(CurrencyHelper::format(1234.56))->toBe('$ 1,234.56');
+        ])->and(CurrencyHelper::symbol())->toBe('$');
     });
 
-    it('always shows two decimal places', function (): void {
-        config()->set('noerd.currency', [
-            'symbol' => '€',
-            'decimal_separator' => ',',
-            'thousands_separator' => '.',
-            'symbol_position' => 'after',
-        ]);
+    it('offers every supported currency with a sample in the reader locale', function (): void {
+        zzCurrencyUser('en-US');
 
-        expect(CurrencyHelper::format(100.0))->toBe('100,00 €')
-            ->and(CurrencyHelper::format(99.9))->toBe('99,90 €')
-            ->and(CurrencyHelper::format(0.0))->toBe('0,00 €');
-    });
+        $options = CurrencyHelper::options();
 
-    it('handles large numbers with thousands separators', function (): void {
-        config()->set('noerd.currency', [
-            'symbol' => '€',
-            'decimal_separator' => ',',
-            'thousands_separator' => '.',
-            'symbol_position' => 'after',
-        ]);
-
-        expect(CurrencyHelper::format(1000000.50))->toBe('1.000.000,50 €');
-    });
-
-    it('handles negative values', function (): void {
-        config()->set('noerd.currency', [
-            'symbol' => '€',
-            'decimal_separator' => ',',
-            'thousands_separator' => '.',
-            'symbol_position' => 'after',
-        ]);
-
-        expect(CurrencyHelper::format(-42.10))->toBe('-42,10 €');
-    });
-
-    it('uses fallback defaults when config is empty', function (): void {
-        config()->set('noerd.currency', []);
-
-        // Which fallback symbol/separators ship is configuration — what matters
-        // is that an empty config still yields a usable, amount-carrying string.
-        expect(CurrencyHelper::format(10.5))->toBeString()->not->toBe('')
-            ->and(CurrencyHelper::format(10.5))->toContain('10');
-    });
-});
-
-describe('tenant-aware config', function (): void {
-    it('returns EUR config by default when no tenant setting exists', function (): void {
-        $user = createCurrencyTenantUser();
-
-        expect(CurrencyHelper::configForTenant($user->selected_tenant_id))
-            ->toBe(CurrencyHelper::CURRENCY_PRESETS['EUR'])
-            ->and(CurrencyHelper::codeForTenant($user->selected_tenant_id))->toBe('EUR');
-    });
-
-    it('resolves every tenant currency setting to its preset', function (string $code): void {
-        $user = createCurrencyTenantUser();
-
-        NoerdSettings::create([
-            'tenant_id' => $user->selected_tenant_id,
-            'currency' => $code,
-        ]);
-
-        expect(CurrencyHelper::configForTenant($user->selected_tenant_id))
-            ->toBe(CurrencyHelper::CURRENCY_PRESETS[$code]);
-    })->with(array_keys(CurrencyHelper::CURRENCY_PRESETS));
-
-    it('formats currency correctly per tenant setting', function (): void {
-        $user = createCurrencyTenantUser();
-
-        NoerdSettings::create([
-            'tenant_id' => $user->selected_tenant_id,
-            'currency' => 'USD',
-        ]);
-
-        $preset = CurrencyHelper::CURRENCY_PRESETS['USD'];
-
-        expect(CurrencyHelper::format(1234.56, $user->selected_tenant_id))
-            ->toBe($preset['symbol'] . ' 1,234.56');
+        expect(array_keys($options))->toBe(array_keys(CurrencyHelper::CURRENCIES))
+            ->and(zzNormalizeSpaces($options['USD']))->toBe('USD - US Dollar ($1,234.56)');
     });
 });

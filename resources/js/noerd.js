@@ -95,12 +95,12 @@ document.addEventListener('alpine:init', () => {
         },
         parseInput(val) {
             if (typeof val === 'number') return val;
-            let cleaned = String(val).replace(/\s/g, '');
-            if (decSep === ',') {
-                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-            } else {
-                cleaned = cleaned.replace(/,/g, '');
-            }
+            // ICU grouping may be ".", ",", "’" or a (narrow) no-break space:
+            // keep digits, the sign and the locale's decimal separator only.
+            const escapedDecSep = decSep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const cleaned = String(val)
+                .replace(new RegExp('[^0-9\\-' + escapedDecSep + ']', 'g'), '')
+                .replace(decSep, '.');
             const num = parseFloat(cleaned);
             return isNaN(num) ? 0 : num;
         },

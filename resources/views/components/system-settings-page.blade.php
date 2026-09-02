@@ -3,10 +3,12 @@
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Services\ThemeRegistry;
+use Noerd\Support\Locales;
 use Noerd\Traits\NoerdSettingsPage;
 
 new class extends Component {
@@ -26,7 +28,10 @@ new class extends Component {
         $this->initSettings();
 
         // A tenant without a settings row sees the effective defaults.
-        $this->detailData['currency'] = $this->detailData['currency'] ?? 'EUR';
+        $this->detailData['currency'] = $this->detailData['currency'] ?? CurrencyHelper::codeForTenant();
+        $this->detailData['locale'] = Locales::isSupported($this->detailData['locale'] ?? null)
+            ? $this->detailData['locale']
+            : FormatHelper::tenantLocale();
         $this->detailData['detail_theme'] = ($this->detailData['detail_theme'] ?? null) ?: config('noerd.theme.default', 'default');
         $this->detailData['detail_theme_enforced'] = (bool) ($this->detailData['detail_theme_enforced'] ?? false);
 
@@ -43,14 +48,18 @@ new class extends Component {
      */
     public function currencyOptions(): array
     {
-        return [
-            'EUR' => 'EUR - Euro (1.234,56 €)',
-            'USD' => 'USD - US Dollar ($1,234.56)',
-            'GBP' => 'GBP - British Pound (£1,234.56)',
-            'CHF' => 'CHF - ' . __('Swiss Franc') . " (CHF 1'234.56)",
-            'CZK' => 'CZK - ' . __('Czech Koruna') . ' (1.234,56 Kč)',
-            'DKK' => 'DKK - ' . __('Danish Krone') . ' (1.234,56 kr)',
-        ];
+        return CurrencyHelper::options();
+    }
+
+    /**
+     * The tenant's DOCUMENT locale: number and date format of PDFs, receipts
+     * and customer e-mails, independent of the user who generates them.
+     *
+     * @return array<string, string> locale => display label
+     */
+    public function localeOptions(): array
+    {
+        return Locales::options();
     }
 
     /**
@@ -79,12 +88,13 @@ new class extends Component {
         }
 
         $rules = [
+            'detailData.locale' => ['required', 'in:' . implode(',', Locales::SUPPORTED)],
             'detailData.detail_theme' => ['required', 'in:' . implode(',', array_keys($this->themeOptions()))],
             'detailData.detail_theme_enforced' => ['boolean'],
         ];
 
         if (config('noerd.features.currency', true)) {
-            $rules['detailData.currency'] = ['required', 'in:' . implode(',', array_keys($this->currencyOptions()))];
+            $rules['detailData.currency'] = ['required', 'in:' . implode(',', array_keys(CurrencyHelper::CURRENCIES))];
         } else {
             // The field is not part of the form — never write a currency then.
             unset($this->detailData['currency']);
@@ -97,6 +107,7 @@ new class extends Component {
         $this->persistSettings();
 
         CurrencyHelper::clearCache();
+        FormatHelper::clearCache();
         ThemeHelper::clearCache();
 
         $this->showSuccessIndicator = true;

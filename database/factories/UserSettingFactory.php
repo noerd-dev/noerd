@@ -34,6 +34,13 @@ class UserSettingFactory extends Factory
         ]);
     }
 
+    public function withFormatLocale(?string $formatLocale): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'format_locale' => $formatLocale,
+        ]);
+    }
+
     public function withSelectedTenantId(?int $tenantId): static
     {
         return $this->state(fn(array $attributes) => [

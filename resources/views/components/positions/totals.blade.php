@@ -15,7 +15,7 @@
 
 @php
     $currency ??= \Noerd\Helpers\CurrencyHelper::codeForTenant();
-    $locale ??= app()->getLocale();
+    $locale ??= \Noerd\Helpers\FormatHelper::locale();
     $themeDefinition = app(\Noerd\Services\ThemeRegistry::class)->get($theme);
     $padding = $themeDefinition->totalsPadding;
 
