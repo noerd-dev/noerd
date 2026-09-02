@@ -33,7 +33,9 @@ describe('Position tables follow the theme', function (): void {
             ->assertSeeHtml('rounded-sm')
             ->assertSeeHtml('py-3')
             ->assertDontSeeHtml('h-10')
-            ->assertDontSeeHtml('tabular-nums');
+            ->assertDontSeeHtml('tabular-nums')
+            // A non-numbering theme renders no number column at all.
+            ->assertDontSeeHtml('>#</th>');
     });
 
     it('bands the rows and numbers them in the numbered theme', function (): void {
@@ -52,11 +54,6 @@ describe('Position tables follow the theme', function (): void {
         expect(preg_match($numberCell(1), $html))->toBe(1)
             ->and(preg_match($numberCell(2), $html))->toBe(1)
             ->and(mb_substr_count($html, '>#</th>'))->toBe(1);
-    });
-
-    it('renders no number column outside a numbering theme', function (): void {
-        Livewire::test('noerd-test::positions-theme-test', ['theme' => 'compact'])
-            ->assertDontSeeHtml('>#</th>');
     });
 
     it('widens the details row by the number column only when rows are numbered', function (): void {

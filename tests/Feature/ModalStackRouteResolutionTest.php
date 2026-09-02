@@ -117,7 +117,7 @@ it('suppresses the url rewrite for an argument the route cannot express', functi
 /**
  * Only `quickCreate` is used as the chrome argument here: the fixture component
  * cannot mount a `relations` array. That `relations` travels as a URL-neutral
- * argument is covered at the dispatch level by ListDetailRouteFallbackTest.
+ * argument is covered at the dispatch level by NoerdListModalDispatchTest.
  */
 it('still rewrites the url for chrome-only arguments', function (): void {
     registerTestLivewireRoute('zz-modal-chrome/{modelId}', 'noerd-test::theme-test', 'zz.modal.chrome');

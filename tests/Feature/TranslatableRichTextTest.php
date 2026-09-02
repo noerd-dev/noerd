@@ -9,6 +9,16 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
+/**
+ * The JS literal the TipTap editor is initialised with (`content: …,`).
+ */
+function zzEditorContent(string $html): ?string
+{
+    preg_match('/content: (.*?),\r?\n/', $html, $matches);
+
+    return $matches[1] ?? null;
+}
+
 describe('TranslatableRichText Component', function (): void {
 
     beforeEach(function (): void {
@@ -58,18 +68,29 @@ describe('TranslatableRichText Component', function (): void {
     });
 
     it('handles empty content gracefully', function (): void {
-        Livewire::test('noerd-test::translatable-rich-text-test', [
+        $html = Livewire::test('noerd-test::translatable-rich-text-test', [
             'initialContent' => ['de' => '', 'en' => ''],
         ])
-            ->assertSuccessful();
+            ->assertSuccessful()
+            ->html();
+
+        // The editor starts on the empty string, not on a null/undefined value.
+        expect(zzEditorContent($html))->toBe("''");
     });
 
     it('handles missing language key gracefully', function (): void {
         session(['selectedLanguage' => 'fr']);
 
-        Livewire::test('noerd-test::translatable-rich-text-test', [
+        $html = Livewire::test('noerd-test::translatable-rich-text-test', [
             'initialContent' => ['de' => 'German', 'en' => 'English'],
         ])
-            ->assertSuccessful();
+            ->assertSuccessful()
+            ->html();
+
+        // A language the value does not carry renders empty — no other
+        // language's content may leak into the editor.
+        expect(zzEditorContent($html))->toBe("''")
+            ->not->toContain('German')
+            ->not->toContain('English');
     });
 });

@@ -9,6 +9,7 @@ use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Support\ComponentAccessGuard;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -141,4 +142,47 @@ it('narrows the super admin list to the tenant chosen in the header filter', fun
 
     expect($visible)->toContain($foreign->id)
         ->not->toContain($this->admin->id);
+});
+
+it('refuses to delete the administrator\'s own account', function (): void {
+    // $modelId is URL-bound: an admin may reach their own record on the user
+    // page, but must never remove their own access from it.
+    Livewire::test('noerd::noerd-user-page', ['modelId' => $this->admin->id])
+        ->call('delete')
+        ->assertStatus(403);
+
+    expect(NoerdUser::find($this->admin->id))->not->toBeNull();
+});
+
+it('scopes admin rights to the tenant of the current request', function (): void {
+    $administered = Tenant::factory()->create();
+    $memberOnly = Tenant::factory()->create();
+
+    $user = zzTenantAdmin($administered);
+    // Same user is a plain member of a second tenant.
+    $user->tenants()->attach($memberOnly->id, ['profile_key' => Profile::User->value]);
+    $this->actingAs($user);
+
+    TenantHelper::setSelectedTenantId($administered->id);
+    expect($user->fresh()->isAdmin())->toBeTrue();
+
+    // Switching to the tenant they only belong to must NOT carry admin rights —
+    // that is what made the setup area of any co-tenant reachable.
+    TenantHelper::setSelectedTenantId($memberOnly->id);
+    expect($user->fresh()->isAdmin())->toBeFalse()
+        ->and(ComponentAccessGuard::allows('noerd::tenants-list'))->toBeFalse();
+
+    // The cross-tenant variant stays available for console/reporting contexts.
+    expect($user->fresh()->isAdminOfAnyTenant())->toBeTrue();
+});
+
+it('keeps a super admin unrestricted across tenants', function (): void {
+    $tenant = Tenant::factory()->create();
+    $user = NoerdUser::factory()->create(['super_admin' => true]);
+    $user->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
+    $this->actingAs($user);
+
+    TenantHelper::setSelectedTenantId(Tenant::factory()->create()->id);
+
+    expect($user->fresh()->isAdmin())->toBeTrue();
 });

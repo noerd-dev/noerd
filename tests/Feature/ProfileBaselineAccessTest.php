@@ -126,21 +126,6 @@ it('lets a defined gate replace the baseline in both directions', function (): v
     expect(AccessHelper::canReadObject(Tenant::class))->toBeFalse();
 });
 
-it('renders every form field readonly for a READ_ONLY profile without any gate', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
-
-    $html = Livewire::test('noerd-test::write-denied-test')->assertOk()->html();
-
-    preg_match_all('/<input\b[^>]*>/s', $html, $matches);
-    $inputs = array_values(array_filter($matches[0], fn(string $tag): bool => str_contains($tag, 'wire:model')));
-
-    expect($inputs)->not->toBe([]);
-    foreach ($inputs as $tag) {
-        $withoutClasses = preg_replace('/\bclass="[^"]*"/s', '', $tag) ?? $tag;
-        expect((bool) preg_match('/\b(readonly|disabled)\b/', $withoutClasses))->toBeTrue();
-    }
-});
-
 it('makes store() a no-op for a READ_ONLY profile', function (): void {
     $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
 

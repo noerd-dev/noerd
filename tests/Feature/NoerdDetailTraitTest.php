@@ -17,9 +17,9 @@ uses(TestCase::class, RefreshDatabase::class);
  | Core NoerdDetail mechanics not covered by the store roundtrip suite
  | (NoerdDetailStoreRoundtripTest): layout hydration on mount, the recursion of
  | validateFromLayout() into `type: block` fields, the setFieldValue event
- | (relation title adoption and dotted writes — its detailData allowlist is
- | proven in SecurityHighFixesTest) and clearRelation(). The layout comes from a
- | runtime fixture YAML, never from a shipped config.
+ | (relation title adoption, dotted writes, its detailData allowlist and the
+ | owner routing) and clearRelation(). The layout comes from a runtime fixture
+ | YAML, never from a shipped config.
  */
 
 class ZzDetailTraitComponent extends Component
@@ -111,4 +111,39 @@ it('clears a relation value and its title for plain and dotted fields', function
         ->and($component->get('relationTitles.customer_id'))->toBe('')
         ->and($component->get('detailData.invoice.contact_id'))->toBeNull()
         ->and($component->get('relationTitles.contact_id'))->toBe('');
+});
+
+it('setFieldValue writes into detailData but ignores any other property', function (): void {
+    $component = new class {
+        use NoerdDetail;
+    };
+    $component->modelId = 5;
+
+    $component->setFieldValue('detailData.name', 'Ok');
+    expect($component->detailData['name'])->toBe('Ok');
+
+    // A non-detailData field is a no-op — an authoritative property stays put.
+    $component->setFieldValue('modelId', 999);
+    expect($component->modelId)->toBe(5);
+
+    // The relationTitle side-channel only fills relationTitles for the field's key.
+    $component->setFieldValue('detailData.customer_id', 7, 'Acme');
+    expect($component->relationTitles['customer_id'])->toBe('Acme');
+});
+
+it('setFieldValue addressed to another owner leaves the detail untouched', function (): void {
+    $component = new class {
+        use NoerdDetail;
+
+        public function getId(): string
+        {
+            return 'owner-a';
+        }
+    };
+
+    $component->setFieldValue('detailData.name', 'Foreign', null, 'owner-b');
+    expect($component->detailData)->not->toHaveKey('name');
+
+    $component->setFieldValue('detailData.name', 'Mine', null, 'owner-a');
+    expect($component->detailData['name'])->toBe('Mine');
 });

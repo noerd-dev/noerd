@@ -21,8 +21,17 @@ new class extends Component
     }
 
 
+    /**
+     * The code comes from the client, so it is only honoured while it names one
+     * of the tenant's ACTIVE languages — an unknown or deactivated code would
+     * otherwise be written into the session and drive every translatable field.
+     */
     public function setLanguage(string $code): void
     {
+        if (! in_array($code, SetupLanguage::getActiveCodes(), true)) {
+            return;
+        }
+
         session(['selectedLanguage' => $code]);
         $this->dispatch('setupLanguageChanged');
     }

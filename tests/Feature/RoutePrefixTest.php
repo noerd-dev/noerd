@@ -69,6 +69,16 @@ describe('auth redirects', function (): void {
     });
 });
 
+describe('generic component page', function (): void {
+    it('aborts with 404 when the component name has no module namespace', function (): void {
+        $user = NoerdUser::factory()->withExampleTenant()->create();
+
+        $this->actingAs($user)
+            ->get(route('noerd.component-page', ['componentName' => 'some-local-component']))
+            ->assertNotFound();
+    });
+});
+
 describe('password reset mail', function (): void {
     it('links to the prefixed noerd reset route', function (): void {
         Notification::fake();

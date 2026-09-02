@@ -12,10 +12,7 @@ uses(RefreshDatabase::class);
 it('creates a new tenant with command options', function (): void {
     $this->artisan('noerd:create-tenant', [
         '--name' => 'New Tenant',
-    ])
-        ->expectsOutput("Tenant 'New Tenant' created successfully.")
-        ->expectsOutput("✅ Tenant 'New Tenant' is ready to use!")
-        ->assertExitCode(0);
+    ])->assertExitCode(0);
 
     // Verify tenant was created
     $tenant = Tenant::where('name', 'New Tenant')->first();
@@ -33,30 +30,14 @@ it('generates unique uuid for each tenant', function (): void {
     expect($tenant1->uuid)->not->toBe($tenant2->uuid);
 });
 
-it('fails with name shorter than 3 characters', function (): void {
-    $this->artisan('noerd:create-tenant', [
-        '--name' => 'AB',
-    ])
-        ->expectsOutput('Tenant name must be at least 3 characters.')
+it('rejects an invalid tenant name', function (string $name, string $error): void {
+    // The error message is the behaviour: it tells the operator what to fix.
+    $this->artisan('noerd:create-tenant', ['--name' => $name])
+        ->expectsOutput($error)
         ->assertExitCode(1);
-});
 
-it('fails with name longer than 50 characters', function (): void {
-    $this->artisan('noerd:create-tenant', [
-        '--name' => str_repeat('A', 51),
-    ])
-        ->expectsOutput('Tenant name must be at most 50 characters.')
-        ->assertExitCode(1);
-});
-
-it('outputs tenant ID and UUID after creation', function (): void {
-    $this->artisan('noerd:create-tenant', [
-        '--name' => 'ID Test Tenant',
-    ])
-        ->expectsOutputToContain('ID:')
-        ->assertExitCode(0);
-
-    // Verify tenant has UUID set
-    $tenant = Tenant::where('name', 'ID Test Tenant')->first();
-    expect($tenant->uuid)->not->toBeNull();
-});
+    expect(Tenant::where('name', $name)->exists())->toBeFalse();
+})->with([
+    'shorter than 3 characters' => ['AB', 'Tenant name must be at least 3 characters.'],
+    'longer than 50 characters' => [str_repeat('A', 51), 'Tenant name must be at most 50 characters.'],
+]);

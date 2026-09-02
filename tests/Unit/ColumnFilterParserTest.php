@@ -116,6 +116,17 @@ it('applies date filters via whereDate', function (string $raw, string $operator
     'german date format' => ['<=17.07.2026', '<=', '2026-07-17'],
 ]);
 
+it('narrows a datetime column to the day like a date column', function (): void {
+    $query = filterQuery();
+    ColumnFilterParser::apply($query, 'created_at', 'datetime', '2026-01-15');
+
+    $wheres = addedWheres($query);
+    expect($wheres)->toHaveCount(1)
+        ->and($wheres[0]['type'])->toBe('Date')
+        ->and($wheres[0]['operator'])->toBe('=')
+        ->and($wheres[0]['value'])->toBe('2026-01-15');
+});
+
 it('ignores unparseable dates', function (): void {
     $query = filterQuery();
     ColumnFilterParser::apply($query, 'created_at', 'date', '>=not-a-date');

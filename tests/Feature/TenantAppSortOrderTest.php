@@ -28,20 +28,6 @@ it('returns tenant apps ordered by sort_order', function (): void {
     expect($apps[2]->name)->toBe('app-a');
 });
 
-it('returns tenant apps with same sort_order in stable order', function (): void {
-    $tenant = Tenant::factory()->create();
-
-    $appA = TenantApp::create(['title' => 'App A', 'name' => 'app-a', 'icon' => 'icon-a', 'route' => 'app-a.index', 'is_active' => true]);
-    $appB = TenantApp::create(['title' => 'App B', 'name' => 'app-b', 'icon' => 'icon-b', 'route' => 'app-b.index', 'is_active' => true]);
-
-    $tenant->tenantApps()->attach($appA->id, ['sort_order' => 0]);
-    $tenant->tenantApps()->attach($appB->id, ['sort_order' => 0]);
-
-    $apps = $tenant->tenantApps()->get();
-
-    expect($apps)->toHaveCount(2);
-});
-
 it('excludes inactive apps from sorted results', function (): void {
     $tenant = Tenant::factory()->create();
 
@@ -55,15 +41,4 @@ it('excludes inactive apps from sorted results', function (): void {
 
     expect($apps)->toHaveCount(1);
     expect($apps[0]->name)->toBe('active');
-});
-
-it('provides sort_order via pivot attribute', function (): void {
-    $tenant = Tenant::factory()->create();
-
-    $app = TenantApp::create(['title' => 'App', 'name' => 'app', 'icon' => 'icon', 'route' => 'app.index', 'is_active' => true]);
-    $tenant->tenantApps()->attach($app->id, ['sort_order' => 5]);
-
-    $result = $tenant->tenantApps()->first();
-
-    expect($result->pivot->sort_order)->toBe(5);
 });

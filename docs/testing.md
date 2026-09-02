@@ -116,8 +116,8 @@ A test that asserts their current content is wrong by definition.
 - Prove the *effect* of a setting with a synthetic layout, a fixture YAML written at runtime under
   the testbench skeleton, factories/mocks for data and runtime-registered routes. References in
   the package: `ThemeTest` (`noerd-test::theme-test` components), `StaticConfigHelperFeatureTest`,
-  `PerAppConfigResolutionTest`, `ListDetailRouteFallbackTest`, `DetailActionsTest`,
-  `NavigationModalRouteTest`, `RelationBoxRouteTest`.
+  `ConfigResolutionTest`, `NoerdListModalDispatchTest`, `DetailActionsTest`,
+  `NavigationModalRouteTest`, `RelationBoxTest`.
 - Architecture guardrails are fine (a detail YAML contains no `widgets:`/`relations:`; a page
   blade embeds exactly the `detail:` component its YAML names).
 
@@ -213,7 +213,7 @@ it('opens the detail by route when the route exists', function (): void {
 ```
 
 The list dispatches the route together with the component as fallback; a list without a
-`$detailRoute` dispatches only `modalComponent` (see `ListDetailRouteFallbackTest`).
+`$detailRoute` dispatches only `modalComponent` (see `NoerdListModalDispatchTest`).
 
 ## Module dependency guard
 

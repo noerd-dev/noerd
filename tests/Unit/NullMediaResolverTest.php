@@ -7,28 +7,14 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
 
-it('returns null for getPreviewUrl', function (): void {
+it('answers as a null object while no media module is installed', function (): void {
     $resolver = new NullMediaResolver();
 
-    expect($resolver->getPreviewUrl(1))->toBeNull();
-});
-
-it('returns false for exists', function (): void {
-    $resolver = new NullMediaResolver();
-
-    expect($resolver->exists(1))->toBeFalse();
-});
-
-it('returns null for getRelativeUrl', function (): void {
-    $resolver = new NullMediaResolver();
-
-    expect($resolver->getRelativeUrl(1))->toBeNull();
-});
-
-it('returns null for storeUploadedFile with null input', function (): void {
-    $resolver = new NullMediaResolver();
-
-    expect($resolver->storeUploadedFile(null))->toBeNull();
+    expect($resolver->isAvailable())->toBeFalse()
+        ->and($resolver->exists(1))->toBeFalse()
+        ->and($resolver->getPreviewUrl(1))->toBeNull()
+        ->and($resolver->getRelativeUrl(1))->toBeNull()
+        ->and($resolver->storeUploadedFile(null))->toBeNull();
 });
 
 it('stores an allowed image under a safe generated name and returns its url', function (): void {
@@ -65,10 +51,4 @@ it('rejects an oversized upload without storing it', function (): void {
     $resolver = new NullMediaResolver();
 
     expect($resolver->storeUploadedFile($fakeFile))->toBeNull();
-});
-
-it('returns false for isAvailable', function (): void {
-    $resolver = new NullMediaResolver();
-
-    expect($resolver->isAvailable())->toBeFalse();
 });

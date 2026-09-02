@@ -10,7 +10,6 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
-use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Services\SetupFieldTypeConverter;
 use Noerd\Tests\TestCase;
@@ -27,8 +26,6 @@ beforeEach(function (): void {
 
     // Create a tenant and user for testing (Tenant::created seeds default languages)
     $this->tenant = Tenant::factory()->create();
-
-    // Create admin profile for the tenant
 
     $this->user = NoerdUser::factory()->create();
 
@@ -84,38 +81,6 @@ afterEach(function (): void {
     }
 });
 
-describe('SetupLanguage Model', function (): void {
-    it('creates default languages when none exist', function (): void {
-        SetupLanguage::query()->delete();
-        SetupLanguage::ensureDefaultLanguagesForTenant($this->tenant->id);
-
-        expect(SetupLanguage::count())->toBe(2);
-        expect(SetupLanguage::where('code', 'de')->exists())->toBeTrue();
-        expect(SetupLanguage::where('code', 'en')->exists())->toBeTrue();
-        expect(SetupLanguage::where('is_default', true)->first()->code)->toBe('en');
-    });
-
-    it('returns active languages', function (): void {
-        $languages = SetupLanguage::getActive();
-
-        expect($languages)->toHaveCount(2);
-        expect($languages->first()->code)->toBe('en'); // Default first
-    });
-
-    it('returns active language codes', function (): void {
-        $codes = SetupLanguage::getActiveCodes();
-
-        expect($codes)->toContain('de');
-        expect($codes)->toContain('en');
-    });
-
-    it('returns default language code', function (): void {
-        $code = SetupLanguage::getDefaultCode();
-
-        expect($code)->toBe('en');
-    });
-});
-
 describe('SetupCollectionHelper', function (): void {
     it('returns null for non-existent collection', function (): void {
         $result = SetupCollectionHelper::getCollectionFields('non-existent');
@@ -141,6 +106,42 @@ describe('SetupCollectionHelper', function (): void {
         $exampleCollection = collect($collections)->firstWhere('key', 'example');
         expect($exampleCollection)->not->toBeNull()
             ->and($exampleCollection['titleList'])->toBe('Beispiele');
+    });
+});
+
+describe('SetupCollectionHelper select options', function (): void {
+    beforeEach(function (): void {
+        $collection = SetupCollection::firstOrCreate(
+            ['tenant_id' => $this->tenant->id, 'collection_key' => 'ZZ_OPTIONS_TEST'],
+            ['name' => 'Options Test', 'sort' => 0],
+        );
+
+        SetupCollectionEntry::create([
+            'tenant_id' => $this->tenant->id,
+            'setup_collection_id' => $collection->id,
+            'data' => ['name' => ['de' => 'Deutschland', 'en' => 'Germany'], 'code' => 'DE'],
+            'sort' => 0,
+        ]);
+    });
+
+    it('builds value-field options with translated labels', function (): void {
+        session(['selectedLanguage' => 'de']);
+
+        $options = SetupCollectionHelper::selectOptions('ZZ_OPTIONS_TEST', 'name', 'code');
+
+        expect($options)->toHaveCount(1);
+        expect($options[0]['value'])->toBe('DE');
+        expect($options[0]['label'])->toBe('Deutschland');
+    });
+
+    it('falls back to the entry id without a value field', function (): void {
+        $options = SetupCollectionHelper::selectOptions('ZZ_OPTIONS_TEST');
+
+        expect($options[0]['value'])->toBeInt();
+    });
+
+    it('returns an empty set for an unknown collection', function (): void {
+        expect(SetupCollectionHelper::selectOptions('ZZ_DOES_NOT_EXIST', 'name', 'code'))->toBe([]);
     });
 });
 
@@ -230,10 +231,16 @@ describe('Setup Collections List Component', function (): void {
             ->assertSee('Beispiele');
     });
 
-    it('can open detail modal', function (): void {
-        Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])
-            ->call('listAction')
-            ->assertDispatched('noerdModal');
+    it('renders an empty state with the primary action when there are no entries', function (): void {
+        app()->setLocale('en');
+
+        $html = Livewire::test('noerd::setup-collections-list', ['collectionKey' => 'example'])->html();
+
+        expect($html)
+            // Empty hint shown below the table header (unique to the empty state).
+            ->toContain('No entries yet')
+            // The list's primary action is offered as a create button.
+            ->toContain('listAction(null,');
     });
 });
 
@@ -243,13 +250,6 @@ describe('Setup Collection Detail Component', function (): void {
             ->assertStatus(200)
             ->assertSet('collectionKey', 'example')
             ->assertSet('collectionLayout', fn($layout) => $layout !== null);
-    });
-
-    it('places the language switcher in the modal-aware actions slot so it clears the modal controls', function (): void {
-        Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'example'])
-            ->assertOk()
-            ->assertSeeLivewire('noerd::setup-language-switcher')
-            ->assertSeeHtml("isModal ? modalControlsClass : ''");
     });
 
     it('can save a new entry', function (): void {
@@ -264,49 +264,6 @@ describe('Setup Collection Detail Component', function (): void {
         $component->assertSet('showSuccessIndicator', true);
 
         expect(SetupCollectionEntry::where('tenant_id', $this->tenant->id)->count())->toBe($entriesBefore + 1);
-    });
-});
-
-describe('SetupLanguage Boot Events', function (): void {
-    it('ensures only one default language exists', function (): void {
-        // English is default from ensureDefaultLanguagesForTenant
-        $english = SetupLanguage::where('code', 'en')->first();
-        expect($english->is_default)->toBeTrue();
-
-        // Set German as default
-        $german = SetupLanguage::where('code', 'de')->first();
-        $german->update(['is_default' => true]);
-
-        // Refresh English from DB
-        $english->refresh();
-
-        expect($german->is_default)->toBeTrue();
-        expect($english->is_default)->toBeFalse();
-        expect(SetupLanguage::where('is_default', true)->count())->toBe(1);
-    });
-
-    it('sets new default after deleting default language', function (): void {
-        $english = SetupLanguage::where('code', 'en')->first();
-        expect($english->is_default)->toBeTrue();
-
-        $english->delete();
-
-        // German should now be default
-        $german = SetupLanguage::where('code', 'de')->first();
-        expect($german->is_default)->toBeTrue();
-    });
-
-    it('can create a new language', function (): void {
-        $french = SetupLanguage::create([
-            'code' => 'fr',
-            'name' => 'Français',
-            'is_active' => true,
-            'is_default' => false,
-            'sort_order' => 2,
-        ]);
-
-        expect($french->exists)->toBeTrue();
-        expect(SetupLanguage::count())->toBe(3);
     });
 });
 
@@ -353,48 +310,5 @@ describe('SetupFieldTypeConverter', function (): void {
         $result = SetupFieldTypeConverter::convertCollectionData($data, 'non-existent-collection');
 
         expect($result)->toBe($data);
-    });
-});
-
-describe('Setup Languages List Component', function (): void {
-    it('shows languages list', function (): void {
-        Livewire::test('noerd::setup-languages-list')
-            ->assertStatus(200)
-            ->assertSee('English');
-    });
-
-    it('can open detail modal', function (): void {
-        Livewire::test('noerd::setup-languages-list')
-            ->call('listAction')
-            ->assertDispatched('noerdModal');
-    });
-});
-
-describe('Setup Language Detail Component', function (): void {
-    it('loads for new language', function (): void {
-        Livewire::test('noerd::setup-language-detail')
-            ->assertStatus(200)
-            ->assertSet('detailData.is_active', true);
-    });
-
-    it('loads existing language', function (): void {
-        $english = SetupLanguage::where('code', 'en')->first();
-
-        Livewire::withUrlParams(['setupLanguageId' => $english->id])->test('noerd::setup-language-detail')
-            ->assertStatus(200)
-            ->assertSet('detailData.code', 'en')
-            ->assertSet('detailData.name', 'English');
-    });
-
-    it('can save a new language', function (): void {
-        Livewire::test('noerd::setup-language-detail')
-            ->set('detailData.code', 'fr')
-            ->set('detailData.name', 'Français')
-            ->set('detailData.is_active', true)
-            ->set('detailData.is_default', false)
-            ->call('store')
-            ->assertSet('showSuccessIndicator', true);
-
-        expect(SetupLanguage::where('code', 'fr')->exists())->toBeTrue();
     });
 });

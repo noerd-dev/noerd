@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Helpers\CurrencyHelper;
+use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
@@ -41,64 +42,54 @@ function createUserWithSetupTenant(): NoerdUser
     return $user;
 }
 
+/**
+ * The settings layout the page renders, reduced to the field names — what the
+ * currency feature flag adds to or removes from the form.
+ *
+ * @return array<int, string>
+ */
+function zzSettingsFieldNames(NoerdUser $user): array
+{
+    $layout = Livewire::actingAs($user)->test('noerd::system-settings-page')->get('pageLayout');
+
+    return array_column($layout['fields'] ?? [], 'name');
+}
+
+/**
+ * Run the callback against a synthetic settings YAML: which fields the shipped
+ * system-settings page carries is configuration, so the feature gating is proven
+ * against a fixture layout instead.
+ */
+function withZzSettingsLayout(Closure $callback): void
+{
+    $path = base_path('app-configs/setup/settings/system-settings-page.yml');
+    $backup = file_exists($path) ? file_get_contents($path) : null;
+    @mkdir(dirname($path), 0755, true);
+    file_put_contents($path, <<<'YAML'
+title: Zz System Settings
+fields:
+  - name: detailData.currency
+    label: Zz Currency
+    type: select
+    optionsMethod: currencyOptions
+  - name: detailData.detail_theme
+    label: Zz Theme
+    type: select
+    optionsMethod: themeOptions
+YAML);
+    StaticConfigHelper::flushRuntimeCaches();
+
+    try {
+        $callback();
+    } finally {
+        $backup === null ? @unlink($path) : file_put_contents($path, $backup);
+        StaticConfigHelper::flushRuntimeCaches();
+    }
+}
+
+
 beforeEach(function (): void {
     CurrencyHelper::clearCache();
-});
-
-describe('CurrencyHelper tenant-aware config', function (): void {
-    it('returns EUR config by default when no tenant setting exists', function (): void {
-        $user = createUserWithSetupTenant();
-
-        $config = CurrencyHelper::configForTenant($user->selected_tenant_id);
-
-        expect($config['symbol'])->toBe('€')
-            ->and($config['decimal_separator'])->toBe(',')
-            ->and($config['thousands_separator'])->toBe('.')
-            ->and($config['symbol_position'])->toBe('after');
-    });
-
-    it('returns correct config for USD tenant setting', function (): void {
-        $user = createUserWithSetupTenant();
-
-        NoerdSettings::create([
-            'tenant_id' => $user->selected_tenant_id,
-            'currency' => 'USD',
-        ]);
-
-        $config = CurrencyHelper::configForTenant($user->selected_tenant_id);
-
-        expect($config['symbol'])->toBe('$')
-            ->and($config['decimal_separator'])->toBe('.')
-            ->and($config['thousands_separator'])->toBe(',')
-            ->and($config['symbol_position'])->toBe('before');
-    });
-
-    it('returns correct config for GBP tenant setting', function (): void {
-        $user = createUserWithSetupTenant();
-
-        NoerdSettings::create([
-            'tenant_id' => $user->selected_tenant_id,
-            'currency' => 'GBP',
-        ]);
-
-        $config = CurrencyHelper::configForTenant($user->selected_tenant_id);
-
-        expect($config['symbol'])->toBe('£')
-            ->and($config['decimal_separator'])->toBe('.')
-            ->and($config['thousands_separator'])->toBe(',')
-            ->and($config['symbol_position'])->toBe('before');
-    });
-
-    it('formats currency correctly per tenant setting', function (): void {
-        $user = createUserWithSetupTenant();
-
-        NoerdSettings::create([
-            'tenant_id' => $user->selected_tenant_id,
-            'currency' => 'USD',
-        ]);
-
-        expect(CurrencyHelper::format(1234.56, $user->selected_tenant_id))->toBe('$ 1,234.56');
-    });
 });
 
 describe('NoerdSettings component', function (): void {
@@ -151,20 +142,25 @@ describe('NoerdSettings component', function (): void {
 describe('Currency feature flag', function (): void {
     it('shows currency section when feature is enabled', function (): void {
         config()->set('noerd.features.currency', true);
-        $user = createUserWithSetupTenant();
 
-        Livewire::actingAs($user)
-            ->test('noerd::system-settings-page')
-            ->assertSee(__('Currency'));
+        withZzSettingsLayout(function (): void {
+            // The enforce field is shipped but NOT part of the fixture layout —
+            // its absence proves the synthetic YAML is what the page rendered.
+            expect(zzSettingsFieldNames(createUserWithSetupTenant()))
+                ->toContain('detailData.currency')
+                ->toContain('detailData.detail_theme')
+                ->not->toContain('detailData.detail_theme_enforced');
+        });
     });
 
     it('hides currency section when feature is disabled', function (): void {
         config()->set('noerd.features.currency', false);
-        $user = createUserWithSetupTenant();
 
-        Livewire::actingAs($user)
-            ->test('noerd::system-settings-page')
-            ->assertDontSee(__('Currency'));
+        withZzSettingsLayout(function (): void {
+            expect(zzSettingsFieldNames(createUserWithSetupTenant()))
+                ->not->toContain('detailData.currency')
+                ->toContain('detailData.detail_theme');
+        });
     });
 
     it('does not save the currency when the currency feature is disabled', function (): void {

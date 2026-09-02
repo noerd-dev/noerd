@@ -1115,14 +1115,14 @@ test. A test that asserts the current content of a real YAML config is wrong by 
   change (any value) has the correct EFFECT. Use dedicated test components that receive a synthetic
   layout (reference: `noerd-test::theme-test` / `noerd-test::theme-setting-test` + `ThemeTest` in the
   noerd module) or runtime-written fixture YAMLs under the testbench skeleton (reference:
-  `StaticConfigHelperFeatureTest`, `PerAppConfigResolutionTest`), plus factories/mocks for data.
+  `StaticConfigHelperFeatureTest`, `ConfigResolutionTest`), plus factories/mocks for data.
 - **The modal target is configuration too**: `route:` vs. `modalComponent:`/`component:`,
   `$detailRoute` vs. `$detailComponent`, `modalRoute:`/`newRoute:` vs. `newComponent:` — every one of
   these may be flipped per installation and must NEVER be asserted against a shipped YAML. Prove the
   EFFECT instead, with a synthetic layout plus a runtime-registered route
   (`registerTestLivewireRoute()` in `tests/helpers.php`): route wins when
-  registered, the component opens as the fallback. References: `ListDetailRouteFallbackTest`,
-  `DetailActionsTest`, `NavigationModalRouteTest`, `RelationBoxRouteTest` in the noerd module, and
+  registered, the component opens as the fallback. References: `NoerdListModalDispatchTest`,
+  `DetailActionsTest`, `NavigationModalRouteTest`, `RelationBoxTest` in the noerd module, and
   `NoerdModalTest` (`describe('Modal Route URL')`) in the noerd-modal module.
 - **Validation stays config-agnostic** via `requiredLayoutFields()` / `validDetailPayload()` — never
   hard-code which fields are required (see "Testing YAML-Driven Detail Forms" below).

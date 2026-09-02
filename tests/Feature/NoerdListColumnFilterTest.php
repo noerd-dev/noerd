@@ -54,510 +54,435 @@ function createColumnFilterRelationTables(): void
     });
 }
 
-it('filters a text column with a like match by default', function (): void {
-    $red = NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    NoerdUser::factory()->create(['name' => 'Blaukraut']);
+describe('filtering by type', function (): void {
+    it('filters a text column with a like match by default', function (): void {
+        $red = NoerdUser::factory()->create(['name' => 'Rotkohl']);
+        NoerdUser::factory()->create(['name' => 'Blaukraut']);
 
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', 'rot');
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'name', 'rot');
 
-    expect(filterListIds($component))->toBe([$red->id]);
+        expect(filterListIds($component))->toBe([$red->id]);
+    });
+
+    it('combines multiple column filters with and', function (): void {
+        $match = NoerdUser::factory()->create(['name' => 'Rotkohl', 'super_admin' => true]);
+        NoerdUser::factory()->create(['name' => 'Rotwein', 'super_admin' => false]);
+        NoerdUser::factory()->create(['name' => 'Blaukraut', 'super_admin' => true]);
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'name', 'rot')
+            ->call('setColumnFilter', 'super_admin', '1');
+
+        expect(filterListIds($component))->toBe([$match->id]);
+    });
+
+    it('combines column filters with the list search', function (): void {
+        $match = NoerdUser::factory()->create(['name' => 'Rotkohl', 'email' => 'kohl@example.com']);
+        NoerdUser::factory()->create(['name' => 'Rotwein', 'email' => 'wein@example.com']);
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->set('search', 'kohl')
+            ->call('setColumnFilter', 'name', 'rot');
+
+        expect(filterListIds($component))->toBe([$match->id]);
+    });
+
+    it('ignores filters on columns not present in the list yaml', function (): void {
+        NoerdUser::factory()->count(2)->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'password', '=secret');
+
+        expect(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('exposes only real non-dotted yaml columns as filterable', function (): void {
+        NoerdUser::factory()->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class);
+        $listConfig = $component->instance()->with()['listConfig'];
+
+        expect($listConfig['filterableColumns'])->toBe([
+            'name',
+            'email',
+            'super_admin',
+            'id',
+            'created_at',
+        ]);
+    });
 });
 
-it('filters a text column with an exact match on =', function (): void {
-    NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    $exact = NoerdUser::factory()->create(['name' => 'Rot']);
+describe('json paths', function (): void {
+    it('ignores filters on dotted fields without a json base column', function (): void {
+        NoerdUser::factory()->count(2)->create();
 
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', '=Rot');
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'custom_attributes.color', 'rot');
 
-    expect(filterListIds($component))->toBe([$exact->id]);
+        expect(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('ignores filters on dotted fields whose base column is not json cast', function (): void {
+        NoerdUser::factory()->count(2)->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'email.domain', 'example');
+
+        expect(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('filters a custom attribute path with a like match by default', function (): void {
+        createColumnFilterJsonItemsTable();
+        $red = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['color' => 'dunkelrot']]);
+        ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['color' => 'blau']]);
+        ColumnFilterJsonItem::create(['name' => 'C', 'custom_attributes' => null]);
+
+        $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'custom_attributes.color', 'rot');
+
+        expect(filterListIds($component))->toBe([$red->id]);
+    });
+
+    it('filters a custom attribute path with an exact match on =', function (): void {
+        createColumnFilterJsonItemsTable();
+        ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['color' => 'dunkelrot']]);
+        $exact = ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['color' => 'rot']]);
+
+        $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'custom_attributes.color', '=rot');
+
+        expect(filterListIds($component))->toBe([$exact->id]);
+    });
+
+    it('filters a numeric custom attribute path with comparison operators', function (): void {
+        createColumnFilterJsonItemsTable();
+        $cheap = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['price' => 5]]);
+        $expensive = ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['price' => 20]]);
+
+        $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'custom_attributes.price', '>10');
+
+        expect(filterListIds($component))->toBe([$expensive->id]);
+
+        $component->call('setColumnFilter', 'custom_attributes.price', '<=5');
+        expect(filterListIds($component))->toBe([$cheap->id]);
+    });
+
+    it('filters a badge custom attribute path by option value', function (): void {
+        createColumnFilterJsonItemsTable();
+        $weekly = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['cycle' => 'weekly']]);
+        ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['cycle' => 'monthly']]);
+
+        $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'custom_attributes.cycle', 'weekly');
+
+        expect(filterListIds($component))->toBe([$weekly->id]);
+    });
+
+    it('exposes json custom attribute paths as filterable', function (): void {
+        createColumnFilterJsonItemsTable();
+        ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => []]);
+
+        $component = Livewire::test(TestableJsonColumnFilterListComponent::class);
+        $listConfig = $component->instance()->with()['listConfig'];
+
+        expect($listConfig['filterableColumns'])->toBe([
+            'name',
+            'custom_attributes.color',
+            'custom_attributes.price',
+            'custom_attributes.cycle',
+        ]);
+    });
 });
 
-it('matches LIKE wildcards in a text filter literally', function (): void {
-    $literal = NoerdUser::factory()->create(['name' => '100%']);
-    NoerdUser::factory()->create(['name' => '100x']);
+describe('relation paths', function (): void {
+    it('filters a relation column path with a like match by default', function (): void {
+        createColumnFilterRelationTables();
+        $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+        $hamburg = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+        $match = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+        ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $hamburg->id]);
+        ColumnFilterRecord::create(['name' => 'C', 'owner_id' => null]);
 
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', '100%');
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'owner.city', 'erli');
 
-    expect(filterListIds($component))->toBe([$literal->id]);
+        expect(filterListIds($component))->toBe([$match->id]);
+    });
+
+    it('filters a relation column path with an exact match on =', function (): void {
+        createColumnFilterRelationTables();
+        $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+        $berlinSuburb = ColumnFilterOwner::create(['city' => 'Berlin-Spandau', 'rating' => 3]);
+        $exact = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+        ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $berlinSuburb->id]);
+
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'owner.city', '=Berlin');
+
+        expect(filterListIds($component))->toBe([$exact->id]);
+    });
+
+    it('types a relation column from the schema of the related table', function (): void {
+        createColumnFilterRelationTables();
+        $low = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 3]);
+        $high = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+        ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $low->id]);
+        $match = ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $high->id]);
+
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'owner.rating', '>5');
+
+        expect(filterListIds($component))->toBe([$match->id]);
+    });
+
+    it('exposes relation column paths as filterable but ignores unknown ones', function (): void {
+        createColumnFilterRelationTables();
+        ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
+
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class);
+        $listConfig = $component->instance()->with()['listConfig'];
+
+        expect($listConfig['filterableColumns'])->toBe([
+            'name',
+            'owner.city',
+            'owner.rating',
+        ]);
+    });
+
+    it('ignores filters on unresolvable relation paths', function (): void {
+        createColumnFilterRelationTables();
+        $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+        ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+        ColumnFilterRecord::create(['name' => 'B', 'owner_id' => null]);
+
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'nope.city', 'Berlin');
+
+        expect(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('hydrates a dotted relation filter from the url', function (): void {
+        createColumnFilterRelationTables();
+        $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+        $hamburg = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+        $match = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+        ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $hamburg->id]);
+
+        $component = Livewire::withUrlParams(['cf' => ['owner.city' => 'Berlin']])
+            ->test(TestableRelationColumnFilterListComponent::class);
+
+        expect($component->get('listColumnFilters'))->toBe(['owner.city' => 'Berlin'])
+            ->and(filterListIds($component))->toBe([$match->id]);
+    });
+
+    it('keeps relation column paths unsortable', function (): void {
+        createColumnFilterRelationTables();
+        ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
+
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+            ->call('sortBy', 'owner.city');
+
+        expect($component->get('sortField'))->toBe('id');
+    });
 });
 
-it('filters a number column with comparison operators', function (): void {
-    $first = NoerdUser::factory()->create();
-    $second = NoerdUser::factory()->create();
-    $third = NoerdUser::factory()->create();
+describe('persistence', function (): void {
+    it('persists column filters per component in the session and restores them', function (): void {
+        NoerdUser::factory()->create(['name' => 'Rotkohl']);
+        NoerdUser::factory()->create(['name' => 'Blaukraut']);
 
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'id', '>' . $first->id);
+        Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'name', 'rot');
 
-    expect(filterListIds($component))->toEqualCanonicalizing([$second->id, $third->id]);
+        expect(session('listColumnFilters.testable-column-filter-list'))->toBe(['name' => 'rot']);
 
-    $component->call('setColumnFilter', 'id', '<=' . $second->id);
-    expect(filterListIds($component))->toEqualCanonicalizing([$first->id, $second->id]);
+        $component = Livewire::test(TestableColumnFilterListComponent::class);
+        expect($component->get('listColumnFilters'))->toBe(['name' => 'rot'])
+            ->and(filterListIds($component))->toHaveCount(1);
+    });
+
+    it('clears a single column filter with an empty value', function (): void {
+        NoerdUser::factory()->count(2)->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'name', 'rot')
+            ->call('clearColumnFilter', 'name');
+
+        expect($component->get('listColumnFilters'))->toBe([])
+            ->and(session('listColumnFilters.testable-column-filter-list'))->toBe([])
+            ->and(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('resets pagination when a column filter is set', function (): void {
+        NoerdUser::factory()->count(3)->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->set('perPage', 1)
+            ->call('setPage', 2)
+            ->call('setColumnFilter', 'name', 'a');
+
+        expect($component->instance()->paginators['page'] ?? 1)->toBe(1);
+    });
+
+    it('resets pagination when the search changes', function (): void {
+        NoerdUser::factory()->count(3)->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->set('perPage', 1)
+            ->call('setPage', 2)
+            ->set('search', 'a');
+
+        expect($component->instance()->paginators['page'] ?? 1)->toBe(1);
+    });
+
+    it('clears column filters via clearAllListFilters', function (): void {
+        NoerdUser::factory()->count(2)->create();
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'name', 'rot')
+            ->call('clearAllListFilters');
+
+        expect($component->get('listColumnFilters'))->toBe([])
+            ->and(session('listColumnFilters.testable-column-filter-list'))->toBeNull()
+            ->and(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('does not apply column filters in compact embedded lists', function (): void {
+        NoerdUser::factory()->create(['name' => 'Rotkohl']);
+        NoerdUser::factory()->create(['name' => 'Blaukraut']);
+
+        session(['listColumnFilters.testable-column-filter-list' => ['name' => 'rot']]);
+
+        $component = Livewire::test(TestableColumnFilterListComponent::class, ['compact' => true]);
+
+        expect(filterListIds($component))->toHaveCount(2);
+    });
+
+    it('hydrates column filters from the url and persists them to the session', function (): void {
+        $red = NoerdUser::factory()->create(['name' => 'Rotkohl']);
+        NoerdUser::factory()->create(['name' => 'Blaukraut']);
+
+        $component = Livewire::withUrlParams(['cf' => ['name' => 'rot']])
+            ->test(TestableColumnFilterListComponent::class);
+
+        expect($component->get('listColumnFilters'))->toBe(['name' => 'rot'])
+            ->and(session('listColumnFilters.testable-column-filter-list'))->toBe(['name' => 'rot'])
+            ->and(filterListIds($component))->toBe([$red->id]);
+    });
+
+    it('lets url column filters win over the session state', function (): void {
+        NoerdUser::factory()->create(['name' => 'Rotkohl']);
+        $blue = NoerdUser::factory()->create(['name' => 'Blaukraut']);
+
+        session(['listColumnFilters.testable-column-filter-list' => ['name' => 'rot']]);
+
+        $component = Livewire::withUrlParams(['cf' => ['name' => 'blau']])
+            ->test(TestableColumnFilterListComponent::class);
+
+        expect($component->get('listColumnFilters'))->toBe(['name' => 'blau'])
+            ->and(filterListIds($component))->toBe([$blue->id]);
+    });
+
+    it('ignores url column filters on compact embedded lists', function (): void {
+        NoerdUser::factory()->create(['name' => 'Rotkohl']);
+        NoerdUser::factory()->create(['name' => 'Blaukraut']);
+
+        $component = Livewire::withUrlParams(['cf' => ['name' => 'rot']])
+            ->test(TestableColumnFilterListComponent::class, ['compact' => true]);
+
+        expect(filterListIds($component))->toHaveCount(2);
+    });
 });
 
-it('filters a bool column', function (): void {
-    $admin = NoerdUser::factory()->create(['super_admin' => true]);
-    NoerdUser::factory()->create(['super_admin' => false]);
+describe('chips', function (): void {
+    it('resolves active column filters into labeled header chips', function (): void {
+        NoerdUser::factory()->create(['name' => 'Rotkohl', 'super_admin' => true]);
 
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'super_admin', '1');
+        $component = Livewire::test(TestableColumnFilterChipListComponent::class)
+            ->call('setColumnFilter', 'name', 'rot')
+            ->call('setColumnFilter', 'super_admin', '1')
+            ->call('setColumnFilter', 'email', 'open@example.com');
 
-    expect(filterListIds($component))->toBe([$admin->id]);
+        filterListIds($component);
+
+        expect($component->instance()->activeColumnFilterChips())->toBe([
+            ['field' => 'name', 'label' => 'Name', 'value' => 'rot'],
+            ['field' => 'super_admin', 'label' => 'Admin', 'value' => __('Yes')],
+            ['field' => 'email', 'label' => 'Status', 'value' => __('Open')],
+        ]);
+    });
+
+    it('resolves a bool zero filter chip to No', function (): void {
+        NoerdUser::factory()->create(['super_admin' => false]);
+
+        $component = Livewire::test(TestableColumnFilterChipListComponent::class)
+            ->call('setColumnFilter', 'super_admin', '0');
+
+        filterListIds($component);
+
+        expect($component->instance()->activeColumnFilterChips())->toBe([
+            ['field' => 'super_admin', 'label' => 'Admin', 'value' => __('No')],
+        ]);
+    });
+
+    it('returns no chips without active column filters', function (): void {
+        NoerdUser::factory()->create();
+
+        $component = Livewire::test(TestableColumnFilterChipListComponent::class);
+
+        expect($component->instance()->activeColumnFilterChips())->toBe([]);
+    });
 });
 
-it('filters a datetime column by day', function (): void {
-    $old = NoerdUser::factory()->create(['created_at' => '2025-01-15 10:00:00']);
-    $recent = NoerdUser::factory()->create(['created_at' => '2026-06-01 10:00:00']);
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'created_at', '>=2026-01-01');
-
-    expect(filterListIds($component))->toBe([$recent->id]);
-
-    $component->call('setColumnFilter', 'created_at', '2025-01-15');
-    expect(filterListIds($component))->toBe([$old->id]);
-});
-
-it('combines multiple column filters with and', function (): void {
-    $match = NoerdUser::factory()->create(['name' => 'Rotkohl', 'super_admin' => true]);
-    NoerdUser::factory()->create(['name' => 'Rotwein', 'super_admin' => false]);
-    NoerdUser::factory()->create(['name' => 'Blaukraut', 'super_admin' => true]);
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->call('setColumnFilter', 'super_admin', '1');
-
-    expect(filterListIds($component))->toBe([$match->id]);
-});
-
-it('combines column filters with the list search', function (): void {
-    $match = NoerdUser::factory()->create(['name' => 'Rotkohl', 'email' => 'kohl@example.com']);
-    NoerdUser::factory()->create(['name' => 'Rotwein', 'email' => 'wein@example.com']);
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->set('search', 'kohl')
-        ->call('setColumnFilter', 'name', 'rot');
-
-    expect(filterListIds($component))->toBe([$match->id]);
-});
-
-it('ignores filters on columns not present in the list yaml', function (): void {
-    NoerdUser::factory()->count(2)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'password', '=secret');
-
-    expect(filterListIds($component))->toHaveCount(2);
-});
-
-it('ignores filters on dotted fields without a json base column', function (): void {
-    NoerdUser::factory()->count(2)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'custom_attributes.color', 'rot');
-
-    expect(filterListIds($component))->toHaveCount(2);
-});
-
-it('ignores filters on dotted fields whose base column is not json cast', function (): void {
-    NoerdUser::factory()->count(2)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'email.domain', 'example');
-
-    expect(filterListIds($component))->toHaveCount(2);
-});
-
-it('filters a custom attribute path with a like match by default', function (): void {
-    createColumnFilterJsonItemsTable();
-    $red = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['color' => 'dunkelrot']]);
-    ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['color' => 'blau']]);
-    ColumnFilterJsonItem::create(['name' => 'C', 'custom_attributes' => null]);
-
-    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'custom_attributes.color', 'rot');
-
-    expect(filterListIds($component))->toBe([$red->id]);
-});
-
-it('filters a custom attribute path with an exact match on =', function (): void {
-    createColumnFilterJsonItemsTable();
-    ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['color' => 'dunkelrot']]);
-    $exact = ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['color' => 'rot']]);
-
-    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'custom_attributes.color', '=rot');
-
-    expect(filterListIds($component))->toBe([$exact->id]);
-});
-
-it('filters a numeric custom attribute path with comparison operators', function (): void {
-    createColumnFilterJsonItemsTable();
-    $cheap = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['price' => 5]]);
-    $expensive = ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['price' => 20]]);
-
-    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'custom_attributes.price', '>10');
-
-    expect(filterListIds($component))->toBe([$expensive->id]);
-
-    $component->call('setColumnFilter', 'custom_attributes.price', '<=5');
-    expect(filterListIds($component))->toBe([$cheap->id]);
-});
-
-it('filters a badge custom attribute path by option value', function (): void {
-    createColumnFilterJsonItemsTable();
-    $weekly = ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => ['cycle' => 'weekly']]);
-    ColumnFilterJsonItem::create(['name' => 'B', 'custom_attributes' => ['cycle' => 'monthly']]);
-
-    $component = Livewire::test(TestableJsonColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'custom_attributes.cycle', 'weekly');
-
-    expect(filterListIds($component))->toBe([$weekly->id]);
-});
-
-it('exposes json custom attribute paths as filterable', function (): void {
-    createColumnFilterJsonItemsTable();
-    ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => []]);
-
-    $component = Livewire::test(TestableJsonColumnFilterListComponent::class);
-    $listConfig = $component->instance()->with()['listConfig'];
-
-    expect($listConfig['filterableColumns'])->toBe([
-        'name',
-        'custom_attributes.color',
-        'custom_attributes.price',
-        'custom_attributes.cycle',
-    ]);
-});
-
-it('filters a relation column path with a like match by default', function (): void {
-    createColumnFilterRelationTables();
-    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
-    $hamburg = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
-    $match = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
-    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $hamburg->id]);
-    ColumnFilterRecord::create(['name' => 'C', 'owner_id' => null]);
-
-    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'owner.city', 'erli');
-
-    expect(filterListIds($component))->toBe([$match->id]);
-});
-
-it('filters a relation column path with an exact match on =', function (): void {
-    createColumnFilterRelationTables();
-    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
-    $berlinSuburb = ColumnFilterOwner::create(['city' => 'Berlin-Spandau', 'rating' => 3]);
-    $exact = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
-    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $berlinSuburb->id]);
-
-    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'owner.city', '=Berlin');
-
-    expect(filterListIds($component))->toBe([$exact->id]);
-});
-
-it('types a relation column from the schema of the related table', function (): void {
-    createColumnFilterRelationTables();
-    $low = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 3]);
-    $high = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
-    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $low->id]);
-    $match = ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $high->id]);
-
-    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'owner.rating', '>5');
-
-    expect(filterListIds($component))->toBe([$match->id]);
-});
-
-it('exposes relation column paths as filterable but ignores unknown ones', function (): void {
-    createColumnFilterRelationTables();
-    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
-
-    $component = Livewire::test(TestableRelationColumnFilterListComponent::class);
-    $listConfig = $component->instance()->with()['listConfig'];
-
-    expect($listConfig['filterableColumns'])->toBe([
-        'name',
-        'owner.city',
-        'owner.rating',
-    ]);
-});
-
-it('ignores filters on unresolvable relation paths', function (): void {
-    createColumnFilterRelationTables();
-    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
-    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
-    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => null]);
-
-    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'nope.city', 'Berlin');
-
-    expect(filterListIds($component))->toHaveCount(2);
-});
-
-it('hydrates a dotted relation filter from the url', function (): void {
-    createColumnFilterRelationTables();
-    $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
-    $hamburg = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
-    $match = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
-    ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $hamburg->id]);
-
-    $component = Livewire::withUrlParams(['cf' => ['owner.city' => 'Berlin']])
-        ->test(TestableRelationColumnFilterListComponent::class);
-
-    expect($component->get('listColumnFilters'))->toBe(['owner.city' => 'Berlin'])
-        ->and(filterListIds($component))->toBe([$match->id]);
-});
-
-it('keeps relation column paths unsortable', function (): void {
-    createColumnFilterRelationTables();
-    ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
-
-    $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
-        ->call('sortBy', 'owner.city');
-
-    expect($component->get('sortField'))->toBe('id');
-});
-
-it('persists column filters per component in the session and restores them', function (): void {
-    NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    NoerdUser::factory()->create(['name' => 'Blaukraut']);
-
-    Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', 'rot');
-
-    expect(session('listColumnFilters.testable-column-filter-list'))->toBe(['name' => 'rot']);
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class);
-    expect($component->get('listColumnFilters'))->toBe(['name' => 'rot'])
-        ->and(filterListIds($component))->toHaveCount(1);
-});
-
-it('clears a single column filter with an empty value', function (): void {
-    NoerdUser::factory()->count(2)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->call('clearColumnFilter', 'name');
-
-    expect($component->get('listColumnFilters'))->toBe([])
-        ->and(session('listColumnFilters.testable-column-filter-list'))->toBe([])
-        ->and(filterListIds($component))->toHaveCount(2);
-});
-
-it('resets pagination when a column filter is set', function (): void {
-    NoerdUser::factory()->count(3)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->set('perPage', 1)
-        ->call('setPage', 2)
-        ->call('setColumnFilter', 'name', 'a');
-
-    expect($component->instance()->paginators['page'] ?? 1)->toBe(1);
-});
-
-it('clears column filters via clearAllListFilters', function (): void {
-    NoerdUser::factory()->count(2)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->call('clearAllListFilters');
-
-    expect($component->get('listColumnFilters'))->toBe([])
-        ->and(session('listColumnFilters.testable-column-filter-list'))->toBeNull()
-        ->and(filterListIds($component))->toHaveCount(2);
-});
-
-it('does not apply column filters in compact embedded lists', function (): void {
-    NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    NoerdUser::factory()->create(['name' => 'Blaukraut']);
-
-    session(['listColumnFilters.testable-column-filter-list' => ['name' => 'rot']]);
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class, ['compact' => true]);
-
-    expect(filterListIds($component))->toHaveCount(2);
-});
-
-it('exposes only real non-dotted yaml columns as filterable', function (): void {
-    NoerdUser::factory()->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class);
-    $listConfig = $component->instance()->with()['listConfig'];
-
-    expect($listConfig['filterableColumns'])->toBe([
-        'name',
-        'email',
-        'super_admin',
-        'id',
-        'created_at',
-    ]);
-});
-
-it('hydrates column filters from the url and persists them to the session', function (): void {
-    $red = NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    NoerdUser::factory()->create(['name' => 'Blaukraut']);
-
-    $component = Livewire::withUrlParams(['cf' => ['name' => 'rot']])
-        ->test(TestableColumnFilterListComponent::class);
-
-    expect($component->get('listColumnFilters'))->toBe(['name' => 'rot'])
-        ->and(session('listColumnFilters.testable-column-filter-list'))->toBe(['name' => 'rot'])
-        ->and(filterListIds($component))->toBe([$red->id]);
-});
-
-it('lets url column filters win over the session state', function (): void {
-    NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    $blue = NoerdUser::factory()->create(['name' => 'Blaukraut']);
-
-    session(['listColumnFilters.testable-column-filter-list' => ['name' => 'rot']]);
-
-    $component = Livewire::withUrlParams(['cf' => ['name' => 'blau']])
-        ->test(TestableColumnFilterListComponent::class);
-
-    expect($component->get('listColumnFilters'))->toBe(['name' => 'blau'])
-        ->and(filterListIds($component))->toBe([$blue->id]);
-});
-
-it('ignores url column filters on compact embedded lists', function (): void {
-    NoerdUser::factory()->create(['name' => 'Rotkohl']);
-    NoerdUser::factory()->create(['name' => 'Blaukraut']);
-
-    $component = Livewire::withUrlParams(['cf' => ['name' => 'rot']])
-        ->test(TestableColumnFilterListComponent::class, ['compact' => true]);
-
-    expect(filterListIds($component))->toHaveCount(2);
-});
-
-it('renders funnel buttons only for filterable columns', function (): void {
-    $tenant = Tenant::factory()->create();
-    $user = NoerdUser::factory()->create();
-    TenantHelper::setSelectedTenantId($tenant->id);
-    TenantHelper::setSelectedApp('SETUP');
-    test()->actingAs($user);
-
-    $html = Livewire::test(TestableColumnFilterRenderComponent::class)->html();
-
-    expect($html)->toContain('column-filter-name-')
-        ->toContain('setColumnFilter')
-        ->not->toContain('column-filter-custom_attributes.color');
-});
-
-it('renders funnel buttons for json custom attribute columns', function (): void {
-    createColumnFilterJsonItemsTable();
-    $tenant = Tenant::factory()->create();
-    $user = NoerdUser::factory()->create();
-    TenantHelper::setSelectedTenantId($tenant->id);
-    TenantHelper::setSelectedApp('SETUP');
-    test()->actingAs($user);
-
-    $html = Livewire::test(TestableJsonColumnFilterRenderComponent::class)->html();
-
-    expect($html)->toContain('column-filter-custom_attributes.color-');
-});
-
-it('renders no funnel buttons in compact mode', function (): void {
-    $tenant = Tenant::factory()->create();
-    $user = NoerdUser::factory()->create();
-    TenantHelper::setSelectedTenantId($tenant->id);
-    TenantHelper::setSelectedApp('SETUP');
-    test()->actingAs($user);
-
-    $html = Livewire::test(TestableColumnFilterRenderComponent::class, ['compact' => true])->html();
-
-    expect($html)->not->toContain('column-filter-name-');
-});
-
-it('resolves active column filters into labeled header chips', function (): void {
-    NoerdUser::factory()->create(['name' => 'Rotkohl', 'super_admin' => true]);
-
-    $component = Livewire::test(TestableColumnFilterChipListComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->call('setColumnFilter', 'super_admin', '1')
-        ->call('setColumnFilter', 'email', 'open@example.com');
-
-    filterListIds($component);
-
-    expect($component->instance()->activeColumnFilterChips())->toBe([
-        ['field' => 'name', 'label' => 'Name', 'value' => 'rot'],
-        ['field' => 'super_admin', 'label' => 'Admin', 'value' => __('Yes')],
-        ['field' => 'email', 'label' => 'Status', 'value' => __('Open')],
-    ]);
-});
-
-it('resolves a bool zero filter chip to No', function (): void {
-    NoerdUser::factory()->create(['super_admin' => false]);
-
-    $component = Livewire::test(TestableColumnFilterChipListComponent::class)
-        ->call('setColumnFilter', 'super_admin', '0');
-
-    filterListIds($component);
-
-    expect($component->instance()->activeColumnFilterChips())->toBe([
-        ['field' => 'super_admin', 'label' => 'Admin', 'value' => __('No')],
-    ]);
-});
-
-it('returns no chips without active column filters', function (): void {
-    NoerdUser::factory()->create();
-
-    $component = Livewire::test(TestableColumnFilterChipListComponent::class);
-
-    expect($component->instance()->activeColumnFilterChips())->toBe([]);
-});
-
-it('renders active column filter chips in the list header', function (): void {
-    $tenant = Tenant::factory()->create();
-    $user = NoerdUser::factory()->create();
-    TenantHelper::setSelectedTenantId($tenant->id);
-    TenantHelper::setSelectedApp('SETUP');
-    test()->actingAs($user);
-
-    $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->html();
-
-    expect($html)->toContain('column-filter-chip-name')
-        ->toContain('clearColumnFilter');
-});
-
-it('keeps the header filters on one row and moves them into a drawer below lg', function (): void {
-    $tenant = Tenant::factory()->create();
-    $user = NoerdUser::factory()->create();
-    TenantHelper::setSelectedTenantId($tenant->id);
-    TenantHelper::setSelectedApp('SETUP');
-    test()->actingAs($user);
-
-    $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->html();
-
-    // Below `lg` the controls become a drawer opened by the funnel button; the
-    // header row itself never wraps onto a second line.
-    expect($html)->toContain('x-data="{ drawer: false }"')
-        ->toContain('drawer = true')
-        ->not->toContain('flex-wrap');
-});
-
-it('renders each header filter exactly once, drawer and header row sharing the element', function (): void {
-    $tenant = Tenant::factory()->create();
-    $user = NoerdUser::factory()->create();
-    TenantHelper::setSelectedTenantId($tenant->id);
-    TenantHelper::setSelectedApp('SETUP');
-    test()->actingAs($user);
-
-    $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
-        ->call('setColumnFilter', 'name', 'rot')
-        ->html();
-
-    // One chip, one wire:key — the drawer is the same container re-laid-out by CSS,
-    // not a second copy that would need its own key prefix.
-    expect(mb_substr_count($html, 'column-filter-chip-name'))->toBe(1);
+describe('rendering', function (): void {
+    beforeEach(function (): void {
+        $tenant = Tenant::factory()->create();
+        TenantHelper::setSelectedTenantId($tenant->id);
+        TenantHelper::setSelectedApp('SETUP');
+        $this->actingAs(NoerdUser::factory()->create());
+    });
+
+    it('renders funnel buttons only for filterable columns', function (): void {
+        $html = Livewire::test(TestableColumnFilterRenderComponent::class)->html();
+
+        expect($html)->toContain('column-filter-name-')
+            ->toContain('setColumnFilter')
+            ->not->toContain('column-filter-custom_attributes.color');
+    });
+
+    it('renders funnel buttons for json custom attribute columns', function (): void {
+        createColumnFilterJsonItemsTable();
+        $html = Livewire::test(TestableJsonColumnFilterRenderComponent::class)->html();
+
+        expect($html)->toContain('column-filter-custom_attributes.color-');
+    });
+
+    it('renders no funnel buttons in compact mode', function (): void {
+        $html = Livewire::test(TestableColumnFilterRenderComponent::class, ['compact' => true])->html();
+
+        expect($html)->not->toContain('column-filter-name-');
+    });
+
+    it('renders active column filter chips in the list header', function (): void {
+        $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
+            ->call('setColumnFilter', 'name', 'rot')
+            ->html();
+
+        expect($html)->toContain('column-filter-chip-name')
+            ->toContain('clearColumnFilter');
+    });
+
+    it('renders each header filter exactly once, drawer and header row sharing the element', function (): void {
+        $html = Livewire::test(TestableColumnFilterPageRenderComponent::class)
+            ->call('setColumnFilter', 'name', 'rot')
+            ->html();
+
+        // One chip, one wire:key — the drawer is the same container re-laid-out by CSS,
+        // not a second copy that would need its own key prefix.
+        expect(mb_substr_count($html, 'column-filter-chip-name'))->toBe(1);
+    });
 });
 
 /**
@@ -811,14 +736,3 @@ class TestableColumnFilterChipListComponent extends TestableColumnFilterListComp
         ];
     }
 }
-
-it('resets pagination when the search changes', function (): void {
-    NoerdUser::factory()->count(3)->create();
-
-    $component = Livewire::test(TestableColumnFilterListComponent::class)
-        ->set('perPage', 1)
-        ->call('setPage', 2)
-        ->set('search', 'a');
-
-    expect($component->instance()->paginators['page'] ?? 1)->toBe(1);
-});

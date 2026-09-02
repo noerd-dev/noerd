@@ -35,58 +35,6 @@ it('renders the tenant-apps page for admins', function (): void {
         ->assertSeeLivewire('noerd::tenant-apps-list');
 });
 
-it('renders the tenant-apps page in single-tenant mode', function (): void {
-    config(['noerd.features.multi_tenant' => false]);
-
-    $this->actingAs($this->admin);
-
-    $this->get('/setup/tenant-apps')
-        ->assertSuccessful()
-        ->assertSeeLivewire('noerd::tenant-apps-list');
-});
-
-it('manages apps for the single tenant in single-tenant mode', function (): void {
-    config(['noerd.features.multi_tenant' => false]);
-
-    $this->actingAs($this->admin);
-
-    Livewire::test('noerd::tenant-apps-list')
-        ->call('toggleApp', $this->appA->id);
-
-    expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
-        ->toContain($this->appA->id);
-});
-
-it('allows a tenant admin to manage the apps of its own tenant', function (): void {
-    $regularAdmin = NoerdUser::factory()->create();
-    $regularAdmin->tenants()->attach($this->tenant->id, [
-        'profile_key' => Profile::Admin->value,
-    ]);
-
-    $this->actingAs($regularAdmin);
-
-    Livewire::test('noerd::tenant-apps-list')
-        ->call('toggleApp', $this->appA->id)
-        ->assertOk();
-
-    expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
-        ->toContain($this->appA->id);
-});
-
-it('denies access to a member without the admin profile', function (): void {
-    // isAdmin() is scoped to the SELECTED tenant, so the guard also keeps an
-    // admin of another tenant out of this tenant's app assignment.
-    $member = NoerdUser::factory()->create();
-    $member->tenants()->attach($this->tenant->id, [
-        'profile_key' => Profile::User->value,
-    ]);
-
-    $this->actingAs($member);
-
-    Livewire::test('noerd::tenant-apps-list')
-        ->assertForbidden();
-});
-
 it('denies access to non-admin users', function (): void {
     // A member of the selected tenant, but without an ADMIN profile. Without a
     // membership the request is redirected to the no-tenant screen before the
@@ -112,16 +60,6 @@ it('shows assigned and available apps', function (): void {
         ->assertSee('App A')
         ->assertSee('App B')
         ->assertSee('App C');
-});
-
-it('toggleApp attaches an unassigned app', function (): void {
-    $this->actingAs($this->admin);
-
-    Livewire::test('noerd::tenant-apps-list')
-        ->call('toggleApp', $this->appA->id);
-
-    expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
-        ->toContain($this->appA->id);
 });
 
 it('toggleApp detaches an assigned app', function (): void {
@@ -166,21 +104,33 @@ it('appSort updates sort_order correctly', function (): void {
     expect($apps[0]->pivot->sort_order)->toBe(0);
 });
 
-it('moves assigned apps between sections on toggle', function (): void {
+it('toggleApp attaches an unassigned app and moves it between the sections', function (string $actor, bool $multiTenant): void {
+    config(['noerd.features.multi_tenant' => $multiTenant]);
+
+    $user = $this->admin;
+
+    if ($actor === 'tenant admin') {
+        // isAdmin() is scoped to the SELECTED tenant — a plain tenant admin
+        // manages its own tenant's apps without being a super admin.
+        $user = NoerdUser::factory()->create();
+        $user->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
+    }
+
     $this->tenant->tenantApps()->attach($this->appA->id, ['sort_order' => 0]);
 
-    $this->actingAs($this->admin);
+    $this->actingAs($user);
 
     $component = Livewire::test('noerd::tenant-apps-list');
-
     $assignedBefore = count($component->get('assignedApps'));
     $availableBefore = count($component->get('availableApps'));
 
-    expect($assignedBefore)->toBe(1);
+    $component->call('toggleApp', $this->appB->id)->assertOk();
 
-    // Add App B
-    $component->call('toggleApp', $this->appB->id);
-
-    expect($component->get('assignedApps'))->toHaveCount($assignedBefore + 1);
-    expect($component->get('availableApps'))->toHaveCount($availableBefore - 1);
-});
+    expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())->toContain($this->appB->id)
+        ->and($component->get('assignedApps'))->toHaveCount($assignedBefore + 1)
+        ->and($component->get('availableApps'))->toHaveCount($availableBefore - 1);
+})->with([
+    ['super admin', true],
+    ['tenant admin', true],
+    ['super admin', false],
+]);

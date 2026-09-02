@@ -94,3 +94,9 @@ it('resolves a page config path for an explicit app', function (): void {
 it('returns null from resolveConfigPath for a missing page yaml', function (): void {
     expect(StaticConfigHelper::resolveConfigPath('setup', 'page', 'zz-missing-page'))->toBeNull();
 });
+
+it('rejects a traversal app segment when resolving a config path', function (): void {
+    expect(StaticConfigHelper::resolveConfigPath('../../etc', 'list', 'x'))->toBeNull();
+    expect(StaticConfigHelper::resolveConfigPath('foo/bar', 'list', 'x'))->toBeNull();
+    expect(StaticConfigHelper::resolveConfigPath('..', 'detail', 'x'))->toBeNull();
+});

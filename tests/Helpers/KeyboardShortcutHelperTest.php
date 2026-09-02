@@ -7,15 +7,6 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
 
-it('provides default keyboard shortcuts via module config', function (): void {
-    expect(config('noerd.keyboard_shortcuts'))->toBe([
-        'search_focus' => 's',
-        'new_entry' => 'n',
-        'save' => 'ctrl+enter',
-        'delete' => 'ctrl+backspace',
-    ]);
-});
-
 it('returns correct JS and badge for simple key shortcut', function (): void {
     config()->set('noerd.keyboard_shortcuts.search_focus', 's');
 

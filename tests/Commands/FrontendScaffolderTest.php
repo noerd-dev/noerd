@@ -39,6 +39,16 @@ function actionFor(array $results, string $file): ?string
     return null;
 }
 
+/**
+ * The pins, entry points and CSS directives the scaffolder writes are declared as
+ * constants on the scaffolder itself — read them from there instead of repeating
+ * a version string that has to be updated in two places.
+ */
+function scaffolderConstant(string $name): mixed
+{
+    return (new ReflectionClass(FrontendScaffolder::class))->getConstant($name);
+}
+
 beforeEach(function (): void {
     File::deleteDirectory(scaffoldPath());
     File::ensureDirectoryExists(scaffoldPath());
@@ -73,15 +83,11 @@ describe('bare project', function (): void {
 
         expect($manifest['private'])->toBeTrue()
             ->and($manifest['type'])->toBe('module')
-            ->and($manifest['scripts']['dev'])->toBe('vite')
-            ->and($manifest['scripts']['build'])->toBe('vite build')
-            ->and($manifest['devDependencies'])->toHaveKeys([
-                'vite',
-                'laravel-vite-plugin',
-                'tailwindcss',
-                '@tailwindcss/vite',
-                '@tailwindcss/forms',
-            ]);
+            ->and($manifest['scripts'])->toMatchArray(scaffolderConstant('SCRIPTS'))
+            ->and($manifest['devDependencies'])->toHaveKeys(array_merge(
+                array_keys(scaffolderConstant('BUILD_PACKAGES')),
+                array_keys(scaffolderConstant('TAILWIND_PACKAGES')),
+            ));
     });
 
     it('writes a vite config with both entry points and the tailwind plugin', function (): void {
@@ -89,34 +95,35 @@ describe('bare project', function (): void {
 
         expect($config)->toContain("import laravel from 'laravel-vite-plugin';")
             ->toContain("import tailwindcss from '@tailwindcss/vite';")
-            ->toContain("'resources/css/app.css'")
-            ->toContain("'resources/js/app.js'")
+            ->toContain("'" . FrontendScaffolder::CSS_ENTRY . "'")
+            ->toContain("'" . FrontendScaffolder::JS_ENTRY . "'")
             ->toContain('refresh: true')
             ->toContain('tailwindcss(),');
     });
 
     it('writes a css entry that imports tailwind, the noerd theme and the noerd sources', function (): void {
-        $css = File::get(scaffoldPath('resources/css/app.css'));
+        $css = File::get(scaffoldPath(FrontendScaffolder::CSS_ENTRY));
+        $tailwindImport = scaffolderConstant('TAILWIND_CSS_IMPORT');
+        $noerdImport = scaffolderConstant('NOERD_CSS_IMPORT');
 
-        expect($css)->toContain("@import 'tailwindcss';")
-            ->toContain("@import '../../vendor/noerd/noerd/resources/css/noerd.css';")
-            ->toContain("@plugin '@tailwindcss/forms';")
-            ->toContain("@source '../views';")
-            ->toContain("@source '../../vendor/noerd/modal/resources/views';")
-            ->toContain("@source '../../vendor/noerd/noerd/resources/views';");
+        expect($css)->toContain($tailwindImport)->toContain($noerdImport);
+
+        foreach (scaffolderConstant('CSS_LINES') as $line) {
+            expect($css)->toContain($line);
+        }
 
         // The noerd theme must override Tailwind's defaults, so it follows the tailwind import.
-        expect(mb_strpos($css, '/noerd.css'))->toBeGreaterThan(mb_strpos($css, "@import 'tailwindcss';"));
+        expect(mb_strpos($css, $noerdImport))->toBeGreaterThan(mb_strpos($css, $tailwindImport));
     });
 
     it('reports every written package as still to be installed', function (): void {
-        expect($this->scaffolder->missingNpmPackages())->toContain(
-            'vite@^8.0',
-            'laravel-vite-plugin@^3.0',
-            'tailwindcss@^4.1',
-            '@tailwindcss/vite@^4.1',
-            '@tailwindcss/forms@^0.5.11',
-        );
+        $expected = [];
+
+        foreach (array_merge(scaffolderConstant('BUILD_PACKAGES'), scaffolderConstant('TAILWIND_PACKAGES')) as $package => $version) {
+            $expected[] = $package . '@' . $version;
+        }
+
+        expect($this->scaffolder->missingNpmPackages())->toContain(...$expected);
     });
 
     it('does not generate a tailwind config or a @config bridge', function (): void {
@@ -308,8 +315,7 @@ describe('node compatibility', function (): void {
 
         $manifest = json_decode(File::get(scaffoldPath('package.json')), true);
 
-        expect($manifest['devDependencies']['vite'])->toBe('^8.0')
-            ->and($manifest['devDependencies']['laravel-vite-plugin'])->toBe('^3.0');
+        expect($manifest['devDependencies'])->toMatchArray(scaffolderConstant('BUILD_PACKAGES'));
     })->with(['v20.19.0', 'v22.12.0', 'v22.22.1', 'v24.0.0']);
 
     it('falls back to the previous major pair on an unsupported node version', function (string $version): void {
@@ -320,8 +326,7 @@ describe('node compatibility', function (): void {
 
         $manifest = json_decode(File::get(scaffoldPath('package.json')), true);
 
-        expect($manifest['devDependencies']['vite'])->toBe('^7.0')
-            ->and($manifest['devDependencies']['laravel-vite-plugin'])->toBe('^2.0');
+        expect($manifest['devDependencies'])->toMatchArray(scaffolderConstant('LEGACY_BUILD_PACKAGES'));
 
         expect(collect($results)->firstWhere('file', 'package.json')['detail'])->toContain($version);
     })->with(['v18.20.0', 'v20.9.0', 'v21.7.3', 'v22.11.0']);
@@ -331,7 +336,7 @@ describe('node compatibility', function (): void {
 
         $manifest = json_decode(File::get(scaffoldPath('package.json')), true);
 
-        expect($manifest['devDependencies']['vite'])->toBe('^8.0');
+        expect($manifest['devDependencies'])->toMatchArray(scaffolderConstant('BUILD_PACKAGES'));
     });
 });
 
