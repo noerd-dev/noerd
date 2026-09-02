@@ -42,8 +42,9 @@ trait RequiresNoerdInstallation
      * Assign a specific app to selected tenants
      *
      * @param  string  $appName  The name/key of the TenantApp (e.g., 'BUSINESS-HOURS')
+     * @param  bool  $compact  Only the selection and the final count — no header, no per-tenant lines
      */
-    protected function assignAppToTenants(string $appName): void
+    protected function assignAppToTenants(string $appName, bool $compact = false): void
     {
         $app = TenantApp::where('name', $appName)->first();
 
@@ -75,10 +76,12 @@ trait RequiresNoerdInstallation
         // Default to all tenants selected
         $allTenantIds = $tenants->pluck('id')->toArray();
 
-        $this->line('');
-        $this->info("Assign '{$app->title}' to tenants:");
-        $this->comment('Use ↑/↓ to navigate, Space to select, Enter to confirm');
-        $this->line('');
+        if (! $compact) {
+            $this->line('');
+            $this->info("Assign '{$app->title}' to tenants:");
+            $this->comment('Use ↑/↓ to navigate, Space to select, Enter to confirm');
+            $this->line('');
+        }
 
         $selectedTenantIds = multiselect(
             label: "Which tenants should '{$app->title}' be assigned to?",
@@ -94,15 +97,21 @@ trait RequiresNoerdInstallation
 
             if ($isSelected && ! $wasAssigned) {
                 $tenant->tenantApps()->attach($app->id);
-                $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
+                if (! $compact) {
+                    $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
+                }
             } elseif (! $isSelected && $wasAssigned) {
                 $tenant->tenantApps()->detach($app->id);
-                $this->line("<comment>✗ '{$app->title}' removed from '{$tenant->name}'</comment>");
+                if (! $compact) {
+                    $this->line("<comment>✗ '{$app->title}' removed from '{$tenant->name}'</comment>");
+                }
             }
         }
 
         $finalCount = $app->fresh()->tenants()->count();
-        $this->line('');
+        if (! $compact) {
+            $this->line('');
+        }
         $this->info("'{$app->title}' is now assigned to {$finalCount} tenant(s).");
     }
 }

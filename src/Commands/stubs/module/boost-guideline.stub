@@ -7,17 +7,18 @@ tests, translations) come from the `noerd/noerd` guideline — this block only a
 to this module.
 
 ### Purpose
-- Describe what the module manages here (main model: `{{Model}}`, table `{{table}}`).
+- Describe what the module manages here.
 
 ### Structure
-- Models: `src/Models/` (`{{Model}}`), `$guarded = []`, `BelongsToTenant`
-- Livewire components (flat, in `resources/views/components/`): `{{models}}-list.blade.php`,
-  `{{model}}-detail.blade.php` — Livewire namespace `{{module-name}}::`
-- YAML: `app-configs/{{module-name}}/lists/{{models}}-list.yml`,
-  `app-configs/{{module-name}}/details/{{model}}-detail.yml`, `app-configs/{{module-name}}/navigation.yml`
+- Models: `src/Models/` — `$guarded = []`, `BelongsToTenant`, tables prefixed with the module key
+  (`{{table-prefix}}_{entities}`), migrations in `database/migrations/`
+- Livewire components (flat, in `resources/views/components/`): `{{module-name}}-dashboard.blade.php`
+  plus the `*-list` / `*-detail` / `*-page` components generated with
+  `php artisan noerd:make-resource {Model} --app={{module-name}}` — Livewire namespace `{{module-name}}::`
+- YAML: `app-configs/{{module-name}}/{lists,details,pages}/` and `app-configs/{{module-name}}/navigation.yml`
   — keep the module copy and the installed project copy (`app-configs/{{module-name}}/…`) in sync
 - Routes: `routes/{{module-name}}-routes.php` — middleware `['noerd', 'app-access:{{module-name}}']`, names
-  `{{module-name}}` (dashboard), `{{module-name}}.{{models}}` (list) and `{{module-name}}.{{model}}.detail` (record route used by
+  `{{module-name}}` (dashboard), `{{module-name}}.{entities}` (list) and `{{module-name}}.{entity}.detail` (record route used by
   route modals)
 - Tenant app name is `{{MODULE_KEY}}` (uppercase) — gates and test traits compare exactly
 - Translations: `resources/lang/de.json` (English keys)
@@ -27,6 +28,8 @@ to this module.
 - `php artisan noerd:install-{{module-name}}` — installs YAML configs, registers the tenant app, runs migrations
 - `php artisan noerd:update-{{module-name}}` — idempotent update of the YAML configs (picked up by
   `noerd:update-all`)
+- `php artisan noerd:make-resource {Model} --app={{module-name}}` — generates list + detail (Blade, YAML,
+  routes, navigation) for a model of this module
 
 ### Tests
 - Pest tests in `tests/`; run with `php artisan test --compact app-modules/{{module-name}}/tests`

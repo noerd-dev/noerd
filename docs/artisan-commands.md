@@ -224,9 +224,12 @@ php artisan noerd:create-tenant
 ## noerd:create-app
 
 Creates a new app (TenantApp) that can be assigned to tenants. Without options the command runs as
-an interactive wizard. Every app comes with its own dashboard: the command runs
-`noerd:make-dashboard` for the new app and stores the generated `{app}.dashboard` route as the
-app's main route (see [Create an App](create-app.md)).
+an interactive wizard that first asks whether the app lives in the **project** or becomes a
+**module** under `app-modules/{app}` (see [Create an App](create-app.md)). Every app comes with
+its own dashboard: in the project the command runs `noerd:make-dashboard` and stores the generated
+`{app}.dashboard` route as the app's main route; in module mode it hands the scaffold to
+`noerd:module`, registers the package with Composer and runs the generated `noerd:install-{app}`
+in its silent scaffold mode (only the tenant assignment is asked).
 
 ```bash
 php artisan noerd:create-app
@@ -237,8 +240,9 @@ php artisan noerd:create-app
 | `--title=` | The display title of the app |
 | `--name=` | The unique name identifier of the app (uppercase) |
 | `--icon=` | The icon identifier stored on the app, in the form `heroicon:outline:{name}` (e.g. `heroicon:outline:users`); the wizard offers a searchable Heroicon picker |
-| `--route=` | Open an existing route (e.g. `inventory.index`) instead of generating a dashboard |
-| `--active=1` | Whether the app is active (`1` or `0`) |
+| `--route=` | Open an existing route (e.g. `inventory.index`) instead of generating a dashboard (project only) |
+| `--active=1` | Whether the app is active (`1` or `0`; project only) |
+| `--module` | Scaffold the app as a module in `app-modules/{app}` instead of the project root |
 
 ## noerd:assign-apps-to-tenant
 
@@ -254,15 +258,28 @@ php artisan noerd:assign-apps-to-tenant
 
 ## noerd:module
 
-Creates a new module with complete directory structure, including model, migration, Livewire
-components, YAML configurations, translations, the install and update commands, and the
-ServiceProvider.
+Creates a new module with its directory structure, dashboard, routes, navigation, translations,
+the tenant-app migration stub, the install and update commands and the ServiceProvider. It
+generates no model — record types are added with `noerd:make-resource {Model} --app={module}`.
+`noerd:create-app` uses it for the module mode.
 
 ```bash
 php artisan noerd:module
 # or with module name
 php artisan noerd:module inventory
+# fully scripted
+php artisan noerd:module inventory --title="Inventory" --icon=cube
 ```
+
+| Option | Description |
+|--------|-------------|
+| `--title=` | The display title of the tenant app (default: the module name as a headline) |
+| `--icon=` | The heroicon of the tenant app, as a name (`cube`) or in the stored form (`heroicon:outline:cube`); required in non-interactive runs |
+| `--no-hints` | Do not print the next steps (`noerd:create-app` runs them itself) |
+
+The generated `noerd:install-{module}` command accepts `--scaffold` besides `--force`: the silent
+run `noerd:create-app` uses right after the scaffold — configs are published, the app registered,
+and the only question is the tenant assignment (no migration or `npm run build` prompt).
 
 See [Creating Modules](creating-modules.md) for the generated structure.
 
@@ -305,6 +322,15 @@ The command creates four files:
   `Route::middleware(['noerd', 'app-access:{app}'])`; the list is annotated with the detail route
   so rows open as route modals
 - **Navigation** — Adds a navigation entry to `app-configs/{app}/navigation.yml`
+
+### Module apps
+
+When the app is a module (`app-modules/{app}/composer.json` exists), every `noerd:make-*`
+generator targets the module instead of the project root: Blade components go into
+`app-modules/{app}/resources/views/components/` and are referenced with the `{app}::` Livewire
+namespace, routes are appended to `app-modules/{app}/routes/{app}-routes.php`, and YAML files and
+navigation entries are written into **both** copies (`app-modules/{app}/app-configs/{app}/` and
+`app-configs/{app}/`). See [Creating Modules](creating-modules.md#adding-resources).
 
 ### Interactive app selection
 
@@ -376,7 +402,8 @@ php artisan noerd:make-page sent-mails --app=inventory
 Generates a dashboard Blade file for an app (`resources/views/components/{app}-dashboard.blade.php`),
 adds the `{app}.dashboard` route to `routes/web.php` (inside the `noerd` + `app-access:{app}`
 middleware group) and links it from the app's `navigation.yml` — creating the navigation file when
-the app has none yet. `noerd:create-app` runs this command automatically for every new app.
+the app has none yet. `noerd:create-app` runs this command automatically for every new app in the
+project (a module gets its dashboard from `noerd:module`).
 
 ```bash
 php artisan noerd:make-dashboard --app=inventory

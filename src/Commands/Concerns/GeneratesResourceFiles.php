@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 
 use Noerd\Models\TenantApp;
+use Symfony\Component\Yaml\Yaml;
 
 trait GeneratesResourceFiles
 {
@@ -86,6 +87,15 @@ trait GeneratesResourceFiles
 
     /** Name of the detail route once addDetailRoute() confirmed it exists. */
     protected ?string $detailRouteName = null;
+
+    /**
+     * The module directory when the selected app is a module (app-modules/{app}
+     * with a composer.json); null when the app lives in the project root.
+     */
+    protected ?string $moduleDir = null;
+
+    /** Livewire namespace prefix of the generated components (`{app}::` for a module). */
+    protected string $componentPrefix = '';
 
     protected function getStubPath(): string
     {
@@ -198,6 +208,8 @@ trait GeneratesResourceFiles
                 $this->appName = $this->appConfigName;
             }
 
+            $this->resolveModuleTarget();
+
             return self::SUCCESS;
         }
 
@@ -216,7 +228,106 @@ trait GeneratesResourceFiles
             $this->appName = $this->appConfigName;
         }
 
+        $this->resolveModuleTarget();
+
         return self::SUCCESS;
+    }
+
+    /**
+     * An app scaffolded as a module (noerd:create-app → Module / noerd:module) owns
+     * its files: Blade components go into the module (Livewire namespace `{app}::`),
+     * routes into `routes/{app}-routes.php`, YAML and navigation into the module
+     * copy AND the installed project copy. Everything else targets the project root.
+     */
+    protected function resolveModuleTarget(): void
+    {
+        $modulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
+        $moduleDir = "{$modulesPath}/{$this->appConfigName}";
+
+        if (! $this->filesystem->exists("{$moduleDir}/composer.json")) {
+            $this->moduleDir = null;
+            $this->componentPrefix = '';
+
+            return;
+        }
+
+        $this->moduleDir = $moduleDir;
+        $this->componentPrefix = "{$this->appConfigName}::";
+        $this->line("<comment>Target:</comment> module app-modules/{$this->appConfigName}");
+    }
+
+    protected function bladeBasePath(): string
+    {
+        return $this->moduleDir
+            ? "{$this->moduleDir}/resources/views/components"
+            : base_path('resources/views/components');
+    }
+
+    protected function routeFilePath(): string
+    {
+        return $this->moduleDir
+            ? "{$this->moduleDir}/routes/{$this->appConfigName}-routes.php"
+            : base_path('routes/web.php');
+    }
+
+    /** The route file as shown in prompts and messages. */
+    protected function routeFileDisplay(): string
+    {
+        return $this->moduleDir
+            ? "app-modules/{$this->appConfigName}/routes/{$this->appConfigName}-routes.php"
+            : 'routes/web.php';
+    }
+
+    /**
+     * Every app-config directory a YAML file is written to — the module copy first
+     * (the template the install command publishes), then the installed project copy.
+     *
+     * @return array<int, string>
+     */
+    protected function yamlBasePaths(): array
+    {
+        $paths = [];
+
+        if ($this->moduleDir) {
+            $paths[] = "{$this->moduleDir}/app-configs/{$this->appConfigName}";
+        }
+
+        $paths[] = base_path("app-configs/{$this->appConfigName}");
+
+        return $paths;
+    }
+
+    /**
+     * Write a YAML file into every app-config copy. Returns the first written path,
+     * or '' when the file already exists in every copy.
+     */
+    protected function writeYaml(string $relative, string $content): string
+    {
+        $written = '';
+
+        foreach ($this->yamlBasePaths() as $base) {
+            $path = "{$base}/{$relative}";
+
+            if ($this->checkFileExists($path)) {
+                continue;
+            }
+
+            $this->filesystem->ensureDirectoryExists(dirname($path));
+            $this->filesystem->put($path, $content);
+            $this->line("<info>Created:</info> {$path}");
+
+            $written = $written === '' ? $path : $written;
+        }
+
+        return $written;
+    }
+
+    /** The route content read from the route file (an empty string when it does not exist yet). */
+    protected function routeFileContent(): string
+    {
+        $routeFile = $this->routeFilePath();
+
+        return $this->filesystem->exists($routeFile) ? $this->filesystem->get($routeFile) : '';
     }
 
     protected function readColumns(): int
@@ -284,6 +395,7 @@ trait GeneratesResourceFiles
                 '{{ModelTitle}}',
                 '{{entity}}',
                 '{{entities}}',
+                '{{ns}}',
             ],
             [
                 $this->modelClass ?? '',
@@ -291,6 +403,7 @@ trait GeneratesResourceFiles
                 Str::headline($this->entity),
                 $this->entity,
                 $this->entities,
+                $this->componentPrefix,
             ],
             $content,
         );
@@ -366,8 +479,7 @@ trait GeneratesResourceFiles
 
     protected function createListBlade(): string
     {
-        $bladeBase = base_path('resources/views/components');
-        $path = "{$bladeBase}/{$this->entities}-list.blade.php";
+        $path = "{$this->bladeBasePath()}/{$this->entities}-list.blade.php";
 
         if ($this->checkFileExists($path)) {
             return '';
@@ -382,8 +494,7 @@ trait GeneratesResourceFiles
 
     protected function createDetailBlade(): string
     {
-        $bladeBase = base_path('resources/views/components');
-        $path = "{$bladeBase}/{$this->entity}-detail.blade.php";
+        $path = "{$this->bladeBasePath()}/{$this->entity}-detail.blade.php";
 
         if ($this->checkFileExists($path)) {
             return '';
@@ -398,8 +509,7 @@ trait GeneratesResourceFiles
 
     protected function createPageBlade(): string
     {
-        $bladeBase = base_path('resources/views/components');
-        $path = "{$bladeBase}/{$this->entity}-page.blade.php";
+        $path = "{$this->bladeBasePath()}/{$this->entity}-page.blade.php";
 
         if ($this->checkFileExists($path)) {
             return '';
@@ -423,17 +533,10 @@ trait GeneratesResourceFiles
             return '';
         }
 
-        $path = base_path("app-configs/{$this->appConfigName}/pages/{$this->entity}-page.yml");
-
-        if ($this->checkFileExists($path)) {
-            return '';
-        }
-
-        $this->filesystem->ensureDirectoryExists(dirname($path));
-        $this->filesystem->put($path, "title: " . Str::headline($this->entity) . "\ndetail: {$this->entity}-detail\n");
-        $this->line("<info>Created:</info> {$path}");
-
-        return $path;
+        return $this->writeYaml(
+            "pages/{$this->entity}-page.yml",
+            'title: ' . Str::headline($this->entity) . "\ndetail: {$this->componentPrefix}{$this->entity}-detail\n",
+        );
     }
 
     /**
@@ -442,8 +545,13 @@ trait GeneratesResourceFiles
      */
     protected function appendRoute(string $route): void
     {
-        $routeFile = base_path('routes/web.php');
+        $routeFile = $this->routeFilePath();
         $group = "Route::middleware(['noerd', 'app-access:{$this->appConfigName}'])->group(function (): void {\n    {$route}\n});";
+
+        if (! $this->filesystem->exists($routeFile)) {
+            $this->filesystem->ensureDirectoryExists(dirname($routeFile));
+            $this->filesystem->put($routeFile, "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n");
+        }
 
         $this->filesystem->append($routeFile, "\n{$group}\n");
         $this->line("<info>Route added:</info> {$route}");
@@ -451,20 +559,19 @@ trait GeneratesResourceFiles
 
     protected function addPageRoute(): void
     {
-        $routeFile = base_path('routes/web.php');
-        $content = $this->filesystem->get($routeFile);
+        $content = $this->routeFileContent();
 
         $routeName = "{$this->appConfigName}.{$this->entity}";
 
         if (str_contains($content, "'{$routeName}'")) {
-            $this->warn("Route '{$routeName}' already exists in routes/web.php — skipping.");
+            $this->warn("Route '{$routeName}' already exists in {$this->routeFileDisplay()} — skipping.");
 
             return;
         }
 
-        $route = "Route::livewire('{$this->appConfigName}/{$this->entity}', '{$this->entity}-page')->name('{$routeName}');";
+        $route = "Route::livewire('{$this->appConfigName}/{$this->entity}', '{$this->componentPrefix}{$this->entity}-page')->name('{$routeName}');";
 
-        if (! $this->confirm("Add page route to routes/web.php?\n  <comment>{$route}</comment>", true)) {
+        if (! $this->confirm("Add page route to {$this->routeFileDisplay()}?\n  <comment>{$route}</comment>", true)) {
             return;
         }
 
@@ -473,52 +580,29 @@ trait GeneratesResourceFiles
 
     protected function createListYaml(): string
     {
-        $yamlBase = base_path("app-configs/{$this->appConfigName}");
-        $path = "{$yamlBase}/lists/{$this->entities}-list.yml";
-
-        if ($this->checkFileExists($path)) {
-            return '';
-        }
-
-        $this->filesystem->ensureDirectoryExists(dirname($path));
-        $this->filesystem->put($path, $this->generateListYaml());
-        $this->line("<info>Created:</info> {$path}");
-
-        return $path;
+        return $this->writeYaml("lists/{$this->entities}-list.yml", $this->generateListYaml());
     }
 
     protected function createDetailYaml(): string
     {
-        $yamlBase = base_path("app-configs/{$this->appConfigName}");
-        $path = "{$yamlBase}/details/{$this->entity}-detail.yml";
-
-        if ($this->checkFileExists($path)) {
-            return '';
-        }
-
-        $this->filesystem->ensureDirectoryExists(dirname($path));
-        $this->filesystem->put($path, $this->generateDetailYaml());
-        $this->line("<info>Created:</info> {$path}");
-
-        return $path;
+        return $this->writeYaml("details/{$this->entity}-detail.yml", $this->generateDetailYaml());
     }
 
     protected function addListRoute(): void
     {
-        $routeFile = base_path('routes/web.php');
-        $content = $this->filesystem->get($routeFile);
+        $content = $this->routeFileContent();
 
         $listRouteName = "{$this->appConfigName}.{$this->entities}";
 
         if (str_contains($content, "'{$listRouteName}'")) {
-            $this->warn("Route '{$listRouteName}' already exists in routes/web.php — skipping.");
+            $this->warn("Route '{$listRouteName}' already exists in {$this->routeFileDisplay()} — skipping.");
 
             return;
         }
 
-        $listRoute = "Route::livewire('{$this->appConfigName}/{$this->entities}', '{$this->entities}-list')->name('{$listRouteName}');";
+        $listRoute = "Route::livewire('{$this->appConfigName}/{$this->entities}', '{$this->componentPrefix}{$this->entities}-list')->name('{$listRouteName}');";
 
-        if (! $this->confirm("Add list route to routes/web.php?\n  <comment>{$listRoute}</comment>", true)) {
+        if (! $this->confirm("Add list route to {$this->routeFileDisplay()}?\n  <comment>{$listRoute}</comment>", true)) {
             return;
         }
 
@@ -528,21 +612,20 @@ trait GeneratesResourceFiles
     /** Returns true when the detail route exists afterwards (added now or already present). */
     protected function addDetailRoute(): bool
     {
-        $routeFile = base_path('routes/web.php');
-        $content = $this->filesystem->get($routeFile);
+        $content = $this->routeFileContent();
 
         $detailRouteName = "{$this->appConfigName}.{$this->entity}.detail";
 
         if (str_contains($content, "'{$detailRouteName}'")) {
-            $this->warn("Route '{$detailRouteName}' already exists in routes/web.php — skipping.");
+            $this->warn("Route '{$detailRouteName}' already exists in {$this->routeFileDisplay()} — skipping.");
             $this->detailRouteName = $detailRouteName;
 
             return true;
         }
 
-        $detailRoute = "Route::livewire('{$this->appConfigName}/{$this->entity}/{modelId}', '{$this->entity}-detail')->name('{$detailRouteName}');";
+        $detailRoute = "Route::livewire('{$this->appConfigName}/{$this->entity}/{modelId}', '{$this->componentPrefix}{$this->entity}-detail')->name('{$detailRouteName}');";
 
-        if (! $this->confirm("Add detail route to routes/web.php?\n  <comment>{$detailRoute}</comment>\n  <info>Note: The component can also be used as a modal without a dedicated route.</info>", true)) {
+        if (! $this->confirm("Add detail route to {$this->routeFileDisplay()}?\n  <comment>{$detailRoute}</comment>\n  <info>Note: The component can also be used as a modal without a dedicated route.</info>", true)) {
             return false;
         }
 
@@ -564,7 +647,7 @@ trait GeneratesResourceFiles
         }
 
         $content = $this->filesystem->get($listBladePath);
-        $componentLine = "    public \$detailComponent = '{$this->entity}-detail';";
+        $componentLine = "    public \$detailComponent = '{$this->componentPrefix}{$this->entity}-detail';";
 
         if (! str_contains($content, $componentLine) || str_contains($content, '$detailRoute')) {
             return;
@@ -579,49 +662,88 @@ trait GeneratesResourceFiles
         $this->line("<info>Detail route declared on:</info> {$listBladePath}");
     }
 
+    /**
+     * Append the entry to the last block of every navigation copy. The file is
+     * parsed and dumped again rather than appended as text: an installed copy is
+     * written by the install command with `hidden:` as its LAST key, so text
+     * appended after it would be read as part of that value.
+     */
     protected function addNavigation(bool $useSingularRoute = false): void
     {
-        $navPaths = [
-            base_path("app-configs/{$this->appConfigName}/navigation.yml"),
-        ];
-
-        foreach ($navPaths as $navPath) {
-            if (! $this->filesystem->exists($navPath)) {
-                $this->warn("Navigation file not found: {$navPath} — skipping.");
-
-                continue;
-            }
-
-            $content = $this->filesystem->get($navPath);
-
-            $routeEntity = $useSingularRoute ? $this->entity : $this->entities;
-
-            if (str_contains($content, "route: {$this->appConfigName}.{$routeEntity}")) {
-                $this->warn("Navigation entry for '{$this->appConfigName}.{$routeEntity}' already exists in {$navPath} — skipping.");
-
-                continue;
-            }
-
-            $entitiesHeadline = Str::headline($this->entities);
-            $navEntry = "        - title: {$entitiesHeadline}\n"
-                . "          route: {$this->appConfigName}.{$routeEntity}\n"
-                . "          heroicon: rectangle-stack";
-
-            if (! $useSingularRoute) {
-                // newRoute wins when registered, newComponent stays as the fallback.
-                if ($this->detailRouteName !== null) {
-                    $navEntry .= "\n          newRoute: {$this->detailRouteName}";
+        $navPaths = array_filter(
+            array_map(fn(string $base): string => "{$base}/navigation.yml", $this->yamlBasePaths()),
+            function (string $navPath): bool {
+                if ($this->filesystem->exists($navPath)) {
+                    return true;
                 }
 
-                $navEntry .= "\n          newComponent: {$this->entity}-detail";
+                $this->warn("Navigation file not found: {$navPath} — skipping.");
+
+                return false;
+            },
+        );
+
+        if ($navPaths === []) {
+            return;
+        }
+
+        $routeEntity = $useSingularRoute ? $this->entity : $this->entities;
+        $routeName = "{$this->appConfigName}.{$routeEntity}";
+
+        $entry = [
+            'title' => Str::headline($this->entities),
+            'route' => $routeName,
+            'heroicon' => 'rectangle-stack',
+        ];
+
+        if (! $useSingularRoute) {
+            // newRoute wins when registered, newComponent stays as the fallback.
+            if ($this->detailRouteName !== null) {
+                $entry['newRoute'] = $this->detailRouteName;
             }
 
-            if (! $this->confirm("Add navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>", true)) {
+            $entry['newComponent'] = "{$this->componentPrefix}{$this->entity}-detail";
+        }
+
+        $preview = Yaml::dump([$entry], 10, 2, Yaml::DUMP_COMPACT_NESTED_MAPPING);
+
+        // One confirmation covers every copy (module template + installed project copy).
+        if (! $this->confirm("Add navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$preview}</comment>", true)) {
+            return;
+        }
+
+        foreach ($navPaths as $navPath) {
+            $navigation = Yaml::parse($this->filesystem->get($navPath));
+
+            if (! is_array($navigation) || ! isset($navigation[0]) || ! is_array($navigation[0])) {
+                $this->warn("Navigation file has no app block: {$navPath} — skipping.");
+
                 continue;
             }
 
-            $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
-            $this->filesystem->put($navPath, $content);
+            $blocks = $navigation[0]['block_menus'] ?? [];
+            $existingRoutes = [];
+            foreach ($blocks as $block) {
+                foreach ($block['navigations'] ?? [] as $existing) {
+                    $existingRoutes[] = $existing['route'] ?? null;
+                }
+            }
+
+            if (in_array($routeName, $existingRoutes, true)) {
+                $this->warn("Navigation entry for '{$routeName}' already exists in {$navPath} — skipping.");
+
+                continue;
+            }
+
+            if ($blocks === []) {
+                $blocks[] = ['title' => 'Overview', 'navigations' => []];
+            }
+
+            $lastBlock = array_key_last($blocks);
+            $blocks[$lastBlock]['navigations'][] = $entry;
+            $navigation[0]['block_menus'] = $blocks;
+
+            $this->filesystem->put($navPath, Yaml::dump($navigation, 10, 2, Yaml::DUMP_COMPACT_NESTED_MAPPING));
             $this->line("<info>Navigation added to:</info> {$navPath}");
         }
     }

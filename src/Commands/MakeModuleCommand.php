@@ -11,15 +11,28 @@ use Illuminate\Support\Str;
 
 use function Laravel\Prompts\text;
 
+use Noerd\Commands\Concerns\AsksForHeroicon;
 use Noerd\Traits\RequiresNoerdInstallation;
 
+/**
+ * Scaffolds a module: the Composer package, the ServiceProvider, the install/update
+ * commands, the tenant-app migration stub, the dashboard, routes, navigation,
+ * translations and the agent guidelines. Models and their list/detail screens are
+ * NOT part of the scaffold — they are generated per model with
+ * `noerd:make-resource {Model} --app={module}` once the model exists.
+ */
 class MakeModuleCommand extends Command
 {
+    use AsksForHeroicon;
     use RequiresNoerdInstallation;
 
-    protected $signature = 'noerd:module {name? : The name of the module}';
+    protected $signature = 'noerd:module
+                            {name? : The name of the module}
+                            {--title= : The display title of the tenant app}
+                            {--icon= : The heroicon of the tenant app (name or heroicon:outline:name)}
+                            {--no-hints : Do not print the next steps (noerd:create-app runs them itself)}';
 
-    protected $description = 'Create a new Noerd module with complete directory structure';
+    protected $description = 'Create a new Noerd module with dashboard, install/update commands and directory structure';
 
     protected Filesystem $filesystem;
 
@@ -27,11 +40,9 @@ class MakeModuleCommand extends Command
 
     protected string $moduleNameStudly;
 
-    protected string $modelName;
+    protected string $appTitle;
 
-    protected string $modelNameStudly;
-
-    protected string $modelNamePlural;
+    protected string $appIcon;
 
     protected string $basePath;
 
@@ -53,7 +64,7 @@ class MakeModuleCommand extends Command
 
         // Get module name
         $name = $this->argument('name') ?? text(
-            label: 'What is the name of the module?',
+            label: 'Module name (e.g. inventory, business-hours)',
             placeholder: 'inventory',
             required: true,
         );
@@ -62,20 +73,24 @@ class MakeModuleCommand extends Command
         $this->moduleNameStudly = Str::studly($name);
         $this->basePath = base_path('app-modules/' . $this->moduleName);
 
-        // Get model name
-        $modelInput = text(
-            label: 'What is the main model name? (singular)',
-            placeholder: 'item',
-            default: Str::singular($this->moduleName),
+        // The tenant app the install command registers: title and heroicon. A module
+        // ships no icon file — the app icon is a heroicon, exactly like a root app.
+        $this->appTitle = $this->option('title') ?? text(
+            label: 'App Title (display name, e.g. Inventory Management)',
+            default: Str::headline($this->moduleName),
             required: true,
         );
 
-        $this->modelName = Str::kebab($modelInput);
-        $this->modelNameStudly = Str::studly($modelInput);
-        $this->modelNamePlural = Str::plural($this->modelName);
+        $icon = $this->option('icon');
+        if ($icon === null && ! $this->input->isInteractive()) {
+            $this->error('The --icon option is required when running non-interactively.');
+
+            return self::FAILURE;
+        }
+        $this->appIcon = $this->normalizeHeroicon($icon ?? $this->askForHeroicon());
 
         $this->info("Creating Noerd module: {$this->moduleName}");
-        $this->info("Main model: {$this->modelNameStudly}");
+        $this->info("App title: {$this->appTitle} (icon {$this->appIcon})");
         $this->line('');
 
         // Check if module directory already exists
@@ -92,11 +107,9 @@ class MakeModuleCommand extends Command
             $this->createInstallCommand();
             $this->createUpdateCommand();
             $this->createRoutes();
-            $this->createModel();
-            $this->createMigration();
-            $this->createAppIcon();
-            $this->createLivewireComponents();
-            $this->createYamlConfigurations();
+            $this->createTenantAppMigrationStub();
+            $this->createDashboard();
+            $this->createNavigation();
             $this->createTranslations();
             $this->createAgentDocs();
             $this->createGitkeep();
@@ -104,11 +117,17 @@ class MakeModuleCommand extends Command
 
             $this->line('');
             $this->info('Module successfully created!');
+
+            if ($this->option('no-hints')) {
+                return self::SUCCESS;
+            }
+
             $this->line('');
             $this->warn('Next steps:');
             $this->line("  1. composer update noerd/{$this->moduleName}");
             $this->line("  2. php artisan noerd:install-{$this->moduleName}");
-            $this->line("  3. Add \"noerd/{$this->moduleName}\" to the packages in boost.json and run php artisan boost:update (optional, for AI agents)");
+            $this->line("  3. Create a model + migration in the module, then php artisan noerd:make-resource {Model} --app={$this->moduleName}");
+            $this->line("  4. Add \"noerd/{$this->moduleName}\" to the packages in boost.json and run php artisan boost:update (optional, for AI agents)");
 
             return self::SUCCESS;
         } catch (Exception $e) {
@@ -124,7 +143,7 @@ class MakeModuleCommand extends Command
             'src/Providers',
             'src/Models',
             'src/Commands',
-            'resources/views/components/icons',
+            'resources/views/components',
             'resources/lang',
             'resources/boost/guidelines',
             'database/migrations',
@@ -136,6 +155,7 @@ class MakeModuleCommand extends Command
             "app-configs/{$this->moduleName}/lists",
             "app-configs/{$this->moduleName}/details",
             "app-configs/{$this->moduleName}/pages",
+            'app-configs/stubs',
         ];
 
         foreach ($directories as $dir) {
@@ -194,71 +214,49 @@ class MakeModuleCommand extends Command
         $this->line('<info>Created:</info> routes');
     }
 
-    private function createModel(): void
+    /**
+     * The tenant-app migration the install command publishes into the host
+     * (`HasModuleInstallation::getMigrationStubPath()`), so non-interactive deploys
+     * register the app through `php artisan migrate`. Its `{{APP_*}}` placeholders
+     * are filled at install time, not here.
+     */
+    private function createTenantAppMigrationStub(): void
     {
-        $content = $this->getStub('model.stub');
-        $this->filesystem->put("{$this->basePath}/src/Models/{$this->modelNameStudly}.php", $content);
-        $this->line('<info>Created:</info> Model');
+        $content = $this->getStub('tenant-app-migration.stub');
+        $this->filesystem->put(
+            "{$this->basePath}/app-configs/stubs/add_{$this->moduleName}_tenant_app.php.stub",
+            $content,
+        );
+        $this->line('<info>Created:</info> tenant app migration stub');
     }
 
-    private function createMigration(): void
+    /**
+     * Every app ships its own dashboard — the module's main route opens it. The
+     * template is shared with noerd:make-dashboard (it carries no placeholders).
+     */
+    private function createDashboard(): void
     {
-        $content = $this->getStub('migration.stub');
-        $filename = date('Y_m_d_His') . "_create_{$this->tableName()}_table.php";
-        $this->filesystem->put("{$this->basePath}/database/migrations/{$filename}", $content);
-        $this->line('<info>Created:</info> Migration');
+        $stubPath = dirname($this->stubPath) . '/resource/dashboard.blade.stub';
+
+        if (! file_exists($stubPath)) {
+            throw new Exception('Stub not found: dashboard.blade.stub');
+        }
+
+        $this->filesystem->put(
+            "{$this->basePath}/resources/views/components/{$this->moduleName}-dashboard.blade.php",
+            file_get_contents($stubPath),
+        );
+        $this->line('<info>Created:</info> dashboard');
     }
 
-    private function createAppIcon(): void
+    private function createNavigation(): void
     {
-        $content = $this->getStub('icon.stub');
-        $this->filesystem->put("{$this->basePath}/resources/views/components/icons/app.blade.php", $content);
-        $this->line('<info>Created:</info> app icon');
-    }
-
-    private function createLivewireComponents(): void
-    {
-        // List component
-        $listContent = $this->getStub('list.stub');
-        $this->filesystem->put(
-            "{$this->basePath}/resources/views/components/{$this->modelNamePlural}-list.blade.php",
-            $listContent,
-        );
-
-        // Detail component
-        $detailContent = $this->getStub('detail.stub');
-        $this->filesystem->put(
-            "{$this->basePath}/resources/views/components/{$this->modelName}-detail.blade.php",
-            $detailContent,
-        );
-
-        $this->line('<info>Created:</info> Livewire components');
-    }
-
-    private function createYamlConfigurations(): void
-    {
-        // List YAML
-        $listContent = $this->getStub('list-yaml.stub');
-        $this->filesystem->put(
-            "{$this->basePath}/app-configs/{$this->moduleName}/lists/{$this->modelNamePlural}-list.yml",
-            $listContent,
-        );
-
-        // Detail YAML
-        $detailContent = $this->getStub('detail-yaml.stub');
-        $this->filesystem->put(
-            "{$this->basePath}/app-configs/{$this->moduleName}/details/{$this->modelName}-detail.yml",
-            $detailContent,
-        );
-
-        // Navigation YAML
-        $navContent = $this->getStub('navigation.stub');
+        $content = $this->getStub('navigation.stub');
         $this->filesystem->put(
             "{$this->basePath}/app-configs/{$this->moduleName}/navigation.yml",
-            $navContent,
+            $content,
         );
-
-        $this->line('<info>Created:</info> YAML configurations');
+        $this->line('<info>Created:</info> navigation');
     }
 
     private function createTranslations(): void
@@ -273,10 +271,14 @@ class MakeModuleCommand extends Command
     private function createGitkeep(): void
     {
         $dirs = [
+            'src/Models',
+            'database/migrations',
             'database/factories',
             'database/seeders',
             'tests/Traits',
             'tests/Components',
+            "app-configs/{$this->moduleName}/lists",
+            "app-configs/{$this->moduleName}/details",
             "app-configs/{$this->moduleName}/pages",
         ];
 
@@ -324,27 +326,21 @@ class MakeModuleCommand extends Command
                 '{{module-name}}',
                 '{{ModuleName}}',
                 '{{MODULE_KEY}}',
-                '{{model}}',
-                '{{Model}}',
-                '{{models}}',
-                '{{Models}}',
-                '{{ModelTitle}}',
-                '{{ModelsTitle}}',
-                '{{table}}',
+                '{{table-prefix}}',
                 '{{noerd-constraint}}',
+                '{{AppTitle}}',
+                '{{AppTitleYaml}}',
+                '{{app-icon}}',
             ],
             [
                 $this->moduleName,
                 $this->moduleNameStudly,
                 Str::upper($this->moduleName),
-                $this->modelName,
-                $this->modelNameStudly,
-                $this->modelNamePlural,
-                Str::studly($this->modelNamePlural),
-                Str::headline($this->modelName),
-                Str::headline($this->modelNamePlural),
-                $this->tableName(),
+                $this->tablePrefix(),
                 $this->noerdConstraint(),
+                str_replace("'", "\\'", $this->appTitle),
+                str_replace("'", "''", $this->appTitle),
+                $this->appIcon,
             ],
             $content,
         );
@@ -353,9 +349,9 @@ class MakeModuleCommand extends Command
     /**
      * Module tables are prefixed with the module key so two modules never collide.
      */
-    private function tableName(): string
+    private function tablePrefix(): string
     {
-        return Str::snake(str_replace('-', '_', $this->moduleName)) . '_' . Str::snake($this->modelNamePlural);
+        return Str::snake(str_replace('-', '_', $this->moduleName));
     }
 
     /**

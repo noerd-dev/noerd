@@ -136,3 +136,133 @@ it('scaffolds usable artefacts', function (array $case): void {
         'yaml' => ['app-configs/zzapp/collections/zz-gadgets.yml'],
     ]],
 ]);
+
+/*
+ | An app scaffolded as a module owns its files: the generators write the Blade
+ | components into the module (namespaced `{app}::`), the routes into the module
+ | route file and every YAML into BOTH copies (module template + installed copy).
+ */
+describe('module target', function (): void {
+    beforeEach(function (): void {
+        $this->moduleDir = $this->hostPath . '/app-modules/zzmod';
+
+        File::ensureDirectoryExists($this->moduleDir . '/app-configs/zzmod');
+        File::ensureDirectoryExists($this->moduleDir . '/routes');
+        File::ensureDirectoryExists($this->hostPath . '/app-configs/zzmod');
+        // The module's PSR-4 namespace lets make-page resolve `tenant` to a model class.
+        File::put($this->moduleDir . '/composer.json', json_encode([
+            'name' => 'noerd/zzmod',
+            'autoload' => ['psr-4' => ['Noerd\\' => 'src/']],
+        ], JSON_UNESCAPED_SLASHES));
+        File::put($this->moduleDir . '/routes/zzmod-routes.php', "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n");
+
+        $navigation = implode("\n", [
+            '- title: Zzmod',
+            '  name: zzmod',
+            '  route: zzmod',
+            '  block_menus:',
+            '    - title: Overview',
+            '      navigations:',
+            '        - title: Dashboard',
+            '          route: zzmod',
+            '          heroicon: home',
+            '',
+        ]);
+        File::put($this->moduleDir . '/app-configs/zzmod/navigation.yml', $navigation);
+        File::put($this->hostPath . '/app-configs/zzmod/navigation.yml', $navigation);
+    });
+
+    it('generates a resource into the module and both YAML copies', function (): void {
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+
+        $list = File::get($this->moduleDir . '/resources/views/components/tenants-list.blade.php');
+        expect($list)
+            ->toContain("public \$detailComponent = 'zzmod::tenant-detail';")
+            ->toContain("public ?string \$detailRoute = 'zzmod.tenant.detail';");
+        expect(File::exists($this->moduleDir . '/resources/views/components/tenant-detail.blade.php'))->toBeTrue();
+
+        $routes = File::get($this->moduleDir . '/routes/zzmod-routes.php');
+        expect($routes)
+            ->toContain("Route::livewire('zzmod/tenants', 'zzmod::tenants-list')->name('zzmod.tenants');")
+            ->toContain("Route::livewire('zzmod/tenant/{modelId}', 'zzmod::tenant-detail')->name('zzmod.tenant.detail');")
+            ->toContain("['noerd', 'app-access:zzmod']");
+
+        foreach (['app-modules/zzmod/app-configs/zzmod', 'app-configs/zzmod'] as $base) {
+            expect(File::exists("{$this->hostPath}/{$base}/lists/tenants-list.yml"))->toBeTrue("{$base} list yaml")
+                ->and(File::exists("{$this->hostPath}/{$base}/details/tenant-detail.yml"))->toBeTrue("{$base} detail yaml");
+
+            $navigation = Yaml::parse(File::get("{$this->hostPath}/{$base}/navigation.yml"));
+            $entries = $navigation[0]['block_menus'][0]['navigations'];
+            expect(end($entries))->toMatchArray([
+                'route' => 'zzmod.tenants',
+                'newRoute' => 'zzmod.tenant.detail',
+                'newComponent' => 'zzmod::tenant-detail',
+            ]);
+        }
+
+        // Nothing lands in the project root.
+        expect(File::glob($this->hostPath . '/resources/views/components/*'))->toBe([])
+            ->and(File::get($this->hostPath . '/routes/web.php'))->toBe("<?php\n");
+    });
+
+    it('appends the navigation entry to an installed copy whose last key is not the navigations', function (): void {
+        // The install command dumps the project copy with `hidden:` as the LAST key —
+        // a text append after it would be parsed as part of that value.
+        File::put($this->hostPath . '/app-configs/zzmod/navigation.yml', Yaml::dump([[
+            'title' => 'Zzmod',
+            'name' => 'zzmod',
+            'route' => 'zzmod',
+            'block_menus' => [[
+                'title' => 'Overview',
+                'navigations' => [['title' => 'Dashboard', 'route' => 'zzmod', 'heroicon' => 'home']],
+            ]],
+            'hidden' => false,
+        ]], 10, 2));
+
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+
+        $navigation = Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'));
+        $entries = $navigation[0]['block_menus'][0]['navigations'];
+
+        expect($navigation[0]['hidden'])->toBeFalse()
+            ->and(count($entries))->toBe(2)
+            ->and($entries[1]['route'])->toBe('zzmod.tenants')
+            ->and($entries[1]['newComponent'])->toBe('zzmod::tenant-detail');
+
+        // A second run (generated files removed, navigation kept) does not duplicate the entry.
+        File::deleteDirectory($this->moduleDir . '/resources');
+        foreach (['app-modules/zzmod/app-configs/zzmod', 'app-configs/zzmod'] as $base) {
+            File::deleteDirectory("{$this->hostPath}/{$base}/lists");
+            File::deleteDirectory("{$this->hostPath}/{$base}/details");
+        }
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+        expect(count(Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))[0]['block_menus'][0]['navigations']))->toBe(2);
+    });
+
+    it('generates a page into the module with a namespaced detail reference', function (): void {
+        expect(Artisan::call('noerd:make-page', ['name' => 'tenant', '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+
+        expect(File::exists($this->moduleDir . '/resources/views/components/tenant-page.blade.php'))->toBeTrue()
+            ->and(File::get($this->moduleDir . '/routes/zzmod-routes.php'))
+            ->toContain("Route::livewire('zzmod/tenant', 'zzmod::tenant-page')->name('zzmod.tenant');");
+
+        $pageYaml = Yaml::parse(File::get($this->moduleDir . '/app-configs/zzmod/pages/tenant-page.yml'));
+        expect($pageYaml['detail'])->toBe('zzmod::tenant-detail')
+            ->and(File::exists($this->hostPath . '/app-configs/zzmod/pages/tenant-page.yml'))->toBeTrue();
+    });
+
+    it('generates a dashboard into the module and links it in both navigation copies', function (): void {
+        File::delete($this->moduleDir . '/app-configs/zzmod/navigation.yml');
+
+        expect(Artisan::call('noerd:make-dashboard', ['--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+
+        expect(File::exists($this->moduleDir . '/resources/views/components/zzmod-dashboard.blade.php'))->toBeTrue()
+            ->and(File::exists($this->hostPath . '/resources/views/components/zzmod-dashboard.blade.php'))->toBeFalse()
+            ->and(File::get($this->moduleDir . '/routes/zzmod-routes.php'))
+            ->toContain("Route::livewire('zzmod', 'zzmod::zzmod-dashboard')->name('zzmod.dashboard');");
+
+        // The missing module copy is created, the existing project copy gets the entry inserted.
+        expect(Yaml::parse(File::get($this->moduleDir . '/app-configs/zzmod/navigation.yml'))[0]['route'])->toBe('zzmod.dashboard');
+        expect(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))->toContain('route: zzmod.dashboard');
+    });
+});

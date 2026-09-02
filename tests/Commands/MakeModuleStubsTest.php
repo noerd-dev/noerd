@@ -14,10 +14,11 @@ use Symfony\Component\Yaml\Yaml;
 uses(TestCase::class);
 
 /**
- * The noerd:module scaffolder must generate the slim list/detail syntax
- * (reference: customers-list) — not the legacy with()/DETAIL_COMPONENT pattern.
- * The stubs are rendered directly so the tests never touch the real composer.json
- * or app-modules (the real command writes both); the composer.json update is
+ * The noerd:module scaffolder generates the module plumbing — package, provider,
+ * install/update commands, dashboard, routes, navigation — and NO model: lists
+ * and details are generated per model by noerd:make-resource. The stubs are
+ * rendered directly so the tests never touch the real composer.json or
+ * app-modules (the real command writes both); the composer.json update is
  * exercised against a temporary base path.
  */
 beforeEach(function (): void {
@@ -33,9 +34,8 @@ beforeEach(function (): void {
     foreach ([
         'moduleName' => 'zz-widget',
         'moduleNameStudly' => 'ZzWidget',
-        'modelName' => 'widget',
-        'modelNameStudly' => 'Widget',
-        'modelNamePlural' => 'widgets',
+        'appTitle' => "Zz Widget's Shop",
+        'appIcon' => 'heroicon:outline:cube',
         'basePath' => $this->basePath,
     ] as $property => $value) {
         $reflection = new ReflectionProperty($this->command, $property);
@@ -53,83 +53,64 @@ afterEach(function (): void {
     File::deleteDirectory($this->basePath);
 });
 
-it('generates a slim list component', function (): void {
-    $content = ($this->renderStub)('list.stub');
+it('ships no model, list or detail stub — resources come from noerd:make-resource', function (): void {
+    $stubs = array_map('basename', glob(dirname(__DIR__, 2) . '/src/Commands/stubs/module/*.stub') ?: []);
 
-    expect($content)
-        ->toContain('public $listModel = Widget::class;')
-        ->toContain("public ?string \$detailRoute = 'zz-widget.widget.detail';")
-        ->toContain("public \$detailComponent = 'zz-widget::widget-detail';")
-        ->toContain('<x-noerd::list/>')
-        ->not->toContain('function listAction')
-        ->not->toContain('DETAIL_COMPONENT')
-        ->not->toContain('function with');
+    expect($stubs)->not->toContain('model.stub', 'migration.stub', 'list.stub', 'detail.stub', 'list-yaml.stub', 'detail-yaml.stub', 'icon.stub');
 });
 
-it('generates block-style YAML configs bound to detailData', function (): void {
-    $listYamlSource = ($this->renderStub)('list-yaml.stub');
-    $detailYamlSource = ($this->renderStub)('detail-yaml.stub');
-
-    // Block style throughout — flow style (`{ key: value }`) is never written.
-    expect($listYamlSource)->not->toContain('{ ')
-        ->and($detailYamlSource)->not->toContain('{ ');
-
-    $listYaml = Yaml::parse($listYamlSource);
-    $detailYaml = Yaml::parse($detailYamlSource);
-
-    // The generated list points its "New …" action at the generated detail route.
-    expect($listYaml['actions'][0]['route'])->toBe('zz-widget.widget.detail');
-
-    // Every detail field binds into $detailData — the values themselves are
-    // reference configuration and may change with the stub.
-    expect($detailYaml['fields'])->not->toBeEmpty();
-
-    foreach ($detailYaml['fields'] as $field) {
-        expect($field['name'])->toStartWith('detailData.');
-    }
-});
-
-it('generates a tenant-scoped model', function (): void {
-    File::ensureDirectoryExists("{$this->basePath}/src/Models");
-
-    $method = new ReflectionMethod($this->command, 'createModel');
-    $method->invoke($this->command);
-
-    $model = File::get("{$this->basePath}/src/Models/Widget.php");
-
-    expect($model)
-        ->toContain('use Noerd\Traits\BelongsToTenant;')
-        ->toContain('use BelongsToTenant;')
-        ->toContain("protected \$table = 'zz_widget_widgets';")
-        ->toContain('protected $guarded = [];');
-});
-
-it('generates a prefixed migration with a custom_attributes column', function (): void {
-    File::ensureDirectoryExists("{$this->basePath}/database/migrations");
-
-    $method = new ReflectionMethod($this->command, 'createMigration');
-    $method->invoke($this->command);
-
-    $migration = File::get(File::files("{$this->basePath}/database/migrations")[0]->getPathname());
-
-    expect($migration)
-        ->toContain("Schema::create('zz_widget_widgets'")
-        ->toContain("\$table->json('custom_attributes')->nullable();");
-});
-
-it('generates guarded, namespaced routes and a matching navigation', function (): void {
+it('generates a guarded dashboard route and a matching navigation', function (): void {
     $routes = ($this->renderStub)('routes.stub');
     $navigation = ($this->renderStub)('navigation.stub');
 
+    // The app's main route opens the module dashboard, exactly like a root app.
     expect($routes)
         ->toContain("['noerd', 'app-access:zz-widget']")
-        ->toContain("Route::livewire('zz-widget', 'zz-widget::widgets-list')->name('zz-widget');")
-        ->toContain("Route::livewire('zz-widget/widget/{modelId}', 'zz-widget::widget-detail')->name('zz-widget.widget.detail');");
+        ->toContain("Route::livewire('zz-widget', 'zz-widget::zz-widget-dashboard')->name('zz-widget');")
+        ->not->toContain('-list')
+        ->not->toContain('-detail');
 
-    expect($navigation)
-        ->toContain('route: zz-widget.widgets')
-        ->toContain('newRoute: zz-widget.widget.detail')
-        ->toContain('newComponent: zz-widget::widget-detail');
+    // The app title is the navigation title (YAML-escaped), the dashboard is the only entry.
+    $parsed = Yaml::parse($navigation);
+    expect($parsed[0]['title'])->toBe("Zz Widget's Shop")
+        ->and($parsed[0]['name'])->toBe('zz-widget')
+        ->and($parsed[0]['route'])->toBe('zz-widget')
+        ->and($parsed[0]['block_menus'][0]['navigations'])->toBe([[
+            'title' => 'Dashboard',
+            'route' => 'zz-widget',
+            'heroicon' => 'home',
+        ]]);
+});
+
+it('generates the module dashboard from the shared dashboard template', function (): void {
+    File::ensureDirectoryExists("{$this->basePath}/resources/views/components");
+
+    $method = new ReflectionMethod($this->command, 'createDashboard');
+    $method->invoke($this->command);
+
+    $dashboard = "{$this->basePath}/resources/views/components/zz-widget-dashboard.blade.php";
+
+    expect(File::exists($dashboard))->toBeTrue()
+        ->and(File::get($dashboard))->toBe(File::get(dirname(__DIR__, 2) . '/src/Commands/stubs/resource/dashboard.blade.stub'))
+        ->and(fn() => Blade::compileString(File::get($dashboard)))->not->toThrow(Exception::class);
+});
+
+it('generates the tenant app migration stub the install command publishes', function (): void {
+    File::ensureDirectoryExists("{$this->basePath}/app-configs/stubs");
+
+    $method = new ReflectionMethod($this->command, 'createTenantAppMigrationStub');
+    $method->invoke($this->command);
+
+    // HasModuleInstallation::getMigrationStubPath() = dirname(sourceDir) . '/stubs/add_{key}_tenant_app.php.stub'
+    $stub = File::get("{$this->basePath}/app-configs/stubs/add_zz-widget_tenant_app.php.stub");
+
+    // The APP_* placeholders are filled by publishMigration() at install time.
+    expect($stub)
+        ->toContain("DB::table('tenant_apps')")
+        ->toContain('{{APP_TITLE}}')
+        ->toContain('{{APP_NAME}}')
+        ->toContain('{{APP_ICON}}')
+        ->toContain('{{APP_ROUTE}}');
 });
 
 it('generates a composer.json requiring the scaffolding core version', function (): void {
@@ -140,14 +121,16 @@ it('generates a composer.json requiring the scaffolding core version', function 
         ->and($composer)->not->toHaveKey('license');
 });
 
-it('generates the app icon the install command references', function (): void {
-    File::ensureDirectoryExists("{$this->basePath}/resources/views/components/icons");
+it('registers the chosen heroicon and app title through the install command', function (): void {
+    $content = ($this->renderStub)('install-command.stub');
 
-    $method = new ReflectionMethod($this->command, 'createAppIcon');
-    $method->invoke($this->command);
-
-    expect(File::exists("{$this->basePath}/resources/views/components/icons/app.blade.php"))->toBeTrue()
-        ->and(($this->renderStub)('install-command.stub'))->toContain("return 'zz-widget::icons.app';");
+    // A module ships no icon file: the tenant app icon is a heroicon (PHP-escaped title).
+    expect($content)
+        ->toContain("return 'heroicon:outline:cube';")
+        ->toContain("return 'Zz Widget\\'s Shop';")
+        ->toContain("return 'zz-widget';")
+        ->toContain('{--scaffold')
+        ->not->toContain('icons.app');
 });
 
 it('generates only a de.json translation with English-text keys', function (): void {
@@ -161,7 +144,7 @@ it('generates only a de.json translation with English-text keys', function (): v
 
     $translations = json_decode(File::get("{$this->basePath}/resources/lang/de.json"), true);
 
-    expect($translations)->toHaveKey('New Widget')
+    expect($translations)->not->toBeEmpty()
         ->and(array_keys($translations))->each->not->toContain('_label_');
 });
 
@@ -191,7 +174,9 @@ it('generates a blade-renderable boost guideline for the module', function (): v
         ->toContain('## ZzWidget Module')
         ->toContain('noerd:install-zz-widget')
         ->toContain('noerd:update-zz-widget')
-        ->toContain('widgets-list.blade.php')
+        ->toContain('noerd:make-resource {Model} --app=zz-widget')
+        ->toContain('zz-widget-dashboard.blade.php')
+        ->toContain('`zz_widget_{entities}`')
         ->not->toContain('{{module-name}}');
 
     expect(\Illuminate\Support\Facades\Blade::render($content))
@@ -204,6 +189,7 @@ it('generates AGENTS.md and a CLAUDE.md importing it', function (): void {
         ->toContain('# AGENTS.md — noerd/zz-widget')
         ->toContain('noerd:install-zz-widget')
         ->toContain('noerd:update-zz-widget')
+        ->toContain('noerd:make-resource {Model} --app=zz-widget')
         ->not->toContain('{{ModuleName}}');
 
     expect(($this->renderStub)('claude.stub'))->toBe("@AGENTS.md\n");
@@ -250,18 +236,15 @@ it('leaves no placeholder in a rendered stub', function (string $stub): void {
     expect($content)->not->toMatch('/\{\{[A-Za-z][A-Za-z0-9_-]*\}\}/')
         ->and($content)->not->toContain('_label_')
         ->and($content)->not->toBe('');
-})->with(fn(): array => array_map(
-    'basename',
-    glob(dirname(__DIR__, 2) . '/src/Commands/stubs/module/*.stub') ?: [],
-));
-
-it('generates blade files that compile', function (string $stub): void {
-    expect(fn() => Blade::compileString(($this->renderStub)($stub)))->not->toThrow(Exception::class);
-})->with(['list.stub', 'detail.stub', 'icon.stub']);
+})->with(fn(): array => array_values(array_filter(
+    array_map('basename', glob(dirname(__DIR__, 2) . '/src/Commands/stubs/module/*.stub') ?: []),
+    // The tenant-app migration keeps its {{APP_*}} placeholders for the install command.
+    fn(string $stub): bool => $stub !== 'tenant-app-migration.stub',
+)));
 
 it('generates YAML files that parse', function (string $stub): void {
     expect(Yaml::parse(($this->renderStub)($stub)))->toBeArray()->not->toBeEmpty();
-})->with(['list-yaml.stub', 'detail-yaml.stub', 'navigation.stub']);
+})->with(['navigation.stub']);
 
 it('generates a de.json translation file that parses', function (): void {
     expect(json_decode(($this->renderStub)('lang-de.stub'), true, 512, JSON_THROW_ON_ERROR))

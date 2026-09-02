@@ -8,6 +8,7 @@ use Exception;
 use Noerd\Models\TenantApp;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
 trait HasModuleInstallation
@@ -167,6 +168,32 @@ trait HasModuleInstallation
     }
 
     /**
+     * The silent post-scaffold run started by noerd:create-app (`--scaffold`, when
+     * the command declares the option): nothing is asked or printed except the
+     * tenant assignment; migrations and the frontend build are not offered.
+     */
+    protected function isScaffoldInstall(): bool
+    {
+        return $this->input->hasOption('scaffold') && (bool) $this->option('scaffold');
+    }
+
+    /**
+     * Run a step without any console output. Prompts must not fire inside — they
+     * would render invisibly and wait for input.
+     */
+    protected function silently(callable $step): mixed
+    {
+        $verbosity = $this->output->getVerbosity();
+        $this->output->setVerbosity(OutputInterface::VERBOSITY_QUIET);
+
+        try {
+            return $step();
+        } finally {
+            $this->output->setVerbosity($verbosity);
+        }
+    }
+
+    /**
      * Run the module installation process.
      */
     protected function runModuleInstallation(): int
@@ -174,6 +201,10 @@ trait HasModuleInstallation
         // Ensure noerd:install has been run first
         if (! $this->ensureNoerdInstalled()) {
             return 1;
+        }
+
+        if ($this->isScaffoldInstall()) {
+            return $this->runScaffoldInstallation();
         }
 
         // If the module is already installed, run as update instead to prevent
@@ -257,6 +288,62 @@ trait HasModuleInstallation
 
             return 1;
         }
+    }
+
+    /**
+     * The post-scaffold install: publish configs, register the app and ask for the
+     * tenant assignment — nothing else. Existing files are overwritten without
+     * asking (the module was scaffolded a moment ago), the tenant-app migration is
+     * published and run silently, `php artisan migrate` and `npm run build` are
+     * left to the developer.
+     */
+    protected function runScaffoldInstallation(): int
+    {
+        $appKey = $this->deriveAppKey($this->getModuleKey());
+        $sourceDir = $this->getSourceDir();
+
+        if (! is_dir($sourceDir)) {
+            $this->error("Source directory not found: {$sourceDir}");
+
+            return 1;
+        }
+
+        if ($this->input->hasOption('force')) {
+            $this->input->setOption('force', true);
+        }
+
+        $this->appTitle = $this->getDefaultAppTitle();
+        $this->targetAppKey = $this->getModuleKey();
+        $targetDir = base_path('app-configs/' . $this->targetAppKey);
+
+        if (! is_dir($targetDir) && ! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
+            $this->error("Failed to create target directory: {$targetDir}");
+
+            return 1;
+        }
+
+        try {
+            $this->silently(function () use ($sourceDir, $targetDir, $appKey): void {
+                $this->copyConfigSubdirectories($sourceDir, $targetDir);
+
+                if (TenantApp::where('name', $appKey)->exists()) {
+                    // Registered by an earlier attempt: refresh the navigation only.
+                    $this->ensureTenantAppRegistered($appKey);
+                } else {
+                    $this->installAsNewApp($sourceDir, $targetDir, false);
+                }
+
+                $this->publishSkills(refreshCopies: true);
+            });
+        } catch (Exception $e) {
+            $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
+
+            return 1;
+        }
+
+        $this->assignAppToTenants($appKey, compact: true);
+
+        return 0;
     }
 
     /**
@@ -374,7 +461,8 @@ trait HasModuleInstallation
         $existingMigrations = glob(database_path("migrations/*_add_{$this->getModuleKey()}_tenant_app.php"));
         if (! empty($existingMigrations)) {
             $this->warn("Migration for {$this->getModuleName()} already exists.");
-            if (! $this->confirm('Do you want to create a new migration anyway?', false)) {
+            // No prompt in the silent scaffold run — it would render invisibly.
+            if ($this->isScaffoldInstall() || ! $this->confirm('Do you want to create a new migration anyway?', false)) {
                 return basename($existingMigrations[0]);
             }
         }
