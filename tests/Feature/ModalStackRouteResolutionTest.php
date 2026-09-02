@@ -13,10 +13,10 @@ uses(TestCase::class);
  * by COMPONENT name (opened as-is, URL untouched) — plus the precedence between
  * them when a caller supplies both.
  *
- * The modal stack lives in the sibling noerd-modal package, whose own suite cannot
- * run inside this project's test run (it corrupts the shared test database, see the
- * exclude in phpunit.xml). This mirrors that contract here against synthetic zz.*
- * routes, so a regression in either flavour is caught by the normal suite.
+ * The modal stack lives in the sibling noerd-modal package. Its own suite proves the
+ * same contract, but it does not run in the standalone noerd package run (noerd-modal
+ * is a vendor dependency there), so this file mirrors the contract against synthetic
+ * zz.* routes and a regression in either flavour is caught by the normal suite.
  *
  * Which of the two a given YAML/component picks is per-installation configuration
  * and is deliberately NOT asserted anywhere — only that both keep working.

@@ -170,3 +170,22 @@ describe('registry contributions', function (): void {
             ->not->toContain('$modalRoute(');
     });
 });
+
+describe('count fallback', function (): void {
+
+    it('computes a zero count for an unknown relation method instead of failing', function (): void {
+        [$component] = mountRelationBox([
+            [
+                'label' => 'Unknown',
+                'heroicon' => 'users',
+                'relation' => 'doesNotExist',
+                'component' => 'zz::tenant-apps-list',
+                'arguments' => ['tenantId' => '$modelId'],
+            ],
+        ]);
+
+        $component
+            ->assertSet('resolvedRelations.0.label', 'Unknown')
+            ->assertSet('resolvedRelations.0.count', 0);
+    });
+});
