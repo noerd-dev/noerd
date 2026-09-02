@@ -26,7 +26,7 @@ guideline; this skill is the procedure. Docs: `vendor/noerd/noerd/docs/detail-vi
 
 ## 2. Create the detail — `resources/views/components/{entity}-detail.blade.php`
 
-Singular name, directly in `components/`. Reference: `src/Commands/stubs/module/detail.stub`.
+Singular name, directly in `components/`. Reference: `src/Commands/stubs/resource/detail.blade.stub`.
 
 ```php
 <?php

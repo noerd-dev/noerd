@@ -9,7 +9,7 @@ new class extends Component {
 
     public $listModel = {{ModelBaseName}}::class;
 
-    public $detailComponent = '{{entity}}-detail';
+    public $detailComponent = '{{ns}}{{entity}}-detail';
 }; ?>
 
 <x-noerd::page>

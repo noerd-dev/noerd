@@ -31,7 +31,7 @@ class ZzModuleInstallFixtureCommand extends Command
     use HasModuleInstallation;
     use RequiresNoerdInstallation;
 
-    protected $signature = 'noerd:install-zz-install-fixture {--force : Overwrite existing files without asking}';
+    protected $signature = 'noerd:install-zz-install-fixture {--force : Overwrite existing files without asking} {--scaffold : Silent post-scaffold run}';
 
     protected $description = 'Test fixture install command';
 
@@ -196,5 +196,25 @@ describe('tenant prompt', function (): void {
             ->expectsOutputToContain('is already installed. Running update instead...')
             ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
             ->assertExitCode(0);
+    });
+});
+
+describe('scaffold mode', function (): void {
+    it('publishes, registers and only asks for the tenant assignment', function (): void {
+        $tenant = Noerd\Models\Tenant::factory()->create(['name' => 'Zz Scaffold Tenant']);
+
+        // No hidden-app / title / migrate / npm questions — the multiselect is the only prompt.
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--scaffold' => true])
+            ->expectsQuestion("Which tenants should 'Zz Install Fixture' be assigned to?", [$tenant->id])
+            ->doesntExpectOutput('Installing Zz Install Fixture...')
+            ->doesntExpectOutput("✓ 'Zz Install Fixture' assigned to 'Zz Scaffold Tenant'")
+            ->expectsOutput("'Zz Install Fixture' is now assigned to 1 tenant(s).")
+            ->assertExitCode(0);
+
+        $app = TenantApp::where('name', ZZ_MODULE_APP_KEY)->first();
+        expect($app)->not->toBeNull()
+            ->and($app->tenants()->pluck('tenants.id')->all())->toBe([$tenant->id])
+            ->and(File::exists(base_path('app-configs/' . ZZ_MODULE_KEY . '/navigation.yml')))->toBeTrue()
+            ->and(File::exists(base_path('app-configs/' . ZZ_MODULE_KEY . '/settings/zz-fixture-settings-page.yml')))->toBeTrue();
     });
 });

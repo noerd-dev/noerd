@@ -12,13 +12,13 @@ below points into that folder — read the referenced page before building the f
 `src/…`, `tests/…`, `stubs/…` and `resources/…` are relative to the noerd package root.
 
 ### Core Rules
-- When creating new lists/tables, always follow the slim list pattern below (reference: the `noerd:module` scaffolder stub `src/Commands/stubs/module/list.stub` and `docs/list-view.md`).
+- When creating new lists/tables, always follow the slim list pattern below (reference: the `noerd:make-resource` stub `src/Commands/stubs/resource/list.blade.stub` and `docs/list-view.md`).
 - List components declare their model as `public $listModel = Model::class;` and their detail target
   as `public ?string $detailRoute = '{app}.{entity}.detail';` (preferred — opens the record as a
   route modal and rewrites the URL) plus `public $detailComponent = 'module::x-detail';` as the
   fallback, at the top of the class. The trait
   methods (`mount()`, `listAction()`, `listData()`, `renderingNoerdList()`) are always used from `NoerdList` —
-  a slim component contains nothing else (reference: `src/Commands/stubs/module/list.stub`). Only when custom
+  a slim component contains nothing else (reference: `src/Commands/stubs/resource/list.blade.stub`). Only when custom
   query logic is needed, override `listData()` (reference: `docs/list-view.md`, "Custom Query Logic"): build the query
   via `$this->listQuery($this->listModel)` (chain additional wheres/eager loads and
   `->paginate($this->perPage)`) and end with `return $this->buildList($rows);`. Never leave a custom
@@ -30,7 +30,7 @@ below points into that folder — read the referenced page before building the f
   funnels in the header. A manual query (and no `$listModel`) is only acceptable when technically
   required (rows not backed by a single Eloquent model, repository/raw queries) — such lists
   intentionally show no column filters.
-- When creating new models/components, always follow the slim detail pattern (reference: `src/Commands/stubs/module/detail.stub` and `docs/detail-view.md`).
+- When creating new models/components, always follow the slim detail pattern (reference: `src/Commands/stubs/resource/detail.blade.stub` and `docs/detail-view.md`).
 - When creating new components, they must always be placed directly in the livewire folder. Not in subfolders like livewire/setup.
 - When creating lists/tables, they should always be named -list.blade.php. For models/components, they should always be named -detail.blade.php.
 Example for user: users-list.blade.php (plural) and user-detail.blade.php (singular)
@@ -126,19 +126,20 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
         route: business-hours.settings
         heroicon: cog-6-tooth
 ```
-- However, when using icons in apps (tenant_apps), always use the icons defined in the respective app. An icon looks like this, an example is noerd::icons.app:
-```
-<div {{ $attributes->whereDoesntStartWith('class') }} {{ $attributes->merge(['class' => 'my-auto flex-1']) }}>
-    <svg class="nc-icon mx-auto" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 48 48"><title>comments</title>
-        <g fill="#333" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10">
-            <path d="M38,11h4a4,4,0,0,1,4,4V32a4,4,0,0,1-4,4H38v8L26,36H22" fill="none" stroke="#333"
-                  stroke-width="2"></path>
-            <path d="M34,3H6A4,4,0,0,0,2,7V24a4,4,0,0,0,4,4h4V38L24,28H34a4,4,0,0,0,4-4V7A4,4,0,0,0,34,3Z" fill="none"
-                  stroke="#333" stroke-width="2"></path>
-        </g>
-    </svg>
-</div>
-```
+- Tenant-app icons (`tenant_apps.icon`, the tile on the apps page and in the app bar) are heroicons
+  too, stored as `heroicon:outline:{name}` and rendered by `noerd::app-icon`. `noerd:create-app` and
+  `noerd:module` ask for the heroicon; a module's install command returns it from `getAppIcon()`. A
+  module ships NO icon file. Only when no heroicon fits, add a Blade icon by hand
+  (`resources/views/components/icons/app.blade.php`) and return `{module}::icons.app` instead.
+- Every app — root app or module — ships its own dashboard: `noerd:create-app` scaffolds
+  `{app}-dashboard` (root) or `{module}::{module}-dashboard` (module, via `noerd:module`), and the
+  app's main route opens it. Never point a new app's tile at a list.
+- Neither `noerd:create-app` nor `noerd:module` generates a model: an app starts with its dashboard,
+  and every record type is added with `noerd:make-resource {Model} --app={app}` (list + detail,
+  YAML, routes, navigation) once the model and its migration exist. For a MODULE app
+  (`app-modules/{app}/composer.json` exists) the `noerd:make-*` generators write into the module —
+  components under the `{app}::` namespace, routes into `routes/{app}-routes.php`, YAML and
+  navigation into BOTH copies — never hand-copy generated files from the project root into a module.
 - Both code comments and Artisan prompts must always be written in English.
 - Documentation (README files, docs folders, markdown files) must always be written in English.
 - When writing tests, they must always be in PEST format.

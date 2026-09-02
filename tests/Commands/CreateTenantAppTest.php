@@ -12,16 +12,20 @@ uses(RefreshDatabase::class);
 
 /**
  * The command scaffolds the app's dashboard into the application root (Blade
- * component, route, navigation). Snapshot what is there before each test and
+ * component, route, navigation) or, in module mode, a package into app-modules/
+ * (plus a require in composer.json). Snapshot what is there before each test and
  * remove everything the test generated afterwards.
  */
 beforeEach(function (): void {
     $routeFile = base_path('routes/web.php');
+    $composerFile = base_path('composer.json');
 
     $this->routeFileExisted = File::exists($routeFile);
     $this->originalRoutes = $this->routeFileExisted ? File::get($routeFile) : null;
+    $this->originalComposer = File::exists($composerFile) ? File::get($composerFile) : null;
     $this->existingDashboards = File::glob(base_path('resources/views/components/*-dashboard.blade.php'));
     $this->existingAppConfigs = File::directories(base_path('app-configs'));
+    $this->existingModules = File::directories(base_path('app-modules'));
 });
 
 afterEach(function (): void {
@@ -31,6 +35,16 @@ afterEach(function (): void {
         File::put($routeFile, $this->originalRoutes);
     } else {
         File::delete($routeFile);
+    }
+
+    if ($this->originalComposer !== null) {
+        File::put(base_path('composer.json'), $this->originalComposer);
+    }
+
+    foreach (File::directories(base_path('app-modules')) as $module) {
+        if (! in_array($module, $this->existingModules, true)) {
+            File::deleteDirectory($module);
+        }
     }
 
     foreach (File::glob(base_path('resources/views/components/*-dashboard.blade.php')) as $dashboard) {
@@ -229,4 +243,93 @@ it('fails when app name already exists', function (): void {
         ->assertExitCode(1);
 
     expect(File::exists(base_path('resources/views/components/existing_app-dashboard.blade.php')))->toBeFalse();
+});
+
+it('scaffolds the app as a module and leaves the registration to its install command', function (): void {
+    $this->artisan('noerd:create-app', [
+        '--title' => 'Zz Probe Suite',
+        '--name' => 'ZZ_PROBE',
+        '--icon' => 'cube',
+        '--module' => true,
+    ])->assertExitCode(0);
+
+    $module = base_path('app-modules/zz-probe');
+
+    // The module boilerplate — dashboard, navigation, install command, migration stub —
+    // and no model: resources are generated later with noerd:make-resource.
+    expect(File::isDirectory($module))->toBeTrue()
+        ->and(File::exists("{$module}/resources/views/components/zz-probe-dashboard.blade.php"))->toBeTrue()
+        ->and(File::exists("{$module}/app-configs/zz-probe/navigation.yml"))->toBeTrue()
+        ->and(File::exists("{$module}/app-configs/stubs/add_zz-probe_tenant_app.php.stub"))->toBeTrue()
+        ->and(File::glob("{$module}/resources/views/components/*-list.blade.php"))->toBe([])
+        ->and(File::glob("{$module}/src/Models/*.php"))->toBe([])
+        ->and(File::isDirectory("{$module}/resources/views/components/icons"))->toBeFalse();
+
+    $installCommand = File::get("{$module}/src/Commands/ZzProbeInstallCommand.php");
+    expect($installCommand)
+        ->toContain("return 'heroicon:outline:cube';")
+        ->toContain("return 'Zz Probe Suite';");
+
+    $routes = File::get("{$module}/routes/zz-probe-routes.php");
+    expect($routes)->toContain("Route::livewire('zz-probe', 'zz-probe::zz-probe-dashboard')->name('zz-probe');");
+
+    $composer = json_decode(File::get(base_path('composer.json')), true);
+    expect($composer['require'])->toHaveKey('noerd/zz-probe');
+
+    // Nothing lands in the project root and no tenant_apps row is written —
+    // noerd:install-zz-probe registers the app (and stays re-runnable).
+    expect(TenantApp::where('name', 'ZZ-PROBE')->exists())->toBeFalse()
+        ->and(TenantApp::where('name', 'ZZ_PROBE')->exists())->toBeFalse()
+        ->and(File::exists(base_path('resources/views/components/zz_probe-dashboard.blade.php')))->toBeFalse()
+        ->and(File::exists(base_path('app-configs/zz_probe/navigation.yml')))->toBeFalse();
+});
+
+it('rejects module mode combined with an explicit route', function (): void {
+    $this->artisan('noerd:create-app', [
+        '--title' => 'Zz Routed',
+        '--name' => 'ZZ_ROUTED',
+        '--icon' => 'cube',
+        '--module' => true,
+        '--route' => 'custom.index',
+    ])
+        ->expectsOutput('The --route option cannot be combined with --module: a module ships its own dashboard route.')
+        ->assertExitCode(1);
+
+    expect(File::isDirectory(base_path('app-modules/zz-routed')))->toBeFalse();
+});
+
+it('refuses to scaffold a module over an existing module directory', function (): void {
+    File::ensureDirectoryExists(base_path('app-modules/zz-taken'));
+
+    $this->artisan('noerd:create-app', [
+        '--title' => 'Zz Taken',
+        '--name' => 'ZZ_TAKEN',
+        '--icon' => 'cube',
+        '--module' => true,
+    ])
+        ->expectsOutput('Module directory already exists: app-modules/zz-taken')
+        ->assertExitCode(1);
+
+    expect(File::exists(base_path('app-modules/zz-taken/composer.json')))->toBeFalse();
+});
+
+it('refuses module mode when the derived tenant app already exists', function (): void {
+    TenantApp::create([
+        'title' => 'Taken',
+        'name' => 'ZZ-EXISTING',
+        'icon' => 'heroicon:outline:cube',
+        'route' => 'zz-existing',
+        'is_active' => true,
+    ]);
+
+    $this->artisan('noerd:create-app', [
+        '--title' => 'Zz Existing',
+        '--name' => 'ZZ_EXISTING',
+        '--icon' => 'cube',
+        '--module' => true,
+    ])
+        ->expectsOutput("App with name 'ZZ-EXISTING' already exists.")
+        ->assertExitCode(1);
+
+    expect(File::isDirectory(base_path('app-modules/zz-existing')))->toBeFalse();
 });

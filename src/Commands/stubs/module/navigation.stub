@@ -1,11 +1,9 @@
-- title: {{ModuleName}}
+- title: '{{AppTitleYaml}}'
   name: {{module-name}}
   route: {{module-name}}
   block_menus:
     - title: Overview
       navigations:
-        - title: {{ModelsTitle}}
-          route: {{module-name}}.{{models}}
-          heroicon: list-bullet
-          newRoute: {{module-name}}.{{model}}.detail
-          newComponent: {{module-name}}::{{model}}-detail
+        - title: Dashboard
+          route: {{module-name}}
+          heroicon: home

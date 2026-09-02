@@ -3,7 +3,5 @@
 use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['noerd', 'app-access:{{module-name}}']], function (): void {
-    Route::livewire('{{module-name}}', '{{module-name}}::{{models}}-list')->name('{{module-name}}');
-    Route::livewire('{{module-name}}/{{models}}', '{{module-name}}::{{models}}-list')->name('{{module-name}}.{{models}}');
-    Route::livewire('{{module-name}}/{{model}}/{modelId}', '{{module-name}}::{{model}}-detail')->name('{{module-name}}.{{model}}.detail');
+    Route::livewire('{{module-name}}', '{{module-name}}::{{module-name}}-dashboard')->name('{{module-name}}');
 });

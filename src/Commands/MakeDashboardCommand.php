@@ -63,8 +63,7 @@ class MakeDashboardCommand extends Command
 
     protected function createDashboardBlade(): string
     {
-        $bladeBase = base_path('resources/views/components');
-        $path = "{$bladeBase}/{$this->appConfigName}-dashboard.blade.php";
+        $path = "{$this->bladeBasePath()}/{$this->appConfigName}-dashboard.blade.php";
 
         if ($this->checkFileExists($path)) {
             return '';
@@ -88,76 +87,76 @@ class MakeDashboardCommand extends Command
 
     protected function addDashboardRoute(): void
     {
-        $routeFile = base_path('routes/web.php');
-
-        if (! $this->filesystem->exists($routeFile)) {
-            $this->filesystem->ensureDirectoryExists(dirname($routeFile));
-            $this->filesystem->put($routeFile, "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n");
-        }
-
-        $content = $this->filesystem->get($routeFile);
+        $content = $this->routeFileContent();
 
         $routeName = self::routeNameFor($this->appConfigName);
 
         if (str_contains($content, "'{$routeName}'")) {
-            $this->warn("Route '{$routeName}' already exists in routes/web.php — skipping.");
+            $this->warn("Route '{$routeName}' already exists in {$this->routeFileDisplay()} — skipping.");
 
             return;
         }
 
-        $route = "Route::livewire('{$this->appConfigName}', '{$this->appConfigName}-dashboard')->name('{$routeName}');";
+        $route = "Route::livewire('{$this->appConfigName}', '{$this->componentPrefix}{$this->appConfigName}-dashboard')->name('{$routeName}');";
 
-        if (! $this->confirmStep("Add dashboard route to routes/web.php?\n  <comment>{$route}</comment>")) {
+        if (! $this->confirmStep("Add dashboard route to {$this->routeFileDisplay()}?\n  <comment>{$route}</comment>")) {
             return;
         }
 
         $this->appendRoute($route);
     }
 
+    /**
+     * Link the dashboard from every navigation copy (module template + installed
+     * project copy for a module app, the project copy otherwise).
+     */
     protected function addDashboardNavigation(): void
     {
-        $navPath = base_path("app-configs/{$this->appConfigName}/navigation.yml");
         $routeName = self::routeNameFor($this->appConfigName);
 
-        if (! $this->filesystem->exists($navPath)) {
-            $this->createDashboardNavigation($navPath, $routeName);
+        foreach ($this->yamlBasePaths() as $base) {
+            $navPath = "{$base}/navigation.yml";
 
-            return;
-        }
+            if (! $this->filesystem->exists($navPath)) {
+                $this->createDashboardNavigation($navPath, $routeName);
 
-        $content = $this->filesystem->get($navPath);
-
-        if (str_contains($content, "route: {$routeName}")) {
-            $this->warn("Dashboard navigation entry already exists in {$navPath} — skipping.");
-
-            return;
-        }
-
-        $navEntry = "    - title: Dashboard\n"
-            . "      route: {$routeName}\n"
-            . "      heroicon: home";
-
-        if (! $this->confirmStep("Add dashboard navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>")) {
-            return;
-        }
-
-        $blockMenusPos = mb_strpos($content, 'block_menus:');
-        if ($blockMenusPos !== false) {
-            $afterBlockMenus = mb_strpos($content, "\n", $blockMenusPos);
-            if ($afterBlockMenus !== false) {
-                $newContent = mb_substr($content, 0, $afterBlockMenus + 1)
-                    . $navEntry . "\n"
-                    . mb_substr($content, $afterBlockMenus + 1);
-                $this->filesystem->put($navPath, $newContent);
-                $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
-
-                return;
+                continue;
             }
-        }
 
-        $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
-        $this->filesystem->put($navPath, $content);
-        $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
+            $content = $this->filesystem->get($navPath);
+
+            if (str_contains($content, "route: {$routeName}")) {
+                $this->warn("Dashboard navigation entry already exists in {$navPath} — skipping.");
+
+                continue;
+            }
+
+            $navEntry = "    - title: Dashboard\n"
+                . "      route: {$routeName}\n"
+                . "      heroicon: home";
+
+            if (! $this->confirmStep("Add dashboard navigation entry to {$navPath}?\n<comment>{$navEntry}</comment>")) {
+                continue;
+            }
+
+            $blockMenusPos = mb_strpos($content, 'block_menus:');
+            if ($blockMenusPos !== false) {
+                $afterBlockMenus = mb_strpos($content, "\n", $blockMenusPos);
+                if ($afterBlockMenus !== false) {
+                    $newContent = mb_substr($content, 0, $afterBlockMenus + 1)
+                        . $navEntry . "\n"
+                        . mb_substr($content, $afterBlockMenus + 1);
+                    $this->filesystem->put($navPath, $newContent);
+                    $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
+
+                    continue;
+                }
+            }
+
+            $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
+            $this->filesystem->put($navPath, $content);
+            $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
+        }
     }
 
     /**
@@ -181,7 +180,7 @@ class MakeDashboardCommand extends Command
             . "          route: {$routeName}\n"
             . "          heroicon: home\n";
 
-        if (! $this->confirmStep("Create {$this->appConfigName} navigation.yml with a dashboard entry?\n<comment>{$navigation}</comment>")) {
+        if (! $this->confirmStep("Create {$navPath} with a dashboard entry?\n<comment>{$navigation}</comment>")) {
             return;
         }
 

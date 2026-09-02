@@ -92,7 +92,7 @@ trait CreatesInventoryUser
             ['name' => 'INVENTORY'],
             [
                 'title' => 'Inventory',
-                'icon' => 'inventory::icons.app',
+                'icon' => 'heroicon:outline:cube',
                 'route' => 'inventory',
                 'is_active' => true,
             ],

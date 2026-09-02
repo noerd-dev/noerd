@@ -17,20 +17,34 @@ translations, tests and an install/update command. Hard rules: `noerd/noerd` Boo
 ## 1. Scaffold
 
 ```bash
-php artisan noerd:module            # asks for module name + main model
+php artisan noerd:create-app        # choose "Module": asks title, name, heroicon, then registers with Composer and installs (tenant assignment is the only question)
+php artisan noerd:module            # the scaffolder itself: module name, app title, heroicon
+                                    # scripted: noerd:module inventory --title=Inventory --icon=cube
 composer update noerd/{module}
-php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates
+php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates (--scaffold = the silent create-app run)
+php artisan noerd:make-resource Item --app={module}   # per record type, after model + migration exist in the module
 ```
+
+The scaffold is dashboard + plumbing, no model. `noerd:make-resource` / `make-list` / `make-detail`
+/ `make-page` / `make-dashboard` detect a module app (`app-modules/{app}/composer.json`) and write
+into it: components under `{app}::`, routes into `routes/{app}-routes.php`, YAML + navigation into
+both copies.
+
+Never write the `tenant_apps` row of a module by hand or via the root `noerd:create-app` flow —
+the generated install command registers it (name = UPPERCASE module key, icon = the heroicon from
+`getAppIcon()`, route = the module dashboard). A module ships no icon file; a Blade icon is only
+the manual exception when no heroicon fits.
 
 Generated layout (keep it — do not invent new base folders):
 
 ```
 app-modules/{module}/
 ├── app-configs/{module}/            # YAML templates: lists/, details/, pages/, navigation.yml
+├── app-configs/stubs/add_{module}_tenant_app.php.stub   # tenant-app migration published by the install command
 ├── database/{migrations,factories,seeders}/
 ├── resources/boost/guidelines/core.blade.php   # module-specific agent rules (Boost)
 ├── resources/lang/de.json           # English key → German
-├── resources/views/components/      # *-list.blade.php, *-detail.blade.php, *-page.blade.php, *-modal.blade.php (flat), icons/app.blade.php
+├── resources/views/components/      # {module}-dashboard.blade.php, *-list.blade.php, *-detail.blade.php, *-page.blade.php, *-modal.blade.php (flat)
 ├── routes/{module}-routes.php
 ├── src/{Commands,Models,Providers}/
 ├── tests/                           # Pest, incl. tests/Traits

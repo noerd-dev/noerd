@@ -43,8 +43,9 @@ class Customer extends Model
 
 - `noerd:install` publishes the config and the frontend scaffold (Vite, Tailwind CSS 4), runs the
   migrations, creates the default tenant and an admin user, and optionally installs demo data.
-- `noerd:create-app` asks for a title, a name and an icon, scaffolds a dashboard for the app and
-  offers to assign it to your tenants. Use `noerd:assign-apps-to-tenant` to change that later.
+- `noerd:create-app` asks where the app lives (project or an `app-modules/` package), for a
+  title, a name and an icon, scaffolds a dashboard for the app and offers to assign it to your
+  tenants. Use `noerd:assign-apps-to-tenant` to change that later.
 - `noerd:make-resource` reads the model's columns and generates the list and detail components,
   their YAML configs, the routes (behind `['noerd', 'app-access:{app}']`) and the navigation entry.
 

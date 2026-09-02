@@ -10,8 +10,8 @@ by `php artisan boost:update` (add `noerd/{{module-name}}` to the `packages` arr
 
 - `app-configs/{{module-name}}/` — YAML templates (lists/, details/, pages/, navigation.yml); the installed
   copy lives in the host's `app-configs/{{module-name}}/` — change both
-- `resources/views/components/` — Livewire single-file components (`{{models}}-list.blade.php`,
-  `{{model}}-detail.blade.php`), flat, Livewire namespace `{{module-name}}::`
+- `resources/views/components/` — Livewire single-file components (`{{module-name}}-dashboard.blade.php`,
+  `*-list.blade.php`, `*-detail.blade.php`, `*-page.blade.php`), flat, Livewire namespace `{{module-name}}::`
 - `src/Models/`, `src/Commands/`, `src/Providers/{{ModuleName}}ServiceProvider.php`
 - `database/migrations|factories|seeders/`, `tests/` (Pest), `resources/lang/de.json`
 
@@ -19,6 +19,8 @@ by `php artisan boost:update` (add `noerd/{{module-name}}` to the `packages` arr
 
 - `php artisan noerd:install-{{module-name}}` — first installation (asks for the tenant assignment)
 - `php artisan noerd:update-{{module-name}}` — idempotent YAML update, discovered by `noerd:update-all`
+- `php artisan noerd:make-resource {Model} --app={{module-name}}` — list + detail for a model of this module
+  (create the model and its migration in `src/Models/` / `database/migrations/` first)
 
 ## Working on the module
 

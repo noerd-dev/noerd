@@ -26,8 +26,8 @@ this skill is the step-by-step procedure. The package docs are in `vendor/noerd/
 
 ## 2. Create the component — `resources/views/components/{entities}-list.blade.php`
 
-Plural name, directly in `components/` (no subfolders). Reference: the `noerd:module` stub
-`src/Commands/stubs/module/list.stub`.
+Plural name, directly in `components/` (no subfolders). Reference: the `noerd:make-resource` stub
+`src/Commands/stubs/resource/list.blade.stub`.
 
 ```php
 <?php
