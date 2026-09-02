@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Noerd\Tests;
 
+use Closure;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
@@ -51,6 +53,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function setUp(): void
     {
+        self::flushGuardableColumnsCache();
         $this->swapInTestbenchRefreshDatabaseState();
 
         try {
@@ -75,8 +78,10 @@ abstract class TestCase extends BaseTestCase
             parent::tearDown();
         } finally {
             $this->swapOutTestbenchRefreshDatabaseState();
+            self::flushGuardableColumnsCache();
         }
     }
+
     protected function getPackageProviders($app): array
     {
         return [
@@ -139,6 +144,24 @@ abstract class TestCase extends BaseTestCase
         if (static::usesRefreshDatabaseTestingConcern()) {
             $this->loadMigrationsFrom(\Orchestra\Testbench\default_migration_path());
         }
+    }
+
+    /**
+     * Eloquent memoizes every model's guardable COLUMN LIST in a process-global
+     * static, filled from the schema of whichever connection first mass-assigns
+     * that model. The testbench app (the package migrations alone) and a host
+     * application (its own migrations on top) disagree about those columns —
+     * `tenants.email`, for one, exists only in the host — so without this flush
+     * the suite that runs first teaches Eloquent a column list the other suite
+     * then filters its own writes through, and `update(['email' => null])`
+     * becomes a silent no-op instead of an error. Flushed around every test so
+     * each suite reads its own schema.
+     */
+    private static function flushGuardableColumnsCache(): void
+    {
+        Closure::bind(static function (): void {
+            Model::$guardableColumns = [];
+        }, null, Model::class)();
     }
 
     private function swapInTestbenchRefreshDatabaseState(): void
