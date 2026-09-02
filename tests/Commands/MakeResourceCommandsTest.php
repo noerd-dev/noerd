@@ -205,6 +205,40 @@ describe('module target', function (): void {
             ->and(File::get($this->hostPath . '/routes/web.php'))->toBe("<?php\n");
     });
 
+    it('appends the navigation entry to an installed copy whose last key is not the navigations', function (): void {
+        // The install command dumps the project copy with `hidden:` as the LAST key —
+        // a text append after it would be parsed as part of that value.
+        File::put($this->hostPath . '/app-configs/zzmod/navigation.yml', Yaml::dump([[
+            'title' => 'Zzmod',
+            'name' => 'zzmod',
+            'route' => 'zzmod',
+            'block_menus' => [[
+                'title' => 'Overview',
+                'navigations' => [['title' => 'Dashboard', 'route' => 'zzmod', 'heroicon' => 'home']],
+            ]],
+            'hidden' => false,
+        ]], 10, 2));
+
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+
+        $navigation = Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'));
+        $entries = $navigation[0]['block_menus'][0]['navigations'];
+
+        expect($navigation[0]['hidden'])->toBeFalse()
+            ->and(count($entries))->toBe(2)
+            ->and($entries[1]['route'])->toBe('zzmod.tenants')
+            ->and($entries[1]['newComponent'])->toBe('zzmod::tenant-detail');
+
+        // A second run (generated files removed, navigation kept) does not duplicate the entry.
+        File::deleteDirectory($this->moduleDir . '/resources');
+        foreach (['app-modules/zzmod/app-configs/zzmod', 'app-configs/zzmod'] as $base) {
+            File::deleteDirectory("{$this->hostPath}/{$base}/lists");
+            File::deleteDirectory("{$this->hostPath}/{$base}/details");
+        }
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
+        expect(count(Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))[0]['block_menus'][0]['navigations']))->toBe(2);
+    });
+
     it('generates a page into the module with a namespaced detail reference', function (): void {
         expect(Artisan::call('noerd:make-page', ['name' => 'tenant', '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
 

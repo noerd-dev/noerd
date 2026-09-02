@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 
 use Noerd\Models\TenantApp;
+use Symfony\Component\Yaml\Yaml;
 
 trait GeneratesResourceFiles
 {
@@ -661,6 +662,12 @@ trait GeneratesResourceFiles
         $this->line("<info>Detail route declared on:</info> {$listBladePath}");
     }
 
+    /**
+     * Append the entry to the last block of every navigation copy. The file is
+     * parsed and dumped again rather than appended as text: an installed copy is
+     * written by the install command with `hidden:` as its LAST key, so text
+     * appended after it would be read as part of that value.
+     */
     protected function addNavigation(bool $useSingularRoute = false): void
     {
         $navPaths = array_filter(
@@ -681,37 +688,62 @@ trait GeneratesResourceFiles
         }
 
         $routeEntity = $useSingularRoute ? $this->entity : $this->entities;
+        $routeName = "{$this->appConfigName}.{$routeEntity}";
 
-        $entitiesHeadline = Str::headline($this->entities);
-        $navEntry = "        - title: {$entitiesHeadline}\n"
-            . "          route: {$this->appConfigName}.{$routeEntity}\n"
-            . "          heroicon: rectangle-stack";
+        $entry = [
+            'title' => Str::headline($this->entities),
+            'route' => $routeName,
+            'heroicon' => 'rectangle-stack',
+        ];
 
         if (! $useSingularRoute) {
             // newRoute wins when registered, newComponent stays as the fallback.
             if ($this->detailRouteName !== null) {
-                $navEntry .= "\n          newRoute: {$this->detailRouteName}";
+                $entry['newRoute'] = $this->detailRouteName;
             }
 
-            $navEntry .= "\n          newComponent: {$this->componentPrefix}{$this->entity}-detail";
+            $entry['newComponent'] = "{$this->componentPrefix}{$this->entity}-detail";
         }
 
+        $preview = Yaml::dump([$entry], 10, 2, Yaml::DUMP_COMPACT_NESTED_MAPPING);
+
         // One confirmation covers every copy (module template + installed project copy).
-        if (! $this->confirm("Add navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$navEntry}</comment>", true)) {
+        if (! $this->confirm("Add navigation entry to {$this->appConfigName} navigation.yml?\n<comment>{$preview}</comment>", true)) {
             return;
         }
 
         foreach ($navPaths as $navPath) {
-            $content = $this->filesystem->get($navPath);
+            $navigation = Yaml::parse($this->filesystem->get($navPath));
 
-            if (str_contains($content, "route: {$this->appConfigName}.{$routeEntity}")) {
-                $this->warn("Navigation entry for '{$this->appConfigName}.{$routeEntity}' already exists in {$navPath} — skipping.");
+            if (! is_array($navigation) || ! isset($navigation[0]) || ! is_array($navigation[0])) {
+                $this->warn("Navigation file has no app block: {$navPath} — skipping.");
 
                 continue;
             }
 
-            $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
-            $this->filesystem->put($navPath, $content);
+            $blocks = $navigation[0]['block_menus'] ?? [];
+            $existingRoutes = [];
+            foreach ($blocks as $block) {
+                foreach ($block['navigations'] ?? [] as $existing) {
+                    $existingRoutes[] = $existing['route'] ?? null;
+                }
+            }
+
+            if (in_array($routeName, $existingRoutes, true)) {
+                $this->warn("Navigation entry for '{$routeName}' already exists in {$navPath} — skipping.");
+
+                continue;
+            }
+
+            if ($blocks === []) {
+                $blocks[] = ['title' => 'Overview', 'navigations' => []];
+            }
+
+            $lastBlock = array_key_last($blocks);
+            $blocks[$lastBlock]['navigations'][] = $entry;
+            $navigation[0]['block_menus'] = $blocks;
+
+            $this->filesystem->put($navPath, Yaml::dump($navigation, 10, 2, Yaml::DUMP_COMPACT_NESTED_MAPPING));
             $this->line("<info>Navigation added to:</info> {$navPath}");
         }
     }
