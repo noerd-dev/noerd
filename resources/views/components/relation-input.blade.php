@@ -1,3 +1,4 @@
+{{-- Thin wire:model wrapper kept for external callers; `x-noerd::select-input` is the primitive. --}}
 @props([
     'model' => '',
     'id' => '',

@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Support\LayoutState;
 use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
@@ -12,25 +13,17 @@ new class extends Component {
 
     public function openSidebar(): void
     {
-        if (session('hide_sidebar')) {
-            session()->forget('hide_sidebar');
-        } else {
-            session(['hide_sidebar' => true]);
-        }
+        LayoutState::setSidebarVisible(! LayoutState::sidebarVisible());
     }
 
     public function saveSidebarWidth(string $width): void
     {
-        session(['sidebar_nav_width' => $width]);
+        LayoutState::setNavigationWidth($width);
     }
 
     public function toggleAppbar(): void
     {
-        if (session('hide_appbar')) {
-            session()->forget('hide_appbar');
-        } else {
-            session(['hide_appbar' => true]);
-        }
+        LayoutState::setAppBarVisible(! LayoutState::appBarVisible());
     }
 }; ?>
 
@@ -87,22 +80,16 @@ new class extends Component {
                     <button x-show="! showAppbar" x-transition.opacity wire:click="openHome" type="button"
                             class="p-3 text-gray-400 hover:text-gray-600 transition-colors">
                         <span class="sr-only">{{ __('Home') }}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                             stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                        </svg>
+                        <x-icon name="home" class="w-5 h-5" />
                     </button>
 
                     {{-- Only appbar toggle. Persists on desktop only — on mobile the appbar is
                          transient and hidden again after every navigation --}}
                     <button @click="showAppbar = !showAppbar; if (isDesktop) { $wire.toggleAppbar() }"
+                            type="button"
+                            aria-label="{{ __('Toggle app bar') }}"
                             class="p-3 text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                             stroke="currentColor"
-                             class="w-5 h-5 transition-transform duration-200"
-                             :class="showAppbar ? '' : 'rotate-180'">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-                        </svg>
+                        <x-icon name="chevron-left" class="w-5 h-5 transition-transform duration-200" x-bind:class="showAppbar ? '' : 'rotate-180'" />
                     </button>
                 </div>
                 <!-- Resize Handle -->

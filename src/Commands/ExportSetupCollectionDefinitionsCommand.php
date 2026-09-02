@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Symfony\Component\Yaml\Yaml;
 
@@ -20,9 +21,7 @@ class ExportSetupCollectionDefinitionsCommand extends Command
     public function handle(DatabaseSetupCollectionDefinitionRepository $repository): int
     {
         $yamlPath = base_path(config('noerd.collections.setup_yaml_path', 'app-configs/setup/collections'));
-        if (! is_dir($yamlPath)) {
-            mkdir($yamlPath, 0755, true);
-        }
+        File::ensureDirectoryExists($yamlPath);
 
         $tenantId = $this->option('tenant-id') ? (int) $this->option('tenant-id') : null;
         $definitions = $repository->all($tenantId);
@@ -40,14 +39,14 @@ class ExportSetupCollectionDefinitionsCommand extends Command
         foreach ($definitions as $definition) {
             $file = $yamlPath . '/' . $definition->filename . '.yml';
 
-            if (file_exists($file) && ! $force) {
+            if (File::exists($file) && ! $force) {
                 $this->warn("skipped (exists): {$definition->filename}");
                 $skipped++;
 
                 continue;
             }
 
-            file_put_contents($file, Yaml::dump($definition->toYamlArray(), 4, 2));
+            File::put($file, Yaml::dump($definition->toYamlArray(), 4, 2));
             $this->line("wrote {$definition->filename}.yml");
             $written++;
         }

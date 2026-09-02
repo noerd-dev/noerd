@@ -44,9 +44,9 @@
     };
 
     $variantClasses = match ($variant) {
-        'primary' => '!bg-brand-primary text-brand-primary-text shadow-xs hover:bg-brand-primary/80 focus:ring-brand-border',
-        'secondary' => 'border border-gray-300 !bg-brand-secondary text-brand-secondary-text shadow-xs hover:bg-brand-secondary/80 focus:ring-brand-primary/80',
-        'danger' => '!bg-brand-danger text-brand-danger-text border border-gray-300 shadow-xs hover:bg-brand-danger/80 focus:ring-red-500',
+        'primary' => 'bg-brand-primary! text-brand-primary-text shadow-xs hover:bg-brand-primary/80 focus:ring-brand-border',
+        'secondary' => 'border border-gray-300 bg-brand-secondary! text-brand-secondary-text shadow-xs hover:bg-brand-secondary/80 focus:ring-brand-primary/80',
+        'danger' => 'bg-brand-danger! text-brand-danger-text border border-gray-300 shadow-xs hover:bg-brand-danger/80 focus:ring-red-500',
         'pill' => 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-brand-primary/80',
         'ghost', 'icon' => 'text-gray-700 hover:bg-gray-100 focus:ring-brand-primary/80',
         'control' => 'border border-gray-300 text-gray-700 hover:bg-gray-100 focus:ring-brand-primary/80',

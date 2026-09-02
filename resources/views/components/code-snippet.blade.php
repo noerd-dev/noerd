@@ -12,7 +12,7 @@
             type="button"
             class="noerd-code-snippet-copy"
             :class="{ 'is-copied': copied }"
-            :aria-label="copied ? 'Code copied' : 'Copy code'"
+            :aria-label="copied ? @js(__('Code copied')) : @js(__('Copy code'))"
             @click="copy($refs.code)"
         >
             <span x-show="! copied">

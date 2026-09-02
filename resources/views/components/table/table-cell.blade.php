@@ -24,19 +24,20 @@
                         id="row-menu-button-{{ $id }}"
                         :aria-expanded="showDropdown ? 'true' : 'false'"
                         aria-haspopup="true"
+                        aria-label="{{ __('Actions') }}"
                     >
                         <svg
-                            class="my-auto"
+                            class="my-auto text-zinc-600"
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"
                             height="16"
                             viewBox="0 0 16 16"
                         >
                             <title>menu-dots</title>
-                            <g fill="#333">
-                                <circle fill="#333" cx="8" cy="8" r="2"></circle>
-                                <circle fill="#333" cx="2" cy="8" r="2"></circle>
-                                <circle fill="#333" cx="14" cy="8" r="2"></circle>
+                            <g fill="currentColor">
+                                <circle cx="8" cy="8" r="2"></circle>
+                                <circle cx="2" cy="8" r="2"></circle>
+                                <circle cx="14" cy="8" r="2"></circle>
                             </g>
                         </svg>
                     </button>
@@ -47,7 +48,7 @@
                         class="absolute right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                         role="menu"
                         aria-orientation="vertical"
-                        aria-labelledby="menu-button"
+                        aria-labelledby="row-menu-button-{{ $id }}"
                         tabindex="-1"
                     >
                         <div class="py-1" role="none">
@@ -90,7 +91,11 @@
                     </div>
                 </div>
             @else
-                <button class="my-auto mr-1 ml-auto flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-center text-sm opacity-0 shadow-sm group-hover:opacity-100 hover:bg-gray-50">
+                <button
+                    type="button"
+                    aria-label="{{ __('Edit') }}"
+                    class="my-auto mr-1 ml-auto flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-center text-sm opacity-0 shadow-sm group-hover:opacity-100 hover:bg-gray-50"
+                >
                     <div class="m-auto">
                         <x-noerd::icons.pencil class="h-3! w-3!" />
                     </div>
@@ -101,7 +106,6 @@
         <a
             class="m-0.5 flex"
             @click.stop
-            wire:navigate
             wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
         >
             <x-noerd::button icon="plus-circle" class="ml-auto"> {{ __($label) }} </x-noerd::button>
@@ -110,13 +114,12 @@
         <a
             class="m-0.5 flex"
             wire:confirm="{{ __('Are you sure you want to delete this entry?') }}"
-            wire:navigate
             wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
         >
             <x-noerd::button variant="danger" class="ml-auto"> {{ __($label) }} </x-noerd::button>
         </a>
     @elseif ($columnValue === 'secondAction')
-        <a class="m-0.5 flex" wire:navigate wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
+        <a class="m-0.5 flex" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
             <x-noerd::button variant="secondary" class="ml-auto"> {{ __($label) }} </x-noerd::button>
         </a>
     @else
@@ -177,7 +180,7 @@
             @endif
         @else
             @if ($type === 'id')
-                <a wire:navigate class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
+                <a class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
                     <input
                         type="text"
                         wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
@@ -327,14 +330,14 @@
                 @if ($value && $relationRoute)
                     <button
                         @click.stop="$modalRoute({{ \Illuminate\Support\Js::from($relationRoute) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $columnConfig['modalComponent'] ?? null])) }})"
-                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
+                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
                     >
                         {{ $value }}
                     </button>
                 @elseif ($value && isset($columnConfig['modalComponent']))
                     <button
                         @click.stop="$modal({{ \Illuminate\Support\Js::from($columnConfig['modalComponent']) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }})"
-                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
+                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
                     >
                         {{ $value }}
                     </button>

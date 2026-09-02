@@ -16,7 +16,7 @@ class SetupCollectionFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'collection_key' => $this->faker->unique()->slug(2),
+            'collection_key' => fake()->unique()->slug(2),
             'name' => $this->faker->word(),
         ];
     }

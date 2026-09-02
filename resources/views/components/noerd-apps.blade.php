@@ -1,9 +1,9 @@
 <?php
 
 use Livewire\Component;
-use Illuminate\Support\Str;
-use Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
 
@@ -41,11 +41,12 @@ new class extends Component {
         <div class="flex flex-wrap">
             @foreach($selectedTenant?->tenantApps ?? [] as $tenantApp)
                 @continue($tenantApp->pivot->is_hidden)
-                @continue(! \Noerd\Helpers\AccessHelper::canAccessApp($tenantApp->name))
-                <a @if($tenantApp->is_active)
-                       wire:click="openApp('{{ $tenantApp->name }}', '{{ $tenantApp->route }}')"
-                   @else
-                       href="#/"
+                @continue(! AccessHelper::canAccessApp($tenantApp->name))
+                <button type="button"
+                        @if($tenantApp->is_active)
+                            wire:click="openApp('{{ $tenantApp->name }}', '{{ $tenantApp->route }}')"
+                        @else
+                            disabled
                         @endif
                         @class([
                             'bg-white border border-gray-300 hover:bg-gray-50 w-36 h-36 mr-6 mt-6 flex p-2 py-4 text-sm text-center rounded-lg items-center justify-center',
@@ -57,7 +58,7 @@ new class extends Component {
                             <x-noerd::app-icon
                                     :icon="$tenantApp->icon"
                                     class="{{ $selectedApp === $tenantApp->name  ? 'stroke-brand-primary border-brand-primary' :
-                                'stroke-black border-transparent hover:!border-gray-500' }}
+                                'stroke-black border-transparent hover:border-gray-500!' }}
                                 border-l-2"/>
                         </div>
 
@@ -74,7 +75,7 @@ new class extends Component {
                             </div>
                         @endif
                     </div>
-                </a>
+                </button>
             @endforeach
         </div>
     </div>

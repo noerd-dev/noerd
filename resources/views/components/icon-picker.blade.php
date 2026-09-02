@@ -31,12 +31,12 @@ new class extends Component {
     </x-slot:header>
 
     <div x-data="{ search: '' }" class="py-6">
-        <input
+        <x-noerd::text-input
             type="text"
             x-model="search"
             autofocus
             placeholder="{{ __('Search icons') }}"
-            class="w-full border rounded-lg block appearance-none text-base sm:text-sm py-2 h-10 leading-[1.375rem] ps-3 pe-3 bg-white text-zinc-700 placeholder-zinc-400 shadow-xs border-zinc-200 border-b-zinc-300/80 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2"
+            class="mt-0"
         />
 
         <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-4">

@@ -148,7 +148,7 @@ describe('authorization', function (): void {
 
     it('refuses to create a tenant from the inner component for a non-admin', function (): void {
         try {
-            Livewire::test('noerd::create-new-tenant')
+            Livewire::test('noerd::create-tenant-form')
                 ->set('name', 'escalation')
                 ->call('createTenant');
         } catch (Throwable) {
@@ -320,12 +320,12 @@ describe('audit list target validation', function (): void {
     });
 
     it('rejects a model class that is not auditable', function (): void {
-        Livewire::test('noerd::audit-list', ['modelClass' => Tenant::class, 'modelId' => 1])
+        Livewire::test('noerd::audit-modal', ['modelClass' => Tenant::class, 'modelId' => 1])
             ->assertStatus(404);
     });
 
     it('rejects a class that is not an eloquent model', function (): void {
-        Livewire::test('noerd::audit-list', ['modelClass' => Illuminate\Support\Str::class, 'modelId' => 1])
+        Livewire::test('noerd::audit-modal', ['modelClass' => Illuminate\Support\Str::class, 'modelId' => 1])
             ->assertStatus(404);
     });
 });

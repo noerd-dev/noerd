@@ -1,7 +1,14 @@
+@php
+    // Tailwind cannot generate class names at runtime — map the YAML `align`
+    // value to a literal class so the scanner picks it up.
+    $alignClasses = ['left' => 'text-left', 'center' => 'text-center', 'right' => 'text-right'];
+    $alignClass = $alignClasses[$align ?? 'left'] ?? 'text-left';
+@endphp
+
 <th
     style="width: {{ $width }}%;@if($minWidth ?? null) min-width: {{ $minWidth }}px;@endif"
     scope="col"
-    class="group/th text-{{ $align }} border-r last:border-r-0 first:pl-6 sticky top-0 z-10 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter"
+    class="group/th {{ $alignClass }} border-r last:border-r-0 first:pl-6 sticky top-0 z-10 border-b border-gray-300 bg-brand-navi/75 py-3.5 pr-3 pl-2 text-left text-sm font-semibold text-gray-900 backdrop-blur-sm backdrop-filter"
 >
     <div class="top-5 flex items-center whitespace-nowrap">
         @if ($field !== 'action')

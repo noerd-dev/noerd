@@ -32,7 +32,7 @@ it('renders the tenant-apps page for admins', function (): void {
 
     $this->get('/setup/tenant-apps')
         ->assertSuccessful()
-        ->assertSeeLivewire('noerd::tenant-apps-list');
+        ->assertSeeLivewire('noerd::tenant-apps-page');
 });
 
 it('denies access to non-admin users', function (): void {
@@ -56,7 +56,7 @@ it('shows assigned and available apps', function (): void {
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-page')
         ->assertSee('App A')
         ->assertSee('App B')
         ->assertSee('App C');
@@ -67,7 +67,7 @@ it('toggleApp detaches an assigned app', function (): void {
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-page')
         ->call('toggleApp', $this->appA->id);
 
     expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())
@@ -80,7 +80,7 @@ it('toggleApp sets correct sort_order when adding', function (): void {
 
     $this->actingAs($this->admin);
 
-    Livewire::test('noerd::tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-page')
         ->call('toggleApp', $this->appC->id);
 
     $pivot = $this->tenant->tenantApps()->where('tenant_apps.id', $this->appC->id)->first()->pivot;
@@ -95,7 +95,7 @@ it('appSort updates sort_order correctly', function (): void {
     $this->actingAs($this->admin);
 
     // Move App C from position 2 to position 0
-    Livewire::test('noerd::tenant-apps-list')
+    Livewire::test('noerd::tenant-apps-page')
         ->call('appSort', $this->appC->id, 0);
 
     $apps = $this->tenant->tenantApps()->get();
@@ -120,7 +120,7 @@ it('toggleApp attaches an unassigned app and moves it between the sections', fun
 
     $this->actingAs($user);
 
-    $component = Livewire::test('noerd::tenant-apps-list');
+    $component = Livewire::test('noerd::tenant-apps-page');
     $assignedBefore = count($component->get('assignedApps'));
     $availableBefore = count($component->get('availableApps'));
 

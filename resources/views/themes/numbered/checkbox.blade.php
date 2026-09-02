@@ -14,10 +14,6 @@
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
 
-    // Get current value and convert to boolean (handles "1"/"0" strings without model cast)
-    $currentValue = data_get($this, $name);
-    $isChecked = filter_var($currentValue, FILTER_VALIDATE_BOOLEAN);
-
     // The row label already names the field; the control slot shows only the checkbox.
     $rowField = $field ?? [];
 @endphp
@@ -31,7 +27,6 @@
             @else
                 wire:model="{{ $name }}"
             @endif
-            :checked="{{ $isChecked ? 'true' : 'false' }}"
             id="{{ $name }}"
             type="checkbox"
             class="text-brand-primary focus:ring-brand-border h-4 w-4 rounded-none border border-zinc-400"

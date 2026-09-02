@@ -150,7 +150,7 @@
             >
                 @if (! $hideHead && ! $compact)
                     <div @class(['-mx-6 border-b border-gray-300 px-6' => ! empty($description)])>
-                        @include('noerd::components.table.title-search', [
+                        @include('noerd::components.table.list-description', [
                             'description' => $description ?? '',
                         ])
                     </div>
@@ -215,7 +215,6 @@
                                             <tbody>
                                                 @forelse ($rows as $key => $row)
                                                     <tr
-                                                        :key="{{ $key }}"
                                                         wire:key="row-{{ $listId }}-{{ $row['id'] ?? $key }}"
                                                         :class="{'bg-gray-100!': selectedRow{{ $listId }} == {{ $key }} }"
                                                         @click="selectedRow{{ $listId }} = '{{ $key }}'"

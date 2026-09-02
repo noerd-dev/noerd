@@ -36,10 +36,10 @@ final class ComponentAccessGuard
         // The inner worker of create-tenant: it holds the actual tenant
         // creation (incl. attaching the caller to the new ADMIN profile), so it
         // must be as unreachable as its wrapper.
-        'noerd::create-new-tenant',
+        'noerd::create-tenant-form',
         // Sets a user's password; only ever embedded in the user editor.
         'noerd::user-update-password',
-        'noerd::tenant-apps-list',
+        'noerd::tenant-apps-page',
         'noerd::system-settings-page',
         'noerd::setup-collections-list',
         'noerd::setup-collection-detail',

@@ -16,8 +16,8 @@ describe('Page disableModal fallback', function (): void {
         $this->actingAs($this->admin);
     });
 
-    /** The page root breaks out of the surrounding padding via a negative margin style. */
-    $breakout = '/<div\b[^>]*\bstyle="[^"]*margin-left[^"]*"/';
+    /** The page root breaks out of the surrounding padding via a negative horizontal margin. */
+    $breakout = '/<div\b[^>]*\bclass="[^"]*-mx-8[^"]*"/';
 
     it('does not apply the breakout style by default', function () use ($breakout): void {
         $html = Livewire::test('noerd-test::page-chrome-list')

@@ -17,7 +17,7 @@ declare(strict_types=1);
 return [
     'auth' => [
         // Guard noerd registers and authenticates against. Set to 'web' to
-        // restore the legacy behavior (host default guard).
+        // run on the host's default guard instead of a dedicated one.
         'guard' => env('NOERD_AUTH_GUARD', 'noerd'),
 
         // Authenticatable model backing the noerd user provider.
@@ -87,10 +87,6 @@ return [
     'generators' => [
         'search_modules' => true,
         'modules_path' => 'app-modules',
-    ],
-
-    'cache' => [
-        'object_catalog' => env('NOERD_OBJECT_CATALOG_CACHE', true),
     ],
 
     'theme' => [

@@ -16,7 +16,7 @@ use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
 use Noerd\Commands\CreateAdminCommand;
-use Noerd\Commands\CreateTenantApp;
+use Noerd\Commands\CreateTenantAppCommand;
 use Noerd\Commands\CreateTenantCommand;
 use Noerd\Commands\ExportSetupCollectionDefinitionsCommand;
 use Noerd\Commands\ImportSetupCollectionDefinitionsCommand;
@@ -79,6 +79,7 @@ use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
 use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
+use Noerd\Support\LayoutState;
 use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
@@ -362,7 +363,7 @@ class NoerdServiceProvider extends ServiceProvider
         ));
 
         View::composer('noerd::layouts.app', function ($view): void {
-            $view->with('showSidebar', ! session('hide_sidebar'));
+            $view->with('showSidebar', LayoutState::sidebarVisible());
         });
 
         // Publishing runs ONLY in console: a live web request must never write
@@ -376,6 +377,12 @@ class NoerdServiceProvider extends ServiceProvider
                 __DIR__ . '/../../public' => public_path('vendor/noerd'),
                 __DIR__ . '/../../dist/build' => public_path('vendor/noerd'),
             ], 'noerd-assets');
+
+            // The host config is normally published by noerd:install; the tag
+            // exists for hosts that publish everything through vendor:publish.
+            $this->publishes([
+                __DIR__ . '/../../stubs/noerd.php.stub' => config_path('noerd.php'),
+            ], 'noerd-config');
 
             // Dev-checkout convenience only: keep the published fonts and the
             // built bundle current on any artisan call. Never on other
@@ -392,7 +399,7 @@ class NoerdServiceProvider extends ServiceProvider
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,
                 NoerdUpdateAllCommand::class,
-                CreateTenantApp::class,
+                CreateTenantAppCommand::class,
                 AssignAppsToTenantCommand::class,
                 MakeModuleCommand::class,
                 MakeResourceCommand::class,

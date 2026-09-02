@@ -45,7 +45,7 @@ describe('Relation field theme templates', function (): void {
         assertElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
 
         // The select button shrinks to the compact input height on the same element.
-        assertElementHasClasses($component->html(), ['!h-7', '!px-2']);
+        assertElementHasClasses($component->html(), ['h-7!', 'px-2!']);
     });
 
     it('renders the numbered template inside the numbered row chrome', function () use ($props): void {

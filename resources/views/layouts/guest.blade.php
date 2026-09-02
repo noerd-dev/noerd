@@ -11,11 +11,13 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <link rel="stylesheet" href="/vendor/noerd/fonts/fonts.css" />
+    <x-noerd::assets />
+
+    <link rel="stylesheet" href="{{ asset('vendor/noerd/fonts/fonts.css') }}" />
 </head>
 <body class="bg-brand-bg h-full">
     <div>
-        <!-- Content -->
+        {{-- Content --}}
         <div>
             <main>{{ $slot }}</main>
         </div>

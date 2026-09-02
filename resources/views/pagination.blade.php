@@ -1,19 +1,19 @@
-<div class="">
+<div>
     <nav
         role="navigation"
         aria-label="Pagination Navigation"
-        class="my-auto flex !h-[44px] items-center justify-between py-3"
+        class="my-auto flex h-[44px]! items-center justify-between py-3"
     >
         {{-- Info text + per-page dropdown left --}}
         <div class="hidden sm:flex sm:items-center sm:gap-4">
             <p class="text-sm text-gray-700">
-                <span>{!! __('Showing') !!}</span>
+                <span>{{ __('Showing') }}</span>
                 <span class="font-medium">{{ $paginator->firstItem() }}</span>
-                <span>{!! __('to') !!}</span>
+                <span>{{ __('to') }}</span>
                 <span class="font-medium">{{ $paginator->lastItem() }}</span>
-                <span>{!! __('of') !!}</span>
+                <span>{{ __('of') }}</span>
                 <span class="font-medium">{{ $paginator->total() }}</span>
-                <span>{!! __('results') !!}</span>
+                <span>{{ __('results') }}</span>
             </p>
             <select
                 wire:model.live="perPage"
@@ -33,7 +33,7 @@
                         <svg class="mr-3 size-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
                         </svg>
-                        {!! __('Previous') !!}
+                        {{ __('Previous') }}
                     </span>
                 @else
                     <button
@@ -46,7 +46,7 @@
                         <svg class="mr-3 size-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
                         </svg>
-                        {!! __('Previous') !!}
+                        {{ __('Previous') }}
                     </button>
                 @endif
 
@@ -58,14 +58,14 @@
                         dusk="nextPage{{ $paginator->getPageName() == 'page' ? '' : '.' . $paginator->getPageName() }}"
                         class="inline-flex cursor-pointer items-center border-t-2 border-transparent text-sm font-medium text-gray-500 transition hover:text-gray-700"
                     >
-                        {!! __('Next') !!}
+                        {{ __('Next') }}
                         <svg class="ml-3 size-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638l-4.158-3.96a.75.75 0 0 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 0 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
                         </svg>
                     </button>
                 @else
                     <span class="inline-flex cursor-default items-center border-t-2 border-transparent text-sm font-medium text-gray-300">
-                        {!! __('Next') !!}
+                        {{ __('Next') }}
                         <svg class="ml-3 size-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638l-4.158-3.96a.75.75 0 0 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 0 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
                         </svg>

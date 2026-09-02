@@ -570,7 +570,7 @@ Use **compact mode** when embedding a list inside another component — for exam
 rendered below the form of a detail view. In compact mode the list renders only the table and hides:
 
 - the list header (title, search field and action buttons such as "New …")
-- the inline title-search and description
+- the inline list description
 - the pagination footer (the "Showing 1 to N of N results" row and the per-page select)
 
 `compact` is a public property on the `NoerdList` trait, so it works exactly like `disableModal` —

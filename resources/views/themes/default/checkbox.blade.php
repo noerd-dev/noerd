@@ -4,6 +4,7 @@
     'label' => '',
     'readonly' => false,
     'live' => false,
+    'required' => false,
 ])
 
 @php
@@ -11,10 +12,7 @@
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? $readonly;
     $live = $field['live'] ?? $live;
-
-    // Get current value and convert to boolean (handles "1"/"0" strings without model cast)
-    $currentValue = data_get($this, $name);
-    $isChecked = filter_var($currentValue, FILTER_VALIDATE_BOOLEAN);
+    $required = $field['required'] ?? $required;
 @endphp
 
 <div class="mt-auto flex h-full">
@@ -27,7 +25,6 @@
                 @else
                     wire:model="{{ $name }}"
                 @endif
-                :checked="{{ $isChecked ? 'true' : 'false' }}"
                 id="{{ $name }}"
                 type="checkbox"
                 class="text-brand-primary focus:ring-brand-border h-4 w-4 rounded-sm border border-gray-300"
@@ -38,6 +35,9 @@
                  YAML `helpText` tooltip is rendered explicitly here. --}}
             <label for="{{ $name }}" class="font-medium text-gray-900">
                 {{ __($label) }}
+                @if ($required)
+                    <span class="text-red-500">*</span>
+                @endif
                 @if (! empty($field['helpText']))
                     <x-noerd::help-tooltip :text="__($field['helpText'])" />
                 @endif

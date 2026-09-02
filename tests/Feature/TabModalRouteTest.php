@@ -69,7 +69,7 @@ it('keeps numbered tabs unchanged', function (): void {
         ['label' => 'General', 'number' => 1],
     ]);
 
-    expect($html)->toContain('currentTab= 1')
+    expect($html)->toContain('currentTab = 1')
         ->not->toContain('$modalRoute(');
 });
 

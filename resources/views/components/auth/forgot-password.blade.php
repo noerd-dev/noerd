@@ -22,46 +22,22 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="flex min-h-[calc(100dvh_-_var(--environment-banner-height,0px))] items-stretch">
-    <div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-        <div class="mx-auto w-full max-w-sm lg:w-96">
-            <div>
-                <x-noerd::application-logo class="h-10 w-auto" />
-                <div class="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900">
-                    {{ __('Forgot password') }}
-                </div>
-                <p class="mt-2 text-sm/6 text-gray-500">
-                    {{ __('Enter your email to receive a password reset link') }}
-                </p>
-            </div>
+<x-noerd::auth-shell :title="__('Forgot password')" :description="__('Enter your email to receive a password reset link')">
+    <form wire:submit="sendPasswordResetLink" class="space-y-6">
+        {{-- Email Address --}}
+        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
 
-            <!-- Session Status -->
-            <x-noerd::auth-session-status class="mt-6" :status="session('status')" />
-
-            <div class="mt-10">
-                <form wire:submit="sendPasswordResetLink" class="space-y-6">
-                    <!-- Email Address -->
-                    <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
-
-                    <!-- Submit Button -->
-                    <div>
-                        <x-noerd::button type="submit" class="w-full justify-center">
-                            {{ __('Email password reset link') }}
-                        </x-noerd::button>
-                    </div>
-                </form>
-
-                <p class="mt-10 text-center text-sm/6 text-gray-500">
-                    <a href="{{ route('noerd.login') }}" wire:navigate class="font-semibold">
-                        {{ __('Back to login') }}
-                    </a>
-                </p>
-            </div>
+        {{-- Submit Button --}}
+        <div>
+            <x-noerd::button type="submit" class="w-full justify-center">
+                {{ __('Email password reset link') }}
+            </x-noerd::button>
         </div>
-    </div>
-    <div class="relative hidden w-0 flex-1 bg-black lg:block">
-        @if(config('noerd.branding.auth_background_image'))
-            <img src="{{ config('noerd.branding.auth_background_image') }}" alt="" class="absolute inset-0 size-full object-cover" />
-        @endif
-    </div>
-</div>
+    </form>
+
+    <p class="mt-10 text-center text-sm/6 text-gray-500">
+        <a href="{{ route('noerd.login') }}" wire:navigate class="font-semibold">
+            {{ __('Back to login') }}
+        </a>
+    </p>
+</x-noerd::auth-shell>

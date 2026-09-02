@@ -114,7 +114,7 @@
                     <button
                         type="button"
                         @click="$wire.setColumnFilter('{{ $field }}', value); open = false"
-                        class="bg-brand-primary rounded-md px-3 py-1 text-sm text-white hover:opacity-90"
+                        class="bg-brand-primary rounded-md px-3 py-1 text-sm text-brand-primary-text hover:opacity-90"
                     >
                         {{ __('Apply') }}
                     </button>

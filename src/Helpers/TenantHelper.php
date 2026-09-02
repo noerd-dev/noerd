@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Noerd\Helpers;
 
 use Noerd\Models\Tenant;
-use Noerd\Models\TenantApp;
 
 class TenantHelper
 {
@@ -143,23 +142,5 @@ class TenantHelper
     public static function hasApp(): bool
     {
         return self::getSelectedApp() !== null;
-    }
-
-    /**
-     * Set the selected app based on the current route name from tenant_apps.
-     */
-    public static function setSelectedAppFromRoute(): void
-    {
-        $currentRoute = request()->route()?->getName();
-
-        if (! $currentRoute) {
-            return;
-        }
-
-        $app = TenantApp::where('route', $currentRoute)->first();
-
-        if ($app && self::getSelectedApp() !== $app->name) {
-            self::setSelectedApp($app->name);
-        }
     }
 }
