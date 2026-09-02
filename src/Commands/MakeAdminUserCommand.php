@@ -13,14 +13,14 @@ use function Laravel\Prompts\text;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 
-class CreateAdminCommand extends Command
+class MakeAdminUserCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'noerd:create-admin
+    protected $signature = 'noerd:make-admin-user
                             {--name= : The name of the user}
                             {--email= : The email of the user}
                             {--password= : The password of the user}
@@ -31,6 +31,13 @@ class CreateAdminCommand extends Command
      *
      * @var string
      */
+    /**
+     * The former command name, kept so existing install scripts keep working.
+     *
+     * @var array<int, string>
+     */
+    protected $aliases = ['noerd:create-admin'];
+
     protected $description = 'Create a new user and make them an admin';
 
     /**
@@ -40,7 +47,7 @@ class CreateAdminCommand extends Command
     {
         // Check if any tenants exist
         if (Tenant::count() === 0) {
-            $this->error('No tenants found. Please run "php artisan noerd:create-tenant" first.');
+            $this->error('No tenants found. Please run "php artisan noerd:make-tenant" first.');
 
             return self::FAILURE;
         }

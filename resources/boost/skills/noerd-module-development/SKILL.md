@@ -11,17 +11,17 @@ metadata:
 A module is a Composer package under `app-modules/{module}/` (namespace `Noerd\{Module}` by
 convention) that ships a tenant app: YAML configs, Livewire components, model, migrations, routes,
 translations, tests and an install/update command. Hard rules: `noerd/noerd` Boost guideline. Docs:
-`vendor/noerd/noerd/docs/creating-modules.md`, `create-app.md`, `navigation.md`,
+`vendor/noerd/noerd/docs/creating-modules.md`, `make-app.md`, `navigation.md`,
 `artisan-commands.md`, `traits.md`, `ai-agents.md`.
 
 ## 1. Scaffold
 
 ```bash
-php artisan noerd:create-app        # choose "Module": asks title, name, heroicon, then registers with Composer and installs (tenant assignment is the only question)
+php artisan noerd:make-app        # choose "Module": asks title, name, heroicon, then registers with Composer and installs (tenant assignment is the only question)
 php artisan noerd:module            # the scaffolder itself: module name, app title, heroicon
                                     # scripted: noerd:module inventory --title=Inventory --icon=cube
 composer update noerd/{module}
-php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates (--scaffold = the silent create-app run)
+php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates (--scaffold = the silent make-app run)
 php artisan noerd:make-resource Item --app={module}   # per record type, after model + migration exist in the module
 ```
 
@@ -30,7 +30,7 @@ The scaffold is dashboard + plumbing, no model. `noerd:make-resource` / `make-li
 into it: components under `{app}::`, routes into `routes/{app}-routes.php`, YAML + navigation into
 both copies.
 
-Never write the `tenant_apps` row of a module by hand or via the root `noerd:create-app` flow —
+Never write the `tenant_apps` row of a module by hand or via the root `noerd:make-app` flow —
 the generated install command registers it (name = UPPERCASE module key, icon = the heroicon from
 `getAppIcon()`, route = the module dashboard). A module ships no icon file; a Blade icon is only
 the manual exception when no heroicon fits.

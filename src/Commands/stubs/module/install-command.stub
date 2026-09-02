@@ -13,7 +13,7 @@ class {{ModuleName}}InstallCommand extends Command
 
     protected $signature = 'noerd:install-{{module-name}}
                             {--force : Overwrite existing files without asking}
-                            {--scaffold : Silent post-scaffold run (noerd:create-app) — only the tenant assignment is asked}';
+                            {--scaffold : Silent post-scaffold run (noerd:make-app) — only the tenant assignment is asked}';
 
     protected $description = 'Install {{ModuleName}} module content and navigation';
 

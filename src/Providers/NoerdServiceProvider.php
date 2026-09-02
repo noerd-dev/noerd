@@ -15,11 +15,10 @@ use Illuminate\Support\Str;
 use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
-use Noerd\Commands\CreateAdminCommand;
-use Noerd\Commands\CreateTenantAppCommand;
-use Noerd\Commands\CreateTenantCommand;
 use Noerd\Commands\ExportSetupCollectionDefinitionsCommand;
 use Noerd\Commands\ImportSetupCollectionDefinitionsCommand;
+use Noerd\Commands\MakeAdminUserCommand;
+use Noerd\Commands\MakeAppCommand;
 use Noerd\Commands\MakeCollectionCommand;
 use Noerd\Commands\MakeDashboardCommand;
 use Noerd\Commands\MakeDetailCommand;
@@ -27,6 +26,7 @@ use Noerd\Commands\MakeListCommand;
 use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
+use Noerd\Commands\MakeTenantCommand;
 use Noerd\Commands\MakeThemeCommand;
 use Noerd\Commands\MakeUserAdminCommand;
 use Noerd\Commands\NoerdDemoCommand;
@@ -403,7 +403,7 @@ class NoerdServiceProvider extends ServiceProvider
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,
                 NoerdUpdateAllCommand::class,
-                CreateTenantAppCommand::class,
+                MakeAppCommand::class,
                 AssignAppsToTenantCommand::class,
                 MakeModuleCommand::class,
                 MakeResourceCommand::class,
@@ -413,8 +413,8 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeDashboardCommand::class,
                 MakeCollectionCommand::class,
                 MakeThemeCommand::class,
-                CreateAdminCommand::class,
-                CreateTenantCommand::class,
+                MakeAdminUserCommand::class,
+                MakeTenantCommand::class,
                 NoerdDemoCommand::class,
                 PublishHomeCommand::class,
                 ImportSetupCollectionDefinitionsCommand::class,

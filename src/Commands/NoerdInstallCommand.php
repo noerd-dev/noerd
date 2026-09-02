@@ -540,7 +540,7 @@ class NoerdInstallCommand extends Command
     /**
      * Setup an admin user - either create a new one or promote an existing user.
      * Skipped in non-interactive runs: an admin needs prompted credentials, and
-     * `noerd:create-admin` accepts them as options for scripted setups.
+     * `noerd:make-admin-user` accepts them as options for scripted setups.
      */
     protected function setupAdminUser(): void
     {
@@ -549,7 +549,7 @@ class NoerdInstallCommand extends Command
         $this->line('================');
 
         if (! $this->input->isInteractive()) {
-            $this->line('<comment>Non-interactive run: skipping admin setup. Create one with: php artisan noerd:create-admin --name= --email= --password=</comment>');
+            $this->line('<comment>Non-interactive run: skipping admin setup. Create one with: php artisan noerd:make-admin-user --name= --email= --password=</comment>');
             return;
         }
 
@@ -564,7 +564,7 @@ class NoerdInstallCommand extends Command
 
     /**
      * Create a new admin user when no users exist. Delegates to
-     * noerd:create-admin, which owns the prompts and their validation —
+     * noerd:make-admin-user, which owns the prompts and their validation —
      * the first user of an installation becomes super admin.
      */
     protected function setupNewAdminUser(): void
@@ -576,7 +576,7 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        $this->call('noerd:create-admin', ['--super-admin' => true]);
+        $this->call('noerd:make-admin-user', ['--super-admin' => true]);
     }
 
     /**
@@ -683,7 +683,7 @@ class NoerdInstallCommand extends Command
 
         // Create default tenant if none exist
         if (Tenant::count() === 0) {
-            $this->call('noerd:create-tenant');
+            $this->call('noerd:make-tenant');
             $this->autoAssignAllApps();
         } else {
             $this->line('<comment>Tenant(s) already exist, skipping.</comment>');

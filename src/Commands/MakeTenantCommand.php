@@ -11,14 +11,14 @@ use function Laravel\Prompts\text;
 
 use Noerd\Models\Tenant;
 
-class CreateTenantCommand extends Command
+class MakeTenantCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'noerd:create-tenant
+    protected $signature = 'noerd:make-tenant
                             {--name= : The name of the tenant}
                             {--default : Use "Default" as the tenant name}';
 
@@ -27,6 +27,13 @@ class CreateTenantCommand extends Command
      *
      * @var string
      */
+    /**
+     * The former command name, kept so existing install scripts keep working.
+     *
+     * @var array<int, string>
+     */
+    protected $aliases = ['noerd:create-tenant'];
+
     protected $description = 'Create a new tenant';
 
     /**

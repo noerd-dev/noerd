@@ -168,7 +168,7 @@ trait HasModuleInstallation
     }
 
     /**
-     * The silent post-scaffold run started by noerd:create-app (`--scaffold`, when
+     * The silent post-scaffold run started by noerd:make-app (`--scaffold`, when
      * the command declares the option): nothing is asked or printed except the
      * tenant assignment; migrations and the frontend build are not offered.
      */

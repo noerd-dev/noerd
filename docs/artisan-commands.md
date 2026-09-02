@@ -23,11 +23,11 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 
 | Command | Description |
 |---------|-------------|
-| `noerd:create-admin` | Create a new user and make them an admin |
+| `noerd:make-admin-user` | Create a new user and make them an admin |
 | `noerd:make-admin` | Make an existing user an admin on all their tenants |
 | `noerd:super-admin` | Grant or revoke the installation-wide super admin flag of a user |
-| `noerd:create-tenant` | Create a new tenant |
-| `noerd:create-app` | Create a new app (TenantApp) with its own dashboard that can be assigned to tenants |
+| `noerd:make-tenant` | Create a new tenant |
+| `noerd:make-app` | Create a new app (TenantApp) with its own dashboard that can be assigned to tenants |
 | `noerd:assign-apps-to-tenant` | Assign apps to a tenant with interactive selection |
 
 ### Scaffolding
@@ -167,12 +167,12 @@ Displays the currently installed Noerd version.
 php artisan noerd:info
 ```
 
-## noerd:create-admin
+## noerd:make-admin-user
 
 Creates a new user and makes them an administrator.
 
 ```bash
-php artisan noerd:create-admin
+php artisan noerd:make-admin-user
 ```
 
 | Option | Description |
@@ -207,13 +207,13 @@ php artisan noerd:super-admin {user} --revoke   # withdraw
 | `--revoke` | Withdraw the super admin flag instead of granting it |
 | `--force` | Revoke even when the user is the last super admin of the installation (refused otherwise) |
 
-## noerd:create-tenant
+## noerd:make-tenant
 
 Creates a new tenant (a single `tenants` row; profiles are hardcoded, see
 [Permissions](permissions.md)).
 
 ```bash
-php artisan noerd:create-tenant
+php artisan noerd:make-tenant
 ```
 
 | Option | Description |
@@ -221,18 +221,18 @@ php artisan noerd:create-tenant
 | `--name=` | The name of the tenant |
 | `--default` | Use "Default" as the tenant name |
 
-## noerd:create-app
+## noerd:make-app
 
 Creates a new app (TenantApp) that can be assigned to tenants. Without options the command runs as
 an interactive wizard that first asks whether the app lives in the **project** or becomes a
-**module** under `app-modules/{app}` (see [Create an App](create-app.md)). Every app comes with
+**module** under `app-modules/{app}` (see [Create an App](make-app.md)). Every app comes with
 its own dashboard: in the project the command runs `noerd:make-dashboard` and stores the generated
 `{app}.dashboard` route as the app's main route; in module mode it hands the scaffold to
 `noerd:module`, registers the package with Composer and runs the generated `noerd:install-{app}`
 in its silent scaffold mode (only the tenant assignment is asked).
 
 ```bash
-php artisan noerd:create-app
+php artisan noerd:make-app
 ```
 
 | Option | Description |
@@ -261,7 +261,7 @@ php artisan noerd:assign-apps-to-tenant
 Creates a new module with its directory structure, dashboard, routes, navigation, translations,
 the tenant-app migration stub, the install and update commands and the ServiceProvider. It
 generates no model — record types are added with `noerd:make-resource {Model} --app={module}`.
-`noerd:create-app` uses it for the module mode.
+`noerd:make-app` uses it for the module mode.
 
 ```bash
 php artisan noerd:module
@@ -275,10 +275,10 @@ php artisan noerd:module inventory --title="Inventory" --icon=cube
 |--------|-------------|
 | `--title=` | The display title of the tenant app (default: the module name as a headline) |
 | `--icon=` | The heroicon of the tenant app, as a name (`cube`) or in the stored form (`heroicon:outline:cube`); required in non-interactive runs |
-| `--no-hints` | Do not print the next steps (`noerd:create-app` runs them itself) |
+| `--no-hints` | Do not print the next steps (`noerd:make-app` runs them itself) |
 
 The generated `noerd:install-{module}` command accepts `--scaffold` besides `--force`: the silent
-run `noerd:create-app` uses right after the scaffold — configs are published, the app registered,
+run `noerd:make-app` uses right after the scaffold — configs are published, the app registered,
 and the only question is the tenant assignment (no migration or `npm run build` prompt).
 
 See [Creating Modules](creating-modules.md) for the generated structure.
@@ -402,7 +402,7 @@ php artisan noerd:make-page sent-mails --app=inventory
 Generates a dashboard Blade file for an app (`resources/views/components/{app}-dashboard.blade.php`),
 adds the `{app}.dashboard` route to `routes/web.php` (inside the `noerd` + `app-access:{app}`
 middleware group) and links it from the app's `navigation.yml` — creating the navigation file when
-the app has none yet. `noerd:create-app` runs this command automatically for every new app in the
+the app has none yet. `noerd:make-app` runs this command automatically for every new app in the
 project (a module gets its dashboard from `noerd:module`).
 
 ```bash
