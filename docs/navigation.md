@@ -83,7 +83,7 @@ there.
 | `newComponent` | Livewire component opened by the "+" button — fallback for `newRoute` |
 | `quickCreate` | With `newRoute`/`newComponent`: open the "+" target as a narrow quick-create modal (`modelId: null`, `quickCreate: true`) |
 | `config` | The entry is hidden unless `config(...)` with this key is truthy (e.g. `noerd.features.currency`) |
-| `superAdmin` | The entry is only visible to super admins |
+| `superAdmin` | The entry is only visible to super admins — the installation admins, see [Permissions](permissions.md#super-admin-installation-admin) |
 
 ### Route vs. component
 

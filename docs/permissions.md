@@ -48,6 +48,35 @@ profile's SEMANTICS come from the authorization gates the module defines; the co
 baseline treats unknown keys like `User`. `NoerdUser::currentProfileKey()` exposes the raw
 stored key for such modules; `currentProfile()` resolves only the built-in enum cases.
 
+## Super admin (installation admin)
+
+Profiles are assigned PER TENANT. The one thing above them is the
+`super_admin` flag on `noerd_users`: an installation admin who administers
+every tenant of the installation.
+
+- `isAdmin()` is true in every tenant — the profile baseline and every gate
+  implementation bypass on it, `/setup` is reachable everywhere.
+- Sees and edits every tenant (Setup → Tenants) and every account
+  (Setup → Users), including accounts that belong to no tenant yet, and may
+  impersonate any of them.
+- May ENTER every tenant: the tenant switcher lists all tenants of the
+  installation and the per-request membership check accepts them.
+  `NoerdUser::accessibleTenants()` / `canAccessTenant()` are the single source
+  for "may this user work in that tenant" — never compare against
+  `$user->tenants` directly for that question; `administeredTenants()` is the
+  matching Setup scope (every tenant vs. the ADMIN-profile memberships).
+- Protected in the other direction: a tenant admin can never edit, impersonate
+  or (by e-mail) capture a super admin account.
+- Visible: the Profile column of the users list renders the `Super Admin`
+  badge (`profile_for_tenant`), followed by the tenant profile as plain text.
+- Set and withdrawn ONLY on the console — the column is `$guarded`, no screen
+  writes it: `php artisan noerd:super-admin {id|email}` grants the flag,
+  `--revoke` withdraws it (the last super admin of an installation only with
+  `--force`). `noerd:install` makes the first user of a fresh installation a
+  super admin (`noerd:create-admin --super-admin`).
+- A navigation entry with `superAdmin: true` is hidden from everybody else
+  (see [Navigation](navigation.md)).
+
 ## Abilities
 
 Every check goes through `Noerd\Helpers\AccessHelper`:

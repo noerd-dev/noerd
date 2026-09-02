@@ -68,3 +68,28 @@ it('clears the tenant entirely when the last membership is revoked', function ()
 
     expect(TenantHelper::getSelectedTenantId())->toBeNull();
 });
+
+it('keeps a tenant a super admin works in without a membership', function (): void {
+    $foreign = Tenant::factory()->create();
+    $superAdmin = NoerdUser::factory()->create(['super_admin' => true]);
+    TenantHelper::setSelectedTenantId($foreign->id);
+    $this->actingAs($superAdmin);
+
+    zzRunMembershipMiddleware();
+
+    expect(TenantHelper::getSelectedTenantId())->toBe($foreign->id);
+});
+
+it('falls back to another tenant for a super admin when the selected one is deleted', function (): void {
+    $remaining = Tenant::factory()->create();
+    $deleted = Tenant::factory()->create();
+    $superAdmin = NoerdUser::factory()->create(['super_admin' => true]);
+    TenantHelper::setSelectedTenantId($deleted->id);
+    $this->actingAs($superAdmin);
+
+    $deleted->delete();
+
+    zzRunMembershipMiddleware();
+
+    expect(TenantHelper::getSelectedTenantId())->toBe($remaining->id);
+});

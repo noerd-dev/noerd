@@ -23,7 +23,8 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * On a revoked tenant the session falls back to another tenant the user still
  * belongs to, or to none at all (the setup middleware then routes them to the
- * no-tenant screen).
+ * no-tenant screen). A super admin may work in every tenant of the
+ * installation, so only a DELETED tenant is ever unselected for one.
  */
 class EnsureTenantMembership
 {
@@ -35,8 +36,8 @@ class EnsureTenantMembership
         $user = NoerdAuth::user();
         $selectedTenantId = TenantHelper::getSelectedTenantId();
 
-        if ($user && $selectedTenantId && ! $user->tenants()->whereKey($selectedTenantId)->exists()) {
-            TenantHelper::setSelectedTenantId($user->tenants()->value('tenants.id'));
+        if ($user && $selectedTenantId && ! $user->canAccessTenant($selectedTenantId)) {
+            TenantHelper::setSelectedTenantId($user->accessibleTenants()->first()?->id);
             TenantHelper::setSelectedApp(null);
         }
 

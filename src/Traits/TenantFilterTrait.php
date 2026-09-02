@@ -16,8 +16,10 @@ trait TenantFilterTrait
         $filter['options'] = [];
 
         // Guest-safe: a list rendered without an authenticated noerd user
-        // simply offers an empty tenant picklist instead of fataling.
-        $tenants = NoerdAuth::user()?->adminTenants ?? collect();
+        // simply offers an empty tenant picklist instead of fataling. The
+        // picklist mirrors the list scope: every tenant for a super admin,
+        // the administered tenants for a tenant admin.
+        $tenants = NoerdAuth::user()?->administeredTenants() ?? collect();
 
         foreach ($tenants as $tenant) {
             $filter['options'][$tenant->id] = $tenant->name;

@@ -35,6 +35,7 @@ use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUpdateAllCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PublishHomeCommand;
+use Noerd\Commands\SuperAdminCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\CurrencyHelper;
@@ -395,6 +396,7 @@ class NoerdServiceProvider extends ServiceProvider
 
             $this->commands([
                 MakeUserAdminCommand::class,
+                SuperAdminCommand::class,
                 NoerdInfoCommand::class,
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,

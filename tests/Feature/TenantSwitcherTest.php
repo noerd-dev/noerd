@@ -113,3 +113,47 @@ it('does not switch to a tenant the user has no access to', function (): void {
 
     expect(TenantHelper::getSelectedTenantId())->toBe($member['tenants'][0]->id);
 });
+
+it('lists every tenant of the installation for a super admin', function (): void {
+    $superAdmin = NoerdUser::factory()->create(['super_admin' => true]);
+    $member = Tenant::factory()->create(['name' => 'Member Tenant']);
+    $foreign = Tenant::factory()->create(['name' => 'Foreign Tenant']);
+    $superAdmin->tenants()->attach($member->id);
+    TenantHelper::setSelectedTenantId($member->id);
+
+    $this->actingAs($superAdmin);
+
+    Livewire::test('noerd::layout.tenant-switcher')
+        ->assertSee('Member Tenant')
+        ->assertSee('Foreign Tenant');
+});
+
+it('lets a super admin switch to a tenant it is no member of', function (): void {
+    $superAdmin = NoerdUser::factory()->create(['super_admin' => true]);
+    $member = Tenant::factory()->create();
+    $foreign = Tenant::factory()->create();
+    $superAdmin->tenants()->attach($member->id);
+    TenantHelper::setSelectedTenantId($member->id);
+
+    $this->actingAs($superAdmin);
+
+    Livewire::test('noerd::layout.tenant-switcher')
+        ->call('switchTenant', $foreign->id)
+        ->assertRedirect('/');
+
+    expect(TenantHelper::getSelectedTenantId())->toBe($foreign->id);
+});
+
+it('shows the switcher to a super admin of a single membership when more tenants exist', function (): void {
+    config(['noerd.features.multi_tenant' => true, 'noerd.features.new_tenant' => false]);
+    $superAdmin = NoerdUser::factory()->create(['super_admin' => true]);
+    $member = Tenant::factory()->create();
+    Tenant::factory()->create();
+    $superAdmin->tenants()->attach($member->id);
+    TenantHelper::setSelectedTenantId($member->id);
+
+    $this->actingAs($superAdmin);
+
+    Livewire::test('noerd::layout.quick-menu')
+        ->assertSeeLivewire('noerd::layout.tenant-switcher');
+});
