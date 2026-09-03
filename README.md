@@ -27,20 +27,6 @@ php artisan migrate
 php artisan noerd:make-resource Customer
 ```
 
-The model needs a `tenant_id` column (`$table->foreignId('tenant_id')->constrained('tenants')`)
-and the `Noerd\Traits\BelongsToTenant` trait — that is all the tenant scoping there is:
-
-```php
-use Noerd\Traits\BelongsToTenant;
-
-class Customer extends Model
-{
-    use BelongsToTenant;
-
-    protected $guarded = [];
-}
-```
-
 - `noerd:install` publishes the config and the frontend scaffold (Vite, Tailwind CSS 4), runs the
   migrations, creates the default tenant and an admin user, and optionally installs demo data.
 - `noerd:make-app` asks where the app lives (project or an `app-modules/` package), for a
