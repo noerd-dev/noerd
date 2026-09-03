@@ -7,7 +7,7 @@
 Zero intrusion: noerd brings its own auth guard, routes and tables, and never modifies your
 `config/auth.php` or `.env`. Screens are slim Livewire components driven by YAML configs.
 
-<img src="https://noerd.dev/assets/Noerd.gif" alt="noerd" width="100%">
+<img src="https://noerd.dev/assets/Noerd.gif?v=2" alt="noerd" width="100%">
 
 ## Quickstart
 
