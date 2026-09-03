@@ -62,9 +62,8 @@ describe('runtime guard registration', function (): void {
         expect(config('auth.passwords.noerd_users'))->toBe($hostBroker);
     });
 
-    it('leaves the default guard untouched when set_as_default is false', function (): void {
+    it('never touches the application default guard', function (): void {
         config([
-            'noerd.auth.set_as_default' => false,
             'auth.defaults.guard' => 'web',
             'auth.defaults.passwords' => 'users',
         ]);
@@ -75,17 +74,12 @@ describe('runtime guard registration', function (): void {
         expect(config('auth.defaults.passwords'))->toBe('users');
     });
 
-    it('takes over the default guard when set_as_default is true', function (): void {
-        config([
-            'noerd.auth.set_as_default' => true,
-            'auth.defaults.guard' => 'web',
-            'auth.defaults.passwords' => 'users',
-        ]);
+    it('always backs the noerd provider with the NoerdUser model', function (): void {
+        config(['auth.providers.noerd_users' => null]);
 
         reRunGuardRegistration();
 
-        expect(config('auth.defaults.guard'))->toBe('noerd');
-        expect(config('auth.defaults.passwords'))->toBe('noerd_users');
+        expect(config('auth.providers.noerd_users.model'))->toBe(NoerdUser::class);
     });
 });
 

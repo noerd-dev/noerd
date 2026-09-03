@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Helpers\FormatHelper;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\NoerdUser;
@@ -81,7 +82,7 @@ it('offers exactly the supported locales', function (): void {
 it('keeps the interface language separate from the formatting locale', function (): void {
     $user = zzProfileLocaleUser();
     $user->setting->update(['locale' => 'de', 'format_locale' => 'en-US']);
-    $this->actingAs($user, config('noerd.auth.guard'));
+    $this->actingAs($user, NoerdAuth::guardName());
 
     (new SetUserLocale())->handle(request(), fn() => response(''));
 
