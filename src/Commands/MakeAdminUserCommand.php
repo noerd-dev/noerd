@@ -31,13 +31,6 @@ class MakeAdminUserCommand extends Command
      *
      * @var string
      */
-    /**
-     * The former command name, kept so existing install scripts keep working.
-     *
-     * @var array<int, string>
-     */
-    protected $aliases = ['noerd:create-admin'];
-
     protected $description = 'Create a new user and make them an admin';
 
     /**

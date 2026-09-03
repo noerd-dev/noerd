@@ -46,13 +46,6 @@ class MakeAppCommand extends Command
      *
      * @var string
      */
-    /**
-     * The former command name, kept so existing install scripts keep working.
-     *
-     * @var array<int, string>
-     */
-    protected $aliases = ['noerd:create-app'];
-
     protected $description = 'Create a new app with its own dashboard that can be assigned to tenants';
 
     /**
