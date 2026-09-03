@@ -9,7 +9,6 @@ use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
-use Noerd\Models\NoerdUser;
 
 /**
  * Resolves noerd's dedicated auth guard, user provider and password broker.
@@ -17,13 +16,22 @@ use Noerd\Models\NoerdUser;
  * Noerd never relies on the host application's default guard: all framework
  * internals (tenant scoping, middleware, permission resolvers) resolve the
  * current user through this helper, so noerd coexists with any host auth
- * stack (Nova, Breeze, ...) that owns the default guard.
+ * stack (Nova, Breeze, ...) that owns the default guard. The guard, provider
+ * and broker names are fixed — a host tunes their definitions (driver, broker
+ * table) in config/auth.php, where an existing key always wins over the
+ * runtime registration.
  */
 final class NoerdAuth
 {
+    public const GUARD = 'noerd';
+
+    public const PROVIDER = 'noerd_users';
+
+    public const BROKER = 'noerd_users';
+
     public static function guardName(): string
     {
-        return config('noerd.auth.guard', 'noerd');
+        return self::GUARD;
     }
 
     public static function guard(): StatefulGuard
@@ -49,21 +57,16 @@ final class NoerdAuth
 
     public static function providerName(): string
     {
-        return config('noerd.auth.provider', 'noerd_users');
+        return self::PROVIDER;
     }
 
     public static function brokerName(): string
     {
-        return config('noerd.auth.passwords', 'noerd_users');
+        return self::BROKER;
     }
 
     public static function broker(): PasswordBroker
     {
         return Password::broker(self::brokerName());
-    }
-
-    public static function userModel(): string
-    {
-        return config('noerd.auth.model', NoerdUser::class);
     }
 }

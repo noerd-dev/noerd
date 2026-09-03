@@ -16,10 +16,10 @@ use Noerd\Tests\TestCase;
 uses(TestCase::class, RefreshDatabase::class);
 
 /*
- | noerd authenticates against its OWN guard, and `noerd.auth.set_as_default`
- | is false by default — a host application keeps the default guard. Components
- | must therefore resolve the user through NoerdAuth, never through Auth::user()
- | / auth()->user().
+ | noerd authenticates against its OWN guard and never claims the application
+ | default guard — a host application keeps it. Components must therefore
+ | resolve the user through NoerdAuth, never through Auth::user() /
+ | auth()->user().
  |
  | The rest of the suite pins auth.defaults.guard to 'noerd' (see TestCase), so
  | it CANNOT observe this distinction. These tests deliberately point the

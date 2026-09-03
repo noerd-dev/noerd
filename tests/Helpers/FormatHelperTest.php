@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Noerd\Helpers\FormatHelper;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
@@ -34,7 +35,7 @@ function zzFormatUser(?string $formatLocale = null): NoerdUser
         $user->setting->update(['format_locale' => $formatLocale]);
     }
 
-    test()->actingAs($user, config('noerd.auth.guard'));
+    test()->actingAs($user, NoerdAuth::guardName());
 
     return $user;
 }

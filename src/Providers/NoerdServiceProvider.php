@@ -58,6 +58,7 @@ use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\NoerdSettings;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -462,7 +463,10 @@ class NoerdServiceProvider extends ServiceProvider
     /**
      * Register noerd's dedicated auth guard, user provider and password
      * broker at runtime. The host's config/auth.php is never written to,
-     * and any key the host already defines wins over the injection.
+     * and any key the host already defines wins over the injection. The
+     * application's DEFAULT guard is never touched: noerd routes select the
+     * noerd guard per request (NoerdAuthenticate), everything else keeps
+     * resolving the host's guard.
      */
     private function registerNoerdGuard(): void
     {
@@ -480,7 +484,7 @@ class NoerdServiceProvider extends ServiceProvider
         if (config("auth.providers.{$provider}") === null) {
             config(["auth.providers.{$provider}" => [
                 'driver' => 'eloquent',
-                'model' => NoerdAuth::userModel(),
+                'model' => NoerdUser::class,
             ]]);
         }
 
@@ -491,15 +495,6 @@ class NoerdServiceProvider extends ServiceProvider
                 'expire' => 60,
                 'throttle' => 60,
             ]]);
-        }
-
-        // Escape hatch for hosts whose routes still use the bare 'auth'
-        // middleware: make the noerd guard the application default.
-        if (config('noerd.auth.set_as_default')) {
-            config([
-                'auth.defaults.guard' => $guard,
-                'auth.defaults.passwords' => $broker,
-            ]);
         }
     }
 

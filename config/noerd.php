@@ -15,24 +15,6 @@ declare(strict_types=1);
 */
 
 return [
-    'auth' => [
-        // Guard noerd registers and authenticates against. Set to 'web' to
-        // run on the host's default guard instead of a dedicated one.
-        'guard' => env('NOERD_AUTH_GUARD', 'noerd'),
-
-        // Authenticatable model backing the noerd user provider.
-        'model' => env('NOERD_AUTH_MODEL', Noerd\Models\NoerdUser::class),
-
-        // Provider / password-broker names registered into auth.providers
-        // and auth.passwords at runtime (skipped when the host defines them).
-        'provider' => 'noerd_users',
-        'passwords' => 'noerd_users',
-
-        // When true, noerd also becomes the app's DEFAULT guard at runtime —
-        // escape hatch for hosts with unmigrated bare-'auth' routes.
-        'set_as_default' => env('NOERD_AUTH_DEFAULT', false),
-    ],
-
     'routes' => [
         // URL prefix for the noerd core routes (login, apps, user, ...).
         // Route NAMES are unaffected — only the URLs carry the prefix.

@@ -139,8 +139,6 @@ itself. The brand palette is CSS-first, no `tailwind.config.js` is needed (see [
   pins `date`, `datetime`, `decimal_separator`, `thousands_separator` (`NOERD_FORMAT_*`) and
   `csv_delimiter` (`NOERD_CSV_DELIMITER`, default `;`) — see
   [Currency, Numbers & Dates](formatting.md)
-- `auth.guard` (`NOERD_AUTH_GUARD`) / `auth.set_as_default` (`NOERD_AUTH_DEFAULT`) — noerd's
-  dedicated auth guard (see [Authentication](auth.md))
 - `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))
 - `brand.active` — color palette (see [Brand](brand.md))
 

@@ -3,33 +3,6 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Authentication
-    |--------------------------------------------------------------------------
-    |
-    | Noerd registers its own auth guard, user provider and password broker
-    | at runtime — config/auth.php is never modified. Any of the keys that
-    | already exist in the host's auth config are left untouched, so a host
-    | can override every part by defining it itself.
-    |
-    | 'guard'          Guard noerd authenticates against. Set to 'web' to
-    |                  run on the host's default guard instead of a dedicated one.
-    | 'model'          Authenticatable model backing the noerd user provider.
-    | 'set_as_default' When true, noerd also becomes the app's DEFAULT guard
-    |                  at runtime — escape hatch for hosts with unmigrated
-    |                  bare-'auth' routes. Leave false when noerd coexists
-    |                  with another auth stack (Nova, Breeze, ...).
-    |
-    */
-    'auth' => [
-        'guard' => env('NOERD_AUTH_GUARD', 'noerd'),
-        'model' => env('NOERD_AUTH_MODEL', Noerd\Models\NoerdUser::class),
-        'provider' => 'noerd_users',
-        'passwords' => 'noerd_users',
-        'set_as_default' => env('NOERD_AUTH_DEFAULT', false),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Routes
     |--------------------------------------------------------------------------
     |

@@ -11,29 +11,17 @@ registers three things **at runtime** (your `config/auth.php` and `.env` are nev
 | `auth.passwords.noerd_users` | `['provider' => 'noerd_users', 'table' => 'password_reset_tokens', 'expire' => 60, 'throttle' => 60]` |
 
 **A key your application already defines always wins** — the runtime registration only fills in
-keys that are absent. To override any part (a different session driver, your own broker table,
-another user model), define the key in your `config/auth.php` and noerd will use it as-is.
+keys that are absent. To override a part (a different session driver, your own broker table),
+define the key in your `config/auth.php` and noerd will use it as-is. The user model behind the
+provider is always `Noerd\Models\NoerdUser` on the `noerd_users` table — the framework internals
+(tenant scoping, profiles, super admin, settings) are methods of that model, so neither the model
+nor the table is configurable.
 
-## Configuration (`config/noerd.php`)
-
-```php
-'auth' => [
-    'guard' => env('NOERD_AUTH_GUARD', 'noerd'),
-    'model' => env('NOERD_AUTH_MODEL', Noerd\Models\NoerdUser::class),
-    'provider' => 'noerd_users',
-    'passwords' => 'noerd_users',
-    'set_as_default' => env('NOERD_AUTH_DEFAULT', false),
-],
-```
-
-- `guard` — the guard noerd registers and authenticates against. Setting `NOERD_AUTH_GUARD=web`
-  makes noerd run on the host's `web` guard: that guard already exists, so nothing is injected and
-  noerd authenticates against the host's user provider.
-- `model` — the Authenticatable backing the noerd user provider.
-- `set_as_default` — when `true`, noerd also flips `auth.defaults.guard` / `auth.defaults.passwords`
-  to the noerd guard at runtime. This is an escape hatch for hosts that still protect routes with
-  the bare `auth` middleware alias (which resolves the default guard). Leave it `false` when noerd
-  coexists with another auth stack (Nova, Breeze, ...) that owns the default guard.
+The names are fixed: the guard is `noerd`, the provider and the password broker are `noerd_users`
+(`NoerdAuth::GUARD`, `NoerdAuth::PROVIDER`, `NoerdAuth::BROKER`). There is no auth section in
+`config/noerd.php`. noerd never changes `auth.defaults.guard` / `auth.defaults.passwords`: the
+noerd route groups select the noerd guard per request (see below), so routes protected by the
+bare `auth` middleware alias keep resolving the host's default guard.
 
 ## Routes & URL prefix
 
@@ -131,8 +119,7 @@ A host that already owns the `web` guard (Nova admin users in a `users` table, B
 login) needs no special setup:
 
 1. Install noerd as usual — `config/auth.php` keeps the host's `users` provider and default guard.
-2. Keep `NOERD_AUTH_DEFAULT` unset (or `false`).
-3. noerd users live in `noerd_users` and log in via noerd's `/noerd/login` against the `noerd`
+2. noerd users live in `noerd_users` and log in via noerd's `/noerd/login` against the `noerd`
    guard; host users keep logging in via their own stack (e.g. their own `/login`) against `web`.
 
 Both guards share the session cookie but store independent login keys
