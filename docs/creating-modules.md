@@ -5,8 +5,8 @@ Using modules is completely optional. The application works perfectly fine witho
 The module approach is very inspired by https://github.com/InterNACHI/modular
 
 Use the `noerd:module` Artisan command to create a new module with complete directory structure —
-or choose **Module** in `php artisan noerd:create-app`, which asks the same questions, calls
-`noerd:module` for you and runs the Composer and install steps (see [Create an App](create-app.md)).
+or choose **Module** in `php artisan noerd:make-app`, which asks the same questions, calls
+`noerd:module` for you and runs the Composer and install steps (see [Create an App](make-app.md)).
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ php artisan noerd:install-{module-name}
 php artisan noerd:make-resource Item --app={module-name}
 ```
 
-Never register the app manually via `noerd:create-app` — the generated install command does all of
+Never register the app manually via `noerd:make-app` — the generated install command does all of
 it and stays re-runnable.
 
 ## What the scaffold gives you
@@ -111,7 +111,7 @@ Artisan commands; `noerd:module` generates both from its stubs:
   `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`.
   Its `handle()` calls `$this->runModuleInstallation()`, which copies the YAML configs into
   `app-configs/{module}/`, registers the tenant app and runs the migrations. With `--scaffold`
-  (declared by the generated command) it runs silently right after `noerd:create-app` — configs,
+  (declared by the generated command) it runs silently right after `noerd:make-app` — configs,
   registration and the tenant assignment question only, no migration or build prompt.
 - **`noerd:update-{module}`** — a slim subclass of the install command whose `handle()` calls
   `$this->runModuleUpdate()` (never `runModuleInstallation()`, which prompts for the tenant

@@ -57,5 +57,5 @@ are protected by `app-access:demo` (see [Authentication](auth.md), [Permissions]
 
 ## Further reading
 
-- [Create an App](create-app.md) — register your own app the same way
+- [Create an App](make-app.md) — register your own app the same way
 - [Creating Modules](creating-modules.md) — package an app as a reusable module

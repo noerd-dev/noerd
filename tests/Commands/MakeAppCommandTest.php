@@ -61,7 +61,7 @@ afterEach(function (): void {
 });
 
 it('successfully creates a app with all parameters', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Test Application',
         '--name' => 'TEST_APP',
         '--icon' => 'icons.test',
@@ -79,7 +79,7 @@ it('successfully creates a app with all parameters', function (): void {
 });
 
 it('scaffolds a dashboard for the new app and uses its route without asking', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Time Booking',
         '--name' => 'TB',
         '--icon' => 'icons.tb',
@@ -110,7 +110,7 @@ it('scaffolds a dashboard for the new app and uses its route without asking', fu
 it('creates the routes file when the project has none yet', function (): void {
     File::delete(base_path('routes/web.php'));
 
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Fresh App',
         '--name' => 'FRESH',
         '--icon' => 'icons.fresh',
@@ -137,7 +137,7 @@ it('keeps an existing navigation and only inserts the dashboard entry', function
         '',
     ]));
 
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Existing',
         '--name' => 'EXISTING_NAV',
         '--icon' => 'icons.existing',
@@ -148,7 +148,7 @@ it('keeps an existing navigation and only inserts the dashboard entry', function
 });
 
 it('points the app at an explicit route and skips the dashboard scaffold', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Custom Route App',
         '--name' => 'CUSTOM_ROUTE',
         '--icon' => 'icons.custom',
@@ -161,7 +161,7 @@ it('points the app at an explicit route and skips the dashboard scaffold', funct
 });
 
 it('creates an inactive tenant app when active is set to 0', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Inactive App',
         '--name' => 'INACTIVE_APP',
         '--icon' => 'icons.inactive',
@@ -173,7 +173,7 @@ it('creates an inactive tenant app when active is set to 0', function (): void {
 });
 
 it('defaults to active when active parameter is not provided', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Default Active App',
         '--name' => 'DEFAULT_ACTIVE',
         '--icon' => 'icons.default',
@@ -187,7 +187,7 @@ it('rejects invalid app input', function (array $options, string $error): void {
     $appCountBefore = TenantApp::count();
 
     // The error message is the behaviour here: it tells the operator what to fix.
-    $this->artisan('noerd:create-app', $options)
+    $this->artisan('noerd:make-app', $options)
         ->expectsOutput($error)
         ->assertExitCode(1);
 
@@ -208,7 +208,7 @@ it('rejects invalid app input', function (array $options, string $error): void {
 ]);
 
 it('normalizes the app name to the uppercase underscore form', function (string $input, string $expected): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Normalized App',
         '--name' => $input,
         '--icon' => 'icons.test',
@@ -234,7 +234,7 @@ it('fails when app name already exists', function (): void {
     ]);
 
     // Try to create another app with the same name
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Duplicate App',
         '--name' => 'EXISTING_APP',
         '--icon' => 'icons.duplicate',
@@ -246,7 +246,7 @@ it('fails when app name already exists', function (): void {
 });
 
 it('scaffolds the app as a module and leaves the registration to its install command', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Zz Probe Suite',
         '--name' => 'ZZ_PROBE',
         '--icon' => 'cube',
@@ -285,7 +285,7 @@ it('scaffolds the app as a module and leaves the registration to its install com
 });
 
 it('rejects module mode combined with an explicit route', function (): void {
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Zz Routed',
         '--name' => 'ZZ_ROUTED',
         '--icon' => 'cube',
@@ -301,7 +301,7 @@ it('rejects module mode combined with an explicit route', function (): void {
 it('refuses to scaffold a module over an existing module directory', function (): void {
     File::ensureDirectoryExists(base_path('app-modules/zz-taken'));
 
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Zz Taken',
         '--name' => 'ZZ_TAKEN',
         '--icon' => 'cube',
@@ -322,7 +322,7 @@ it('refuses module mode when the derived tenant app already exists', function ()
         'is_active' => true,
     ]);
 
-    $this->artisan('noerd:create-app', [
+    $this->artisan('noerd:make-app', [
         '--title' => 'Zz Existing',
         '--name' => 'ZZ_EXISTING',
         '--icon' => 'cube',

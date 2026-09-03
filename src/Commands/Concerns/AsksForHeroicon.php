@@ -11,7 +11,7 @@ use WireUi\Heroicons\HeroiconsServiceProvider;
 
 /**
  * Tenant-app icons are heroicons stored as `heroicon:outline:{name}` and
- * rendered by `noerd::app-icon`. Shared by noerd:create-app and noerd:module.
+ * rendered by `noerd::app-icon`. Shared by noerd:make-app and noerd:module.
  */
 trait AsksForHeroicon
 {

@@ -73,7 +73,7 @@ every tenant of the installation.
   writes it: `php artisan noerd:super-admin {id|email}` grants the flag,
   `--revoke` withdraws it (the last super admin of an installation only with
   `--force`). `noerd:install` makes the first user of a fresh installation a
-  super admin (`noerd:create-admin --super-admin`).
+  super admin (`noerd:make-admin-user --super-admin`).
 - A navigation entry with `superAdmin: true` is hidden from everybody else
   (see [Navigation](navigation.md)).
 

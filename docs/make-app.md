@@ -5,7 +5,7 @@ Now that at least one user and one tenant have been set up, the first app can be
 ![Noerd Example App](/assets/apps.png "Navigation")
 
 ```bash
-php artisan noerd:create-app
+php artisan noerd:make-app
 ```
 
 The command first asks **where** the app should live:
@@ -69,10 +69,10 @@ php artisan noerd:make-resource {Model} --app=my-app
 ## Non-interactive use
 
 For install scripts, every prompt has an option (the full option table is in
-[Artisan Commands](artisan-commands.md#noerdcreate-app)):
+[Artisan Commands](artisan-commands.md#noerdmake-app)):
 
 ```bash
-php artisan noerd:create-app --title="Inventory Management" --name=INVENTORY \
+php artisan noerd:make-app --title="Inventory Management" --name=INVENTORY \
     --icon=heroicon:outline:users --active=1
 ```
 
@@ -80,7 +80,7 @@ Pass `--route=` only when the app tile should open an existing route instead —
 generated then:
 
 ```bash
-php artisan noerd:create-app --title="Inventory Management" --name=INVENTORY \
+php artisan noerd:make-app --title="Inventory Management" --name=INVENTORY \
     --icon=heroicon:outline:users --route=inventory.index
 ```
 
@@ -88,7 +88,7 @@ Module mode needs `--module`; a scripted run scaffolds the module and prints the
 install steps instead of running them:
 
 ```bash
-php artisan noerd:create-app --title="Inventory Management" --name=INVENTORY \
+php artisan noerd:make-app --title="Inventory Management" --name=INVENTORY \
     --icon=heroicon:outline:users --module
 ```
 

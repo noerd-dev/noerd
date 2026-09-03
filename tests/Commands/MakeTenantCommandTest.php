@@ -10,7 +10,7 @@ uses(TestCase::class);
 uses(RefreshDatabase::class);
 
 it('creates a new tenant with command options', function (): void {
-    $this->artisan('noerd:create-tenant', [
+    $this->artisan('noerd:make-tenant', [
         '--name' => 'New Tenant',
     ])->assertExitCode(0);
 
@@ -21,8 +21,8 @@ it('creates a new tenant with command options', function (): void {
 });
 
 it('generates unique uuid for each tenant', function (): void {
-    $this->artisan('noerd:create-tenant', ['--name' => 'Tenant 1'])->assertExitCode(0);
-    $this->artisan('noerd:create-tenant', ['--name' => 'Tenant 2'])->assertExitCode(0);
+    $this->artisan('noerd:make-tenant', ['--name' => 'Tenant 1'])->assertExitCode(0);
+    $this->artisan('noerd:make-tenant', ['--name' => 'Tenant 2'])->assertExitCode(0);
 
     $tenant1 = Tenant::where('name', 'Tenant 1')->first();
     $tenant2 = Tenant::where('name', 'Tenant 2')->first();
@@ -32,7 +32,7 @@ it('generates unique uuid for each tenant', function (): void {
 
 it('rejects an invalid tenant name', function (string $name, string $error): void {
     // The error message is the behaviour: it tells the operator what to fix.
-    $this->artisan('noerd:create-tenant', ['--name' => $name])
+    $this->artisan('noerd:make-tenant', ['--name' => $name])
         ->expectsOutput($error)
         ->assertExitCode(1);
 

@@ -12,12 +12,12 @@ uses(RefreshDatabase::class);
 
 it('fails when no tenants exist', function (): void {
     // The message is the behaviour: it names the command that has to run first.
-    $this->artisan('noerd:create-admin', [
+    $this->artisan('noerd:make-admin-user', [
         '--name' => 'Test Admin',
         '--email' => 'admin@example.com',
         '--password' => 'password123',
     ])
-        ->expectsOutput('No tenants found. Please run "php artisan noerd:create-tenant" first.')
+        ->expectsOutput('No tenants found. Please run "php artisan noerd:make-tenant" first.')
         ->assertExitCode(1);
 
     // Verify user was NOT created
@@ -28,7 +28,7 @@ it('creates a new admin user with command options', function (): void {
     // Create a tenant first so the make-admin command has something to work with
     Tenant::factory()->create(['name' => 'Test Tenant']);
 
-    $this->artisan('noerd:create-admin', [
+    $this->artisan('noerd:make-admin-user', [
         '--name' => 'Test Admin',
         '--email' => 'admin@example.com',
         '--password' => 'password123',
@@ -47,7 +47,7 @@ it('creates a super admin user when flag is provided', function (): void {
     // Create a tenant first
     Tenant::factory()->create(['name' => 'Test Tenant']);
 
-    $this->artisan('noerd:create-admin', [
+    $this->artisan('noerd:make-admin-user', [
         '--name' => 'Super Admin',
         '--email' => 'superadmin@example.com',
         '--password' => 'password123',
@@ -65,7 +65,7 @@ it('rejects invalid credentials', function (array $options, string $error): void
     Tenant::factory()->create(['name' => 'Test Tenant']);
 
     // The error message is the behaviour: it tells the operator what to fix.
-    $this->artisan('noerd:create-admin', $options)
+    $this->artisan('noerd:make-admin-user', $options)
         ->expectsOutput($error)
         ->assertExitCode(1);
 
@@ -85,7 +85,7 @@ it('fails with duplicate email', function (): void {
     Tenant::factory()->create(['name' => 'Test Tenant']);
     NoerdUser::factory()->create(['email' => 'existing@example.com']);
 
-    $this->artisan('noerd:create-admin', [
+    $this->artisan('noerd:make-admin-user', [
         '--name' => 'Test User',
         '--email' => 'existing@example.com',
         '--password' => 'password123',
@@ -101,7 +101,7 @@ it('assigns user to all tenants as admin', function (): void {
     $tenant1 = Tenant::factory()->create(['name' => 'Tenant 1']);
     $tenant2 = Tenant::factory()->create(['name' => 'Tenant 2']);
 
-    $this->artisan('noerd:create-admin', [
+    $this->artisan('noerd:make-admin-user', [
         '--name' => 'Multi-Tenant Admin',
         '--email' => 'multiadmin@example.com',
         '--password' => 'password123',

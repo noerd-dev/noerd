@@ -148,4 +148,4 @@ You should now have access to `/noerd-apps` with your created user. If you insta
 
 ## Next Steps
 
-Continue with [Create an App](create-app.md) to create your first own app.
+Continue with [Create an App](make-app.md) to create your first own app.

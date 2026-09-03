@@ -24,7 +24,7 @@ use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
-class CreateTenantAppCommand extends Command
+class MakeAppCommand extends Command
 {
     use AsksForHeroicon;
 
@@ -33,7 +33,7 @@ class CreateTenantAppCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'noerd:create-app
+    protected $signature = 'noerd:make-app
                             {--title= : The display title of the app}
                             {--name= : The unique name identifier of the app}
                             {--icon= : The icon identifier for the app}
@@ -46,6 +46,13 @@ class CreateTenantAppCommand extends Command
      *
      * @var string
      */
+    /**
+     * The former command name, kept so existing install scripts keep working.
+     *
+     * @var array<int, string>
+     */
+    protected $aliases = ['noerd:create-app'];
+
     protected $description = 'Create a new app with its own dashboard that can be assigned to tenants';
 
     /**

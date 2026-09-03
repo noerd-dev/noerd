@@ -127,14 +127,14 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
         heroicon: cog-6-tooth
 ```
 - Tenant-app icons (`tenant_apps.icon`, the tile on the apps page and in the app bar) are heroicons
-  too, stored as `heroicon:outline:{name}` and rendered by `noerd::app-icon`. `noerd:create-app` and
+  too, stored as `heroicon:outline:{name}` and rendered by `noerd::app-icon`. `noerd:make-app` and
   `noerd:module` ask for the heroicon; a module's install command returns it from `getAppIcon()`. A
   module ships NO icon file. Only when no heroicon fits, add a Blade icon by hand
   (`resources/views/components/icons/app.blade.php`) and return `{module}::icons.app` instead.
-- Every app — root app or module — ships its own dashboard: `noerd:create-app` scaffolds
+- Every app — root app or module — ships its own dashboard: `noerd:make-app` scaffolds
   `{app}-dashboard` (root) or `{module}::{module}-dashboard` (module, via `noerd:module`), and the
   app's main route opens it. Never point a new app's tile at a list.
-- Neither `noerd:create-app` nor `noerd:module` generates a model: an app starts with its dashboard,
+- Neither `noerd:make-app` nor `noerd:module` generates a model: an app starts with its dashboard,
   and every record type is added with `noerd:make-resource {Model} --app={app}` (list + detail,
   YAML, routes, navigation) once the model and its migration exist. For a MODULE app
   (`app-modules/{app}/composer.json` exists) the `noerd:make-*` generators write into the module —
@@ -155,7 +155,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   (every installed module) — both are idempotent.
 
 ### Install Command Required for Every App Module
-- Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) MUST ship a `noerd:install-{module}` command. New submodules always get one — never rely on the manual `noerd:create-app` flow.
+- Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) MUST ship a `noerd:install-{module}` command. New submodules always get one — never rely on the manual `noerd:make-app` flow.
 - The command extends `Illuminate\Console\Command`, uses the `HasModuleInstallation` and `RequiresNoerdInstallation` traits, and implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` calls `$this->runModuleInstallation()` (which copies the YAML configs, registers the app via a published migration and runs migrations).
 - Register the command in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`.
 - The `noerd:module` scaffolder generates this command and its ServiceProvider registration automatically, from `src/Commands/stubs/module/install-command.stub`.

@@ -30,7 +30,7 @@ class MakeModuleCommand extends Command
                             {name? : The name of the module}
                             {--title= : The display title of the tenant app}
                             {--icon= : The heroicon of the tenant app (name or heroicon:outline:name)}
-                            {--no-hints : Do not print the next steps (noerd:create-app runs them itself)}';
+                            {--no-hints : Do not print the next steps (noerd:make-app runs them itself)}';
 
     protected $description = 'Create a new Noerd module with dashboard, install/update commands and directory structure';
 

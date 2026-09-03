@@ -29,7 +29,7 @@ class MakeDashboardCommand extends Command
 
     /**
      * The route name of the dashboard generated for the given app — the target
-     * noerd:create-app stores as the app's main route.
+     * noerd:make-app stores as the app's main route.
      */
     public static function routeNameFor(string $app): string
     {
@@ -191,7 +191,7 @@ class MakeDashboardCommand extends Command
 
     /**
      * Confirm a scaffolding step, defaulting to yes. A non-interactive run (e.g. the
-     * call from noerd:create-app) never asks: the child command shares the caller's
+     * call from noerd:make-app) never asks: the child command shares the caller's
      * output style, so the question would otherwise reach the caller's prompt.
      */
     protected function confirmStep(string $question): bool

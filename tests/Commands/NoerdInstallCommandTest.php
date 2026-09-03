@@ -198,7 +198,7 @@ describe('demo prompt', function (): void {
  | interactively, but a scripted run (CI, deploy) must NEVER inherit those
  | defaults — migrations, npm build, admin setup and the demo app all require
  | an explicit opt-in flag. Admin credentials cannot be prompted at all, so
- | that step is always skipped with a pointer to noerd:create-admin.
+ | that step is always skipped with a pointer to noerd:make-admin-user.
  */
 describe('non-interactive', function (): void {
     beforeEach(function (): void {
