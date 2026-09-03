@@ -139,8 +139,9 @@ new class extends Component {
   a `#[Url]` attribute. The embedded detail may declare the SAME alias (it does, for standalone
   use): an `embedded: true` instance skips the binding automatically, so page and detail never
   compete for the URL parameter.
-- `openRelationDetail($detailComponent, $fieldName, $detailRoute)` opens the record behind a
-  `detailData` foreign key as a modal (route first, component as fallback); `setPreselect()` /
+- `openRelationDetail($fieldName)` opens the record behind a `detailData` foreign key as a modal —
+  target route and component come from the field's registered relation definition in the layout
+  (route first, component as fallback); `setPreselect()` /
   `preselect()` hand a preselected filter value between a page and a related list through the
   session (see [Detail View](detail-view.md#custom-store--delete-logic)).
 

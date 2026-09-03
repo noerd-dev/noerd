@@ -164,7 +164,7 @@ class MakeAppCommand extends Command
 
     /**
      * Module mode: the app becomes a Composer package under app-modules/{key} with
-     * the module boilerplate (noerd:module) — dashboard, routes, navigation,
+     * the module boilerplate (noerd:make-module) — dashboard, routes, navigation,
      * install/update commands; resources are added later with noerd:make-resource.
      * The tenant_apps row is NOT written here — the generated noerd:install-{key}
      * command registers the app (and stays re-runnable), exactly like every shipped
@@ -204,7 +204,7 @@ class MakeAppCommand extends Command
         $this->line("<comment>App key:</comment> {$appKey}");
         $this->newLine();
 
-        $result = $this->call('noerd:module', [
+        $result = $this->call('noerd:make-module', [
             'name' => $moduleKey,
             '--title' => $title,
             '--icon' => $icon,
@@ -269,15 +269,6 @@ class MakeAppCommand extends Command
         $appsUrl = mb_rtrim((string) config('app.url'), '/') . '/noerd-apps';
         $makeResource = "php artisan noerd:make-resource {Model} --app={$moduleKey}";
 
-        if (! function_exists('\Laravel\Prompts\callout')) {
-            $this->newLine();
-            $this->info("{$title} is ready!");
-            $this->line("Open: {$appsUrl}");
-            $this->line("Add a record type: {$makeResource}");
-
-            return;
-        }
-
         callout("{$title} is ready", [
             "The module lives in app-modules/{$moduleKey} and is installed for the selected tenants.",
             new NumberedList([
@@ -320,7 +311,7 @@ class MakeAppCommand extends Command
     protected function normalizeAppName(string $name): string
     {
         // Replace spaces and hyphens with underscores and convert to uppercase
-        return mb_strtoupper(preg_replace('/[\s-]+/', '_', mb_trim($name)));
+        return mb_strtoupper((string) preg_replace('/[\s-]+/', '_', mb_trim($name)));
     }
 
     protected function askToAssignTenants(TenantApp $tenantApp): void

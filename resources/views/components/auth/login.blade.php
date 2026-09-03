@@ -29,7 +29,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 
         $this->ensureIsNotRateLimited();
 
-        if (!NoerdAuth::guard()->attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        if (! NoerdAuth::guard()->attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -48,7 +48,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 

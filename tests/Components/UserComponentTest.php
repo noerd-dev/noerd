@@ -176,6 +176,24 @@ it('requires at least one tenant access', function () use ($testSettings): void 
         ->assertHasErrors(['tenantAccess']);
 });
 
+it('rebuilds the tenant access map on every store', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $this->actingAs($admin);
+
+    // tenantAccess is client-writable: a stale/forged entry must not keep
+    // satisfying the AtLeastOneTrue rule once every checkbox is unticked.
+    Livewire::test($testSettings['componentName'])
+        ->set('detailData.name', 'Test User')
+        ->set('detailData.email', 'test@example.com')
+        ->set('tenantAccess', [999999 => true])
+        ->set("possibleTenants.{$tenant->id}.hasAccess", false)
+        ->call('store')
+        ->assertHasErrors(['tenantAccess'])
+        ->assertSet('tenantAccess', [$tenant->id => false]);
+});
+
 it('sets success indicator after storing', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();

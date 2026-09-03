@@ -35,6 +35,9 @@ Not composer-autoloaded (test code must never load in production). Suites bindin
 | `validDetailPayload(Model::class, $overrides)` | complete factory-sourced `detailData` for store-success tests |
 | `requiredLayoutFields($component)` | required field names from the live `pageLayout` for validation tests |
 | `registerTestLivewireRoute($uri, $component, $name)` | register a named `Route::livewire()` inside a test (route-vs-component mechanics) |
+| `assertModuleDependenciesDeclared($moduleDir, $allowedPackages = [])` | module-independence guard: fails when another module's namespace appears without a `require` entry |
+| `assertModuleUpdateCommandPublishesConfigs($command, $moduleDir, $moduleKey)` | the standard proof for a `noerd:update-{module}` command |
+| `zzNormalizeSpaces($value)` | collapse ICU's U+00A0 / U+202F spaces to plain ones before asserting a formatted value |
 
 ## 3. Recipes
 
@@ -56,8 +59,16 @@ keeps explicit assertions.
 **Modal route fallback:** register a route with `registerTestLivewireRoute()` and assert the route
 is used; without it assert the component fallback (see noerd's `NoerdListModalDispatchTest`,
 `DetailActionsTest`, `NavigationModalRouteTest`, `RelationBoxTest`).
-**Install/update commands:** `artisan('noerd:install-module', ['--force' => true])` with the
-tenant assignment answered; assert YAML copies and the `tenant_apps` row (UPPERCASE key).
+**Install/update commands:** the update command gets the one standard test — never hand-roll the
+publish assertions:
+```php
+it('publishes the module configs', function (): void {
+    assertModuleUpdateCommandPublishesConfigs('noerd:update-inventory', dirname(__DIR__, 2), 'inventory');
+});
+```
+The helper deletes `app-configs/{key}`, runs the command, asserts every shipped YAML was published
+and that `--force` restores a locally modified copy — and restores the installed configs
+afterwards. For the INSTALL command assert the `tenant_apps` row (UPPERCASE key) on top.
 
 ## 4. Factories
 

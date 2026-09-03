@@ -4,13 +4,13 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\SetupLanguageFilterTrait;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -42,16 +42,13 @@ new class extends Component
         session(['listFilters' => $this->listFilters]);
 
         if (! empty($this->listFilters['language'])) {
-            session(['selectedLanguage' => $this->listFilters['language']]);
+            session([SetupLanguage::SESSION_KEY => $this->listFilters['language']]);
         }
     }
 
     public function mount(): void
     {
         $this->mountList();
-
-        // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
 
         if (! $this->collectionKey) {
             $this->collectionKey = request()->get('key');
@@ -60,7 +57,10 @@ new class extends Component
         // Load collection layout
         $this->collectionLayout = SetupCollectionHelper::getCollectionFields($this->collectionKey);
 
-        // Every collection definition owns one bucket row per tenant.
+        // Every collection definition owns one bucket row per tenant. firstOrCreate
+        // is a single read that only writes when the bucket is missing — mount()
+        // re-runs on every modal-stack update and must stay side-effect free
+        // for a tenant that is already provisioned.
         if ($this->collectionKey) {
             SetupCollection::firstOrCreate([
                 'tenant_id' => NoerdAuth::user()->selected_tenant_id,
@@ -105,7 +105,7 @@ new class extends Component
         // Apply search if provided
         if (! empty($this->search)) {
             $escapedSearch = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $this->search) . '%';
-            $languageCodes = SetupLanguage::getActiveCodes();
+            $languageCodes = SetupLanguage::activeCodes();
 
             $query->where(function ($q) use ($escapedSearch, $languageCodes): void {
                 $searchable = 0;

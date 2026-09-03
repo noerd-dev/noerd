@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function (): void {
+    // The setup landing page IS the users list; noerd.setup stays a second name
+    // for the same screen because host modules and tests link to it.
     Route::livewire('/', 'noerd::noerd-users-list')->name('noerd.setup');
     Route::livewire('tenant-apps', 'noerd::tenant-apps-page')->name('noerd.tenant-apps');
     Route::livewire('users', 'noerd::noerd-users-list')->name('noerd.users');
@@ -34,7 +36,7 @@ Route::group(['middleware' => ['noerd']], function (): void {
 
 Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void {
     Route::livewire('component-page/{componentName}', 'noerd::generic-component-page')->name('noerd.component-page');
-    Route::redirect('home', '/noerd-apps');
+    Route::get('home', fn() => redirect()->route('noerd.apps'))->name('noerd.home');
     Route::livewire('no-tenant', 'noerd::no-tenant')->name('noerd.no-tenant');
     Route::view('user', 'noerd::profile')->name('noerd.profile');
 });

@@ -15,21 +15,18 @@ return new class extends Migration {
 
         Schema::create('setup_collection_definitions', function (Blueprint $table): void {
             $table->id();
-            $table->unsignedBigInteger('tenant_id');
+            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->string('filename');
             $table->string('key');
             $table->string('title');
             $table->string('title_list');
             $table->text('description')->nullable();
             $table->json('fields');
-            $table->unsignedBigInteger('created_by')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('noerd_users')->nullOnDelete();
             $table->timestamps();
 
             $table->unique(['tenant_id', 'key']);
             $table->unique(['tenant_id', 'filename']);
-
-            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('noerd_users')->nullOnDelete();
         });
     }
 

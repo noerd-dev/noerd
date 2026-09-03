@@ -39,12 +39,13 @@ new class extends Component {
 <div class="{{ $hasTarget ? '' : 'hidden' }}">
     @if ($hasTarget)
     @if ($opensAsModal)
-        <a @if ($naviModalRoute)
-               @click="$modalRoute({{ \Illuminate\Support\Js::from($naviModalRoute) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $naviModalComponent])) }}); if(! isDesktop) showSidebar = false"
-           @else
-               @click="$modal({{ \Illuminate\Support\Js::from($naviModalComponent) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}); if(! isDesktop) showSidebar = false"
-           @endif
-           class="{{ $activeClass }} flex cursor-pointer items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
+        <button type="button"
+                @if ($naviModalRoute)
+                    @click="$modalRoute({{ \Illuminate\Support\Js::from($naviModalRoute) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $naviModalComponent])) }}); if(! isDesktop) showSidebar = false"
+                @else
+                    @click="$modal({{ \Illuminate\Support\Js::from($naviModalComponent) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}); if(! isDesktop) showSidebar = false"
+                @endif
+                class="{{ $activeClass }} flex w-full cursor-pointer items-center gap-x-3 rounded-xl border p-3 text-left text-gray-900 transition-colors">
             @isset($navi['icon'])
                 <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
             @endisset
@@ -54,7 +55,7 @@ new class extends Component {
             <div x-show="showSidebar" class="text-sm font-medium">
                 {{ __($navi['title']) }}
             </div>
-        </a>
+        </button>
     @endif
 
     @isset($navi['link'])

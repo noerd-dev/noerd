@@ -48,7 +48,7 @@ them.
 
 ## Shipping guidelines with your own module
 
-A module created with `php artisan noerd:module` already contains:
+A module created with `php artisan noerd:make-module` already contains:
 
 - `resources/boost/guidelines/core.blade.php` — a module guideline (purpose, YAML locations,
   component names, install/update commands, test call). It is Blade-rendered by Boost, so literal

@@ -9,11 +9,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
+use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Noerd\Contracts\DeclaresRelationForms;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Support\RelationFormDefinition;
+use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\RelationFormSync;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
@@ -358,4 +360,62 @@ it('rendered() recurses into blocks and strip() removes form and snake relation 
     ]);
 
     expect($stripped)->toBe(['name' => 'Host']);
+});
+
+describe('RelationFormPersistHook', function (): void {
+    it('is registered as a global Livewire component hook', function (): void {
+        $registered = (new ReflectionProperty(ComponentHookRegistry::class, 'componentHooks'))->getValue();
+
+        expect($registered)->toContain(RelationFormPersistHook::class);
+    });
+
+    it('persists the form after a hand-rolled store() that never touches relation code', function (): void {
+        Livewire::component('zz-relation-manual-detail', new class extends Component {
+            use NoerdDetail;
+
+            public $detailModel = ZzRelationHost::class;
+
+            public ?string $detailPrimary = 'zzManualId';
+
+            public function mount(): void
+            {
+                $this->initDetail();
+                $this->pageLayout = zzRelationLayout();
+            }
+
+            /**
+             * A deliberately naive store: it builds its payload with strip()
+             * and saves the model — no hydrate, no persist, no rehydrate. The
+             * hook has to supply all of that.
+             */
+            public function store(): void
+            {
+                $model = ZzRelationHost::findOrNew($this->modelId);
+                $model->fill(RelationFormSync::strip(ZzRelationHost::class, $this->detailData));
+                $model->save();
+
+                $this->storeProcess($model);
+            }
+
+            public function render(): string
+            {
+                return '<div>zz-relation-manual</div>';
+            }
+        });
+
+        $host = ZzRelationHost::create(['name' => 'Host']);
+
+        Livewire::test('zz-relation-manual-detail', ['modelId' => $host->id])
+            ->set('detailData.zzAddress.line_1', 'Hookweg 4')
+            ->set('detailData.zzAddress.city', 'Bremen')
+            ->call('store')
+            ->assertHasNoErrors()
+            // rehydrated by the hook, in the same response
+            ->assertSet('detailData.zzAddress.line_1', 'Hookweg 4');
+
+        $host->refresh();
+        expect($host->zzChild)->not->toBeNull()
+            ->and($host->zzChild->line_1)->toBe('Hookweg 4')
+            ->and($host->zzChild->city)->toBe('Bremen');
+    });
 });

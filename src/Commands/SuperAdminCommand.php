@@ -94,10 +94,14 @@ class SuperAdminCommand extends Command
 
     private function resolveUser(string $identifier): ?NoerdUser
     {
-        if (is_numeric($identifier)) {
-            return NoerdUser::find((int) $identifier);
+        // E-mail first: an all-digit local part ("12345@example.com" — or a
+        // numeric-only address in a test domain) would otherwise be read as an id.
+        $user = NoerdUser::query()->where('email', $identifier)->first();
+
+        if ($user) {
+            return $user;
         }
 
-        return NoerdUser::query()->where('email', $identifier)->first();
+        return is_numeric($identifier) ? NoerdUser::find((int) $identifier) : null;
     }
 }

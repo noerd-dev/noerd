@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use Noerd\Tests\HelperLoader;
+use Noerd\Tests\TestCase;
+
+uses(TestCase::class);
 
 /*
  | The global test helpers must stay out of the production autoload, but must

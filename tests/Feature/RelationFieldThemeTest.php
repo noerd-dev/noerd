@@ -48,7 +48,7 @@ describe('Relation field theme templates', function (): void {
         assertElementHasClasses($component->html(), ['h-7!', 'px-2!']);
     });
 
-    it('renders the numbered template inside the numbered row chrome', function () use ($props): void {
+    it('renders the numbered relation-field template inside the numbered row chrome', function () use ($props): void {
         $component = Livewire::test('noerd-relation-field', $props + ['theme' => 'numbered', 'number' => 7])
             ->assertSuccessful()
             ->assertSeeHtml('bg-zinc-100')
@@ -106,7 +106,7 @@ describe('Polymorphic relation field theme templates', function (): void {
         assertElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
     });
 
-    it('renders the numbered template inside the numbered row chrome', function () use ($props): void {
+    it('renders the numbered polymorphic relation-field template inside the numbered row chrome', function () use ($props): void {
         $component = Livewire::test('noerd-polymorphic-relation-field', $props + ['theme' => 'numbered', 'number' => 3])
             ->assertSuccessful()
             ->assertSeeHtml('bg-zinc-100')

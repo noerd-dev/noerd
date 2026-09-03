@@ -28,7 +28,7 @@
     />
 
     <div class="min-w-0 flex-1">
-        <div class="flex" x-data="{ v: $wire.entangle('{{ $name }}') }">
+        <div class="flex" x-data="noerdEntangled({ value: $wire.entangle(@js($name)) })">
             <input
                 {{ $readonly ? 'readonly' : '' }}
                 autocomplete="off"

@@ -50,6 +50,16 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   the `actions` slot of `<x-noerd::tabs>`, which renders right-aligned inside the tab row. Only for
   a list of choices — a popover carrying a form (filters) keeps its own Alpine scope.
   Reference: `docs/action-menu.md`.
+- **File uploads.** A drag-and-drop upload is the shipped `<livewire:noerd::dropzone wire:model="files" :rules="[...]" multiple />`
+  — never hand-roll a drop target with `WithFileUploads`. The `rules` array (`mimes:pdf,jpg`,
+  `max:2048`) also drives the `accept` attribute and the displayed size limit; the component
+  dispatches `files-updated` / `files-cleared`. Reference: `docs/detail-view.md`
+  ("Further UI Components").
+- **Change history.** A record's audit trail is the shipped `noerd::audit-modal`
+  (`Noerd::modal('noerd::audit-modal', ['modelClass' => Model::class, 'modelId' => $id])`, or a
+  detail YAML action with `modalComponent: noerd::audit-modal`). It requires
+  `owen-it/laravel-auditing` and a model that is `Auditable` + `BelongsToTenant` — never build a
+  per-module history screen. Reference: `docs/audit-log.md`.
 - **Route modal vs. component modal.** A modal that shows ONE addressable record must be opened by
   ROUTE, not by component: `Noerd::modalRoute('{app}.{entity}.detail', ['modelId' => $id])` /
   `$modalRoute(...)`. The route is resolved to the component behind it, the browser URL is rewritten
@@ -128,13 +138,13 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 ```
 - Tenant-app icons (`tenant_apps.icon`, the tile on the apps page and in the app bar) are heroicons
   too, stored as `heroicon:outline:{name}` and rendered by `noerd::app-icon`. `noerd:make-app` and
-  `noerd:module` ask for the heroicon; a module's install command returns it from `getAppIcon()`. A
+  `noerd:make-module` ask for the heroicon; a module's install command returns it from `getAppIcon()`. A
   module ships NO icon file. Only when no heroicon fits, add a Blade icon by hand
   (`resources/views/components/icons/app.blade.php`) and return `{module}::icons.app` instead.
 - Every app — root app or module — ships its own dashboard: `noerd:make-app` scaffolds
-  `{app}-dashboard` (root) or `{module}::{module}-dashboard` (module, via `noerd:module`), and the
+  `{app}-dashboard` (root) or `{module}::{module}-dashboard` (module, via `noerd:make-module`), and the
   app's main route opens it. Never point a new app's tile at a list.
-- Neither `noerd:make-app` nor `noerd:module` generates a model: an app starts with its dashboard,
+- Neither `noerd:make-app` nor `noerd:make-module` generates a model: an app starts with its dashboard,
   and every record type is added with `noerd:make-resource {Model} --app={app}` (list + detail,
   YAML, routes, navigation) once the model and its migration exist. For a MODULE app
   (`app-modules/{app}/composer.json` exists) the `noerd:make-*` generators write into the module —
@@ -158,7 +168,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 - Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) MUST ship a `noerd:install-{module}` command. New submodules always get one — never rely on the manual `noerd:make-app` flow.
 - The command extends `Illuminate\Console\Command`, uses the `HasModuleInstallation` and `RequiresNoerdInstallation` traits, and implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` calls `$this->runModuleInstallation()` (which copies the YAML configs, registers the app via a published migration and runs migrations).
 - Register the command in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`.
-- The `noerd:module` scaffolder generates this command and its ServiceProvider registration automatically, from `src/Commands/stubs/module/install-command.stub`.
+- The `noerd:make-module` scaffolder generates this command and its ServiceProvider registration automatically, from `src/Commands/stubs/module/install-command.stub`.
 - Every such module MUST also ship a `noerd:update-{module}` command — a slim subclass of the install
   command whose `handle()` calls `$this->runModuleUpdate()` (never `runModuleInstallation()`, which
   prompts for the tenant assignment) plus the module's *idempotent* post-install steps (e.g.
@@ -166,7 +176,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   republishes its config instead.
   Register it next to the install command. `noerd:update-all` discovers every command named
   `noerd:update-{module}`, so a missing one silently drops the module out of the project-wide update.
-- Reference: the `install-command.stub` / `update-command.stub` rendered by `noerd:module` (`src/Commands/stubs/module/`) and `docs/creating-modules.md`.
+- Reference: the `install-command.stub` / `update-command.stub` rendered by `noerd:make-module` (`src/Commands/stubs/module/`) and `docs/creating-modules.md`.
 
 ### Eloquent Models: $guarded instead of $fillable
 - Never use `$fillable` in Eloquent models. Always use `$guarded` instead.
@@ -221,6 +231,17 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
   on the model — while read is denied, every query (aggregates included) yields nothing. This is
   DELIBERATELY opt-in per model; without the trait such queries are NOT permission-guarded
   (reference: `docs/permissions.md`, "Query-level read guard").
+- A module's ADMIN-ONLY components must be registered with
+  `Noerd\Support\ComponentAccessGuard::registerAdminComponents([...])` in the module provider's
+  `boot()`. Route middleware (`setup`) does not cover the two dynamic-mount seams — the
+  client-dispatchable `noerdModal` event and `/noerd/component-page/{componentName}` — so an
+  unregistered admin screen is reachable there by any authenticated user of the tenant
+  (reference: `docs/extension-registries.md`, "ComponentAccessGuard").
+- NEVER bind a locked component property to `wire:model` and never pass `detailModel`/`listModel`/
+  `objectPermissionModel` as modal arguments: `LockedPropertiesHook` rejects client updates to the
+  identity/config properties of every NoerdList/NoerdPage component with
+  `CannotUpdateLockedPropertyException` (reference: `docs/permissions.md`, "Locked component
+  surface").
 - An operation beyond CRUD ("start production run") is a NAMED ACTION: register it in the module
   provider's `boot()` via `app(ActionPermissionRegistry::class)->register('{module}_{action}', 'Label')`
   (snake_case keys, `[a-z0-9_]` — e.g. `production_start_run`) and guard the call site with the
@@ -395,7 +416,7 @@ singleton — nothing is hardcoded. A module registers additional field types in
   address card), pass a custom Livewire component as `fieldComponent:` in the definition; that
   component MUST extend `Noerd\Livewire\RelationFieldComponent` (inherits the full picker/select/
   clear/openDetail behaviour and the same props) and may read the related record via
-  `$this->relatedModel()`. Never fork the selection round trip in custom markup — reuse
+  the computed `$this->relatedModel`. Never fork the selection round trip in custom markup — reuse
   `$modal('{{ $listComponent }}', {id: ..., context: '{{ $fieldName }}', listActionMethod: 'selectAction'})`.
 - Unknown types fall back to the plain input (`text`, `number`, `date`, … need no registration);
   unregistered `*Relation` types throw during rendering.
@@ -976,7 +997,7 @@ is an unrelated concept).
   field types a `-{theme}` suffix component wins when it exists (namespace-aware). Relation fields
   are Livewire components that `@include` the theme templates `relation-field.blade.php` /
   `polymorphic-relation-field.blade.php`, so a copied theme restyles them like any element.
-- **Creating a NEW theme:** `php artisan noerd:theme {name}` (or copy `themes/default/` to
+- **Creating a NEW theme:** `php artisan noerd:make-theme {name}` (or copy `themes/default/` to
   `resources/views/themes/{name}/`, for modules + `registerPath()`), edit `theme.yml`, adapt the
   element templates you change — missing elements fall back to the default theme. No PHP needed.
   Full reference: `docs/themes.md`.

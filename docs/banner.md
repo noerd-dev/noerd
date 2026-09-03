@@ -6,7 +6,7 @@ user has not dismissed.
 
 ## File Location
 
-```
+```text
 app-configs/banner.yml
 ```
 
@@ -74,7 +74,7 @@ banners:
 Components are placed in your module's views directory and referenced by their namespaced Livewire
 name with the `banner.` prefix:
 
-```
+```text
 app-modules/{module}/resources/views/components/banner/{name}.blade.php   → {module}::banner.{name}
 ```
 

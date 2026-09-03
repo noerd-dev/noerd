@@ -1,5 +1,6 @@
 <?php
 
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdDetail;
@@ -25,6 +26,7 @@ new class extends Component {
      * The last language and the only active default language stay — the
      * delete button is hidden for them and delete() refuses.
      */
+    #[Computed]
     public function canDeleteLanguage(): bool
     {
         if (! $this->modelId || ($this->detailData['is_default'] ?? false)) {
@@ -36,7 +38,7 @@ new class extends Component {
 
     public function delete(): void
     {
-        if (! $this->canDeleteLanguage()) {
+        if (! $this->canDeleteLanguage) {
             return;
         }
 
@@ -61,6 +63,6 @@ new class extends Component {
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="$this->canDeleteLanguage()"/>
+        <x-noerd::delete-save-bar :showDelete="$this->canDeleteLanguage"/>
     </x-slot:footer>
 </x-noerd::page>

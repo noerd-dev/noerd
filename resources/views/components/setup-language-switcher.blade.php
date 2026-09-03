@@ -28,11 +28,11 @@ new class extends Component
      */
     public function setLanguage(string $code): void
     {
-        if (! in_array($code, SetupLanguage::getActiveCodes(), true)) {
+        if (! in_array($code, SetupLanguage::activeCodes(), true)) {
             return;
         }
 
-        session(['selectedLanguage' => $code]);
+        session([SetupLanguage::SESSION_KEY => $code]);
         $this->dispatch('setupLanguageChanged');
     }
 } ?>

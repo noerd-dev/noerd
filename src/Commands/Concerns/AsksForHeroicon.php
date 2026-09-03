@@ -6,24 +6,18 @@ namespace Noerd\Commands\Concerns;
 
 use function Laravel\Prompts\search;
 
-use ReflectionClass;
-use WireUi\Heroicons\HeroiconsServiceProvider;
+use Noerd\Helpers\IconHelper;
 
 /**
  * Tenant-app icons are heroicons stored as `heroicon:outline:{name}` and
- * rendered by `noerd::app-icon`. Shared by noerd:make-app and noerd:module.
+ * rendered by `noerd::app-icon`. Shared by noerd:make-app and noerd:make-module.
  */
 trait AsksForHeroicon
 {
     protected function askForHeroicon(): string
     {
-        // Resolve the heroicons package through its provider, not a hard-coded vendor path.
-        $iconsPath = dirname((new ReflectionClass(HeroiconsServiceProvider::class))->getFileName()) . '/views/components/outline';
-        $icons = collect(scandir($iconsPath))
-            ->filter(fn($file) => str_ends_with($file, '.blade.php'))
-            ->map(fn($file) => str_replace('.blade.php', '', $file))
-            ->values()
-            ->all();
+        // The single discovery of the shipped heroicons (memoized per request).
+        $icons = IconHelper::heroicons();
 
         return search(
             label: 'Search for a Heroicon',

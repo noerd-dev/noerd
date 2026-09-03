@@ -12,8 +12,8 @@ Registries with their own documentation are not repeated here:
   beyond CRUD, see [permissions.md](permissions.md)
 
 Documented on this page: `TopBarRegistry`, `PicklistRegistry`, `DynamicNavigationRegistry`,
-`RelationBoxRegistry`, `DetailSlotsRegistry`, the overridable null bindings and the
-authorization gates.
+`RelationBoxRegistry`, `DetailSlotsRegistry`, `ComponentAccessGuard`, the overridable null bindings
+and the authorization gates.
 
 ## TopBarRegistry
 
@@ -279,6 +279,55 @@ public function hostStored(int $modelId): void
   re-mounted) — hosts should not open nested modals around a filled slot
 - The shipped host is the setup app's user detail (`noerd::noerd-user-detail`, slot
   `user-below-form`); mechanics: `tests/Feature/DetailSlotRenderTest.php`
+
+## ComponentAccessGuard
+
+An allow-list of components that may only be mounted by a tenant admin. Setup screens are normally
+protected by the `setup` route middleware (`SetupMiddleware` → `NoerdUser::isAdmin()`), but two
+entry points mount a component **without** ever passing through that middleware:
+
+- the client-dispatchable `noerdModal` event — the modal stack takes the component name straight
+  from the browser
+- the generic component page `/noerd/component-page/{componentName}`
+
+Both call `ComponentAccessGuard::authorize()` before instantiating the component, which re-asserts
+admin access for every name on the allow-list. A module that ships admin-only screens must
+therefore register them — an unregistered admin component is reachable through those two seams by
+any authenticated user of the tenant.
+
+**API** (`Noerd\Support\ComponentAccessGuard`, static):
+
+| Method | Description |
+|--------|-------------|
+| `registerAdminComponents(array $componentNames): void` | Add module-owned admin components to the allow-list; idempotent |
+| `allows(?string $componentName): bool` | Whether the current user may mount the component (`true` for every name not on the list, and for `null`) |
+| `authorize(?string $componentName): void` | `abort(403)` when `allows()` is false |
+
+**Registering** from a module service provider's `boot()`:
+
+```php
+use Noerd\Support\ComponentAccessGuard;
+
+public function boot(): void
+{
+    ComponentAccessGuard::registerAdminComponents([
+        'plus::user-roles-list',
+        'plus::user-role-detail',
+    ]);
+}
+```
+
+**Important:**
+
+- Matching ignores the namespace prefix and collapses every spelling Livewire resolves to the same
+  component (`noerd::tenants-list`, `tenants-list`, `.tenants-list`). Consequence: a host component
+  whose bare name collides with a registered one becomes admin-only too — the deliberate
+  fail-closed choice
+- The guard only closes the admin bypass at the dynamic-mount seams; components that are not on the
+  list are still governed by their own route middleware and the object gates
+  (see [permissions.md](permissions.md))
+- The core's own setup screens are on the list already and are kept in lockstep with the
+  `['noerd', 'setup']` route group; mechanics: `tests/Feature/DynamicMountTest.php`
 
 ## Overridable Null Bindings
 

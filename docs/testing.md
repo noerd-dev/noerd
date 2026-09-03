@@ -152,6 +152,9 @@ related reaches a production request. New global helpers go into `tests/helpers.
 | `assertModuleDependenciesDeclared(string $moduleDir, array $allowedPackages = [])` | Fails when a module references another module's namespace without a `require` entry (see below) |
 | `assertModuleUpdateCommandPublishesConfigs(string $command, string $moduleDir, string $moduleKey)` | Standard proof for a `noerd:update-{module}` command: publishes every shipped YAML into `app-configs/{key}`, exits cleanly and `--force` restores a locally modified copy; the installed configs are snapshotted and restored |
 | `createNoerdUserWithProfile(?Profile $profile)` | A user attached to a fresh tenant under the given `Noerd\Enums\Profile` (or none), with that tenant selected — the fixture for profile and permission tests |
+| `zzNormalizeSpaces(string $value)` | Collapses every kind of space (ICU uses U+00A0 / U+202F around symbols and groups) to a plain one, so a formatting assertion reads like the screen |
+| `ensureZzSettingsProfilesTable()` | Creates the `zz_settings_profiles` fixture table when it does not exist yet |
+| `ZzSettingsProfile` (class) | The tenant-scoped Eloquent fixture model on that table — settings-page tests depend on no real domain model |
 
 ## Testing YAML-driven detail forms
 
@@ -247,6 +250,16 @@ A factory's `definition()` must produce a fully valid, persistable record: every
 column that can be `required` is non-null and deterministic (no `optional()` on such fields).
 Foreign keys may default to `null` but must be satisfiable through a named state or an explicit
 `create([...])`. Tests that need a sparse record pass the nulls explicitly.
+
+The package ships factories for its own models under `database/factories/`:
+
+| Factory | Notes |
+|---------|-------|
+| `NoerdUserFactory` | States `adminUser()`, `withExampleTenant()`, `withSelectedApp($app)` and `superAdmin()` (the installation-wide flag) |
+| `TenantFactory` | A plain tenant |
+| `TenantAppFactory` | A tenant app row — attach it to a tenant with `$tenant->tenantApps()->attach(...)` |
+| `NoerdSettingsFactory` | The per-tenant settings singleton (`currency`, `locale`, detail theme) — the fixture for formatting tests |
+| `SetupCollectionFactory`, `SetupLanguageFactory`, `UserSettingFactory`, `NoerdLoginFactory` | The remaining core models |
 
 ## Shared databases
 

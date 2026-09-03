@@ -15,13 +15,16 @@ class SetupCollectionDefinition extends Model
 
     protected $table = 'setup_collection_definitions';
 
-    protected $guarded = [];
+    protected $guarded = ['id'];
 
     public function creator(): BelongsTo
     {
         return $this->belongsTo(NoerdUser::class, 'created_by');
     }
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

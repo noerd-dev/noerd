@@ -6,7 +6,7 @@ namespace Noerd\Services;
 
 use Noerd\Contracts\DynamicNavigationProviderContract;
 
-class DynamicNavigationRegistry
+final class DynamicNavigationRegistry
 {
     /** @var array<string, DynamicNavigationProviderContract> */
     private array $providers = [];

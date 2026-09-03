@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
@@ -112,7 +111,8 @@ class MakeAdminUserCommand extends Command
         $user = NoerdUser::create([
             'name' => $name,
             'email' => $email,
-            'password' => Hash::make($passwordValue),
+            // The model's `hashed` cast hashes on assignment — never hash twice.
+            'password' => $passwordValue,
         ]);
 
         // Set super admin if requested
@@ -125,7 +125,7 @@ class MakeAdminUserCommand extends Command
         }
 
         // Make the user admin using existing command
-        $this->call('noerd:make-admin', ['user_id' => $user->id]);
+        $this->call('noerd:promote-admin', ['user_id' => $user->id]);
 
         return self::SUCCESS;
     }

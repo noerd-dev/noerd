@@ -6,35 +6,29 @@ namespace Noerd\Exceptions;
 
 use Exception;
 use Illuminate\Http\Response;
+use Noerd\Enums\NoerdExceptionType;
 
 class NoerdException extends Exception
 {
-    public const TYPE_APP_NOT_ASSIGNED = 'app_not_assigned';
-
-    public const TYPE_APP_ACCESS_DENIED = 'app_access_denied';
-
-    public const TYPE_CONFIG_NOT_FOUND = 'config_not_found';
-
     public function __construct(
-        public string $type,
+        public NoerdExceptionType $type,
         public ?string $appName = null,
         public ?string $configFile = null,
     ) {
-        $message = match ($type) {
-            self::TYPE_APP_NOT_ASSIGNED => "App '{$appName}' is not assigned to this tenant",
-            self::TYPE_APP_ACCESS_DENIED => "App '{$appName}' is not accessible for this user",
-            self::TYPE_CONFIG_NOT_FOUND => "Config file not found: {$configFile}",
-            default => 'Unknown error',
-        };
-        parent::__construct($message);
+        parent::__construct(match ($type) {
+            NoerdExceptionType::AppNotAssigned => "App '{$appName}' is not assigned to this tenant",
+            NoerdExceptionType::AppAccessDenied => "App '{$appName}' is not accessible for this user",
+            NoerdExceptionType::ConfigNotFound => "Config file not found: {$configFile}",
+        });
     }
 
     public function render(): Response
     {
         return response()->view('noerd::errors.noerd-error', [
-            'type' => $this->type,
+            // The view branches on the raw key, not the enum case.
+            'type' => $this->type->value,
             'appName' => $this->appName,
             'configFile' => $this->configFile,
-        ], in_array($this->type, [self::TYPE_APP_ACCESS_DENIED, self::TYPE_APP_NOT_ASSIGNED], true) ? 403 : 500);
+        ], $this->type->isAccessDenial() ? 403 : 500);
     }
 }

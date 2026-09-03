@@ -47,7 +47,7 @@ Go to **Setup → Languages → New Language** and fill in:
 The language is per tenant. It appears immediately in the language picker of every
 user profile and in the user detail screen — no deployment needed. A new tenant starts with a
 default language set (`SetupLanguage::ensureDefaultLanguagesForTenant()`), and
-`SetupLanguage::getActive()` / `getActiveCodes()` / `getDefaultCode()` expose the tenant's
+`SetupLanguage::active()` / `activeCodes()` / `defaultLanguage()` / `defaultCode()` expose the tenant's
 languages to your own code.
 
 ### Step 2 — Provide the translations
@@ -66,7 +66,7 @@ English → Danish:
 
 Put that file in **your own project**, at:
 
-```
+```text
 lang/da.json
 ```
 
@@ -85,7 +85,7 @@ Validation errors, date formats and pagination come from Laravel itself and are 
 the host application's `lang/` directory — the noerd package ships no `lang/` folder of its
 own. To translate them, add:
 
-```
+```text
 lang/da/validation.php
 ```
 

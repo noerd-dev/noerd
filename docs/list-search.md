@@ -77,7 +77,7 @@ only **real columns of the model's table** are searched (`tableHasColumn()`): do
 
 ## Architecture Overview
 
-```
+```text
 User types in search field
         ↓
 wire:model.live.debounce.300ms="search" updates $this->search

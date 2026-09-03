@@ -31,7 +31,7 @@ new class extends Component {
 
     public function localeOptions(): array
     {
-        return SetupLanguage::getActive()->pluck('name', 'code')->toArray();
+        return SetupLanguage::active()->pluck('name', 'code')->toArray();
     }
 
     /**
@@ -57,7 +57,7 @@ new class extends Component {
         $this->initDetail();
 
         $this->isOwner = $this->modelId && (int) $this->modelId === NoerdAuth::id();
-        $this->userLocale = SetupLanguage::getDefaultCode();
+        $this->userLocale = SetupLanguage::defaultCode();
         $this->userFormatLocale = Locales::defaultFor($this->userLocale);
 
         $user = $this->modelId ? NoerdUser::find($this->modelId) ?? new NoerdUser() : new NoerdUser();
@@ -80,8 +80,12 @@ new class extends Component {
 
     public function store(): void
     {
+        // Rebuilt from scratch: a leftover entry from an earlier submit would
+        // otherwise keep satisfying the AtLeastOneTrue rule.
+        $this->tenantAccess = [];
+
         foreach ($this->possibleTenants as $tenantId => $value) {
-            $this->tenantAccess[$tenantId] = $value['hasAccess'];
+            $this->tenantAccess[$tenantId] = (bool) ($value['hasAccess'] ?? false);
         }
 
         $this->validate([
@@ -204,7 +208,7 @@ new class extends Component {
                 </div>
                 <fieldset class="pl-2">
                     @foreach($possibleTenants as $tenant)
-                        <div class="space-y-5 max-w-2xl">
+                        <div class="space-y-5 max-w-2xl" wire:key="tenant-access-{{ $tenant['id'] }}">
                             <div class="relative flex items-start py-1">
                                 <div class="flex my-auto h-6 items-center">
                                     <x-noerd::checkbox

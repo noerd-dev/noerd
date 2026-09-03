@@ -26,8 +26,7 @@ class MakeModuleCommand extends Command
     use AsksForHeroicon;
     use RequiresNoerdInstallation;
 
-    protected $signature = 'noerd:module
-                            {name? : The name of the module}
+    protected $signature = 'noerd:make-module                            {name? : The name of the module}
                             {--title= : The display title of the tenant app}
                             {--icon= : The heroicon of the tenant app (name or heroicon:outline:name)}
                             {--no-hints : Do not print the next steps (noerd:make-app runs them itself)}';
@@ -361,7 +360,7 @@ class MakeModuleCommand extends Command
      */
     private function noerdConstraint(): string
     {
-        $composer = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/composer.json'), true);
+        $composer = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/composer.json'), true, 512, JSON_THROW_ON_ERROR);
         $version = mb_ltrim((string) ($composer['version'] ?? ''), 'v');
 
         if (! preg_match('/^(\d+)\.(\d+)/', $version, $matches)) {
@@ -371,9 +370,16 @@ class MakeModuleCommand extends Command
         return "^{$matches[1]}.{$matches[2]}";
     }
 
+    /**
+     * Order a composer require block the way Composer itself does: php first,
+     * then hhvm-/ext-/lib-, then everything else alphabetically.
+     *
+     * @param  array<string, string>  $packages
+     * @return array<string, string>
+     */
     private function sortComposerPackages(array $packages): array
     {
-        $prefix = fn($requirement) => preg_replace(
+        $prefix = fn(string $requirement): string => (string) preg_replace(
             [
                 '/^php$/',
                 '/^hhvm-/',
@@ -393,7 +399,7 @@ class MakeModuleCommand extends Command
             $requirement,
         );
 
-        uksort($packages, fn($a, $b) => strnatcmp($prefix($a), $prefix($b)));
+        uksort($packages, fn(string $a, string $b): int => strnatcmp($prefix($a), $prefix($b)));
 
         return $packages;
     }

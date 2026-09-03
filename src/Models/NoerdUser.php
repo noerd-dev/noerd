@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Models;
 
 use Illuminate\Contracts\Translation\HasLocalePreference;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -44,6 +45,8 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      * The framework notification links to route('password.reset') — a name
      * noerd does not claim. Send noerd's own notification instead, which
      * builds the link from the noerd.password.reset route.
+     *
+     * @param  string  $token  (untyped to stay compatible with the framework signature)
      */
     public function sendPasswordResetNotification($token): void
     {
@@ -130,27 +133,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     {
         return $this->isSuperAdmin()
             ? Tenant::query()->orderBy('id')->get()
-            : $this->adminTenants;
-    }
-
-    /**
-     * @return array{badge: string, text: string}
-     */
-    public function getProfileForTenantAttribute(): array
-    {
-        $key = $this->currentProfileKey();
-
-        // Registered profiles (ProfileRegistry) get their translated label;
-        // an unregistered key falls back to the raw key rather than hiding.
-        $label = $key === null ? '' : (app(ProfileRegistry::class)->label($key) ?? $key);
-
-        // The installation-level role is visible wherever the profile is: the
-        // badge names it, the tenant profile (if any) follows as plain text.
-        if ($this->isSuperAdmin()) {
-            return ['badge' => __('Super Admin'), 'text' => $label];
-        }
-
-        return ['badge' => $label, 'text' => ''];
+            : $this->adminTenants()->get();
     }
 
     /**
@@ -208,8 +191,9 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      */
     public function isAdminOfAnyTenant(): bool
     {
-        return $this->isSuperAdmin()
-            || $this->tenants->contains(fn($tenant): bool => $tenant->pivot->profile_key === Profile::Admin->value);
+        // Read fresh (never the memoized relation): an assignment made earlier
+        // in the same request must be visible to the check that follows it.
+        return $this->isSuperAdmin() || $this->adminTenants()->exists();
     }
 
     public function isSuperAdmin(): bool
@@ -222,103 +206,9 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return $this->hasOne(UserSetting::class, 'user_id', 'id');
     }
 
-    /**
-     * Get or create the user's settings.
-     */
-    public function getSettingAttribute(): UserSetting
-    {
-        if (! $this->relationLoaded('userSetting') || $this->userSetting === null) {
-            $setting = $this->userSetting()->firstOrCreate(
-                ['user_id' => $this->id],
-                ['locale' => 'en'],
-            );
-            $this->setRelation('userSetting', $setting);
-        }
-
-        return $this->userSetting;
-    }
-
-    /**
-     * The selected tenant is NOT a column on noerd_users: the live selection is
-     * session state and its persisted counterpart is
-     * noerd_user_settings.selected_tenant_id, both owned by TenantHelper. The
-     * accessor/mutator pair keeps $user->selected_tenant_id working as the
-     * public read/write API without a second, drifting copy of the value.
-     */
-    public function getSelectedTenantIdAttribute(): ?int
-    {
-        // The live (session) selection belongs to the authenticated user; any
-        // other user instance reads its persisted setting.
-        if ($this->ownsTenantSession()) {
-            return TenantHelper::getSelectedTenantId();
-        }
-
-        if (! $this->relationLoaded('userSetting')) {
-            $this->setRelation('userSetting', $this->userSetting()->first());
-        }
-
-        return $this->userSetting?->selected_tenant_id;
-    }
-
-    public function setSelectedTenantIdAttribute(?int $value): void
-    {
-        // The settings row needs the user's id — an unsaved user (factory
-        // attributes, mass assignment before save) persists it on `saved`.
-        if (! $this->exists) {
-            $this->pendingSelectedTenantId = [$value];
-
-            return;
-        }
-
-        $this->setting->update(['selected_tenant_id' => $value]);
-
-        if ($this->ownsTenantSession()) {
-            TenantHelper::setSelectedTenantId($value);
-        }
-    }
-
-    public function getLocaleAttribute(): string
-    {
-        // Read-only: SetUserLocale reads this on EVERY web request — a missing
-        // settings row must not trigger the write path ($this->setting would
-        // firstOrCreate). Writers keep going through getSettingAttribute().
-        if (! $this->relationLoaded('userSetting')) {
-            $this->setRelation('userSetting', $this->userSetting()->first());
-        }
-
-        return $this->userSetting?->locale ?? 'en';
-    }
-
-    public function setLocaleAttribute(string $value): void
-    {
-        $this->setting->update(['locale' => $value]);
-    }
-
     public function preferredLocale(): string
     {
         return $this->locale;
-    }
-
-    /**
-     * The user's FORMATTING locale (`en-US`): how numbers, dates and amounts
-     * are written in the backend UI. Separate from `locale`, which is the
-     * interface LANGUAGE. Null (or an unsupported value) means "use the tenant
-     * locale" — see FormatHelper::locale().
-     */
-    public function getFormatLocaleAttribute(): ?string
-    {
-        if (! $this->relationLoaded('userSetting')) {
-            $this->setRelation('userSetting', $this->userSetting()->first());
-        }
-
-        $formatLocale = $this->userSetting?->format_locale;
-
-        return Locales::isSupported($formatLocale) ? Locales::normalize($formatLocale) : null;
-    }
-
-    public function setFormatLocaleAttribute(?string $value): void
-    {
-        $this->setting->update(['format_locale' => $value]);
     }
 
     protected static function booted(): void
@@ -337,6 +227,155 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return NoerdUserFactory::new();
     }
 
+    /**
+     * The profile badge of the user in the current tenant.
+     *
+     * @return Attribute<array{badge: string, text: string}, never>
+     */
+    protected function profileForTenant(): Attribute
+    {
+        return Attribute::make(get: function (): array {
+            $key = $this->currentProfileKey();
+
+            // Registered profiles (ProfileRegistry) get their translated label;
+            // an unregistered key falls back to the raw key rather than hiding.
+            $label = $key === null ? '' : (app(ProfileRegistry::class)->label($key) ?? $key);
+
+            // The installation-level role is visible wherever the profile is: the
+            // badge names it, the tenant profile (if any) follows as plain text.
+            if ($this->isSuperAdmin()) {
+                return ['badge' => __('Super Admin'), 'text' => $label];
+            }
+
+            return ['badge' => $label, 'text' => ''];
+        });
+    }
+
+    /**
+     * The user's settings row, created on first access — the WRITE path. Readers
+     * that must not create a row use the userSetting() relation directly.
+     *
+     * @return Attribute<UserSetting, never>
+     */
+    protected function setting(): Attribute
+    {
+        return Attribute::make(get: function (): UserSetting {
+            if (! $this->relationLoaded('userSetting') || $this->userSetting === null) {
+                $setting = $this->userSetting()->firstOrCreate(
+                    ['user_id' => $this->id],
+                    ['locale' => 'en'],
+                );
+                $this->setRelation('userSetting', $setting);
+            }
+
+            return $this->userSetting;
+        })->withoutObjectCaching();
+    }
+
+    /**
+     * The selected tenant is NOT a column on noerd_users: the live selection is
+     * session state and its persisted counterpart is
+     * noerd_user_settings.selected_tenant_id, both owned by TenantHelper. The
+     * accessor/mutator pair keeps $user->selected_tenant_id working as the
+     * public read/write API without a second, drifting copy of the value.
+     */
+    /**
+     * @return Attribute<int|null, array{}>
+     */
+    protected function selectedTenantId(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?int {
+                // The live (session) selection belongs to the authenticated user; any
+                // other user instance reads its persisted setting.
+                if ($this->ownsTenantSession()) {
+                    return TenantHelper::getSelectedTenantId();
+                }
+
+                if (! $this->relationLoaded('userSetting')) {
+                    $this->setRelation('userSetting', $this->userSetting()->first());
+                }
+
+                return $this->userSetting?->selected_tenant_id;
+            },
+            // The value lives in the settings row and the session, never in a
+            // column — the empty array writes nothing back onto the model.
+            set: function (?int $value): array {
+                // The settings row needs the user's id — an unsaved user (factory
+                // attributes, mass assignment before save) persists it on `saved`.
+                if (! $this->exists) {
+                    $this->pendingSelectedTenantId = [$value];
+
+                    return [];
+                }
+
+                $this->setting->update(['selected_tenant_id' => $value]);
+
+                if ($this->ownsTenantSession()) {
+                    TenantHelper::setSelectedTenantId($value);
+                }
+
+                return [];
+            },
+        );
+    }
+
+    /**
+     * @return Attribute<string, array{}>
+     */
+    protected function locale(): Attribute
+    {
+        return Attribute::make(
+            get: function (): string {
+                // Read-only: SetUserLocale reads this on EVERY web request — a missing
+                // settings row must not trigger the write path ($this->setting would
+                // firstOrCreate). Writers keep going through the setting attribute.
+                if (! $this->relationLoaded('userSetting')) {
+                    $this->setRelation('userSetting', $this->userSetting()->first());
+                }
+
+                return $this->userSetting?->locale ?? 'en';
+            },
+            set: function (string $value): array {
+                $this->setting->update(['locale' => $value]);
+
+                return [];
+            },
+        );
+    }
+
+    /**
+     * The user's FORMATTING locale (`en-US`): how numbers, dates and amounts
+     * are written in the backend UI. Separate from `locale`, which is the
+     * interface LANGUAGE. Null (or an unsupported value) means "use the tenant
+     * locale" — see FormatHelper::locale().
+     */
+    /**
+     * @return Attribute<string|null, array{}>
+     */
+    protected function formatLocale(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?string {
+                if (! $this->relationLoaded('userSetting')) {
+                    $this->setRelation('userSetting', $this->userSetting()->first());
+                }
+
+                $formatLocale = $this->userSetting?->format_locale;
+
+                return Locales::isSupported($formatLocale) ? Locales::normalize($formatLocale) : null;
+            },
+            set: function (?string $value): array {
+                $this->setting->update(['format_locale' => $value]);
+
+                return [];
+            },
+        );
+    }
+
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

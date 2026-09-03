@@ -24,7 +24,9 @@ trait NoerdComponentShared
 
     public function refreshList(): void
     {
-        $this->dispatch('$refresh');
+        // Self-targeted: a bare dispatch('$refresh') is a browser-wide event
+        // that re-renders every listening component on the page.
+        $this->dispatch('$refresh')->self();
     }
 
     /**

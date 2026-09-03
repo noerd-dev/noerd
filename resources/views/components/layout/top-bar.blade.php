@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Session;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Noerd\Support\LayoutState;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\TopBarRegistry;
+use Noerd\Support\LayoutState;
 
 new class extends Component {
     /**
@@ -13,6 +14,7 @@ new class extends Component {
      *
      * @var array<int, string>
      */
+    #[Locked]
     public array $topBarComponents = [];
 
     public function mount(): void

@@ -20,7 +20,7 @@
 <div>
     <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" />
 
-    <div class="flex" x-data="{ v: $wire.entangle('{{ $name }}') }">
+    <div class="flex" x-data="noerdEntangled({ value: $wire.entangle(@js($name)) })">
         <input
             {{ $readonly ? 'readonly' : '' }}
             autocomplete="off"

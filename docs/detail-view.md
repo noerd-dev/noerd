@@ -7,12 +7,12 @@ Detail pages display and edit individual records with forms.
 ## File Locations
 
 ### YAML Configuration:
-```
+```text
 app-configs/{app}/details/{name}-detail.yml
 ```
 
 ### Livewire Component:
-```
+```text
 app-modules/{module}/resources/views/components/{name}-detail.blade.php
 ```
 
@@ -391,6 +391,20 @@ actions:
       modelId: $modelId
 ```
 
+`modalComponent:` needs no method on the detail component, and `arguments` accepts static values
+next to the `$modelId` token — enough to wire up the shipped
+[Activity Log](audit-log.md) modal for an auditable model:
+
+```yaml
+actions:
+  - label: Activity Log
+    heroicon: clock
+    modalComponent: noerd::audit-modal
+    arguments:
+      modelClass: 'Noerd\Invoicing\Models\Invoice'
+      modelId: $modelId
+```
+
 ### Conditional Actions
 
 `showIf` / `showIfNot` mirror the field- and tab-level conditions: the button carries an Alpine
@@ -637,10 +651,11 @@ first. Typical additions:
 - `setPreselect('customer_id', $id)` / `preselect('customer_id')` — the shared `listFilters`
   session bucket: a page seeds it so a related list opens pre-filtered, and a new record adopts
   the value by calling the matching `customerSelected()` method when it exists
-- `openRelationDetail($detailComponent, $fieldName, $detailRoute)` — open the record a
-  `detailData` foreign key points at (route first, component as fallback)
-- `clearRelation($fieldName)` — reset a relation value and its `relationTitles` entry (relation
-  fields do this themselves; see [Relation Field Types](relation-field-types.md)) Initial field values are **not** such a case: they are
+- `openRelationDetail($fieldName)` — open the record a `detailData` foreign key points at; the
+  target route and component are read from the field's registered relation definition in the
+  layout (route first, component as fallback)
+
+Initial field values are **not** such a case: they are
 configuration and belong in the YAML (`default:`, or the first option of a select) — see
 [Default Values](field-types.md#default-values). The trait applies them generically, also to a
 custom `mount()` that replaces `$detailData` wholesale.
@@ -666,6 +681,25 @@ custom `mount()` that replaces `$detailData` wholesale.
   code panel with a copy button; useful on settings pages that show embed codes.
 - **`<x-noerd::help-tooltip text="...">`** — the question-mark tooltip used by `helpText`; can be
   placed manually next to custom labels.
+- **`<livewire:noerd::dropzone wire:model="files" :rules="[...]" multiple />`** — a drag-and-drop
+  file upload. `files` is the `#[Modelable]` array the host binds to (one entry per file with
+  `name`, `extension`, `size`, `path`, `mime_type` and the original upload under `_original`),
+  `rules` the Laravel validation rules applied per file (`mimes:pdf,jpg`, `max:2048` — they also
+  produce the `accept` attribute and the displayed size limit), `multiple` allows more than one
+  file. It dispatches `files-updated` (with the current `files` array) after every add or remove
+  and `files-cleared` after `clearFiles()`.
+- **`<x-noerd::dashboard-card title="..." heroicon="..." :value="$count" />`** — the square tile used
+  on app dashboards. `route` opens a route modal, `component` a component modal (the fallback when
+  the route is not registered), `arguments` are passed to either, `rewriteUrl: false` keeps the URL
+  when the card opens a filtered list, `external` turns the card into a plain link in a new tab,
+  `image` / `heroicon` set the icon, `value` renders a figure below the title and `background`
+  overrides the tile color.
+- **`<x-noerd::action-message on="saved">Saved.</x-noerd::action-message>`** — a transient
+  confirmation line. It listens for the Livewire event named in `on` and fades itself out after two
+  seconds; the slot replaces the default text.
+- **`<x-noerd::markdown :content="$text" />`** — renders (tenant-editable) markdown. The content is
+  HTML-escaped *before* it is parsed and unsafe links are dropped, so embedded markup renders as
+  literal text; consecutive blank lines are preserved.
 
 ## Naming Conventions
 

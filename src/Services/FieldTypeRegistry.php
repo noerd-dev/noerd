@@ -6,7 +6,7 @@ namespace Noerd\Services;
 
 use Noerd\Support\FieldTypeDefinition;
 
-class FieldTypeRegistry
+final class FieldTypeRegistry
 {
     /** @var array<string, FieldTypeDefinition> */
     private array $definitions = [];

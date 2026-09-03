@@ -10,7 +10,7 @@ namespace Noerd\Support;
  * detail block; read by chrome components such as `x-noerd::button` that sit
  * outside the YAML field grid but should follow the active theme.
  */
-class ThemeContext
+final class ThemeContext
 {
     private static ?string $current = null;
 

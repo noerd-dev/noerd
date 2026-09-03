@@ -24,7 +24,6 @@ class Tenant extends Authenticatable
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $hidden = [
-        'password',
         'remember_token',
         'created_at',
         'updated_at',
@@ -48,6 +47,9 @@ class Tenant extends Authenticatable
         return TenantFactory::new();
     }
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

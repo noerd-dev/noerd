@@ -1,10 +1,12 @@
 <?php
 
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
+    #[Locked]
     public array $widgets = [];
 
     public function mount(): void

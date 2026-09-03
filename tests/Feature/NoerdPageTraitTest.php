@@ -118,8 +118,14 @@ it('resets the tab when a different component type was opened before', function 
     $page->currentTab = 3;
     $page->mountNoerdPage();
 
+    // mount() only READS the session — a modal-stack update re-mounts the
+    // component, so the write belongs to the render hook.
     expect($page->currentTab)->toBe(1)
-        ->and(session('noerd.lastDetailComponent'))->toBe('zz-fixture-page');
+        ->and(session('noerd.lastDetailComponent'))->toBe('other-component');
+
+    $page->renderingNoerdPage();
+
+    expect(session('noerd.lastDetailComponent'))->toBe('zz-fixture-page');
 });
 
 it('keeps the tab when the same component type reopens', function (): void {
@@ -139,6 +145,7 @@ it('leaves the tab session untouched for embedded components', function (): void
     $detail->embedded = true;
     $detail->currentTab = 2;
     $detail->mountNoerdPage();
+    $detail->renderingNoerdPage();
 
     expect($detail->currentTab)->toBe(2)
         ->and(session('noerd.lastDetailComponent'))->toBe('zz-fixture-page');

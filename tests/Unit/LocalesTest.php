@@ -7,12 +7,13 @@ use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
 
-it('formats a number and a date for every supported locale', function (string $locale): void {
-    $sample = Locales::sample($locale);
+it('builds a picker label with a number and a date sample for every supported locale', function (string $locale): void {
+    // label()/sample() are internals — the public surface is options().
+    $label = Locales::options('en')[$locale];
 
-    expect($sample)->toContain('·')
-        ->and(preg_match('/\d/', $sample))->toBe(1)
-        ->and(Locales::label($locale, 'en'))->toStartWith(Locale::getDisplayName($locale, 'en'));
+    expect($label)->toStartWith(Locale::getDisplayName($locale, 'en'))
+        ->and($label)->toContain('·')
+        ->and(preg_match('/\d/', $label))->toBe(1);
 })->with(Locales::SUPPORTED);
 
 it('knows which locales it supports', function (): void {

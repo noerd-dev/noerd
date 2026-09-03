@@ -28,12 +28,12 @@ describe('SetupLanguage Model', function (): void {
     });
 
     it('returns active languages', function (): void {
-        $languages = SetupLanguage::getActive();
+        $languages = SetupLanguage::active();
 
         expect($languages)->toHaveCount(2);
         expect($languages->first()->code)->toBe('en'); // Default first
-        expect(SetupLanguage::getActiveCodes())->toContain('de')->toContain('en');
-        expect(SetupLanguage::getDefaultCode())->toBe('en');
+        expect(SetupLanguage::activeCodes())->toContain('de')->toContain('en');
+        expect(SetupLanguage::defaultCode())->toBe('en');
     });
 });
 
@@ -106,20 +106,20 @@ describe('Setup Language Detail Component', function (): void {
 
 describe('Setup Language Switcher', function (): void {
     it('switches to an active language code', function (): void {
-        session()->forget('selectedLanguage');
+        session()->forget(SetupLanguage::SESSION_KEY);
 
         Livewire::test('noerd::setup-language-switcher')
             ->call('setLanguage', 'de')
             ->assertDispatched('setupLanguageChanged');
 
-        expect(session('selectedLanguage'))->toBe('de');
+        expect(session(SetupLanguage::SESSION_KEY))->toBe('de');
     });
 
     it('ignores a code that is not an active language', function (): void {
         // Deactivated and never-existing codes are both client input the
         // switcher must not write into the session.
         SetupLanguage::where('code', 'de')->update(['is_active' => false]);
-        session(['selectedLanguage' => 'en']);
+        session([SetupLanguage::SESSION_KEY => 'en']);
 
         Livewire::test('noerd::setup-language-switcher')
             ->call('setLanguage', 'de')
@@ -129,6 +129,6 @@ describe('Setup Language Switcher', function (): void {
             ->call('setLanguage', 'zz')
             ->assertNotDispatched('setupLanguageChanged');
 
-        expect(session('selectedLanguage'))->toBe('en');
+        expect(session(SetupLanguage::SESSION_KEY))->toBe('en');
     });
 });

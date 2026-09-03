@@ -12,7 +12,7 @@ afterEach(function (): void {
 });
 
 it('scaffolds a project theme from the default theme folder', function (): void {
-    $this->artisan('noerd:theme zz-scaffold')->assertSuccessful();
+    $this->artisan('noerd:make-theme zz-scaffold')->assertSuccessful();
 
     $target = resource_path('views/themes/zz-scaffold');
 
@@ -27,9 +27,9 @@ it('scaffolds a project theme from the default theme folder', function (): void 
 it('refuses to overwrite an existing theme folder', function (): void {
     File::ensureDirectoryExists(resource_path('views/themes/zz-scaffold'));
 
-    $this->artisan('noerd:theme zz-scaffold')->assertFailed();
+    $this->artisan('noerd:make-theme zz-scaffold')->assertFailed();
 });
 
 it('rejects an invalid theme name', function (): void {
-    $this->artisan('noerd:theme "Ödes_Theme!"')->assertFailed();
+    $this->artisan('noerd:make-theme "Ödes_Theme!"')->assertFailed();
 });

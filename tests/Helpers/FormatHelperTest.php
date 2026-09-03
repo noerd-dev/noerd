@@ -99,15 +99,6 @@ describe('locale resolution', function (): void {
 
         expect(FormatHelper::tenantLocale())->toBe('da-DK');
     });
-
-    it('runs a callback in a fixed locale and restores the previous one', function (): void {
-        zzFormatUser('de-DE');
-
-        $inside = FormatHelper::withLocale('en-US', fn(): string => FormatHelper::date('2026-09-03'));
-
-        expect($inside)->toBe('09/03/2026')
-            ->and(FormatHelper::date('2026-09-03'))->toBe('03.09.2026');
-    });
 });
 
 describe('dates and times', function (): void {

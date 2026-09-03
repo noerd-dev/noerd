@@ -12,6 +12,9 @@ class NoerdLoginFactory extends Factory
 {
     protected $model = NoerdLogin::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [

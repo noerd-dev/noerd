@@ -24,7 +24,7 @@ use Noerd\Traits\NoerdPage;
  * the modal panel. It is a no-op for non-detail components and for details that
  * already left quick-create (e.g. via storeProcess()).
  */
-class QuickCreateExitHook extends ComponentHook
+final class QuickCreateExitHook extends ComponentHook
 {
     public function call($method, $params, $returnEarly, $metadata, $componentContext): callable
     {

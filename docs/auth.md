@@ -73,10 +73,18 @@ Every noerd-based module protects its routes with `['noerd', 'app-access:{module
 its parameter: `app-access:inventory` only lets requests through when the selected tenant has the
 `inventory` app assigned and the per-app authorization gate allows it; it also selects that app in
 the session, so a deep link always lands in the right app. Without it, any authenticated user of
-any tenant app can open the module's screens. The `noerd:module` scaffolder and the
+any tenant app can open the module's screens. The `noerd:make-module` scaffolder and the
 `noerd:make-*` generators emit routes wrapped in `['noerd', 'app-access:{app}']` (see
-[Creating Modules](creating-modules.md)). Two further aliases exist: `setup` (the `/setup` area,
-admin only) and `action-permission:{key}` (see [Permissions](permissions.md)).
+[Creating Modules](creating-modules.md)).
+
+`NoerdServiceProvider` registers four middleware aliases in total:
+
+| Alias | Middleware | Purpose |
+|-------|------------|---------|
+| `app-access:{app}` | `AppAccessMiddleware` | The tenant must have the app assigned and the app gate must allow it; also selects the app in the session |
+| `setup` | `SetupMiddleware` | The `/setup` area — tenant admins only (`NoerdUser::isAdmin()`) |
+| `action-permission:{key}` | `ActionPermissionMiddleware` | A registered named action must be allowed for the user (see [Permissions](permissions.md#named-action-checks)) |
+| `setup.collections.ui` | `EnsureSetupCollectionDefinitionsEnabled` | The collection-definition screens, only reachable while `noerd.collections.mode` is `database` (see [Setup Collections](setup-collections.md)) |
 
 `Noerd\Middleware\SetUserLocale` is pushed onto the global `web` group and applies the noerd
 user's UI language on every request, including Livewire updates (see [Languages](languages.md)).

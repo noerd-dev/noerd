@@ -2,16 +2,20 @@
     // A column may declare `translatable: true` — the cell then carries a subtle blue
     // tint so a language-dependent value is recognisable at a glance in the list.
     $isTranslatableCell = (bool) ($columnConfig['translatable'] ?? false);
+
+    // Element ids must be unique across every list on the page — two lists
+    // rendering the same row/column would otherwise collide.
+    $cellId = ($listId ?? 'list') . '-' . $column . '-' . $row;
 @endphp
 
 <td
     class="border-r border-b border-gray-300 py-1 first:pl-4 last:border-r-0 {{ $isTranslatableCell ? 'bg-sky-50 group-hover:bg-transparent' : '' }}"
-    x-data="{ showDropdown: false }"
 >
     @if ($columnValue === 'action')
         <div class="mr-1 ml-auto flex">
             @if ($actions)
                 <div
+                    x-data="{ showDropdown: false }"
                     :class="showDropdown ? 'opacity-100' : 'opacity-0'"
                     @click.stop
                     class="relative ml-auto inline-block text-left opacity-0 group-hover:opacity-100"
@@ -21,7 +25,7 @@
                         @click="showDropdown = ! showDropdown"
                         type="button"
                         class="inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
-                        id="row-menu-button-{{ $id }}"
+                        id="row-menu-button-{{ $listId ?? 'list' }}-{{ $id }}"
                         :aria-expanded="showDropdown ? 'true' : 'false'"
                         aria-haspopup="true"
                         aria-label="{{ __('Actions') }}"
@@ -48,7 +52,7 @@
                         class="absolute right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                         role="menu"
                         aria-orientation="vertical"
-                        aria-labelledby="row-menu-button-{{ $id }}"
+                        aria-labelledby="row-menu-button-{{ $listId ?? 'list' }}-{{ $id }}"
                         tabindex="-1"
                     >
                         <div class="py-1" role="none">
@@ -66,7 +70,9 @@
                                 @if (! empty($action['route']) && ! $rowActionRoute && empty($action['modalComponent']))
                                     @continue
                                 @endif
-                                <a
+                                <button
+                                    type="button"
+                                    wire:key="row-action-{{ $id }}-{{ $loop->index }}"
                                     @if ($rowActionRoute)
                                         x-on:click.prevent="$modalRoute({{ \Illuminate\Support\Js::from($rowActionRoute) }}, {{ \Illuminate\Support\Js::from(['modelId' => $id]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $action['modalComponent'] ?? null])) }})"
                                     @elseif (! empty($action['modalComponent']))
@@ -77,7 +83,7 @@
                                             wire:confirm="{{ __($action['confirm']) }}"
                                         @endisset
                                     @endif
-                                    class="group flex cursor-pointer items-center px-4 py-2 text-sm text-gray-700"
+                                    class="group flex w-full cursor-pointer items-center px-4 py-2 text-left text-sm text-gray-700"
                                     role="menuitem"
                                     tabindex="-1"
                                 >
@@ -85,43 +91,56 @@
                                         <x-icon name="{{ $action['heroicon'] }}" class="mr-2 h-4 w-4 text-gray-800" />
                                     @endisset
                                     {{ __($action['label']) }}
-                                </a>
+                                </button>
                             @endforeach
                         </div>
                     </div>
                 </div>
             @else
-                <button
-                    type="button"
-                    aria-label="{{ __('Edit') }}"
-                    class="my-auto mr-1 ml-auto flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-center text-sm opacity-0 shadow-sm group-hover:opacity-100 hover:bg-gray-50"
+                {{-- Purely decorative row affordance: the row itself is clickable,
+                     this carries no handler and must not be focusable. --}}
+                <span
+                    aria-hidden="true"
+                    class="my-auto mr-1 ml-auto flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-center text-sm opacity-0 shadow-sm group-hover:opacity-100"
                 >
-                    <div class="m-auto">
+                    <span class="m-auto">
                         <x-noerd::icons.pencil class="h-3! w-3!" />
-                    </div>
-                </button>
+                    </span>
+                </span>
             @endif
         </div>
     @elseif ($columnValue === 'selectAction')
-        <a
-            class="m-0.5 flex"
-            @click.stop
-            wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-        >
-            <x-noerd::button icon="plus-circle" class="ml-auto"> {{ __($label) }} </x-noerd::button>
-        </a>
+        <div class="m-0.5 flex" @click.stop>
+            <x-noerd::button
+                type="button"
+                icon="plus-circle"
+                class="ml-auto"
+                wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+            >
+                {{ __($label) }}
+            </x-noerd::button>
+        </div>
     @elseif ($columnValue === 'deleteAction')
-        <a
-            class="m-0.5 flex"
-            wire:confirm="{{ __('Are you sure you want to delete this entry?') }}"
-            wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-        >
-            <x-noerd::button variant="danger" class="ml-auto"> {{ __($label) }} </x-noerd::button>
-        </a>
+        <div class="m-0.5 flex">
+            <x-noerd::button
+                variant="danger"
+                class="ml-auto"
+                wire:confirm="{{ __('Are you sure you want to delete this entry?') }}"
+                wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+            >
+                {{ __($label) }}
+            </x-noerd::button>
+        </div>
     @elseif ($columnValue === 'secondAction')
-        <a class="m-0.5 flex" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
-            <x-noerd::button variant="secondary" class="ml-auto"> {{ __($label) }} </x-noerd::button>
-        </a>
+        <div class="m-0.5 flex">
+            <x-noerd::button
+                variant="secondary"
+                class="ml-auto"
+                wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+            >
+                {{ __($label) }}
+            </x-noerd::button>
+        </div>
     @else
         @if ($type === 'bool' || $type === 'boolean')
             @if (\Noerd\Support\ListCellFormatter::truthy($value))
@@ -180,23 +199,23 @@
             @endif
         @else
             @if ($type === 'id')
-                <a class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
+                <div class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
                     <input
                         type="text"
                         wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
                         @if ($readOnly ?? true) readonly @endif
-                        id="cell-{{ $column }}-{{ $row }}"
+                        id="cell-{{ $cellId }}"
                         class="cursor-pointer underline w-auto border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent text-sm py-0.5 px-1.5 @if(in_array($type, ['number'])) text-right @endif"
                         value="{{ $value }}"
                     />
-                </a>
+                </div>
             @elseif ($type === 'date')
                 {{-- Rendered as text, not as <input type="date">: the browser would
                      localise a date input by ITS locale, the list follows the user's. --}}
                 @if ($value)
                     <span
                         wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-                        id="cell-{{ $column }}-{{ $row }}"
+                        id="cell-{{ $cellId }}"
                         class="cursor-pointer px-1.5 py-0.5 text-sm"
                     >
                         {{ \Noerd\Helpers\FormatHelper::date($value) }}
@@ -216,7 +235,7 @@
                     type="text"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     @if ($readOnly ?? true) readonly @endif
-                    id="cell-{{ $column }}-{{ $row }}"
+                    id="cell-{{ $cellId }}"
                     class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
                     value="{{ is_numeric($value) ? \Noerd\Helpers\FormatHelper::number((float) $value, 2) : ($value ?? '') }}"
                 />
@@ -225,7 +244,7 @@
                     type="text"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     @if ($readOnly ?? true) readonly @endif
-                    id="cell-{{ $column }}-{{ $row }}"
+                    id="cell-{{ $cellId }}"
                     class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-right text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
                     value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}"
                 />
@@ -378,7 +397,7 @@
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
                     @if ($readOnly ?? true) readonly @endif
-                    id="cell-{{ $column }}-{{ $row }}"
+                    id="cell-{{ $cellId }}"
                     @if ($isTranslatableCell)
                         title="{{ __('This field is translatable. The value belongs to the language selected in the language switcher.') }}"
                     @endif

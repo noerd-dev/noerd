@@ -13,7 +13,7 @@ use Livewire\ComponentHook;
  * hook), the modal system needs no knowledge of noerd's authorization: it just
  * mounts a component and this hook rejects an unauthorized one.
  */
-class ComponentAccessHook extends ComponentHook
+final class ComponentAccessHook extends ComponentHook
 {
     public function boot(): void
     {

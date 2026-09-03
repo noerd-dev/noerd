@@ -16,8 +16,14 @@ new class extends Component {
         LayoutState::setSidebarVisible(! LayoutState::sidebarVisible());
     }
 
+    /**
+     * The stored width is interpolated into an inline <style> block by the app
+     * layout, so only a plain pixel value is ever accepted.
+     */
     public function saveSidebarWidth(string $width): void
     {
+        abort_unless(preg_match('/^\d{2,4}px$/', $width) === 1, 422);
+
         LayoutState::setNavigationWidth($width);
     }
 
@@ -51,21 +57,9 @@ new class extends Component {
         @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
 
             <div x-show="showSidebar"
-                 x-data="{
-                    isResizing: false,
-                    startX: 0,
-                    startWidth: 0
-                 }"
-                 @mousemove.window="if (isResizing) {
-                    const diff = $event.clientX - startX;
-                    const newWidth = Math.max(200, Math.min(500, startWidth + diff));
-                    document.documentElement.style.setProperty('--sidebar-nav-width', newWidth + 'px');
-                 }"
-                 @mouseup.window="if (isResizing) {
-                    isResizing = false;
-                    const width = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-nav-width').trim();
-                    $wire.saveSidebarWidth(width);
-                 }"
+                 x-data="noerdSidebarResize(@js(['min' => 200, 'max' => 500, 'step' => 16]))"
+                 @mousemove.window="move($event)"
+                 @mouseup.window="stop()"
                  @class([
                     'fixed top-0 lg:top-[calc(var(--banner-height,0px)_+_var(--impersonation-banner-height,0px)_+_var(--environment-banner-height,0px))] bottom-0 z-50 lg:z-40 bg-brand-navi flex flex-col border-r border-gray-300',
                  ])
@@ -94,8 +88,17 @@ new class extends Component {
                 </div>
                 <!-- Resize Handle -->
                 <div
-                    class="absolute right-0 top-0 h-full w-0.5 cursor-col-resize hover:bg-brand-primary/40 transition-all"
-                    @mousedown="isResizing = true; startX = $event.clientX; startWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-nav-width'))"></div>
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="{{ __('Resize navigation') }}"
+                    aria-valuemin="200"
+                    aria-valuemax="500"
+                    :aria-valuenow="width"
+                    tabindex="0"
+                    class="absolute right-0 top-0 h-full w-0.5 cursor-col-resize hover:bg-brand-primary/40 transition-all focus:bg-brand-primary/40 focus:outline-none"
+                    @mousedown="start($event)"
+                    @keydown.arrow-left.prevent="nudge(-1)"
+                    @keydown.arrow-right.prevent="nudge(1)"></div>
             </div>
         @endif
     </div>

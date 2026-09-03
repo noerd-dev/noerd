@@ -38,4 +38,27 @@ describe('icon picker', function (): void {
             ->assertDispatched('setFieldValue', field: 'detailData.icon', value: 'trophy')
             ->assertDispatched('closeTopModal');
     });
+
+    it('filters the icon list on the server', function (): void {
+        $user = NoerdUser::factory()->withExampleTenant()->create();
+
+        $component = Livewire::actingAs($user)
+            ->test('noerd::icon-picker', ['context' => 'detailData.icon'])
+            ->set('search', 'Shopping cart');
+
+        $filtered = $component->instance()->filteredIcons();
+
+        expect($filtered)->toContain('shopping-cart')
+            ->and($filtered)->not->toContain('trophy')
+            ->and(count($filtered))->toBeLessThan(count(IconHelper::heroicons()));
+    });
+
+    it('refuses an icon name that is not a heroicon', function (): void {
+        $user = NoerdUser::factory()->withExampleTenant()->create();
+
+        Livewire::actingAs($user)
+            ->test('noerd::icon-picker', ['context' => 'detailData.icon'])
+            ->call('selectIcon', '../../etc/passwd')
+            ->assertStatus(422);
+    });
 });

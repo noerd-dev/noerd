@@ -114,7 +114,7 @@ same `Noerd\Support\ListCellFormatter`, so a column type looks identical everywh
 | `number` | Right-aligned number in the user's locale, at most 2 decimals (`FormatHelper::number()`) |
 | `currency` | Right-aligned amount in the tenant currency, written in the user's locale (`Noerd\Helpers\CurrencyHelper::format()`) |
 | `id` | Clickable ID link |
-| `bool` | Read-only icon: green checkmark (true), red circle (false) |
+| `bool` (alias `boolean`) | Read-only icon: green checkmark (true), red circle (false) |
 | `inversebool` | Read-only icon: green checkmark when true, nothing when false |
 | `checkbox` | Editable checkbox bound to a component property via `wireModel` (see Inline Editing below) |
 | `badge` | Neutral badge; the raw value is translated to a label via the column's `options` (`value`/`label` pairs). Columns mirroring a paired detail `type: select` field get this automatically |
@@ -150,6 +150,55 @@ columns:
     width: 10
     type: inversebool
 ```
+
+### Action columns
+
+Four **field names** are magic: a column whose `field` is one of them renders a control instead of a
+value, so an action column needs no `type`. The row id is always passed as the single argument.
+
+| `field` | Renders | Companion keys |
+|---------|---------|----------------|
+| `action` | The row's kebab menu on hover — or, without `actions:`, the plain pencil button that opens the row | `actions:` (see below) |
+| `selectAction` | A primary button with a plus icon, right-aligned — the "pick this row" button of a picker | `label:`, `action:` |
+| `deleteAction` | A danger button behind a confirmation prompt | `label:`, `action:` |
+| `secondAction` | A secondary button | `label:`, `action:` |
+
+- `action:` is the public method called on the list component, `{{ $action }}($id)`. It defaults to
+  `openListRow` — the generic row opener — so a button column without `action:` behaves like a row
+  click.
+- `label:` is the button caption (translation key). Give every button column one; the `action`
+  column needs none.
+
+**The `action` column's dropdown** — each entry of `actions:` mirrors the
+[detail actions](detail-view.md#detail-actions) precedence: `route:` opens a route modal for the row
+record, `modalComponent:` is the fallback, and `action:` calls a method on the list component. An
+entry with a `route:` that is not registered and no `modalComponent:` is skipped, so YAML may
+reference an optional module safely.
+
+| Key | Description |
+|-----|-------------|
+| `label` | Entry caption (translation key) |
+| `route` | Named route opened as a route modal with `modelId` = the row id |
+| `modalComponent` | Component modal opened with `modelId` = the row id; also the fallback for an unregistered `route` |
+| `action` | Method called on the list component as `method($id)` (used when neither `route` nor `modalComponent` is set) |
+| `heroicon` | Optional icon before the label |
+| `confirm` | Optional confirmation prompt via `wire:confirm` (translation key); `action:` entries only |
+
+```yaml
+columns:
+  - field: email
+    label: Email
+  - field: name
+    label: Name
+  - field: action
+    actions:
+      - label: Login as user
+        heroicon: user
+        action: loginAsUser
+        confirm: Do you really want to log in as this user?
+```
+
+Put the action column last — it right-aligns its control in the cell.
 
 ### Inline Editing
 

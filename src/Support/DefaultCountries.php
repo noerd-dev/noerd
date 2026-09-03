@@ -14,7 +14,7 @@ use Noerd\Models\SetupCollectionEntry;
  * address country). Idempotent — existing entries are matched by code or name
  * and only backfilled with a missing code, so tenant edits survive.
  */
-class DefaultCountries
+final class DefaultCountries
 {
     public const COUNTRIES = [
         ['code' => 'DE', 'de' => 'Deutschland', 'en' => 'Germany'],

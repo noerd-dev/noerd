@@ -1,18 +1,25 @@
 <?php
 
+use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component {
+    /** @return Collection<int, Tenant> */
+    #[Computed]
+    public function tenants(): Collection
+    {
+        return NoerdAuth::user()->accessibleTenants();
+    }
+
     public function switchTenant(int $tenantId): void
     {
         // Membership for everybody, every tenant of the installation for a
         // super admin — the same answer the per-request membership check gives.
-        if (! NoerdAuth::user()->canAccessTenant($tenantId)) {
-            return;
-        }
+        abort_unless(NoerdAuth::user()->canAccessTenant($tenantId), 403);
 
         TenantHelper::setSelectedTenantId($tenantId);
 
@@ -54,9 +61,8 @@ new class extends Component {
 } ?>
 
 @php
-    $tenants = NoerdAuth::user()->accessibleTenants();
-    $selectedTenantId = \Noerd\Helpers\TenantHelper::getSelectedTenantId();
-    $currentTenantName = $tenants->firstWhere('id', $selectedTenantId)?->name ?? __('Tenant');
+    $selectedTenantId = TenantHelper::getSelectedTenantId();
+    $currentTenantName = $this->tenants->firstWhere('id', $selectedTenantId)?->name ?? __('Tenant');
     $canCreateTenant = NoerdAuth::user()->isAdmin()
         && config('noerd.features.multi_tenant')
         && config('noerd.features.new_tenant');
@@ -73,8 +79,9 @@ new class extends Component {
         </x-noerd::button>
     </x-slot:trigger>
 
-    @foreach($tenants as $tenant)
+    @foreach($this->tenants as $tenant)
         <x-noerd::action-menu-item
+            wire:key="tenant-{{ $tenant->id }}"
             wire:click="switchTenant({{ $tenant->id }})"
             :active="$tenant->id === $selectedTenantId"
             class="justify-between"

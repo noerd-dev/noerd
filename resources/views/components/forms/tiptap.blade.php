@@ -1,56 +1,11 @@
 @props(['field', 'content' => '', 'readonly' => false])
 
 <div
-    x-data="{
-        editor: null,
-        content: @js($content),
-        linkUrl: '',
-        showLinkInput: false,
-        updatedAt: Date.now(),
-        init() {
-            this.editor = new window.TipTap.Editor({
-                element: this.$refs.editor,
-                extensions: [
-                    window.TipTap.StarterKit.configure({
-                        heading: {
-                            levels: [1, 2, 3],
-                        },
-                    }),
-                    window.TipTap.Link.configure({
-                        openOnClick: false,
-                    }),
-                ],
-                content: this.content,
-                editable: {{ $readonly ? 'false' : 'true' }},
-                editorProps: {
-                    attributes: {
-                        class: 'rich-text focus:outline-none min-h-[150px] p-3 text-base sm:text-sm',
-                    },
-                },
-                onUpdate: ({ editor }) => {
-                    this.content = editor.getHTML();
-                    this.updatedAt = Date.now();
-                    this.$wire.set('{{ $field }}', this.content);
-                },
-                onSelectionUpdate: () => {
-                    this.updatedAt = Date.now();
-                },
-            });
-        },
-        isActive(type, attrs = {}) {
-            return this.updatedAt && Alpine.raw(this.editor)?.isActive(type, attrs);
-        },
-        setLink() {
-            if (this.linkUrl) {
-                Alpine.raw(this.editor).chain().focus().setLink({ href: this.linkUrl }).run();
-            }
-            this.linkUrl = '';
-            this.showLinkInput = false;
-        },
-        removeLink() {
-            Alpine.raw(this.editor).chain().focus().unsetLink().run();
-        }
-    }"
+    x-data="noerdTiptap(@js([
+        'field' => $field,
+        'content' => $content,
+        'editable' => ! $readonly,
+    ]))"
     wire:ignore
     class="tiptap-wrapper"
 >
@@ -61,7 +16,7 @@
                 {{-- Headings --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleHeading({ level: 1 }).run()"
+                    @click.prevent="command().toggleHeading({ level: 1 }).run()"
                     :class="{ 'bg-gray-200': isActive('heading', { level: 1 }) }"
                     class="rounded p-1.5 text-xs font-bold transition-colors hover:bg-gray-200"
                     title="{{ __('Heading 1 (# )') }}"
@@ -71,7 +26,7 @@
                 </button>
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleHeading({ level: 2 }).run()"
+                    @click.prevent="command().toggleHeading({ level: 2 }).run()"
                     :class="{ 'bg-gray-200': isActive('heading', { level: 2 }) }"
                     class="rounded p-1.5 text-xs font-bold transition-colors hover:bg-gray-200"
                     title="{{ __('Heading 2 (## )') }}"
@@ -81,7 +36,7 @@
                 </button>
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleHeading({ level: 3 }).run()"
+                    @click.prevent="command().toggleHeading({ level: 3 }).run()"
                     :class="{ 'bg-gray-200': isActive('heading', { level: 3 }) }"
                     class="rounded p-1.5 text-xs font-bold transition-colors hover:bg-gray-200"
                     title="{{ __('Heading 3 (### )') }}"
@@ -95,7 +50,7 @@
                 {{-- Bold --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleBold().run()"
+                    @click.prevent="command().toggleBold().run()"
                     :class="{ 'bg-gray-200': isActive('bold') }"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Bold (**text**)') }}"
@@ -110,7 +65,7 @@
                 {{-- Italic --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleItalic().run()"
+                    @click.prevent="command().toggleItalic().run()"
                     :class="{ 'bg-gray-200': isActive('italic') }"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Italic (*text*)') }}"
@@ -126,7 +81,7 @@
                 {{-- Bullet List --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleBulletList().run()"
+                    @click.prevent="command().toggleBulletList().run()"
                     :class="{ 'bg-gray-200': isActive('bulletList') }"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Bullet List (- item)') }}"
@@ -140,7 +95,7 @@
                 {{-- Ordered List --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleOrderedList().run()"
+                    @click.prevent="command().toggleOrderedList().run()"
                     :class="{ 'bg-gray-200': isActive('orderedList') }"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Numbered List (1. item)') }}"
@@ -156,7 +111,7 @@
                 {{-- Blockquote --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleBlockquote().run()"
+                    @click.prevent="command().toggleBlockquote().run()"
                     :class="{ 'bg-gray-200': isActive('blockquote') }"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Quote (> text)') }}"
@@ -170,7 +125,7 @@
                 {{-- Horizontal Rule --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().setHorizontalRule().run()"
+                    @click.prevent="command().setHorizontalRule().run()"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Horizontal Line (---)') }}"
                     aria-label="{{ __('Horizontal Line (---)') }}"
@@ -236,7 +191,7 @@
                 {{-- Code --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().toggleCode().run()"
+                    @click.prevent="command().toggleCode().run()"
                     :class="{ 'bg-gray-200': isActive('code') }"
                     class="rounded p-1.5 transition-colors hover:bg-gray-200"
                     title="{{ __('Inline Code (`code`)') }}"
@@ -252,7 +207,7 @@
                 {{-- Clear Formatting --}}
                 <button
                     type="button"
-                    @click.prevent="Alpine.raw(editor).chain().focus().unsetAllMarks().clearNodes().run()"
+                    @click.prevent="command().unsetAllMarks().clearNodes().run()"
                     class="rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-200"
                     title="{{ __('Clear Formatting') }}"
                     aria-label="{{ __('Clear Formatting') }}"

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\{{ModuleName}}\Commands;
 
 use Illuminate\Console\Command;

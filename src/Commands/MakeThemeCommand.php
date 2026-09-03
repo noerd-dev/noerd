@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class MakeThemeCommand extends Command
 {
-    protected $signature = 'noerd:theme {name : The theme name (folder name, kebab-case)}
+    protected $signature = 'noerd:make-theme {name : The theme name (folder name, kebab-case)}
         {--module= : Create the theme inside app-modules/{module} instead of the project}';
 
     protected $description = 'Scaffold a new form theme by copying the default theme folder';

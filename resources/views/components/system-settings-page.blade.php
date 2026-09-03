@@ -5,7 +5,6 @@ use Livewire\Component;
 use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\NoerdAuth;
-use Noerd\Helpers\ThemeHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\Locales;
@@ -107,8 +106,6 @@ new class extends Component {
         $this->persistSettings();
 
         CurrencyHelper::clearCache();
-        FormatHelper::clearCache();
-        ThemeHelper::clearCache();
 
         $this->showSuccessIndicator = true;
     }

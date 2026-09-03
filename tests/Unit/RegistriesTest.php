@@ -36,7 +36,7 @@ describe('DetailSlotsRegistry', function (): void {
         ]);
     });
 
-    it('keeps registration order for equal sort values', function (): void {
+    it('keeps registration order for equal slot sort values', function (): void {
         $registry = new DetailSlotsRegistry();
 
         $registry->register('user-below-form', 'some-module::first');
@@ -243,7 +243,7 @@ describe('RelationBoxRegistry', function (): void {
         ]);
     });
 
-    it('keeps registration order for equal sort values', function (): void {
+    it('keeps registration order for equal relation-box sort values', function (): void {
         $registry = new RelationBoxRegistry();
 
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'First']);

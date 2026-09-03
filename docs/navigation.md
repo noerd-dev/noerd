@@ -6,7 +6,7 @@ Navigation is defined in YAML files. Each app has its own navigation configurati
 
 ## File Location
 
-```
+```text
 app-configs/{app}/navigation.yml
 ```
 

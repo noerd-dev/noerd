@@ -30,13 +30,13 @@ return new class extends Migration {
 
     public function down(): void
     {
-        if (Schema::hasColumn('noerd_settings', 'locale')) {
+        if (Schema::hasTable('noerd_settings') && Schema::hasColumn('noerd_settings', 'locale')) {
             Schema::table('noerd_settings', function (Blueprint $table): void {
                 $table->dropColumn('locale');
             });
         }
 
-        if (Schema::hasColumn('noerd_user_settings', 'format_locale')) {
+        if (Schema::hasTable('noerd_user_settings') && Schema::hasColumn('noerd_user_settings', 'format_locale')) {
             Schema::table('noerd_user_settings', function (Blueprint $table): void {
                 $table->dropColumn('format_locale');
             });

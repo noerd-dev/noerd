@@ -46,10 +46,23 @@ trait NoerdDetail
         $this->validateFromLayout();
 
         $modelClass = $this->detailModel;
-        $model = $modelClass::updateOrCreate(
-            ['id' => $this->modelId],
-            $this->writableDetailData($modelClass),
-        );
+        $payload = $this->writableDetailData($modelClass);
+
+        // $modelId is URL bound and therefore client-controlled. Never let an id
+        // the scoped query cannot resolve (another tenant's record, a deleted or
+        // invented id) fall through to an INSERT with that very id — resolve the
+        // record first and bail out when it does not exist for this user.
+        if ($this->modelId !== null && $this->modelId !== '') {
+            $model = $modelClass::find($this->modelId);
+
+            if (! $model) {
+                return;
+            }
+
+            $model->fill($payload)->save();
+        } else {
+            $model = $modelClass::create($payload);
+        }
 
         $this->finishStore($model);
     }
@@ -134,28 +147,14 @@ trait NoerdDetail
         }
     }
 
-    public function clearRelation(string $fieldName): void
-    {
-        $key = str_replace('detailData.', '', $fieldName);
-        $relationKey = last(explode('.', $key));
-        $this->relationTitles[$relationKey] = '';
-
-        if (str_contains($key, '.')) {
-            $detailData = $this->detailData;
-            data_set($detailData, $key, null);
-            $this->detailData = $detailData;
-        } elseif (array_key_exists($key, $this->detailData)) {
-            $this->detailData[$key] = null;
-        }
-    }
-
     public function resolvePicklistOptions(string $picklistField): array
     {
         // $picklistField is a public method name from the field YAML, but this is
-        // also a client-callable action — only invoke a genuine options provider
-        // (a method declaring an `array` return type), never an action like
-        // store()/delete() (which are `void`).
-        if (method_exists($this, $picklistField) && $this->returnsArray($picklistField)) {
+        // also a client-callable action — only invoke a genuine options provider:
+        // PUBLIC (like every other Livewire action, see NoerdList::callRowAction()),
+        // callable without arguments, and declaring an `array` return type so an
+        // action like store()/delete() (which are `void`) can never be reached.
+        if ($this->isPicklistOptionsProvider($picklistField)) {
             return $this->{$picklistField}();
         }
 
@@ -210,9 +209,30 @@ trait NoerdDetail
 
     protected function returnsArray(string $method): bool
     {
+        if (! method_exists($this, $method)) {
+            return false;
+        }
+
         $returnType = (new ReflectionMethod($this, $method))->getReturnType();
 
         return $returnType instanceof ReflectionNamedType && $returnType->getName() === 'array';
+    }
+
+    /**
+     * Whether a client-supplied method name is a genuine picklist options
+     * provider: public, argument-free and returning an array.
+     */
+    protected function isPicklistOptionsProvider(string $method): bool
+    {
+        if (! method_exists($this, $method)) {
+            return false;
+        }
+
+        $reflection = new ReflectionMethod($this, $method);
+
+        return $reflection->isPublic()
+            && $reflection->getNumberOfRequiredParameters() === 0
+            && $this->returnsArray($method);
     }
 
     /**

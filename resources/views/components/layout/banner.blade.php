@@ -1,10 +1,12 @@
 <?php
 
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
+    #[Locked]
     public array $banners = [];
     public array $dismissedBanners = [];
 
@@ -35,7 +37,7 @@ new class extends Component {
     public function activeBanner(): ?array
     {
         foreach ($this->banners as $index => $banner) {
-            if (!in_array($index, $this->dismissedBanners)) {
+            if (! in_array($index, $this->dismissedBanners, true)) {
                 return ['index' => $index, 'banner' => $banner];
             }
         }

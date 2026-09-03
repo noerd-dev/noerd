@@ -1,30 +1,44 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Models\TenantApp;
 
 new class extends Component {
-
     public function mount(): void
     {
         $user = NoerdAuth::user();
         $selectedTenantId = TenantHelper::getSelectedTenantId();
 
         // Fall back to an available tenant when none is selected, or when the user
-        // is no longer assigned to the currently selected one.
+        // is no longer assigned to the currently selected one. Guarded so the modal
+        // re-mount of this component never writes the session on every stack update.
         if (! $selectedTenantId || ! $user->canAccessTenant($selectedTenantId)) {
             TenantHelper::setSelectedTenantId($user->accessibleTenants()->first()?->id);
         }
     }
 
-    public function openApp(string $appName, string $route): void
+    /**
+     * The target is resolved from the tenant's own app record — never from the
+     * request. A client-supplied route would otherwise redirect anywhere.
+     */
+    public function openApp(string $appName): void
     {
-        TenantHelper::setSelectedApp($appName);
-        $this->redirect(route($route), navigate: true);
-    }
+        $tenantApp = TenantHelper::getSelectedTenant()?->tenantApps
+            ->first(fn(TenantApp $app): bool => mb_strtolower($app->name) === mb_strtolower($appName));
 
+        abort_unless($tenantApp instanceof TenantApp, 403);
+        abort_if((bool) $tenantApp->pivot->is_hidden, 403);
+        abort_unless((bool) $tenantApp->is_active, 403);
+        abort_unless(AccessHelper::canAccessApp($tenantApp->name), 403);
+        abort_unless(Route::has((string) $tenantApp->route), 404);
+
+        TenantHelper::setSelectedApp($tenantApp->name);
+        $this->redirect(route((string) $tenantApp->route), navigate: true);
+    }
 } ?>
 
 <x-noerd::page>
@@ -43,8 +57,9 @@ new class extends Component {
                 @continue($tenantApp->pivot->is_hidden)
                 @continue(! AccessHelper::canAccessApp($tenantApp->name))
                 <button type="button"
+                        wire:key="app-{{ $tenantApp->id }}"
                         @if($tenantApp->is_active)
-                            wire:click="openApp('{{ $tenantApp->name }}', '{{ $tenantApp->route }}')"
+                            wire:click="openApp({{ Illuminate\Support\Js::from($tenantApp->name) }})"
                         @else
                             disabled
                         @endif

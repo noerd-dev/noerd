@@ -15,7 +15,8 @@ noerd is a Laravel Livewire boilerplate for building admin panels and business a
 
 ## Requirements
 
-- PHP 8.3+
+- PHP 8.3+ with the `intl` and `mbstring` extensions (`intl` drives every date, number and currency
+  format — see [Currency, Numbers & Dates](formatting.md))
 - Laravel 12 or 13
 - Livewire 4+
 - Node.js `^20.19 || >=22.12` and npm (for the frontend build)
@@ -48,8 +49,8 @@ runs (CI) pass `--force --migrate --build --demo` explicitly — see
 | Table | Description |
 |-------|-------------|
 | `noerd_users` | User accounts |
-| `noerd_user_settings` | User settings (language, selected tenant) |
-| `noerd_settings` | Per-tenant system settings (currency, detail theme) |
+| `noerd_user_settings` | User settings (language, `format_locale`, selected tenant) |
+| `noerd_settings` | Per-tenant system settings (currency, `locale`, detail theme) |
 | `tenants` | Tenants / Organizations / Environments |
 | `users_tenants` | User ↔ tenant assignments, incl. the user's `profile_key` for that tenant |
 | `tenant_apps` | Available apps which can be assigned to tenants (with `tenant_app` pivot) |
@@ -73,7 +74,8 @@ All core routes are named with the `noerd.` prefix. The `/setup` area (middlewar
 `noerd.setup-collection.detail`, `noerd.setup-collection-definitions`,
 `noerd.setup-collection-definition.detail`, `noerd.setup-languages`, `noerd.setup-language.detail`
 and `noerd.system-settings`. The apps dashboard is `noerd.apps` (`/noerd-apps`); under the
-configurable URL prefix live `noerd.profile`, `noerd.no-tenant`, `noerd.component-page` and the
+configurable URL prefix live `noerd.profile`, `noerd.no-tenant`, `noerd.component-page`,
+`noerd.home` (a redirect to the apps dashboard, for starter kits that link `/home`) and the
 auth routes (`noerd.login`, `noerd.password.request`, `noerd.password.reset`). See
 [Authentication](auth.md#routes--url-prefix).
 

@@ -15,7 +15,7 @@ use Noerd\Services\ThemeRegistry;
  * a theme that does not ship an element falls back to the default theme's
  * template, and finally to the renderer registered on the field type.
  */
-class ThemeElementResolver
+final class ThemeElementResolver
 {
     /**
      * Template for an include-kind field type. The element name is the

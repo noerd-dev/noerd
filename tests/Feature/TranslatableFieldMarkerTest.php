@@ -10,6 +10,7 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
+use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
 
@@ -109,7 +110,7 @@ describe('Translatable field marker in detail forms', function (): void {
     });
 
     it('binds a translatable field to the selected language in every theme', function (string $theme): void {
-        session(['selectedLanguage' => 'en']);
+        session([SetupLanguage::SESSION_KEY => 'en']);
 
         $html = Livewire::test('noerd-test::theme-test', [
             'initialModel' => [],

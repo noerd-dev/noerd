@@ -16,7 +16,7 @@ use Noerd\Services\ThemeRegistry;
  * Read on every detail render through StaticConfigHelper, so the per-tenant
  * lookup is memoized for the request (same shape as CurrencyHelper).
  */
-class ThemeHelper
+final class ThemeHelper
 {
     public const FALLBACK_THEME = 'default';
 
@@ -39,7 +39,8 @@ class ThemeHelper
         }
 
         try {
-            $settings = NoerdSettings::where('tenant_id', $tenantId)->first();
+            // ONE settings memo for the whole package (currency, locale, theme).
+            $settings = NoerdSettings::forTenant($tenantId);
         } catch (QueryException) {
             // Read from the config layer, which every detail render passes through:
             // a not-yet-migrated settings table must never break a page.

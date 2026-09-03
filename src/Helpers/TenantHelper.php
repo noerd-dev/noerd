@@ -6,7 +6,7 @@ namespace Noerd\Helpers;
 
 use Noerd\Models\Tenant;
 
-class TenantHelper
+final class TenantHelper
 {
     /**
      * Request memo for getSelectedTenant(): the selected tenant is read from a

@@ -16,6 +16,11 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - `docs/` is the single source of the public documentation (https://noerd.dev). The repository
   `noerd-dev/docs` is an auto-synced mirror (`.github/workflows/sync-docs.yml`) — never edit the
   mirror, it is overwritten on every push to `main`.
+- Released under the MIT license (`LICENSE`, `Copyright (c) 2026 Johannes Brock`). Keep the file in
+  the Packagist archive — `.gitattributes` `export-ignore`s development-only paths, never `LICENSE`.
+- Every test lives in a subdirectory of `tests/` (`Feature`, `Components`, `Unit`, `Commands`,
+  `Helpers`, `Middleware`, `Traits`); the root of `tests/` holds only the shipped test API
+  (`TestCase.php`, `HelperLoader.php`, `helpers.php`, `Pest.php`).
 
 ## Workflow
 
@@ -105,5 +110,5 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 3. Update the agent-facing rules: `resources/boost/guidelines/core.blade.php` (hard rules, wrapped
    in `@verbatim`) and, if the workflow changed, the relevant skill in `resources/boost/skills/`.
    `tests/Feature/BoostGuidelineTest.php` verifies that the guideline still renders.
-4. If the `noerd:module` / `noerd:make-resource` stubs are affected
+4. If the `noerd:make-module` / `noerd:make-resource` stubs are affected
    (`src/Commands/stubs/`), update them and `tests/Commands/MakeModuleStubsTest.php`.

@@ -156,7 +156,7 @@ public function tableFilters(): array
 
 ## PublishesAuditMigration (Artisan commands)
 
-`Noerd\Traits\PublishesAuditMigration` is for install/update commands of modules that use `owen-it/laravel-auditing`. `publishAuditingMigrationIfNeeded(): void` checks `database_path('migrations')` for an existing `*_create_audits_table.php`; when none exists it runs `vendor:publish` with `--provider=OwenIt\Auditing\AuditingServiceProvider --tag=migrations` and reports the result on the command output. Re-running is a no-op.
+`Noerd\Traits\PublishesAuditMigration` is for install/update commands of modules that use `owen-it/laravel-auditing`. `publishAuditingMigrationIfNeeded(): void` checks `database_path('migrations')` for an existing `*_create_audits_table.php`; when none exists it runs `vendor:publish` with `--provider=OwenIt\Auditing\AuditingServiceProvider --tag=migrations` and reports the result on the command output. Re-running is a no-op. The screen behind those records is the [Activity Log modal](audit-log.md).
 
 ```php
 class MyModuleInstallCommand extends Command
@@ -190,6 +190,24 @@ The traits behind every `noerd:install-{module}` command — covered in full in 
 `RequiresNoerdInstallation` contributes `ensureNoerdInstalled(): bool` (aborts with a hint when `noerd:install` has not run) and `assignAppToTenants(string $appName): void`.
 
 
+## GuardedByObjectPermission (Eloquent models)
+
+`Noerd\Traits\GuardedByObjectPermission` is the opt-in query-level read guard: while
+`AccessHelper::canReadObject()` denies the model for the current user, a global scope makes EVERY
+query on it yield nothing — hand-built dashboard counters, aggregates and relations included.
+Console, queue and guest contexts are unaffected, and a system read lifts the scope explicitly with
+`withoutGlobalScope(Model::OBJECT_READ_GUARD_SCOPE)`. It is deliberately per-model, never automatic —
+see [Permissions → Query-level read guard](permissions.md#query-level-read-guard-opt-in-trait).
+
+## AdministersNoerdUsers (internal)
+
+`Noerd\Traits\AdministersNoerdUsers` is shared by the setup app's user screens
+(`noerd::noerd-user-page` and the embedded `noerd::noerd-user-detail`) so both entry points to the
+same account apply identical checks: `assignedToCurrentTenant()`, `authorizeTargetUser()` (the
+edited account must belong to a tenant the caller administers — `$modelId` is URL-bound and can be
+repointed after mount) and `deleteUserAccount()`. It is internal to those screens and not intended
+for module use.
+
 ## Helpers
 
 Static helpers under `Noerd\Helpers` that the traits and components build on:
@@ -208,12 +226,23 @@ Static helpers under `Noerd\Helpers` that the traits and components build on:
 - **`FormatHelper`** — ICU formatting in the reader's locale: `locale()` / `tenantLocale()`
   (user → tenant → config → language default), `date()`, `dateTime()`, `time()`, `decimal()`,
   `number()`, `percent()`, the `document*()` variants for PDFs and receipts (tenant locale),
-  `withLocale()`, `csvDelimiter()` — see [Currency, Numbers & Dates](formatting.md).
+  `csvDelimiter()`, `numberSymbols()` — see [Currency, Numbers & Dates](formatting.md).
 - **`CurrencyHelper`** — `codeForTenant()` (ISO code from `noerd_settings`, fallback
   `config('noerd.currency.default')`), `format($value)` (reader's locale), `formatForDocument($value)`
-  (tenant locale), `formatIn($value, $currency)`, `symbol()`, `configForTenant()`, `options()`,
+  (tenant locale), `formatIn($value, $currency)`, `configForTenant()`, `options()`,
   `clearCache()`.
 - **`IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers).
+- **`StaticConfigHelper`** — resolves every YAML config: `getListConfig()`, `getComponentFields()`
+  (details), `getPageFields()`, `getSettingsFields()`, `getNavigationStructure()`, the list-view
+  discovery (`getListViews()`) and the model↔component name mapping. Its lookup order and the
+  `noerd.layout-overrides` binding are described in
+  [Extension Registries](extension-registries.md#layout-overrides-noerdlayout-overrides-binding).
+- **`SetupCollectionHelper`** — the lookup tables: `getAllCollections()`, `getCollectionFields()`,
+  `getCollectionTable()` and `selectOptions($collectionKey)` for picklist-style selects — see
+  [Setup Collections](setup-collections.md).
+- **`KeyboardShortcutHelper::parse($configKey, $default)`** — turns a configured shortcut string
+  into its modifier/key parts for the list and detail bindings — see
+  [Keyboard Shortcuts](keyboard-shortcuts.md).
 - **`ThemeHelper`** — `forTenant()` (`['theme' => …, 'enforced' => …]` from `noerd_settings`
   with `config('noerd.theme')` as fallback), `fromLayout($layout)` and `clearCache()` — see
   [Themes](themes.md).

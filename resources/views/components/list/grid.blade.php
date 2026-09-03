@@ -51,8 +51,8 @@
                 <button
                     type="button"
                     wire:key="grid-{{ $listId }}-{{ $row['id'] ?? $key }}"
-                    :class="{'ring-2 ring-brand-primary': selectedRow{{ $listId }} == {{ $key }} }"
-                    @click="selectedRow{{ $listId }} = '{{ $key }}'"
+                    :class="{'ring-2 ring-brand-primary': selectedRow == {{ $key }} }"
+                    @click="selectedRow = '{{ $key }}'"
                     wire:click="openListRow('{{ $row['id'] ?? '' }}')"
                     class="group hover:border-brand-primary relative flex cursor-pointer flex-col items-start gap-1 rounded-lg border bg-white p-4 text-left transition hover:shadow-sm {{ $rowChecked ? 'border-brand-primary' : 'border-gray-200' }}"
                 >

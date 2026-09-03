@@ -2,6 +2,10 @@ title: Demo Customers
 defaultSort:
   field: name
   direction: asc
+searchableColumns:
+  - name
+  - company_name
+  - email
 actions:
   - label: New Demo Customer
     route: demo-customer.detail

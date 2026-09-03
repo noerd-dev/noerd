@@ -234,7 +234,7 @@ trait GeneratesResourceFiles
     }
 
     /**
-     * An app scaffolded as a module (noerd:make-app → Module / noerd:module) owns
+     * An app scaffolded as a module (noerd:make-app → Module / noerd:make-module) owns
      * its files: Blade components go into the module (Livewire namespace `{app}::`),
      * routes into `routes/{app}-routes.php`, YAML and navigation into the module
      * copy AND the installed project copy. Everything else targets the project root.

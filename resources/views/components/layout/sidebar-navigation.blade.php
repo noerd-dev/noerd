@@ -1,11 +1,31 @@
 <?php
 
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Support\LayoutState;
 
 new class extends Component {
+    /**
+     * Open/closed state of the block menus, keyed exactly like $navigations.
+     * Deliberately NOT locked: Alpine entangles it so the chevron reacts
+     * instantly, while the component/link data stays server-owned.
+     *
+     * @var array<int|string, bool>
+     */
+    public array $expanded = [];
+
+    #[Locked]
     public array $navigation = [];
+
+    #[Locked]
     public array $navigations = [];
+
+    public function mount(): void
+    {
+        foreach ($this->navigations as $key => $block) {
+            $this->expanded[$key] = (bool) ($block['show'] ?? false);
+        }
+    }
 
     public function openStatus(string $title): void
     {
@@ -21,8 +41,8 @@ new class extends Component {
         {{-- if its an block menu --}}
         @foreach($navigations as $key => $block)
             @if(!empty($block['navigations']))
-                <div x-data="{show: $wire.entangle('navigations.{{ $key }}.show')}">
-                    <button type="button" wire:click="openStatus('{{$block['title']}}')" @click="show = !show"
+                <div wire:key="block-{{ $key }}" x-data="{show: $wire.entangle('expanded.{{ $key }}')}">
+                    <button type="button" wire:click="openStatus({{ Illuminate\Support\Js::from($block['title']) }})" @click="show = !show"
                             class="hover:text-black w-full py-2">
                         <div class="font-bold text-xs flex">
                             <div class="font-semibold text-gray-600" x-show="showSidebar">

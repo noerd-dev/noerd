@@ -12,6 +12,9 @@ class SetupLanguageFactory extends Factory
 {
     protected $model = SetupLanguage::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [

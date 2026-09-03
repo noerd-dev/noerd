@@ -17,7 +17,7 @@ use Noerd\Traits\NoerdPage;
  * hook runs BEFORE the action, so canSaveObject() still sees the pre-store
  * $modelId and correctly picks create (new record) vs. write (update).
  */
-class WriteGuardHook extends ComponentHook
+final class WriteGuardHook extends ComponentHook
 {
     public function call($method, $params, $returnEarly, $metadata, $componentContext): void
     {

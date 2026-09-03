@@ -99,54 +99,20 @@
             @if (! $compact && ! $returnsSelection)
                 {{-- Mirror the canonical list state (active view + column filters) into the
              URL on initial load so a shared link reproduces the exact view. Livewire's
-             #[Url] bindings only write on updates, never on page load. Runs once per
-             load (morphs never re-execute script tags) and only for the page-level
-             list — modal lists must not rewrite the page URL. --}}
-                <script id="list-url-sync-{{ $listId }}">
-                    (() => {
-                        const marker = document.getElementById(@json('list-url-sync-' . $listId));
-                        if (!marker || marker.closest('#modal') || marker.closest('[modal]')) {
-                            return;
-                        }
-                        const url = new URL(window.location.href);
-                        const view = @json($this->listViewParam ?? null);
-                        if (view) {
-                            url.searchParams.set('view', view);
-                        }
-                        [...url.searchParams.keys()].filter((key) => key.startsWith('cf[')).forEach((key) => url.searchParams.delete(key));
-                        Object.entries(@json($this->listColumnFilters ?? [])).forEach(([key, value]) =>
-                            url.searchParams.set('cf[' + key + ']', value),
-                        );
-                        if (url.toString() !== window.location.href) {
-                            history.replaceState(history.state, '', url.toString());
-                        }
-                    })();
-                </script>
+             #[Url] bindings only write on updates, never on page load. Only for the
+             page-level list — modal lists must not rewrite the page URL. --}}
+                <span hidden x-data="noerdListUrlSync(@js([
+                    'view' => $this->listViewParam ?? null,
+                    'filters' => $this->listColumnFilters ?? [],
+                ]))"></span>
             @endif
 
             <div
-                x-data="{
-        selectedRow{{ $listId }}: 0,
-        isInsideModal: false,
-        isInBlockingField() {
-            const el = document.activeElement;
-            return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el?.tagName)
-                || el?.isContentEditable
-                || !!el?.closest?.('[contenteditable]');
-        },
-        canHandleListKey() {
-            return ($store.app.currentId == '{{ $listId }}')
-                && (this.isInsideModal || ! $store.app.modalOpen)
-                && ! this.isInBlockingField();
-        },
-    }"
-                x-init="
-        $store.app.setId('{{ $listId }}');
-        isInsideModal = !!$el.closest('#modal') || !!$el.closest('[modal]');"
-                @mouseenter="$store.app.setId('{{ $listId }}')"
-                @keydown.window.arrow-down="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{ $listId }}++ }"
-                @keydown.window.arrow-up="if (canHandleListKey()) { $event.preventDefault(); selectedRow{{ $listId }}-- }"
-                @keydown.window.enter="if (canHandleListKey()) { $event.preventDefault(); $wire.findListAction(selectedRow{{ $listId }}) }"
+                x-data="noerdList(@js(['listId' => $listId]))"
+                @mouseenter="claim()"
+                @keydown.window.arrow-down="onArrow($event, 1)"
+                @keydown.window.arrow-up="onArrow($event, -1)"
+                @keydown.window.enter="onEnter($event)"
             >
                 @if (! $hideHead && ! $compact)
                     <div @class(['-mx-6 border-b border-gray-300 px-6' => ! empty($description)])>
@@ -216,8 +182,8 @@
                                                 @forelse ($rows as $key => $row)
                                                     <tr
                                                         wire:key="row-{{ $listId }}-{{ $row['id'] ?? $key }}"
-                                                        :class="{'bg-gray-100!': selectedRow{{ $listId }} == {{ $key }} }"
-                                                        @click="selectedRow{{ $listId }} = '{{ $key }}'"
+                                                        :class="{'bg-gray-100!': selectedRow == {{ $key }} }"
+                                                        @click="selectedRow = '{{ $key }}'"
                                                         wire:click="openListRow('{{ $row['id'] ?? '' }}')"
                                                         class="group hover:bg-brand-bg cursor-pointer border border-black/10"
                                                     >
@@ -248,6 +214,7 @@
                                                         @endif
                                                         @foreach ($table as $index => $column)
                                                             @include('noerd::components.table.table-cell', [
+                                                                'listId' => $listId,
                                                                 'row' => $key,
                                                                 'column' => $index,
                                                                 'label' => $column['label'] ?? '',

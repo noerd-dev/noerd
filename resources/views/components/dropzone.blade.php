@@ -130,7 +130,7 @@ new class extends Component {
         }
     }
 
-    public function getFileDisplayName(array $file): string
+    protected function getFileDisplayName(array $file): string
     {
         if (isset($file['_original']) && method_exists($file['_original'], 'getClientOriginalName')) {
             return $file['_original']->getClientOriginalName();
@@ -138,7 +138,7 @@ new class extends Component {
         return $file['name'] ?? __('Unknown file');
     }
 
-    public function getFileSize(array $file): int
+    protected function getFileSize(array $file): int
     {
         if (isset($file['_original']) && method_exists($file['_original'], 'getSize')) {
             return $file['_original']->getSize();
@@ -150,16 +150,7 @@ new class extends Component {
 <div class="w-full">
     {{-- Dropzone Area --}}
     <div
-        x-data="{
-            isDragging: false,
-            handleDrop(e) {
-                this.isDragging = false;
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    @this.uploadMultiple('temporaryFiles', files);
-                }
-            }
-        }"
+        x-data="noerdDropzone()"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop($event)"
@@ -235,7 +226,8 @@ new class extends Component {
             </div>
             <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg">
                 @foreach(is_array($files) ? $files : [] as $index => $file)
-                    <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50">
+                    <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50"
+                        wire:key="dropzone-file-{{ $index }}-{{ $this->getFileDisplayName($file) }}">
                         <div class="flex items-center min-w-0 flex-1">
                             {{-- File Icon --}}
                             <svg class="h-5 w-5 text-gray-400 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -257,6 +249,7 @@ new class extends Component {
                         <button
                             wire:click="removeFile({{ $index }})"
                             type="button"
+                            aria-label="{{ __('Remove file') }}"
                             class="ml-4 shrink-0 text-red-600 hover:text-red-500"
                         >
                             <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">

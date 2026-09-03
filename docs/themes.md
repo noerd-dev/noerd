@@ -73,7 +73,7 @@ configs are never affected — the `compact` flag on lists is an unrelated conce
 
 The built-in themes live in the noerd package under `resources/views/themes/`:
 
-```
+```text
 resources/views/themes/
   default/
     theme.yml
@@ -150,7 +150,7 @@ The minimal `theme.yml` of the built-in `settings` theme is three keys (`label`,
 
 ### In a project
 
-1. Run `php artisan noerd:theme mytheme` — it copies the `default` theme folder to
+1. Run `php artisan noerd:make-theme mytheme` — it copies the `default` theme folder to
    `resources/views/themes/mytheme/` (or copy the folder yourself).
 2. Edit `resources/views/themes/mytheme/theme.yml` (at least the `label`).
 3. Adapt the element templates you want to change; delete the ones you keep unchanged
@@ -178,7 +178,7 @@ app(ThemeRegistry::class)->registerPath(__DIR__ . '/../../resources/views/themes
 For a theme name that exists in several roots, the highest-priority `theme.yml` wins the metadata;
 element templates resolve through the same root order, element by element.
 
-`php artisan noerd:theme mytheme --module=mymodule` scaffolds the folder inside a module and prints
+`php artisan noerd:make-theme mytheme --module=mymodule` scaffolds the folder inside a module and prints
 the `registerPath()` snippet.
 
 ### Programmatic registration (escape hatch)

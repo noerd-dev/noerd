@@ -96,9 +96,9 @@ new class extends \Noerd\Livewire\RelationFieldComponent {}; ?>
 </div>
 ```
 
-For markup that shows more than the title, the base class exposes the related Eloquent record via
-`$this->relatedModel()` (resolved through the definition's `modelClass`; `null` while the field is
-empty). Non-default themes resolve a `{component}-{theme}` sibling when it exists and fall back to
+For markup that shows more than the title, the base class exposes the related Eloquent record as
+the computed property `$this->relatedModel` (resolved through the definition's `modelClass`; `null`
+while the field is empty). Non-default themes resolve a `{component}-{theme}` sibling when it exists and fall back to
 the component itself (see [Themes](themes.md)).
 
 ## Polymorphic Relation Fields
@@ -153,8 +153,7 @@ Polymorphic fields render through the shared Livewire component
 - **Owner scoping:** the detail block passes the owning detail's Livewire id as `owner`. The
   picker context becomes `{fieldName}@{owner}` (`RelationFieldComponent::selectionContext()`) and
   `setFieldValue` carries the owner, so two stacked details sharing a field name never adopt each
-  other's selection. `NoerdDetail::clearRelation($fieldName)` is the server-side counterpart of
-  the field's clear button for custom markup
+  other's selection
 - **Validation messages:** the field receives the owning detail's error bag entries for its
   `fieldName` as the reactive `errorMessages` prop, so a failed `store()` shows them without
   re-mounting the field

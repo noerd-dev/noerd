@@ -46,7 +46,7 @@ php artisan noerd:assign-apps-to-tenant --tenant-id=1
 
 ## Module
 
-The command hands the scaffold to `noerd:module`: the app name becomes the module key (`MY_APP` →
+The command hands the scaffold to `noerd:make-module`: the app name becomes the module key (`MY_APP` →
 `app-modules/my-app`), the title and the heroicon go into the generated install command, and the
 module gets its dashboard, the dashboard route and navigation, translations, the install/update
 commands and the agent guidelines — everything [Creating Modules](creating-modules.md) describes.

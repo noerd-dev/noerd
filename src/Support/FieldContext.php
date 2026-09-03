@@ -11,7 +11,7 @@ namespace Noerd\Support;
  * the theme fallbacks — picks up optional field keys like `helpText` without having
  * to forward them one by one. Mirrors ThemeContext.
  */
-class FieldContext
+final class FieldContext
 {
     /** @var array<string, mixed>|null */
     private static ?array $current = null;

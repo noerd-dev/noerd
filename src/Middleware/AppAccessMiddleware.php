@@ -6,6 +6,7 @@ namespace Noerd\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Noerd\Enums\NoerdExceptionType;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
@@ -61,14 +62,14 @@ class AppAccessMiddleware
 
         if (! $matchingApp) {
             throw new NoerdException(
-                NoerdException::TYPE_APP_NOT_ASSIGNED,
+                NoerdExceptionType::AppNotAssigned,
                 appName: mb_strtoupper($appNames[0] ?? ''),
             );
         }
 
         if (! AccessHelper::canAccessApp($matchingApp)) {
             throw new NoerdException(
-                NoerdException::TYPE_APP_ACCESS_DENIED,
+                NoerdExceptionType::AppAccessDenied,
                 appName: mb_strtoupper($matchingApp),
             );
         }

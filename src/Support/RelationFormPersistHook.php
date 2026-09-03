@@ -17,7 +17,7 @@ use Livewire\Component;
  * the fields stay filled in the same response (the persister may have
  * normalized values or swapped the related record).
  */
-class RelationFormPersistHook extends DetailSaveHook
+final class RelationFormPersistHook extends DetailSaveHook
 {
     protected function afterSave(Component $component, Model $record): void
     {

@@ -7,7 +7,7 @@ namespace Noerd\Helpers;
 use ReflectionClass;
 use WireUi\Heroicons\HeroiconsServiceProvider;
 
-class IconHelper
+final class IconHelper
 {
     /**
      * @var list<string>|null

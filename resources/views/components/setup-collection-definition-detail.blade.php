@@ -17,6 +17,19 @@ new class extends Component
 {
     use NoerdDetail;
 
+    public ?string $detailPrimary = 'setupCollectionDefinitionId';
+
+    public array $fields = [];
+
+    public bool $isEditing = false;
+
+    public array $originalFieldNames = [];
+
+    /** True while the rename question is open — the next store() proceeds. */
+    public bool $renameConfirmationPending = false;
+
+    public array $pendingRenames = [];
+
     /**
      * Entry count for the delete confirmation. Computed (request-cached) —
      * the previous inline @php block ran two queries on EVERY render,
@@ -35,19 +48,6 @@ new class extends Component
 
         return $collection ? $collection->entries()->count() : 0;
     }
-
-    public ?string $detailPrimary = 'setupCollectionDefinitionId';
-
-    public array $fields = [];
-
-    public bool $isEditing = false;
-
-    public array $originalFieldNames = [];
-
-    /** True while the rename question is open — the next store() proceeds. */
-    public bool $renameConfirmationPending = false;
-
-    public array $pendingRenames = [];
 
     public function mount(): void
     {
@@ -183,7 +183,7 @@ new class extends Component
         $this->isEditing = true;
         $this->modelId = $filename;
 
-        $this->dispatch('listRefresh');
+        $this->dispatch('refreshList-noerd::setup-collection-definitions-list');
         $this->showSuccessIndicator = true;
     }
 
@@ -281,7 +281,7 @@ new class extends Component
             ]);
         }
 
-        $this->dispatch('listRefresh');
+        $this->dispatch('refreshList-noerd::setup-collection-definitions-list');
         $this->closeModalProcess('noerd::setup-collection-definitions-list');
     }
 

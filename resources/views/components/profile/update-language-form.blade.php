@@ -12,7 +12,7 @@ new class extends Component {
     public function mount(): void
     {
         $this->locale = NoerdAuth::user()->locale ?? 'en';
-        $this->languages = SetupLanguage::getActive()
+        $this->languages = SetupLanguage::active()
             ->map(fn (SetupLanguage $language) => [
                 'value' => $language->code,
                 'label' => $language->name,
@@ -22,7 +22,7 @@ new class extends Component {
 
     public function updateLanguage(): void
     {
-        $activeCodes = implode(',', SetupLanguage::getActiveCodes());
+        $activeCodes = implode(',', SetupLanguage::activeCodes());
 
         $validated = $this->validate([
             'locale' => ['required', 'string', "in:{$activeCodes}"],
