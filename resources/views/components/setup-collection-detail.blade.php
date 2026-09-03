@@ -5,14 +5,13 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Facades\Noerd;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
-use Noerd\Models\SetupLanguage;
 use Noerd\Services\SetupFieldTypeConverter;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\SetupLanguageFilterTrait;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -40,9 +39,6 @@ new class extends Component
         if ($model !== null) {
             $this->modelId = $model instanceof SetupCollectionEntry ? $model->id : $model;
         }
-
-        // Ensure default languages exist for current tenant
-        SetupLanguage::ensureDefaultLanguagesForTenant(NoerdAuth::user()->selected_tenant_id);
 
         $entry = $this->modelId ? SetupCollectionEntry::find($this->modelId) : null;
         $this->entryExists = $entry !== null;

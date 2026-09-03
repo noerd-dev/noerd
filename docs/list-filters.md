@@ -331,7 +331,7 @@ public function storeActiveListFilters(): void
     $this->resetPage();
 
     if (! empty($this->listFilters['language'])) {
-        session(['selectedLanguage' => $this->listFilters['language']]);
+        session([SetupLanguage::SESSION_KEY => $this->listFilters['language']]);
     }
 }
 ```

@@ -29,7 +29,6 @@ new class extends Component {
         ]);
 
         NoerdAuth::user()->setting->update(['format_locale' => $validated['formatLocale']]);
-        FormatHelper::clearCache();
 
         $this->dispatch('locale-updated');
     }

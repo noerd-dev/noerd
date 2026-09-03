@@ -15,12 +15,21 @@ class SetupLanguage extends Model
     use BelongsToTenant;
     use HasFactory;
 
-    protected $guarded = [];
+    /**
+     * Session key of the language the setup screens currently edit. Deliberately
+     * not namespaced under `noerd.`: frontend modules (e.g. a website language
+     * switcher) read and write the same key so backend and frontend stay in sync.
+     */
+    public const SESSION_KEY = 'selectedLanguage';
+
+    protected $guarded = ['id'];
 
     /**
-     * Get all active languages
+     * All active languages of the tenant, default first.
+     *
+     * @return Collection<int, self>
      */
-    public static function getActive(): Collection
+    public static function active(): Collection
     {
         return static::where('is_active', true)
             ->orderBy('is_default', 'desc')
@@ -29,17 +38,17 @@ class SetupLanguage extends Model
     }
 
     /**
-     * Get the default language
+     * The tenant's default language (`default` is a reserved word).
      */
-    public static function getDefault(): ?self
+    public static function defaultLanguage(): ?self
     {
         return static::where('is_default', true)->first();
     }
 
     /**
-     * Get active language codes
+     * @return array<int, string>
      */
-    public static function getActiveCodes(): array
+    public static function activeCodes(): array
     {
         return static::where('is_active', true)
             ->orderBy('is_default', 'desc')
@@ -48,12 +57,9 @@ class SetupLanguage extends Model
             ->toArray();
     }
 
-    /**
-     * Get default language code
-     */
-    public static function getDefaultCode(): string
+    public static function defaultCode(): string
     {
-        $default = static::getDefault();
+        $default = static::defaultLanguage();
 
         return $default?->code ?? 'en';
     }
@@ -64,7 +70,7 @@ class SetupLanguage extends Model
      */
     public static function selectedCode(): string
     {
-        return session('selectedLanguage') ?? static::getDefaultCode();
+        return session(self::SESSION_KEY) ?? static::defaultCode();
     }
 
     /**
@@ -138,6 +144,9 @@ class SetupLanguage extends Model
         });
     }
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

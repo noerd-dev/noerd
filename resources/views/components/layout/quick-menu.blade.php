@@ -1,5 +1,7 @@
 <?php
 
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
@@ -7,6 +9,7 @@ use Noerd\Helpers\StaticConfigHelper;
 
 new class extends Component {
     /** @var array{buttons: array<int, array<string, mixed>>} */
+    #[Locked]
     public array $config = ['buttons' => []];
 
     public function mount(): void
@@ -22,6 +25,7 @@ new class extends Component {
         return AccessHelper::canPassGate($policy);
     }
 
+    #[Computed]
     public function showTenantSwitcher(): bool
     {
         $user = NoerdAuth::user();
@@ -36,7 +40,7 @@ new class extends Component {
      YAML buttons scroll horizontally when they get too wide (overflow-x-auto would otherwise clip
      the dropdown vertically as well). --}}
 <div class="flex items-center gap-x-2 min-w-0 flex-1">
-    @if($this->showTenantSwitcher())
+    @if($this->showTenantSwitcher)
         <div class="shrink-0">
             <livewire:noerd::layout.tenant-switcher />
         </div>
@@ -49,12 +53,7 @@ new class extends Component {
          would otherwise draw it at full length); the ResizeObserver keeps the class in sync when
          the container or a button changes size. --}}
     <div class="noerd-scrollbar noerd-scrollbar-idle flex items-center gap-x-2 overflow-x-scroll -mb-[6px] min-w-0 flex-1 p-1"
-         x-data
-         x-init="const sync = () => $el.classList.toggle('noerd-scrollbar-idle', $el.scrollWidth <= $el.clientWidth);
-                 sync();
-                 const observer = new ResizeObserver(sync);
-                 observer.observe($el);
-                 Array.from($el.children).forEach((child) => observer.observe(child))">
+         x-data="noerdScrollShadow()">
         {{-- The optional `app:` (string) / `apps:` (list) key ties a button to
              tenant apps: it renders only when at least one of them is assigned
              to the tenant AND the app permission allows it — users a restricted
@@ -67,8 +66,8 @@ new class extends Component {
                 );
             @endphp
             @if((!isset($button['policy']) || $this->canAccess($button['policy']))
-                && ($buttonApps === [] || \Noerd\Helpers\AccessHelper::canUseApp(...$buttonApps)))
-                <div class="shrink-0">
+                && ($buttonApps === [] || AccessHelper::canUseApp(...$buttonApps)))
+                <div class="shrink-0" wire:key="quick-menu-{{ $button['component'] }}">
                     <livewire:dynamic-component :component="$button['component']" :wire:key="'quick-menu-' . $button['component']" />
                 </div>
             @endif

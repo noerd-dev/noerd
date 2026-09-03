@@ -1,11 +1,15 @@
 <?php
 
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
+    #[Locked]
     public bool $isImpersonating = false;
+
+    #[Locked]
     public string $userName = '';
 
     public function mount(): void
@@ -18,6 +22,8 @@ new class extends Component {
 
     public function stopImpersonating(): void
     {
+        abort_unless(session()->has('impersonating_from'), 403);
+
         $originalUserId = session('impersonating_from');
         session()->forget('impersonating_from');
 

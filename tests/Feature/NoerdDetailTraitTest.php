@@ -18,8 +18,8 @@ uses(TestCase::class, RefreshDatabase::class);
  | (NoerdDetailStoreRoundtripTest): layout hydration on mount, the recursion of
  | validateFromLayout() into `type: block` fields, the setFieldValue event
  | (relation title adoption, dotted writes, its detailData allowlist and the
- | owner routing) and clearRelation(). The layout comes from a runtime fixture
- | YAML, never from a shipped config.
+ | owner routing). The layout comes from a runtime fixture YAML, never from a
+ | shipped config.
  */
 
 class ZzDetailTraitComponent extends Component
@@ -98,19 +98,6 @@ it('adopts a setFieldValue event into detailData with its relation title', funct
     $component->dispatch('setFieldValue', field: 'detailData.address.city', value: 'Berlin');
 
     expect($component->get('detailData.address.city'))->toBe('Berlin');
-});
-
-it('clears a relation value and its title for plain and dotted fields', function (): void {
-    $component = Livewire::test('zz-detail-trait-detail')
-        ->dispatch('setFieldValue', field: 'detailData.customer_id', value: 5, relationTitle: 'Acme')
-        ->dispatch('setFieldValue', field: 'detailData.invoice.contact_id', value: 7, relationTitle: 'Jane')
-        ->call('clearRelation', 'detailData.customer_id')
-        ->call('clearRelation', 'detailData.invoice.contact_id');
-
-    expect($component->get('detailData.customer_id'))->toBeNull()
-        ->and($component->get('relationTitles.customer_id'))->toBe('')
-        ->and($component->get('detailData.invoice.contact_id'))->toBeNull()
-        ->and($component->get('relationTitles.contact_id'))->toBe('');
 });
 
 it('setFieldValue writes into detailData but ignores any other property', function (): void {

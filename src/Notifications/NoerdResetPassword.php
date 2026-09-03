@@ -15,7 +15,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
  */
 class NoerdResetPassword extends ResetPassword
 {
-    protected function resetUrl($notifiable): string
+    protected function resetUrl(mixed $notifiable): string
     {
         return url(route('noerd.password.reset', [
             'token' => $this->token,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Traits;
 
 use Exception;
+use Illuminate\Console\Command;
 use Noerd\Models\TenantApp;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -16,6 +17,7 @@ trait HasModuleInstallation
     use \Noerd\Commands\Concerns\PublishesConfigDirectory;
     use \Noerd\Commands\Concerns\RunsNpmBuild;
 
+    /** @var array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int} */
     private array $installResults = [
         'created_dirs' => 0,
         'copied_files' => 0,
@@ -82,7 +84,7 @@ trait HasModuleInstallation
     protected function runModuleUpdate(): int
     {
         if (! $this->ensureNoerdInstalled()) {
-            return 1;
+            return Command::FAILURE;
         }
 
         $sourceDir = $this->getSourceDir();
@@ -90,7 +92,7 @@ trait HasModuleInstallation
         if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
 
-            return 1;
+            return Command::FAILURE;
         }
 
         $targetDir = base_path('app-configs/' . $this->getModuleKey());
@@ -104,7 +106,7 @@ trait HasModuleInstallation
             if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
                 $this->error("Failed to create target directory: app-configs/{$this->getModuleKey()}/");
 
-                return 1;
+                return Command::FAILURE;
             }
             $this->info("Created target directory: app-configs/{$this->getModuleKey()}/");
         }
@@ -159,11 +161,11 @@ trait HasModuleInstallation
             $this->line('');
             $this->info("{$this->getModuleName()} configurations updated!");
 
-            return 0;
+            return Command::SUCCESS;
         } catch (Exception $e) {
             $this->error("Error updating {$this->getModuleName()}: " . $e->getMessage());
 
-            return 1;
+            return Command::FAILURE;
         }
     }
 
@@ -200,7 +202,7 @@ trait HasModuleInstallation
     {
         // Ensure noerd:install has been run first
         if (! $this->ensureNoerdInstalled()) {
-            return 1;
+            return Command::FAILURE;
         }
 
         if ($this->isScaffoldInstall()) {
@@ -238,7 +240,7 @@ trait HasModuleInstallation
         if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
 
-            return 1;
+            return Command::FAILURE;
         }
 
         $this->line('');
@@ -251,10 +253,10 @@ trait HasModuleInstallation
 
         // Create target directory if it doesn't exist
         if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true)) {
+            if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
                 $this->error("Failed to create target directory: {$targetDir}");
 
-                return 1;
+                return Command::FAILURE;
             }
             $this->info("Created target directory: app-configs/{$this->targetAppKey}/");
         }
@@ -282,11 +284,11 @@ trait HasModuleInstallation
             // Ask to run npm build
             $this->askForNpmBuild();
 
-            return 0;
+            return Command::SUCCESS;
         } catch (Exception $e) {
             $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
 
-            return 1;
+            return Command::FAILURE;
         }
     }
 
@@ -305,7 +307,7 @@ trait HasModuleInstallation
         if (! is_dir($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
 
-            return 1;
+            return Command::FAILURE;
         }
 
         if ($this->input->hasOption('force')) {
@@ -319,7 +321,7 @@ trait HasModuleInstallation
         if (! is_dir($targetDir) && ! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
             $this->error("Failed to create target directory: {$targetDir}");
 
-            return 1;
+            return Command::FAILURE;
         }
 
         try {
@@ -338,12 +340,12 @@ trait HasModuleInstallation
         } catch (Exception $e) {
             $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
 
-            return 1;
+            return Command::FAILURE;
         }
 
         $this->assignAppToTenants($appKey, compact: true);
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     /**

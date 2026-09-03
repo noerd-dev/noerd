@@ -30,7 +30,7 @@ App-specific entry points belong in that app's navigation, dashboard or header a
 
 ## File Location
 
-```
+```text
 app-configs/quick-menu.yml
 ```
 
@@ -74,7 +74,7 @@ The user must use the `INVENTORY` app AND pass `viewStockLevels` for this button
 Components are placed in your module's views directory and referenced by their namespaced Livewire
 name with the `quick-menu.` prefix:
 
-```
+```text
 app-modules/{module}/resources/views/components/quick-menu/{name}.blade.php   → {module}::quick-menu.{name}
 ```
 

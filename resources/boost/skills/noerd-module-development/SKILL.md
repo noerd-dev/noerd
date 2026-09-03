@@ -1,6 +1,6 @@
 ---
 name: noerd-module-development
-description: "Use this skill when creating a new Noerd module or tenant app, or when touching module-level plumbing: the noerd:module scaffolder, the mandatory noerd:install-{module} / noerd:update-{module} commands, the ServiceProvider, app-configs (lists/details/pages/navigation.yml and the rule to keep project and module copies in sync), navigation entries and heroicons, JSON translations (English keys, de.json), project-specific fields via custom_attributes, module independence, and shipping agent guidelines (Boost guideline, AGENTS.md) with the module. Triggers on 'create a module/app', 'add a navigation entry', 'install/update command', 'project-specific field', 'module structure'."
+description: "Use this skill when creating a new Noerd module or tenant app, or when touching module-level plumbing: the noerd:make-module scaffolder, the mandatory noerd:install-{module} / noerd:update-{module} commands, the ServiceProvider, app-configs (lists/details/pages/navigation.yml and the rule to keep project and module copies in sync), navigation entries and heroicons, JSON translations (English keys, de.json), project-specific fields via custom_attributes, module independence, and shipping agent guidelines (Boost guideline, AGENTS.md) with the module. Triggers on 'create a module/app', 'add a navigation entry', 'install/update command', 'project-specific field', 'module structure'."
 license: MIT
 metadata:
   author: noerd
@@ -18,8 +18,8 @@ translations, tests and an install/update command. Hard rules: `noerd/noerd` Boo
 
 ```bash
 php artisan noerd:make-app        # choose "Module": asks title, name, heroicon, then registers with Composer and installs (tenant assignment is the only question)
-php artisan noerd:module            # the scaffolder itself: module name, app title, heroicon
-                                    # scripted: noerd:module inventory --title=Inventory --icon=cube
+php artisan noerd:make-module            # the scaffolder itself: module name, app title, heroicon
+                                    # scripted: noerd:make-module inventory --title=Inventory --icon=cube
 composer update noerd/{module}
 php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates (--scaffold = the silent make-app run)
 php artisan noerd:make-resource Item --app={module}   # per record type, after model + migration exist in the module

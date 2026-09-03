@@ -7,7 +7,7 @@ namespace Noerd\Services;
 use Illuminate\Support\Str;
 use Noerd\Contracts\MediaResolverContract;
 
-class NullMediaResolver implements MediaResolverContract
+final class NullMediaResolver implements MediaResolverContract
 {
     private const ALLOWED_MIMES = [
         'image/jpeg' => 'jpg',

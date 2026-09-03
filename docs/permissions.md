@@ -128,6 +128,13 @@ write.
   shortcuts are hidden.
 - **Apps:** `AppAccessMiddleware`, the app bar, the home
   tiles and the allowed-app config discovery all consult `canAccessApp()`.
+- **Admin-only components:** `/setup` routes run through `SetupMiddleware`
+  (`NoerdUser::isAdmin()`); the two entry points that bypass it — the
+  client-dispatchable `noerdModal` event and
+  `/noerd/component-page/{componentName}` — re-assert admin access through
+  `Noerd\Support\ComponentAccessGuard`. A module that ships admin-only screens
+  registers them with `ComponentAccessGuard::registerAdminComponents()` (see
+  [Extension Registries](extension-registries.md#componentaccessguard)).
 - **Dashboard widgets and quick-menu buttons** declare `app:` (string) or
   `apps:` (list) in their YAML — an entry renders only when one of its apps is
   assigned to the tenant AND allowed (`AccessHelper::canUseApp()`, see
@@ -137,6 +144,38 @@ write.
   `TenantHelper::getSelectedApp()`. NEVER hand-roll a per-module "tenant has app X"
   gate for this — such gates ignore the user's profile. On routes use the
   `app-access:{app}` middleware (see [Authentication](auth.md)).
+
+## Locked component surface
+
+Some public properties of list/detail/page components decide WHICH model the generic query reads,
+WHICH class the object gates are checked against and WHICH YAML layout drives validation. They are
+established at mount — from the component's own declaration or the opener's arguments — and are
+mutated only server-side, so a client update to them is always tampering. The global
+`Noerd\Support\LockedPropertiesHook` vetoes that update path for every component using `NoerdList`
+or `NoerdPage` (and therefore `NoerdDetail`).
+
+**Rejected on the client update path:**
+
+| Property | What repointing it would achieve |
+|----------|----------------------------------|
+| `detailModel`, `listModel` | Query an unscoped model through the generic list/detail |
+| `objectPermissionModel` | Have the object gates checked against a different class |
+| `detailComponent`, `detailRoute` | Swap the modal target of a row click |
+| `showMoreComponent`, `showMoreRoute` | Swap the "show more" target |
+| `listActionMethod` | Redirect the picker callback |
+| `listView`, `listViewApp` | Render another app's list view |
+| `settingsModels` | Repoint which model `persistSettings()` writes and which property it reads |
+| `pageLayout` | Skip `validateFromLayout()` and mount attacker-chosen nested components |
+
+**Additionally rejected as MOUNT ARGUMENTS** — `detailModel`, `listModel` and
+`objectPermissionModel`. Livewire assigns mount parameters to matching public properties before any
+update hook runs, and the modal stack takes those arguments straight from the client; no legitimate
+caller passes them, because a component declares them itself. Properties like `listActionMethod` or
+`context` are deliberately *not* mount-protected — the relation-field picker passes them.
+
+A violation throws Livewire's `CannotUpdateLockedPropertyException`. The practical rule: **never
+bind any of these properties to `wire:model`** and never pass the three mount-protected ones as
+modal arguments — set them as literal property defaults on the component instead.
 
 ## Query-level read guard (opt-in trait)
 

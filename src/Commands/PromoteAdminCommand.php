@@ -9,14 +9,14 @@ use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 
-class MakeUserAdminCommand extends Command
+class PromoteAdminCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'noerd:make-admin {user_id : The ID of the user to make admin}';
+    protected $signature = 'noerd:promote-admin {user_id : The ID of the user to promote to admin}';
 
     /**
      * The console command description.
@@ -116,7 +116,7 @@ class MakeUserAdminCommand extends Command
                 $this->info("User {$user->name} is now an admin with access to Setup!");
             }
         } else {
-            $this->error("Failed to make user admin. Please check the database.");
+            $this->error('Failed to make user admin. Please check the database.');
             return self::FAILURE;
         }
 

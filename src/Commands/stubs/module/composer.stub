@@ -2,15 +2,21 @@
     "name": "noerd/{{module-name}}",
     "description": "",
     "type": "library",
+    "license": "MIT",
     "require": {
+        "php": "^8.3",
         "noerd/noerd": "{{noerd-constraint}}"
     },
     "autoload": {
         "psr-4": {
             "Noerd\\{{ModuleName}}\\": "src/",
-            "Noerd\\{{ModuleName}}\\Tests\\": "tests/",
             "Noerd\\{{ModuleName}}\\Database\\Factories\\": "database/factories/",
             "Noerd\\{{ModuleName}}\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Noerd\\{{ModuleName}}\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "stable",

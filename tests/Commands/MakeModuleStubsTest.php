@@ -14,7 +14,7 @@ use Symfony\Component\Yaml\Yaml;
 uses(TestCase::class);
 
 /**
- * The noerd:module scaffolder generates the module plumbing — package, provider,
+ * The noerd:make-module scaffolder generates the module plumbing — package, provider,
  * install/update commands, dashboard, routes, navigation — and NO model: lists
  * and details are generated per model by noerd:make-resource. The stubs are
  * rendered directly so the tests never touch the real composer.json or
@@ -117,8 +117,11 @@ it('generates a composer.json requiring the scaffolding core version', function 
     $composer = json_decode(($this->renderStub)('composer.stub'), true, 512, JSON_THROW_ON_ERROR);
 
     expect($composer['require']['noerd/noerd'])->toMatch('/^\^\d+\.\d+$/')
-        ->and($composer['autoload']['psr-4'])->toHaveKey('Noerd\\ZzWidget\\Tests\\')
-        ->and($composer)->not->toHaveKey('license');
+        ->and($composer['require'])->toHaveKey('php')
+        ->and($composer['license'])->toBe('MIT')
+        // Test-only autoloading never ships in a consumer's production autoloader.
+        ->and($composer['autoload']['psr-4'])->not->toHaveKey('Noerd\\ZzWidget\\Tests\\')
+        ->and($composer['autoload-dev']['psr-4'])->toHaveKey('Noerd\\ZzWidget\\Tests\\');
 });
 
 it('registers the chosen heroicon and app title through the install command', function (): void {

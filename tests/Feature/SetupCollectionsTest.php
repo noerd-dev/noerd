@@ -10,6 +10,7 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
+use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Services\SetupFieldTypeConverter;
 use Noerd\Tests\TestCase;
@@ -125,7 +126,7 @@ describe('SetupCollectionHelper select options', function (): void {
     });
 
     it('builds value-field options with translated labels', function (): void {
-        session(['selectedLanguage' => 'de']);
+        session([SetupLanguage::SESSION_KEY => 'de']);
 
         $options = SetupCollectionHelper::selectOptions('ZZ_OPTIONS_TEST', 'name', 'code');
 

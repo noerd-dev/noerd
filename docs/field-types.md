@@ -587,7 +587,7 @@ Color picker with HEX value input. Combines a text input for manual HEX entry wi
 ```
 
 **Database Value:**
-```
+```text
 #efefef
 ```
 
@@ -1224,7 +1224,7 @@ Dropdown for selecting entries from a Setup Collection.
 **Notes:**
 - Supports translatable display fields
 - Locale fallback for translatable display fields: the selected language → the tenant's default
-  language (`SetupLanguage::getDefaultCode()`) → the first available translation
+  language (`SetupLanguage::defaultCode()`) → the first available translation
   (`SetupCollectionHelper::selectOptions()`)
 - See [Setup Collections](setup-collections.md)
 

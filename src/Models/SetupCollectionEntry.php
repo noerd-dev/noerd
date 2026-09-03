@@ -6,6 +6,7 @@ namespace Noerd\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Services\SetupFieldTypeConverter;
 use Noerd\Traits\BelongsToTenant;
 
@@ -13,7 +14,7 @@ class SetupCollectionEntry extends Model
 {
     use BelongsToTenant;
 
-    protected $guarded = [];
+    protected $guarded = ['id'];
 
     /**
      * Get the parent collection
@@ -38,8 +39,20 @@ class SetupCollectionEntry extends Model
                 }
             }
         });
+
+        // The picklist options built from these entries are memoized per
+        // request — a written entry must be visible to the next render.
+        static::saved(static function (): void {
+            SetupCollectionHelper::clearSelectOptionsCache();
+        });
+        static::deleted(static function (): void {
+            SetupCollectionHelper::clearSelectOptionsCache();
+        });
     }
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

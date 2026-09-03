@@ -13,32 +13,34 @@ trait SetupLanguageFilterTrait
         return SetupLanguage::where('is_active', true)->count() > 1;
     }
 
+    /**
+     * @return array{label: string, column: string, type: string, options: array<string, string>}
+     */
     protected function getLanguageListFilter(): array
     {
-        $filter['label'] = __('Language');
-        $filter['column'] = 'language';
-        $filter['type'] = 'Picklist';
-        $filter['options'] = [];
-
         $languages = SetupLanguage::where('is_active', true)
             ->orderBy('is_default', 'desc')
             ->orderBy('name', 'asc')
             ->get();
 
-        foreach ($languages as $language) {
-            $filter['options'][$language->code] = $language->name;
-        }
-
-        return $filter;
+        return [
+            'label' => __('Language'),
+            'column' => 'language',
+            'type' => 'Picklist',
+            'options' => $languages->pluck('name', 'code')->all(),
+        ];
     }
 
     protected function getDefaultLanguageCode(): string
     {
-        return SetupLanguage::getDefaultCode();
+        return SetupLanguage::defaultCode();
     }
 
+    /**
+     * @return array<int, string>
+     */
     protected function getActiveTenantLanguageCodes(): array
     {
-        return SetupLanguage::getActiveCodes();
+        return SetupLanguage::activeCodes();
     }
 }

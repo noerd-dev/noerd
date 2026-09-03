@@ -1,10 +1,16 @@
 <?php
 
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 new class extends Component {
+    #[Locked]
     public ?string $environment = null;
+
+    #[Locked]
     public string $label = '';
+
+    #[Locked]
     public string $bgClass = '';
 
     public function mount(): void
@@ -12,9 +18,9 @@ new class extends Component {
         $env = app()->environment();
 
         $config = match ($env) {
-            'local' => ['label' => 'Local', 'bgClass' => 'bg-blue-100 text-blue-800'],
-            'development' => ['label' => 'Development', 'bgClass' => 'bg-emerald-100 text-emerald-800'],
-            'staging' => ['label' => 'Staging', 'bgClass' => 'bg-orange-100 text-orange-800'],
+            'local' => ['label' => __('Local'), 'bgClass' => 'bg-blue-100 text-blue-800'],
+            'development' => ['label' => __('Development'), 'bgClass' => 'bg-emerald-100 text-emerald-800'],
+            'staging' => ['label' => __('Staging'), 'bgClass' => 'bg-orange-100 text-orange-800'],
             default => null,
         };
 

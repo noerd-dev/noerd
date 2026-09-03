@@ -1,24 +1,24 @@
 # Creating Modules
 
-Using modules is completely optional. The application works perfectly fine without any modules. 
+Using modules is completely optional. The application works perfectly fine without any modules.
 
 The module approach is very inspired by https://github.com/InterNACHI/modular
 
-Use the `noerd:module` Artisan command to create a new module with complete directory structure —
+Use the `noerd:make-module` Artisan command to create a new module with complete directory structure —
 or choose **Module** in `php artisan noerd:make-app`, which asks the same questions, calls
-`noerd:module` for you and runs the Composer and install steps (see [Create an App](make-app.md)).
+`noerd:make-module` for you and runs the Composer and install steps (see [Create an App](make-app.md)).
 
 ## Quick Start
 
 ```bash
-php artisan noerd:module
+php artisan noerd:make-module
 ```
 
 The command will ask for:
 1. **Module name** (e.g., `inventory`)
 2. **App title** (e.g., `Inventory`) and the **heroicon** of the tenant app
 
-Every prompt has an option for scripted runs (`noerd:module inventory --title=Inventory --icon=cube`).
+Every prompt has an option for scripted runs (`noerd:make-module inventory --title=Inventory --icon=cube`).
 
 The scaffold contains **no model**: it is the module plumbing plus a dashboard. Every record type is
 added afterwards with `noerd:make-resource` (see [Adding resources](#adding-resources)).
@@ -104,7 +104,7 @@ uses `BelongsToTenant`) and a nullable `custom_attributes` JSON column cast to `
 ## Install and update commands (required)
 
 Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) ships two
-Artisan commands; `noerd:module` generates both from its stubs:
+Artisan commands; `noerd:make-module` generates both from its stubs:
 
 - **`noerd:install-{module}`** — extends `Illuminate\Console\Command`, uses the
   `HasModuleInstallation` and `RequiresNoerdInstallation` traits and implements `getModuleName()`,
@@ -180,6 +180,7 @@ $this->detailData['custom_attributes']['my_key'];
 | `app-configs/stubs/add_{module}_tenant_app.php.stub` | The tenant-app migration published by the install command |
 | `database/migrations/`, `database/factories/`, `database/seeders/` | Database migrations, factories and seeders (module-owned) |
 | `resources/boost/guidelines/core.blade.php` | Module-specific rules for AI coding agents, rendered by Laravel Boost (see [AI Agents](ai-agents.md)) |
+| `skills/{name}/SKILL.md` | Claude Code skills shipped with the module — **top-level**, next to `src/` (the install/update command publishes every subfolder into the project's `.claude/skills/`). Only the noerd package itself keeps its skills in `resources/boost/skills/` |
 | `resources/lang/de.json` | Translations (English key → German) |
 | `resources/views/components/` | Livewire single-file components (`{module}-dashboard.blade.php`, `*-list.blade.php`, `*-detail.blade.php`, `*-page.blade.php`, `*-modal.blade.php`) — flat, no subfolders |
 | `routes/{module}-routes.php` | Route definitions |

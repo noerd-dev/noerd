@@ -15,7 +15,7 @@ class SetupCollection extends Model
     use BelongsToTenant;
     use HasFactory;
 
-    protected $guarded = [];
+    protected $guarded = ['id'];
 
     /**
      * Get all entries for this collection

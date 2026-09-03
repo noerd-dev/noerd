@@ -6,12 +6,14 @@ namespace Noerd\Providers;
 
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Octane\Events\RequestReceived;
 use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
@@ -28,12 +30,12 @@ use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeTenantCommand;
 use Noerd\Commands\MakeThemeCommand;
-use Noerd\Commands\MakeUserAdminCommand;
 use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUpdateAllCommand;
 use Noerd\Commands\NoerdUpdateCommand;
+use Noerd\Commands\PromoteAdminCommand;
 use Noerd\Commands\PublishHomeCommand;
 use Noerd\Commands\SuperAdminCommand;
 use Noerd\Contracts\MediaResolverContract;
@@ -128,9 +130,8 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(FieldTypeRegistry::class);
         $this->app->singleton(ThemeRegistry::class);
         $this->app->singleton(NoerdManager::class);
-        $this->app->singleton(RelationFieldRegistry::class, fn($app) => new RelationFieldRegistry(
-            $app->make(FieldTypeRegistry::class),
-        ));
+        // Autowired: its only dependency is the FieldTypeRegistry singleton above.
+        $this->app->singleton(RelationFieldRegistry::class);
         // Singleton so the per-request FK-title lookups are memoized.
         $this->app->singleton(RelationTitleResolver::class);
         $this->app->singleton(PicklistRegistry::class);
@@ -169,15 +170,15 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Migrations change what the schema cache describes — never keep
         // serving the pre-migration column listing.
-        Event::listen(\Illuminate\Database\Events\MigrationsEnded::class, fn() => SchemaColumnCache::clear());
+        Event::listen(MigrationsEnded::class, fn() => SchemaColumnCache::clear());
 
         // Under Octane booted() fires once per WORKER, not per request — the
         // same flush must run before every request, or one user's memoized
         // tenant/config/theme state leaks into the next request the worker
         // serves. Guarded by class_exists so the listener only registers when
         // Octane is installed. The schema cache deliberately survives requests.
-        if (class_exists(\Laravel\Octane\Events\RequestReceived::class)) {
-            Event::listen(\Laravel\Octane\Events\RequestReceived::class, function (): void {
+        if (class_exists(RequestReceived::class)) {
+            Event::listen(RequestReceived::class, function (): void {
                 $this->flushRequestState();
                 // Stateful singletons are rebuilt per request: the title
                 // resolver memoizes tenant-scoped DB values, the navigation
@@ -195,6 +196,25 @@ class NoerdServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->bootResources();
+        $this->bootEventListeners();
+        $this->bootRouting();
+        $this->bootRegistries();
+        $this->bootFieldTypes();
+
+        View::composer('noerd::layouts.app', function ($view): void {
+            $view->with('showSidebar', LayoutState::sidebarVisible());
+        });
+
+        $this->bootConsole();
+    }
+
+    /**
+     * Everything the package loads into the framework: migrations, views,
+     * Livewire namespaces, translations and routes.
+     */
+    private function bootResources(): void
+    {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
         Blade::component('noerd::app-layout', AppLayout::class);
@@ -209,8 +229,14 @@ class NoerdServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
         $this->loadRoutesFrom(__DIR__ . '/../../routes/noerd-routes.php');
+    }
 
-        // Register event listeners
+    /**
+     * Auth events (tenant session, login log) and the model hooks that seed a
+     * new tenant / invalidate the config search roots.
+     */
+    private function bootEventListeners(): void
+    {
         Event::listen(Login::class, InitializeTenantSession::class);
         Event::listen(Authenticated::class, InitializeTenantSession::class);
         Event::listen(Login::class, RecordLogin::class);
@@ -233,18 +259,22 @@ class NoerdServiceProvider extends ServiceProvider
         // TenantApp mutation (install commands, setup screens) invalidates them.
         TenantApp::saved(fn() => StaticConfigHelper::flushRuntimeCaches());
         TenantApp::deleted(fn() => StaticConfigHelper::flushRuntimeCaches());
+    }
 
+    /**
+     * The shared middleware groups and route middleware aliases every
+     * noerd-based module protects its routes with.
+     */
+    private function bootRouting(): void
+    {
         $router = $this->app['router'];
         // Shared route middleware groups: every noerd-based module protects
         // its routes with the 'noerd' group instead of the bare 'auth' alias,
         // so authentication always runs against noerd's own guard. The noerd
         // subclasses pin the redirect targets to noerd's own routes — the
         // host's 'auth'/'guest' aliases and any redirectUsing() callbacks
-        // (e.g. from a coexisting starter kit) never apply here. The
-        // 'verified' middleware resolves $request->user() after auth's
-        // shouldUse() call, so it is guard-correct (and currently inert —
-        // NoerdUser does not implement MustVerifyEmail).
-        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), 'verified', EnsureTenantMembership::class]);
+        // (e.g. from a coexisting starter kit) never apply here.
+        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), EnsureTenantMembership::class]);
         $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':' . NoerdAuth::guardName()]);
         // Livewire's default persistent-middleware list only knows the
         // framework's Authenticate class — the subclass must be added so
@@ -255,120 +285,29 @@ class NoerdServiceProvider extends ServiceProvider
         $router->aliasMiddleware('action-permission', ActionPermissionMiddleware::class);
         $router->aliasMiddleware('setup.collections.ui', EnsureSetupCollectionDefinitionsEnabled::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
+    }
 
-        // Register the Setup collections dynamic navigation provider.
-        $registry = $this->app->make(DynamicNavigationRegistry::class);
-        $registry->register($this->app->make(SetupCollectionsNavigationProvider::class));
+    /**
+     * The package's own entries in the extension registries: the Setup
+     * collections navigation provider and the theme folder roots.
+     */
+    private function bootRegistries(): void
+    {
+        $this->app->make(DynamicNavigationRegistry::class)
+            ->register($this->app->make(SetupCollectionsNavigationProvider::class));
 
         // Theme folders: the project root wins over module themes, which win
         // over the noerd built-ins (default, compact, numbered).
         $themeRegistry = $this->app->make(ThemeRegistry::class);
         $themeRegistry->registerPath(resource_path('views/themes'), priority: 100);
         $themeRegistry->registerPath(__DIR__ . '/../../resources/views/themes', priority: 0);
+    }
 
-        $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
-        $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
-            'noerd::components.forms.input-select',
-            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId): array {
-                $optionsMethod = $field['optionsMethod'] ?? null;
-
-                if ($optionsMethod && $component && method_exists($component, $optionsMethod)) {
-                    $resolved = $component->{$optionsMethod}();
-                    $options = [];
-
-                    foreach ($resolved as $value => $label) {
-                        $options[] = ['value' => $value, 'label' => $label];
-                    }
-
-                    $field['options'] = $options;
-                }
-
-                return ['field' => $field];
-            },
-        ));
-        $fieldTypeRegistry->register('picklist', FieldTypeDefinition::include(
-            'noerd::components.forms.picklist',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('setupCollectionSelect', FieldTypeDefinition::include(
-            'noerd::components.forms.setup-collection-select',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('belongsToMany', FieldTypeDefinition::include(
-            'noerd::components.forms.belongs-to-many',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('checkbox', FieldTypeDefinition::include(
-            'noerd::components.forms.checkbox',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('image', FieldTypeDefinition::include(
-            'noerd::components.forms.image',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
-                'field' => $field,
-                'detailData' => $detailData,
-            ],
-        ));
-        $fieldTypeRegistry->register('richText', FieldTypeDefinition::include(
-            'noerd::components.forms.rich-text',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('translatableRichText', FieldTypeDefinition::include(
-            'noerd::components.forms.translatable-rich-text',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('translatableText', FieldTypeDefinition::include(
-            'noerd::components.forms.translatable-text',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('translatableTextarea', FieldTypeDefinition::include(
-            'noerd::components.forms.translatable-textarea',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('button', FieldTypeDefinition::include(
-            'noerd::components.forms.button',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('colorHex', FieldTypeDefinition::include(
-            'noerd::components.forms.color-hex',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('currency', FieldTypeDefinition::include(
-            'noerd::components.forms.input-currency',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('textarea', FieldTypeDefinition::include(
-            'noerd::components.forms.input-textarea',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('file', FieldTypeDefinition::include(
-            'noerd::components.forms.file',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('spacer', FieldTypeDefinition::include(
-            'noerd::components.forms.spacer',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('phone', FieldTypeDefinition::include(
-            'noerd::components.forms.phone',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('email', FieldTypeDefinition::include(
-            'noerd::components.forms.email',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-        ));
-        $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
-            'noerd::components.forms.icon',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
-                'field' => $field,
-                'iconValue' => data_get($component?->detailData ?? $detailData ?? [], Str::after($field['name'] ?? '', 'detailData.')),
-            ],
-        ));
-
-        View::composer('noerd::layouts.app', function ($view): void {
-            $view->with('showSidebar', LayoutState::sidebarVisible());
-        });
-
+    /**
+     * Publishable assets/config and the artisan commands — console only.
+     */
+    private function bootConsole(): void
+    {
         // Publishing runs ONLY in console: a live web request must never write
         // to public/ (concurrent requests race on the copy, and a production
         // public/ is typically not writable by the PHP user). noerd:install and
@@ -397,7 +336,7 @@ class NoerdServiceProvider extends ServiceProvider
             }
 
             $this->commands([
-                MakeUserAdminCommand::class,
+                PromoteAdminCommand::class,
                 SuperAdminCommand::class,
                 NoerdInfoCommand::class,
                 NoerdInstallCommand::class,
@@ -424,6 +363,80 @@ class NoerdServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register the shipped detail field types. Most are a plain Blade partial
+     * receiving the field array — those come from ONE map; only the three types
+     * needing extra props keep a resolver of their own.
+     */
+    private function bootFieldTypes(): void
+    {
+        $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
+
+        /** @var array<string, string> $viewOnlyTypes YAML type => Blade partial */
+        $viewOnlyTypes = [
+            'picklist' => 'noerd::components.forms.picklist',
+            'setupCollectionSelect' => 'noerd::components.forms.setup-collection-select',
+            'belongsToMany' => 'noerd::components.forms.belongs-to-many',
+            'checkbox' => 'noerd::components.forms.checkbox',
+            'richText' => 'noerd::components.forms.rich-text',
+            'translatableRichText' => 'noerd::components.forms.translatable-rich-text',
+            'translatableText' => 'noerd::components.forms.translatable-text',
+            'translatableTextarea' => 'noerd::components.forms.translatable-textarea',
+            'button' => 'noerd::components.forms.button',
+            'colorHex' => 'noerd::components.forms.color-hex',
+            'currency' => 'noerd::components.forms.input-currency',
+            'textarea' => 'noerd::components.forms.input-textarea',
+            'file' => 'noerd::components.forms.file',
+            'spacer' => 'noerd::components.forms.spacer',
+            'phone' => 'noerd::components.forms.phone',
+            'email' => 'noerd::components.forms.email',
+        ];
+
+        foreach ($viewOnlyTypes as $type => $view) {
+            $fieldTypeRegistry->register($type, FieldTypeDefinition::include(
+                $view,
+                resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
+            ));
+        }
+
+        // A select may build its options from a component method at render time.
+        $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
+            'noerd::components.forms.input-select',
+            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId): array {
+                $optionsMethod = $field['optionsMethod'] ?? null;
+
+                if ($optionsMethod && $component && method_exists($component, $optionsMethod)) {
+                    $resolved = $component->{$optionsMethod}();
+                    $options = [];
+
+                    foreach ($resolved as $value => $label) {
+                        $options[] = ['value' => $value, 'label' => $label];
+                    }
+
+                    $field['options'] = $options;
+                }
+
+                return ['field' => $field];
+            },
+        ));
+
+        $fieldTypeRegistry->register('image', FieldTypeDefinition::include(
+            'noerd::components.forms.image',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+                'field' => $field,
+                'detailData' => $detailData,
+            ],
+        ));
+
+        $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
+            'noerd::components.forms.icon',
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
+                'field' => $field,
+                'iconValue' => data_get($component?->detailData ?? $detailData ?? [], Str::after($field['name'] ?? '', 'detailData.')),
+            ],
+        ));
+    }
+
+    /**
      * Drop every request-scoped PHP static the package maintains. Runs on app
      * boot (fresh per test in one Pest process, per-request no-op under FPM)
      * and — via the Octane RequestReceived listener — before every Octane
@@ -441,6 +454,7 @@ class NoerdServiceProvider extends ServiceProvider
         CurrencyHelper::clearCache();
         FormatHelper::clearCache();
         NoerdSettings::clearCache();
+        SetupCollectionHelper::clearSelectOptionsCache();
         DatabaseSetupCollectionDefinitionRepository::resetCache();
         $this->app->make(ThemeRegistry::class)->clearCache();
     }

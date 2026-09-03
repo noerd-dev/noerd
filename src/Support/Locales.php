@@ -108,29 +108,6 @@ final class Locales
     }
 
     /**
-     * Human-readable picker label: the locale's display name in the current
-     * interface language plus a formatting sample, e.g.
-     * "Deutsch (Deutschland) · 1.234,56 · 31.12.2026".
-     */
-    public static function label(string $locale, ?string $displayLanguage = null): string
-    {
-        $displayName = Locale::getDisplayName($locale, $displayLanguage ?? app()->getLocale()) ?: $locale;
-
-        return $displayName . ' · ' . self::sample($locale);
-    }
-
-    /**
-     * What a number and a date look like in the locale ("1.234,56 · 31.12.2026").
-     */
-    public static function sample(string $locale): string
-    {
-        $number = (string) Number::format(1234.56, precision: 2, locale: $locale);
-        $date = Carbon::create(2026, 12, 31)->locale($locale)->isoFormat('L');
-
-        return $number . ' · ' . $date;
-    }
-
-    /**
      * @return array<string, string> locale => label, for `optionsMethod` selects
      */
     public static function options(?string $displayLanguage = null): array
@@ -141,5 +118,28 @@ final class Locales
         }
 
         return $options;
+    }
+
+    /**
+     * Human-readable picker label: the locale's display name in the current
+     * interface language plus a formatting sample, e.g.
+     * "Deutsch (Deutschland) · 1.234,56 · 31.12.2026".
+     */
+    private static function label(string $locale, ?string $displayLanguage = null): string
+    {
+        $displayName = Locale::getDisplayName($locale, $displayLanguage ?? app()->getLocale()) ?: $locale;
+
+        return $displayName . ' · ' . self::sample($locale);
+    }
+
+    /**
+     * What a number and a date look like in the locale ("1.234,56 · 31.12.2026").
+     */
+    private static function sample(string $locale): string
+    {
+        $number = (string) Number::format(1234.56, precision: 2, locale: $locale);
+        $date = Carbon::create(2026, 12, 31)->locale($locale)->isoFormat('L');
+
+        return $number . ' · ' . $date;
     }
 }

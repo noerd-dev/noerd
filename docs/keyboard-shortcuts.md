@@ -34,18 +34,16 @@ the button always shows the effective shortcut.
 ## KeyboardShortcutHelper API
 
 `Noerd\Helpers\KeyboardShortcutHelper` turns a configured shortcut into the two things a view
-needs: a JS match expression for `@keydown.window` and a badge string for a `<kbd>` element. All
-methods read `config("noerd.keyboard_shortcuts.{$configKey}")` and fall back to the given default.
+needs: a JS match expression for `@keydown.window` and a badge string for a `<kbd>` element. It
+reads `config("noerd.keyboard_shortcuts.{$configKey}")` and falls back to the given default.
 
 | Method | Returns |
 |--------|---------|
-| `toJs(string $configKey, string $default): string` | JS boolean expression over the event `e` (for `@keydown.window` handlers) |
-| `toBadge(string $configKey, string $default): string` | Human-readable badge string (Mac symbols, key symbols) |
-| `parse(string $configKey, string $default): array` | Both at once: `['js' => …, 'badge' => …]` |
+| `parse(string $configKey, string $default): array` | Both parts at once: `['js' => …, 'badge' => …]` |
 
 ### The JS expression
 
-`toJs()` builds an expression like:
+`parse()['js']` is an expression like:
 
 ```js
 e.key.toLowerCase() === "enter" && (e.ctrlKey || e.metaKey)
@@ -58,7 +56,7 @@ e.key.toLowerCase() === "enter" && (e.ctrlKey || e.metaKey)
 
 ### The badge
 
-`toBadge()` renders platform-aware symbols (macOS is detected from the request User-Agent):
+`parse()['badge']` renders platform-aware symbols (macOS is detected from the request User-Agent):
 
 - `ctrl` → `⌘` on Mac, `Ctrl` elsewhere; `meta` → `⌘` / `Win`; `alt` → `⌥` / `Alt`; `shift` → `⇧`
 - Special keys render as symbols: `enter` → `↵`, `backspace` → `⌫`, `delete` → `⌦`,

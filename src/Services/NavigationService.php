@@ -13,7 +13,7 @@ use Noerd\Support\LayoutState;
  * several views per page, and the structure itself is memoized per request
  * in StaticConfigHelper.
  */
-class NavigationService
+final class NavigationService
 {
     private array $subMenu = [];
 

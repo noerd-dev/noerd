@@ -6,8 +6,9 @@ namespace Noerd\Support;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Str;
+use Noerd\Models\SetupLanguage;
 
-class RelationFieldDefinition
+final class RelationFieldDefinition
 {
     /**
      * @param  ?string  $detailRoute  Named Route::livewire() route of the detail full
@@ -76,7 +77,7 @@ class RelationFieldDefinition
             // are bound — fall back to 'en' there.
             $app = Container::getInstance();
             if ($app->bound('session.store')) {
-                $selectedLanguage = session('selectedLanguage') ?? app()->getLocale();
+                $selectedLanguage = session(SetupLanguage::SESSION_KEY) ?? app()->getLocale();
             } elseif ($app->bound('config')) {
                 $selectedLanguage = app()->getLocale();
             } else {

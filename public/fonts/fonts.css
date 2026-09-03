@@ -3,26 +3,26 @@
     font-family: 'Nunito Sans';
     font-style: normal;
     font-weight: 300;
-    src: url('/vendor/noerd/fonts/NunitoSans-Light.ttf') format('truetype');
+    src: url('./NunitoSans-Light.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Nunito Sans';
     font-style: normal;
     font-weight: 400;
-    src: url('/vendor/noerd/fonts/NunitoSans-Regular.ttf') format('truetype');
+    src: url('./NunitoSans-Regular.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Nunito Sans';
     font-style: normal;
     font-weight: 600;
-    src: url('/vendor/noerd/fonts/NunitoSans-SemiBold.ttf') format('truetype');
+    src: url('./NunitoSans-SemiBold.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Nunito Sans';
     font-style: normal;
     font-weight: 700;
-    src: url('/vendor/noerd/fonts/NunitoSans-Bold.ttf') format('truetype');
+    src: url('./NunitoSans-Bold.ttf') format('truetype');
 }

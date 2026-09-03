@@ -32,17 +32,17 @@
         {{ __('Total Net') }}:
     </div>
     <div class="pl-3 pr-4 {{ $padding }} text-right text-sm text-gray-500 sm:pr-0">
-        {{ \Illuminate\Support\Number::currency($net ?? 0, in: $currency, locale: $locale) }}
+        {{ \Noerd\Helpers\CurrencyHelper::formatIn((float) ($net ?? 0), $currency, $locale) }}
     </div>
 </div>
 
 @foreach ($taxRows as $taxRow)
     <div class="flex">
         <div class="ml-auto pl-4 pr-3 {{ $padding }} text-right text-sm font-normal text-gray-500 sm:pl-0">
-            {{ __('Tax') }} {{ \Illuminate\Support\Number::percentage((float) $taxRow['rate'], precision: 2, locale: $locale) }}:
+            {{ __('Tax') }} {{ \Noerd\Helpers\FormatHelper::percent((float) $taxRow['rate'], 2, $locale) }}:
         </div>
         <div class="pl-3 pr-4 {{ $padding }} text-right text-sm text-gray-500 sm:pr-0">
-            {{ \Illuminate\Support\Number::currency($taxRow['total'] ?? 0, in: $currency, locale: $locale) }}
+            {{ \Noerd\Helpers\CurrencyHelper::formatIn((float) ($taxRow['total'] ?? 0), $currency, $locale) }}
         </div>
     </div>
 @endforeach
@@ -52,6 +52,6 @@
         {{ __('Total Gross') }}:
     </div>
     <div class="pl-3 pr-4 {{ $padding }} text-right text-sm text-black font-semibold sm:pr-0">
-        {{ \Illuminate\Support\Number::currency($gross ?? 0, in: $currency, locale: $locale) }}
+        {{ \Noerd\Helpers\CurrencyHelper::formatIn((float) ($gross ?? 0), $currency, $locale) }}
     </div>
 </div>

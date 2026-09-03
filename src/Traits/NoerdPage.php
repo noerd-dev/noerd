@@ -11,6 +11,9 @@ use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
+use Noerd\Services\RelationFieldRegistry;
+use Noerd\Support\LayoutFields;
+use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\ThemeContext;
 use RuntimeException;
 
@@ -76,13 +79,12 @@ trait NoerdPage
             return;
         }
 
-        $component = $this->componentName();
-
-        if (session('noerd.lastDetailComponent') !== $component) {
+        // READ ONLY. The matching write happens when the component renders —
+        // mount() re-runs on every modal-stack update (@teleport re-mounts
+        // Livewire children), so it must stay free of side effects.
+        if (session('noerd.lastDetailComponent') !== $this->componentName()) {
             $this->currentTab = 1;
         }
-
-        session(['noerd.lastDetailComponent' => $component]);
     }
 
     /**
@@ -219,6 +221,12 @@ trait NoerdPage
      */
     public function renderingNoerdPage(): void
     {
+        // Remember which component type was rendered last, so the next one of a
+        // DIFFERENT type starts on tab 1 (see mountNoerdPage()).
+        if (! $this->embedded) {
+            session(['noerd.lastDetailComponent' => $this->componentName()]);
+        }
+
         $this->themeContextBefore = ThemeContext::current();
 
         ThemeContext::set($this->detailTheme());
@@ -275,12 +283,22 @@ trait NoerdPage
     }
 
     /**
-     * Open the detail of the record a relation field points at. $detailRoute is
-     * the preferred target (the browser URL is rewritten to the record);
-     * $detailComponent stays as the fallback for an unregistered route.
+     * Open the detail of the record a relation field points at. This is a
+     * client-callable action, so the TARGET is never taken from the call: the
+     * field is looked up in the layout and its registered relation definition
+     * supplies the route (preferred — the browser URL is rewritten to the
+     * record) and the component fallback. A field name the layout does not
+     * declare — or one whose type is not a registered relation type — opens
+     * nothing.
      */
-    public function openRelationDetail(string $detailComponent, string $fieldName, ?string $detailRoute = null): void
+    public function openRelationDetail(string $fieldName): void
     {
+        $definition = $this->relationDefinitionForField($fieldName);
+
+        if (! $definition) {
+            return;
+        }
+
         $key = str_replace('detailData.', '', $fieldName);
         $id = data_get($this->detailData, $key);
 
@@ -293,8 +311,32 @@ trait NoerdPage
         }
 
         if ($id) {
-            Noerd::modalFor($detailRoute, $detailComponent, ['modelId' => $id]);
+            Noerd::modalFor($definition->detailRoute, $definition->getDetailComponent(), ['modelId' => $id]);
         }
+    }
+
+    /**
+     * The registered relation definition of a layout field, or null when the
+     * layout declares no such field or the field is not a relation type.
+     */
+    protected function relationDefinitionForField(string $fieldName): ?RelationFieldDefinition
+    {
+        if ($fieldName === '') {
+            return null;
+        }
+
+        $type = null;
+        LayoutFields::walk($this->pageLayout['fields'] ?? [], function (array $field) use ($fieldName, &$type): ?bool {
+            if (($field['name'] ?? null) !== $fieldName) {
+                return null;
+            }
+
+            $type = is_string($field['type'] ?? null) ? $field['type'] : null;
+
+            return false;
+        });
+
+        return $type === null ? null : app(RelationFieldRegistry::class)->resolve($type);
     }
 
     protected function initPage(): void

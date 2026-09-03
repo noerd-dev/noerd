@@ -22,7 +22,7 @@ use Noerd\Traits\NoerdPage;
  * per-component defaults) and cannot carry a trait-level attribute. Mount and
  * server-side writes are untouched — only the client update path is vetoed.
  */
-class LockedPropertiesHook extends ComponentHook
+final class LockedPropertiesHook extends ComponentHook
 {
     /**
      * @var array<int, string>

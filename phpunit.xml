@@ -17,6 +17,7 @@
     <source>
         <include>
             <directory>src</directory>
+            <directory>resources/views</directory>
         </include>
     </source>
 </phpunit>

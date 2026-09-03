@@ -20,7 +20,12 @@ class SetupMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = NoerdAuth::user();
-        abort_unless($user, 403);
+
+        // A guest is not "forbidden", they are unauthenticated — send them to
+        // the login screen exactly like AppAccessMiddleware does.
+        if (! $user) {
+            return redirect()->route('noerd.login');
+        }
 
         if (! TenantHelper::getSelectedTenantId()) {
             $firstTenantId = $user->accessibleTenants()->first()?->id;

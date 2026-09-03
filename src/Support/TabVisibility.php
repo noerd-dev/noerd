@@ -29,11 +29,7 @@ final class TabVisibility
             return false;
         }
 
-        return ! (isset($tab['viewExists']) && ! View::exists($tab['viewExists']))
-
-
-
-        ;
+        return ! (isset($tab['viewExists']) && ! View::exists($tab['viewExists']));
     }
 
     /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Services;
 
-class BrandService
+final class BrandService
 {
     /**
      * Get the resolved color values for the active brand,

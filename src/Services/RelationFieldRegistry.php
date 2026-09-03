@@ -9,7 +9,7 @@ use Livewire\Component;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\RelationFieldDefinition;
 
-class RelationFieldRegistry
+final class RelationFieldRegistry
 {
     /** @var array<string, RelationFieldDefinition> */
     private array $definitions = [];

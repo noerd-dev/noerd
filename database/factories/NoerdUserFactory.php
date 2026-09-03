@@ -19,6 +19,9 @@ class NoerdUserFactory extends Factory
 
     protected static ?string $password;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [
@@ -32,14 +35,30 @@ class NoerdUserFactory extends Factory
 
     public function unverified(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'email_verified_at' => null,
         ]);
     }
 
+    /**
+     * The installation-level admin flag. `super_admin` is $guarded — only a
+     * forced write reaches the column.
+     */
+    public function superAdmin(): static
+    {
+        return $this->afterMaking(static function (NoerdUser $user): void {
+            $user->forceFill(['super_admin' => true]);
+        });
+    }
+
+    /**
+     * Attaches a fresh tenant AND selects it in the tenant session — the state
+     * a screen test needs. Note the session mutation: it changes the request
+     * scope for everything that follows in the test.
+     */
     public function withExampleTenant(): static
     {
-        return $this->afterCreating(function ($user): void {
+        return $this->afterCreating(function (NoerdUser $user): void {
             $tenant = Tenant::factory()->create();
 
             $user->tenants()->attach($tenant->id);
@@ -47,9 +66,13 @@ class NoerdUserFactory extends Factory
         });
     }
 
+    /**
+     * Like withExampleTenant(), but with the ADMIN profile on the pivot — and
+     * with the same tenant-session mutation.
+     */
     public function adminUser(): static
     {
-        return $this->afterCreating(function ($user): void {
+        return $this->afterCreating(function (NoerdUser $user): void {
             $tenant = Tenant::factory()->create();
 
             // Create admin profile for the tenant
@@ -59,9 +82,13 @@ class NoerdUserFactory extends Factory
         });
     }
 
+    /**
+     * Selects an app in the tenant session and assigns it to the user's tenant.
+     * Also a session mutation — call it after withExampleTenant()/adminUser().
+     */
     public function withSelectedApp(string $app): static
     {
-        return $this->afterCreating(function ($user) use ($app): void {
+        return $this->afterCreating(function (NoerdUser $user) use ($app): void {
             $appName = mb_strtoupper($app);
             TenantHelper::setSelectedApp($appName);
 

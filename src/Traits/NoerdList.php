@@ -318,7 +318,6 @@ trait NoerdList
         $this->resetPage();
     }
 
-
     public function sortBy(string $field): void
     {
         // Refuse a column the query could not order by rather than let the header appear
@@ -511,7 +510,6 @@ trait NoerdList
      */
     public function findListAction(int|string $id): void
     {
-
         $listData = $this->resolvedListConfig()['rows'] ?? [];
 
         $item = is_array($listData) ? ($listData[$id] ?? null) : $listData->getCollection()->get($id);
@@ -725,7 +723,6 @@ trait NoerdList
         if ($this->minimal) {
             $this->perPage = $this->minimalLimit;
         }
-
     }
 
     public function exportCsv(): StreamedResponse
@@ -1404,7 +1401,6 @@ trait NoerdList
      */
     protected function buildList(mixed $rows, string|array|null $config = null): array
     {
-
         $listSettings = is_array($config)
             ? $config
             : $this->getListConfig($config);

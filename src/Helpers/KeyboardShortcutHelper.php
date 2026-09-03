@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Helpers;
 
-class KeyboardShortcutHelper
+final class KeyboardShortcutHelper
 {
     private const KEY_SYMBOLS = [
         'enter' => '↵',
@@ -13,27 +13,6 @@ class KeyboardShortcutHelper
         'escape' => '⎋',
         'tab' => '⇥',
     ];
-
-    /**
-     * Build a JS boolean expression for use in @keydown.window handlers.
-     * Includes an input guard for shortcuts without modifiers.
-     */
-    public static function toJs(string $configKey, string $default): string
-    {
-        $shortcut = config("noerd.keyboard_shortcuts.{$configKey}", $default);
-
-        return self::buildJs($shortcut);
-    }
-
-    /**
-     * Build a badge string with Mac symbols and key symbols.
-     */
-    public static function toBadge(string $configKey, string $default): string
-    {
-        $shortcut = config("noerd.keyboard_shortcuts.{$configKey}", $default);
-
-        return self::buildBadge($shortcut);
-    }
 
     /**
      * Build both JS expression and badge string.

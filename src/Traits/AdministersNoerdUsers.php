@@ -23,11 +23,13 @@ trait AdministersNoerdUsers
         }
 
         $user = NoerdUser::find($this->modelId);
-        if (! $user) {
+        $admin = NoerdAuth::user();
+
+        if (! $user || ! $admin) {
             return false;
         }
 
-        return $user->tenants->contains(NoerdAuth::user()->selected_tenant_id);
+        return $user->tenants->contains($admin->selected_tenant_id);
     }
 
     /**
@@ -81,11 +83,14 @@ trait AdministersNoerdUsers
         $user = NoerdUser::findOrFail($this->modelId);
 
         $user->tenants()->detach(NoerdAuth::user()->selected_tenant_id);
-        $this->closeModalProcess($this->getListComponent());
 
         // If user has no more tenants, delete the user
         if ($user->tenants()->count() === 0) {
             $user->delete();
         }
+
+        // Close only after the account is fully gone — the list refresh the
+        // close dispatches must never race an account that is still there.
+        $this->closeModalProcess($this->getListComponent());
     }
 }

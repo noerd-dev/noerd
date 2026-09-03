@@ -39,15 +39,13 @@ it('uses fallback default when config key is missing', function (): void {
 it('generates badge with key symbol for special keys', function (): void {
     config()->set('noerd.keyboard_shortcuts.delete', 'ctrl+backspace');
 
-    $badge = KeyboardShortcutHelper::toBadge('delete', 'ctrl+backspace');
-
-    expect($badge)->toContain('⌫');
+    expect(KeyboardShortcutHelper::parse('delete', 'ctrl+backspace')['badge'])->toContain('⌫');
 });
 
-it('generates JS expression via toJs method', function (): void {
+it('generates a JS expression guarding against input elements', function (): void {
     config()->set('noerd.keyboard_shortcuts.new_entry', 'n');
 
-    $js = KeyboardShortcutHelper::toJs('new_entry', 'n');
+    $js = KeyboardShortcutHelper::parse('new_entry', 'n')['js'];
 
     expect($js)->toContain('e.key.toLowerCase() === "n"')
         ->and($js)->toContain('INPUT');

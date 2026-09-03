@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Support;
 
-class FieldTypeDefinition
+final class FieldTypeDefinition
 {
     /**
      * @param  array<string, mixed>  $props

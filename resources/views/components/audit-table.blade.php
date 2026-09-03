@@ -31,12 +31,12 @@
 
     <tbody class="divide-y divide-gray-200 bg-white">
         @foreach ($audits as $audit)
-            <tr>
+            <tr wire:key="audit-{{ $audit['id'] ?? $loop->index }}">
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
                     {{ \Noerd\Helpers\FormatHelper::date($audit['created_at']) }}
                 </td>
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
-                    {{ \Carbon\Carbon::parse($audit['created_at'])->format('H:i') }}
+                    {{ \Noerd\Helpers\FormatHelper::time($audit['created_at']) }}
                 </td>
                 <td class="px-3 py-2 text-sm whitespace-nowrap text-gray-900">
                     {{ $auditUserEmails[$audit['user_id']] ?? '' }}

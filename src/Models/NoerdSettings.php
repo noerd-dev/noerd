@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace Noerd\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Noerd\Database\Factories\NoerdSettingsFactory;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Helpers\ThemeHelper;
 
 class NoerdSettings extends Model
 {
+    use HasFactory;
+
     protected $table = 'noerd_settings';
 
-    protected $guarded = [];
+    protected $guarded = ['id'];
 
     /**
      * Request-scoped memo of the tenant singleton rows: the currency and the
@@ -52,18 +58,27 @@ class NoerdSettings extends Model
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 
+    protected static function newFactory(): NoerdSettingsFactory
+    {
+        return NoerdSettingsFactory::new();
+    }
+
     protected static function booted(): void
     {
-        // A saved or deleted row invalidates the memo, so a settings save is
-        // visible to formatting in the same request (and the same test).
+        // A saved or deleted row invalidates the memo AND every memo derived
+        // from it, so a settings save is visible to formatting and theming in
+        // the same request (and the same test) — no matter who wrote the row.
         static::saved(static function (): void {
-            self::clearCache();
+            self::flushDerivedCaches();
         });
         static::deleted(static function (): void {
-            self::clearCache();
+            self::flushDerivedCaches();
         });
     }
 
+    /**
+     * @return array<string, string>
+     */
     /**
      * @return array<string, string>
      */
@@ -72,5 +87,16 @@ class NoerdSettings extends Model
         return [
             'detail_theme_enforced' => 'boolean',
         ];
+    }
+
+    /**
+     * The memos that read this row: the settings memo itself plus the locale
+     * and theme resolutions derived from it.
+     */
+    private static function flushDerivedCaches(): void
+    {
+        self::clearCache();
+        FormatHelper::clearCache();
+        ThemeHelper::clearCache();
     }
 }

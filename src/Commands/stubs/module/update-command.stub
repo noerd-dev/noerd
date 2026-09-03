@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Noerd\{{ModuleName}}\Commands;
 
 class {{ModuleName}}UpdateCommand extends {{ModuleName}}InstallCommand

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Services;
 
-class PicklistRegistry
+final class PicklistRegistry
 {
     /** @var array<string, callable> */
     private array $providers = [];

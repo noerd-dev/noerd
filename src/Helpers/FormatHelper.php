@@ -76,21 +76,6 @@ final class FormatHelper
         return Locales::defaultFor(app()->getLocale());
     }
 
-    /**
-     * Run the callback with a fixed locale for every format call inside it.
-     */
-    public static function withLocale(string $locale, callable $callback): mixed
-    {
-        $previous = self::$override;
-        self::$override = Locales::normalize($locale);
-
-        try {
-            return $callback();
-        } finally {
-            self::$override = $previous;
-        }
-    }
-
     public static function clearCache(): void
     {
         self::$localeCache = [];

@@ -12,7 +12,7 @@ use Noerd\Services\DynamicNavigationRegistry;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
-class StaticConfigHelper
+final class StaticConfigHelper
 {
     /** Container key for the optional layout-override hook (see layoutOverrides()). */
     public const LAYOUT_OVERRIDES_BINDING = 'noerd.layout-overrides';

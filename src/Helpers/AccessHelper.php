@@ -123,14 +123,6 @@ final class AccessHelper
     }
 
     /**
-     * Named action permission (e.g. 'production_start_run'), declared in code
-     * via the ActionPermissionRegistry and checked at its call sites (the
-     * `action-permission:{key}` middleware or a manual call). Actions are
-     * mutations: the profile baseline treats them like writes.
-     *
-     * @param  string|null  $actionKey  null/'' (no action known) is allowed
-     */
-    /**
      * A host-defined gate or policy ability (YAML `policy:` key of quick-menu
      * buttons and dashboard widgets): a `Gate::define()`d ability is checked as
      * such, anything else against the Tenant policy.
@@ -146,6 +138,14 @@ final class AccessHelper
         return Gate::has($ability) ? $user->can($ability) : $user->can($ability, Tenant::class);
     }
 
+    /**
+     * Named action permission (e.g. 'production_start_run'), declared in code
+     * via the ActionPermissionRegistry and checked at its call sites (the
+     * `action-permission:{key}` middleware or a manual call). Actions are
+     * mutations: the profile baseline treats them like writes.
+     *
+     * @param  string|null  $actionKey  null/'' (no action known) is allowed
+     */
     public static function canPerformAction(?string $actionKey): bool
     {
         if ($actionKey === null || $actionKey === '') {

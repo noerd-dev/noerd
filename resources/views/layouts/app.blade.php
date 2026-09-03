@@ -54,31 +54,10 @@
 
     <div
         class="h-dvh"
-        x-data="{
-           openProfile: false,
-           isModal: false,
-           selectedRow: 0,
-           activeList: '',
-           isDesktop: window.innerWidth >= 1024,
-           desktopSidebar: {{ $showSidebar ? 'true' : 'false' }},
-           desktopAppbar: @js(\Noerd\Support\LayoutState::appBarVisible()),
-           showSidebar: window.innerWidth >= 1024 ? {{ $showSidebar ? 'true' : 'false' }} : false,
-           showAppbar: window.innerWidth >= 1024 ? @js(\Noerd\Support\LayoutState::appBarVisible()) : false,
-           handleResize() {
-               const desktop = window.innerWidth >= 1024;
-               if (desktop === this.isDesktop) return;
-               this.isDesktop = desktop;
-               if (desktop) {
-                   this.showSidebar = this.desktopSidebar;
-                   this.showAppbar = this.desktopAppbar;
-               } else {
-                   this.desktopSidebar = this.showSidebar;
-                   this.desktopAppbar = this.showAppbar;
-                   this.showSidebar = false;
-                   this.showAppbar = false;
-               }
-           },
-           }"
+        x-data="noerdAppShell(@js([
+            'showSidebar' => (bool) $showSidebar,
+            'showAppbar' => \Noerd\Support\LayoutState::appBarVisible(),
+        ]))"
         @resize.window="handleResize()"
     >
         @inject('navigation', 'Noerd\Services\NavigationService')

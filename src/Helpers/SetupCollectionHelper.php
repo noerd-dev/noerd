@@ -8,7 +8,7 @@ use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupLanguage;
 
-class SetupCollectionHelper
+final class SetupCollectionHelper
 {
     /**
      * Field types a collection definition may use, value => display label.
@@ -35,6 +35,9 @@ class SetupCollectionHelper
         'datetime' => 'DateTime',
         'number' => 'Number',
     ];
+
+    /** @var array<string, array<int, array{value: mixed, label: string}>> */
+    private static array $selectOptionsMemo = [];
 
     public function __construct(
         private readonly SetupCollectionDefinitionRepositoryContract $repository,
@@ -78,18 +81,51 @@ class SetupCollectionHelper
      */
     public static function selectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null): array
     {
-        $collection = SetupCollection::where('collection_key', $collectionKey)->first();
-        if (! $collection) {
-            return [];
+        return app(self::class)->resolveSelectOptions($collectionKey, $displayField, $valueField);
+    }
+
+    /**
+     * Drop the per-request select-option memo (entry writes, tests).
+     */
+    public static function clearSelectOptionsCache(): void
+    {
+        self::$selectOptionsMemo = [];
+    }
+
+    /**
+     * Instance method behind selectOptions(). A list renders the same picklist
+     * for every row, so the entries are read ONCE per request and key
+     * (collection + fields + tenant + language).
+     *
+     * @return array<int, array{value: mixed, label: string}>
+     */
+    public function resolveSelectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null): array
+    {
+        $locale = SetupLanguage::selectedCode();
+        $memoKey = implode('|', [
+            (string) TenantHelper::getSelectedTenantId(),
+            $locale,
+            $collectionKey,
+            $displayField,
+            (string) $valueField,
+        ]);
+
+        if (array_key_exists($memoKey, self::$selectOptionsMemo)) {
+            return self::$selectOptionsMemo[$memoKey];
         }
 
-        $locale = session('selectedLanguage') ?? app()->getLocale();
+        $collection = SetupCollection::where('collection_key', $collectionKey)->first();
+        if (! $collection) {
+            return self::$selectOptionsMemo[$memoKey] = [];
+        }
+
+        $defaultCode = SetupLanguage::defaultCode();
         $options = [];
 
         foreach ($collection->entries as $entry) {
             $label = $entry->data[$displayField] ?? '';
             if (is_array($label)) {
-                $label = $label[$locale] ?? $label[SetupLanguage::getDefaultCode()] ?? reset($label) ?: '';
+                $label = $label[$locale] ?? $label[$defaultCode] ?? reset($label) ?: '';
             }
 
             $options[] = [
@@ -98,7 +134,7 @@ class SetupCollectionHelper
             ];
         }
 
-        return $options;
+        return self::$selectOptionsMemo[$memoKey] = $options;
     }
 
     /**

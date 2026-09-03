@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Exception;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Noerd\Commands\Concerns\PublishesNoerdContent;
+use Noerd\Commands\Concerns\RunsNpmBuild;
 
-class NoerdUpdateCommand extends NoerdInstallCommand
+class NoerdUpdateCommand extends Command
 {
+    use PublishesNoerdContent;
+    use RunsNpmBuild;
+
     protected $signature = 'noerd:update {--force : Overwrite existing files without asking} {--build : Run npm build after update}';
 
     protected $description = 'Refresh the published setup app configs, config and frontend assets of an existing installation';

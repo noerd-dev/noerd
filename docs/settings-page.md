@@ -82,7 +82,7 @@ public function mount(): void
     $this->initSettings();
 
     // effective defaults for a tenant without a settings row
-    $this->detailData['currency'] = $this->detailData['currency'] ?? 'EUR';
+    $this->detailData['currency'] = $this->detailData['currency'] ?? CurrencyHelper::codeForTenant();
 }
 
 public function store(): void

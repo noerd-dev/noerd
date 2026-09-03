@@ -17,7 +17,7 @@ use NumberFormatter;
  * `1234.56` in USD reads `$1,234.56` for an `en-US` reader and `1.234,56 $`
  * for a `de-DE` reader.
  */
-class CurrencyHelper
+final class CurrencyHelper
 {
     /**
      * The currencies a tenant may choose from (ISO 4217 code => English name;
@@ -32,6 +32,9 @@ class CurrencyHelper
         'DKK' => 'Danish Krone',
     ];
 
+    /** The currency used when neither the tenant nor the config names a valid one. */
+    public const DEFAULT_CURRENCY = 'EUR';
+
     /** @var array<string, array{code: string, symbol: string, decimal_separator: string, thousands_separator: string, symbol_position: string}> */
     protected static array $configCache = [];
 
@@ -43,11 +46,15 @@ class CurrencyHelper
     {
         $code = NoerdSettings::forTenant($tenantId)?->currency;
 
-        if (! is_string($code) || ! isset(self::CURRENCIES[$code])) {
-            $code = (string) config('noerd.currency.default', 'EUR');
+        if (is_string($code) && isset(self::CURRENCIES[$code])) {
+            return $code;
         }
 
-        return isset(self::CURRENCIES[$code]) ? $code : 'EUR';
+        // The configured default is the ONE fallback — validated against the
+        // supported list so a typo cannot produce an unformattable currency.
+        $configured = (string) config('noerd.currency.default', self::DEFAULT_CURRENCY);
+
+        return isset(self::CURRENCIES[$configured]) ? $configured : self::DEFAULT_CURRENCY;
     }
 
     /**

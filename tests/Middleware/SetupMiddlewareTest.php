@@ -10,7 +10,6 @@ use Noerd\Middleware\SetupMiddleware;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 uses(TestCase::class, RefreshDatabase::class);
 
@@ -25,13 +24,14 @@ beforeEach(function (): void {
     config()->set('noerd.features.multi_tenant', true);
 });
 
-it('forbids a guest', function (): void {
+it('redirects a guest to the login screen instead of forbidding them', function (): void {
     // The route stack redirects a guest at NoerdAuthenticate, so the middleware's
     // own guest branch is exercised directly.
     $middleware = new SetupMiddleware();
 
-    expect(fn(): mixed => $middleware->handle(Request::create('/setup', 'GET'), fn() => response('OK')))
-        ->toThrow(HttpException::class);
+    $response = $middleware->handle(Request::create('/setup', 'GET'), fn() => response('OK'));
+
+    expect($response->isRedirect(route('noerd.login')))->toBeTrue();
 });
 
 it('sends an admin without any tenant to the no-tenant page without selecting an app', function (): void {

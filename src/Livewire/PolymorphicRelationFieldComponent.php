@@ -8,8 +8,6 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Reactive;
-use Livewire\Component;
 use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\RelationFieldDefinition;
@@ -19,22 +17,12 @@ use Noerd\Support\RelationFieldDefinition;
  * variants differ ONLY in their markup: each single-file component is
  * `new class extends PolymorphicRelationFieldComponent {}` plus its Blade.
  */
-abstract class PolymorphicRelationFieldComponent extends Component
+abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
 {
-    // Mount-established identity/config is #[Locked] — a crafted update must
-    // never repoint the field at another form key or widen the type whitelist.
-    // $value, $currentType, $selectedRelationType and $displayTitle stay
-    // mutable: they carry the user's selection.
-    #[Locked]
-    public string $fieldName = '';
-
+    // $currentType and $selectedRelationType stay mutable on purpose: they
+    // carry the user's type choice, re-checked against $allowedTypes on use.
     #[Locked]
     public string $typeField = '';
-
-    #[Locked]
-    public string $label = '';
-
-    public mixed $value = null;
 
     public ?string $currentType = null;
 
@@ -42,47 +30,11 @@ abstract class PolymorphicRelationFieldComponent extends Component
     #[Locked]
     public array $allowedTypes = [];
 
-    #[Locked]
-    public bool $required = false;
-
-    #[Locked]
-    public bool $readonly = false;
-
-    /** Optional YAML `helpText`, rendered as a tooltip next to the label. */
-    #[Locked]
-    public string $helpText = '';
-
-    #[Locked]
-    public mixed $modelId = null;
-
-    /** Row number supplied by the detail block in themes that number their rows. */
-    #[Locked]
-    public ?int $number = null;
-
-    /** Theme the owning detail block renders in — selects the element template. */
-    #[Locked]
-    public string $theme = 'default';
-
     public string $selectedRelationType = '';
-
-    public string $displayTitle = '';
 
     /**
      * @param  array<int, string>  $allowedTypes
      */
-    /** Livewire id of the owning detail — see RelationFieldComponent::$owner. */
-    #[Locked]
-    public ?string $owner = null;
-
-    /**
-     * Validation messages of the owning detail for this field — reactive, so
-     * a failed store() shows them without re-mounting the field.
-     *
-     * @var array<int, string>
-     */
-    #[Reactive]
-    public array $errorMessages = [];
-
     public function mount(
         string $fieldName,
         string $typeField,
@@ -114,15 +66,6 @@ abstract class PolymorphicRelationFieldComponent extends Component
 
         $this->selectedRelationType = $this->resolveRelationTypeFromModelType($currentType) ?? '';
         $this->resolveDisplayTitle();
-    }
-
-    /**
-     * The `context` a picker opened by this field reports back with — the
-     * field name plus the owner id (see RelationFieldComponent::selectionContext()).
-     */
-    public function selectionContext(): string
-    {
-        return $this->owner ? $this->fieldName . '@' . $this->owner : $this->fieldName;
     }
 
     #[On('noerdRelationSelected')]
@@ -237,27 +180,6 @@ abstract class PolymorphicRelationFieldComponent extends Component
     public function activeListComponent(): ?string
     {
         return $this->activeDefinition()?->listComponent;
-    }
-
-    /**
-     * The field array the numbered row chrome expects.
-     *
-     * @return array<string, mixed>
-     */
-    public function numberedRowField(): array
-    {
-        return [
-            'name' => $this->fieldName,
-            'label' => $this->label,
-            'required' => $this->required,
-            'number' => $this->number,
-            'helpText' => $this->helpText,
-        ];
-    }
-
-    protected function acceptsSelectionContext(?string $context): bool
-    {
-        return $context !== null && in_array($context, [$this->fieldName, $this->selectionContext()], true);
     }
 
     private function activeDefinition(): ?RelationFieldDefinition

@@ -11,7 +11,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Installation](installation.md) — requirements, `noerd:install`, created tables, routes and the frontend scaffold
 - [Example Application](example-application.md) — the Demo Customers app installed by `noerd:demo`, as a reference
 - [Creating Apps](make-app.md) — register a tenant app with its own dashboard, in the project or as a module (`noerd:make-app`)
-- [Creating Modules](creating-modules.md) — scaffold a module with `noerd:module`, install/update commands, custom attributes
+- [Creating Modules](creating-modules.md) — scaffold a module with `noerd:make-module`, install/update commands, custom attributes
 - [Artisan Commands](artisan-commands.md) — every `noerd:*` command with its options
 
 ### Building screens
@@ -37,6 +37,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Dashboard Widgets](dashboard-widgets.md) — widgets below the app tiles on the apps dashboard
 - [Quick Menu](quick-menu.md) — tenant-scoped action buttons in the header
 - [Banner](banner.md) — notification banners at the top of the application
+- [Activity Log](audit-log.md) — the audit-trail modal for auditable models
 - [Keyboard Shortcuts](keyboard-shortcuts.md) — configurable list and detail shortcuts
 - [Brand (Colors & Branding)](brand.md) — color palette, logo, favicon, sidebar dimensions
 - [Languages](languages.md) — interface languages, translations and translatable collection values

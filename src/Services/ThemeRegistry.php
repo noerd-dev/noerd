@@ -17,7 +17,7 @@ use Noerd\Support\ThemeDefinition;
  * hint paths walk the same root order — so a project may override single
  * element files of a built-in theme without shipping its own theme.yml.
  */
-class ThemeRegistry
+final class ThemeRegistry
 {
     /** @var array<string, ThemeDefinition> */
     private array $themes = [];

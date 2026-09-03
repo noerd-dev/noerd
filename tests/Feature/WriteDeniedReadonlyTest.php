@@ -38,6 +38,20 @@ function boundSelectTags(string $html): array
     return $matches[0];
 }
 
+/** Whether the rich-text editor was initialised editable. */
+function tiptapIsEditable(string $html): ?bool
+{
+    if (preg_match("/noerdTiptap\\(JSON\\.parse\\('(.*?)'\\)\\)/s", $html, $matches) !== 1) {
+        return null;
+    }
+
+    // @js() emits JSON.parse('…') with the payload escaped as a JS string
+    // literal (\u0022 for every quote) — resolve that layer first.
+    $json = json_decode('"' . $matches[1] . '"');
+
+    return is_string($json) ? (json_decode($json, true)['editable'] ?? null) : null;
+}
+
 function tagIsInert(string $tag): bool
 {
     // Tailwind variant prefixes (disabled:*) live inside class="…" — strip the
@@ -57,8 +71,8 @@ it('renders every field editable when writing is allowed', function (): void {
         expect(tagIsInert($tag))->toBeFalse();
     }
 
-    expect($html)->toContain('wire:click="doSomething"')
-        ->toContain('editable: true,');
+    expect($html)->toContain('wire:click="doSomething"');
+    expect(tiptapIsEditable($html))->toBeTrue();
 });
 
 it('renders every field readonly or disabled when writing is denied', function (string $theme): void {
@@ -86,8 +100,8 @@ it('renders every field readonly or disabled when writing is denied', function (
         expect(tagIsInert($tag))->toBeTrue();
     }
 
-    expect($html)->not->toContain('wire:click="doSomething"')
-        ->toContain('editable: false,');
+    expect($html)->not->toContain('wire:click="doSomething"');
+    expect(tiptapIsEditable($html))->toBeFalse();
 })->with(['default', 'compact', 'numbered']);
 
 it('renders nested block fields readonly when writing is denied', function (): void {

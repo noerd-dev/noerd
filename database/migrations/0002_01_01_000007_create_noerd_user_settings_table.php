@@ -16,12 +16,9 @@ return new class extends Migration {
         Schema::create('noerd_user_settings', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('noerd_users')->cascadeOnDelete();
-            $table->unsignedBigInteger('selected_tenant_id')->nullable();
+            $table->foreignId('selected_tenant_id')->nullable()->constrained('tenants')->nullOnDelete();
             $table->string('locale', 5)->default('en');
             $table->timestamps();
-
-            $table->foreign('selected_tenant_id')->references('id')->on('tenants')->onDelete('set null');
-            $table->index('selected_tenant_id');
         });
     }
 

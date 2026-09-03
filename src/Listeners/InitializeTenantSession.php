@@ -8,6 +8,7 @@ use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Models\NoerdUser;
 
 /**
  * Seeds the tenant session from the user's persisted selection the moment a
@@ -26,8 +27,17 @@ class InitializeTenantSession
 
         $user = $event->user;
 
+        // The guard name alone is no proof of the user CLASS (a host may point
+        // another provider at the same guard) — and only a NoerdUser carries the
+        // tenant API used below.
+        if (! $user instanceof NoerdUser) {
+            return;
+        }
+
         if (! TenantHelper::hasTenant()) {
-            $savedTenantId = $user->setting->selected_tenant_id;
+            // Read-only: authentication happens on every request, so a missing
+            // settings row must never trigger the firstOrCreate write path.
+            $savedTenantId = $user->userSetting()->first()?->selected_tenant_id;
 
             if ($savedTenantId && $user->canAccessTenant($savedTenantId)) {
                 TenantHelper::setSelectedTenantId($savedTenantId);

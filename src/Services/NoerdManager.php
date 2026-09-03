@@ -7,7 +7,7 @@ namespace Noerd\Services;
 use Livewire\Livewire;
 use RuntimeException;
 
-class NoerdManager
+final class NoerdManager
 {
     /**
      * Open a Livewire component in a noerd modal, e.g. 'crm::task-create-modal'.

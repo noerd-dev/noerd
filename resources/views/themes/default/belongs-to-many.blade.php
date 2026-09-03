@@ -14,51 +14,10 @@
     $readonly = $field['readonly'] ?? false;
 
     $options = $optionsMethod && method_exists($this, $optionsMethod) ? $this->{$optionsMethod}() : [];
-    $selectedIds = $this->{$name} ?? [];
 @endphp
 
 <div
-    x-data="{
-    search: '',
-    open: false,
-    highlightedIndex: 0,
-    selectedIds: @entangle($name),
-    options: {{ json_encode($options) }},
-    get filteredOptions() {
-        return Object.entries(this.options).filter(([id, label]) =>
-            ! this.selectedIds.includes(parseInt(id)) &&
-            label.toLowerCase().includes(this.search.toLowerCase())
-        );
-    },
-    addItem(id) {
-        if (id && ! this.selectedIds.includes(parseInt(id))) {
-            this.selectedIds.push(parseInt(id));
-            this.search = '';
-            this.highlightedIndex = 0;
-        }
-    },
-    removeItem(id) {
-        this.selectedIds = this.selectedIds.filter(i => i !== parseInt(id));
-    },
-    getLabel(id) {
-        return this.options[id] || '';
-    },
-    selectHighlighted() {
-        if (this.filteredOptions.length > 0 && this.highlightedIndex < this.filteredOptions.length) {
-            this.addItem(this.filteredOptions[this.highlightedIndex][0]);
-        }
-    },
-    moveUp() {
-        if (this.highlightedIndex > 0) {
-            this.highlightedIndex--;
-        }
-    },
-    moveDown() {
-        if (this.highlightedIndex < this.filteredOptions.length - 1) {
-            this.highlightedIndex++;
-        }
-    }
-}"
+    x-data="noerdBelongsToMany({ options: @js($options), selectedIds: @entangle($name) })"
     @click.outside="open = false"
 >
     <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" />

@@ -4,7 +4,6 @@
     'label' => '',
     'readonly' => false,
     'placeholder' => null,
-    'live' => false,
     'required' => false,
 ])
 
@@ -13,14 +12,14 @@
     $label = $field['label'] ?? $label;
     $readonly = $field['readonly'] ?? $readonly;
     $placeholder = $field['placeholder'] ?? $placeholder;
-    $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 
     $currencyConfig = \Noerd\Helpers\CurrencyHelper::configForTenant();
-    $symbol = $currencyConfig['symbol'] ?? '€';
-    $decSep = $currencyConfig['decimal_separator'] ?? ',';
-    $thousSep = $currencyConfig['thousands_separator'] ?? '.';
-    $symbolPosition = $currencyConfig['symbol_position'] ?? 'after';
+    // configForTenant() always returns every key — no fallbacks needed.
+    $symbol = $currencyConfig['symbol'];
+    $decSep = $currencyConfig['decimal_separator'];
+    $thousSep = $currencyConfig['thousands_separator'];
+    $symbolPosition = $currencyConfig['symbol_position'];
 @endphp
 
 <div>
@@ -28,14 +27,17 @@
 
     <div
         class="relative"
-        wire:ignore.self
         x-data="noerdCurrency({ name: @js($name), decSep: @js($decSep), thousSep: @js($thousSep) })"
     >
         @if ($symbolPosition === 'before')
             <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-zinc-400">{{ $symbol }}</span>
         @endif
 
+        {{-- wire:ignore on the INPUT: its displayed value is written imperatively
+             by Alpine and a morph of the input would drop the formatting. The
+             wrapper stays morphable so symbol/label/errors keep updating. --}}
         <input
+            wire:ignore
             x-ref="input"
             {{ $readonly ? 'readonly' : '' }}
             autocomplete="off"

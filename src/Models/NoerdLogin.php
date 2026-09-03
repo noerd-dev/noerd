@@ -39,6 +39,9 @@ class NoerdLogin extends Model
         return NoerdLoginFactory::new();
     }
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [

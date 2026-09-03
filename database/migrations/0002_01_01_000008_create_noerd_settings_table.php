@@ -16,7 +16,7 @@ return new class extends Migration {
         Schema::create('noerd_settings', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('tenant_id')->unique()->constrained('tenants')->cascadeOnDelete();
-            $table->string('currency')->default('EUR');
+            $table->string('currency', 3)->default('EUR');
             $table->string('detail_theme')->nullable();
             $table->boolean('detail_theme_enforced')->default(false);
             $table->timestamps();
