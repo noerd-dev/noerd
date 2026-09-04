@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ViewErrorBag;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
 use Noerd\Tests\TestCase;
@@ -111,5 +112,28 @@ describe('tab panel scrolling', function (): void {
         assertElementHasClasses(Livewire::test('noerd-test::page-chrome-detail')->html(), $bodyClasses);
 
         assertNoElementHasClasses(Livewire::test('noerd-test::page-chrome-list')->html(), $bodyClasses);
+    });
+});
+
+/*
+ | x-noerd::tab-panel clips at its top edge (overflow-y-auto), so the first form
+ | row must never start flush against it — a flush input loses its top border and
+ | its focus ring. Quick-create drops the block heading and replaces the theme's
+ | grid padding, which is where that gap would otherwise disappear.
+ */
+describe('quick create spacing', function (): void {
+
+    it('keeps the first quick-create field clear of the scroll container clip edge', function (): void {
+        // Form fields resolve $errors from the request; Blade::render has none.
+        view()->share('errors', new ViewErrorBag());
+
+        $html = Blade::render(<<<'BLADE'
+            <x-noerd::tab-content
+                :layout="['quickCreate' => true, 'fields' => [['name' => 'detailData.name', 'label' => 'Name', 'type' => 'text', 'required' => true]]]"
+                :modelId="null" />
+        BLADE);
+
+        assertElementHasClasses($html, ['[&>div>div]:pt-2']);
+        assertNoElementHasClasses($html, ['[&>div>div]:py-0']);
     });
 });

@@ -25,7 +25,11 @@
         unset($quickLayout['tabs'], $quickLayout['title'], $quickLayout['description']);
     @endphp
 
-    <div class="[&>div>div]:py-0">
+    {{-- The theme's grid padding is replaced by a fixed 8px top gap: quick-create
+         drops the block heading, so the first field would otherwise sit flush
+         against the top edge of the hosting scroll container (x-noerd::tab-panel
+         clips there) and lose its top border and focus ring. --}}
+    <div class="[&>div>div]:pt-2 [&>div>div]:pb-0">
         @include('noerd::components.detail.block', array_merge($quickLayout, ['detailData' => $detailData]))
     </div>
 @else
