@@ -41,11 +41,19 @@ new class extends Component {
             'profile_key' => Profile::Admin->value,
         ]);
 
+        // The pivot flags are copied along: an app the source tenant hides is
+        // module-internal (it backs another app's screens rather than standing
+        // on its own), so a plain attach would surface it in the copy's app
+        // switcher. syncWithoutDetaching rather than attach so an app a module
+        // already assigned during creation does not hit the unique index.
         $selectedTenant = TenantHelper::getSelectedTenant();
         $apps = $selectedTenant?->tenantApps ?? collect();
-        foreach ($apps as $app) {
-            $tenant->tenantApps()->attach($app->id);
-        }
+        $tenant->tenantApps()->syncWithoutDetaching(
+            $apps->mapWithKeys(fn($app): array => [$app->id => [
+                'is_hidden' => (bool) $app->pivot->is_hidden,
+                'sort_order' => (int) $app->pivot->sort_order,
+            ]])->all(),
+        );
 
         TenantHelper::setSelectedTenantId($tenant->id);
 
