@@ -697,9 +697,11 @@ custom `mount()` that replaces `$detailData` wholesale.
 - **`<x-noerd::action-message on="saved">Saved.</x-noerd::action-message>`** — a transient
   confirmation line. It listens for the Livewire event named in `on` and fades itself out after two
   seconds; the slot replaces the default text.
-- **`<x-noerd::markdown :content="$text" />`** — renders (tenant-editable) markdown. The content is
-  HTML-escaped *before* it is parsed and unsafe links are dropped, so embedded markup renders as
-  literal text; consecutive blank lines are preserved.
+- **`<x-noerd::rich-text :content="$text" />`** — renders the (tenant-editable) HTML produced by
+  `<x-noerd::forms.tiptap>`. The content passes through `Noerd\Support\HtmlSanitizer` first: the
+  editor's tag subset survives, every other element is unwrapped to its text, `script`/`style`/
+  `iframe`/form elements are removed with their content, attributes outside the allow-list (so all
+  `on*` handlers) are stripped and `href`/`src` may only use http, https, mailto or tel.
 
 ## Naming Conventions
 
