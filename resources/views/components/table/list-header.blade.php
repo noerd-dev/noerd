@@ -45,24 +45,28 @@
             @endif
         >
             <div class="flex min-w-0 shrink-0 items-center gap-2">
-                <div class="min-w-0 truncate">
+                {{-- The title must never clip its own overflow: the view switcher's
+                     dropdown is an absolutely positioned child of it, and an
+                     `overflow: hidden` here would swallow the whole panel. Only the
+                     title TEXT truncates, one level further in. --}}
+                <div class="min-w-0">
                     @if (count($listViews ?? []) > 1)
                         {{-- List-view switcher: pick one of several YAML views for this list --}}
-                        <x-noerd::action-menu align="left" width="w-56" wrapperClass="relative">
+                        <x-noerd::action-menu align="left" width="w-56" wrapperClass="relative min-w-0">
                             <x-slot:trigger>
                                 <button
                                     type="button"
                                     x-on:click="open = ! open"
-                                    class="flex cursor-pointer items-center gap-1 rounded focus:outline-hidden"
+                                    class="flex min-w-0 max-w-full cursor-pointer items-center gap-1 rounded focus:outline-hidden"
                                     :aria-expanded="open"
                                     aria-haspopup="true"
                                     title="{{ __('Switch list view') }}"
                                 >
                                     <span class="truncate">{{ $title }}</span>
                                     @if (isset($rows) && ! is_array($rows))
-                                        <span class="font-light">({{ $rows->total() }})</span>
+                                        <span class="shrink-0 font-light">({{ $rows->total() }})</span>
                                     @endif
-                                    <x-noerd::icons.chevron-down class="my-auto text-gray-500" />
+                                    <x-noerd::icons.chevron-down class="my-auto shrink-0 text-gray-500" />
                                 </button>
                             </x-slot:trigger>
 
@@ -77,10 +81,12 @@
                             @endforeach
                         </x-noerd::action-menu>
                     @else
-                        {{ $title }}
-                        @if (isset($rows) && ! is_array($rows))
-                            <span class="font-light"> ({{ $rows->total() }}) </span>
-                        @endif
+                        <div class="truncate">
+                            {{ $title }}
+                            @if (isset($rows) && ! is_array($rows))
+                                <span class="font-light"> ({{ $rows->total() }}) </span>
+                            @endif
+                        </div>
                     @endif
                 </div>
 
