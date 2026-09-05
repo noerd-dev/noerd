@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
@@ -75,4 +77,20 @@ it('syncs the selection onto the tenant, removing what was deselected', function
         ->assertExitCode(0);
 
     expect(($this->assignedAppIds)())->toBe([$this->noerdAppB->id]);
+});
+
+it('announces only the apps the sync newly assigned', function (): void {
+    Event::fake([TenantAppAssigned::class]);
+
+    $this->tenant->tenantApps()->attach($this->noerdAppA->id);
+
+    $this->artisan('noerd:assign-apps-to-tenant', ['--tenant-id' => $this->tenant->id])
+        ->expectsQuestion('Select apps to assign to this tenant:', [$this->noerdAppA->id, $this->noerdAppB->id])
+        ->assertExitCode(0);
+
+    Event::assertDispatchedTimes(TenantAppAssigned::class, 1);
+    Event::assertDispatched(
+        TenantAppAssigned::class,
+        fn(TenantAppAssigned $event): bool => $event->tenantId === $this->tenant->id && $event->appName === 'NOERD_APP_B',
+    );
 });

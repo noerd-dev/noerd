@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Noerd\Events\TenantAppAssigned;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\TenantApp;
@@ -22,13 +23,15 @@ new class extends Component {
         $this->authorizeAdmin();
 
         $tenant = TenantHelper::getSelectedTenant();
-        $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->map(fn ($id): int => (int) $id)->all();
+        $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->map(fn($id): int => (int) $id)->all();
 
         if (in_array($appId, $assignedIds, true)) {
             $tenant->tenantApps()->detach($appId);
         } else {
             $maxSort = $tenant->tenantApps()->max('sort_order') ?? -1;
             $tenant->tenantApps()->attach($appId, ['sort_order' => $maxSort + 1]);
+
+            TenantAppAssigned::dispatch($tenant->id, (string) TenantApp::whereKey($appId)->value('name'));
         }
 
         $this->loadApps();

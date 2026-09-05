@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
+use Noerd\Events\TenantAppAssigned;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
@@ -85,6 +87,24 @@ it('toggleApp sets correct sort_order when adding', function (): void {
 
     $pivot = $this->tenant->tenantApps()->where('tenant_apps.id', $this->appC->id)->first()->pivot;
     expect($pivot->sort_order)->toBe(2);
+});
+
+it('toggleApp announces a newly assigned app, but not a detached one', function (): void {
+    Event::fake([TenantAppAssigned::class]);
+
+    $this->tenant->tenantApps()->attach($this->appA->id, ['sort_order' => 0]);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test('noerd::tenant-apps-page')
+        ->call('toggleApp', $this->appB->id)
+        ->call('toggleApp', $this->appA->id);
+
+    Event::assertDispatchedTimes(TenantAppAssigned::class, 1);
+    Event::assertDispatched(
+        TenantAppAssigned::class,
+        fn(TenantAppAssigned $event): bool => $event->tenantId === $this->tenant->id && $event->appName === 'APP_B',
+    );
 });
 
 it('appSort updates sort_order correctly', function (): void {

@@ -11,6 +11,7 @@ use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 
+use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 
@@ -162,6 +163,10 @@ class AssignAppsToTenantCommand extends Command
 
             $addedApps = array_diff($selectedAppIds, $currentAppIds);
             $removedApps = array_diff($currentAppIds, $selectedAppIds);
+
+            foreach (TenantApp::whereIn('id', $addedApps)->pluck('name') as $addedAppName) {
+                TenantAppAssigned::dispatch($tenant->id, (string) $addedAppName);
+            }
 
             $this->newLine();
             $this->info('App assignments updated successfully!');
