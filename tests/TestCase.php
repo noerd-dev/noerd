@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\File;
+use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
 use Noerd\Models\NoerdUser;
@@ -54,6 +55,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         self::flushGuardableColumnsCache();
+        self::flushLivewireComponentHooks();
         $this->swapInTestbenchRefreshDatabaseState();
 
         try {
@@ -162,6 +164,24 @@ abstract class TestCase extends BaseTestCase
         Closure::bind(static function (): void {
             Model::$guardableColumns = [];
         }, null, Model::class)();
+    }
+
+    /**
+     * Livewire keeps the registered component hooks in a process-global static
+     * list that survives app boots: every hook a provider ever registered stays
+     * on the list, and the next Livewire boot wires ALL of them into the new
+     * app. A host-application suite that ran earlier in the same PHPUnit
+     * process therefore leaks the hooks of every host package (e.g. noerd-plus'
+     * custom-attribute hooks) into this testbench app — which never booted
+     * those packages and has none of their tables. Flushed before the app is
+     * created, so only the hooks of the providers this app actually boots are
+     * attached; a host suite running afterwards re-registers its own on boot.
+     */
+    private static function flushLivewireComponentHooks(): void
+    {
+        Closure::bind(static function (): void {
+            ComponentHookRegistry::$componentHooks = [];
+        }, null, ComponentHookRegistry::class)();
     }
 
     private function swapInTestbenchRefreshDatabaseState(): void
