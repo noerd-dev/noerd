@@ -357,7 +357,7 @@ the YAML hides the row):
 - **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`
 - **listAction(mixed $modelId = null, array $relations = []):** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; only override it for custom behavior (extra modal arguments, no modal, …)
 - **buildList():** Generates the list configuration from the YAML
-- **Deep links:** `?{entity}Id=5` opens that record's modal over the list, `?create=1` the create modal. `mountList()` reads them once on mount; the parameter name derives from the component name (`items-list` → `itemId`, via `getDeepLinkParam()`) — no override needed
+- **Deep links:** `?{entity}Id=5` opens that record's modal over the list, `?create=1` the create modal. `mountList()` reads them once on mount; the parameter name derives from the component name (`items-list` → `itemId`, via `getDeepLinkParam()`) — no override needed. A list whose name does not follow the `{entities}-list` convention declares `protected string $listEntity = 'item';` (select event and deep-link parameter derive from it) or `protected string $deepLinkParam = 'itemId';` directly
 - **`<x-noerd::list />`:** Renders the table
 - **Object permissions:** Read/write/delete denial via the optional `noerd.object-*` gates (see
   `AccessHelper` in extension-registries.md) hides rows, header actions and the delete bulk action. The permission target is the model resolved
@@ -376,7 +376,28 @@ the YAML hides the row):
 | `refreshList()` | Re-renders the list (`$refresh`). Listens to `refreshList-{component}` (the full name incl. namespace, e.g. `inventory::items-list`) and to the name after the last dot; a detail's `closeModalProcess()` dispatches it for its paired list |
 | `exportCsv()` | Streams the CSV download (see CSV Export) |
 | `componentName()` (protected) | The name the YAML config, session keys and events resolve by — Livewire's component name; override only in unregistered test fixtures |
-| `listConfigComponent()` (protected) | The name the list YAML resolves under — override when a component renders another list's YAML |
+| `listConfigComponent()` (protected) | The name the list YAML resolves under — declare `protected string $listConfigComponent = 'other-list';` when a component renders another list's YAML |
+| `getListEntity()`, `getSelectEvent()`, `getDeepLinkParam()` (protected) | The singular entity (`items-list` → `item`), the picker event (`itemSelected`) and the deep-link parameter (`itemId`), all derived from the component name — configure them with `protected string $listEntity` / `$selectEvent` / `$deepLinkParam` |
+
+The naming hooks (`listConfigComponent()`, `getListEntity()`, `getSelectEvent()`, `getDeepLinkParam()`)
+resolve in a fixed order: a method override wins over the configured property, the property wins
+over the derivation from the component name. Declare the properties `protected` — the trait
+declares none of them itself (a class redeclaring a trait property with another default is a PHP
+fatal), and a public one would be client-writable:
+
+```php
+new class extends Component {
+    use NoerdList;
+
+    public $listModel = Item::class;
+
+    // Renders the YAML of items-list under another component name
+    protected string $listConfigComponent = 'items-list';
+
+    // 'inventory-stock-list' would otherwise derive 'inventoryStock'
+    protected string $listEntity = 'item';
+};
+```
 | `getAllowedListFilterColumns()` (protected) | Whitelist of header `listFilters` keys (see [List Filters](list-filters.md#security)) |
 | `mountList()` / `loadListFilters()` (protected) | Mount-time setup (per-page, filters, view, sort, deep links) — call `mountList()` first in a custom `mount()` |
 

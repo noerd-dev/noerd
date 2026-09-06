@@ -7,16 +7,26 @@ namespace Noerd\Traits;
 use Carbon\Carbon;
 use Exception;
 
+/**
+ * The date columns the ShowFrom/ShowUntil filters compare against are
+ * configured on the component as `protected string $showFromDateColumn` /
+ * `protected string $showUntilDateColumn` (both default to `created_at`).
+ * The trait deliberately declares NEITHER property: PHP fatals when a class
+ * redeclares a trait property with a different default, so the hooks read
+ * them through `??`. Override the hook method itself only when the column is
+ * dynamic. Keep the properties protected — a public one would be part of the
+ * Livewire client payload and end up as a raw column name in the query.
+ */
 trait ShowFromFilterTrait
 {
     protected function getShowFromDateColumn(): string
     {
-        return 'created_at';
+        return $this->showFromDateColumn ?? 'created_at';
     }
 
     protected function getShowUntilDateColumn(): string
     {
-        return 'created_at';
+        return $this->showUntilDateColumn ?? 'created_at';
     }
 
     protected function resolveShowDate(string $value): ?string

@@ -1013,52 +1013,58 @@ trait NoerdList
         }
     }
 
+    /*
+     | The naming hooks below derive their value from the component name and
+     | may be configured per component through a PROTECTED property of the same
+     | name ($listConfigComponent, $selectEvent, $deepLinkParam, $listEntity).
+     | The trait declares none of them — PHP fatals when a class redeclares a
+     | trait property with a different default — so each hook reads the
+     | property through `??` and falls back to the derivation. Overriding the
+     | method itself stays possible for dynamic cases.
+     */
+
     /**
      * The name this list's YAML config resolves under — the component's own
-     * name. Override when a component renders another list's YAML.
+     * name. Configure `protected string $listConfigComponent` when a component
+     * renders another list's YAML.
      */
     protected function listConfigComponent(): string
     {
-        return $this->componentName();
+        return $this->listConfigComponent ?? $this->componentName();
     }
 
     /**
      * Get the event name for select mode.
      * Derives from COMPONENT: 'customers-list' -> 'customerSelected'
      * Strips any Livewire namespace prefix: 'booking-members::customers-list' -> 'customerSelected'
+     * Configure `protected string $selectEvent` to dispatch another name.
      */
     protected function getSelectEvent(): string
     {
-        return Str::camel($this->getListEntity()) . 'Selected';
+        return $this->selectEvent ?? Str::camel($this->getListEntity()) . 'Selected';
     }
 
     /**
      * Get the URL query parameter that deep-links a record of this list.
      * Derives from COMPONENT: 'products-list' -> 'productId'
+     * Configure `protected string $deepLinkParam` for another parameter name.
      */
     protected function getDeepLinkParam(): string
     {
-        return Str::camel($this->getListEntity()) . 'Id';
+        return $this->deepLinkParam ?? Str::camel($this->getListEntity()) . 'Id';
     }
 
     /**
      * Get the singular entity name of this list.
      * Derives from COMPONENT: 'customers-list' -> 'customer'
      * Strips any Livewire namespace prefix: 'booking-members::customers-list' -> 'customer'
+     * Configure `protected string $listEntity` when the list name does not
+     * follow the `{entities}-list` convention — the select event and the deep
+     * link parameter derive from it.
      */
     protected function getListEntity(): string
     {
-        $name = $this->componentName();
-
-        if (str_contains($name, '::')) {
-            $name = Str::afterLast($name, '::');
-        }
-
-        if (str_contains($name, '.')) {
-            $name = Str::afterLast($name, '.');
-        }
-
-        return Str::singular(Str::before($name, '-list'));
+        return $this->listEntity ?? $this->deriveListEntity();
     }
 
     protected function dispatchSelectionEvents(mixed $modelId = null): void
@@ -1714,6 +1720,21 @@ trait NoerdList
         }
 
         return $listeners;
+    }
+
+    private function deriveListEntity(): string
+    {
+        $name = $this->componentName();
+
+        if (str_contains($name, '::')) {
+            $name = Str::afterLast($name, '::');
+        }
+
+        if (str_contains($name, '.')) {
+            $name = Str::afterLast($name, '.');
+        }
+
+        return Str::singular(Str::before($name, '-list'));
     }
 
     /**

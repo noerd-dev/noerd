@@ -96,7 +96,9 @@ The preview modal is `noerd::email-preview-modal`; the test mail is `Noerd\Mail\
 | `one_year` | One year ago |
 | anything else | Parsed as a date via `resolveCustomDate()` (`null` when unparseable) |
 
-**Customizing the columns** — override the protected hooks (both default to `created_at`):
+**Customizing the columns** — declare the two properties on the component (both default to
+`created_at`). Set BOTH: "Show From" and "Show Until" are independent filters, and a list that
+moves only one of them keeps comparing the other boundary against the import timestamp:
 
 ```php
 use Noerd\Traits\NoerdList;
@@ -106,12 +108,17 @@ new class extends Component {
     use NoerdList;
     use ShowFromFilterTrait;
 
-    protected function getShowFromDateColumn(): string
-    {
-        return 'published_at';
-    }
+    protected string $showFromDateColumn = 'published_at';
+    protected string $showUntilDateColumn = 'published_at';
 };
 ```
+
+The properties must be `protected`: a public property is part of the Livewire client payload, and
+these values are written into the query as raw column names. The trait deliberately declares
+neither property — PHP fatals when a class redeclares a trait property with a different default —
+so the hooks `getShowFromDateColumn()` / `getShowUntilDateColumn()` read them through `??`. The
+methods stay overridable as the escape hatch for a column that is only known at runtime; a method
+override wins over the property.
 
 ## TenantFilterTrait (list components)
 

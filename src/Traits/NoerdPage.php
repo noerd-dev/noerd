@@ -498,37 +498,36 @@ trait NoerdPage
         }
     }
 
+    /*
+     | Both naming hooks below may be configured per component through a
+     | PROTECTED property ($detailConfigComponent, $listComponent). The trait
+     | declares neither — PHP fatals when a class redeclares a trait property
+     | with a different default — so each hook reads the property through `??`
+     | and falls back to the derivation. Overriding the method itself stays
+     | possible for dynamic cases. The property is NOT named $detailComponent:
+     | on lists that name already means "the detail modal a row click opens".
+     */
+
     /**
      * The name this component's detail YAML resolves under — the component's
-     * own name. Override when a component renders another component's YAML.
+     * own name. Configure `protected string $detailConfigComponent` when a
+     * component renders another component's YAML.
      */
     protected function getDetailComponent(): string
     {
-        return $this->componentName();
+        return $this->detailConfigComponent ?? $this->componentName();
     }
 
     /**
      * The list this record belongs to (refreshed when the modal closes), derived
      * from the component name with its namespace kept: 'customer-detail' →
-     * 'customers-list', 'crm::account-page' → 'crm::accounts-list'. Override
-     * when the list name does not follow the plural convention.
+     * 'customers-list', 'crm::account-page' → 'crm::accounts-list'. Configure
+     * `protected string $listComponent` when the list name does not follow the
+     * plural convention.
      */
     protected function getListComponent(): string
     {
-        $name = $this->componentName();
-
-        // If this is already a list component, return as-is
-        if (Str::endsWith($name, '-list')) {
-            return $name;
-        }
-
-        // Extract entity: 'customer-detail' → 'customer', 'account-page' → 'account'
-        $entity = Str::endsWith($name, '-page')
-            ? Str::beforeLast($name, '-page')
-            : Str::before($name, '-detail');
-
-        // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity) . '-list';
+        return $this->listComponent ?? $this->deriveListComponent();
     }
 
     protected function setPreselect(string $key, mixed $value): void
@@ -583,5 +582,23 @@ trait NoerdPage
         }
 
         return $listeners;
+    }
+
+    private function deriveListComponent(): string
+    {
+        $name = $this->componentName();
+
+        // If this is already a list component, return as-is
+        if (Str::endsWith($name, '-list')) {
+            return $name;
+        }
+
+        // Extract entity: 'customer-detail' → 'customer', 'account-page' → 'account'
+        $entity = Str::endsWith($name, '-page')
+            ? Str::beforeLast($name, '-page')
+            : Str::before($name, '-detail');
+
+        // Pluralize and add -list: 'customer' → 'customers-list'
+        return Str::plural($entity) . '-list';
     }
 }
