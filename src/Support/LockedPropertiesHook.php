@@ -38,6 +38,19 @@ final class LockedPropertiesHook extends ComponentHook
         'listViewApp',
         'showMoreComponent',
         'showMoreRoute',
+        // The naming hooks' configuration properties. Declared protected by
+        // convention (then never part of the client payload) — listed here so
+        // a public declaration cannot repoint the YAML source, the select
+        // event, the deep-link parameter, the paired list or the columns the
+        // ShowFrom/ShowUntil filters write into the query either.
+        'listConfigComponent',
+        'detailConfigComponent',
+        'listComponent',
+        'listEntity',
+        'selectEvent',
+        'deepLinkParam',
+        'showFromDateColumn',
+        'showUntilDateColumn',
         // A settings page's model map decides WHICH model persistSettings()
         // writes and WHICH property it reads the payload from — repointing it
         // from the client is an arbitrary-model write.

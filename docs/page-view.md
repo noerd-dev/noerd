@@ -132,8 +132,11 @@ new class extends Component {
   chrome-less (no header/footer/scroll wrapper), the page owns all chrome.
 - The list refreshed when the page closes is derived from the component name with its namespace
   kept (`inventory::warehouse-page` → `inventory::warehouses-list`; `getListComponent()` strips
-  `-page` and `-detail` alike). A list that does not follow the plural convention overrides
-  `protected function getListComponent(): string` and returns the list's component name.
+  `-page` and `-detail` alike). A list that does not follow the plural convention is declared as
+  `protected string $listComponent = 'inventory::stock-list';` on the page (the trait declares no
+  such property itself — keep it `protected`); overriding `getListComponent()` stays the escape
+  hatch for a dynamic target and wins over the property. The same shape configures the YAML the
+  page's detail resolves under: `protected string $detailConfigComponent` / `getDetailComponent()`.
 - `$detailPrimary` binds `$modelId` (`int|string|null`) to the page's URL parameter
   (`?warehouseId=5`) via the trait's `queryStringNoerdPage()` — never redeclare `$modelId` or add
   a `#[Url]` attribute. The embedded detail may declare the SAME alias (it does, for standalone

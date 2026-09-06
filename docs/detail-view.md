@@ -667,8 +667,8 @@ custom `mount()` that replaces `$detailData` wholesale.
 - **Properties:** `$detailData` (array) for form binding, `$modelId` (from trait) for the record ID
 - **mount() / store() / delete():** Provided by the trait — only override for custom behavior
 - **validateFromLayout():** Validates against the `required:` flags of the YAML (plus relation-form rules)
-- **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); override `protected function getListComponent(): string` when the list does not follow the plural convention
-- **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); `getDetailComponent()` is the overridable hook for a component that renders another component's detail YAML
+- **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); declare `protected string $listComponent = 'inventory::stock-list';` when the list does not follow the plural convention (overriding the method stays possible for a dynamic target and wins over the property)
+- **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); `getDetailComponent()` is the hook for a component that renders another component's detail YAML — declare `protected string $detailConfigComponent = 'item-detail';` (NOT `$detailComponent`, which on lists names the modal a row click opens). The trait declares neither property; keep them `protected`
 - The Eloquent model is **never** stored as a component property
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
 

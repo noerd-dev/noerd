@@ -162,6 +162,7 @@ or `NoerdPage` (and therefore `NoerdDetail`).
 | `objectPermissionModel` | Have the object gates checked against a different class |
 | `detailComponent`, `detailRoute` | Swap the modal target of a row click |
 | `showMoreComponent`, `showMoreRoute` | Swap the "show more" target |
+| `listConfigComponent`, `detailConfigComponent`, `listComponent`, `listEntity`, `selectEvent`, `deepLinkParam`, `showFromDateColumn`, `showUntilDateColumn` | Repoint the naming hooks (which YAML renders, which event/list a save or selection targets) or the columns the ShowFrom/ShowUntil filters write into the query — declared `protected` by convention, vetoed here in case a component makes one public |
 | `listActionMethod` | Redirect the picker callback |
 | `listView`, `listViewApp` | Render another app's list view |
 | `settingsModels` | Repoint which model `persistSettings()` writes and which property it reads |
