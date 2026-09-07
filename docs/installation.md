@@ -15,8 +15,7 @@ noerd is a Laravel Livewire boilerplate for building admin panels and business a
 
 ## Requirements
 
-- PHP 8.3+ with the `intl` and `mbstring` extensions (`intl` drives every date, number and currency
-  format — see [Currency, Numbers & Dates](formatting.md))
+- PHP 8.3+
 - Laravel 12 or 13
 - Livewire 4+
 - Node.js `^20.19 || >=22.12` and npm (for the frontend build)

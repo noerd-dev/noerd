@@ -77,7 +77,7 @@ the Demo Customers app into your project (see the Example Application page of th
 
 ## Requirements
 
-- PHP 8.3+ with the `intl` and `mbstring` extensions
+- PHP 8.3+
 - Laravel 12 or 13
 - Livewire 4+
 - Node.js `^20.19 || >=22.12` and npm (for the frontend build)
