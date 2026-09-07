@@ -56,3 +56,25 @@ it('the rich text component renders plain text unchanged', function (): void {
 
     expect($html)->toContain('Dies ist dein Shop.');
 });
+
+it('the editor toolbar exposes the toggle state of its buttons', function (): void {
+    $html = Blade::render('<x-noerd::forms.tiptap field="detailData.text" />');
+
+    expect($html)->toContain(':aria-pressed="isActive(\'bold\')"')
+        ->and($html)->toContain(':aria-pressed="isActive(\'heading\', { level: 1 })"');
+});
+
+it('the editor frame turns red when the bound field carries a validation error', function (): void {
+    // Shared exactly like ShareErrorsFromSession does it for a web request
+    $errors = new Illuminate\Support\ViewErrorBag();
+    $errors->put('default', new Illuminate\Support\MessageBag(['detailData.text' => ['Required']]));
+    view()->share('errors', $errors);
+
+    $clean = Blade::render('<x-noerd::forms.tiptap field="detailData.other" />');
+    $failed = Blade::render('<x-noerd::forms.tiptap field="detailData.text" />');
+    $forced = Blade::render('<x-noerd::forms.tiptap field="detailData.other" :hasError="true" />');
+
+    expect($clean)->not->toContain('border-red-500')
+        ->and($failed)->toContain('border-red-500')
+        ->and($forced)->toContain('border-red-500');
+});

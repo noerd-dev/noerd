@@ -1,15 +1,7 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
 import sort from '@alpinejs/sort';
 import focus from '@alpinejs/focus';
-
-// Make TipTap globally available
-window.TipTap = {
-    Editor,
-    StarterKit,
-    Link
-};
 
 function parseShortcut(shortcut) {
     const parts = shortcut.toLowerCase().split('+').map(p => p.trim());
@@ -400,8 +392,10 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    // Rich text editing. The editor writes its HTML back to the component on
-    // every update; updatedAt only exists to re-evaluate isActive() bindings.
+    // Rich text editing. The editor holds the HTML and hands it to the
+    // component deferred (sent with the next request, e.g. store) instead of
+    // one round trip per keystroke; updatedAt only exists to re-evaluate the
+    // isActive() bindings of the toolbar.
     Alpine.data('noerdTiptap', ({ field, content, editable }) => ({
         editor: null,
         content,
@@ -410,16 +404,16 @@ document.addEventListener('alpine:init', () => {
         updatedAt: Date.now(),
 
         init() {
-            this.editor = new window.TipTap.Editor({
+            this.editor = new Editor({
                 element: this.$refs.editor,
                 extensions: [
-                    window.TipTap.StarterKit.configure({
+                    StarterKit.configure({
                         heading: {
                             levels: [1, 2, 3],
                         },
-                    }),
-                    window.TipTap.Link.configure({
-                        openOnClick: false,
+                        link: {
+                            openOnClick: false,
+                        },
                     }),
                 ],
                 content: this.content,
@@ -430,13 +424,28 @@ document.addEventListener('alpine:init', () => {
                     },
                 },
                 onUpdate: ({ editor }) => {
-                    this.content = editor.getHTML();
+                    // An empty document must be stored as an empty string, not
+                    // as "<p></p>" — otherwise required fields pass validation
+                    // and lists render a blank paragraph.
+                    this.content = editor.isEmpty ? '' : editor.getHTML();
                     this.updatedAt = Date.now();
-                    this.$wire.set(field, this.content);
+                    this.$wire.set(field, this.content, false);
                 },
                 onSelectionUpdate: () => {
                     this.updatedAt = Date.now();
                 },
+            });
+
+            // The wrapper is wire:ignore, so a value the SERVER changes after
+            // mount (reset after save, "load template" actions) has to be
+            // pushed into the editor by hand. Skip echoes of our own updates.
+            this.$wire.$watch(field, (value) => {
+                const next = value ?? '';
+                if (next === this.content) {
+                    return;
+                }
+                this.content = next;
+                Alpine.raw(this.editor)?.commands.setContent(next, { emitUpdate: false });
             });
         },
         destroy() {
@@ -447,7 +456,7 @@ document.addEventListener('alpine:init', () => {
             return Alpine.raw(this.editor).chain().focus();
         },
         isActive(type, attrs = {}) {
-            return this.updatedAt && Alpine.raw(this.editor)?.isActive(type, attrs);
+            return Boolean(this.updatedAt && Alpine.raw(this.editor)?.isActive(type, attrs));
         },
         setLink() {
             if (this.linkUrl) {
