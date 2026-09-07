@@ -21,7 +21,8 @@ Ask: *paste the resulting URL into a fresh tab — does it show the same thing?*
 |---|---|
 | ONE addressable record (`*-detail`, `*-page`, or a list that IS a record, e.g. an object manager) | action dialogs (`*-modal`, `*-confirmation`, `*-review`, `*-import`, `*-editor`) |
 | `Noerd::modalRoute('{app}.{entity}.detail', ['modelId' => $id])` / `$modalRoute(...)` | `Noerd::modal('{module}::{component}', ['key' => $value])` / `$modal(...)` |
-| URL rewritten to the record `+ ?modal=true`, restored on close, reload reopens the modal | pickers (`multiSelect`, `returnsSelection`, `context`, `selectMode`, …) and lists narrowed by a parent record (route allowed with `rewriteUrl: false`) |
+| URL rewritten to the record `+ ?modal=true`, restored on close, reload reopens the modal | pickers (`multiSelect`, `returnsSelection`, `context`, `selectMode`, …) and lists narrowed by a parent record opened from a tile, widget or action (route allowed with `rewriteUrl: false`) |
+| A LIST ROW always opens its record this way — a record without an editable form gets a read-only `*-detail` that embeds the narrowed list (`lists:`) | never what a list row click opens |
 | Requirements: target uses `NoerdDetail`/`NoerdPage` (or `NoerdList` for record-lists), a named `Route::livewire('{app}/{entity}/{modelId}', …)` exists, every identity argument is a route parameter | |
 
 **Always keep the component as fallback** — `Noerd::modalFor($route, $component, $args)` in PHP;

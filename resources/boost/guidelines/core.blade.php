@@ -14,9 +14,9 @@ below points into that folder — read the referenced page before building the f
 ### Core Rules
 - When creating new lists/tables, always follow the slim list pattern below (reference: the `noerd:make-resource` stub `src/Commands/stubs/resource/list.blade.stub` and `docs/list-view.md`).
 - List components declare their model as `public $listModel = Model::class;` and their detail target
-  as `public ?string $detailRoute = '{app}.{entity}.detail';` (preferred — opens the record as a
-  route modal and rewrites the URL) plus `public $detailComponent = 'module::x-detail';` as the
-  fallback, at the top of the class. The trait
+  as `public ?string $detailRoute = '{app}.{entity}.detail';` (mandatory for every list whose rows
+  open a record — opens it as a route modal and rewrites the URL) plus
+  `public $detailComponent = 'module::x-detail';` as the fallback, at the top of the class. The trait
   methods (`mount()`, `listAction()`, `listData()`, `renderingNoerdList()`) are always used from `NoerdList` —
   a slim component contains nothing else (reference: `src/Commands/stubs/resource/list.blade.stub`). Only when custom
   query logic is needed, override `listData()` (reference: `docs/list-view.md`, "Custom Query Logic"): build the query
@@ -74,9 +74,17 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   (`/setup/object-manager/{table}`); `relations`/`quickCreate` are chrome.
   **Everything else stays `Noerd::modal()`/`$modal()`:** action dialogs (`*-modal`, `*-confirmation`,
   `*-review`, `*-import`, `*-editor`), pickers (`listActionMethod`, `selectMode`, `selectContext`,
-  `multiSelect`, `returnsSelection`, `context`) and lists narrowed by a parent record. A narrowed
-  list MAY use a route for decoupling, but then with `rewriteUrl: false` — a reload of the plain list
-  route would show the unfiltered list.
+  `multiSelect`, `returnsSelection`, `context`) and lists narrowed by a parent record, opened from
+  a relation-box tile, a widget or a detail action. A narrowed list MAY use a route for decoupling,
+  but then with `rewriteUrl: false` — a reload of the plain list route would show the unfiltered list.
+  **A list row click ALWAYS opens its record by route** — `$detailRoute` + `$detailComponent`, URL
+  rewritten — never override `listAction()` to open a component modal, a narrowed list or anything
+  else without a URL instead. A record that has no editable form (mirrored/read-only data such as a
+  synced Toggl client, an import log line) still gets its own `*-detail`: fields with `readonly: true`,
+  no save bar, `store()`/`delete()` overridden as no-ops, the related rows embedded through `lists:`
+  in the detail YAML, and a `Route::livewire('{app}/{entity}/{modelId}', …)` route the row opens.
+  Reviewer's test for a list: *after the row click, does the address bar point at the record?*
+  No → wrong.
   **Always keep the component key as the fallback** (`route:` + `modalComponent:`, `$detailRoute` +
   `$detailComponent`, `newRoute:` + `newComponent:`): the route wins when registered, the component
   opens when the owning module is not installed. `Noerd::modalFor($route, $component, $args)` is the
