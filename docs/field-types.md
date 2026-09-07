@@ -1108,8 +1108,11 @@ TipTap WYSIWYG editor for formatted text content.
 
 **Notes:**
 - Uses TipTap editor with standard formatting options
-- Content is stored as HTML
+- Content is stored as HTML; an empty editor stores an empty string (so `required: true` works)
 - Automatically retrieves content from `$detailData` array
+- The editor hands its value to the component deferred — it is sent with the next request
+  (e.g. `store()`), not on every keystroke; a value changed on the server after mount is pushed
+  back into the editor
 
 ---
 

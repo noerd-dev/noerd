@@ -31,7 +31,7 @@
     <x-noerd::input-label for="{{ $name }}" :value="__($label)" :required="$required" />
 
     <div class="overflow-hidden rounded-lg border border-sky-300 bg-sky-50/30">
-        <x-noerd::forms.tiptap :field="$name . '.' . $selectedLang" :content="$contentValue" :readonly="$readonly" />
+        <x-noerd::forms.tiptap :field="$name . '.' . $selectedLang" :content="$contentValue" :readonly="$readonly" :hasError="$errors->has($name)" />
     </div>
 
     <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />

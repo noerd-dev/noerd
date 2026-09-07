@@ -10,7 +10,6 @@
         "@alpinejs/focus": "^3.17.1",
         "@alpinejs/sort": "^3.17.1",
         "@tiptap/core": "^3.31.0",
-        "@tiptap/extension-link": "^3.31.0",
         "@tiptap/pm": "^3.31.0",
         "@tiptap/starter-kit": "^3.31.0",
         "laravel-vite-plugin": "^3.2.0",
