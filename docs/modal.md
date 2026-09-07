@@ -221,9 +221,12 @@ longer hard-code a foreign module's component name.
   they perform one operation and close, they have no identity.
 - **Pickers** — anything opened with `listActionMethod`, `selectMode`, `selectContext`,
   `multiSelect`, `returnsSelection` or `context`. The selection is not a URL.
-- **Filtered lists** — a list narrowed by a parent record (`categoryId`, `folderId`).
-  A route may be used here for decoupling, but the URL is deliberately NOT rewritten
-  (see below).
+- **Filtered lists** — a list narrowed by a parent record (`categoryId`, `folderId`),
+  opened from a relation-box tile, a widget or a detail action. A route may be used here
+  for decoupling, but the URL is deliberately NOT rewritten (see below). A narrowed list
+  is never what a LIST ROW opens: a row click always opens its record by route — a record
+  without an editable form gets a read-only detail that embeds the narrowed list (see
+  [Row click](list-view.md#row-click-always-opens-the-record-by-route)).
 
 Reviewer's test: *paste the resulting URL into a fresh tab — does it show the same
 thing?* Yes → route. No → component.

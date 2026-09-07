@@ -275,6 +275,46 @@ reload reopens the record over the previously visited page. `$detailComponent` s
 fallback — keep both, so a list may reference a detail route owned by an optional module.
 See [Modal System](modal.md#route-modals).
 
+### Row click always opens the record by route
+
+Declaring `$detailRoute` is not optional: every list whose rows open a record opens it by
+route, so the address bar points at the record after the click, the link is shareable and
+a reload brings it back. Never override `listAction()` to open a component modal, a list
+narrowed by the clicked row, or anything else that has no URL.
+
+A record without an editable form — mirrored or read-only data such as a synced Toggl
+client or an import log line — still gets its own `*-detail`:
+
+- the detail YAML marks the fields `readonly: true` and embeds the related rows through
+  `lists:` (the narrowed list the row used to open directly);
+- the component renders no save bar and overrides `store()` / `delete()` as no-ops;
+- the module registers `Route::livewire('{app}/{entity}/{modelId}', 'module::{entity}-detail')`
+  and the list opens it via `$detailRoute` (+ `$detailComponent` as fallback).
+
+```php
+// clients-list.blade.php — the row opens the read-only client, not its time entries
+public ?string $detailRoute = 'toggl-integration.client.detail';
+public $detailComponent = 'toggl-integration::client-detail';
+```
+
+```yaml
+# details/client-detail.yml — the narrowed list moves INTO the record
+title: Toggl Client
+fields:
+  - name: detailData.name
+    label: Name
+    type: text
+    readonly: true
+lists:
+  - title: Time Entries
+    component: toggl-integration::time-entries-list
+    arguments:
+      clientId: $modelId
+```
+
+Component modals opened from a list row are reserved for pickers (`selectAction`, see
+[Multi-Select](#multi-select--bulk-actions)) — a selection is not a URL.
+
 ### Custom Query Logic
 
 When the list needs its own query (eager loads, extra wheres, row transformations),
@@ -355,7 +395,7 @@ the YAML hides the row):
 - **$detailRoute:** Named detail route opened by `listAction()` — rewrites the browser URL to the record (preferred)
 - **$detailComponent:** The detail component opened by `listAction()` when no `$detailRoute` is registered
 - **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`
-- **listAction(mixed $modelId = null, array $relations = []):** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; only override it for custom behavior (extra modal arguments, no modal, …)
+- **listAction(mixed $modelId = null, array $relations = []):** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; only override it to add modal arguments — never to open a component modal or a narrowed list instead of the record (see "Row click always opens the record by route")
 - **buildList():** Generates the list configuration from the YAML
 - **Deep links:** `?{entity}Id=5` opens that record's modal over the list, `?create=1` the create modal. `mountList()` reads them once on mount; the parameter name derives from the component name (`items-list` → `itemId`, via `getDeepLinkParam()`) — no override needed. A list whose name does not follow the `{entities}-list` convention declares `protected string $listEntity = 'item';` (select event and deep-link parameter derive from it) or `protected string $deepLinkParam = 'itemId';` directly
 - **`<x-noerd::list />`:** Renders the table

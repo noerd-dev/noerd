@@ -53,6 +53,11 @@ new class extends Component {
 
 - Nothing else goes into a slim component. `mount()`, `listAction()`, `listData()`,
   `renderingNoerdList()` come from the trait.
+- `$detailRoute` is mandatory for every list whose rows open a record: the row click ALWAYS
+  opens the record by route (URL rewritten). Never override `listAction()` to open a component
+  modal or a list narrowed by the clicked row. A record without an editable form (mirrored data)
+  gets a read-only `*-detail` (`readonly: true` fields, no save bar, `store()`/`delete()` no-ops)
+  that embeds the narrowed list through `lists:` — and the row opens THAT route.
 - Default sort: a `defaultSort:` block in the list YAML (`field:` + optional
   `direction: asc|desc`, `desc` when omitted) — both synced copies, never component code. A
   user-picked sort persists in the session and wins; never set `$sortField`/`$sortAsc` directly.
@@ -112,6 +117,6 @@ Checklist of optional YAML features (all generic, never re-implement in the comp
 
 - [ ] component is slim (or the `listData()` override ends in `buildList()`)
 - [ ] YAML exists in both locations and is block style
-- [ ] row click opens the detail (route with component fallback)
+- [ ] row click opens the record by route (URL rewritten) with component fallback — no `listAction()` override opening something without a URL
 - [ ] navigation + routes + `de.json` updated
 - [ ] Pest test added and green, `vendor/bin/pint --dirty` run
