@@ -13,6 +13,7 @@ use Livewire\Livewire;
 use Livewire\LivewireServiceProvider;
 use Noerd\Models\NoerdUser;
 use Noerd\Providers\NoerdServiceProvider;
+use Noerd\Support\ComponentAccessGuard;
 use NoerdModal\Providers\NoerdModalServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use PDO;
@@ -56,6 +57,7 @@ abstract class TestCase extends BaseTestCase
     {
         self::flushGuardableColumnsCache();
         self::flushLivewireComponentHooks();
+        self::flushRegisteredAdminComponents();
         $this->swapInTestbenchRefreshDatabaseState();
 
         try {
@@ -182,6 +184,18 @@ abstract class TestCase extends BaseTestCase
         Closure::bind(static function (): void {
             ComponentHookRegistry::$componentHooks = [];
         }, null, ComponentHookRegistry::class)();
+    }
+
+    /**
+     * The admin allow-list modules contribute through
+     * ComponentAccessGuard::registerAdminComponents() is process-global too, so
+     * a host suite that ran earlier leaks the registrations of packages this
+     * testbench app never boots. Flushed before the app is created; the
+     * providers this app does boot register their own again.
+     */
+    private static function flushRegisteredAdminComponents(): void
+    {
+        ComponentAccessGuard::flushRegisteredComponents();
     }
 
     private function swapInTestbenchRefreshDatabaseState(): void
