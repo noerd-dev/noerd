@@ -319,10 +319,15 @@ public function boot(): void
 
 **Important:**
 
-- Matching ignores the namespace prefix and collapses every spelling Livewire resolves to the same
-  component (`noerd::tenants-list`, `tenants-list`, `.tenants-list`). Consequence: a host component
-  whose bare name collides with a registered one becomes admin-only too — the deliberate
-  fail-closed choice
+- Matching is namespace-aware and collapses every spelling Livewire resolves to the same component
+  within that namespace (`cms::settings-page`, `CMS::.Settings-Page`). Registering one module's
+  screen therefore never locks down a same-named screen of another module — `cms::settings-page`
+  and `hr::settings-page` are different components
+- A name written WITHOUT a namespace matches a registered entry by its bare name alone
+  (`tenants-list`, `.tenants-list`): it cannot be attributed to a module, and the core registers its
+  own screens under a bare component location as well (`Livewire::addLocation`). Consequence: a host
+  component mounted bare under a name that collides with a registered one becomes admin-only too —
+  the deliberate fail-closed choice
 - The guard only closes the admin bypass at the dynamic-mount seams; components that are not on the
   list are still governed by their own route middleware and the object gates
   (see [permissions.md](permissions.md))

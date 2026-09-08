@@ -312,6 +312,30 @@ describe('component access guard', function (): void {
 
         expect(ComponentAccessGuard::allows('plus::user-role-detail'))->toBeFalse();
     });
+
+    it('keeps a module registration inside its own namespace', function (): void {
+        // Several modules ship a component of the same name — every module that
+        // has a settings screen calls it `settings-page`. Registering one of
+        // them as admin-only must not lock down the others; only the namespace
+        // makes them different components.
+        ComponentAccessGuard::registerAdminComponents(['cms::settings-page']);
+
+        expect(ComponentAccessGuard::allows('cms::settings-page'))->toBeFalse()
+            ->and(ComponentAccessGuard::allows('CMS::.Settings-Page'))->toBeFalse()
+            ->and(ComponentAccessGuard::allows('hr::settings-page'))->toBeTrue()
+            ->and(ComponentAccessGuard::allows('accounting::.settings-page'))->toBeTrue();
+    });
+
+    it('stays fail-closed for a bare name that matches an admin component', function (): void {
+        // A name written without a namespace cannot be attributed to a module,
+        // and noerd registers its own screens under a bare location as well —
+        // so the bare spelling keeps matching every admin entry by name alone.
+        ComponentAccessGuard::registerAdminComponents(['cms::settings-page']);
+
+        expect(ComponentAccessGuard::allows('settings-page'))->toBeFalse()
+            ->and(ComponentAccessGuard::allows('::settings-page'))->toBeFalse()
+            ->and(ComponentAccessGuard::allows('tenants-list'))->toBeFalse();
+    });
 });
 
 describe('audit list target validation', function (): void {

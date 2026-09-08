@@ -67,6 +67,17 @@ final class ComponentAccessGuard
     }
 
     /**
+     * Drop every module-contributed entry. The allow-list is process-global and
+     * survives an application boot, so a test process that boots several
+     * applications has to reset it — the providers of the new app register
+     * their own screens again.
+     */
+    public static function flushRegisteredComponents(): void
+    {
+        self::$registered = [];
+    }
+
+    /**
      * Abort with 403 when the current user may not mount the given component.
      */
     public static function authorize(?string $componentName): void
@@ -82,14 +93,14 @@ final class ComponentAccessGuard
      * own route middleware / object gates; this guard only closes the admin
      * bypass at the dynamic-mount seams.
      *
-     * Matching ignores the namespace prefix: noerd registers its components with
-     * BOTH a namespace and a bare location (Livewire::addLocation), so
-     * `noerd::tenants-list` and `tenants-list` mount the very same admin screen —
-     * comparing the full name alone let the bare alias walk straight past this
-     * guard. Consequence to be aware of: a host or module component whose bare
-     * name matches one of these becomes admin-only too. That is the deliberate
-     * fail-closed choice — such a component already collides with noerd's own
-     * registration.
+     * Matching is namespace-aware, with ONE deliberate exception: a name written
+     * WITHOUT a namespace matches an admin entry by its bare name alone. That
+     * exception is what keeps the guard closed for noerd's own screens, which
+     * are registered both namespaced and bare (Livewire::addLocation), so
+     * `noerd::tenants-list` and `tenants-list` mount the very same component.
+     * The namespace of a namespaced name is never dropped, though: modules
+     * register their screens under their own namespace only, so `cms::settings-page`
+     * being admin-only must not lock down `hr::settings-page` as well.
      */
     public static function allows(?string $componentName): bool
     {
@@ -97,36 +108,56 @@ final class ComponentAccessGuard
             return true;
         }
 
-        $restricted = array_map(
-            static fn(string $name): string => self::normalize($name),
-            array_merge(self::ADMIN_COMPONENTS, self::$registered),
-        );
+        $candidateNamespace = self::namespaceOf($componentName);
+        $candidateName = self::normalizeName($componentName);
 
-        if (in_array(self::normalize($componentName), $restricted, true)) {
-            return (bool) NoerdAuth::user()?->isAdmin();
+        foreach (array_merge(self::ADMIN_COMPONENTS, self::$registered) as $restricted) {
+            if (self::normalizeName($restricted) !== $candidateName) {
+                continue;
+            }
+
+            if ($candidateNamespace === null || $candidateNamespace === self::namespaceOf($restricted)) {
+                return (bool) NoerdAuth::user()?->isAdmin();
+            }
         }
 
         return true;
     }
 
     /**
-     * The comparable identity of a component name — it must collapse EVERY
-     * spelling Livewire resolves to the same component file, or the guard is
+     * The Livewire namespace of a component name, or null when it carries none
+     * (a bare component location). Lowercased so `NOERD::x` and `noerd::x`
+     * compare equal; an empty prefix (`::x`) counts as no namespace, which
+     * matches bare entries and therefore stays fail-closed.
+     */
+    private static function namespaceOf(string $componentName): ?string
+    {
+        $name = self::stripMarker($componentName);
+
+        if (! str_contains($name, '::')) {
+            return null;
+        }
+
+        $namespace = mb_trim(Str::beforeLast($name, '::'));
+
+        return $namespace === '' ? null : mb_strtolower($namespace);
+    }
+
+    /**
+     * The comparable identity of the name behind the namespace — it must collapse
+     * EVERY spelling Livewire resolves to the same component file, or the guard is
      * bypassable by writing the name differently.
      *
      * Livewire's Finder strips the ⚡ marker and rewrites '/' to '.'
      * (Finder::normalizeName), then builds the view path from the dot segments,
      * where empty segments simply vanish — so 'x', '.x', '..x' and '/x' all
-     * load the same component. The namespace is dropped as well, because noerd
-     * registers its components both namespaced and bare (Livewire::addLocation).
+     * load the same component.
      */
-    private static function normalize(string $componentName): string
+    private static function normalizeName(string $componentName): string
     {
-        $name = Str::afterLast($componentName, '::');
+        $name = Str::afterLast(self::stripMarker($componentName), '::');
 
-        // Mirror Finder::normalizeName(): drop the ⚡ marker (with either
-        // variation selector) and treat slashes as dot separators.
-        $name = preg_replace('/\x{26A1}[\x{FE0E}\x{FE0F}]?/u', '', $name) ?? $name;
+        // Mirror Finder::normalizeName(): treat slashes as dot separators.
         $name = str_replace(['/', '\\'], '.', $name);
 
         // Empty segments carry no meaning for the resolver — dropping them is
@@ -137,5 +168,14 @@ final class ComponentAccessGuard
         ));
 
         return mb_strtolower(implode('.', $segments));
+    }
+
+    /**
+     * Drop the ⚡ marker (with either variation selector) Livewire allows in
+     * front of a component name.
+     */
+    private static function stripMarker(string $componentName): string
+    {
+        return preg_replace('/\x{26A1}[\x{FE0E}\x{FE0F}]?/u', '', $componentName) ?? $componentName;
     }
 }
