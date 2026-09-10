@@ -83,6 +83,7 @@ use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
 use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
+use Noerd\Support\EmptyNumberFieldHook;
 use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LayoutState;
@@ -119,6 +120,7 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(RelationFormPersistHook::class);
         ComponentHookRegistry::register(LockedPropertiesHook::class);
         ComponentHookRegistry::register(WriteGuardHook::class);
+        ComponentHookRegistry::register(EmptyNumberFieldHook::class);
         ComponentHookRegistry::register(ComponentAccessHook::class);
 
         $this->app->singleton(ActionPermissionRegistry::class);
