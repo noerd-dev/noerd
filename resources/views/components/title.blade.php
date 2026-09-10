@@ -1,8 +1,8 @@
 @props([
     /**
      * Keep the header on ONE non-wrapping row at every breakpoint. Used by the generic
-     * list header, whose overflowing controls collapse into the filter drawer instead of
-     * wrapping onto further lines. Detail headers stay stacked below `lg`.
+     * list header, whose title row holds only the title and the buttons — search and
+     * filters live on their own row below it. Detail headers stay stacked below `lg`.
      */
     'row' => false,
 ])

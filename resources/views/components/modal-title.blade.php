@@ -7,8 +7,8 @@
     'listRelations' => [],
     /**
      * Keep the header on ONE non-wrapping row at every breakpoint instead of stacking
-     * below `lg`. Set by the generic list header, which collapses its overflowing
-     * controls into the filter drawer rather than onto a second line.
+     * below `lg`. Set by the generic list header, whose title row carries only the
+     * title and the buttons; search and filters sit on the filter row below it.
      */
     'row' => false,
 ])

@@ -498,13 +498,15 @@ actions:
 - No `actions` key means no button is rendered
 
 **Where the controls render:** the standard list header (`noerd::components.table.list-header`,
-rendered by `<x-noerd::list />`) draws the search field, CSV export, registry list actions and the
-YAML action buttons itself — as one responsive row whose collapsible half moves into a filter
-drawer on small screens (owner: [List Filters](list-filters.md#responsive-header-the-filter-drawer)).
-A component with its OWN custom `<x-slot:header>` (e.g. a list nested in tab panels) gets the same
-controls injected by `x-noerd::modal-title` (`noerd::components.table.list-controls`): wrap the
-custom title in `<x-noerd::modal-title>` and they appear top right automatically — never hand-roll
-a search field or action buttons in a list header. Two props on `x-noerd::modal-title` tune the
+rendered by `<x-noerd::list />`) is two rows: the title row carries the title with its record
+count and, right-aligned, every button (CSV export, `style: secondary` and primary YAML actions);
+the filter row below carries the search field, the filters in a horizontally scrolling strip, the
+registry list actions and the pagination summary with its page buttons (owner:
+[List Filters](list-filters.md#header-layout-title-row--filter-row)). A component with its OWN
+custom `<x-slot:header>` (e.g. a list nested in tab panels) gets the same controls injected in one
+row by `x-noerd::modal-title` (`noerd::components.table.list-controls`): wrap the custom title in
+`<x-noerd::modal-title>` and they appear top right automatically — never hand-roll a search field
+or action buttons in a list header. Two props on `x-noerd::modal-title` tune the
 injection:
 
 | Prop | Description |
@@ -549,6 +551,19 @@ public function openImportModal(mixed $modelId = null, array $relations = []): v
 Requires the facade import: `use Noerd\Facades\Noerd;`
 
 Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
+
+## Pagination
+
+Every list is paginated (`WithPagination`, page state kept out of the URL). The navigation —
+the summary `1-50 of 150` plus icon-only previous/next buttons — is ONE partial
+(`noerd::components.table.list-pagination-nav`, expecting a `$paginator`) rendered twice: in the
+right group of the header's filter row (only while the list has rows) and in the pagination footer
+(`noerd::pagination`). The two can therefore never drift apart; never render page buttons by hand.
+
+The rows-per-page select lives in the footer only. Its options are `10, 25, 50, 100, 200` — never
+above `NoerdList::MAX_PER_PAGE` (200), which `clampPerPage()` enforces on every update and on the
+session-restored value in `mountList()`. The chosen size is persisted per list in the session
+(`listPerPage.{component}`).
 
 ## Multi-Select & Bulk Actions
 
@@ -681,7 +696,7 @@ rendered below the form of a detail view. In compact mode the list renders only 
 
 - the list header (title, search field and action buttons such as "New …")
 - the inline list description
-- the pagination footer (the "Showing 1 to N of N results" row and the per-page select)
+- the pagination footer (the `1-50 of 150` summary, the per-page select and the page buttons)
 
 `compact` is a public property on the `NoerdList` trait, so it works exactly like `disableModal` —
 just add it as an attribute on the embedded Livewire component.
@@ -835,8 +850,8 @@ searchableColumns:
   - sku
 ```
 
-Grid mode swaps only the rows block (`noerd::components.list.grid`) — the list header (title,
-search, view switcher, actions, filter chips), the pagination footer, the picker/bulk footers and
+Grid mode swaps only the rows block (`noerd::components.list.grid`) — the list header rows (title,
+search, view switcher, actions, filter chips, pagination), the pagination footer, the picker/bulk footers and
 the object-permission handling stay exactly as in table mode.
 
 **Card content** is derived from the `columns` array: the first column with a non-empty value

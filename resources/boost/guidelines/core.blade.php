@@ -491,8 +491,16 @@ public function openImportModal(mixed $modelId = null, array $relations = []): v
 - Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters
 - No `actions` key means no button is rendered
 - The `action` value must always be explicitly set (no implicit fallback to `listAction`)
+- The generic list header is TWO rows and never anything else: the title row (title + record
+  count, every button right-aligned) and the filter row (search field left, the filters in a
+  horizontally SCROLLING strip built like the quick-menu, registry actions and the pagination
+  summary `1-50 of 150` with icon-only page buttons right). The filter row renders only when a
+  search field, filters or registry actions exist. Never add breakpoint stacking, a drawer or
+  width-measuring JavaScript to a list header; the same page buttons and summary render again in
+  the footer through the one partial `noerd::components.table.list-pagination-nav`, next to the
+  footer-only rows-per-page select (options never above `NoerdList::MAX_PER_PAGE`)
 
-**Reference:** `docs/list-view.md` ("Actions")
+**Reference:** `docs/list-view.md` ("Actions", "Pagination"), `docs/list-filters.md` ("Header layout")
 
 ### Picklist Columns Render as Translated Badges in Lists
 When a list column displays a picklist/select value, it must ALWAYS be shown as a **badge** with the
@@ -619,7 +627,7 @@ related list rendered inside a detail view). In compact mode the list renders on
 
 - the list header is hidden (title, search field and action buttons / "New …")
 - the inline list description is hidden
-- the pagination footer is hidden (the "Showing 1 to N of N results" row and the per-page select)
+- the pagination footer is hidden (the `1-50 of 150` summary, the per-page select and the page buttons)
 
 **Enabling it** — pass the `compact` attribute when embedding the list Livewire component, exactly
 like `disableModal`:

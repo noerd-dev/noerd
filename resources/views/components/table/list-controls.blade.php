@@ -1,9 +1,10 @@
 {{--
-    Generic list header controls for a header that does NOT collapse: CSV export,
-    search, registry list actions and the YAML `actions` buttons, in one row.
-    Included by x-noerd::modal-title for a NoerdList host that brings its own custom
-    header slot. The generic list-header renders the same partials itself instead,
-    so the collapsing half can double as the filter drawer — see list-header.
+    Generic list header controls for a list host that brings its OWN custom header
+    slot (e.g. a list nested in tab panels): search, CSV export, the `style:
+    secondary` actions, the registry list actions and the primary YAML buttons, in
+    one row. Included by x-noerd::modal-title. The generic list-header renders the
+    same partials itself, spread over its title row and its filter row — see
+    list-header.
 
     Expects: $host (the NoerdList Livewire component), $listRelations. Positioning
     (ml-auto, modal controls offset) is owned by the modal-title wrapper — never add
@@ -22,5 +23,7 @@
         @include('noerd::components.table.list-controls-secondary', $controlArguments)
     </div>
 @endif
+
+@include('noerd::components.table.list-controls-registry', $controlArguments)
 
 @include('noerd::components.table.list-controls-primary', $controlArguments)

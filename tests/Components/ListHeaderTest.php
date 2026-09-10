@@ -14,8 +14,9 @@ uses(TestCase::class, RefreshDatabase::class);
 
 /*
  | The generic list header: which controls it computes (headerControls()), how a
- | list host with its OWN header slot gets them injected, and how they collapse
- | into the drawer instead of wrapping onto a second row.
+ | list host with its OWN header slot gets them injected, and how the two rows
+ | are laid out — buttons on the title row, search + filters + pagination on the
+ | filter row, whose filter strip scrolls instead of wrapping or collapsing.
  */
 
 beforeEach(function (): void {
@@ -72,18 +73,25 @@ describe('control injection', function (): void {
             ->toContain('wire:model.live.debounce.300ms="search"');
     });
 
-    it('keeps room for the focus ring inside the scrolling controls row', function (): void {
-        // `xl:overflow-x-auto` makes the header row scroll rather than wrap, and a scroll
-        // container clips BOTH axes. Without padding the row is exactly as tall as its
-        // 32px controls, so the search field's focus ring is cut down to a black sliver.
+    it('keeps room for focus rings inside the scrolling filter strip', function (): void {
+        // The strip is a scroll container, which clips BOTH axes; without padding
+        // the focus ring of a filter control is cut off. It is built exactly like
+        // the quick-menu: a reserved 6px track pulled out of the layout, and the
+        // idle class that hides the thumb while nothing overflows.
         $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
 
-        preg_match_all('/class="([^"]*xl:overflow-x-auto[^"]*)"/', $html, $matches);
+        preg_match_all('/class="([^"]*overflow-x-scroll[^"]*)"/', $html, $matches);
 
-        expect($matches[1])->not->toBeEmpty();
+        expect($matches[1])->not->toBeEmpty()
+            ->and($html)->toContain('x-data="noerdScrollShadow()"');
 
         foreach ($matches[1] as $classAttribute) {
-            expect($classAttribute)->toContain('xl:p-1.5');
+            expect($classAttribute)->toContain('noerd-scrollbar')
+                ->toContain('noerd-scrollbar-idle')
+                ->toContain('-mb-[6px]')
+                ->toContain('p-1')
+                ->toContain('min-w-0')
+                ->toContain('flex-1');
         }
     });
 });
@@ -131,12 +139,12 @@ describe('headerControls', function (): void {
             ->and($controls['registry'])->toBe([]);
     });
 
-    it('answers whether anything collapses into the drawer', function (): void {
+    it('answers whether the list has a search field, a CSV export or secondary actions', function (): void {
         expect(Livewire::test(CollapsingHeaderListComponent::class)->instance()->hasCollapsibleControls())->toBeTrue()
             ->and(Livewire::test(BareHeaderListComponent::class)->instance()->hasCollapsibleControls())->toBeFalse();
     });
 
-    it('counts the primary actions towards the header controls but not towards the drawer', function (): void {
+    it('counts the primary actions towards the header controls but not towards the injected group', function (): void {
         $host = Livewire::test(PrimaryOnlyHeaderListComponent::class)->instance();
 
         expect($host->hasCollapsibleControls())->toBeFalse()
@@ -155,38 +163,70 @@ describe('header rendering', function (): void {
             ->and(mb_substr_count($html, '$refs.searchInput.focus()'))->toBe(1);
     });
 
-    it('keeps the header on a single row instead of stacking below lg', function (): void {
+    it('keeps the title row on a single line instead of stacking below lg', function (): void {
         $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
 
         // x-noerd::title stacks below `lg` for detail headers; the list header opts
-        // out via `row`, so its title element is flex at EVERY width and the controls
-        // collapse into the drawer instead of wrapping.
+        // out via `row`, so its title element is flex at EVERY width — the buttons
+        // stay on the title line and nothing wraps.
         assertElementHasClasses($html, ['font-semibold', 'text-slate-900', 'flex', 'h-[30px]']);
         assertNoElementHasClasses($html, ['font-semibold', 'text-slate-900', 'lg:flex', 'lg:h-[30px]']);
     });
 
-    it('opens the drawer from a funnel button that only exists below lg', function (): void {
+    it('renders the filters on a second row that scrolls instead of wrapping or collapsing', function (): void {
         $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
 
-        // Below `lg` the controls become a drawer opened by the funnel button; the
-        // header row itself never wraps onto a second line.
-        expect($html)->toContain('x-data="{ drawer: false }"')
-            ->and($html)->toContain('drawer = true')
-            ->and($html)->not->toContain('flex-wrap');
+        expect($html)->toContain('wire:key="list-filter-row"')
+            ->and($html)->not->toContain('drawer')
+            ->and($html)->not->toContain('flex-wrap')
+            ->and($html)->not->toContain('max-xl:')
+            ->and($html)->not->toContain('xl:overflow-x-auto');
     });
 
-    it('offers no drawer when there is nothing to collapse', function (): void {
+    it('keeps the search field outside the scrolling strip and the filters inside it', function (): void {
+        app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+
+        $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
+
+        // Filter row order: search | scrolling strip with the filters | registry
+        // actions — all of it above the table. (The pagination nav needs a real
+        // paginator and is covered by ListPaginationTest.)
+        $positions = array_map(
+            static fn(string $needle): int|false => mb_strpos($html, $needle),
+            ['wire:key="list-search"', 'overflow-x-scroll', 'listFilters.color', 'HA-PROBE:', '<table'],
+        );
+
+        expect($positions)->each->not->toBeFalse();
+        expect($positions)->toBe(collect($positions)->sort()->values()->all());
+    });
+
+    it('puts CSV and the secondary actions on the title row next to the primary buttons', function (): void {
+        $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
+
+        $filterRow = mb_strpos($html, 'wire:key="list-filter-row"');
+
+        expect(mb_strpos($html, 'wire:key="list-csv-export"'))->toBeLessThan($filterRow)
+            ->and(mb_strpos($html, '$wire.exportSecondary(null, [])'))->toBeLessThan($filterRow)
+            ->and(mb_strpos($html, '$wire.listAction(null, [])'))->toBeLessThan($filterRow);
+    });
+
+    it('renders no filter row when there is nothing to put in it', function (): void {
         $html = Livewire::test(BareHeaderListComponent::class)->assertOk()->html();
 
-        expect($html)->not->toContain('x-data="{ drawer: false }"')
-            ->and($html)->not->toContain('drawer = true');
+        expect($html)->not->toContain('wire:key="list-filter-row"')
+            ->and($html)->not->toContain('overflow-x-scroll');
     });
 
-    it('counts an active search in the funnel badge, which is all the drawer leaves visible', function (): void {
-        $html = Livewire::test(CollapsingHeaderListComponent::class)->set('search', 'rot')->html();
+    it('opens the filter row for registry actions alone', function (): void {
+        app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
 
-        assertElementHasClasses($html, ['bg-brand-primary', 'px-1', 'text-[10px]']);
+        $html = Livewire::test(BareHeaderListComponent::class)->assertOk()->html();
+
+        expect($html)->toContain('wire:key="list-filter-row"')
+            ->and($html)->toContain('HA-PROBE:')
+            ->and($html)->not->toContain('overflow-x-scroll');
     });
+
 });
 
 /**
@@ -237,10 +277,18 @@ class CustomHeaderListComponent extends Component
     }
 }
 
-/** List with a search field, CSV export and both a secondary and a primary action. */
+/** List with a search field, a header filter, CSV export and both a secondary and a primary action. */
 class CollapsingHeaderListComponent extends Component
 {
     use NoerdList;
+
+    /**
+     * @return array{column: string, label: string, options: array<string, string>}
+     */
+    public function getColorListFilter(): array
+    {
+        return ['column' => 'color', 'label' => 'Color', 'options' => ['red' => 'Red']];
+    }
 
     /**
      * @return array<string, mixed>

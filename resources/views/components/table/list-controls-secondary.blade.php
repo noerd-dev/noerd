@@ -1,9 +1,8 @@
 {{--
-    The list header's secondary buttons: CSV export and every YAML action marked
-    `style: secondary`. Rendered ONCE — below `xl` they stack full-width in the
-    filter drawer, from `xl` on they sit on the header row. The layout switch is
-    pure CSS (`max-xl:` / `xl:`), so there is no second copy and therefore no key
-    prefix, no `stacked` flag and no shortcut that could fire twice.
+    The list's secondary buttons: CSV export and every YAML action marked
+    `style: secondary`. They sit on the TITLE row next to the primary buttons —
+    the title row holds every button, the filter row below holds search, filters
+    and pagination.
 
     Expects: $host (the NoerdList Livewire component), $controls (see
     NoerdList::headerControls()), $listRelations.
@@ -13,10 +12,7 @@
         wire:key="list-csv-export"
         variant="secondary"
         icon="arrow-down-tray"
-        {{-- x-noerd::button centres itself with `my-auto` for the header ROW; in the
-             drawer's flex COLUMN that margin would absorb the free vertical space
-             and scatter the buttons down the panel. --}}
-        class="max-xl:!my-0 max-xl:w-full xl:h-8 xl:shrink-0"
+        class="h-8 shrink-0"
         title="{{ __('Export CSV') }}"
         wire:click="exportCsv"
     >
@@ -44,7 +40,7 @@
     @endphp
     <div
         wire:key="list-secondary-action-{{ $actionIndex }}"
-        class="max-xl:w-full xl:shrink-0"
+        class="shrink-0"
         @if ($shortcut !== null)
             x-data
             @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }"
@@ -54,12 +50,12 @@
             variant="secondary"
             :icon="$actionItem['heroicon'] ?? null"
             x-ref="actionBtn{{ $actionIndex }}"
-            class="relative max-xl:!my-0 max-xl:w-full xl:h-8"
+            class="relative h-8 whitespace-nowrap"
             @click.prevent="{{ $clickExpression }}"
         >
             {{ __($actionItem['label']) }}
             @if ($shortcut !== null)
-                <kbd class="ml-2 hidden rounded border border-gray-300 bg-gray-100 px-1 py-0.5 text-xs text-gray-500 xl:inline-block">{{ $shortcut['badge'] }}</kbd>
+                <kbd class="ml-2 hidden rounded border border-gray-300 bg-gray-100 px-1 py-0.5 text-xs text-gray-500 lg:inline-block">{{ $shortcut['badge'] }}</kbd>
             @endif
         </x-noerd::button>
     </div>

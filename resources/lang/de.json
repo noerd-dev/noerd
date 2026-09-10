@@ -1,4 +1,5 @@
 {
+    ":from-:to of :total": ":from-:to von :total",
     "A collection with this filename already exists.": "Eine Collection mit diesem Dateinamen existiert bereits.",
     "A new tenant contains its own master and transactional data, but can be managed with the same users.": "Ein neuer Mandant enthält eigene Stamm- und Bewegungsdaten, kann aber mit denselben Benutzern verwaltet werden.",
     "A new verification link has been sent to your email address.": "Ein neuer Bestätigungslink wurde an Ihre E-Mail-Adresse versendet.",
@@ -215,6 +216,7 @@
     "Orders": "Bestellungen",
     "Overview of your current access rights to tenants and assigned profiles.": "Übersicht über Ihre aktuellen Zugriffsrechte auf Mandanten und zugewiesene Profile.",
     "Overwrites the user's password. Can only be set by administrators.": "Überschreibt das Passwort des Benutzers. Kann nur von Administratoren gesetzt werden.",
+    "Pagination Navigation": "Seitennavigation",
     "Paid": "Bezahlt",
     "Part": "Teil",
     "Password": "Passwort",
@@ -231,6 +233,7 @@
     "Profile Information": "Profilinformationen",
     "Read Only": "Nur Lesen",
     "Really delete this collection and all :count entries?": "Diese Collection und alle :count Einträge wirklich löschen?",
+    "Rows per page": "Zeilen pro Seite",
     "Remember me": "Angemeldet bleiben",
     "Remove all": "Alle entfernen",
     "Remove file": "Datei entfernen",

@@ -1,193 +1,142 @@
 <x-slot:header>
-    {{-- The generic list header is ONE non-wrapping row at every viewport width
-         (`row` on modal-title). From `xl` on, the filters, the search field, CSV
-         export and the `style: secondary` actions sit inline on that row; below it
-         they move into a drawer behind the funnel button instead of wrapping onto
-         further lines, which is what makes the header usable on a phone. Only the
-         title and the primary actions are on the row at every width.
+    {{-- The generic list header is TWO rows at every viewport width:
 
-         Everything is rendered ONCE — the controls container below IS the drawer
-         panel below `xl` and the inline row from `xl` on, switched by `max-xl:` /
-         `xl:` classes. Nothing is duplicated, so there is no key prefix, no
-         `stacked` flag and no shortcut that could fire twice.
+         • The TITLE row (modal-title, `row` = one non-wrapping flex line): the
+           list title with its record count (and the view switcher when the list
+           ships several YAML views) on the left, every button on the right — the
+           `style: secondary` actions, CSV export and the primary "New …" actions.
+           modal-title draws the grey separator below it.
+         • The FILTER row, rendered only when something belongs in it (a search
+           field, header filters/chips, or registry list actions): the search field
+           on the left, the filters in a horizontally SCROLLING strip next to it,
+           and on the right the registry list actions (e.g. a module's layout
+           and object managers) followed by the pagination summary with its
+           previous/next buttons.
+
+         Neither row ever wraps and nothing collapses into a drawer: the three
+         zones of the filter row are `shrink-0` | `flex-1 min-w-0` | `shrink-0`,
+         so any overflow goes into the middle strip, which scrolls exactly like
+         the quick-menu. No JavaScript measures or positions anything —
+         `noerdScrollShadow` only toggles the idle scrollbar class.
+
+         Both rows live in the page's header slot, i.e. above the scrolling body,
+         so they stay put while the table scrolls.
 
          The controls are included here rather than injected by modal-title
-         (:listControls="false") because they have to sit inside this row. --}}
+         (:listControls="false") because they are spread over the two rows. --}}
+    @php
+        $controls = $this->headerControls();
+        $filterChips = $this->activeColumnFilterChips;
+        $hasFilters = (bool) $this->tableFilters || $filterChips !== [];
+        $paginator = isset($rows) && ! is_array($rows) ? $rows : null;
+
+        // The filter row exists only when something belongs in it. Pagination
+        // alone never opens it — the footer already carries the same navigation.
+        $hasFilterRow = $controls['search'] || $hasFilters || $controls['registry'] !== [];
+
+        $controlArguments = [
+            'host' => $this,
+            'controls' => $controls,
+            'listRelations' => $relations ?? [],
+            'tableFilters' => $this->tableFilters,
+            'listFilters' => $this->listFilters,
+            'chips' => $filterChips,
+            'hasClearAll' => collect($this->listFilters)->filter()->isNotEmpty() || count($filterChips) > 1,
+        ];
+    @endphp
+
     <x-noerd::modal-title :listRelations="$relations ?? []" :listControls="false" row>
-        @php
-            $controls = $this->headerControls();
-            $filterChips = $this->activeColumnFilterChips;
-            $hasFilters = (bool) $this->tableFilters || $filterChips !== [];
-            $hasDrawer = $hasFilters || $this->hasCollapsibleControls();
+        <div class="flex w-full min-w-0 items-center">
+            {{-- The title must never clip its own overflow: the view switcher's
+                 dropdown is an absolutely positioned child of it, and an
+                 `overflow: hidden` here would swallow the whole panel. Only the
+                 title TEXT truncates, one level further in. --}}
+            <div class="min-w-0">
+                @if (count($listViews ?? []) > 1)
+                    {{-- List-view switcher: pick one of several YAML views for this list --}}
+                    <x-noerd::action-menu align="left" width="w-56" wrapperClass="relative min-w-0">
+                        <x-slot:trigger>
+                            <button
+                                type="button"
+                                x-on:click="open = ! open"
+                                class="flex min-w-0 max-w-full cursor-pointer items-center gap-1 rounded focus:outline-hidden"
+                                :aria-expanded="open"
+                                aria-haspopup="true"
+                                title="{{ __('Switch list view') }}"
+                            >
+                                <span class="truncate">{{ $title }}</span>
+                                @if ($paginator !== null)
+                                    <span class="shrink-0 font-light">({{ $paginator->total() }})</span>
+                                @endif
+                                <x-noerd::icons.chevron-down class="my-auto shrink-0 text-gray-500" />
+                            </button>
+                        </x-slot:trigger>
 
-            // The badge counts everything the drawer hides from view, so an active
-            // search is still visible while the search field itself is in there.
-            $activeFilterCount = collect($this->listFilters)->filter()->count()
-                + count($filterChips)
-                + ($this->search !== '' ? 1 : 0);
-
-            $controlArguments = [
-                'host' => $this,
-                'controls' => $controls,
-                'listRelations' => $relations ?? [],
-                'tableFilters' => $this->tableFilters,
-                'listFilters' => $this->listFilters,
-                'chips' => $filterChips,
-                'hasClearAll' => collect($this->listFilters)->filter()->isNotEmpty() || count($filterChips) > 1,
-            ];
-        @endphp
-
-        <div
-            class="flex w-full min-w-0 items-center"
-            @if ($hasDrawer)
-                x-data="{ drawer: false }"
-                @keydown.escape.window="drawer = false"
-            @endif
-        >
-            <div class="flex min-w-0 shrink-0 items-center gap-2">
-                {{-- The title must never clip its own overflow: the view switcher's
-                     dropdown is an absolutely positioned child of it, and an
-                     `overflow: hidden` here would swallow the whole panel. Only the
-                     title TEXT truncates, one level further in. --}}
-                <div class="min-w-0">
-                    @if (count($listViews ?? []) > 1)
-                        {{-- List-view switcher: pick one of several YAML views for this list --}}
-                        <x-noerd::action-menu align="left" width="w-56" wrapperClass="relative min-w-0">
-                            <x-slot:trigger>
-                                <button
-                                    type="button"
-                                    x-on:click="open = ! open"
-                                    class="flex min-w-0 max-w-full cursor-pointer items-center gap-1 rounded focus:outline-hidden"
-                                    :aria-expanded="open"
-                                    aria-haspopup="true"
-                                    title="{{ __('Switch list view') }}"
-                                >
-                                    <span class="truncate">{{ $title }}</span>
-                                    @if (isset($rows) && ! is_array($rows))
-                                        <span class="shrink-0 font-light">({{ $rows->total() }})</span>
-                                    @endif
-                                    <x-noerd::icons.chevron-down class="my-auto shrink-0 text-gray-500" />
-                                </button>
-                            </x-slot:trigger>
-
-                            @foreach ($listViews as $viewKey => $view)
-                                <x-noerd::action-menu-item
-                                    wire:click="switchListView('{{ $viewKey }}')"
-                                    :active="$viewKey === $activeListView"
-                                >
-                                    {{ __($view['title']) }}
-                                    <span class="opacity-50">({{ $view['appLabel'] }})</span>
-                                </x-noerd::action-menu-item>
-                            @endforeach
-                        </x-noerd::action-menu>
-                    @else
-                        <div class="truncate">
-                            {{ $title }}
-                            @if (isset($rows) && ! is_array($rows))
-                                <span class="font-light"> ({{ $rows->total() }}) </span>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-
-                @if ($hasDrawer)
-                    {{-- Opens the drawer. Only exists where the controls are in it. --}}
-                    <button
-                        type="button"
-                        x-on:click="drawer = true"
-                        class="relative inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-gray-300 text-gray-700 transition hover:bg-gray-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden xl:hidden"
-                        :aria-expanded="drawer"
-                        title="{{ __('Filters') }}"
-                    >
-                        <span class="sr-only">{{ __('Filters') }}</span>
-                        <x-dynamic-component component="heroicons::outline.funnel" class="size-4" />
-                        @if ($activeFilterCount > 0)
-                            <span class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-primary px-1 text-[10px] leading-none font-semibold text-brand-primary-text">
-                                {{ $activeFilterCount }}
-                            </span>
+                        @foreach ($listViews as $viewKey => $view)
+                            <x-noerd::action-menu-item
+                                wire:click="switchListView('{{ $viewKey }}')"
+                                :active="$viewKey === $activeListView"
+                            >
+                                {{ __($view['title']) }}
+                                <span class="opacity-50">({{ $view['appLabel'] }})</span>
+                            </x-noerd::action-menu-item>
+                        @endforeach
+                    </x-noerd::action-menu>
+                @else
+                    <div class="truncate">
+                        {{ $title }}
+                        @if ($paginator !== null)
+                            <span class="font-light"> ({{ $paginator->total() }}) </span>
                         @endif
-                    </button>
+                    </div>
                 @endif
             </div>
 
-            @if ($hasDrawer)
-                {{-- Backdrop, drawer widths only. Sits above the modal stack (z-50/z-[60])
-                     so a list opened as a modal keeps its drawer usable. --}}
-                <div
-                    x-show="drawer"
-                    x-cloak
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    x-on:click="drawer = false"
-                    class="fixed inset-0 z-[70] bg-gray-800/50 xl:hidden"
-                ></div>
-
-                {{-- THE controls. One element, two layouts:
-                     • from `xl`: a flex ROW inside the header, filters left, search and
-                       buttons pushed right (`xl:ml-auto` on the search group).
-                     • below `xl`: a full-height panel fixed to the right edge, stacked
-                       as a flex COLUMN — search first, then the filters, then the
-                       buttons, ordered with `order-*` rather than by rendering the
-                       groups a second time.
-                     Visibility below `xl` is driven by opacity/visibility (not
-                     `display`), so the panel can transition without a translate that
-                     would push the page into horizontal overflow. --}}
-                {{-- `xl:overflow-x-auto` makes the row scroll instead of wrap, but a
-                     scroll container clips BOTH axes (CSS forces `overflow-y` to
-                     `auto` as soon as one axis is not `visible`), and the row's box
-                     is exactly as tall as its 32px controls. Without room the focus
-                     ring of the search field (`ring-2` + `ring-offset-2`) is cut down
-                     to a bare sliver on its left. `xl:p-1.5` opens 6px on every side
-                     for it; the negative margins (and the reduced `xl:ml-2.5`) cancel
-                     that padding again, so the row sits exactly where it did. --}}
-                <div
-                    class="xl:-my-1.5 xl:-mr-1.5 xl:ml-2.5 xl:flex xl:min-w-0 xl:flex-1 xl:flex-row xl:items-center xl:gap-1 xl:overflow-x-auto xl:p-1.5
-                           max-xl:fixed max-xl:inset-y-0 max-xl:right-0 max-xl:z-[70] max-xl:flex max-xl:w-80 max-xl:max-w-[85vw] max-xl:flex-col max-xl:items-stretch max-xl:gap-3 max-xl:overflow-y-auto max-xl:bg-white max-xl:p-6 max-xl:text-sm max-xl:font-normal max-xl:shadow-xl max-xl:transition max-xl:duration-200"
-                    x-bind:class="drawer
-                        ? 'max-xl:visible max-xl:translate-x-0 max-xl:opacity-100'
-                        : 'max-xl:invisible max-xl:translate-x-2 max-xl:opacity-0'"
-                >
-                    {{-- Drawer chrome — no place on the inline row. --}}
-                    <div class="flex items-center border-b border-gray-300 pb-4 max-xl:order-first xl:hidden">
-                        <span class="font-semibold text-zinc-900">{{ __('Filters') }}</span>
-                        <button
-                            type="button"
-                            x-on:click="drawer = false"
-                            class="ml-auto inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border border-gray-300 text-gray-700 transition hover:bg-gray-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
-                            title="{{ __('Close') }}"
-                        >
-                            <span class="sr-only">{{ __('Close') }}</span>
-                            <x-dynamic-component component="heroicons::mini.solid.x-mark" class="size-4" />
-                        </button>
-                    </div>
-
-                    @if ($controls['search'])
-                        <div class="max-xl:order-1 max-xl:w-full xl:order-2 xl:ml-auto xl:shrink-0 xl:pl-2">
-                            @include('noerd::components.table.list-search', $controlArguments)
-                        </div>
-                    @endif
-
-                    @if ($hasFilters)
-                        <div class="flex max-xl:order-2 max-xl:flex-col max-xl:gap-3 xl:order-1 xl:min-w-0 xl:items-center xl:gap-1">
-                            @include('noerd::components.table.list-filters', $controlArguments)
-                        </div>
-                    @endif
-
-                    @if ($controls['csv'] || $controls['secondary'] !== [])
-                        <div class="flex max-xl:order-3 max-xl:flex-col max-xl:gap-3 xl:order-3 xl:shrink-0 xl:items-center xl:gap-2 xl:pl-2">
-                            @include('noerd::components.table.list-controls-secondary', $controlArguments)
-                        </div>
-                    @endif
-                </div>
-            @endif
-
-            <div class="ml-auto flex shrink-0 items-center gap-4 pl-4" :class="isModal ? modalControlsClass : ''">
+            <div class="ml-auto flex shrink-0 items-center gap-2 pl-4" :class="isModal ? modalControlsClass : ''">
+                @include('noerd::components.table.list-controls-secondary', $controlArguments)
                 @include('noerd::components.table.list-controls-primary', $controlArguments)
             </div>
         </div>
     </x-noerd::modal-title>
+
+    @if ($hasFilterRow)
+        <div
+            wire:key="list-filter-row"
+            class="flex w-full min-w-0 items-center gap-x-2 border-b border-gray-300 px-6 py-2 text-sm font-normal"
+        >
+            @if ($controls['search'])
+                <div class="shrink-0">
+                    @include('noerd::components.table.list-search', $controlArguments)
+                </div>
+            @endif
+
+            @if ($hasFilters)
+                {{-- The scrolling strip, built like the quick-menu: overflow-x-scroll
+                     (not auto) keeps the 6px scrollbar track permanently reserved and
+                     -mb-[6px] cancels it out of the layout, so the controls never
+                     shift when the scrollbar appears — it draws in the row's bottom
+                     padding instead. noerd-scrollbar-idle hides the thumb while
+                     nothing overflows (a custom WebKit scrollbar would otherwise draw
+                     it at full length); noerdScrollShadow keeps the class in sync.
+
+                     A scroll container clips BOTH axes, so `p-1` opens 4px on every
+                     side for the controls' focus rings. Popovers are safe: the
+                     picklist is a native <select>, the date dropdown anchors with
+                     `x-anchor.fixed`, and chips have none. --}}
+                <div
+                    class="noerd-scrollbar noerd-scrollbar-idle -mb-[6px] flex min-w-0 flex-1 items-center gap-x-2 overflow-x-scroll p-1"
+                    x-data="noerdScrollShadow()"
+                >
+                    @include('noerd::components.table.list-filters', $controlArguments)
+                </div>
+            @endif
+
+            <div class="ml-auto flex shrink-0 items-center gap-2 pl-2">
+                @include('noerd::components.table.list-controls-registry', $controlArguments)
+                @if ($paginator !== null && $paginator->total() > 0)
+                    @include('noerd::components.table.list-pagination-nav', ['paginator' => $paginator])
+                @endif
+            </div>
+        </div>
+    @endif
 </x-slot:header>
