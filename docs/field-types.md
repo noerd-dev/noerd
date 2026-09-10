@@ -449,6 +449,7 @@ render through the same element (see the fallback behavior in the [Overview](#ov
 | `live` | bool | `false` | Enable real-time updates |
 | `required` | bool | `false` | Show required indicator |
 | `placeholder` | string | - | Placeholder text (translation key) |
+| `step` | string/number | - | `type: number` only: the HTML `step` attribute (`0.01`, `any`) — without it a browser rejects decimals |
 
 **YAML Example:**
 
@@ -536,8 +537,19 @@ clickable on read-only fields.
 
 Amount input in the tenant's currency (Setup → System Settings), written the way the current user's
 locale writes it: symbol, decimal and thousands separators follow `FormatHelper::locale()`, so a
-US reader types `1,234.56` and a German reader `1.234,56` for the same field. The value is stored
-as a plain decimal. See [Currency, Numbers & Dates](formatting.md).
+US reader types `1,234.56` and a German reader `1.234,56` for the same field. The input parses the
+notation in the browser and writes a plain decimal into the bound property — the component never
+sees a locale string, so it needs no conversion of its own. See
+[Currency, Numbers & Dates](formatting.md).
+
+- **Nullable:** a `null` value renders an empty input and an emptied input writes `null` back —
+  never `0`. An optional amount column (a net amount derived later, an offer without a price) stays
+  `NULL`, and a form never shows a figure it does not hold. A typed `0` is a value and is kept.
+- **Server changes are mirrored:** the input is `wire:ignore`d (a morph would drop the formatting),
+  so the field watches the bound property itself. A value the component sets after mount — figures
+  derived in `store()`, a proposal loaded into the form — appears in the input at once, unless the
+  reader is typing in it at that moment.
+- A percentage (VAT rate, discount) is NOT a currency: use `type: number` with `step:`.
 
 **YAML Example:**
 

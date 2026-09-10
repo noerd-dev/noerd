@@ -70,18 +70,37 @@ document.addEventListener('alpine:init', () => {
     Alpine.plugin(sort);
     Alpine.plugin(focus);
 
-    // Currency input: the bound value stays a plain number, the field shows it
-    // formatted with the tenant's separators and accepts either notation.
+    // Currency input: the bound value stays a plain number — or null. The
+    // field shows it formatted with the tenant's separators and accepts either
+    // notation. An empty input means "no amount", never 0, so an optional
+    // amount column stays NULL and a form never shows a value it does not hold.
     Alpine.data('noerdCurrency', ({ name, decSep, thousSep }) => ({
         rawValue: null,
         init() {
-            this.rawValue = this.$wire.get(name);
+            this.rawValue = this.normalize(this.$wire.get(name));
             this.$nextTick(() => this.showFormatted());
+
+            // The input is wire:ignore, so a value the SERVER changes after
+            // mount (figures derived on save, a proposal loaded into the form)
+            // has to be written into it by hand. Skip echoes of our own updates
+            // and never overwrite what the reader is typing right now.
+            this.$wire.$watch(name, (value) => {
+                const next = this.normalize(value);
+                if (next === this.rawValue || document.activeElement === this.$refs.input) {
+                    return;
+                }
+                this.rawValue = next;
+                this.showFormatted();
+            });
+        },
+        normalize(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const num = typeof value === 'number' ? value : parseFloat(value);
+            return isNaN(num) ? null : num;
         },
         formatDisplay(val) {
-            let num = parseFloat(val);
-            if (isNaN(num)) num = 0;
-            const parts = num.toFixed(2).split('.');
+            if (val === null) return '';
+            const parts = val.toFixed(2).split('.');
             const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousSep);
             return intPart + decSep + parts[1];
         },
@@ -94,14 +113,13 @@ document.addEventListener('alpine:init', () => {
                 .replace(new RegExp('[^0-9\\-' + escapedDecSep + ']', 'g'), '')
                 .replace(decSep, '.');
             const num = parseFloat(cleaned);
-            return isNaN(num) ? 0 : num;
+            return isNaN(num) ? null : num;
         },
         showFormatted() {
             this.$refs.input.value = this.formatDisplay(this.rawValue);
         },
         onFocus(e) {
-            const num = parseFloat(this.rawValue);
-            e.target.value = isNaN(num) ? '' : num.toFixed(2).replace('.', decSep);
+            e.target.value = this.rawValue === null ? '' : this.rawValue.toFixed(2).replace('.', decSep);
             this.$nextTick(() => e.target.select());
         },
         onBlur(e) {

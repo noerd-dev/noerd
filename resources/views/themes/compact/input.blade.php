@@ -6,6 +6,7 @@
     'type' => 'text',
     'readonly' => false,
     'placeholder' => null,
+    'step' => null,
     'live' => false,
     'required' => false,
 ])
@@ -16,6 +17,7 @@
     $type = $field['type'] ?? $type;
     $readonly = $field['readonly'] ?? $readonly;
     $placeholder = $field['placeholder'] ?? $placeholder;
+    $step = $field['step'] ?? $step;
     $live = $field['live'] ?? $live;
     $required = $field['required'] ?? $required;
 @endphp
@@ -34,6 +36,7 @@
             {{ $readonly ? 'readonly' : '' }}
             autocomplete="off"
             @if ($placeholder) placeholder="{{ __($placeholder) }}" @endif
+            @if ($type === 'number' && $step !== null) step="{{ $step }}" @endif
             class="focus:ring-brand-border block h-7 w-full appearance-none rounded-sm border border-zinc-200 bg-white py-1 ps-2 pe-2 text-base text-zinc-700 placeholder-zinc-400 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 focus:ring-1 focus:outline-none sm:text-sm"
             type="{{ $type }}"
             id="{{ $name }}"
