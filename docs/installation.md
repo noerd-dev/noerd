@@ -141,6 +141,9 @@ itself. The brand palette is CSS-first, no `tailwind.config.js` is needed (see [
 - `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))
 - `brand.active` — color palette (see [Brand](brand.md))
 
+If [Laravel Boost](ai-agents.md) is installed, `noerd:install` and `noerd:update` also register
+`noerd/noerd` in `boost.json` and render the framework rules into your agent files.
+
 ## Verification
 
 You should now have access to `/noerd-apps` with your created user. If you installed the demo data, you will see a working Demo Customers app with a list and detail view — ready to explore and use as a reference for building your own apps.

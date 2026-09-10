@@ -74,6 +74,9 @@ class NoerdInstallCommand extends Command
             // Publish fonts + built Vite assets to public/vendor/noerd
             $this->publishNoerdAssets();
 
+            // Register the package in boost.json and render the agent guidelines
+            $this->registerNoerdBoostPackage();
+
             // Run migrations and setup admin user
             $this->runMigrationsAndSetupAdmin();
 

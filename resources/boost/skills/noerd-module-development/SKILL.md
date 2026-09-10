@@ -116,8 +116,9 @@ payment payloads → `CurrencyHelper::codeForTenant()`. See `docs/formatting.md`
 
 - `resources/boost/guidelines/core.blade.php` — module rules (purpose, YAML locations, component
   names, commands, test call). Blade-rendered by Boost: wrap literal `{{ }}`/`@` in `@verbatim`.
-  The host enables it by adding `"noerd/{module}"` to the `packages` array in `boost.json` and
-  running `php artisan boost:update`.
+  `noerd:install-{module}` / `noerd:update-{module}` register the package in the host's
+  `boost.json` and run `php artisan boost:update` — no manual step. A module's own Claude skills
+  live in the top-level `skills/` folder (published by noerd), never in `boost.json`.
 - `AGENTS.md` (+ `CLAUDE.md` containing `@AGENTS.md`) — contributor workflow for the module repo.
 - Keep both current when the module gains features.
 

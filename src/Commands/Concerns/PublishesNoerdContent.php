@@ -19,6 +19,7 @@ use Noerd\Services\FrontendScaffolder;
 trait PublishesNoerdContent
 {
     use PublishesConfigDirectory;
+    use RegistersBoostPackage;
 
     /**
      * Copy directory contents recursively (see PublishesConfigDirectory).
@@ -49,6 +50,14 @@ trait PublishesNoerdContent
             '--force' => true,
             '--no-interaction' => true,
         ]);
+    }
+
+    /**
+     * Enable the noerd guideline and skills in the host's boost.json and render them.
+     */
+    protected function registerNoerdBoostPackage(): void
+    {
+        $this->registerBoostPackage(dirname(__DIR__, 3));
     }
 
     /**

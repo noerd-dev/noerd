@@ -82,7 +82,11 @@ in the test that needs them.
 - Host project: `php artisan test --compact app-modules/{module}/tests/Feature/ThingTest.php`
   (or `--filter=`). Run the smallest relevant subset, then `vendor/bin/pint --dirty`.
 - Do not run suites in parallel against one shared MySQL test database — `migrate:fresh` of one run
-  destroys the other. Package-only suites run on Testbench sqlite `:memory:`.
+  destroys the other. Package-only suites run on Testbench sqlite `:memory:`. Never
+  `vendor/bin/pest --parallel` in a host with Testbench installed (its workers share ONE database);
+  `php artisan test --parallel` is the parallel runner, and Testbench-bound suites run sequentially.
+- After attaching/detaching tenant apps mid-test call `TenantHelper::clearCache()` before the next
+  `Livewire::test()` — the selected tenant is memoized per process.
 - Module test traits (`CreatesModuleUser`, …) live in `app-modules/{module}/tests/Traits/`.
 
 ## Done when

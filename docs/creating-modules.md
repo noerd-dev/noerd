@@ -179,7 +179,7 @@ $this->detailData['custom_attributes']['my_key'];
 | `app-configs/{module}/` | YAML configuration templates (`lists/`, `details/`, `pages/`, `navigation.yml`) — copied into the project by the install command; the generators write both copies, keep them in sync |
 | `app-configs/stubs/add_{module}_tenant_app.php.stub` | The tenant-app migration published by the install command |
 | `database/migrations/`, `database/factories/`, `database/seeders/` | Database migrations, factories and seeders (module-owned) |
-| `resources/boost/guidelines/core.blade.php` | Module-specific rules for AI coding agents, rendered by Laravel Boost (see [AI Agents](ai-agents.md)) |
+| `resources/boost/guidelines/core.blade.php` | Module-specific rules for AI coding agents, rendered by Laravel Boost; the install/update command registers the package in the host's `boost.json` (see [AI Agents](ai-agents.md)) |
 | `skills/{name}/SKILL.md` | Claude Code skills shipped with the module — **top-level**, next to `src/` (the install/update command publishes every subfolder into the project's `.claude/skills/`). Only the noerd package itself keeps its skills in `resources/boost/skills/` |
 | `resources/lang/de.json` | Translations (English key → German) |
 | `resources/views/components/` | Livewire single-file components (`{module}-dashboard.blade.php`, `*-list.blade.php`, `*-detail.blade.php`, `*-page.blade.php`, `*-modal.blade.php`) — flat, no subfolders |

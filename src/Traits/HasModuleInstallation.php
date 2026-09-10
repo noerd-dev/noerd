@@ -15,6 +15,7 @@ use Symfony\Component\Yaml\Yaml;
 trait HasModuleInstallation
 {
     use \Noerd\Commands\Concerns\PublishesConfigDirectory;
+    use \Noerd\Commands\Concerns\RegistersBoostPackage;
     use \Noerd\Commands\Concerns\RunsNpmBuild;
 
     /** @var array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int} */
@@ -155,6 +156,7 @@ trait HasModuleInstallation
             }
 
             $this->publishSkills(refreshCopies: true);
+            $this->registerBoostPackage($this->getModuleRoot());
 
             $this->displayInstallSummary();
 
@@ -267,6 +269,7 @@ trait HasModuleInstallation
             $this->installAsNewApp($sourceDir, $targetDir, $isHidden);
 
             $this->publishSkills(refreshCopies: false);
+            $this->registerBoostPackage($this->getModuleRoot());
 
             $this->displayInstallSummary();
 
@@ -336,6 +339,7 @@ trait HasModuleInstallation
                 }
 
                 $this->publishSkills(refreshCopies: true);
+                $this->registerBoostPackage($this->getModuleRoot());
             });
         } catch (Exception $e) {
             $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
@@ -545,6 +549,15 @@ trait HasModuleInstallation
     }
 
     /**
+     * The module root (composer.json, resources/boost, skills/): the source dir
+     * is always {module}/app-configs/{key}.
+     */
+    protected function getModuleRoot(): string
+    {
+        return dirname($this->getSourceDir(), 2);
+    }
+
+    /**
      * Publish all bundled Claude Code skills (every subdir of {module}/skills/)
      * into base_path('.claude/skills'). Prefers a relative symlink so the
      * skill auto-updates with the module; falls back to a recursive copy.
@@ -554,7 +567,7 @@ trait HasModuleInstallation
      */
     protected function publishSkills(bool $refreshCopies = false): void
     {
-        $skillsRoot = dirname($this->getSourceDir(), 2) . '/skills';
+        $skillsRoot = $this->getModuleRoot() . '/skills';
 
         if (! is_dir($skillsRoot)) {
             return;

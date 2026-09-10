@@ -126,7 +126,7 @@ class MakeModuleCommand extends Command
             $this->line("  1. composer update noerd/{$this->moduleName}");
             $this->line("  2. php artisan noerd:install-{$this->moduleName}");
             $this->line("  3. Create a model + migration in the module, then php artisan noerd:make-resource {Model} --app={$this->moduleName}");
-            $this->line("  4. Add \"noerd/{$this->moduleName}\" to the packages in boost.json and run php artisan boost:update (optional, for AI agents)");
+            $this->line("  4. With Laravel Boost installed, noerd:install-{$this->moduleName} registers the module guideline in boost.json for AI agents");
 
             return self::SUCCESS;
         } catch (Exception $e) {
