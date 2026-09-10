@@ -87,7 +87,10 @@ columns:
 ```
 
 Checklist of optional YAML features (all generic, never re-implement in the component):
-- `actions:` — several header buttons (`route:` / `action:`, `heroicon`, `style: secondary`)
+- `actions:` — several header buttons (`route:` / `action:`, `heroicon`, `style: secondary`); they
+  render on the header's title row, while search, filters and the pagination summary render on
+  the filter row below it (the filters scroll horizontally, nothing wraps) — never hand-build
+  either row
 - `multiSelect: true` + `bulkActions:` (`deleteSelected` is built in; custom bulk methods read
   `$this->selectedRecordIds`)
 - `displayMode: grid` + `gridColumns:` — card layout, row click unchanged

@@ -1,5 +1,5 @@
-{{-- The control is full-width below `xl` (where it lives in the stacked filter drawer)
-     and inline-sized from `xl` on. `full` forces the full-width layout at every width. --}}
+{{-- A header filter inside the list's scrolling filter strip: never shrinks, never
+     wraps. `full` forces a full-width layout for hosts that lay filters out themselves. --}}
 @props(['filter', 'value' => '', 'full' => false])
 
 @php
@@ -12,9 +12,9 @@
      filter bar (an `overflow-x` ancestor clips absolutely positioned children vertically too). --}}
 <div x-data="{ open: false, showDatePicker: false, customDate: '{{ $isCustomDate ? $value : '' }}' }"
      @click.outside="open = false; showDatePicker = false"
-     class="relative {{ $full ? 'w-full' : 'max-xl:w-full xl:mr-4 xl:shrink-0' }}">
+     class="relative {{ $full ? 'w-full' : 'shrink-0' }}">
     <button x-ref="trigger_{{ $filter['column'] }}" @click="open = !open; showDatePicker = false" type="button"
-            class="{{ $active ? 'border-brand-primary! border-solid! border-2!' : 'border border-dashed border-zinc-300' }} {{ $full ? 'w-full' : 'max-xl:w-full' }} flex items-center gap-1 rounded-md px-3 h-8 py-1 text-sm leading-[1.375rem] focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
+            class="{{ $active ? 'border-brand-primary! border-solid! border-2!' : 'border border-dashed border-zinc-300' }} {{ $full ? 'w-full' : '' }} flex items-center gap-1 rounded-md px-3 h-8 py-1 text-sm leading-[1.375rem] focus:outline-none focus:ring-2 focus:ring-brand-border whitespace-nowrap">
         <span>{{ $filter['label'] }}</span>
         @if($active)
             <span class="text-gray-400 mx-0.5">|</span>

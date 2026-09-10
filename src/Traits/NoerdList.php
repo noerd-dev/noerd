@@ -446,7 +446,7 @@ trait NoerdList
 
     /**
      * The generic header controls this list actually renders, resolved ONCE so the
-     * header row, the filter drawer and modal-title cannot disagree about what
+     * title row, the filter row and modal-title cannot disagree about what
      * exists. Every consumer reads this — never re-derive "does the list have a
      * search field / secondary action" from $listSettings at the call site.
      *
@@ -481,8 +481,9 @@ trait NoerdList
     }
 
     /**
-     * Whether anything renders in the half of the header that collapses into the
-     * filter drawer below `lg` (search, CSV export, `style: secondary` actions).
+     * Whether the list has a search field, a CSV export or `style: secondary`
+     * actions — the controls a custom header slot gets injected next to the
+     * primary buttons and the registry actions.
      */
     public function hasCollapsibleControls(): bool
     {
@@ -806,7 +807,9 @@ trait NoerdList
             return;
         }
 
-        $this->perPage = session("listPerPage.{$this->componentName()}", 50);
+        // Clamped: a session value stored by an earlier per-page option set (or by
+        // hand) must never exceed MAX_PER_PAGE, or the footer select has no match.
+        $this->perPage = $this->clampPerPage((int) session("listPerPage.{$this->componentName()}", 50));
         $this->loadListFilters();
 
         // Column filters: a ?cf[...] URL param (shared link) wins over the session
