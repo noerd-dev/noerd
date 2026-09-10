@@ -21,6 +21,7 @@ uses(TestCase::class);
  */
 class ZzNoerdUpdateFixtureCommand extends NoerdUpdateCommand
 {
+    public static int $boostUpdateCalls = 0;
     protected $signature = 'test:noerd-update
                             {--force : Overwrite existing files without asking}
                             {--build : Run npm build after update}';
@@ -28,10 +29,27 @@ class ZzNoerdUpdateFixtureCommand extends NoerdUpdateCommand
     protected function setupFrontendAssets(): void {}
 
     protected function publishNoerdAssets(): void {}
+
+    protected function boostUpdateAvailable(): bool
+    {
+        return true;
+    }
+
+    protected function boostPackageInstalled(string $name): bool
+    {
+        return true;
+    }
+
+    protected function runBoostUpdate(): void
+    {
+        static::$boostUpdateCalls++;
+    }
 }
 
 beforeEach(function (): void {
     $this->app[Kernel::class]->registerCommand(new ZzNoerdUpdateFixtureCommand());
+    ZzNoerdUpdateFixtureCommand::$boostUpdateCalls = 0;
+    \Noerd\Support\BoostConfig::markRefreshedInProcess(false);
 
     $this->originalBasePath = $this->app->basePath();
     $this->hostPath = storage_path('framework/testing/zz-noerd-update');
@@ -100,4 +118,31 @@ it('fails when the target directory cannot be created', function (): void {
     }
 
     expect(File::exists($this->hostPath . '/config/noerd.php'))->toBeFalse();
+});
+
+describe('boost registration', function (): void {
+    it('registers noerd and its skills in the host boost.json and re-renders the agent files', function (): void {
+        File::put($this->hostPath . '/boost.json', json_encode(['agents' => ['claude_code'], 'guidelines' => true, 'packages' => [], 'skills' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+
+        $this->artisan('test:noerd-update', ['--force' => true, '--no-interaction' => true])
+            ->expectsOutputToContain('Boost package registered: noerd/noerd')
+            ->assertExitCode(0);
+
+        $config = new \Noerd\Support\BoostConfig($this->hostPath . '/boost.json');
+        $shippedSkills = array_map('basename', File::directories(dirname(__DIR__, 2) . '/resources/boost/skills'));
+        sort($shippedSkills);
+
+        expect($config->packages())->toBe(['noerd/noerd'])
+            ->and($config->skills())->toBe($shippedSkills)
+            ->and(ZzNoerdUpdateFixtureCommand::$boostUpdateCalls)->toBe(1);
+    });
+
+    it('only hints at Boost when the host has no boost.json', function (): void {
+        $this->artisan('test:noerd-update', ['--force' => true, '--no-interaction' => true])
+            ->expectsOutputToContain('Laravel Boost is not set up (no boost.json)')
+            ->assertExitCode(0);
+
+        expect(File::exists($this->hostPath . '/boost.json'))->toBeFalse()
+            ->and(ZzNoerdUpdateFixtureCommand::$boostUpdateCalls)->toBe(0);
+    });
 });

@@ -261,11 +261,27 @@ The package ships factories for its own models under `database/factories/`:
 | `NoerdSettingsFactory` | The per-tenant settings singleton (`currency`, `locale`, detail theme) — the fixture for formatting tests |
 | `SetupCollectionFactory`, `SetupLanguageFactory`, `UserSettingFactory`, `NoerdLoginFactory` | The remaining core models |
 
-## Shared databases
+## Shared databases and parallel runs
 
 Testbench's sqlite `:memory:` isolates the package suite. If you point module tests at a shared
 MySQL test database, never run two suites against it at the same time — a `migrate:fresh` of one
-run drops the tables under the other.
+run drops the tables under the other. Isolate a second session with its own database name
+(`DB_DATABASE=noerd_test_<name> php artisan test …`).
+
+- **Never `vendor/bin/pest --parallel` in a host that has Orchestra Testbench installed** (every
+  host running module suites has): Pest's Laravel parallel handler disables itself as soon as
+  Testbench is present, so all workers run `migrate:fresh` against the SAME database. Use
+  `php artisan test --parallel` for the host suites — Laravel derives one database per worker.
+- Testbench-bound suites (every suite built on `Noerd\Tests\TestCase`) share ONE skeleton for
+  their runtime-written fixtures and are therefore never run in parallel with each other; run them
+  sequentially (`--testsuite=Testbench` or per path).
+
+## Request-scoped memos
+
+`TenantHelper::getSelectedTenant()` memoizes the tenant (including its `tenantApps`) per request
+and is only flushed on boot. Several `Livewire::test()` calls in one test share that process: after
+attaching or detaching tenant apps (or any other tenant mutation) mid-test, call
+`TenantHelper::clearCache()` before the next component renders, otherwise it sees the stale relation.
 
 ## Next Steps
 

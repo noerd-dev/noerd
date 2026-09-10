@@ -56,7 +56,10 @@ class NoerdUpdateCommand extends Command
             // 4. Refresh published fonts + built Vite assets
             $this->publishNoerdAssets();
 
-            // 5. Optional: npm build (only if --build flag is set)
+            // 5. Register the package in boost.json and render the agent guidelines
+            $this->registerNoerdBoostPackage();
+
+            // 6. Optional: npm build (only if --build flag is set)
             if ($this->option('build')) {
                 $this->runNpmBuildWithoutPrompt();
             }

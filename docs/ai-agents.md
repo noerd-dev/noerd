@@ -19,17 +19,25 @@ registration is involved.
 
 ## Enabling it in a project
 
-1. Install Boost: `composer require laravel/boost --dev` and run `php artisan boost:install`.
-   Boost lists `noerd/noerd` under the discovered third-party packages; select it (guideline and
-   skills).
-2. Alternatively edit `boost.json` by hand (`packages` lists the third-party packages whose guidelines and skills are installed; `skills` is filled by Boost with the installed skill names) and re-run the update:
+1. Install Boost: `composer require laravel/boost --dev` and run `php artisan boost:install` (it
+   writes `boost.json`; `noerd/noerd` may already be selected under the discovered third-party
+   packages).
+2. Run `php artisan noerd:install` (first installation) or `php artisan noerd:update` (after every
+   noerd upgrade). Both **register the package automatically**: `noerd/noerd` is added to the
+   `packages` array of `boost.json`, the shipped skill names to `skills`, and `php artisan
+   boost:update` is run so the rendered rules follow the installed version. The same happens for
+   every module through its `noerd:install-{module}` / `noerd:update-{module}` command (and thus
+   `noerd:update-all`) — the step is idempotent and never removes an entry.
+
+Without a `boost.json` the commands only print a hint — Boost stays optional. A package without an
+install command (e.g. `noerd/modal`) is registered by hand:
 
 ```json
 {
     "agents": ["claude_code"],
     "editors": ["claude_code"],
     "guidelines": true,
-    "packages": ["noerd/noerd"],
+    "packages": ["noerd/noerd", "noerd/modal"],
     "skills": []
 }
 ```
@@ -40,8 +48,12 @@ php artisan boost:update
 
 Boost writes the `=== noerd/noerd/core rules ===` block into `CLAUDE.md` (inside the
 `<laravel-boost-guidelines>` markers), `.cursor/rules/laravel-boost.mdc`, `.junie/guidelines.md`, …
-and copies the skills to `.claude/skills/noerd-*`. Re-run `php artisan boost:update`
-after every noerd upgrade so the rendered rules follow the installed version.
+and copies the skills to `.claude/skills/noerd-*`.
+
+Boost rewrites `packages` as "configured ∩ discovered" on every run, so a package is only kept
+while it is installed under `vendor/`; and it removes every tracked skill it cannot discover under
+`resources/boost/skills/` — never list a module's top-level `skills/` folder (published by noerd
+itself) in `boost.json`.
 
 Keep your own project rules outside the Boost markers — Boost overwrites only the block between
 them.
@@ -59,10 +71,12 @@ A module may additionally ship Claude Code skills in a top-level `skills/{skill-
 `noerd:install-{module}` / `noerd:update-{module}` (`HasModuleInstallation::publishSkills()`) link
 or copy every such folder into the project's `.claude/skills/` independently of Boost.
 
-Add `"noerd/{module}"` (the Composer package name) to the `packages` array of the host's
-`boost.json` (Boost ≥ 2; `boost:install` offers it interactively) and run `php artisan boost:update`. Skills are optional: create
-`resources/boost/skills/{skill-name}/SKILL.md` with a YAML front matter containing at least `name`
-(equal to the folder name) and `description`.
+The module's install and update commands (`HasModuleInstallation`) add the Composer package name
+to the `packages` array of the host's `boost.json` and run `php artisan boost:update` — as soon as
+the module ships a guideline or Boost skills, nothing has to be configured by hand (Boost ≥ 2).
+Boost skills are optional: create `resources/boost/skills/{skill-name}/SKILL.md` with a YAML front
+matter containing at least `name` (equal to the folder name) and `description`; those names are
+tracked in `boost.json` too.
 
 ## Writing a good guideline
 

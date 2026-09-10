@@ -29,7 +29,10 @@ below points into that folder — read the referenced page before building the f
   filters from the YAML config — a manually built query gets none of these and renders no filter
   funnels in the header. A manual query (and no `$listModel`) is only acceptable when technically
   required (rows not backed by a single Eloquent model, repository/raw queries) — such lists
-  intentionally show no column filters.
+  intentionally show no column filters. A hand-written "contains" match always goes through
+  `ColumnFilterParser::applyLikeContains($query, $field, $value)` — never a bare
+  `->where($f, 'like', "%{$v}%")` with backslash-escaped wildcards: sqlite has no default LIKE
+  escape character, so such a query matches nothing there while it works on MySQL.
 - When creating new models/components, always follow the slim detail pattern (reference: `src/Commands/stubs/resource/detail.blade.stub` and `docs/detail-view.md`).
 - When creating new components, they must always be placed directly in the livewire folder. Not in subfolders like livewire/setup.
 - When creating lists/tables, they should always be named -list.blade.php. For models/components, they should always be named -detail.blade.php.
@@ -170,7 +173,9 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   (which also re-publishes the frontend assets). Never read `env()` outside config files — use
   `config('noerd.…')`.
 - After upgrading the package run `php artisan noerd:update` (core) and `php artisan noerd:update-all`
-  (every installed module) — both are idempotent.
+  (every installed module) — both are idempotent. When Laravel Boost is installed they also
+  register the package(s) in `boost.json` and run `boost:update`, so the rendered agent rules
+  follow the installed version — never edit the generated `<laravel-boost-guidelines>` block by hand.
 
 ### Install Command Required for Every App Module
 - Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) MUST ship a `noerd:install-{module}` command. New submodules always get one — never rely on the manual `noerd:make-app` flow.
@@ -190,6 +195,10 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 - Never use `$fillable` in Eloquent models. Always use `$guarded` instead.
 - `$guarded` should either be an empty array `[]` (all fields mass-assignable) or contain only sensitive fields that must be protected (e.g., `is_admin`, `role`).
 - When reviewing or refactoring existing models, replace `$fillable` with the appropriate `$guarded` definition.
+- Never use Laravel's throwing `encrypted` cast for a stored third-party secret (API keys, tokens):
+  after an `APP_KEY` rotation the ciphertext is unreadable and every page that touches the row
+  dies. Use a `CastsAttributes` cast that catches `DecryptException` and returns `null`, so the
+  module degrades to "not configured" and the UI can offer re-entering the key.
 
 **Example:**
 ```php
@@ -244,7 +253,10 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
   `boot()`. Route middleware (`setup`) does not cover the two dynamic-mount seams — the
   client-dispatchable `noerdModal` event and `/noerd/component-page/{componentName}` — so an
   unregistered admin screen is reachable there by any authenticated user of the tenant
-  (reference: `docs/extension-registries.md`, "ComponentAccessGuard").
+  (reference: `docs/extension-registries.md`, "ComponentAccessGuard"). The guard matches the BARE
+  component name (the `module::` prefix is stripped), so registering `toggl::settings-page` locks
+  EVERY module's `settings-page` — give an admin-only component a name that is unique across all
+  installed modules (`toggl-settings-page`) before registering it.
 - NEVER bind a locked component property to `wire:model` and never pass `detailModel`/`listModel`/
   `objectPermissionModel` as modal arguments: `LockedPropertiesHook` rejects client updates to the
   identity/config properties of every NoerdList/NoerdPage component with
@@ -845,7 +857,12 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
   Live form sync runs via `detailDataUpdated-{detail}` (`syncPayload()` filters the payload).
 - Embed the detail in the page blade via
   `@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))` —
-  `x-noerd::page` renders embedded components chrome-less automatically.
+  `x-noerd::page` renders embedded components chrome-less automatically. Two rules for EVERY
+  Livewire child embedded in another component: use the `@livewire()` directive for namespaced
+  components (the `<livewire:module::x>` tag rejects the `::`), and give the child's view ONE
+  unconditional root element — a root-level `@if` breaks Livewire's child tracking on the second
+  request. A component that can live inside a modal keeps its `mount()` free of side effects: the
+  modal stack re-mounts its children on every update.
 - Reference: `docs/page-view.md` and the `page.blade.stub` rendered by `noerd:make-page`
   (`src/Commands/stubs/resource/page.blade.stub`).
 
@@ -1141,8 +1158,12 @@ the default `store()`/`delete()` and the header actions; `$detailPrimary` binds 
 entity-scoped URL parameter and a missing declaration throws on mount). Never use a `DETAIL_CLASS`
 constant — that pattern is removed. Never redeclare `$modelId` and never add a `#[Url]` attribute to
 it: the binding comes from the trait (`queryStringNoerdPage()`) and is skipped automatically for
-`embedded: true` instances, so a hosting page may own the same URL parameter. `detailPrimary` must be
-a literal property default (never assigned in `mount()`). The trait methods (`mount()`, `store()`,
+`embedded: true` instances, so a hosting page may own the same URL parameter. `$detailModel`,
+`$detailPrimary` and `$listModel` must be LITERAL property defaults in the component's Blade source
+(never assigned in `mount()`, never inherited from a base class): the custom-attribute object catalog
+and the layout editor parse them out of the file with a regex, so a computed value silently drops the
+component from both. A shared form partial must not be named `*-detail.blade.php` — the catalog globs
+that pattern and would register it as a component. The trait methods (`mount()`, `store()`,
 `delete()`) are always used from `NoerdDetail` — a slim component contains nothing else besides
 `$detailModel` and `$detailPrimary`. Only when the logic deviates, override the method (call `$this->initDetail()`
 first in a custom `mount()`; end a custom `store()` with `$this->storeProcess($model)` and a custom

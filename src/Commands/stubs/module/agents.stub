@@ -31,4 +31,5 @@ by `php artisan boost:update` (add `noerd/{{module-name}}` to the `packages` arr
 - Keep the module independent of other optional modules; project-specific fields go into
   `custom_attributes`, never into module code or module YAML
 - When a feature changes: update the YAML in both places, `resources/lang/de.json`, the tests and
-  `resources/boost/guidelines/core.blade.php`
+  `resources/boost/guidelines/core.blade.php` (including its "Reference implementations" section —
+  the module, not a host project, names the components agents should copy from)

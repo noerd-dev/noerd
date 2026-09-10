@@ -24,11 +24,16 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 
 ## Workflow
 
-- **Never commit or push directly to `main`.** Create a feature branch, push it and open a GitHub
-  pull request against `main`. The only exception is the release version bump described below.
+- **Never commit or push directly to `main`** — the branch is protected on GitHub, a direct push
+  is rejected. Create a feature branch, push it and open a GitHub pull request against `main`;
+  squash-merge once the required checks are green.
 - **Release:** tagging a version requires the `composer.json` `"version"` field to equal the tag in
-  the tagged commit (`Bump version to vX.Y.Z`). That bump may be committed to `main` as part of the
-  tag flow.
+  the tagged commit. The bump is a PR like any other (`Bump version to vX.Y.Z`); tag the merged
+  commit, then publish the GitHub release with `### Added / Fixed / Changed / Docs` sections.
+- **Composer constraints:** when a framework constraint is tightened or loosened, check every
+  package of the ecosystem that depends on it (`noerd/modal`, the modules) — Composer silently
+  falls back to the newest tag that still satisfies the host, so an open range like `^0.3` keeps
+  resolving to an old version without any error. Raise the minimum along with the change.
 - **A pushed tag is immutable — never move it.** Packagist indexes a version once and keeps the
   commit it saw first, so re-pointing an existing tag keeps shipping the old code while the
   repository looks correct. Consumers see no reason to update, because the version number did not

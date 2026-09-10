@@ -34,4 +34,9 @@ to this module.
 ### Tests
 - Pest tests in `tests/`; run with `php artisan test --compact app-modules/{{module-name}}/tests`
 - Prove mechanics, never the current YAML configuration (see the `noerd-testing` skill)
+
+### Reference implementations
+- List the components of this module that show a pattern well (e.g. a list with a custom
+  `listData()`, a page with a relation box, a component modal with a result event) — agents use
+  them as the starting point instead of a host project's notes.
 @endverbatim

@@ -31,6 +31,8 @@ class ZzModuleInstallFixtureCommand extends Command
     use HasModuleInstallation;
     use RequiresNoerdInstallation;
 
+    public static int $boostUpdateCalls = 0;
+
     protected $signature = 'noerd:install-zz-install-fixture {--force : Overwrite existing files without asking} {--scaffold : Silent post-scaffold run}';
 
     protected $description = 'Test fixture install command';
@@ -70,6 +72,21 @@ class ZzModuleInstallFixtureCommand extends Command
         // Nested so that publishSkills() (dirname twice + /skills) lands inside the
         // disposable tests-tmp tree and finds nothing to publish.
         return base_path('tests-tmp/module/app-configs/' . ZZ_MODULE_KEY);
+    }
+
+    protected function boostUpdateAvailable(): bool
+    {
+        return true;
+    }
+
+    protected function boostPackageInstalled(string $name): bool
+    {
+        return true;
+    }
+
+    protected function runBoostUpdate(): void
+    {
+        static::$boostUpdateCalls++;
     }
 }
 
@@ -216,5 +233,53 @@ describe('scaffold mode', function (): void {
             ->and($app->tenants()->pluck('tenants.id')->all())->toBe([$tenant->id])
             ->and(File::exists(base_path('app-configs/' . ZZ_MODULE_KEY . '/navigation.yml')))->toBeTrue()
             ->and(File::exists(base_path('app-configs/' . ZZ_MODULE_KEY . '/settings/zz-fixture-settings-page.yml')))->toBeTrue();
+    });
+});
+
+describe('boost registration', function (): void {
+    beforeEach(function (): void {
+        ZzModuleInstallFixtureCommand::$boostUpdateCalls = 0;
+        \Noerd\Support\BoostConfig::markRefreshedInProcess(false);
+
+        $this->boostJson = base_path('boost.json');
+        $this->boostJsonBackup = File::exists($this->boostJson) ? File::get($this->boostJson) : null;
+    });
+
+    afterEach(function (): void {
+        if ($this->boostJsonBackup === null) {
+            File::delete($this->boostJson);
+        } else {
+            File::put($this->boostJson, $this->boostJsonBackup);
+        }
+    });
+
+    it('registers a module that ships a boost guideline in the host boost.json', function (): void {
+        $moduleRoot = base_path('tests-tmp/module');
+        File::put($moduleRoot . '/composer.json', json_encode(['name' => 'zz/install-fixture']));
+        File::ensureDirectoryExists($moduleRoot . '/resources/boost/guidelines');
+        File::put($moduleRoot . '/resources/boost/guidelines/core.blade.php', "## Zz\n");
+        File::put($this->boostJson, json_encode(['agents' => ['claude_code'], 'guidelines' => true, 'packages' => ['noerd/noerd'], 'skills' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+
+        runZzModuleInstall($this);
+
+        expect((new \Noerd\Support\BoostConfig($this->boostJson))->packages())->toBe(['noerd/noerd', 'zz/install-fixture'])
+            ->and(ZzModuleInstallFixtureCommand::$boostUpdateCalls)->toBe(1);
+
+        // The update path is idempotent: nothing new, no second render.
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true])
+            ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+            ->assertExitCode(0);
+
+        expect((new \Noerd\Support\BoostConfig($this->boostJson))->packages())->toBe(['noerd/noerd', 'zz/install-fixture'])
+            ->and(ZzModuleInstallFixtureCommand::$boostUpdateCalls)->toBe(1);
+    });
+
+    it('leaves boost.json alone for a module without agent guidelines', function (): void {
+        File::put($this->boostJson, "{\n    \"packages\": [\n        \"noerd/noerd\"\n    ]\n}\n");
+
+        runZzModuleInstall($this);
+
+        expect(File::get($this->boostJson))->toBe("{\n    \"packages\": [\n        \"noerd/noerd\"\n    ]\n}\n")
+            ->and(ZzModuleInstallFixtureCommand::$boostUpdateCalls)->toBe(0);
     });
 });

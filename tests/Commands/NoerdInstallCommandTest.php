@@ -107,6 +107,11 @@ class ZzInstallFixtureCommand extends NoerdInstallCommand
         $this->step('publishNoerdAssets', fn() => parent::publishNoerdAssets());
     }
 
+    protected function registerNoerdBoostPackage(): void
+    {
+        $this->step('registerNoerdBoostPackage', fn() => parent::registerNoerdBoostPackage());
+    }
+
     protected function runMigrationsAndSetupAdmin(): void
     {
         $this->step('runMigrationsAndSetupAdmin', fn() => parent::runMigrationsAndSetupAdmin());
@@ -184,7 +189,7 @@ describe('demo prompt', function (): void {
         // flow — behind every other step that asks something.
         $demoStep = array_search('installDemoApp', $steps, true);
 
-        foreach (['publishNoerdConfig', 'setupFrontendAssets', 'runMigrationsAndSetupAdmin', 'runNpmBuild'] as $earlierStep) {
+        foreach (['publishNoerdConfig', 'setupFrontendAssets', 'registerNoerdBoostPackage', 'runMigrationsAndSetupAdmin', 'runNpmBuild'] as $earlierStep) {
             $earlierStepIndex = array_search($earlierStep, $steps, true);
 
             expect($earlierStepIndex)->not->toBeFalse("Step {$earlierStep} did not run")
@@ -328,5 +333,19 @@ describe('config publishing', function (): void {
 
         expect(File::exists($this->configPath . '.bak'))->toBeFalse()
             ->and(File::get($this->configPath))->not->toContain("'prefix' => 'custom'");
+    });
+});
+
+describe('boost registration', function (): void {
+    it('registers the package before the migration prompt so a scripted run needs no extra step', function (): void {
+        ZzInstallFixtureCommand::$recordStepsOnly = true;
+
+        $this->artisan('test:noerd-install')->assertExitCode(0);
+
+        $steps = ZzInstallFixtureCommand::$steps;
+
+        expect(array_search('registerNoerdBoostPackage', $steps, true))
+            ->toBeGreaterThan(array_search('publishNoerdAssets', $steps, true))
+            ->toBeLessThan(array_search('runMigrationsAndSetupAdmin', $steps, true));
     });
 });
