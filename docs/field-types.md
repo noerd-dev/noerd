@@ -451,6 +451,10 @@ render through the same element (see the fallback behavior in the [Overview](#ov
 | `placeholder` | string | - | Placeholder text (translation key) |
 | `step` | string/number | - | `type: number` only: the HTML `step` attribute (`0.01`, `any`) — without it a browser rejects decimals |
 
+An emptied `type: number` input is stored as `null`, never as `''`: the core normalises every
+number field of the layout right before `store()` runs (custom overrides included), so a nullable
+numeric column needs no hand-rolled empty-string handling in the component.
+
 **YAML Example:**
 
 ```yaml
