@@ -299,6 +299,7 @@
     "The file must be one of the following formats: :values": "Die Datei muss eines der folgenden Formate haben: :values",
     "The required configuration file was not found:": "Die erforderliche Konfigurationsdatei wurde nicht gefunden:",
     "This field is translatable. The value belongs to the language selected in the language switcher.": "Dieses Feld ist übersetzbar. Der Wert gehört zu der Sprache, die oben im Sprachumschalter gewählt ist.",
+    "This value was proposed for you. Check it before saving.": "Dieser Wert wurde vorgeschlagen. Vor dem Speichern prüfen.",
     "This is how the email will be displayed with sample data": "So wird die E-Mail mit Beispieldaten angezeigt",
     "This language is set as the default language and cannot be deleted.": "Diese Sprache ist als Standardsprache festgelegt und kann nicht gelöscht werden.",
     "This Month": "Diesen Monat",
@@ -343,5 +344,6 @@
     "You currently have no access to tenants.": "Sie haben derzeit keinen Zugriff auf Mandanten.",
     "You do not have permission to view this area.": "Sie haben keine Berechtigung, diesen Bereich anzuzeigen.",
     "Your email address is unverified.": "Ihre E-Mail-Adresse ist nicht verifiziert.",
-    "Zip Code": "PLZ"
+    "Zip Code": "PLZ",
+    "was: :value": "vorher: :value"
 }

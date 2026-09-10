@@ -51,6 +51,16 @@ final class FieldContext
         return is_string($type) && str_starts_with($type, 'translatable');
     }
 
+    /**
+     * Whether the field currently being rendered holds a prefilled value the
+     * reader did not enter themselves (see NoerdDetail::$prefill). Read by
+     * `x-noerd::input-label`, so the marker needs no element template of its own.
+     */
+    public static function isHighlighted(): bool
+    {
+        return (bool) (self::$current['highlight'] ?? false);
+    }
+
     public static function clear(): void
     {
         self::$current = null;

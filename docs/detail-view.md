@@ -172,6 +172,51 @@ expression for reactive visibility on top of the tab switch:
 | `tab` | Tab number (defaults to 1) |
 | `theme` | Per-field theme override (see [Themes](themes.md)) |
 | `number` | Explicit row number in the `numbered` theme (defaults to auto-increment) |
+| `highlight` | Render the field with a highlight ring (see [Highlighted Fields](#highlighted-fields)); normally stamped at runtime, not written in YAML |
+| `previousValue` | Render `was: …` under the field (see [Highlighted Fields](#highlighted-fields)) |
+
+## Highlighted Fields
+
+A form can mark individual fields as carrying a value the reader did not enter themselves — a
+proposal from an AI agent, a value copied from another record. Two optional field keys drive it:
+
+| Key | Effect |
+|-----|--------|
+| `highlight` | Renders the field with a ring and a tooltip on the label ("This value was proposed for you") |
+| `previousValue` | Renders `was: …` under the field — what it held before the proposal replaced it |
+
+Both are normally **stamped onto the layout at runtime** rather than written into the YAML: a
+component that renders a proposal walks its `$pageLayout` with `Noerd\Support\LayoutFields::map()`
+and sets the keys on the fields it filled.
+
+```php
+$this->pageLayout['fields'] = LayoutFields::map(
+    $this->pageLayout['fields'],
+    function (array $field) use ($proposed): array {
+        $key = Str::after((string) ($field['name'] ?? ''), 'detailData.');
+
+        if (array_key_exists($key, $proposed)) {
+            $field['highlight'] = true;
+        }
+
+        return $field;
+    },
+);
+```
+
+The ring is drawn on the field wrapper in `noerd::components.detail.block`, so it works for every
+field type in every theme without an element template of its own; the label marker reads the flag
+out of `FieldContext`, exactly like `helpText`.
+
+**Rendering another component's form.** A component may render a FOREIGN detail YAML — that is what
+makes a generic review screen possible: load it with
+`StaticConfigHelper::getComponentFields('accounting::expense-detail', Expense::class)` and bind the
+values into your own `$detailData`. The layout resolves by component name regardless of the session
+app (see `componentOwnerApp()`), and `validateFromLayout()` picks up its `required:` fields. Two
+things do NOT come along, because they live in the original component's PHP rather than its YAML:
+a `picklistField:` naming a method on that component renders empty (put such providers in the
+`PicklistRegistry` when a generic host has to render them), and its `#[On('...Selected')]` side
+effects do not run.
 
 ## Relation Forms
 

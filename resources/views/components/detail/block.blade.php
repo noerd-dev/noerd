@@ -93,11 +93,20 @@
                         $field['readonly'] = true;
                     }
 
+                    // The `highlight` field key marks a value the reader did not enter
+                    // themselves (a prefilled proposal). The ring sits on the field
+                    // wrapper, so it works for every field type in every theme —
+                    // element templates build their own control classes and share no
+                    // partial to hook into.
+                    $highlightClasses = ($field['highlight'] ?? false)
+                        ? ' rounded-lg p-2 -m-2 ring-2 ring-amber-400/70'
+                        : '';
+
                     // Set unconditionally so optional keys (helpText) never leak into
                     // the next field; cleared again after the loop.
                     \Noerd\Support\FieldContext::set($field);
                 @endphp
-                <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}" {!! $getShowIfDirective($field) !!}>
+                <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}{{ $highlightClasses }}" {!! $getShowIfDirective($field) !!}>
                     @php
                         $fieldTypeDefinition = $fieldTypeRegistry->resolve($field['type'] ?? '');
                         $resolvedRendererProps = $fieldTypeDefinition?->resolveProps(
@@ -175,6 +184,16 @@
                         @else
                             @include(\Noerd\Support\ThemeElementResolver::resolveFallbackInput($fieldTheme), ['field' => $field])
                         @endif
+                    @endif
+
+                    {{-- What the field held before a proposal replaced it, so the
+                         reader can weigh the suggestion against the current value.
+                         Rendered inside the wrapper, under whatever control the
+                         theme drew. --}}
+                    @if (array_key_exists('previousValue', $field))
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ __('was: :value', ['value' => ($field['previousValue'] ?? '') === '' || $field['previousValue'] === null ? '—' : $field['previousValue']]) }}
+                        </p>
                     @endif
                 </div>
             @endif
