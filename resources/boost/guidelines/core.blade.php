@@ -1079,6 +1079,38 @@ declared in the YAML and applied generically by `NoerdDetail::applyLayoutDefault
 ```
 - Reference: `docs/field-types.md` ("Default Values")
 
+### A Form May Render ANOTHER Component's Detail YAML
+
+A screen that shows a record's form without being that record's detail — a review screen for an AI
+proposal, a preview, a wizard step — renders the TARGET's detail YAML instead of duplicating it, and
+NEVER by changing the target component:
+
+```php
+$this->pageLayout = StaticConfigHelper::getComponentFields('accounting::expense-detail', Expense::class);
+```
+
+- The layout resolves by component name from any app (`componentOwnerApp()` searches the owning
+  module last but unconditionally), so a screen in one module can render another module's form.
+- `validateFromLayout()` reads `$pageLayout`, so the target's `required:` fields validate as usual.
+- Relation fields work: they are mounted with the HOST's Livewire id and write back through
+  `setFieldValue` into `detailData.*` — the host only has to use `NoerdDetail`.
+- Override `canReadObject()`/`canCreateObject()`/`canWriteObject()`/`canDeleteObject()` to gate on
+  the TARGET model. `objectPermissionModel` is a list-only property; details have no equivalent.
+- What does NOT come along, because it lives in the target's PHP and not in its YAML: a
+  `picklistField:`/`optionsMethod:` naming a method on that component (renders empty — such providers
+  belong in the `PicklistRegistry`), its `#[On('...Selected')]` side effects, and any value
+  formatting its own `mount()`/`store()` performs. A host that renders money fields must convert the
+  reader's notation back itself.
+
+### Mark Values the Reader Did Not Enter
+
+A field holding a proposed value gets the layout key `highlight: true` (ring + label tooltip) and
+optionally `previousValue` (renders `was: …` underneath). Both are stamped onto `$pageLayout` at
+runtime with `Noerd\Support\LayoutFields::map()` — never written into the shipped YAML, and never
+rebuilt per module: the ring lives once in `noerd::components.detail.block`.
+
+- Reference: `docs/detail-view.md` ("Highlighted Fields")
+
 ### Empty Spacer Columns in Detail/Block Layouts
 Fields in a detail/block layout flow into a 12-column grid via auto-placement, so removing a field makes
 the following field move up into the freed slot. To keep a deliberate empty column (e.g. leave the right

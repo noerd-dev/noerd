@@ -42,4 +42,32 @@ final class LayoutFields
 
         return true;
     }
+
+    /**
+     * Rewrite every non-block field, depth-first through nested `type: block`
+     * groups, and return the new field list. The counterpart of walk() for
+     * features that decorate the layout instead of reading from it.
+     *
+     * @param  array<int, array<string, mixed>>  $fields
+     * @param  callable(array<string, mixed>): array<string, mixed>  $mapper
+     * @return array<int, array<string, mixed>>
+     */
+    public static function map(array $fields, callable $mapper): array
+    {
+        foreach ($fields as $index => $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+
+            if (($field['type'] ?? null) === 'block') {
+                $fields[$index]['fields'] = self::map($field['fields'] ?? [], $mapper);
+
+                continue;
+            }
+
+            $fields[$index] = $mapper($field);
+        }
+
+        return $fields;
+    }
 }
