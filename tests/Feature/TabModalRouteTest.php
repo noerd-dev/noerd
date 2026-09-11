@@ -133,6 +133,18 @@ it('marks tabs that open their own modal with an icon', function (): void {
     expect($inlineTabs)->not->toContain('data-modal-tab-icon');
 });
 
+it('marks a modal tab with the stack icon only and no external-link affordance', function (): void {
+    $html = renderLayoutTabs([
+        ['label' => 'Related Record', 'modalRoute' => 'zz.tab.record', 'arguments' => ['modelId' => '$modelId']],
+    ], 42);
+
+    // The external-link icon is reserved for `external` tabs; cmd/ctrl-click on the
+    // modal tab's own href still opens the full page in a new browser tab.
+    expect($html)->toContain('zz-tab-record/42')
+        ->not->toContain('target="_blank"')
+        ->not->toContain(__('Open in new tab'));
+});
+
 it('hides a requiresId tab until the record is saved', function (): void {
     $tab = [
         'label' => 'Related Records',

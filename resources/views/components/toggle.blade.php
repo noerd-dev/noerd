@@ -18,7 +18,7 @@
 
     <button
         x-ref="toggle"
-        wire:click="{{ $click }}"
+        @if ($click) wire:click="{{ $click }}" @endif
         @click="value = ! value"
         type="button"
         role="switch"
