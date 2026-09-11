@@ -174,7 +174,7 @@ describe('header rendering', function (): void {
         expect($matches[1])->not->toBeEmpty();
 
         foreach ($matches[1] as $expression) {
-            expect($expression)->toContain('$topLayer()');
+            expect($expression)->toContain('window.noerdTopLayer?.($el)');
         }
     });
 

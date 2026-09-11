@@ -47,6 +47,15 @@ function isTopLayer(el) {
     return panels[panels.length - 1].contains(el);
 }
 
+/**
+ * The same check for Blade views with their own `@keydown.window`. It is a
+ * plain global rather than an Alpine magic on purpose: a published asset bundle
+ * that is older than the views (the classic `vendor:publish` miss) then simply
+ * has no guard — an unknown magic would throw on every keystroke instead.
+ * Views therefore call it as `(window.noerdTopLayer?.($el) ?? true)`.
+ */
+window.noerdTopLayer = isTopLayer;
+
 function escapeHtml(value) {
     return value
         .replace(/&/g, '&amp;')
@@ -89,10 +98,6 @@ function highlightCode(value) {
 }
 
 document.addEventListener('alpine:init', () => {
-    // Guard for every `@keydown.window` shortcut in a view: only the topmost
-    // layer reacts, so a modal never triggers the list or form behind it.
-    Alpine.magic('topLayer', (el) => () => isTopLayer(el));
-
     // Alpine Sort Plugin
     Alpine.plugin(sort);
     Alpine.plugin(focus);

@@ -126,12 +126,16 @@ with no modal open — or without the modal package installed — the page itsel
 - `noerdPage` checks it before save and delete, so `ctrl+enter` in a modal never also saves the
   record behind it, and a stacked modal (a review that opens its prerequisite on top) never
   decides the record underneath.
-- Views with their own `@keydown.window` guard the expression with the Alpine magic `$topLayer()`
-  (registered in `noerd.js`), like the list search field and the list action buttons:
+- Views with their own `@keydown.window` guard the expression with `window.noerdTopLayer` (exported
+  by `noerd.js`), like the list search field and the list action buttons:
 
 ```blade
-@keydown.window="let e = $event; if ($topLayer() && ({{ $searchShortcut['js'] }})) { e.preventDefault(); $refs.searchInput.focus(); }"
+@keydown.window="let e = $event; if ((window.noerdTopLayer?.($el) ?? true) && ({{ $searchShortcut['js'] }})) { e.preventDefault(); $refs.searchInput.focus(); }"
 ```
+
+  The optional chaining plus `?? true` is deliberate: a project whose published asset bundle is
+  older than its views (`vendor:publish --tag=noerd-assets` forgotten) falls back to the previous
+  behaviour instead of throwing an unknown-magic error on every keystroke.
 
 - Row navigation (`noerdList`: arrow keys and Enter) additionally claims the hovered list through
   the shared Alpine store, so only one list on a layer answers the arrow keys.
