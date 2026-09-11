@@ -142,6 +142,17 @@ describe('assertModuleDependenciesDeclared()', function (): void {
         'tests/ZzLeakTest.php',
         'app-configs/zz-module/lists/leak.yml',
     ]);
+
+    it('ignores the Boost guideline, which names foreign modules in prose', function (): void {
+        zzWriteModuleSkeleton();
+        File::ensureDirectoryExists(zzModuleDir() . '/resources/boost/guidelines');
+        File::put(
+            zzModuleDir() . '/resources/boost/guidelines/core.blade.php',
+            "The zz-module must never reference Zz\\Other\\Gadget.\n",
+        );
+
+        assertModuleDependenciesDeclared(zzModuleDir());
+    });
 });
 
 describe('assertModuleUpdateCommandPublishesConfigs()', function (): void {

@@ -173,6 +173,10 @@ if (! function_exists('assertModuleDependenciesDeclared')) {
      * derived from the sibling app-modules' composer.json files, so the guard
      * needs no hand-maintained mapping and also catches test-only leaks.
      *
+     * The agent documentation under resources/boost (the Boost guideline and
+     * the skills) is skipped: it is prose that names foreign classes on
+     * purpose — describing a boundary is not crossing it.
+     *
      * @param  string  $moduleDir  absolute path of the module under test
      * @param  array<int, string>  $allowedPackages  extra packages to tolerate
      */
@@ -212,6 +216,10 @@ if (! function_exists('assertModuleDependenciesDeclared')) {
                 }
                 // The boundary tests themselves name foreign namespaces as needles.
                 if (str_contains($file->getFilename(), 'ModuleBoundaryTest')) {
+                    continue;
+                }
+                // Agent documentation (Boost guideline, skills) is prose, not code.
+                if (str_contains(str_replace('\\', '/', $file->getPathname()), '/resources/boost/')) {
                     continue;
                 }
                 $content = (string) file_get_contents($file->getPathname());
