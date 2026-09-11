@@ -13,11 +13,14 @@ beforeEach(function (): void {
     $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
 });
 
-it('rings the fields marked highlight and leaves the others plain', function (): void {
+it('fills the controls of the fields marked highlight and leaves the others plain', function (): void {
     $html = Livewire::test('noerd-test::highlight-test')->assertSuccessful()->html();
 
     // Two of the three fields are marked — the nested block is walked too.
-    expect(mb_substr_count($html, 'ring-amber-400/70'))->toBe(2);
+    expect(mb_substr_count($html, 'data-highlight'))->toBe(2)
+        // Blade escapes the `&` of the arbitrary variant; match past it.
+        ->and(mb_substr_count($html, '_input:not([type=checkbox])]:bg-amber-50'))->toBe(2)
+        ->and($html)->not->toContain('ring-amber');
 });
 
 it('marks the label of a highlighted field', function (): void {
@@ -33,10 +36,10 @@ it('shows what the field held before, only where a previous value was recorded',
         ->assertSee(__('was: :value', ['value' => 'the old value']));
 });
 
-it('rings the field in every theme, not just the default one', function (): void {
+it('fills the field in every theme, not just the default one', function (): void {
     foreach (['default', 'compact', 'numbered'] as $theme) {
         $html = Livewire::test('noerd-test::highlight-test', ['theme' => $theme])->html();
 
-        expect(mb_substr_count($html, 'ring-amber-400/70'))->toBe(2, "theme {$theme}");
+        expect(mb_substr_count($html, 'data-highlight'))->toBe(2, "theme {$theme}");
     }
 });
