@@ -14,7 +14,7 @@
     wire:key="list-search"
     class="relative w-40 shrink-0 sm:w-56"
     x-data="{ searchFocused: false }"
-    @keydown.window="let e = $event; if ({{ $searchShortcut['js'] }}) { e.preventDefault(); $refs.searchInput.focus(); }"
+    @keydown.window="let e = $event; if ($topLayer() && ({{ $searchShortcut['js'] }})) { e.preventDefault(); $refs.searchInput.focus(); }"
 >
     <x-noerd::text-input
         x-ref="searchInput"

@@ -24,6 +24,29 @@ function matchesShortcut(event, parsed) {
     return true;
 }
 
+/**
+ * Is `el` on the layer the user is actually looking at?
+ *
+ * Every page, detail and list behind an open modal stays mounted and keeps its
+ * `window` keydown listener, so a shortcut used to fire on all of them at once:
+ * one ctrl+enter saved the record under the modal as well, and in a stacked
+ * review it decided the proposal underneath too.
+ *
+ * The topmost layer is the LAST modal panel in the document — the modal stack
+ * teleports its panels to <body> in open order, the same contract its own
+ * "close the top modal" handling relies on. With no modal open (or without the
+ * modal package installed) the page itself is the top layer.
+ */
+function isTopLayer(el) {
+    const panels = document.querySelectorAll('[modal]');
+
+    if (panels.length === 0) {
+        return true;
+    }
+
+    return panels[panels.length - 1].contains(el);
+}
+
 function escapeHtml(value) {
     return value
         .replace(/&/g, '&amp;')
@@ -66,6 +89,10 @@ function highlightCode(value) {
 }
 
 document.addEventListener('alpine:init', () => {
+    // Guard for every `@keydown.window` shortcut in a view: only the topmost
+    // layer reacts, so a modal never triggers the list or form behind it.
+    Alpine.magic('topLayer', (el) => () => isTopLayer(el));
+
     // Alpine Sort Plugin
     Alpine.plugin(sort);
     Alpine.plugin(focus);
@@ -267,11 +294,9 @@ document.addEventListener('alpine:init', () => {
     // Enter opens it. Scoped per list so nested lists never fight over it.
     Alpine.data('noerdList', ({ listId }) => ({
         selectedRow: 0,
-        isInsideModal: false,
 
         init() {
             this.$store.app.setId(listId);
-            this.isInsideModal = !! this.$el.closest('#modal') || !! this.$el.closest('[modal]');
         },
         claim() {
             this.$store.app.setId(listId);
@@ -283,8 +308,10 @@ document.addEventListener('alpine:init', () => {
                 || !! el?.closest?.('[contenteditable]');
         },
         canHandleListKey() {
+            // Same rule as the page shortcuts: a list behind an open modal (or
+            // under a stacked one) keeps its listener but must stay quiet.
             return (this.$store.app.currentId == listId)
-                && (this.isInsideModal || ! this.$store.app.modalOpen)
+                && isTopLayer(this.$el)
                 && ! this.isInBlockingField();
         },
         onArrow(event, direction) {
@@ -500,6 +527,10 @@ document.addEventListener('alpine:init', () => {
             }
 
             this._keydownHandler = (e) => {
+                // A page behind an open modal is still mounted and still
+                // listening; only the layer the user is looking at may act.
+                if (! isTopLayer(this.$el)) return;
+
                 if ('save' in this._parsedShortcuts && matchesShortcut(e, this._parsedShortcuts.save)) {
                     e.preventDefault();
                     this.$wire.store();

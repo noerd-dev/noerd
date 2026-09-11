@@ -116,6 +116,29 @@ on save and `$wire.delete()` on delete (behind a `window.confirm`), and removes 
 `destroy()`. A shortcut is only registered when the component actually has the matching method —
 a list-only component never reacts to `ctrl+enter`.
 
+## Only the Topmost Layer Reacts
+
+A page behind an open modal is still mounted and its window listener is still bound, so every
+shortcut has to ask whether it is on the layer the user is looking at. The topmost layer is the
+LAST modal panel in the document (the modal stack teleports its panels to `<body>` in open order);
+with no modal open — or without the modal package installed — the page itself is the top layer.
+
+- `noerdPage` checks it before save and delete, so `ctrl+enter` in a modal never also saves the
+  record behind it, and a stacked modal (a review that opens its prerequisite on top) never
+  decides the record underneath.
+- Views with their own `@keydown.window` guard the expression with the Alpine magic `$topLayer()`
+  (registered in `noerd.js`), like the list search field and the list action buttons:
+
+```blade
+@keydown.window="let e = $event; if ($topLayer() && ({{ $searchShortcut['js'] }})) { e.preventDefault(); $refs.searchInput.focus(); }"
+```
+
+- Row navigation (`noerdList`: arrow keys and Enter) additionally claims the hovered list through
+  the shared Alpine store, so only one list on a layer answers the arrow keys.
+
+Any new `@keydown.window` listener must carry the same guard — a shortcut that skips it fires on
+every open layer at once.
+
 ## Changing a Shortcut
 
 Override the key in the **project's** `config/noerd.php`:
@@ -140,6 +163,7 @@ the `<kbd>` badges update everywhere — no view changes needed.
 - Keys are compared lowercase; write config values in lowercase.
 - Embedded details (`embedded: true`, e.g. a detail hosted inside a `*-page`) register **no**
   shortcuts — the hosting page owns them, so save/delete never fire twice.
+- Only the topmost layer reacts: a modal never triggers the page behind it (see above).
 - Detail shortcuts require the trait methods AND the permission: `save` binds only when the
   component has `store()` and `canSaveObject()` passes, `delete` only when it has `delete()` and
   `canDeleteObject()` passes.

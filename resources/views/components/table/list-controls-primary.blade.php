@@ -30,7 +30,7 @@
             <div
                 @if ($shortcut !== null)
                     x-data
-                    @keydown.window="let e = $event; if ({{ $shortcut['js'] }}) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }"
+                    @keydown.window="let e = $event; if ($topLayer() && ({{ $shortcut['js'] }})) { e.preventDefault(); $refs.actionBtn{{ $actionIndex }}.click(); }"
                 @endif
             >
                 <x-noerd::button

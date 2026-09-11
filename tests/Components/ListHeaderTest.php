@@ -163,6 +163,21 @@ describe('header rendering', function (): void {
             ->and(mb_substr_count($html, '$refs.searchInput.focus()'))->toBe(1);
     });
 
+    it('guards every window shortcut of the header with the top-layer check', function (): void {
+        $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
+
+        // A list behind an open modal keeps its window listener, so the search
+        // and action shortcuts must ask whether they are on the visible layer —
+        // otherwise `n` in a modal opens the create dialog of the list below it.
+        preg_match_all('/@keydown\\.window="([^"]*)"/', $html, $matches);
+
+        expect($matches[1])->not->toBeEmpty();
+
+        foreach ($matches[1] as $expression) {
+            expect($expression)->toContain('$topLayer()');
+        }
+    });
+
     it('keeps the title row on a single line instead of stacking below lg', function (): void {
         $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
 
