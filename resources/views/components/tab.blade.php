@@ -45,7 +45,9 @@
 @if ($opensAsModal)
     @php
         // A modalRoute tab points at the record's real page, so it also supplies
-        // the href for cmd-click / "open in new tab".
+        // the href for cmd/ctrl-click. No extra "open in new tab" link: the
+        // external-link icon is reserved for `external` targets, the modal tab
+        // is marked by the stack icon alone.
         $componentRouteUrl = $tabModalRoute
             ? route($tabModalRoute, $routeParameters ?? [])
             : ($route ? route($route, $routeParameters) : null);
@@ -68,16 +70,5 @@
                 <x-icon name="square-2-stack" data-modal-tab-icon="true" class="ml-1 h-4 w-4 shrink-0 text-gray-400" />
             </span>
         </a>
-        @if ($componentRouteUrl)
-            <a
-                href="{{ $componentRouteUrl }}"
-                target="_blank"
-                rel="noopener"
-                class="border-b-2 border-transparent py-3 pl-2 text-gray-500 hover:text-black focus:outline-none focus-visible:outline-none"
-                aria-label="{{ __('Open in new tab') }}"
-            >
-                <x-noerd::icons.external />
-            </a>
-        @endif
     </div>
 @endif
