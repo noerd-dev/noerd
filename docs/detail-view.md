@@ -172,7 +172,7 @@ expression for reactive visibility on top of the tab switch:
 | `tab` | Tab number (defaults to 1) |
 | `theme` | Per-field theme override (see [Themes](themes.md)) |
 | `number` | Explicit row number in the `numbered` theme (defaults to auto-increment) |
-| `highlight` | Render the field with a highlight ring (see [Highlighted Fields](#highlighted-fields)); normally stamped at runtime, not written in YAML |
+| `highlight` | Render the field's control with a highlight fill (see [Highlighted Fields](#highlighted-fields)); normally stamped at runtime, not written in YAML |
 | `previousValue` | Render `was: …` under the field (see [Highlighted Fields](#highlighted-fields)) |
 
 ## Highlighted Fields
@@ -182,7 +182,7 @@ proposal from an AI agent, a value copied from another record. Two optional fiel
 
 | Key | Effect |
 |-----|--------|
-| `highlight` | Renders the field with a ring and a tooltip on the label ("This value was proposed for you") |
+| `highlight` | Fills the field's control with a light amber tint and adds a tooltip on the label ("This value was proposed for you") |
 | `previousValue` | Renders `was: …` under the field — what it held before the proposal replaced it |
 
 Both are normally **stamped onto the layout at runtime** rather than written into the YAML: a
@@ -204,9 +204,10 @@ $this->pageLayout['fields'] = LayoutFields::map(
 );
 ```
 
-The ring is drawn on the field wrapper in `noerd::components.detail.block`, so it works for every
-field type in every theme without an element template of its own; the label marker reads the flag
-out of `FieldContext`, exactly like `helpText`.
+The fill is applied from the field wrapper in `noerd::components.detail.block` (a `data-highlight`
+wrapper whose descendant variants tint every `input`, `select`, `textarea` and rich-text editor —
+checkboxes excepted), so it works for every field type in every theme without an element template
+of its own; the label marker reads the flag out of `FieldContext`, exactly like `helpText`.
 
 **Rendering another component's form.** A component may render a FOREIGN detail YAML — that is what
 makes a generic review screen possible: load it with

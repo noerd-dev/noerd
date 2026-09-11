@@ -94,19 +94,21 @@
                     }
 
                     // The `highlight` field key marks a value the reader did not enter
-                    // themselves (a prefilled proposal). The ring sits on the field
-                    // wrapper, so it works for every field type in every theme —
-                    // element templates build their own control classes and share no
-                    // partial to hook into.
-                    $highlightClasses = ($field['highlight'] ?? false)
-                        ? ' rounded-lg p-2 -m-2 ring-2 ring-amber-400/70'
+                    // themselves (a prefilled proposal). The control is tinted from
+                    // the field wrapper through descendant variants, so it works for
+                    // every field type in every theme — element templates build their
+                    // own control classes (bg-white) and share no partial to hook into.
+                    // Checkboxes stay untinted: a filled box reads as "checked".
+                    $isHighlighted = (bool) ($field['highlight'] ?? false);
+                    $highlightClasses = $isHighlighted
+                        ? ' [&_input:not([type=checkbox])]:bg-amber-50 [&_select]:bg-amber-50 [&_textarea]:bg-amber-50 [&_[contenteditable]]:bg-amber-50'
                         : '';
 
                     // Set unconditionally so optional keys (helpText) never leak into
                     // the next field; cleared again after the loop.
                     \Noerd\Support\FieldContext::set($field);
                 @endphp
-                <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}{{ $highlightClasses }}" {!! $getShowIfDirective($field) !!}>
+                <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}{{ $highlightClasses }}" @if ($isHighlighted) data-highlight @endif {!! $getShowIfDirective($field) !!}>
                     @php
                         $fieldTypeDefinition = $fieldTypeRegistry->resolve($field['type'] ?? '');
                         $resolvedRendererProps = $fieldTypeDefinition?->resolveProps(

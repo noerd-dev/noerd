@@ -1129,10 +1129,10 @@ $this->pageLayout = StaticConfigHelper::getComponentFields('accounting::expense-
 
 ### Mark Values the Reader Did Not Enter
 
-A field holding a proposed value gets the layout key `highlight: true` (ring + label tooltip) and
-optionally `previousValue` (renders `was: …` underneath). Both are stamped onto `$pageLayout` at
-runtime with `Noerd\Support\LayoutFields::map()` — never written into the shipped YAML, and never
-rebuilt per module: the ring lives once in `noerd::components.detail.block`.
+A field holding a proposed value gets the layout key `highlight: true` (amber-filled control + label
+tooltip) and optionally `previousValue` (renders `was: …` underneath). Both are stamped onto
+`$pageLayout` at runtime with `Noerd\Support\LayoutFields::map()` — never written into the shipped
+YAML, and never rebuilt per module: the fill lives once in `noerd::components.detail.block`.
 
 - Reference: `docs/detail-view.md` ("Highlighted Fields")
 
