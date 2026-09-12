@@ -142,6 +142,17 @@ describe('assertModuleDependenciesDeclared()', function (): void {
         'tests/ZzLeakTest.php',
         'app-configs/zz-module/lists/leak.yml',
     ]);
+
+    it('ignores a foreign namespace named in the agent documentation', function (): void {
+        zzWriteModuleSkeleton();
+        File::ensureDirectoryExists(zzModuleDir() . '/resources/boost/guidelines');
+        File::put(
+            zzModuleDir() . '/resources/boost/guidelines/core.blade.php',
+            "## Boundaries\n\n- never reference `Zz\\Other\\` from this module\n",
+        );
+
+        assertModuleDependenciesDeclared(zzModuleDir());
+    });
 });
 
 describe('assertModuleUpdateCommandPublishesConfigs()', function (): void {

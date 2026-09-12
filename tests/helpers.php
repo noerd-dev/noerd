@@ -169,7 +169,9 @@ if (! function_exists('assertModuleDependenciesDeclared')) {
      * Module-independence guard: every OTHER app module whose PSR-4 namespace
      * appears anywhere in this module (src, resources, routes, database,
      * config, app-configs and tests) must be declared in the module's
-     * composer.json require or require-dev. The known module namespaces are
+     * composer.json require or require-dev. Agent documentation under
+     * resources/boost/ is skipped: a guideline states the boundary rule in
+     * prose and names the namespaces it forbids. The known module namespaces are
      * derived from the sibling app-modules' composer.json files, so the guard
      * needs no hand-maintained mapping and also catches test-only leaks.
      *
@@ -212,6 +214,12 @@ if (! function_exists('assertModuleDependenciesDeclared')) {
                 }
                 // The boundary tests themselves name foreign namespaces as needles.
                 if (str_contains($file->getFilename(), 'ModuleBoundaryTest')) {
+                    continue;
+                }
+                // Agent documentation (the Boost guideline, skills) is prose, not
+                // code: a module's guideline states its boundary rule and has to
+                // name the namespaces it must NOT use.
+                if (str_contains(str_replace('\\', '/', $file->getPathname()), '/resources/boost/')) {
                     continue;
                 }
                 $content = (string) file_get_contents($file->getPathname());
