@@ -103,6 +103,26 @@ final class RelationFieldRegistry
     }
 
     /**
+     * The registered relation type behind a foreign-key column, by naming
+     * convention: `customer_id` → `customerRelation`, `product_group_id` →
+     * `productGroupRelation`. This is the single home of that convention — the
+     * `relationBadge` list cell resolves its title through it, and tools that
+     * derive fields from the database schema (the Plus layout editor) use it to
+     * offer a foreign key as the matching relation field. Null when the column
+     * is no `*_id` column or no such type is registered.
+     */
+    public function typeForColumn(string $column): ?string
+    {
+        if (! str_ends_with($column, '_id')) {
+            return null;
+        }
+
+        $type = Str::camel(Str::beforeLast($column, '_id')) . 'Relation';
+
+        return $this->has($type) ? $type : null;
+    }
+
+    /**
      * @return array<string, RelationFieldDefinition>
      */
     public function all(): array
