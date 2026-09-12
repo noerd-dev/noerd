@@ -128,3 +128,20 @@ it('normalizes translated relation titles and derives default select event names
     // follows the session language / app locale.
     expect($definition->resolveTitle((object) []))->toBe('Page');
 });
+
+it('derives the relation type of a foreign-key column from the registered types', function (): void {
+    $registry = new RelationFieldRegistry(new FieldTypeRegistry());
+
+    $registry->register('fixtureWidgetRelation', RelationFieldDefinition::model(
+        listComponent: 'fixture-widgets-list',
+        modelClass: null,
+    ));
+
+    expect($registry->typeForColumn('fixture_widget_id'))->toBe('fixtureWidgetRelation')
+        // A `*_id` column whose type nobody registered is no relation.
+        ->and($registry->typeForColumn('gadget_id'))->toBeNull()
+        ->and($registry->typeForColumn('external_id'))->toBeNull()
+        // Not a foreign-key column at all.
+        ->and($registry->typeForColumn('fixture_widget'))->toBeNull()
+        ->and($registry->typeForColumn('name'))->toBeNull();
+});

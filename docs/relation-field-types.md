@@ -129,6 +129,12 @@ Polymorphic fields render through the shared Livewire component
 
 ## Runtime Behaviour
 
+- A foreign-key column maps to its relation type by naming convention — `customer_id` →
+  `customerRelation`, `product_group_id` → `productGroupRelation` (camelCase + `Relation`).
+  `RelationFieldRegistry::typeForColumn($column)` is the single home of that convention and
+  returns `null` when no such type is registered: the list cell `relationBadge` resolves its
+  title through it, and tools that derive fields from the database schema (the Plus layout
+  editor) use it to offer a foreign key as the matching relation field on a detail
 - All registered relation types render through the shared Livewire component `noerd-relation-field`
   (polymorphic types through `noerd-polymorphic-relation-field`), unless the definition names a
   custom `fieldComponent`

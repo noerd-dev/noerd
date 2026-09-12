@@ -391,6 +391,9 @@ listComponent: ..., detailRoute: ..., modelClass: ..., titleResolver: ...))`; th
 that type and nothing else. The generic `type: relation` does not exist and throws during rendering.
 The field component keeps the value and the display title in sync with the detail itself
 (`detailData.{field}` + `relationTitles.{field}`), so the detail needs no code for the common case.
+A foreign-key column maps to its type by naming convention (`customer_id` → `customerRelation`);
+`RelationFieldRegistry::typeForColumn($column)` is the single home of that rule (null when no
+such type is registered) — never re-derive it in a module.
 
 When the detail must REACT to a selection (derive further fields, load defaults):
 
