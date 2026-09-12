@@ -60,7 +60,12 @@ Every noerd-based module protects its routes with `['noerd', 'app-access:{module
 `NoerdServiceProvider`, backed by `Noerd\Middleware\AppAccessMiddleware`) that takes the app key as
 its parameter: `app-access:inventory` only lets requests through when the selected tenant has the
 `inventory` app assigned and the per-app authorization gate allows it; it also selects that app in
-the session, so a deep link always lands in the right app. Without it, any authenticated user of
+the session, so a deep link always lands in the right app. A HIDDEN app (`tenant_app.is_hidden`,
+an app that only backs the screens of another app) is never selected: the user keeps the app they
+came from, with its navigation and its `app-configs/{app}/` YAML, as long as that app is assigned
+and accessible. For a route shared by several apps (`app-access:booking,booking-members`) the
+selected app is kept when it is one of them; otherwise the first visible one in route order is
+selected. Without it, any authenticated user of
 any tenant app can open the module's screens. The `noerd:make-module` scaffolder and the
 `noerd:make-*` generators emit routes wrapped in `['noerd', 'app-access:{app}']` (see
 [Creating Modules](creating-modules.md)).
@@ -69,7 +74,7 @@ any tenant app can open the module's screens. The `noerd:make-module` scaffolder
 
 | Alias | Middleware | Purpose |
 |-------|------------|---------|
-| `app-access:{app}` | `AppAccessMiddleware` | The tenant must have the app assigned and the app gate must allow it; also selects the app in the session |
+| `app-access:{app}` | `AppAccessMiddleware` | The tenant must have the app assigned and the app gate must allow it; also selects the app in the session (a hidden app never — the current app is kept) |
 | `setup` | `SetupMiddleware` | The `/setup` area — tenant admins only (`NoerdUser::isAdmin()`) |
 | `action-permission:{key}` | `ActionPermissionMiddleware` | A registered named action must be allowed for the user (see [Permissions](permissions.md#named-action-checks)) |
 | `setup.collections.ui` | `EnsureSetupCollectionDefinitionsEnabled` | The collection-definition screens, only reachable while `noerd.collections.mode` is `database` (see [Setup Collections](setup-collections.md)) |
