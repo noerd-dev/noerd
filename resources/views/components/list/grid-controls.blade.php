@@ -28,7 +28,7 @@
 @endphp
 
 @if ($gridFilterableColumns !== [] || $gridSortColumns !== [])
-    <div class="mb-3 flex flex-wrap items-center gap-2">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
         @foreach ($table as $gridFilterColumn)
             @php
                 $gridFilterField = $gridFilterColumn['field'] ?? null;
