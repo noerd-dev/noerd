@@ -20,7 +20,10 @@
 
 @endphp
 
-<div class="min-w-full pb-2 align-middle">
+{{-- The page body of a list host carries no chrome padding (the table is full-bleed
+     and sits flush under the header on purpose) — the grid therefore brings the gap to
+     whatever is above it (the description divider, or the header chrome) itself. --}}
+<div @class(['min-w-full pb-2 align-middle', 'pt-4' => ! $compact])>
     {{-- Above the empty state too, so a filter that matches nothing stays clearable --}}
     @include('noerd::components.list.grid-controls')
 
