@@ -423,7 +423,10 @@ trait NoerdList
             $options = $column['options'] ?? $picklistOptions[$field] ?? [];
 
             $value = mb_trim($raw);
-            if (in_array($type, ['bool', 'boolean', 'inversebool'], true)) {
+            $wantEmpty = ColumnFilterParser::emptiness($value);
+            if ($wantEmpty !== null) {
+                $value = $wantEmpty ? __('Empty') : __('Not empty');
+            } elseif (in_array($type, ['bool', 'boolean', 'inversebool'], true)) {
                 $value = $value === '1' ? __('Yes') : __('No');
             } else {
                 foreach ($options as $option) {
@@ -1292,6 +1295,19 @@ trait NoerdList
                 $relationType = $yamlTypes[$field]
                     ?? $this->schemaColumnTypeMap($relationPath['table'])[$relationPath['column']]
                     ?? 'text';
+
+                // Empty includes rows without a related record at all, so it is the
+                // negation of "a related record with a set value exists".
+                $wantEmpty = ColumnFilterParser::emptiness($raw);
+                if ($wantEmpty !== null) {
+                    $notEmpty = fn(Builder $related) => ColumnFilterParser::applyNotEmpty($related, $relationPath['column'], $relationType);
+                    $wantEmpty
+                        ? $query->whereDoesntHave($relationPath['relation'], $notEmpty)
+                        : $query->whereHas($relationPath['relation'], $notEmpty);
+
+                    continue;
+                }
+
                 $query->whereHas(
                     $relationPath['relation'],
                     fn(Builder $related) => ColumnFilterParser::apply($related, $relationPath['column'], $relationType, $raw),
