@@ -26,7 +26,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Relation Field Types](relation-field-types.md) — registered `{x}Relation` pickers and their events
 - [Relation Forms](relation-forms.md) — editing a related model's fields inside a detail form
 - [Modal System](modal.md) — route modals vs. component modals, opening, closing, results
-- [Themes](themes.md) — form layout themes (`default`, `compact`, `numbered`) and custom themes
+- [Themes](themes.md) — form layout themes (`default`, `compact`, `numbered`), the read-only `display` theme and custom themes
 - [Setup Collections](setup-collections.md) — tenant-maintained lookup tables defined in YAML or the database
 
 ### Application chrome

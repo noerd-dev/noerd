@@ -70,7 +70,7 @@ Allowed keys: `title`, `description`, `theme`, `quickCreate`, `tabs`, `fields`, 
 
 ```yaml
 title: Thing
-theme: compact                 # optional: default | compact | numbered
+theme: compact                 # optional: default | compact | numbered (display = read-only text, usually per field/block)
 tabs:
   - number: 1
     label: General
@@ -99,6 +99,9 @@ fields:
   further fields) and then writes `$this->detailData['x_id']` / `$this->relationTitles['x_id']`;
   never add a display property.
 - Use `type: spacer` to keep an empty grid cell; use `type: block` for nested groups.
+- Read-only facts shown as TEXT (a row above the inputs, a customer block): `theme: display` on the
+  field or on a nested `type: block` — the field `type` still formats the value, `hideIfEmpty: true`
+  drops blank rows. Never hand-written Blade rows, never `readonly: true` inputs for that.
 - Tabs: `<x-noerd::tab-content>` renders them for you; hand-rolled panels must use
   `<x-noerd::tab-panels>` / `<x-noerd::tab-panel>`.
 - `actions:` renders a button row automatically (`action:` method, `route:`/`modalComponent:` modal,

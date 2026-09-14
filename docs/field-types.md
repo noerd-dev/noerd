@@ -344,7 +344,8 @@ These options are available for most field types:
 | `show` | bool | `true` | Statically show/hide the field |
 | `viewExists` | string | - | View name — the field is skipped when that view is not registered (safe reference to an optional module) |
 | `quickCreate` | bool | `false` | Include the field in the quick-create dialog even though it is not `required` (see [Page View](page-view.md#quick-create-lifecycle)) |
-| `theme` | string | - | Per-field theme override (see [Themes](themes.md)) |
+| `theme` | string | - | Per-field theme override (see [Themes](themes.md)); `display` renders the value as read-only text |
+| `hideIfEmpty` | bool | `false` | Skip the field while its value is blank — honoured only in a text-only theme such as `display` (see [Display Theme](themes.md#display-theme-read-only-text)) |
 | `number` | int | - | Explicit row number in the `numbered` theme (defaults to auto-increment) |
 
 `readonly` is also forced onto every field while the user's object permission denies saving — see

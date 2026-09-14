@@ -21,6 +21,12 @@ final class ThemeDefinition
         public string $name,
         public ?string $label = null,
         public bool $hidden = false,
+        /**
+         * The theme renders values as TEXT instead of controls (the built-in
+         * `display` theme). It is a rendering mode, not a look: an enforced
+         * system theme leaves it alone, and `hideIfEmpty` is honoured only here.
+         */
+        public bool $textOnly = false,
         public string $gridClasses = 'pt-4 gap-6',
         public bool $fullWidthRows = false,
         public bool $numbersRows = false,
@@ -63,6 +69,7 @@ final class ThemeDefinition
             name: $name,
             label: is_string($data['label'] ?? null) ? $data['label'] : null,
             hidden: (bool) ($data['hidden'] ?? false),
+            textOnly: (bool) ($data['textOnly'] ?? false),
             gridClasses: $string('gridClasses'),
             fullWidthRows: (bool) ($data['fullWidthRows'] ?? false),
             numbersRows: (bool) ($data['numbersRows'] ?? false),

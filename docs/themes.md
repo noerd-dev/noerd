@@ -9,6 +9,7 @@ tables and buttons) are rendered. Noerd ships four built-in themes:
 | `compact` | Label to the LEFT of the input with tighter vertical spacing |
 | `numbered` | Numbered form rows in the style of official/tax forms: one field per full-width row (colspan is ignored), light gray row background, leading row number, right-aligned label, input on the right |
 | `settings` | Internal (`hidden: true`): fields stacked vertically, full width — forced on [settings pages](settings-page.md), never selectable as a form theme |
+| `display` | Internal (`hidden: true`, `textOnly: true`): every field renders as TEXT — label left, value right, no control. Used per field or per nested block for read-only rows inside a form, or for a whole read-only block; see [Display Theme](#display-theme-read-only-text) |
 
 A theme is a **self-contained folder**: all element blade templates (input, select, textarea,
 checkbox, button, relation field, …) plus a `theme.yml` metadata file. Creating a new theme means
@@ -58,7 +59,9 @@ An admin preconfigures the theme for the whole system under **Setup → System S
 | set, **enforced** | yes / no | **the system theme — everywhere** |
 
 With *Enforce in Setup* ticked the system theme also overrides every per-field and nested-block
-`theme:` override, so the whole form renders in one theme.
+`theme:` override, so the whole form renders in one theme. The one exception is a text-only theme
+(`display`): it is a rendering mode, not a look, and stays wherever the YAML put it — enforcing
+would otherwise turn read-only text rows back into inputs.
 
 The select is built from the `ThemeRegistry`, so every discovered theme shows up automatically
 (labelled with its `theme.yml` `label`); a stored theme whose folder is gone falls back to
@@ -97,7 +100,75 @@ resources/views/themes/
     theme.yml + the elements numbered restyles
   settings/
     theme.yml only (see settings-page.md)
+  display/
+    theme.yml + one-line elements including noerd::components.detail.display-value
 ```
+
+## Display Theme (read-only text)
+
+`display` renders a field's VALUE as plain text — the label left (fixed width, truncated with the
+full text as tooltip), the value right — instead of a control. It is the way to show read-only
+information inside a form: a row of facts above the inputs, a customer block in an ordering modal,
+a preview. Three ways to use it, all through the ordinary `theme:` key:
+
+```yaml
+title: Order
+fields:
+  - type: block                     # 1. a read-only row above the inputs
+    theme: display
+    colspan: 12
+    fields:
+      - name: detailData.customer_name
+        label: Customer
+        colspan: 4
+      - name: detailData.customer_phone
+        label: Phone
+        type: phone
+        colspan: 4
+      - name: detailData.total
+        label: Total
+        type: currency
+        colspan: 4
+  - name: detailData.created_at    # 2. a single read-only field between inputs
+    label: Created
+    type: datetime
+    theme: display
+    colspan: 6
+  - name: detailData.note
+    label: Note
+    type: textarea
+    colspan: 12
+```
+
+```yaml
+theme: display                      # 3. the whole layout as text (e.g. a page YAML with fields)
+fields:
+  - name: detailData.email
+    label: Email
+    type: email
+    hideIfEmpty: true
+```
+
+- The field `type` still decides HOW the value is written: `currency` through `CurrencyHelper`,
+  `date`/`datetime`/`time` through `FormatHelper` in the reader's locale, `number` as a quantity,
+  `checkbox` as Yes/No, `select`/`picklist`/`setupCollectionSelect` as the option's translated
+  label, `phone` as a `tel:` link, `email` as a `mailto:` link, `textarea` with preserved line
+  breaks, relation fields as their resolved title. Every other type (text, and the types the
+  theme ships no element for — `image`, `richText`, `translatable*`, `file`, `button`) shows the
+  raw value, or falls back to the default theme's read-only control.
+- `hideIfEmpty: true` drops a field whose value is blank, so the grid closes up (a customer without
+  a phone number shows no "Phone" row). The key is honoured ONLY in a text-only theme — an input
+  never disappears because it is empty.
+- `highlight` and `previousValue` (see [Detail View](detail-view.md#highlighted-fields)) work
+  unchanged; the tint sits on the field wrapper.
+- The theme is `hidden` (never offered in System Settings) and `textOnly` (see below). An enforced
+  system theme leaves `display` alone.
+- The row markup lives ONCE in `noerd::components.detail.display-value`; the theme's element
+  templates are one-line includes handing it a `format`. A project theme that wants another look
+  for read-only rows copies the folder, keeps `textOnly: true` and restyles the partial include.
+- What the display theme is NOT: a permission. The value is not editable because there is no
+  control, but a `store()` that mass-assigns `detailData` still writes whatever the payload holds.
+  The security boundary stays the `store()`/`delete()` guards.
 
 A theme folder does **not** have to ship every element: a missing element falls back to the
 `default` theme's template (and finally to the renderer registered on the field type). The element
@@ -125,6 +196,9 @@ theme (the constructor defaults of `Noerd\Support\ThemeDefinition`):
 label: Compact                          # display label in System Settings
 hidden: false                           # true: internal theme, excluded from the System
                                         # Settings theme picker (e.g. the settings theme)
+textOnly: false                         # true: the theme renders values as text, not controls
+                                        # (display theme) — an enforced system theme leaves it
+                                        # alone and `hideIfEmpty` is honoured
 gridClasses: 'pt-1 gap-x-6 gap-y-1.5'   # spacing classes on the form grid wrapper (no bottom
                                         # padding — the x-noerd::page chrome owns the gap above
                                         # the footer)

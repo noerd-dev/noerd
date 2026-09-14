@@ -274,6 +274,9 @@ Notes:
   disable their controls accordingly.
 - Components without `canSaveObject()`/`canWriteObject()` (no `NoerdDetail`/`NoerdPage`) are
   never restricted.
+- A field that should show a value as TEXT by design (not a disabled input) uses the `display`
+  theme instead of `readonly: true` — per field, per nested block or for the whole layout; see
+  [Display Theme](themes.md#display-theme-read-only-text).
 
 ## Position Tables
 
