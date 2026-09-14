@@ -17,7 +17,8 @@ concerns". The split:
 `NoerdSettingsPage` trait and a `settings/{name}.yml`, see [Settings Pages](settings-page.md).
 
 **Details are pure model forms.** Their YAML (`details/{entity}-detail.yml`, mandatory) contains
-only `title`, `description`, `theme`, `quickCreate`, `tabs`, `fields`, `actions` and `lists`
+only `title`, `description`, `theme`, `quickCreate`, `tabs`, `fields`, `actions`, `lists` and
+`positions`
 (see [Detail Properties](detail-view.md#detail-properties)). `widgets:` and `relations:` do NOT
 belong in a detail YAML — they are page concerns. A detail opened standalone (e.g. from a relation
 field) therefore renders just the form, without widgets or relation box.

@@ -329,7 +329,8 @@ Hand-written position (line item) tables follow the theme through the `x-noerd::
 components and `x-noerd::forms.control` — their class strings come from the `theme.yml` values
 (`tableClasses`, `rowClasses`, `controlClasses`, …), so a theme gets position styling for free.
 The component reference and the Blade example live in
-[Detail View → Position Tables](detail-view.md#position-tables).
+[Detail View → Position Tables](detail-view.md#position-tables); which columns a table shows is
+configured per installation, see [Configurable Columns](detail-view.md#configurable-columns).
 
 ## Theme vs. Brand
 
