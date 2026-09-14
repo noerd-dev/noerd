@@ -124,21 +124,59 @@ it('appSort updates sort_order correctly', function (): void {
     expect($apps[0]->pivot->sort_order)->toBe(0);
 });
 
-it('toggleApp attaches an unassigned app and moves it between the sections', function (string $actor, bool $multiTenant): void {
+describe('tenant admin', function (): void {
+    beforeEach(function (): void {
+        $this->tenantAdmin = NoerdUser::factory()->create();
+        $this->tenantAdmin->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
+
+        $this->tenant->tenantApps()->attach($this->appA->id, ['sort_order' => 0]);
+    });
+
+    it('offers no apps to assign', function (): void {
+        $this->actingAs($this->tenantAdmin);
+
+        Livewire::test('noerd::tenant-apps-page')
+            ->assertSet('availableApps', [])
+            ->assertSee('Only a super admin can assign or remove apps.');
+    });
+
+    it('cannot assign an app', function (): void {
+        $this->actingAs($this->tenantAdmin);
+
+        Livewire::test('noerd::tenant-apps-page')
+            ->call('toggleApp', $this->appB->id)
+            ->assertForbidden();
+
+        expect($this->tenant->tenantApps()->pluck('tenant_apps.id'))->not->toContain($this->appB->id);
+    });
+
+    it('cannot remove an app', function (): void {
+        $this->actingAs($this->tenantAdmin);
+
+        Livewire::test('noerd::tenant-apps-page')
+            ->call('toggleApp', $this->appA->id)
+            ->assertForbidden();
+
+        expect($this->tenant->tenantApps()->pluck('tenant_apps.id'))->toContain($this->appA->id);
+    });
+
+    it('still hides an assigned app', function (): void {
+        $this->actingAs($this->tenantAdmin);
+
+        Livewire::test('noerd::tenant-apps-page')
+            ->call('toggleHidden', $this->appA->id)
+            ->assertOk();
+
+        expect((bool) $this->tenant->tenantApps()->where('tenant_apps.id', $this->appA->id)->first()->pivot->is_hidden)->toBeTrue();
+    });
+});
+
+it('toggleApp attaches an unassigned app and moves it between the sections', function (bool $multiTenant): void {
     config(['noerd.features.multi_tenant' => $multiTenant]);
-
-    $user = $this->admin;
-
-    if ($actor === 'tenant admin') {
-        // isAdmin() is scoped to the SELECTED tenant — a plain tenant admin
-        // manages its own tenant's apps without being a super admin.
-        $user = NoerdUser::factory()->create();
-        $user->tenants()->attach($this->tenant->id, ['profile_key' => Profile::Admin->value]);
-    }
 
     $this->tenant->tenantApps()->attach($this->appA->id, ['sort_order' => 0]);
 
-    $this->actingAs($user);
+    $this->actingAs($this->admin);
 
     $component = Livewire::test('noerd::tenant-apps-page');
     $assignedBefore = count($component->get('assignedApps'));
@@ -150,7 +188,6 @@ it('toggleApp attaches an unassigned app and moves it between the sections', fun
         ->and($component->get('assignedApps'))->toHaveCount($assignedBefore + 1)
         ->and($component->get('availableApps'))->toHaveCount($availableBefore - 1);
 })->with([
-    ['super admin', true],
-    ['tenant admin', true],
-    ['super admin', false],
+    'multi tenant' => [true],
+    'single tenant' => [false],
 ]);

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Noerd\Events\TenantAppAssigned;
 use Noerd\Helpers\NoerdAuth;
@@ -20,7 +21,10 @@ new class extends Component {
 
     public function toggleApp(int $appId): void
     {
-        $this->authorizeAdmin();
+        // Assigning and removing apps is an installation decision: an app may read
+        // across tenants or cost money, so a tenant admin only orders and hides
+        // the apps a super admin gave their tenant.
+        abort_unless($this->canAssignApps(), 403);
 
         $tenant = TenantHelper::getSelectedTenant();
         $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->map(fn($id): int => (int) $id)->all();
@@ -79,11 +83,17 @@ new class extends Component {
         $this->loadApps();
     }
 
+    #[Computed]
+    public function canAssignApps(): bool
+    {
+        return (bool) NoerdAuth::user()?->isSuperAdmin();
+    }
+
     /**
      * The screen only ever touches the SELECTED tenant, and isAdmin() is scoped
-     * to exactly that tenant — so an admin manages their own tenant's apps and
-     * no other. Every action re-asserts it: mount() alone leaves the guarantee
-     * one refactor away from being lost.
+     * to exactly that tenant — so an admin orders and hides their own tenant's
+     * apps and no other. Every action re-asserts it: mount() alone leaves the
+     * guarantee one refactor away from being lost.
      */
     private function authorizeAdmin(): void
     {
@@ -102,6 +112,12 @@ new class extends Component {
             'name' => $app->name,
             'is_hidden' => (bool) $app->pivot->is_hidden,
         ])->toArray();
+
+        if (! $this->canAssignApps()) {
+            $this->availableApps = [];
+
+            return;
+        }
 
         $this->availableApps = TenantApp::where('is_active', true)
             ->whereNotIn('id', $assignedIds)
@@ -144,7 +160,9 @@ new class extends Component {
                         </div>
 
                         <x-noerd::button variant="icon" :icon="$app['is_hidden'] ? 'eye-slash' : 'eye'" wire:click="toggleHidden({{ $app['id'] }})" wire:confirm="{{ $app['is_hidden'] ? __('Are you sure you want to make this app visible?') : __('Are you sure you want to hide this app?') }}" class="shrink-0"/>
-                        <x-noerd::button variant="icon" icon="x-mark" wire:click="toggleApp({{ $app['id'] }})" wire:confirm="{{ __('Are you sure you want to remove this app?') }}" class="text-red-500! shrink-0"/>
+                        @if($this->canAssignApps)
+                            <x-noerd::button variant="icon" icon="x-mark" wire:click="toggleApp({{ $app['id'] }})" wire:confirm="{{ __('Are you sure you want to remove this app?') }}" class="text-red-500! shrink-0"/>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -152,6 +170,9 @@ new class extends Component {
             <div class="text-gray-500 italic mb-4">{{ __('No apps assigned') }}</div>
         @endif
 
+        @if(! $this->canAssignApps)
+            <p class="mt-10 text-sm text-gray-500">{{ __('Only a super admin can assign or remove apps.') }}</p>
+        @else
         <div class="mt-10 mb-6">
             <div class="text-lg font-semibold">{{ __('Available Apps') }}</div>
         </div>
@@ -175,6 +196,7 @@ new class extends Component {
             </div>
         @else
             <div class="text-gray-500 italic">{{ __('No more apps available') }}</div>
+        @endif
         @endif
     </div>
 

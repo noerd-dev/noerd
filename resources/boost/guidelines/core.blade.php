@@ -240,6 +240,10 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
   (`noerd:super-admin {id|email}`, `--revoke` to withdraw), never from a screen. Whether a user may
   WORK IN a tenant is `NoerdUser::canAccessTenant()` / `accessibleTenants()` — never compare
   against `$user->tenants` directly for that question.
+- Assigning an app to a tenant (or removing it) is a SUPER ADMIN decision: Setup → Apps lets a
+  tenant admin only reorder and hide the assigned apps, and a tenant created by a tenant admin
+  starts without apps. Never add a screen that attaches `tenant_apps` for a mere tenant admin;
+  system flows (install commands, provisioning services) assign apps without a user.
 - All checks go through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
   `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`). Create
   and write are SEPARATE abilities: `canSaveObject()` on detail/page components picks create (new

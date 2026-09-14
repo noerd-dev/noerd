@@ -101,8 +101,22 @@ it('attaches current user to new tenant as admin', function () use ($testSetting
     expect($pivot->pivot->profile_key)->toBe(Profile::Admin->value);
 });
 
-it('copies tenant apps from current tenant to new tenant', function () use ($testSettings): void {
+it('starts the tenant of a tenant admin without apps', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->create();
+    $admin->tenants->first()->tenantApps()->attach(TenantApp::factory()->create()->id);
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'])
+        ->set('name', 'Tenant Admin Copy')
+        ->call('createTenant')
+        ->assertHasNoErrors();
+
+    expect(Tenant::where('name', 'Tenant Admin Copy')->first()->tenantApps)->toHaveCount(0);
+});
+
+it('copies tenant apps from current tenant to new tenant for a super admin', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->superAdmin()->adminUser()->create();
     $currentTenant = $admin->tenants->first();
 
     // Create some tenant apps and attach them to current tenant
