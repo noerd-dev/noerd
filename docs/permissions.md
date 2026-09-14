@@ -76,6 +76,10 @@ every tenant of the installation.
   super admin (`noerd:make-admin-user --super-admin`).
 - A navigation entry with `superAdmin: true` is hidden from everybody else
   (see [Navigation](navigation.md)).
+- The only one who assigns apps to a tenant and removes them (Setup → Apps).
+  A tenant admin sees the apps of their tenant there and may reorder and hide
+  them, nothing more; a tenant they create starts without apps, while a super
+  admin's new tenant copies the apps of the selected one.
 
 ## Abilities
 
