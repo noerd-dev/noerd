@@ -862,7 +862,7 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
   `quickCreate`, `tabs`, `relations`, `widgets`. A missing page YAML is fine
   (`StaticConfigHelper::getPageFields()` is silent on miss).
 - **Detail YAMLs are pure model forms** (mandatory): only `title`, `description`, `theme`,
-  `quickCreate`, `tabs`, `fields`, `actions` and `lists`. `widgets:` and `relations:` NEVER belong in
+  `quickCreate`, `tabs`, `fields`, `actions`, `lists` and `positions`. `widgets:` and `relations:` NEVER belong in
   a detail YAML — they are page concerns. A detail opened standalone renders just the form.
 - The save roundtrip page↔detail is generic via trait events: page `store()` dispatches
   `storeDetail-{detail}`; the detail's `store()` ends in `finishStore($model)` which dispatches
@@ -1181,6 +1181,32 @@ fields:
 - It needs no `name`; only `type: spacer` and `colspan` are relevant
 - It is a generic noerd field type (`noerd::components.forms.spacer`) — works in any list/detail block,
   compact or not. Never duplicate it per module
+
+### Position Columns (Line-Item Tables)
+
+The columns of a position table (order, quote, invoice lines) are CONFIGURATION: an installation
+removes, resizes, relabels, reorders or adds them through `positions.columns` in the detail YAML.
+The core knows no business module — the module brings its knowledge through a contract:
+
+- The module ships a `Noerd\Contracts\DefinesPositionColumns` catalog: `columns($modelClass)` returns
+  `PositionColumn::make('amount')->type('number')->locked()->onChange('calcGross')`-style columns
+  in default order, `forbidden()` the model fields that must never be added through YAML. Every
+  column the calculation depends on (quantity, prices, tax rate, totals) is `locked()` — it can only
+  be relabelled, resized and moved, never removed; put the logic-bearing fields outside the catalog
+  into `forbidden()`.
+- A catalog entry in the YAML overrides ONLY `label` and `width`; `type`, `readonly`, `change`,
+  `step` and `options` always come from the catalog. A field outside the catalog is accepted when it
+  is a real, non-system, non-forbidden column of the position table (`type` text/number/date/
+  checkbox/select, `options`, `step`, `readonly`). Invalid entries are dropped with a log warning.
+  Array/JSON values always render read-only as text.
+- The detail blade resolves once — `$columns = $this->positionColumns(Catalog::class, Position::class)`
+  (`NoerdPage`) — and passes the result to `<x-noerd::positions.table :columns>` AND to every row.
+- Row components `use Noerd\Traits\NoerdPositionRow` (`initPositionRow()`, `row.{field}` binding,
+  locked `columns`, `editablePositionValues()` for `fill()`, `positionColumnCount()` for the row
+  `colspan`) and render `<x-noerd::positions.cells :theme :columns />` plus their own trash cell.
+  NEVER hard-code a header array or cell markup per column in a module again.
+- Tests prove the mechanics with a synthetic catalog, fixture table and layout — never a shipped YAML.
+- Reference: `docs/detail-view.md` ("Configurable Columns")
 
 ### Detail Component Structure (Slim `$detailModel` Syntax)
 Detail components (`*-detail.blade.php`) declare their model as `public $detailModel = Model::class;`

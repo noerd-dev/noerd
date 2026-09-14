@@ -67,6 +67,7 @@ fields:
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
 | `actions` | Array of action button definitions rendered above the form (see [Detail Actions](#detail-actions)) |
+| `positions` | Column configuration of the detail's position (line item) table (see [Configurable Columns](#configurable-columns)) |
 
 > **Note:** `relations:` (Relation Box) and `widgets:` are PAGE concerns — they live in the
 > optional page YAML (`pages/{entity}-page.yml`), not in a detail YAML. See [Page View](page-view.md).
@@ -364,6 +365,166 @@ the numbered form rows above it.
 
 Note that `controlClasses` describes the control *inside a position row*; the element templates in
 the theme folders (`themes/{name}/`) keep their own (slightly smaller) class strings.
+
+### Configurable Columns
+
+Which columns a position table shows is **configuration**: an installation removes a column, makes
+it wider or narrower, relabels it, reorders the columns or adds further columns of the position
+model's table — in the detail YAML, without touching the module:
+
+```yaml
+title: Order
+theme: compact
+positions:
+  columns:
+    - field: quantity
+      width: w-20
+    - field: name
+      width: w-96
+    - field: comment
+      label: Comment
+    - field: wishes
+      label: Wishes
+      readonly: true
+    - field: price
+```
+
+The core knows no business module. The module declares its **catalog** of columns through
+`Noerd\Contracts\DefinesPositionColumns`; `Noerd\Support\Positions\PositionColumnResolver` merges
+it with the YAML.
+
+**Resolution rules**
+
+- **No `positions.columns`:** every catalog column with `default: true` (and every locked one), in
+  catalog order. A table without the key renders exactly as the module ships it.
+- **With `positions.columns`:** the YAML order wins.
+  - A **catalog column** may override only `label` and `width`. `type`, `readonly`, `change`,
+    `step` and `options` always come from the catalog.
+  - A **locked** catalog column the YAML leaves out is re-inserted after the nearest preceding
+    catalog column that is present (or at the start). It can never be removed.
+  - An **optional** catalog column the YAML leaves out is hidden.
+  - An **extra field** (not in the catalog) is accepted when it is a real column of the position
+    model's table, not a system column (`id`, `tenant_id`, `created_at`, `updated_at`,
+    `deleted_at`) and not in the catalog's `forbidden()` list. Allowed keys: `label` (default: the
+    headline of the field), `width` (default `w-32`), `type` (`text` default, `number`, `date`,
+    `checkbox`, `select` with `options` as a `value`/`label` list), `step`, `readonly`. Its change
+    handler is always `store`.
+  - An **invalid entry** (unknown, system or forbidden field, missing `field`, duplicate) is dropped
+    with a `Log::warning` — a YAML mistake never breaks the page.
+- A column whose model value is an **array or JSON** is always rendered read-only as text: a list of
+  scalars is comma-joined, a list of arrays/objects joins each item's scalar values.
+
+**The catalog** — mark every column the module's calculation depends on `locked()` and list the
+logic-bearing fields outside the catalog in `forbidden()`:
+
+```php
+use Noerd\Contracts\DefinesPositionColumns;
+use Noerd\Support\Positions\PositionColumn;
+
+class InvoicePositionColumns implements DefinesPositionColumns
+{
+    public function columns(string $modelClass): array
+    {
+        return [
+            PositionColumn::make('quantity')->type('number')->width('w-20')->locked(),
+            PositionColumn::make('name')->width('w-auto'),
+            PositionColumn::make('unit')->options(['pc' => 'Piece', 'h' => 'Hour'])->default(false),
+            PositionColumn::make('amount')->label('Price')->type('number')->step('0.01')->locked()->onChange('calcGross'),
+            PositionColumn::make('tax_amount')->label('Tax rate')->type('number')->locked(),
+            PositionColumn::make('total_gross')->label('Total')->type('number')->locked()->readonly(),
+        ];
+    }
+
+    public function forbidden(): array
+    {
+        return ['invoice_id', 'total_net', 'total_tax'];
+    }
+}
+```
+
+`PositionColumn` is immutable (`make()`, `label()`, `type()` with the shorthands `text()`, `number($step)`,
+`date()`, `checkbox()`, `select($options)`, `width()`, `locked()`, `readonly()`,
+`default()`, `onChange()`, `step()`, `options()`); resolved columns travel to row components as
+plain arrays (`toArray()` / `fromArray()`).
+
+**Detail blade** — resolve once with `NoerdPage::positionColumns()` and hand the columns to the
+table and to every row:
+
+```blade
+@php
+    $positionsTheme = $this->detailTheme();
+    $positionColumns = $this->positionColumns(InvoicePositionColumns::class, InvoicePosition::class);
+@endphp
+
+<x-noerd::positions.section :theme="$positionsTheme" title="Positions">
+    <x-noerd::positions.table :theme="$positionsTheme" :columns="$positionColumns">
+        @foreach($invoice->positions as $position)
+            <livewire:accounting::invoice-position
+                :key="$position->id"
+                :$position
+                :columns="$positionColumns"
+                :theme="$positionsTheme"
+                :number="$loop->iteration"
+            />
+        @endforeach
+    </x-noerd::positions.table>
+</x-noerd::positions.section>
+```
+
+With resolved columns the table appends the empty action header itself (`:actions="false"` omits
+it). The legacy `label`/`class` shape of `columns` keeps working unchanged.
+
+**Row component** — `Noerd\Traits\NoerdPositionRow` provides `$position`, `$row` (attribute → value,
+the `wire:model` target), the `#[Locked]` `$columns`, `$theme` and `$number`:
+
+```php
+use Noerd\Traits\NoerdPositionRow;
+
+new class extends Component
+{
+    use NoerdPositionRow;
+
+    public function mount(InvoicePosition $position, array $columns, string $theme = 'default', ?int $number = null): void
+    {
+        $this->initPositionRow($position, $columns, $theme, $number);
+    }
+
+    public function store(): void
+    {
+        // Locked, calculated fields are written by the module itself …
+        $this->position->quantity = (float) $this->row['quantity'];
+        $this->position->amount = (float) $this->row['amount'];
+        // … every other configured column comes from the YAML.
+        $this->position->fill($this->editablePositionValues());
+
+        PriceService::calcPosition($this->position);
+        $this->position->save();
+    }
+};
+```
+
+```blade
+<x-noerd::positions.row :theme="$theme" :number="$number" :colspan="$this->positionColumnCount()">
+    <x-noerd::positions.cells :theme="$theme" :columns="$columns" />
+
+    <x-noerd::positions.cell :theme="$theme" width="w-16">
+        <button type="button" wire:click="delete" wire:confirm="{{ __('Delete position?') }}">
+            <x-noerd::icons.trash />
+        </button>
+    </x-noerd::positions.cell>
+</x-noerd::positions.row>
+```
+
+- `initPositionRow()` fills `row` for every column (dates as `Y-m-d`, arrays unchanged).
+- `<x-noerd::positions.cells>` renders a theme control per editable column
+  (`wire:model="row.{field}"`, `wire:change="{change}"`), a disabled control for readonly columns and
+  text for array values. The trash cell stays in the row component, so it keeps its own
+  `wire:confirm`.
+- `editablePositionValues()` returns only the editable, NOT locked fields of the resolved columns.
+  Because `$columns` is locked, a client cannot add a field to it — a tampered `row.*` key is never
+  written.
+- `positionColumnCount()` is the column count plus the action column, for `positions.row :colspan`.
+- `delete()` deletes the position and dispatches `positionDeleted`; override it when needed.
 
 ## Detail Actions
 

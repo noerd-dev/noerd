@@ -7,12 +7,15 @@ namespace Noerd\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
+use Noerd\Contracts\DefinesPositionColumns;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\LayoutFields;
+use Noerd\Support\Positions\PositionColumn;
+use Noerd\Support\Positions\PositionColumnResolver;
 use Noerd\Support\RelationFieldDefinition;
 use Noerd\Support\ThemeContext;
 use RuntimeException;
@@ -213,6 +216,29 @@ trait NoerdPage
     public function detailTheme(): string
     {
         return ThemeHelper::fromLayout($this->pageLayout);
+    }
+
+    /**
+     * The resolved columns of a position (line item) table: the module's
+     * catalog merged with the `positions.columns` block of this component's
+     * layout. Returns plain arrays, ready to travel as a Livewire prop. Hand
+     * the result to `<x-noerd::positions.table :columns>` AND to every row
+     * component (`NoerdPositionRow`):
+     *
+     * `@php $columns = $this->positionColumns(InvoicePositionColumns::class, InvoicePosition::class); @endphp`
+     *
+     * @param  DefinesPositionColumns|class-string<DefinesPositionColumns>  $catalog
+     * @param  class-string<Model>  $modelClass
+     * @return array<int, array<string, mixed>>
+     */
+    public function positionColumns(DefinesPositionColumns|string $catalog, string $modelClass): array
+    {
+        $catalog = is_string($catalog) ? app($catalog) : $catalog;
+
+        return array_map(
+            fn(PositionColumn $column): array => $column->toArray(),
+            app(PositionColumnResolver::class)->resolve($catalog, $modelClass, $this->pageLayout),
+        );
     }
 
     /**
