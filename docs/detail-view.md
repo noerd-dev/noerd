@@ -469,13 +469,21 @@ positions:
       width: w-40
 ```
 
+**Registration** — the module wires detail, catalog and position model once in its provider's
+`boot()` ([PositionTableRegistry](extension-registries.md#positiontableregistry)); layout tooling uses
+the same entry to let an admin edit the columns in the UI:
+
+```php
+app(PositionTableRegistry::class)->register('accounting::invoice-detail', InvoicePositionColumns::class, InvoicePosition::class);
+```
+
 **Detail blade** — resolve once with `NoerdPage::positionColumns()` and hand the columns to the
 table and to every row:
 
 ```blade
 @php
     $positionsTheme = $this->detailTheme();
-    $positionColumns = $this->positionColumns(InvoicePositionColumns::class, InvoicePosition::class);
+    $positionColumns = $this->positionColumns();
 @endphp
 
 <x-noerd::positions.section :theme="$positionsTheme" title="Positions">

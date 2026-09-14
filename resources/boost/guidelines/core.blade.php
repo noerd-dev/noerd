@@ -1200,8 +1200,12 @@ The core knows no business module — the module brings its knowledge through a 
   text/number/date/checkbox/select, `options` or `optionsMethod` — a `PicklistRegistry` provider —,
   `placeholder`, `step`, `readonly`). Invalid entries are dropped with a log warning. Array/JSON
   values always render read-only as text.
-- The detail blade resolves once — `$columns = $this->positionColumns(Catalog::class, Position::class)`
-  (`NoerdPage`) — and passes the result to `<x-noerd::positions.table :columns>` AND to every row.
+- The module registers every detail with a position table ONCE in its provider's `boot()`:
+  `app(PositionTableRegistry::class)->register('{module}::{entity}-detail', Catalog::class, Position::class)`
+  (bare component names must be unique). The detail blade resolves once —
+  `$columns = $this->positionColumns()` (`NoerdPage`, catalog and model from the registry) — and
+  passes the result to `<x-noerd::positions.table :columns>` AND to every row. Layout tooling edits
+  `positions.columns` through the same registry entry.
 - Row components `use Noerd\Traits\NoerdPositionRow` (`initPositionRow()`, `row.{field}` binding,
   locked `columns`, `editablePositionValues()` for `fill()`, `positionColumnCount()` for the row
   `colspan`) and render `<x-noerd::positions.cells :theme :columns />` plus their own trash cell.

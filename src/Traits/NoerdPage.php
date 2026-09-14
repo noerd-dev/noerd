@@ -12,6 +12,7 @@ use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
+use Noerd\Services\PositionTableRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\Positions\PositionColumn;
@@ -225,14 +226,28 @@ trait NoerdPage
      * the result to `<x-noerd::positions.table :columns>` AND to every row
      * component (`NoerdPositionRow`):
      *
-     * `@php $columns = $this->positionColumns(InvoicePositionColumns::class, InvoicePosition::class); @endphp`
+     * `@php $columns = $this->positionColumns(); @endphp`
      *
-     * @param  DefinesPositionColumns|class-string<DefinesPositionColumns>  $catalog
-     * @param  class-string<Model>  $modelClass
+     * Without arguments the catalog and position model come from the
+     * PositionTableRegistry entry of this component.
+     *
+     * @param  DefinesPositionColumns|class-string<DefinesPositionColumns>|null  $catalog
+     * @param  class-string<Model>|null  $modelClass
      * @return array<int, array<string, mixed>>
      */
-    public function positionColumns(DefinesPositionColumns|string $catalog, string $modelClass): array
+    public function positionColumns(DefinesPositionColumns|string|null $catalog = null, ?string $modelClass = null): array
     {
+        if ($catalog === null || $modelClass === null) {
+            $table = app(PositionTableRegistry::class)->for($this->componentName());
+
+            if ($table === null) {
+                throw new RuntimeException("No position table is registered for [{$this->componentName()}] in the PositionTableRegistry.");
+            }
+
+            $catalog ??= $table['catalog'];
+            $modelClass ??= $table['model'];
+        }
+
         $catalog = is_string($catalog) ? app($catalog) : $catalog;
 
         return array_map(
