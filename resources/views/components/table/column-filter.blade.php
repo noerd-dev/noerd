@@ -11,6 +11,8 @@
     $filterActive = $filterValue !== '';
     $isBoolFilter = in_array($filterType, ['bool', 'boolean', 'inversebool'], true);
     $hasOptionFilter = ! $isBoolFilter && ! empty($filterOptions);
+    // true = "Empty" (`=`), false = "Not empty" (`!=`), null = any other expression.
+    $filterEmptiness = \Noerd\Services\ColumnFilterParser::emptiness($filterValue);
     $filterRef = 'funnelBtn_' . preg_replace('/[^A-Za-z0-9_]/', '_', $field);
     $placeholder = match (true) {
         in_array($filterType, ['number', 'currency'], true) => __('e.g. >0 or <=10'),
@@ -21,7 +23,7 @@
 
 <div
     wire:key="column-filter-{{ $field }}-{{ md5($filterValue) }}"
-    x-data="{ open: false, value: @js($filterValue) }"
+    x-data="{ open: false, value: @js($filterEmptiness === null ? $filterValue : '') }"
     @click.outside="open = false"
     class="relative {{ $filterLabel === null ? (($align ?? 'left') === 'right' ? 'ml-1' : 'ml-auto') : '' }}"
 >
@@ -80,6 +82,15 @@
                 >
                     {{ __('All') }}
                 </button>
+                @foreach ([['=', true, __('(Empty)')], ['!=', false, __('(Not empty)')]] as [$emptinessExpression, $emptinessState, $emptinessLabel])
+                    <button
+                        type="button"
+                        @click="$wire.setColumnFilter('{{ $field }}', '{{ $emptinessExpression }}'); open = false"
+                        class="block w-full rounded px-3 py-1.5 text-left text-sm {{ $filterEmptiness === $emptinessState ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
+                    >
+                        {{ $emptinessLabel }}
+                    </button>
+                @endforeach
                 @foreach ($filterOptions as $option)
                     <button
                         type="button"
@@ -92,6 +103,17 @@
             </div>
         @else
             <div class="p-1">
+                <div class="mb-2 flex gap-1">
+                    @foreach ([['=', true, __('Empty')], ['!=', false, __('Not empty')]] as [$emptinessExpression, $emptinessState, $emptinessLabel])
+                        <button
+                            type="button"
+                            @click="value = ''; $wire.setColumnFilter('{{ $field }}', '{{ $emptinessExpression }}'); open = false"
+                            class="flex-1 rounded-md border px-2 py-1 text-xs {{ $filterEmptiness === $emptinessState ? 'border-brand-primary bg-gray-100 font-medium text-brand-primary' : 'border-zinc-300 text-gray-700 hover:bg-gray-50' }}"
+                        >
+                            {{ $emptinessLabel }}
+                        </button>
+                    @endforeach
+                </div>
                 <input
                     type="text"
                     x-model="value"

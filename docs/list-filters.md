@@ -20,9 +20,36 @@ A filter expression may start with a comparison operator: `>=`, `<=`, `>`, `<`, 
 | `number`, `currency` | Text input | `>0`, `<=10`, `!=5` (comma decimals accepted: `>=2,5`) | Exact match |
 | `date`, `datetime` | Text input | `>=2026-01-01` (also German format `17.07.2026`) | That exact day (`whereDate =`) |
 | `bool` | All / Yes / No buttons | — | — |
-| `badge`/`select` (with `options`) | All + one button per option | — | Exact match on the option value |
+| `badge`/`select` (with `options`) | All, (Empty), (Not empty) + one button per option | — | Exact match on the option value |
+| every type except `bool` | Empty / Not empty buttons | `=` alone → empty, `!=` / `<>` alone → not empty | — |
 
-Invalid input (non-numeric value on a number column, unparseable date, operator without value) is silently ignored — the filter is a no-op, never an error.
+Invalid input (non-numeric value on a number column, unparseable date, a comparison operator such as `>=` without value) is silently ignored — the filter is a no-op, never an error.
+
+### Empty / Not empty
+
+Like Excel's "(Blanks)", every column with a filter popover — text, number, currency, date,
+datetime, badge/select, JSON paths and relation paths — can be narrowed to empty or set values. The
+popover of a text input column shows two buttons **Empty** and **Not empty** above the input; a
+picklist/badge popover lists **(Empty)** and **(Not empty)** right after "All". Boolean columns keep
+their All / Yes / No buttons.
+
+There is no extra state: the buttons write a bare operator as the expression, so the URL
+(`?cf[field]==`) and the session stay the same format as every other filter.
+
+| Expression | Meaning |
+|------------|---------|
+| `=` | Empty |
+| `!=` or `<>` | Not empty |
+
+- **What counts as empty:** `NULL` — and additionally the empty string `''` for string-like targets:
+  `text`, `badge` and `select` columns and every JSON path. Real `date`, `datetime`, `number`,
+  `currency` and `bool` columns are checked for `NULL` only (comparing a MySQL `DATE` column with `''`
+  is not portable). On a JSON path a missing key and a JSON `null` both count as empty.
+- **Relation paths:** "Empty" also matches rows WITHOUT a related record
+  (`whereDoesntHave(relation, value not empty)`); "Not empty" requires a related record with a set
+  value (`whereHas(relation, value not empty)`).
+- **Chips:** the header chip shows the translated "Empty" / "Not empty" instead of `=` / `!=`, and the
+  popover input stays blank while such a filter is active.
 
 ### Which columns are filterable
 

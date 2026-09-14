@@ -40,6 +40,17 @@ it('parses operator prefixes', function (string $raw, ?string $op, string $value
     'operator only' => ['>=', '>=', ''],
 ]);
 
+it('detects empty and not-empty expressions', function (string $raw, ?bool $expected): void {
+    expect(ColumnFilterParser::emptiness($raw))->toBe($expected);
+})->with([
+    'bare equals is empty' => ['=', true],
+    'bare equals with whitespace' => [' = ', true],
+    'bare not equals is not empty' => ['!=', false],
+    'bare angle brackets are not empty' => ['<>', false],
+    'equals with value' => ['=x', null],
+    'comparison operator only' => ['>', null],
+]);
+
 it('applies a plain text value as a like filter with escaped wildcards', function (): void {
     $query = filterQuery();
     ColumnFilterParser::apply($query, 'name', 'text', '50%_a!b');

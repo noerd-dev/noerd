@@ -32,7 +32,10 @@ below points into that folder — read the referenced page before building the f
   intentionally show no column filters. A hand-written "contains" match always goes through
   `ColumnFilterParser::applyLikeContains($query, $field, $value)` — never a bare
   `->where($f, 'like', "%{$v}%")` with backslash-escaped wildcards: sqlite has no default LIKE
-  escape character, so such a query matches nothing there while it works on MySQL.
+  escape character, so such a query matches nothing there while it works on MySQL. Column filters
+  understand "Empty" (`=` alone) and "Not empty" (`!=`/`<>` alone) for every column type; a
+  hand-written "has a value" check reuses `ColumnFilterParser::applyNotEmpty($query, $field, $type)`
+  (NULL, plus `''` for string-like targets and JSON paths) instead of re-deriving the rule.
 - When creating new models/components, always follow the slim detail pattern (reference: `src/Commands/stubs/resource/detail.blade.stub` and `docs/detail-view.md`).
 - When creating new components, they must always be placed directly in the livewire folder. Not in subfolders like livewire/setup.
 - When creating lists/tables, they should always be named -list.blade.php. For models/components, they should always be named -detail.blade.php.

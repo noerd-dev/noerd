@@ -54,6 +54,84 @@ function createColumnFilterRelationTables(): void
     });
 }
 
+function createColumnFilterBlankItemsTable(): void
+{
+    if (Schema::hasTable('column_filter_blank_items')) {
+        return;
+    }
+
+    Schema::create('column_filter_blank_items', function (Blueprint $table): void {
+        $table->id();
+        $table->string('label')->nullable();
+        $table->date('due_on')->nullable();
+        $table->json('custom_attributes')->nullable();
+    });
+}
+
+describe('empty and not empty', function (): void {
+    it('treats a missing key, json null and an empty string as empty on a date json path', function (): void {
+        createColumnFilterBlankItemsTable();
+        $missing = ColumnFilterBlankItem::create(['custom_attributes' => ['other' => 'x']]);
+        $jsonNull = ColumnFilterBlankItem::create(['custom_attributes' => ['last_call' => null]]);
+        $blank = ColumnFilterBlankItem::create(['custom_attributes' => ['last_call' => '']]);
+        $set = ColumnFilterBlankItem::create(['custom_attributes' => ['last_call' => '2026-09-01']]);
+
+        $component = Livewire::test(TestableBlankColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'custom_attributes.last_call', '=');
+
+        expect(filterListIds($component))->toEqualCanonicalizing([$missing->id, $jsonNull->id, $blank->id]);
+
+        $component->call('setColumnFilter', 'custom_attributes.last_call', '!=');
+        expect(filterListIds($component))->toBe([$set->id]);
+    });
+
+    it('treats null and an empty string as empty on a real text column', function (): void {
+        createColumnFilterBlankItemsTable();
+        $null = ColumnFilterBlankItem::create(['label' => null]);
+        $blank = ColumnFilterBlankItem::create(['label' => '']);
+        $set = ColumnFilterBlankItem::create(['label' => 'Rot']);
+
+        $component = Livewire::test(TestableBlankColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'label', '=');
+
+        expect(filterListIds($component))->toEqualCanonicalizing([$null->id, $blank->id]);
+
+        $component->call('setColumnFilter', 'label', '<>');
+        expect(filterListIds($component))->toBe([$set->id]);
+    });
+
+    it('treats null as empty on a real date column', function (): void {
+        createColumnFilterBlankItemsTable();
+        $null = ColumnFilterBlankItem::create(['due_on' => null]);
+        $set = ColumnFilterBlankItem::create(['due_on' => '2026-09-01']);
+
+        $component = Livewire::test(TestableBlankColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'due_on', '=');
+
+        expect(filterListIds($component))->toBe([$null->id]);
+
+        $component->call('setColumnFilter', 'due_on', '!=');
+        expect(filterListIds($component))->toBe([$set->id]);
+    });
+
+    it('counts a row without a related record as empty on a relation path', function (): void {
+        createColumnFilterRelationTables();
+        $berlin = ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 5]);
+        $blankCity = ColumnFilterOwner::create(['city' => '', 'rating' => 1]);
+        $withCity = ColumnFilterRecord::create(['name' => 'A', 'owner_id' => $berlin->id]);
+        $withBlankCity = ColumnFilterRecord::create(['name' => 'B', 'owner_id' => $blankCity->id]);
+        $withoutOwner = ColumnFilterRecord::create(['name' => 'C', 'owner_id' => null]);
+
+        $component = Livewire::test(TestableRelationColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'owner.city', '=');
+
+        expect(filterListIds($component))->toEqualCanonicalizing([$withBlankCity->id, $withoutOwner->id]);
+
+        $component->call('setColumnFilter', 'owner.city', '!=');
+        expect(filterListIds($component))->toBe([$withCity->id]);
+    });
+});
+
 describe('filtering by type', function (): void {
     it('filters a text column with a like match by default', function (): void {
         $red = NoerdUser::factory()->create(['name' => 'Rotkohl']);
@@ -427,6 +505,21 @@ describe('chips', function (): void {
         ]);
     });
 
+    it('resolves empty and not-empty filters into readable chips', function (): void {
+        NoerdUser::factory()->create();
+
+        $component = Livewire::test(TestableColumnFilterChipListComponent::class)
+            ->call('setColumnFilter', 'name', '=')
+            ->call('setColumnFilter', 'email', '!=');
+
+        filterListIds($component);
+
+        expect($component->instance()->activeColumnFilterChips())->toBe([
+            ['field' => 'name', 'label' => 'Name', 'value' => __('Empty')],
+            ['field' => 'email', 'label' => 'Status', 'value' => __('Not empty')],
+        ]);
+    });
+
     it('returns no chips without active column filters', function (): void {
         NoerdUser::factory()->create();
 
@@ -457,6 +550,15 @@ describe('rendering', function (): void {
         $html = Livewire::test(TestableJsonColumnFilterRenderComponent::class)->html();
 
         expect($html)->toContain('column-filter-custom_attributes.color-');
+    });
+
+    it('renders empty and not-empty buttons in the filter popover', function (): void {
+        $html = Livewire::test(TestableColumnFilterRenderComponent::class)->html();
+
+        expect($html)->toContain("setColumnFilter('name', '=')")
+            ->toContain("setColumnFilter('name', '!=')")
+            ->toContain(__('Empty'))
+            ->toContain(__('Not empty'));
     });
 
     it('renders no funnel buttons in compact mode', function (): void {
@@ -589,6 +691,63 @@ class TestableJsonColumnFilterListComponent extends Component
                         ['value' => 'monthly', 'label' => 'Monthly'],
                     ],
                 ],
+            ],
+        ];
+    }
+}
+
+/**
+ * Model over a runtime-created table with nullable text, date and JSON columns,
+ * so the empty / not-empty filters can be exercised per storage kind.
+ */
+class ColumnFilterBlankItem extends Model
+{
+    public $timestamps = false;
+
+    protected $table = 'column_filter_blank_items';
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'custom_attributes' => 'array',
+    ];
+}
+
+/**
+ * List component over the blank-items model: a text column, a real date column and
+ * a date-typed JSON path.
+ */
+class TestableBlankColumnFilterListComponent extends Component
+{
+    use NoerdList;
+
+    public function with(): array
+    {
+        return [
+            'listConfig' => $this->buildList(
+                $this->listQuery(ColumnFilterBlankItem::class)->paginate($this->perPage),
+            ),
+        ];
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'testable-blank-column-filter-list';
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Testable Blank Items',
+            'columns' => [
+                ['field' => 'label', 'label' => 'Label'],
+                ['field' => 'due_on', 'label' => 'Due', 'type' => 'date'],
+                ['field' => 'custom_attributes.last_call', 'label' => 'Last call', 'type' => 'date'],
             ],
         ];
     }

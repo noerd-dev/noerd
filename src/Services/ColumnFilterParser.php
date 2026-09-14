@@ -35,11 +35,32 @@ final class ColumnFilterParser
     }
 
     /**
+     * Whether the expression asks for empty values: a bare `=` means "empty"
+     * (true), a bare `!=`/`<>` means "not empty" (false). Every other expression
+     * — including an operator followed by a value — returns null.
+     */
+    public static function emptiness(string $raw): ?bool
+    {
+        return match (mb_trim($raw)) {
+            '=' => true,
+            '!=', '<>' => false,
+            default => null,
+        };
+    }
+
+    /**
      * Apply one column filter to the query based on the column's resolved type.
      */
     public static function apply(Builder $query, string $field, string $type, string $raw): void
     {
         if (mb_trim($raw) === '') {
+            return;
+        }
+
+        $wantEmpty = self::emptiness($raw);
+        if ($wantEmpty !== null) {
+            self::applyEmptiness($query, $field, $type, $wantEmpty);
+
             return;
         }
 
@@ -66,6 +87,52 @@ final class ColumnFilterParser
         $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
 
         $query->whereRaw("{$wrapped} like ? escape '!'", ['%' . $escaped . '%'], $boolean);
+    }
+
+    /**
+     * Restrict the query to rows whose value is set: NOT NULL, and — for
+     * string-like targets — not the empty string.
+     */
+    public static function applyNotEmpty(Builder $query, string $field, string $type): void
+    {
+        $query->whereNotNull($field);
+
+        if (self::comparesEmptyString($field, $type)) {
+            $query->where($field, '!=', '');
+        }
+    }
+
+    /**
+     * Empty means NULL or — for string-like targets — the empty string. A missing
+     * JSON key and a JSON null both read as NULL (MySQL grammar and sqlite's
+     * json_extract alike).
+     */
+    private static function applyEmptiness(Builder $query, string $field, string $type, bool $wantEmpty): void
+    {
+        if (! $wantEmpty) {
+            self::applyNotEmpty($query, $field, $type);
+
+            return;
+        }
+
+        if (! self::comparesEmptyString($field, $type)) {
+            $query->whereNull($field);
+
+            return;
+        }
+
+        $query->where(fn(Builder $nested) => $nested->whereNull($field)->orWhere($field, '=', ''));
+    }
+
+    /**
+     * Only string-like targets are compared with '': text/badge/select columns
+     * and JSON paths. Real date, number and bool columns are checked for NULL
+     * only — comparing a MySQL DATE column with '' is not portable.
+     */
+    private static function comparesEmptyString(string $field, string $type): bool
+    {
+        return str_contains($field, '->')
+            || ! in_array($type, ['number', 'currency', 'date', 'datetime', 'bool', 'boolean', 'inversebool'], true);
     }
 
     private static function applyBool(Builder $query, string $field, string $raw): void
