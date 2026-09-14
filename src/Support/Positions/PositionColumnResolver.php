@@ -93,6 +93,49 @@ final class PositionColumnResolver
     }
 
     /**
+     * The columns of the position table an installation may declare in the YAML:
+     * every real column that is neither a catalog, system nor forbidden column,
+     * as a ready YAML entry with a type derived from the schema. Layout tooling
+     * offers exactly these.
+     *
+     * @param  class-string<Model>  $modelClass
+     * @return array<int, array{field: string, label: string, type: string, readonly?: bool}>
+     */
+    public function addableColumns(DefinesPositionColumns $catalog, string $modelClass): array
+    {
+        if (! is_subclass_of($modelClass, Model::class)) {
+            return [];
+        }
+
+        $model = new $modelClass();
+
+        try {
+            $columns = SchemaColumnCache::columns($model->getTable());
+        } catch (Throwable) {
+            return [];
+        }
+
+        $catalogFields = array_map(
+            fn(PositionColumn $column): string => $column->field,
+            array_filter($catalog->columns($modelClass), fn(mixed $column): bool => $column instanceof PositionColumn),
+        );
+        $excluded = [...self::SYSTEM_COLUMNS, ...array_map('strval', $catalog->forbidden()), ...$catalogFields];
+
+        $addable = [];
+        foreach ($columns as $name => $column) {
+            $name = (string) $name;
+
+            if (in_array($name, $excluded, true)) {
+                continue;
+            }
+
+            $addable[] = ['field' => $name, 'label' => Str::headline($name)] + $this->schemaType($model, $name, $column);
+        }
+
+        return $addable;
+    }
+
+    /**
      * @param  array<string, mixed>  $entry
      */
     private function overrideCatalogColumn(PositionColumn $column, array $entry): PositionColumn
@@ -256,6 +299,26 @@ final class PositionColumnResolver
         } catch (Throwable) {
             return false;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $column
+     * @return array{type: string, readonly?: bool}
+     */
+    private function schemaType(Model $model, string $name, array $column): array
+    {
+        $typeName = mb_strtolower((string) ($column['type_name'] ?? ''));
+        $type = mb_strtolower((string) ($column['type'] ?? ''));
+
+        return match (true) {
+            // Arrays/JSON and timestamps are shown, never edited, in a position row.
+            $model->hasCast($name, ['array', 'json', 'object', 'collection']) || in_array($typeName, ['json', 'jsonb'], true) => ['type' => 'text', 'readonly' => true],
+            in_array($typeName, ['datetime', 'timestamp', 'timestamptz', 'time'], true) => ['type' => 'text', 'readonly' => true],
+            $typeName === 'date' => ['type' => 'date'],
+            in_array($typeName, ['boolean', 'bool'], true) || str_starts_with($type, 'tinyint(1)') => ['type' => 'checkbox'],
+            in_array($typeName, ['int', 'integer', 'bigint', 'smallint', 'mediumint', 'tinyint', 'decimal', 'numeric', 'float', 'double', 'real'], true) => ['type' => 'number'],
+            default => ['type' => 'text'],
+        };
     }
 
     private function warn(string $modelClass, string $reason, mixed $entry): void

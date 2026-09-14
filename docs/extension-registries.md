@@ -111,6 +111,42 @@ fields:
 - A component method with the same name (and an `: array` return type) always shadows a registered provider
 - PHP code can resolve a provider directly when it needs the options outside a form: `app(PicklistRegistry::class)->resolve('warehouseOptions')`
 
+## PositionTableRegistry
+
+Which position (line item) table a detail renders: its column catalog (`Noerd\Contracts\DefinesPositionColumns`)
+and its position model. `NoerdPage::positionColumns()` resolves a detail's columns through it, and
+tooling that edits the `positions:` block of a detail YAML reads the
+same entry — the wiring exists exactly once. See [Detail View → Configurable Columns](detail-view.md#configurable-columns).
+
+**API** (`Noerd\Services\PositionTableRegistry`):
+
+| Method | Description |
+|--------|-------------|
+| `register(string $detailComponent, string $catalogClass, string $modelClass)` | Register the position table of a detail component |
+| `has(string $component)` | Whether a table is registered for the component |
+| `for(string $component)` | `['catalog' => …, 'model' => …]` or `null` |
+| `catalogFor(string $component)` | The catalog instance or `null` |
+
+Keys are the BARE component name: a `module::` prefix is stripped (`accounting::invoice-detail` and
+`invoice-detail` are the same entry), so the name must be unique across modules.
+
+**Registering** (in the module provider's `boot()`):
+
+```php
+use Noerd\Services\PositionTableRegistry;
+
+app(PositionTableRegistry::class)->register('accounting::invoice-detail', DocumentPositionColumns::class, InvoicePosition::class);
+```
+
+**Using it** in the detail blade — no arguments needed:
+
+```blade
+@php $positionColumns = $this->positionColumns(); @endphp
+```
+
+A detail without a registered table throws a `RuntimeException` when it calls `positionColumns()`
+without arguments; passing the catalog and model explicitly still works.
+
 ## DynamicNavigationRegistry
 
 Lets a module inject navigation entries computed at runtime (e.g. one entry per setup collection) into a `navigation.yml` that only names a *type*. `StaticConfigHelper::getNavigationStructure()` runs every parsed navigation through `processDynamicNavigation()`, which resolves the type against the registry and expands the block.

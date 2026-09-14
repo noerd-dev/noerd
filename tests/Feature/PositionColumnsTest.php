@@ -400,3 +400,56 @@ describe('positions.table', function (): void {
             ->and(mb_substr_count($withoutActions, 'scope="col"'))->toBe(count($columns));
     });
 });
+
+describe('PositionTableRegistry', function (): void {
+
+    it('registers a position table under the bare component name', function (): void {
+        $registry = new \Noerd\Services\PositionTableRegistry();
+        $registry->register('zzmodule::zz-order-detail', ZzPositionColumns::class, ZzPosition::class);
+
+        expect($registry->has('zz-order-detail'))->toBeTrue()
+            ->and($registry->for('other::zz-order-detail'))->toBe(['catalog' => ZzPositionColumns::class, 'model' => ZzPosition::class])
+            ->and($registry->catalogFor('zz-order-detail'))->toBeInstanceOf(ZzPositionColumns::class)
+            ->and($registry->for('zz-unknown-detail'))->toBeNull();
+    });
+
+    it('resolves the columns of a detail through the registry when no catalog is passed', function (): void {
+        $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
+
+        Livewire::component('zz-registry-host-detail', new class extends Component {
+            use NoerdDetail;
+
+            public $detailModel = ZzPosition::class;
+
+            public ?string $detailPrimary = 'zzRegistryPositionId';
+
+            public function mount(): void
+            {
+                $this->pageLayout = ['positions' => ['columns' => [['field' => 'comment']]]];
+            }
+
+            public function render(): string
+            {
+                return '<div></div>';
+            }
+        });
+
+        $host = Livewire::test('zz-registry-host-detail')->instance();
+
+        expect(fn() => $host->positionColumns())->toThrow(RuntimeException::class);
+
+        app(\Noerd\Services\PositionTableRegistry::class)->register('zz-registry-host-detail', ZzPositionColumns::class, ZzPosition::class);
+
+        expect(array_column($host->positionColumns(), 'field'))->toBe(['quantity', 'price', 'total', 'comment']);
+    });
+
+    it('offers every addable column of the position table with a type derived from the schema', function (): void {
+        $addable = collect(app(PositionColumnResolver::class)->addableColumns(new ZzPositionColumns(), ZzPosition::class))->keyBy('field');
+
+        expect($addable->keys()->all())->toBe(['name', 'comment', 'wishes', 'delivered_on', 'express', 'unit'])
+            ->and($addable['name'])->toBe(['field' => 'name', 'label' => 'Name', 'type' => 'text'])
+            ->and($addable['wishes'])->type->toBe('text')->readonly->toBeTrue()
+            ->and($addable['delivered_on']['type'])->toBe('date')
+            ->and($addable['express']['type'])->toBe('checkbox');
+    });
+});

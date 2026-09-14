@@ -75,6 +75,7 @@ use Noerd\Services\NavigationService;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Services\PositionTableRegistry;
 use Noerd\Services\ProfileRegistry;
 use Noerd\Services\RelationBoxRegistry;
 use Noerd\Services\RelationFieldRegistry;
@@ -138,6 +139,7 @@ class NoerdServiceProvider extends ServiceProvider
         // Singleton so the per-request FK-title lookups are memoized.
         $this->app->singleton(RelationTitleResolver::class);
         $this->app->singleton(PicklistRegistry::class);
+        $this->app->singleton(PositionTableRegistry::class);
         $this->app->singleton(BrandService::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
 
