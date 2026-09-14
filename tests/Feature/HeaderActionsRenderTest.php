@@ -53,6 +53,16 @@ it('mounts a registered detail action in the detail header', function (): void {
         ->assertSee('HA-PROBE:noerd::noerd-user-detail/' . NoerdUser::class);
 });
 
+it('mounts a registered detail action in a page header', function (): void {
+    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+
+    // A *-page hosts the actions too — an embedded detail renders chrome-less, and a
+    // page may render a field grid of its own. This page declares no model.
+    Livewire::test('noerd::system-settings-page')
+        ->assertOk()
+        ->assertSee('HA-PROBE:noerd::system-settings-page/');
+});
+
 it('does not mount a detail action in a list header', function (): void {
     app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
 

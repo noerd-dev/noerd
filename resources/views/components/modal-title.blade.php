@@ -14,10 +14,13 @@
 ])
 
 @php
-    // Detail headers get the module-contributed header actions (HeaderActionsRegistry)
-    // injected here — modal-title is the one generic component every *-detail header
-    // goes through. The slim quick-create dialogs are no place for admin tooling.
-    $headerActionHost = isset($__livewire) && str_ends_with($__livewire->getName(), '-detail')
+    // Detail and page headers get the module-contributed header actions
+    // (HeaderActionsRegistry) injected here — modal-title is the one generic
+    // component every *-detail / *-page header goes through (an embedded detail
+    // renders chrome-less, so its hosting page carries the actions). The slim
+    // quick-create dialogs are no place for admin tooling.
+    $headerActionHost = isset($__livewire)
+        && (str_ends_with($__livewire->getName(), '-detail') || str_ends_with($__livewire->getName(), '-page'))
         && ! ($__livewire->quickCreate ?? false)
         ? $__livewire
         : null;

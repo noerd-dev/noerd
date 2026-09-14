@@ -60,6 +60,7 @@ widgets:
 | `tabs` | Page-level tabs (e.g. Media, Activity Log) — rendered by the page blade via `<x-noerd::tabs>`; same properties as [detail tabs](detail-view.md#tab-properties) |
 | `relations` | Relation Box tiles (see [Relation Box](#relation-box) below). Each tile may carry `route:` next to `component:` |
 | `widgets` | Right-hand widget sidebar rendered by `<x-noerd::detail-grid>` / `<x-noerd::detail-widgets>` (see [Widgets](#widgets) below) |
+| `fields` | Optional field grid the page renders ITSELF (same syntax and [field types](field-types.md) as a detail YAML, `theme:` included) via `@include('noerd::components.detail.block', array_merge($pageLayout, ['modelId' => …, 'detailData' => $detailData]))` or `<x-noerd::tab-content :layout="$pageLayout" …>`. A page has no `validateFromLayout()` and no `store()` of its own for them — they are display and binding only. Typical use: a read-only block of facts in the `display` theme (see [Themes](themes.md#display-theme-read-only-text)), configurable per installation and through the layout manager |
 
 Both `relations` and `widgets` open a list NARROWED by the current record, so their
 `route:` resolves the component WITHOUT rewriting the browser URL — see

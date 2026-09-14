@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
+use Noerd\Services\ThemeRegistry;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
@@ -576,7 +577,11 @@ final class StaticConfigHelper
             return $config;
         }
 
-        $config['theme'] = $theme;
+        // A text-only theme (display) is a rendering mode, not a look: enforcing
+        // the system theme over it would turn text rows back into inputs.
+        if (! self::isTextOnlyTheme($config['theme'] ?? null)) {
+            $config['theme'] = $theme;
+        }
 
         if (isset($config['fields']) && is_array($config['fields'])) {
             $config['fields'] = self::stripFieldThemes($config['fields']);
@@ -587,7 +592,8 @@ final class StaticConfigHelper
 
     /**
      * Recursively remove per-field theme overrides so an enforced system theme
-     * is inherited by every field and nested `type: block`.
+     * is inherited by every field and nested `type: block` — except text-only
+     * themes, which stay (see applyThemeSetting()).
      *
      * @param  array<int, mixed>  $fields
      * @return array<int, mixed>
@@ -599,7 +605,9 @@ final class StaticConfigHelper
                 continue;
             }
 
-            unset($field['theme']);
+            if (! self::isTextOnlyTheme($field['theme'] ?? null)) {
+                unset($field['theme']);
+            }
 
             if (isset($field['fields']) && is_array($field['fields'])) {
                 $field['fields'] = self::stripFieldThemes($field['fields']);
@@ -609,6 +617,14 @@ final class StaticConfigHelper
         }
 
         return $fields;
+    }
+
+    private static function isTextOnlyTheme(mixed $theme): bool
+    {
+        return is_string($theme)
+            && $theme !== ''
+            && app(ThemeRegistry::class)->has($theme)
+            && app(ThemeRegistry::class)->get($theme)->textOnly;
     }
 
     private static function stripComponentNamespace(string $component): string

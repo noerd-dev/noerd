@@ -55,6 +55,18 @@
         && (method_exists($this, 'canSaveObject')
             ? ! $this->canSaveObject()
             : (method_exists($this, 'canWriteObject') && ! $this->canWriteObject()));
+
+    // `hideIfEmpty` drops a field whose value is blank — only in a text-only
+    // theme (display), where an empty row carries no information. An input
+    // never disappears because it is empty: it could not be filled then.
+    $blockValueSource = isset($this) ? $this : ['detailData' => $detailData ?? []];
+    $isHiddenEmptyField = function (array $field) use ($themeRegistry, $theme, $blockValueSource): bool {
+        if (! ($field['hideIfEmpty'] ?? false) || ! $themeRegistry->get($field['theme'] ?? $theme)->textOnly) {
+            return false;
+        }
+
+        return blank(data_get($blockValueSource, (string) ($field['name'] ?? '')));
+    };
 @endphp
 {{-- not-last:mb-8 separates the block from custom content rendered after it
      (e.g. a tab slot); when the block is the last element the page chrome's
@@ -67,7 +79,8 @@
         @foreach($fields ?? [] as $field)
             @if(isset($field['show']) && !$field['show'])
             @elseif(isset($field['viewExists']) && !\Illuminate\Support\Facades\View::exists($field['viewExists']))
-            @elseif($field['type'] === 'block')
+            @elseif(($field['type'] ?? '') !== 'block' && $isHiddenEmptyField($field))
+            @elseif(($field['type'] ?? '') === 'block')
                 {{-- Nested block with its own title and fields --}}
                 <div class="{{ $themeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '12') }}" {!! $getShowIfDirective($field) !!}>
                     @include('noerd::components.detail.block', [

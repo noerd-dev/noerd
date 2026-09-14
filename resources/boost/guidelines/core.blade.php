@@ -987,6 +987,7 @@ into an alternate **theme** via the top-level string key `theme:`. Built-in them
 | `default` | Label on top of the input (also used when `theme` is absent or unknown) |
 | `compact` | Label to the LEFT of the input, tighter vertical spacing |
 | `numbered` | Numbered form rows in the style of official/tax forms: one field per full-width row, light gray row background, leading row number, right-aligned label, input on the right |
+| `display` | Hidden, `textOnly`: every field renders as TEXT (label left, value right, no control) — for read-only rows inside a form or a whole read-only block |
 
 **YAML configuration** (`details/{entity}-detail.yml`):
 ```yaml
@@ -1011,7 +1012,8 @@ There is no `view:` or boolean `compact:` key on a detail YAML — the form layo
 system there; it is stored per tenant on `noerd_settings` (`detail_theme`, `detail_theme_enforced`),
 with `config('noerd.theme')` (`NOERD_THEME` / `NOERD_THEME_ENFORCED`) as the fallback. The YAML wins
 over the system default — unless the admin ticked **"Enforce in Setup"**, which forces the system
-theme everywhere and additionally drops every per-field and nested-block `theme:` override. This is
+theme everywhere and additionally drops every per-field and nested-block `theme:` override — except
+a text-only theme (`display`), which is a rendering mode and stays. This is
 a single generic feature — `Noerd\Helpers\ThemeHelper` (per-tenant memo + `clearCache()`) read from
 `StaticConfigHelper::applyThemeSetting()`, applied in `getComponentFields()` and `getPageFields()`
 only. Never duplicate it per module, and never apply it to list configs (the `compact` flag on lists
@@ -1063,6 +1065,22 @@ is an unrelated concept).
 - Rows are numbered automatically (1, 2, 3, … per block; nested `type: block` restarts at 1;
   `type: spacer` rows render as a blank line and consume NO number). A field
   may pin its number with an explicit `number:` key in the YAML (numbers may repeat, like tax forms)
+
+**Display theme (read-only values as text):**
+- A value the form SHOWS but does not edit — a row of facts above the inputs, the customer block of
+  an ordering modal, a preview — is rendered in the `display` theme: per field (`theme: display` on
+  the field), as a read-only row (`type: block` + `theme: display` + `colspan: 12` above the input
+  fields) or for the whole layout (top-level `theme: display`, e.g. a page YAML with `fields:`).
+  Never hand-write such rows in Blade and never fake them with `readonly: true` inputs
+- The field `type` keeps deciding the format (`currency`, `date`/`datetime`/`time`, `number`,
+  `checkbox` → Yes/No, `select`/`picklist`/`setupCollectionSelect` → option label, `phone`/`email`
+  → link, `textarea` → line breaks, relation → resolved title); `hideIfEmpty: true` drops a blank
+  value's row (honoured only in text-only themes). The row markup lives once in
+  `noerd::components.detail.display-value` — never duplicate it per module, never ship a second
+  text theme per module (the former `pos-display` theme of liefertool-pos is this feature)
+- A `*-page` component MAY carry `fields:` in its page YAML and render them itself through
+  `noerd::components.detail.block` / `<x-noerd::tab-content>` — display and binding only, no
+  validation, no persistence (reference: `liefertool-pos::pos-customer-page`)
 
 **Important:**
 - This is a generic noerd feature — never duplicate the theme registry or element templates per module
