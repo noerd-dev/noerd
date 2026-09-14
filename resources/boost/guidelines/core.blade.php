@@ -1188,17 +1188,18 @@ The columns of a position table (order, quote, invoice lines) are CONFIGURATION:
 removes, resizes, relabels, reorders or adds them through `positions.columns` in the detail YAML.
 The core knows no business module — the module brings its knowledge through a contract:
 
-- The module ships a `Noerd\Contracts\DefinesPositionColumns` catalog: `columns($modelClass)` returns
-  `PositionColumn::make('amount')->type('number')->locked()->onChange('calcGross')`-style columns
-  in default order, `forbidden()` the model fields that must never be added through YAML. Every
-  column the calculation depends on (quantity, prices, tax rate, totals) is `locked()` — it can only
-  be relabelled, resized and moved, never removed; put the logic-bearing fields outside the catalog
-  into `forbidden()`.
-- A catalog entry in the YAML overrides ONLY `label` and `width`; `type`, `readonly`, `change`,
-  `step` and `options` always come from the catalog. A field outside the catalog is accepted when it
-  is a real, non-system, non-forbidden column of the position table (`type` text/number/date/
-  checkbox/select, `options`, `step`, `readonly`). Invalid entries are dropped with a log warning.
-  Array/JSON values always render read-only as text.
+- The YAML is the ONLY source of a table's columns — there is no code default. The module ships
+  the table it wants as a `positions:` block in its detail YAML (both synced copies).
+- The module's `Noerd\Contracts\DefinesPositionColumns` catalog contains ONLY the columns the
+  calculation depends on (quantity, prices, tax rate, totals): `columns($modelClass)` returns
+  `PositionColumn::make('amount')->number()->onChange('calcGross')`-style columns. They always
+  render (re-inserted when the YAML omits them) and can only be relabelled, resized and moved;
+  `forbidden()` lists the logic-bearing fields that must never be declared in the YAML.
+- A catalog entry in the YAML overrides ONLY `label` and `width`. Every other column is declared
+  completely in the YAML: a real, non-system, non-forbidden column of the position table (`type`
+  text/number/date/checkbox/select, `options` or `optionsMethod` — a `PicklistRegistry` provider —,
+  `placeholder`, `step`, `readonly`). Invalid entries are dropped with a log warning. Array/JSON
+  values always render read-only as text.
 - The detail blade resolves once — `$columns = $this->positionColumns(Catalog::class, Position::class)`
   (`NoerdPage`) — and passes the result to `<x-noerd::positions.table :columns>` AND to every row.
 - Row components `use Noerd\Traits\NoerdPositionRow` (`initPositionRow()`, `row.{field}` binding,

@@ -8,20 +8,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Noerd\Contracts\DefinesPositionColumns;
+use Noerd\Services\PicklistRegistry;
 use Noerd\Support\SchemaColumnCache;
 use Throwable;
 
 /**
- * Merges a module's position column catalog with the `positions.columns` block
- * of a detail YAML.
+ * Resolves the columns of a position table from the `positions.columns` block of
+ * a detail YAML. The YAML is the only source of the table's columns — the code
+ * only contributes the columns a module's calculation depends on.
  *
- * - No `positions.columns`: every catalog column with `default: true`, in
- *   catalog order (locked columns are always included).
- * - With `positions.columns`: the YAML order wins. A catalog entry may override
- *   `label` and `width` only; a locked catalog column the YAML leaves out is
- *   re-inserted after its nearest preceding present catalog column; an optional
- *   catalog column left out is hidden. A field outside the catalog is added when
- *   it is a real, non-system, non-forbidden column of the model's table.
+ * - The catalog columns ({@see DefinesPositionColumns::columns()}) can never be
+ *   removed. Without `positions.columns` exactly these render, in catalog order.
+ *   A YAML entry may override their `label` and `width`; one the YAML leaves out
+ *   is re-inserted after its nearest preceding present catalog column.
+ * - Every other column is declared in the YAML: a real, non-system,
+ *   non-forbidden column of the position model's table.
  * - Invalid entries are dropped with a log warning — a YAML mistake never breaks
  *   the page.
  */
@@ -41,17 +42,14 @@ final class PositionColumnResolver
         $catalogColumns = [];
         foreach ($catalog->columns($modelClass) as $column) {
             if ($column instanceof PositionColumn && $column->field !== '') {
-                $catalogColumns[$column->field] ??= $column;
+                $catalogColumns[$column->field] ??= $column->with(['locked' => true]);
             }
         }
 
         $entries = $pageLayout['positions']['columns'] ?? null;
 
         if (! is_array($entries)) {
-            return array_values(array_filter(
-                $catalogColumns,
-                fn(PositionColumn $column): bool => $column->default || $column->locked,
-            ));
+            return array_values($catalogColumns);
         }
 
         $forbidden = array_map('strval', $catalog->forbidden());
@@ -84,14 +82,14 @@ final class PositionColumnResolver
                 continue;
             }
 
-            $extra = $this->extraColumn($modelClass, $field, $entry, $forbidden);
+            $column = $this->yamlColumn($modelClass, $field, $entry, $forbidden);
 
-            if ($extra !== null) {
-                $resolved[$field] = $extra;
+            if ($column !== null) {
+                $resolved[$field] = $column;
             }
         }
 
-        return $this->reinsertLockedColumns($catalogColumns, $resolved);
+        return $this->reinsertCatalogColumns($catalogColumns, $resolved);
     }
 
     /**
@@ -113,11 +111,16 @@ final class PositionColumnResolver
     }
 
     /**
+     * A column declared entirely in the YAML. Keys: `label`, `width`, `type`
+     * (text|number|date|checkbox|select), `options` or `optionsMethod` (a
+     * PicklistRegistry provider returning `value => label`), `placeholder`,
+     * `step`, `readonly`. Its change handler is always `store`.
+     *
      * @param  class-string<Model>  $modelClass
      * @param  array<string, mixed>  $entry
      * @param  array<int, string>  $forbidden
      */
-    private function extraColumn(string $modelClass, string $field, array $entry, array $forbidden): ?PositionColumn
+    private function yamlColumn(string $modelClass, string $field, array $entry, array $forbidden): ?PositionColumn
     {
         if (in_array($field, self::SYSTEM_COLUMNS, true)) {
             $this->warn($modelClass, "system column '{$field}' cannot be a position column", $entry);
@@ -150,29 +153,56 @@ final class PositionColumnResolver
             'type' => $type,
             'step' => $entry['step'] ?? null,
             'readonly' => (bool) ($entry['readonly'] ?? false),
-            'options' => $type === 'select' && is_array($entry['options'] ?? null) ? $entry['options'] : [],
+            'options' => $type === 'select' ? $this->options($modelClass, $entry) : [],
+            'placeholder' => is_string($entry['placeholder'] ?? null) ? $entry['placeholder'] : '',
             'locked' => false,
-            'default' => true,
             'change' => 'store',
         ]);
     }
 
     /**
-     * Put every locked catalog column the YAML omitted back in: right after the
-     * nearest preceding catalog column that is present, or at the start.
+     * @param  array<string, mixed>  $entry
+     * @return array<int|string, mixed>
+     */
+    private function options(string $modelClass, array $entry): array
+    {
+        if (is_array($entry['options'] ?? null)) {
+            return $entry['options'];
+        }
+
+        $method = $entry['optionsMethod'] ?? null;
+
+        if (! is_string($method) || $method === '') {
+            return [];
+        }
+
+        $provider = app(PicklistRegistry::class)->resolve($method);
+
+        if ($provider === null) {
+            $this->warn($modelClass, "unknown optionsMethod '{$method}'", $entry);
+
+            return [];
+        }
+
+        $options = $provider();
+
+        return is_array($options) ? $options : [];
+    }
+
+    /**
+     * Put every catalog column the YAML omitted back in: right after the nearest
+     * preceding catalog column that is present, or at the start.
      *
      * @param  array<string, PositionColumn>  $catalogColumns
      * @param  array<string, PositionColumn>  $resolved
      * @return array<int, PositionColumn>
      */
-    private function reinsertLockedColumns(array $catalogColumns, array $resolved): array
+    private function reinsertCatalogColumns(array $catalogColumns, array $resolved): array
     {
         $catalogFields = array_keys($catalogColumns);
 
         foreach ($catalogFields as $index => $field) {
-            $column = $catalogColumns[$field];
-
-            if (! $column->locked || isset($resolved[$field])) {
+            if (isset($resolved[$field])) {
                 continue;
             }
 
@@ -184,7 +214,7 @@ final class PositionColumnResolver
                 }
             }
 
-            $resolved = $this->insertAfter($resolved, $anchor, $column);
+            $resolved = $this->insertAfter($resolved, $anchor, $catalogColumns[$field]);
         }
 
         return array_values($resolved);

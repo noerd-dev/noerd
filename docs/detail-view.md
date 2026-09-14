@@ -389,33 +389,33 @@ positions:
     - field: price
 ```
 
-The core knows no business module. The module declares its **catalog** of columns through
+**The YAML is the only source of a table's columns.** The code contributes nothing but the columns
+the module's calculation depends on: the module declares them through
 `Noerd\Contracts\DefinesPositionColumns`; `Noerd\Support\Positions\PositionColumnResolver` merges
-it with the YAML.
+them with the YAML. A module ships the table it wants as `positions:` block in its detail YAML.
 
 **Resolution rules**
 
-- **No `positions.columns`:** every catalog column with `default: true` (and every locked one), in
-  catalog order. A table without the key renders exactly as the module ships it.
+- **Catalog columns can never be removed.** Without `positions.columns` exactly these render, in
+  catalog order — there is no other code default.
 - **With `positions.columns`:** the YAML order wins.
   - A **catalog column** may override only `label` and `width`. `type`, `readonly`, `change`,
-    `step` and `options` always come from the catalog.
-  - A **locked** catalog column the YAML leaves out is re-inserted after the nearest preceding
-    catalog column that is present (or at the start). It can never be removed.
-  - An **optional** catalog column the YAML leaves out is hidden.
-  - An **extra field** (not in the catalog) is accepted when it is a real column of the position
-    model's table, not a system column (`id`, `tenant_id`, `created_at`, `updated_at`,
+    `step` and `options` always come from the catalog. One the YAML leaves out is re-inserted
+    after the nearest preceding catalog column that is present (or at the start).
+  - **Every other column is declared in the YAML.** It is accepted when it is a real column of the
+    position model's table, not a system column (`id`, `tenant_id`, `created_at`, `updated_at`,
     `deleted_at`) and not in the catalog's `forbidden()` list. Allowed keys: `label` (default: the
     headline of the field), `width` (default `w-32`), `type` (`text` default, `number`, `date`,
-    `checkbox`, `select` with `options` as a `value`/`label` list), `step`, `readonly`. Its change
-    handler is always `store`.
+    `checkbox`, `select`), for a select `options` (a `value`/`label` list) or `optionsMethod` (a
+    `PicklistRegistry` provider returning `value => label`) plus `placeholder` (the text of the
+    leading empty option), `step`, `readonly`. Its change handler is always `store`.
   - An **invalid entry** (unknown, system or forbidden field, missing `field`, duplicate) is dropped
     with a `Log::warning` — a YAML mistake never breaks the page.
 - A column whose model value is an **array or JSON** is always rendered read-only as text: a list of
   scalars is comma-joined, a list of arrays/objects joins each item's scalar values.
 
-**The catalog** — mark every column the module's calculation depends on `locked()` and list the
-logic-bearing fields outside the catalog in `forbidden()`:
+**The catalog** — only the columns the module's calculation depends on; list the logic-bearing
+fields outside the catalog in `forbidden()`:
 
 ```php
 use Noerd\Contracts\DefinesPositionColumns;
@@ -426,12 +426,10 @@ class InvoicePositionColumns implements DefinesPositionColumns
     public function columns(string $modelClass): array
     {
         return [
-            PositionColumn::make('quantity')->type('number')->width('w-20')->locked(),
-            PositionColumn::make('name')->width('w-auto'),
-            PositionColumn::make('unit')->options(['pc' => 'Piece', 'h' => 'Hour'])->default(false),
-            PositionColumn::make('amount')->label('Price')->type('number')->step('0.01')->locked()->onChange('calcGross'),
-            PositionColumn::make('tax_amount')->label('Tax rate')->type('number')->locked(),
-            PositionColumn::make('total_gross')->label('Total')->type('number')->locked()->readonly(),
+            PositionColumn::make('quantity')->number()->width('w-20'),
+            PositionColumn::make('amount')->label('Price')->number('0.01')->onChange('calcGross'),
+            PositionColumn::make('tax_amount')->label('Tax rate')->number(),
+            PositionColumn::make('total_gross')->label('Total')->number()->readonly(),
         ];
     }
 
@@ -443,9 +441,33 @@ class InvoicePositionColumns implements DefinesPositionColumns
 ```
 
 `PositionColumn` is immutable (`make()`, `label()`, `type()` with the shorthands `text()`, `number($step)`,
-`date()`, `checkbox()`, `select($options)`, `width()`, `locked()`, `readonly()`,
-`default()`, `onChange()`, `step()`, `options()`); resolved columns travel to row components as
-plain arrays (`toArray()` / `fromArray()`).
+`date()`, `checkbox()`, `select($options)`, `width()`, `readonly()`, `onChange()`, `step()`,
+`options()`, `placeholder()`); the resolver marks catalog columns `locked`. Resolved columns travel
+to row components as plain arrays (`toArray()` / `fromArray()`).
+
+**The shipped YAML** declares everything else — the name, a unit select fed by a picklist, a date:
+
+```yaml
+positions:
+  columns:
+    - field: quantity
+    - field: unit
+      label: Unit
+      type: select
+      optionsMethod: unitOptions
+      placeholder: '-'
+      width: w-28
+    - field: name
+      label: Name
+      width: w-auto
+    - field: amount
+    - field: tax_amount
+    - field: total_gross
+    - field: delivery_date
+      label: Delivery Date
+      type: date
+      width: w-40
+```
 
 **Detail blade** — resolve once with `NoerdPage::positionColumns()` and hand the columns to the
 table and to every row:

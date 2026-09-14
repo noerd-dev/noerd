@@ -33,7 +33,6 @@ final class PositionColumn
         public readonly string $width = 'w-32',
         public readonly bool $locked = false,
         public readonly bool $readonly = false,
-        public readonly bool $default = true,
         public readonly string $change = 'store',
         public readonly int|float|string|null $step = null,
         public readonly array $options = [],
@@ -72,7 +71,6 @@ final class PositionColumn
             width: is_string($data['width'] ?? null) && $data['width'] !== '' ? $data['width'] : 'w-32',
             locked: (bool) ($data['locked'] ?? false),
             readonly: (bool) ($data['readonly'] ?? false),
-            default: (bool) ($data['default'] ?? true),
             change: is_string($data['change'] ?? null) && $data['change'] !== '' ? $data['change'] : 'store',
             step: is_int($step) || is_float($step) || is_string($step) ? $step : null,
             options: self::normalizeOptions(is_array($data['options'] ?? null) ? $data['options'] : []),
@@ -125,27 +123,9 @@ final class PositionColumn
         return $this->with(['width' => $width]);
     }
 
-    /**
-     * The module's calculation depends on this column: it can never be removed
-     * and an installation may only change its label, width and position.
-     */
-    public function locked(bool $locked = true): self
-    {
-        return $this->with(['locked' => $locked]);
-    }
-
     public function readonly(bool $readonly = true): self
     {
         return $this->with(['readonly' => $readonly]);
-    }
-
-    /**
-     * Whether an OPTIONAL column is shown while the YAML declares no
-     * `positions.columns`. A locked column is always shown.
-     */
-    public function default(bool $default = true): self
-    {
-        return $this->with(['default' => $default]);
     }
 
     /**
@@ -220,7 +200,7 @@ final class PositionColumn
     }
 
     /**
-     * @return array{field: string, label: string, type: string, width: string, locked: bool, readonly: bool, default: bool, change: string, step: int|float|string|null, options: array<int, array{value: mixed, label: string}>, placeholder: string}
+     * @return array{field: string, label: string, type: string, width: string, locked: bool, readonly: bool, change: string, step: int|float|string|null, options: array<int, array{value: mixed, label: string}>, placeholder: string}
      */
     public function toArray(): array
     {
@@ -231,7 +211,6 @@ final class PositionColumn
             'width' => $this->width,
             'locked' => $this->locked,
             'readonly' => $this->readonly,
-            'default' => $this->default,
             'change' => $this->change,
             'step' => $this->step,
             'options' => $this->options,

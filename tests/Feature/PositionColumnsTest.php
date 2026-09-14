@@ -12,6 +12,7 @@ use Livewire\Component;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Noerd\Contracts\DefinesPositionColumns;
 use Noerd\Models\NoerdUser;
+use Noerd\Services\PicklistRegistry;
 use Noerd\Support\Positions\PositionColumn;
 use Noerd\Support\Positions\PositionColumnResolver;
 use Noerd\Support\SchemaColumnCache;
@@ -37,11 +38,9 @@ class ZzPositionColumns implements DefinesPositionColumns
     public function columns(string $modelClass): array
     {
         return [
-            PositionColumn::make('quantity')->type('number')->width('w-20')->locked(),
-            PositionColumn::make('name')->width('w-auto'),
-            PositionColumn::make('note')->default(false),
-            PositionColumn::make('price')->type('number')->step('0.01')->locked()->onChange('calcGross'),
-            PositionColumn::make('total')->type('number')->locked()->readonly(),
+            PositionColumn::make('quantity')->number()->width('w-20'),
+            PositionColumn::make('price')->number('0.01')->onChange('calcGross'),
+            PositionColumn::make('total')->number()->readonly(),
         ];
     }
 
@@ -86,7 +85,6 @@ beforeEach(function (): void {
         $table->unsignedBigInteger('invoice_id')->nullable();
         $table->decimal('quantity', 10, 2)->default(1);
         $table->string('name')->nullable();
-        $table->string('note')->nullable();
         $table->decimal('price', 10, 2)->default(0);
         $table->decimal('total', 10, 2)->default(0);
         $table->decimal('total_tax', 10, 2)->default(0);
@@ -106,28 +104,31 @@ afterEach(function (): void {
 
 describe('PositionColumnResolver', function (): void {
 
-    it('returns the default catalog columns without a positions block', function (): void {
-        expect(zzResolvedFields(null))->toBe(['quantity', 'name', 'price', 'total']);
+    it('renders only the non-removable catalog columns without a positions block', function (): void {
+        $columns = app(PositionColumnResolver::class)->resolve(new ZzPositionColumns(), ZzPosition::class, []);
+
+        expect(array_map(fn(PositionColumn $column): string => $column->field, $columns))->toBe(['quantity', 'price', 'total'])
+            ->and(array_filter($columns, fn(PositionColumn $column): bool => ! $column->locked))->toBeEmpty();
     });
 
-    it('follows the YAML order and hides optional columns it leaves out', function (): void {
+    it('takes every other column and the order from the YAML', function (): void {
         expect(zzResolvedFields([
             ['field' => 'price'],
-            ['field' => 'note'],
+            ['field' => 'name'],
             ['field' => 'quantity'],
             ['field' => 'total'],
-        ]))->toBe(['price', 'note', 'quantity', 'total']);
+        ]))->toBe(['price', 'name', 'quantity', 'total']);
     });
 
-    it('re-inserts an omitted locked column after its nearest present predecessor', function (): void {
-        // quantity has no predecessor → start; price follows name; total follows price.
+    it('re-inserts an omitted catalog column after its nearest present predecessor', function (): void {
+        // quantity has no predecessor → start; total follows price.
         expect(zzResolvedFields([
             ['field' => 'comment'],
-            ['field' => 'name'],
-        ]))->toBe(['quantity', 'comment', 'name', 'price', 'total']);
+            ['field' => 'price'],
+        ]))->toBe(['quantity', 'comment', 'price', 'total']);
     });
 
-    it('applies label and width overrides but ignores type, readonly and change', function (): void {
+    it('applies label and width overrides to a catalog column but ignores type, readonly and change', function (): void {
         $price = collect(zzResolvedArrays([
             [
                 'field' => 'price',
@@ -150,7 +151,7 @@ describe('PositionColumnResolver', function (): void {
             ->locked->toBeTrue();
     });
 
-    it('adds a real table column with its declared type and readonly flag', function (): void {
+    it('adds a YAML column of the table with its declared type and readonly flag', function (): void {
         $columns = collect(zzResolvedArrays([
             ['field' => 'comment', 'label' => 'Comment'],
             ['field' => 'wishes', 'label' => 'Wishes', 'readonly' => true],
@@ -165,7 +166,28 @@ describe('PositionColumnResolver', function (): void {
             ->and($columns->keys()->all())->toContain('quantity', 'price', 'total');
     });
 
-    it('defaults the label of an extra column to the headline of the field', function (): void {
+    it('builds select options from a registered optionsMethod', function (): void {
+        app(PicklistRegistry::class)->register('zzUnits', fn(): array => ['kg' => 'Kilogram', 'pc' => 'Piece']);
+
+        $columns = collect(zzResolvedArrays([
+            ['field' => 'unit', 'type' => 'select', 'optionsMethod' => 'zzUnits', 'placeholder' => '-'],
+        ]))->keyBy('field');
+
+        expect($columns['unit'])
+            ->options->toBe([['value' => 'kg', 'label' => 'Kilogram'], ['value' => 'pc', 'label' => 'Piece']])
+            ->placeholder->toBe('-');
+    });
+
+    it('logs an unknown optionsMethod and renders an empty select', function (): void {
+        Log::spy();
+
+        expect(collect(zzResolvedArrays([['field' => 'unit', 'type' => 'select', 'optionsMethod' => 'zzMissing']]))->firstWhere('field', 'unit')['options'])
+            ->toBe([]);
+
+        Log::shouldHaveReceived('warning')->once();
+    });
+
+    it('defaults the label of a YAML column to the headline of the field', function (): void {
         expect(collect(zzResolvedArrays([['field' => 'delivered_on', 'type' => 'date']]))->firstWhere('field', 'delivered_on')['label'])
             ->toBe('Delivered On');
     });
@@ -183,7 +205,7 @@ describe('PositionColumnResolver', function (): void {
             ['field' => 'total_tax'],
             ['label' => 'No field'],
             ['field' => 'name', 'label' => 'Again'],
-        ]))->toBe(['quantity', 'name', 'price', 'total']);
+        ]))->toBe(['quantity', 'price', 'total', 'name']);
 
         Log::shouldHaveReceived('warning')->times(8);
     });
@@ -196,9 +218,8 @@ describe('PositionColumn', function (): void {
             ->label('Unit')
             ->width('w-24')
             ->options(['kg' => 'Kilogram', 'pc' => 'Piece'])
-            ->locked()
+            ->placeholder('-')
             ->readonly()
-            ->default(false)
             ->onChange('calcGross')
             ->step(2);
 
@@ -226,7 +247,7 @@ describe('PositionColumn', function (): void {
     });
 
     it('is editable unless readonly', function (): void {
-        expect(PositionColumn::make('price')->locked()->isEditable())->toBeTrue()
+        expect(PositionColumn::fromArray(['field' => 'price', 'locked' => true])->isEditable())->toBeTrue()
             ->and(PositionColumn::make('total')->readonly()->isEditable())->toBeFalse();
     });
 });
@@ -272,7 +293,7 @@ describe('NoerdPositionRow + positions.cells', function (): void {
             ->assertSet('row.delivered_on', null)
             ->html();
 
-        // The locked, readonly total renders a disabled control without a change handler.
+        // The readonly total renders a disabled control without a change handler.
         expect(preg_match('/<input[^>]*wire:model="row\.total"[^>]*>/', $html, $total))->toBe(1)
             ->and($total[0])->toContain('disabled')
             ->and($total[0])->not->toContain('wire:change');
@@ -307,7 +328,7 @@ describe('NoerdPositionRow + positions.cells', function (): void {
         expect(array_keys($values))->toBe(['name', 'comment', 'delivered_on']);
     });
 
-    it('saves a configured extra column through the row store()', function (): void {
+    it('saves a configured YAML column through the row store()', function (): void {
         ($this->mountRow)()
             ->set('row.comment', 'leave at the door')
             ->set('row.delivered_on', '2026-09-20')
@@ -351,7 +372,7 @@ describe('NoerdPositionRow + positions.cells', function (): void {
 
         $columns = Livewire::test('zz-position-host-detail')->instance()->positionColumns(ZzPositionColumns::class, ZzPosition::class);
 
-        expect(array_column($columns, 'field'))->toBe(['quantity', 'comment', 'name', 'price', 'total']);
+        expect(array_column($columns, 'field'))->toBe(['quantity', 'price', 'total', 'comment', 'name']);
     });
 });
 
