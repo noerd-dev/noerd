@@ -54,7 +54,7 @@ it('creates the record, adopts its id and reports it to a hosting page', functio
     expect($tenant)->not->toBeNull();
 
     $component->assertSet('modelId', $tenant->id)
-        ->assertDispatched('detailStored-zz-store-roundtrip-page', modelId: $tenant->id);
+        ->assertDispatched('detailStored-zz-store-roundtrip-page', modelId: $tenant->id, detail: 'zz-store-roundtrip-page');
 });
 
 it('updates the mounted record instead of creating a new one', function (): void {

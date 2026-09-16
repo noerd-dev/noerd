@@ -391,7 +391,7 @@ the YAML hides the row):
 ## Key Concepts
 
 - **Trait:** `NoerdList` provides all necessary properties and methods
-- **$listModel:** The Eloquent model backing the list — required for the trait defaults and the header actions (layout/object manager)
+- **$listModel:** The Eloquent model backing the list — required for the trait defaults and the module-contributed header actions
 - **$detailRoute:** Named detail route opened by `listAction()` — rewrites the browser URL to the record (preferred)
 - **$detailComponent:** The detail component opened by `listAction()` when no `$detailRoute` is registered
 - **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`

@@ -116,7 +116,7 @@ final class StaticConfigHelper
     /**
      * Resolve the MANDATORY settings YAML of a settings page (settings/{name}.yml,
      * see the NoerdSettingsPage trait). Settings pages are always configured by
-     * their YAML alone: deliberately NO applyOverrides() (the layout manager must
+     * their YAML alone: deliberately NO applyOverrides() (a layout override must
      * never touch them) and NO applyThemeSetting() — they always render in the
      * built-in `settings` theme (fields stacked vertically, no grid).
      */

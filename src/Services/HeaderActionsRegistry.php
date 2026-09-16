@@ -7,7 +7,7 @@ namespace Noerd\Services;
 /**
  * Livewire components contributed to the list and detail headers by optional
  * modules, which register themselves from their service provider's boot().
- * Entries are Livewire component names (e.g. `plus::list-header-action-layout-manager`).
+ * Entries are Livewire component names (e.g. `inventory::list-header-action-export`).
  *
  * List and detail slots are separate registries: an action usable in both
  * contexts registers twice. Each action is mounted with a `model` (the host's

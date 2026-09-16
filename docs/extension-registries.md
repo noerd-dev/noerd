@@ -347,8 +347,8 @@ use Noerd\Support\ComponentAccessGuard;
 public function boot(): void
 {
     ComponentAccessGuard::registerAdminComponents([
-        'plus::user-roles-list',
-        'plus::user-role-detail',
+        'inventory::warehouse-settings-list',
+        'inventory::warehouse-setting-detail',
     ]);
 }
 ```

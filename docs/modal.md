@@ -191,7 +191,7 @@ Noerd::modalRoute('inventory.item.detail', ['modelId' => 5]);
 ```
 
 Route params are filled by name from the arguments — `modelId` by convention, but any
-property the target binds may be the record's identity (`/setup/object-manager/{table}`).
+property the target binds may be the record's identity (`/inventory/warehouse-settings/{table}`).
 A create modal has no record id — the conventional `{modelId}` param then carries the
 `new` sentinel (`/inventory/item/new?modal=true`), which `NoerdPage::prepareRoutedModal()`
 maps back to `null`. Reloading such a URL reopens the record as a modal over the page the
@@ -209,7 +209,7 @@ user last visited (`RoutedModal::redirectToRoutedModal()`, shared by `NoerdPage`
 2. a named `Route::livewire('{app}/{entity}/{modelId}', …)` route exists for exactly
    that component;
 3. every identity-bearing argument is a parameter of that route — conventionally
-   `modelId`, but any bound property works (`/setup/object-manager/{table}`).
+   `modelId`, but any bound property works (`/inventory/warehouse-settings/{table}`).
    Everything else is chrome (`relations`, `quickCreate`).
 
 You get a shareable URL, a working reload, "open in new tab", and callers that no
