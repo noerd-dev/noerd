@@ -71,9 +71,30 @@
 {{-- not-last:mb-8 separates the block from custom content rendered after it
      (e.g. a tab slot); when the block is the last element the page chrome's
      bottom padding provides the gap instead. --}}
+@php
+    // The module-contributed detail header actions (HeaderActionsRegistry) mount in
+    // the head row of the FIRST block the host renders — claimed once per host render,
+    // so a second tab, a nested `type: block` (which passes false) or a further direct
+    // include never mounts them again (Livewire keys children per parent). The
+    // component's own `blockActions` (slot of x-noerd::tab-content, or a view()/
+    // HtmlString passed by a direct include) travel the same way, explicitly per include.
+    $blockHeaderActions = ($headerActions ?? true) === false
+        ? []
+        : \Noerd\Support\DetailHeaderActions::claim($__livewire ?? null);
+    $blockActionsSlot = ($headerActions ?? true) === false ? null : ($blockActions ?? null);
+    $hasBlockActionsSlot = $blockActionsSlot instanceof \Illuminate\Contracts\Support\Htmlable
+        ? trim($blockActionsSlot->toHtml()) !== ''
+        : trim((string) ($blockActionsSlot ?? '')) !== '';
+@endphp
 <div class="not-last:mb-8">
-    @if(isset($title) || isset($description))
-        @include('noerd::components.detail.block-head', ['title' => __($title ?? ''), 'description' => __($description ?? '')])
+    @if(isset($title) || isset($description) || $blockHeaderActions !== [] || $hasBlockActionsSlot)
+        @include('noerd::components.detail.block-head', [
+            'title' => __($title ?? ''),
+            'description' => __($description ?? ''),
+            'headerActions' => $blockHeaderActions,
+            'headerActionHost' => $__livewire ?? null,
+            'blockActions' => $blockActionsSlot,
+        ])
     @endif
     <div @if($theme !== 'default') data-theme="{{ $theme }}" @endif class="grid {{ $themeDefinition->gridClasses }} grid-cols-1 sm:grid-cols-{{$cols ?? '12'}}">
         @foreach($fields ?? [] as $field)
@@ -90,6 +111,8 @@
                         'cols' => $field['cols'] ?? $cols ?? '12',
                         'modelId' => $modelId ?? null,
                         'theme' => $field['theme'] ?? $theme,
+                        'headerActions' => false,
+                        'blockActions' => null,
                     ])
                 </div>
             @else

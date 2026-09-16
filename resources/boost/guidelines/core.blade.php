@@ -77,7 +77,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   understands the `'new'` sentinel, (2) a named `Route::livewire('{app}/{entity}/{modelId}', …)`
   route exists for exactly that component, (3) every identity-bearing argument is a parameter of
   that route — conventionally `modelId`, but any bound property works
-  (`/setup/object-manager/{table}`); `relations`/`quickCreate` are chrome.
+  (`/inventory/warehouse-settings/{table}`); `relations`/`quickCreate` are chrome.
   **Everything else stays `Noerd::modal()`/`$modal()`:** action dialogs (`*-modal`, `*-confirmation`,
   `*-review`, `*-import`, `*-editor`), pickers (`listActionMethod`, `selectMode`, `selectContext`,
   `multiSelect`, `returnsSelection`, `context`) and lists narrowed by a parent record, opened from
@@ -863,16 +863,26 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
 
 - A page MAY ship a YAML at `app-configs/{app}/pages/{entity}-page.yml` (+ module copy, both in
   sync). Keys: `title`, `detail:` (the embedded detail component, e.g. `crm::account-detail`),
-  `quickCreate`, `tabs`, `relations`, `widgets`. A missing page YAML is fine
+  `details:` (a list of FURTHER embedded details saved by the same Save button — the first of
+  `detail:`/`details:` is the primary whose record is the page's own), `quickCreate`, `tabs`,
+  `relations`, `widgets`, `fields`. A missing page YAML is fine
   (`StaticConfigHelper::getPageFields()` is silent on miss).
 - **Detail YAMLs are pure model forms** (mandatory): only `title`, `description`, `theme`,
   `quickCreate`, `tabs`, `fields`, `actions`, `lists` and `positions`. `widgets:` and `relations:` NEVER belong in
   a detail YAML — they are page concerns. A detail opened standalone renders just the form.
 - The save roundtrip page↔detail is generic via trait events: page `store()` dispatches
-  `storeDetail-{detail}`; the detail's `store()` ends in `finishStore($model)` which dispatches
-  `detailStored-{detail}`; the page adopts the id and runs the protected hook
-  `afterEmbeddedDetailStored($model)` (override for page-owned persistence, e.g. product groups).
-  Live form sync runs via `detailDataUpdated-{detail}` (`syncPayload()` filters the payload).
+  `storeDetail-{detail}` to EVERY embedded detail (`embeddedDetailComponents()`); the detail's
+  `store()` ends in `finishStore($model)` which dispatches `detailStored-{detail}` (payload
+  `modelId` + `detail` = the reporting component); for the primary detail the page adopts the id
+  and runs the protected hook `afterEmbeddedDetailStored($model)` (override for page-owned
+  persistence, e.g. product groups); an ADDITIONAL detail (`details:`) only sets the success
+  indicator and runs `afterAdditionalDetailStored($detail, $modelId)` — its id is never adopted,
+  its data never merged. Live form sync runs via `detailDataUpdated-{detail}` (`syncPayload()`
+  filters the payload; the primary is merged, an additional one reaches
+  `afterAdditionalDetailDataUpdated()`). Every embedded detail validates and persists behind its
+  own guard and needs its own `wire:key`; an additional child-record detail renders only once
+  `$modelId` is set; the page keeps exactly ONE `<x-noerd::delete-save-bar>`. Never dispatch a
+  `component:` key in an event payload — Livewire reserves it (`ref`, `el`, `self`, `to` too).
 - Embed the detail in the page blade via
   `@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))` —
   `x-noerd::page` renders embedded components chrome-less automatically. Two rules for EVERY
@@ -912,7 +922,7 @@ YAML — never hand-written fields, never `NoerdDetail` with a bespoke tenant-ke
   irrelevant: settings pages have NO grid, every field renders as a stacked full-width row in the
   built-in hidden `settings` theme. A `theme:` key in the YAML and the tenant-wide theme setting
   (even enforced) are both ignored, and layout overrides NEVER apply — settings pages have no
-  layout overrides at all. There is also no `custom_attributes` object manager.
+  layout overrides at all. There are also no `custom_attributes` fields.
 - No `$detailPrimary`, no `$modelId`, no delete: the URL stays clean, the singleton row is created
   on first save via `updateOrCreate(['tenant_id' => …])` (stripping id/tenant_id/timestamps).
 - Blade skeleton: `<x-noerd::page>` + `<x-noerd::modal-title>` header +
@@ -1221,7 +1231,12 @@ The core knows no business module — the module brings its knowledge through a 
 Detail components (`*-detail.blade.php`) declare their model as `public $detailModel = Model::class;`
 and their URL alias as `public ?string $detailPrimary = '{entity}Id';` (e.g. `'customerId'`) at the
 top of the class — both are MANDATORY for every model-backed detail (`$detailModel` drives mounting,
-the default `store()`/`delete()` and the header actions; `$detailPrimary` binds `$modelId` to the
+the default `store()`/`delete()` and the module-contributed detail header actions
+(`HeaderActionsRegistry`, mounted top-right in the head row of the FIRST form block the detail
+renders — embedded included, never in the modal header; a `*-page` hosts them only on a field grid
+of its own). A detail's OWN buttons for that row go into the `blockActions` slot of
+`<x-noerd::tab-content>` (a direct `detail.block` include passes `'blockActions' => view(...)`);
+`$detailPrimary` binds `$modelId` to the
 entity-scoped URL parameter and a missing declaration throws on mount). Never use a `DETAIL_CLASS`
 constant — that pattern is removed. Never redeclare `$modelId` and never add a `#[Url]` attribute to
 it: the binding comes from the trait (`queryStringNoerdPage()`) and is skipped automatically for

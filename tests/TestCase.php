@@ -235,6 +235,14 @@ abstract class TestCase extends BaseTestCase
     private function linkModuleIntoSkeleton(): void
     {
         $moduleTarget = base_path('app-modules/noerd');
+
+        // The skeleton outlives checkouts: a link left behind by a moved or deleted
+        // project dangles, or points at a foreign tree whose YAMLs and commands the
+        // suite would then silently read. Replace it instead of trusting is_link().
+        if (is_link($moduleTarget) && realpath($moduleTarget) !== realpath(dirname(__DIR__))) {
+            @unlink($moduleTarget);
+        }
+
         if (! file_exists($moduleTarget) && ! is_link($moduleTarget)) {
             File::ensureDirectoryExists(base_path('app-modules'));
             @symlink(dirname(__DIR__), $moduleTarget);

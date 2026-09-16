@@ -4,9 +4,32 @@ Header actions let a module contribute small Livewire components to the header o
 
 ## Concept
 
-- **Separate slots for lists and details.** The registry keeps two independent lists: list actions render among the list header controls (`table/list-controls-registry`: in the right group of the filter row in the standard list header; injected next to the buttons by `modal-title` for a `NoerdList` host with a custom header slot), detail actions render in the header of every `*-detail` component (`modal-title`). An action that should appear in both contexts must be registered twice — there is no shared slot.
+- **Separate slots for lists and details.** The registry keeps two independent lists: list actions render among the list header controls (`table/list-controls-registry`: in the right group of the filter row in the standard list header; injected next to the buttons by `modal-title` for a `NoerdList` host with a custom header slot), detail actions render top-right in the head row of the FIRST form block a `*-detail` renders (`detail/block-head`, decided by `Noerd\Support\DetailHeaderActions`) — never in the modal header. An embedded detail renders chrome-less but its form block is still its own, so every detail carries its own actions and a page embedding two details shows two sets. A `*-page` hosts them only on a field grid of its own (`fields:` in the page YAML). An action that should appear in both contexts must be registered twice — there is no shared slot.
+- **Once per host.** The actions are mounted in the first block only — a second tab, a nested `type: block` or a further direct `@include('noerd::components.detail.block', …)` of a hand-built detail never mounts them again (Livewire keys children per parent). Nothing to wire: `x-noerd::tab-content` and direct block includes both go through the same claim.
 - **One action, one function, one Livewire component.** Every action is its own minimal Livewire component. It renders exactly one button (or nothing) and contains no logic for the other context.
 - **Actions own their visibility.** The core always mounts every registered action. The action itself decides in `mount()` whether it has something to show (permissions, current app, available configuration) and renders an empty root when hidden.
+
+## A Component's Own Buttons: the `blockActions` Slot
+
+The registry is for buttons EVERY detail gets. A single detail (or a page with its own field
+grid) puts its own buttons into the same head row through the `blockActions` slot of
+`x-noerd::tab-content` — no registry, no Livewire child, rendered once on the first form block:
+
+```blade
+<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
+    <x-slot:blockActions>
+        <x-noerd::button variant="control" icon="arrow-down-tray" type="button"
+                         wire:click="export" title="{{ __('Export') }}">
+            <span class="sr-only">{{ __('Export') }}</span>
+        </x-noerd::button>
+    </x-slot:blockActions>
+</x-noerd::tab-content>
+```
+
+A hand-built detail that includes `noerd::components.detail.block` directly passes the markup
+on its FIRST include instead: `'blockActions' => view('inventory::components.item-block-actions')`
+(any `Htmlable`, e.g. `new HtmlString(...)`). The slot content renders before the registry
+actions; the row shows as soon as either exists.
 
 ## Registering Actions
 
@@ -42,7 +65,7 @@ Every action component is mounted with the same two parameters, in both contexts
 | Param | Value |
 |-------|-------|
 | `model` | The host's declared model class (`$listModel` on lists, `$detailModel` on details) — `null` when the host declares none |
-| `component` | The host's Livewire alias, e.g. `inventory::items-list` or `inventory::item-detail` |
+| `component` | The host's Livewire alias, e.g. `inventory::items-list` or `inventory::item-detail` (an embedded detail passes its OWN alias, not the hosting page's) |
 
 Rules for the component itself:
 
@@ -125,7 +148,9 @@ Registered with `$registry->registerListAction('my-module::list-header-action-ex
 - Compact/embedded and minimal lists (no header at all)
 - Picker lists (`returnsSelection`)
 - Quick-create detail dialogs
-- Headers of `*-page` components — the detail slot is bound to component names ending in `-detail`
+- Modal headers of details and pages — the detail slot is the form block, not the header
+- `*-page` components whose page YAML declares no `fields:` (their embedded detail carries the actions)
+- Details and pages that render no `noerd::components.detail.block` at all (a hand-built body without a YAML form)
 
 ## Design Guidance
 

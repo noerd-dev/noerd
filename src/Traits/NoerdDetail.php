@@ -197,14 +197,16 @@ trait NoerdDetail
 
     /**
      * Shared store tail for details: run the post-store chrome and report the
-     * persisted record to a hosting page (`detailStored-{name}`). Standalone the
-     * event simply has no listener. Custom store() overrides end with this call.
+     * persisted record to a hosting page (`detailStored-{name}`, payload `modelId`
+     * plus `detail` = this component's name, so a page embedding several details
+     * knows which one reported). Standalone the event simply has no listener.
+     * Custom store() overrides end with this call.
      */
     protected function finishStore(Model $model): void
     {
         $this->storeProcess($model);
 
-        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id);
+        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id, detail: $this->componentName());
     }
 
     protected function returnsArray(string $method): bool
@@ -320,7 +322,7 @@ trait NoerdDetail
     protected function syncEmbeddedDetailData(): void
     {
         if ($this->embedded) {
-            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload());
+            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload(), detail: $this->componentName());
         }
     }
 

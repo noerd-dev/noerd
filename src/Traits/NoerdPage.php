@@ -14,6 +14,7 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Services\PositionTableRegistry;
 use Noerd\Services\RelationFieldRegistry;
+use Noerd\Support\DetailHeaderActions;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\Positions\PositionColumn;
 use Noerd\Support\Positions\PositionColumnResolver;
@@ -134,16 +135,15 @@ trait NoerdPage
     }
 
     /**
-     * Page default: forward the save to the embedded detail declared in the page
-     * YAML (`detail:`). The browser roundtrip flushes the detail's deferred
-     * wire:model state; the detail persists and reports back via
-     * `detailStored-{detail}`. NoerdDetail overrides this with the model store.
+     * Page default: forward the save to every embedded detail declared in the page
+     * YAML (`detail:` / `details:`). The browser roundtrip flushes each detail's
+     * deferred wire:model state; every detail persists behind its own guard and
+     * reports back via `detailStored-{detail}`. NoerdDetail overrides this with
+     * the model store.
      */
     public function store(): void
     {
-        $detail = $this->embeddedDetailComponent();
-
-        if ($detail) {
+        foreach ($this->embeddedDetailComponents() as $detail) {
             $this->dispatch('storeDetail-' . $detail);
         }
     }
@@ -199,13 +199,38 @@ trait NoerdPage
     }
 
     /**
-     * The embedded detail component declared in the page YAML (`detail:`).
-     * Deliberately no fallback to the component's own name — a standalone
-     * detail must never grow page listeners.
+     * The PRIMARY embedded detail component declared in the page YAML: `detail:`,
+     * or the first entry of `details:`. Its record is the page's own
+     * ($detailModel, $modelId). Deliberately no fallback to the component's own
+     * name — a standalone detail must never grow page listeners.
      */
     public function embeddedDetailComponent(): ?string
     {
-        return $this->pageLayout['detail'] ?? null;
+        return $this->embeddedDetailComponents()[0] ?? null;
+    }
+
+    /**
+     * Every embedded detail component of the page, the primary first: `detail:`
+     * (the single-detail shorthand) followed by the `details:` list of the page
+     * YAML, deduplicated. The page's single Save button stores all of them; the
+     * additional ones are independent records (another model, or a second form
+     * of the same record — the default store() writes only the fields each
+     * detail's YAML declares). Like `detail`, the list comes from the
+     * client-writable $pageLayout; the guards stay on each detail's own store().
+     *
+     * @return array<int, string>
+     */
+    public function embeddedDetailComponents(): array
+    {
+        $details = $this->pageLayout['details'] ?? [];
+        $details = is_array($details) ? $details : [];
+
+        $components = array_filter(
+            [$this->pageLayout['detail'] ?? null, ...array_values($details)],
+            fn($component): bool => is_string($component) && $component !== '',
+        );
+
+        return array_values(array_unique($components));
     }
 
     /**
@@ -268,6 +293,9 @@ trait NoerdPage
             session(['noerd.lastDetailComponent' => $this->componentName()]);
         }
 
+        // The detail header actions mount once per render, in the first form block.
+        DetailHeaderActions::reset($this->getId());
+
         $this->themeContextBefore = ThemeContext::current();
 
         ThemeContext::set($this->detailTheme());
@@ -284,15 +312,31 @@ trait NoerdPage
     public function renderedNoerdPage(): void
     {
         ThemeContext::set($this->themeContextBefore);
+
+        // Release the header-action claim again — a long-lived process (Octane)
+        // must not keep one entry per component it ever rendered.
+        DetailHeaderActions::reset($this->getId());
     }
 
     /**
      * The embedded detail persisted its record: adopt the id, refresh the page's
      * model snapshot and run the shared post-store chrome (success indicator,
      * quick-create exit). Pages hook extra persistence via afterEmbeddedDetailStored().
+     *
+     * `$detail` names the reporting component (the `detail` key of the
+     * `detailStored-*` payload). An ADDITIONAL detail (`details:`) owns another
+     * record: its id is never adopted and nothing is merged — the page only shows
+     * the success indicator and runs afterAdditionalDetailStored().
      */
-    public function embeddedDetailStored(int $modelId): void
+    public function embeddedDetailStored(int $modelId, ?string $detail = null): void
     {
+        if ($this->isAdditionalDetail($detail)) {
+            $this->showSuccessIndicator = true;
+            $this->afterAdditionalDetailStored($detail, $modelId);
+
+            return;
+        }
+
         $this->modelId = $modelId;
 
         if (isset($this->detailModel)) {
@@ -316,10 +360,19 @@ trait NoerdPage
 
     /**
      * Live sync from the embedded detail (`detailDataUpdated-{detail}`): keeps the
-     * page's $detailData mirror current, e.g. for a live preview.
+     * page's $detailData mirror current, e.g. for a live preview. An ADDITIONAL
+     * detail's form is never merged — its keys (`name`, …) would clobber the
+     * primary record's mirror; a page that wants it hooks
+     * afterAdditionalDetailDataUpdated().
      */
-    public function embeddedDetailDataUpdated(array $detailData): void
+    public function embeddedDetailDataUpdated(array $detailData, ?string $detail = null): void
     {
+        if ($this->isAdditionalDetail($detail)) {
+            $this->afterAdditionalDetailDataUpdated($detail, $detailData);
+
+            return;
+        }
+
         $this->detailData = array_merge($this->detailData, $detailData);
     }
 
@@ -496,6 +549,21 @@ trait NoerdPage
     }
 
     /**
+     * Hook: an ADDITIONAL embedded detail (`details:`, not the primary) persisted
+     * its record. The page neither adopts the id nor merges the data — override
+     * to react (refresh a preview, reload a relation).
+     */
+    protected function afterAdditionalDetailStored(string $detail, int $modelId): void {}
+
+    /**
+     * Hook: an ADDITIONAL embedded detail mirrored its form state. Override to
+     * opt into a live preview of that form — the page mirror stays untouched.
+     *
+     * @param  array<string, mixed>  $detailData
+     */
+    protected function afterAdditionalDetailDataUpdated(string $detail, array $detailData): void {}
+
+    /**
      * Load the record identified by $modelId into $detailData (or keep the fresh
      * model for a new record). Returns false when the id no longer resolves — the
      * modal is closed and the caller must stop mounting.
@@ -600,8 +668,8 @@ trait NoerdPage
 
     /**
      * Get the event listeners for the component: the generic list refresh plus —
-     * when the page YAML declares an embedded detail — the store roundtrip events
-     * scoped by the detail's full component name.
+     * for every embedded detail the page YAML declares — the store roundtrip
+     * events scoped by the detail's full component name.
      *
      * OVERRIDE CONTRACT: a component defining its own getListeners() replaces
      * this set entirely and silently disconnects the framework events — always
@@ -616,13 +684,25 @@ trait NoerdPage
             'refreshList-' . $this->getDetailComponent() => 'refreshList',
         ];
 
-        $detail = $this->embeddedDetailComponent();
-        if ($detail) {
+        foreach ($this->embeddedDetailComponents() as $detail) {
             $listeners['detailStored-' . $detail] = 'embeddedDetailStored';
             $listeners['detailDataUpdated-' . $detail] = 'embeddedDetailDataUpdated';
         }
 
         return $listeners;
+    }
+
+    /**
+     * Whether the reporting detail is one of the additional (non-primary) embedded
+     * details. A missing name (a detail older than the `detail` payload key, or a
+     * page with a single detail) always means the primary.
+     */
+    private function isAdditionalDetail(?string $detail): bool
+    {
+        return $detail !== null
+            && $detail !== ''
+            && $detail !== $this->embeddedDetailComponent()
+            && in_array($detail, $this->embeddedDetailComponents(), true);
     }
 
     private function deriveListComponent(): string

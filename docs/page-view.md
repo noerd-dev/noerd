@@ -57,11 +57,12 @@ widgets:
 |----------|-------------|
 | `title` | Page title (translation key) |
 | `detail` | The embedded detail Livewire component (full name, e.g. `inventory::warehouse-detail`). Drives the generic store roundtrip |
+| `details` | A list of embedded detail components saved by the same Save button (see [Several embedded details](#several-embedded-details)). The first entry — or `detail:` when both are given — is the PRIMARY detail whose record is the page's own |
 | `quickCreate` | Opt-in for the narrow quick-create modal on new records (also sizes the modal via noerd-modal) |
 | `tabs` | Page-level tabs (e.g. Media, Activity Log) — rendered by the page blade via `<x-noerd::tabs>`; same properties as [detail tabs](detail-view.md#tab-properties) |
 | `relations` | Relation Box tiles (see [Relation Box](#relation-box) below). Each tile may carry `route:` next to `component:` |
 | `widgets` | Right-hand widget sidebar rendered by `<x-noerd::detail-grid>` / `<x-noerd::detail-widgets>` (see [Widgets](#widgets) below) |
-| `fields` | Optional field grid the page renders ITSELF (same syntax and [field types](field-types.md) as a detail YAML, `theme:` included) via `@include('noerd::components.detail.block', array_merge($pageLayout, ['modelId' => …, 'detailData' => $detailData]))` or `<x-noerd::tab-content :layout="$pageLayout" …>`. A page has no `validateFromLayout()` and no `store()` of its own for them — they are display and binding only. Typical use: a read-only block of facts in the `display` theme (see [Themes](themes.md#display-theme-read-only-text)), configurable per installation and through the layout manager |
+| `fields` | Optional field grid the page renders ITSELF (same syntax and [field types](field-types.md) as a detail YAML, `theme:` included) via `@include('noerd::components.detail.block', array_merge($pageLayout, ['modelId' => …, 'detailData' => $detailData]))` or `<x-noerd::tab-content :layout="$pageLayout" …>`. A page has no `validateFromLayout()` and no `store()` of its own for them — they are display and binding only. Typical use: a read-only block of facts in the `display` theme (see [Themes](themes.md#display-theme-read-only-text)), configurable per installation and through the layout-override hook |
 
 Both `relations` and `widgets` open a list NARROWED by the current record, so their
 `route:` resolves the component WITHOUT rewriting the browser URL — see
@@ -211,20 +212,60 @@ relations:
 The save flow between page and embedded detail is fully generic — no per-component events:
 
 1. The page footer's Save calls `NoerdPage::store()`, which dispatches
-   **`storeDetail-{detail}`** (suffix = the full component name from the YAML `detail:` key).
+   **`storeDetail-{detail}`** for every embedded detail (suffix = the full component name from
+   the YAML `detail:` / `details:` keys).
 2. The detail listens (via `getListeners()`), runs its normal `store()` — identical to a
    standalone save — and ends in `finishStore($model)`.
-3. `finishStore()` (protected) dispatches **`detailStored-{detail}`** with the model id. The page
-   adopts the id (`embeddedDetailStored()`), refreshes its `$detailData` snapshot (merge —
-   page-owned keys survive), runs `storeProcess()` and finally the protected hook
+3. `finishStore()` (protected) dispatches **`detailStored-{detail}`** with the payload `modelId`
+   and `detail` (the reporting component's name). For the primary detail the page adopts the id
+   (`embeddedDetailStored()`), refreshes its `$detailData` snapshot (merge — page-owned keys
+   survive), runs `storeProcess()` and finally the protected hook
    **`afterEmbeddedDetailStored($model)`**.
 4. Pages that persist page-owned state (e.g. variant groups, uploads) override
    `afterEmbeddedDetailStored(Model $model)`.
 
 Live form sync: an embedded detail mirrors its form state via **`detailDataUpdated-{detail}`**
-(`NoerdDetail::updatedDetailData()` → `syncPayload()`, override the latter to filter the payload).
-The page merges it in `embeddedDetailDataUpdated()` (override to add side effects, e.g. a change
-counter for a live preview).
+(payload `detailData` + `detail`; `NoerdDetail::updatedDetailData()` → `syncPayload()`, override
+the latter to filter the payload). The page merges the primary detail's state in
+`embeddedDetailDataUpdated()` (override to add side effects, e.g. a change counter for a live
+preview).
+
+## Several embedded details
+
+A page may embed MORE than one detail — a second form of the same record, or a related
+record such as a settings row — and save all of them with its single Save button:
+
+```yaml
+title: Warehouse
+detail: inventory::warehouse-detail          # the primary: the page's own record
+details:
+  - inventory::warehouse-pricing-detail      # saved by the same Save button
+```
+
+```blade
+@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))
+
+@if ($modelId)
+    @livewire('inventory::warehouse-pricing-detail', ['modelId' => $modelId, 'embedded' => true], key('embedded-detail-pricing'))
+@endif
+```
+
+- `embeddedDetailComponents()` lists every embedded detail, the primary first (`detail:`, or the
+  first entry of `details:`). `store()` dispatches `storeDetail-*` to all of them; the listeners
+  `detailStored-*` / `detailDataUpdated-*` are registered for each.
+- Every detail validates and persists on its own, behind its own object permission. The default
+  `store()` writes only the fields its own YAML declares, so two slim details of the SAME model
+  each persist their own columns.
+- Only the primary detail's report changes the page: its id is adopted, its data merged. An
+  ADDITIONAL detail's report only sets the success indicator and runs the protected no-op hooks
+  **`afterAdditionalDetailStored(string $detail, int $modelId)`** and
+  **`afterAdditionalDetailDataUpdated(string $detail, array $detailData)`** — its keys (`name`, …)
+  must never clobber the page mirror. Override the hooks for a preview or a reload.
+- An additional detail that is a child record of the primary is rendered only once the record
+  exists (`@if ($modelId)`, the same rule as embedded lists). Each embed needs its own
+  `wire:key`; there is still exactly ONE `<x-noerd::delete-save-bar>` on the page.
+- Each embedded detail carries its own module-contributed header actions on its form block
+  (see [Header Actions](header-actions.md)).
 
 ## References
 

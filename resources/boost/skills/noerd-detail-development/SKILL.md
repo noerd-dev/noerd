@@ -126,7 +126,12 @@ relations:
 Blade: header → `<x-noerd::detail-relations :layout="$pageLayout" :modelId="$modelId" :modelClass="Thing::class" />`
 → `@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))`.
 Save roundtrip page↔detail is generic (`storeDetail-*` / `detailStored-*` events); override
-`afterEmbeddedDetailStored($model)` for page-owned persistence.
+`afterEmbeddedDetailStored($model)` for page-owned persistence. Several details on one page:
+`details:` list in the page YAML (first = primary), each embedded with its own `wire:key`, one Save
+stores all; an additional detail reports through `afterAdditionalDetailStored($detail, $modelId)`
+and is never merged into the page mirror. Module-contributed header actions (`HeaderActionsRegistry`)
+sit in the head row of each detail's own form block, never in the page header; a detail's OWN
+buttons for that row go into the `blockActions` slot of `<x-noerd::tab-content>`.
 
 ## 5. Routes, navigation, translations
 

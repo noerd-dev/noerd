@@ -21,7 +21,7 @@ use RuntimeException;
  *   `public array $settingsModels = ['detailData' => Model::class, ...];`
  *   where each key is the public array property the YAML fields bind to,
  * - its layout always comes from the settings YAML — layout overrides never
- *   apply and there is no custom_attributes object manager,
+ *   apply and there are no custom_attributes fields,
  * - it always renders in the built-in `settings` theme (fields stacked
  *   vertically, full width — no grid).
  *

@@ -105,6 +105,7 @@ named slots — no hand-rolled panels needed:
 |-------------|-------------|
 | `tab{n}` | Markup rendered BELOW the YAML fields of panel `n` (`<x-slot:tab2>…</x-slot:tab2>`) |
 | `prependTab{n}` | Markup rendered ABOVE the YAML fields of panel `n` |
+| `blockActions` | The component's own buttons for the head row of the first form block (tab 1), right-aligned next to the module-contributed [header actions](header-actions.md#a-components-own-buttons-the-blockactions-slot) |
 | default slot | Shorthand for `tab1` — a single-tab detail passes its extra markup directly |
 | `:showBlock="false"` | Skip the YAML field block entirely and render only the slots (custom, non-YAML bodies — pass `:layout="[]"`) |
 | `:quickCreate` | Explicit override of the quick-create mode (normally read from the layout) |
@@ -846,6 +847,13 @@ top-level keys the detail YAML on disk binds (`detailData.*`, recursing into blo
 relation-form keys (see [Relation Forms](relation-forms.md)) and always drops `id`, `tenant_id`,
 `created_at` and `updated_at` — a crafted request can never inject columns the form does not show.
 Both `store()` and `delete()` are guarded by `canSaveObject()` / `canDeleteObject()`.
+
+**Success indicator.** The transient "Successfully saved" feedback the save bar shows left of its
+buttons is its own component, `<x-noerd::success-indicator :message="..." />`, bound to the boolean
+`showSuccessIndicator` property (another name via `property=`). It fades out and resets the property
+after three seconds. A component with a save action that does not use the save bar — an editor modal,
+a screen with custom footer buttons — renders it in its footer instead of a status banner and sets
+the property to `true` after persisting.
 
 ### Custom Store / Delete Logic
 

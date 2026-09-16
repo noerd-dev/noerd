@@ -9,7 +9,7 @@ Settings pages differ from details/pages in four hard rules:
 
 1. **Always YAML-configured** — the layout comes exclusively from
    `settings/{component}.yml`. Layout overrides never apply (the settings loader skips
-   the override hook entirely), and there is no `custom_attributes` object manager.
+   the override hook entirely), and there are no `custom_attributes` fields.
 2. **No grid** — every field renders stacked, full width, in the built-in `settings`
    theme. A `theme:` key in the YAML is ignored; the tenant-wide form theme (even an
    enforced one) does not apply either.

@@ -9,8 +9,8 @@
          • The FILTER row, rendered only when something belongs in it (a search
            field, header filters/chips, or registry list actions): the search field
            on the left, the filters in a horizontally SCROLLING strip next to it,
-           and on the right the registry list actions (e.g. a module's layout
-           and object managers) followed by the pagination summary with its
+           and on the right the registry list actions (module-contributed
+           buttons) followed by the pagination summary with its
            previous/next buttons.
 
          Neither row ever wraps and nothing collapses into a drawer: the three

@@ -74,7 +74,13 @@
                             }
                         @endphp
 
-                        @include('noerd::components.detail.block', array_merge($tabLayout, ['detailData' => $detailData]))
+                        {{-- The component's own buttons for the head row of its form block
+                             (`<x-slot:blockActions>`) belong to tab 1 only — passed explicitly,
+                             because an @include inherits the enclosing scope. --}}
+                        @include('noerd::components.detail.block', array_merge($tabLayout, [
+                            'detailData' => $detailData,
+                            'blockActions' => $tab['number'] === 1 ? ($blockActions ?? null) : null,
+                        ]))
                     @endif
 
                     {{-- Render named slot for this tab if it exists (e.g., tab1, tab2, etc.) --}}

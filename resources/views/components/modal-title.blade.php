@@ -14,19 +14,10 @@
 ])
 
 @php
-    // Detail and page headers get the module-contributed header actions
-    // (HeaderActionsRegistry) injected here — modal-title is the one generic
-    // component every *-detail / *-page header goes through (an embedded detail
-    // renders chrome-less, so its hosting page carries the actions). The slim
-    // quick-create dialogs are no place for admin tooling.
-    $headerActionHost = isset($__livewire)
-        && (str_ends_with($__livewire->getName(), '-detail') || str_ends_with($__livewire->getName(), '-page'))
-        && ! ($__livewire->quickCreate ?? false)
-        ? $__livewire
-        : null;
-    $detailHeaderActions = $headerActionHost !== null
-        ? app(\Noerd\Services\HeaderActionsRegistry::class)->detailActions()
-        : [];
+    // The module-contributed DETAIL header actions (HeaderActionsRegistry) do not
+    // render here: they sit in the head row of the host's first form block
+    // (noerd::components.detail.block-head via DetailHeaderActions), so an embedded
+    // detail carries its own icons instead of the hosting page.
 
     // List headers get their generic controls (search, CSV, registry list actions,
     // YAML action buttons) injected here for every NoerdList host — whether this
@@ -49,7 +40,7 @@
 <div @class(['border-b border-gray-300 px-6 py-6', 'lg:flex' => ! $row])>
     <x-noerd::title :row="$row">
         {{ $slot }}
-        @if (isset($actions) || $detailHeaderActions !== [] || $hasListControls)
+        @if (isset($actions) || $hasListControls)
             <div class="ml-auto flex shrink-0 items-center gap-4" :class="isModal ? modalControlsClass : ''">
                 @if ($hasListControls)
                     @if ($listControlsShow)
@@ -62,25 +53,6 @@
                     @if ($listControlsShow)
                         </div>
                     @endif
-                @endif
-                @if ($detailHeaderActions !== [])
-                    {{-- Grouped so the icon buttons keep the 8px rhythm of the modal
-                         panel controls. Collapses when every action hid itself —
-                         otherwise the empty wrapper would still eat the parent gap. --}}
-                    <div
-                        x-data="{ hasActions: false }"
-                        x-init="hasActions = $el.querySelector('button') !== null"
-                        x-show="hasActions"
-                        x-cloak
-                        class="flex shrink-0 items-center gap-2"
-                    >
-                        @foreach ($detailHeaderActions as $detailHeaderAction)
-                            @livewire($detailHeaderAction, [
-                                'model' => $headerActionHost->detailModel ?? null,
-                                'component' => $headerActionHost->getName(),
-                            ], key('detail-header-action-' . $detailHeaderAction))
-                        @endforeach
-                    </div>
                 @endif
                 {{ $actions ?? '' }}
             </div>
