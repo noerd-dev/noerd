@@ -248,25 +248,34 @@ if (! function_exists('assertModuleUpdateCommandPublishesConfigs')) {
     /**
      * Standard proof for a module's noerd:update-{module} command: publishes
      * every YAML the module ships into app-configs/{key} (self-heal branch),
-     * exits cleanly, and --force restores a locally modified copy. The target
-     * directory is snapshotted and restored exactly, so the host project's
-     * installed configuration is never left altered.
+     * exits cleanly, and --force restores a locally modified copy.
+     *
+     * The command runs against a THROWAWAY base path, because an update command
+     * writes into the host tree (app-configs/, config/{module}.php, boost.json,
+     * the setup navigation). Writing into the real project would leave the
+     * checkout altered and — under `php artisan test --parallel` — let a second
+     * worker `require` a config file while it is only half written.
      */
     function assertModuleUpdateCommandPublishesConfigs(string $command, string $moduleDir, string $moduleKey): void
     {
         $source = $moduleDir . '/app-configs/' . $moduleKey;
-        $target = base_path('app-configs/' . $moduleKey);
-        $scratch = storage_path('framework/testing/zz-update-cmd-' . $moduleKey . '-' . getmypid());
 
         Assert::assertDirectoryExists($source, "Module ships no app-configs/{$moduleKey} directory.");
 
-        $existed = is_dir($target);
-        if ($existed) {
-            \Illuminate\Support\Facades\File::copyDirectory($target, $scratch);
-        }
+        $app = app();
+        $originalBasePath = $app->basePath();
+        // Resolved before the base path moves: storage_path() follows it.
+        $host = storage_path('framework/testing/zz-update-cmd-' . $moduleKey . '-' . getmypid());
+
+        \Illuminate\Support\Facades\File::deleteDirectory($host);
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($host . '/config');
+        // RequiresNoerdInstallation only checks that the host published the config.
+        \Illuminate\Support\Facades\File::put($host . '/config/noerd.php', "<?php\n\nreturn [];\n");
+
+        $app->setBasePath($host);
 
         try {
-            \Illuminate\Support\Facades\File::deleteDirectory($target);
+            $target = $host . '/app-configs/' . $moduleKey;
 
             $exit = \Illuminate\Support\Facades\Artisan::call($command, ['--no-interaction' => true]);
             Assert::assertSame(0, $exit, "{$command} did not exit cleanly: " . \Illuminate\Support\Facades\Artisan::output());
@@ -294,11 +303,8 @@ if (! function_exists('assertModuleUpdateCommandPublishesConfigs')) {
             Assert::assertSame(0, $exit, "{$command} --force did not exit cleanly");
             Assert::assertStringNotContainsString('Zz Local Change', (string) file_get_contents($published));
         } finally {
-            \Illuminate\Support\Facades\File::deleteDirectory($target);
-            if ($existed) {
-                \Illuminate\Support\Facades\File::copyDirectory($scratch, $target);
-                \Illuminate\Support\Facades\File::deleteDirectory($scratch);
-            }
+            $app->setBasePath($originalBasePath);
+            \Illuminate\Support\Facades\File::deleteDirectory($host);
         }
     }
 }
