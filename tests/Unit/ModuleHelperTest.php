@@ -19,14 +19,14 @@ uses(TestCase::class);
 
 /**
  * A minimal update command whose publish behaviour the test controls: it copies
- * the fixture module's app-configs into the project, or (when disabled)
- * publishes nothing while still exiting cleanly.
+ * the fixture module's app-configs into the host, or (when disabled) publishes
+ * nothing while still exiting cleanly. Like every real update command it
+ * resolves its target through base_path() at RUN time, so it follows the
+ * throwaway host the helper installs.
  */
 final class ZzUpdateModuleCommand extends Command
 {
     public static string $source = '';
-
-    public static string $target = '';
 
     public static bool $publishes = true;
 
@@ -37,7 +37,7 @@ final class ZzUpdateModuleCommand extends Command
     public function handle(): int
     {
         if (self::$publishes) {
-            File::copyDirectory(self::$source, self::$target);
+            File::copyDirectory(self::$source, base_path('app-configs/zz-module'));
         }
 
         return self::SUCCESS;
@@ -88,7 +88,6 @@ beforeEach(function (): void {
     File::deleteDirectory(base_path('app-configs/zz-module'));
 
     ZzUpdateModuleCommand::$source = zzModuleDir() . '/app-configs/zz-module';
-    ZzUpdateModuleCommand::$target = base_path('app-configs/zz-module');
     ZzUpdateModuleCommand::$publishes = true;
 
     app(Kernel::class)->registerCommand(new ZzUpdateModuleCommand());
@@ -178,7 +177,7 @@ describe('assertModuleUpdateCommandPublishesConfigs()', function (): void {
             ->toThrow(AssertionFailedError::class);
     });
 
-    it('restores a pre-existing installed config directory', function (): void {
+    it('leaves a pre-existing installed config directory untouched', function (): void {
         zzWriteModuleSkeleton();
 
         $target = base_path('app-configs/zz-module');
@@ -188,10 +187,11 @@ describe('assertModuleUpdateCommandPublishesConfigs()', function (): void {
         assertModuleUpdateCommandPublishesConfigs('noerd:update-zz-module', zzModuleDir(), 'zz-module');
 
         expect(File::exists($target . '/zz-installed.yml'))->toBeTrue()
-            ->and(File::get($target . '/zz-installed.yml'))->toBe("title: Zz Installed\n");
+            ->and(File::get($target . '/zz-installed.yml'))->toBe("title: Zz Installed\n")
+            ->and(File::exists($target . '/lists/x.yml'))->toBeFalse();
     });
 
-    it('leaves nothing behind when the module was not installed before', function (): void {
+    it('writes nothing into the project when the module was not installed before', function (): void {
         zzWriteModuleSkeleton();
 
         assertModuleUpdateCommandPublishesConfigs('noerd:update-zz-module', zzModuleDir(), 'zz-module');
