@@ -654,8 +654,13 @@ like `disableModal`:
   list component accepts it as a tag attribute
 - `noerd::components.list` (`list/index.blade.php`) reads the flag via
   `$compact = $compact ?? ($this->compact ?? false);` and skips the header slot and the pagination
-- A list embedded with `disableModal` breaks out by `-2rem` (intended for full-page routes). Inside a
-  modal/detail, the surrounding wrappers re-pad it so it aligns cleanly
+- A list embedded with `disableModal` breaks out of its host by `--noerd-page-inset`
+  (`-mx-(--noerd-page-inset)`); the noerd page body declares its `px-6` as that inset, so the list
+  sits flush with the page edge wherever it is nested (tab panel, `detail-list`, widget) — never
+  re-pad it with a wrapper. A widget card resets `[--noerd-page-inset:0px]` to keep the list inside
+- A full page nested in another noerd page (a complete list in a detail tab) is detected by
+  `noerdPage` (`isNestedPage`): no modal chrome, no viewport height, no header space reserved for
+  the modal controls — embed it plainly
 
 **Important:**
 - Compact mode also removes pagination — only the first `perPage` rows are shown. Use it for

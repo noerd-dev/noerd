@@ -708,14 +708,11 @@ just add it as an attribute on the embedded Livewire component.
 The low-level flag (used internally by `<x-noerd::detail-lists>`):
 
 ```blade
-{{-- mx-8 cancels the disableModal -2rem breakout so the list aligns with the surrounding form --}}
-<div class="mx-8">
-    <livewire:inventory::items-list
-        wire:key="category-items-{{ $modelId }}"
-        disableModal
-        compact
-        :categoryId="$modelId" />
-</div>
+<livewire:inventory::items-list
+    wire:key="category-items-{{ $modelId }}"
+    disableModal
+    compact
+    :categoryId="$modelId" />
 ```
 
 **Notes:**
@@ -724,8 +721,14 @@ The low-level flag (used internally by `<x-noerd::detail-lists>`):
   so the behaviour is generic — never duplicate it per module.
 - Compact mode also removes pagination, so only the first `perPage` rows are shown. Use it for
   narrowly-scoped lists (e.g. records that belong to the current detail record).
-- A list embedded with `disableModal` breaks out by `-2rem` (intended for full-page routes); the
-  wrappers re-pad it so it aligns cleanly inside a modal or detail view.
+- A list embedded with `disableModal` breaks out of its host by `--noerd-page-inset`
+  (`-mx-(--noerd-page-inset)`, default `2rem`). The noerd page body declares its own `px-6` as that
+  inset, so a list nested anywhere inside a detail or page (a tab panel, `<x-noerd::detail-list>`,
+  a widget) sits flush with the page edge without any wrapper — never re-pad it by hand. A host
+  that wants the list to stay inside (the widget card) resets `[--noerd-page-inset:0px]`.
+- A full page nested inside another noerd page (e.g. a complete list with its own header in a
+  detail tab) is detected by `noerdPage` (`isNestedPage`): it takes neither the modal chrome nor the
+  viewport height of the outer page, and its header buttons reserve no space for the modal controls.
 - `disableModal` never needs to be passed to `<x-noerd::page>` in the component's own view —
   the page component reads the flag from the Livewire component automatically
   (`$disableModal = $disableModal ?? (($__livewire ?? null)?->disableModal ?? false);`). An explicit

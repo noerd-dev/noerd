@@ -28,11 +28,7 @@
             ])
         @endif
 
-        {{-- Break the compact list out to the full detail width, then re-pad so it aligns cleanly --}}
-        <div class="-mr-6 -ml-6">
-            <div class="mx-8">
-                @livewire($component, $params, key($listKey))
-            </div>
-        </div>
+        {{-- The list breaks out to the page edge on its own (--noerd-page-inset) --}}
+        @livewire($component, $params, key($listKey))
     </div>
 @endif

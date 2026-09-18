@@ -15,6 +15,17 @@
 @source inline("{,sm:}col-span-{1..12}");
 @source inline("{,sm:}grid-cols-{1..12}");
 
+/*
+ * Horizontal inset a `disableModal` page undoes to sit flush with its host
+ * (`-mx-(--noerd-page-inset)` in components/page.blade.php). The noerd page body
+ * declares its own padding as the inset, so a full list embedded in a detail
+ * tab, a `detail-list` or a widget breaks out by exactly the padding around it —
+ * no per-embedding re-padding. Hosts without a noerd page keep this default.
+ */
+:root {
+    --noerd-page-inset: 2rem;
+}
+
 @theme {
     /* App-wide default text size: text-sm is the de-facto base, 14px -> 13px */
     --text-sm: 0.8125rem;

@@ -127,6 +127,24 @@ describe('value cells', function (): void {
         expect($html)->toContain('<input')
             ->and($html)->toContain('Plain Value');
     });
+
+    it('keeps a colored_text value on one line and exposes the full text as tooltip', function (): void {
+        $html = renderTableCell([
+            'type' => 'colored_text',
+            'columnValue' => 'linked_display',
+            'value' => ['text' => 'A very long linked record title', 'class' => 'bg-blue-100'],
+        ]);
+
+        expect($html)->toContain('truncate')
+            ->and($html)->toContain('title="A very long linked record title"');
+    });
+
+    it('keeps a relation_link value on one line and exposes the full text as tooltip', function (): void {
+        $html = renderRelationLinkCell(['modalComponent' => 'noerd-test::theme-test', 'idField' => 'vehicle_id']);
+
+        expect($html)->toContain('<span class="truncate">Vehicle A</span>')
+            ->and($html)->toContain('title="Vehicle A"');
+    });
 });
 
 describe('relation_link route mode', function (): void {
