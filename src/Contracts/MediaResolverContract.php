@@ -22,6 +22,14 @@ interface MediaResolverContract
     public function getRelativeUrl(int $mediaId): ?string;
 
     /**
+     * Get a relative URL (without domain) for DELIVERING an image, e.g. on a
+     * public website: a size-limited variant instead of the original. The
+     * variant names (`web`, …) are configuration of the media module; a file
+     * that cannot be scaled (SVG, PDF, …) answers with its original URL.
+     */
+    public function getImageUrl(int $mediaId, string $variant = 'web'): ?string;
+
+    /**
      * Store an uploaded file and return its relative URL.
      */
     public function storeUploadedFile(mixed $uploadedFile): ?string;

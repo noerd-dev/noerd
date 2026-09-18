@@ -33,6 +33,11 @@ final class NullMediaResolver implements MediaResolverContract
         return null;
     }
 
+    public function getImageUrl(int $mediaId, string $variant = 'web'): ?string
+    {
+        return null;
+    }
+
     public function storeUploadedFile(mixed $uploadedFile): ?string
     {
         if (! $uploadedFile) {

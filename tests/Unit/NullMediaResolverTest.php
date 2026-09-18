@@ -14,6 +14,8 @@ it('answers as a null object while no media module is installed', function (): v
         ->and($resolver->exists(1))->toBeFalse()
         ->and($resolver->getPreviewUrl(1))->toBeNull()
         ->and($resolver->getRelativeUrl(1))->toBeNull()
+        ->and($resolver->getImageUrl(1))->toBeNull()
+        ->and($resolver->getImageUrl(1, 'thumb'))->toBeNull()
         ->and($resolver->storeUploadedFile(null))->toBeNull();
 });
 

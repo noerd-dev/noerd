@@ -1002,6 +1002,10 @@ relative URL (`$resolver->getRelativeUrl($mediaId)`) — both render a preview. 
 `resources/views/components/setup-collection-detail.blade.php` (stores the URL and handles the
 plain-upload fallback via `storeUploadedFile()`).
 
+When a stored media ID is rendered for visitors — a public website, an e-mail — resolve it with
+`$resolver->getImageUrl($mediaId)` instead of `getRelativeUrl()`: it answers with a size-limited
+variant of the image, so an oversized original is never delivered in full.
+
 **Notes:**
 - Shows a preview thumbnail when an image is selected
 - Includes a delete button with confirmation dialog
