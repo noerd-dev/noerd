@@ -71,6 +71,14 @@ final class HtmlSanitizer
     ];
 
     /**
+     * Elements whose rendering makes the renderer FETCH a URL. Dropped for
+     * documents, kept for web output where the browser does the fetching.
+     *
+     * @var list<string>
+     */
+    private const FETCHING_ELEMENTS = ['img'];
+
+    /**
      * URL schemes a href/src may use; everything else (javascript:, data:, …) is dropped.
      *
      * @var list<string>
@@ -78,6 +86,25 @@ final class HtmlSanitizer
     private const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel'];
 
     public static function sanitize(?string $html): string
+    {
+        return self::clean($html, dropRemoteResources: false);
+    }
+
+    /**
+     * The same allow-list, minus everything that makes the RENDERER fetch a URL.
+     *
+     * A PDF is rendered server-side: dompdf resolves <img src="http://…"> from
+     * the application host, so a remote source in tenant-editable text is a
+     * request forge into the internal network (cloud metadata, admin ports)
+     * rather than a mere display issue. Documents therefore keep the formatting
+     * tags and lose the fetching ones.
+     */
+    public static function sanitizeForDocument(?string $html): string
+    {
+        return self::clean($html, dropRemoteResources: true);
+    }
+
+    private static function clean(?string $html, bool $dropRemoteResources): string
     {
         $html = mb_trim((string) $html);
 
@@ -101,7 +128,7 @@ final class HtmlSanitizer
             return '';
         }
 
-        self::cleanChildren($body);
+        self::cleanChildren($body, $dropRemoteResources);
 
         $result = '';
 
@@ -112,14 +139,14 @@ final class HtmlSanitizer
         return mb_trim($result);
     }
 
-    private static function cleanChildren(DOMNode $node): void
+    private static function cleanChildren(DOMNode $node, bool $dropRemoteResources = false): void
     {
         foreach (iterator_to_array($node->childNodes) as $child) {
-            self::cleanNode($child);
+            self::cleanNode($child, $dropRemoteResources);
         }
     }
 
-    private static function cleanNode(DOMNode $node): void
+    private static function cleanNode(DOMNode $node, bool $dropRemoteResources = false): void
     {
         if (! $node instanceof DOMElement) {
             if ($node->nodeType === XML_TEXT_NODE) {
@@ -139,7 +166,13 @@ final class HtmlSanitizer
             return;
         }
 
-        self::cleanChildren($node);
+        if ($dropRemoteResources && in_array($name, self::FETCHING_ELEMENTS, true)) {
+            $node->parentNode?->removeChild($node);
+
+            return;
+        }
+
+        self::cleanChildren($node, $dropRemoteResources);
 
         if (! array_key_exists($name, self::ALLOWED_ELEMENTS)) {
             self::unwrap($node);
