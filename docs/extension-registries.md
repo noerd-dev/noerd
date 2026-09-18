@@ -384,7 +384,8 @@ Resolves media IDs to URLs for `type: image` fields and handles plain file uploa
 |--------|-------------|
 | `getPreviewUrl(int $mediaId): ?string` | Preview URL for a media item |
 | `exists(int $mediaId): bool` | Whether the media item exists |
-| `getRelativeUrl(int $mediaId): ?string` | Relative URL (without domain) |
+| `getRelativeUrl(int $mediaId): ?string` | Relative URL (without domain) of the ORIGINAL file |
+| `getImageUrl(int $mediaId, string $variant = 'web'): ?string` | Relative URL for DELIVERING an image (public website, e-mail): a size-limited variant instead of the original. The variant names are configuration of the media module; a file that cannot be scaled (SVG, PDF) answers with its original URL |
 | `storeUploadedFile(mixed $uploadedFile): ?string` | Store an upload, return its relative URL |
 | `isAvailable(): bool` | Whether the full media module is available |
 | `pickerComponent(): ?string` | The list component opened as the media picker (with the `selectMode`, `selectContext`, `selectToken` arguments; it answers with the `mediaSelected` event), or `null` when no library exists |
