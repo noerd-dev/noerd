@@ -2,6 +2,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import sort from '@alpinejs/sort';
 import focus from '@alpinejs/focus';
+import { noerdChunkUploads } from './upload-chunks.js';
 
 function parseShortcut(shortcut) {
     const parts = shortcut.toLowerCase().split('+').map(p => p.trim());
@@ -377,17 +378,80 @@ document.addEventListener('alpine:init', () => {
     }));
 
     // Drag & drop uploads on top of Livewire's file upload.
-    Alpine.data('noerdDropzone', ({ property = 'temporaryFiles' } = {}) => ({
+    //
+    // A selection is uploaded in CONSECUTIVE requests: the browser hands
+    // everything to Livewire in one POST, and PHP refuses a request carrying
+    // more than `max_file_uploads` files or more than `post_max_size` bytes —
+    // by answering with a warning instead of a response, so the whole upload
+    // fails with nothing to see. Splitting the selection server-side is not
+    // possible; the request never arrives. See noerdChunkUploads().
+    Alpine.data('noerdDropzone', ({ property = 'temporaryFiles', maxFiles = 20, maxBytes = 0 } = {}) => ({
         isDragging: false,
+        uploading: false,
+        uploadedCount: 0,
+        totalCount: 0,
+        uploadError: '',
+        // What one request takes — the view shows a counter above it.
+        chunkSize: maxFiles,
 
         handleDrop(event) {
             this.isDragging = false;
+            this.upload(event.dataTransfer?.files);
+        },
 
-            const files = event.dataTransfer?.files;
+        handleSelect(event) {
+            this.upload(event.target.files);
+            // Free the input so selecting the same files again still fires.
+            event.target.value = '';
+        },
 
-            if (files && files.length > 0) {
-                this.$wire.uploadMultiple(property, files);
+        async upload(fileList) {
+            const files = Array.from(fileList || []);
+
+            if (files.length === 0 || this.uploading) {
+                return;
             }
+
+            const chunks = noerdChunkUploads(files, maxFiles, maxBytes);
+
+            this.uploading = true;
+            this.uploadError = '';
+            this.uploadedCount = 0;
+            this.totalCount = files.length;
+
+            try {
+                for (const chunk of chunks) {
+                    await this.uploadChunk(chunk);
+                    this.uploadedCount += chunk.length;
+                }
+            } catch (message) {
+                this.uploadError = message;
+            } finally {
+                this.uploading = false;
+                this.totalCount = 0;
+                this.uploadedCount = 0;
+            }
+        },
+
+        uploadChunk(chunk) {
+            return new Promise((resolve, reject) => {
+                this.$wire.uploadMultiple(
+                    property,
+                    chunk,
+                    () => resolve(),
+                    (event) => reject(this.errorMessage(event)),
+                );
+            });
+        },
+
+        errorMessage(event) {
+            const status = event?.target?.status;
+
+            // 413 and a PHP-level refusal (no status, or an HTML body where
+            // JSON was expected) both mean the server turned the batch away.
+            return status === 413 || !status
+                ? this.$el.dataset.uploadRefused
+                : this.$el.dataset.uploadFailed;
         },
     }));
 

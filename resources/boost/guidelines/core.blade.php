@@ -59,8 +59,12 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 - **File uploads.** A drag-and-drop upload is the shipped `<livewire:noerd::dropzone wire:model="files" :rules="[...]" multiple />`
   — never hand-roll a drop target with `WithFileUploads`. The `rules` array (`mimes:pdf,jpg`,
   `max:2048`) also drives the `accept` attribute and the displayed size limit; the component
-  dispatches `files-updated` / `files-cleared`. Reference: `docs/detail-view.md`
-  ("Further UI Components").
+  dispatches `files-updated` / `files-cleared` — once per upload REQUEST, and a large selection
+  takes several: PHP refuses a request carrying more than `max_file_uploads` files or more than
+  `post_max_size` bytes without an error anything can catch, so the dropzone reads both limits
+  (`Noerd\Support\UploadLimits`) and uploads in batches that fit. Never work around an upload
+  size or count limit in a module, and never hand-roll a drop target that posts everything at
+  once. Reference: `docs/detail-view.md` ("Further UI Components", "Upload limits").
 - **Change history.** A record's audit trail is the shipped `noerd::audit-modal`
   (`Noerd::modal('noerd::audit-modal', ['modelClass' => Model::class, 'modelId' => $id])`, or a
   detail YAML action with `modalComponent: noerd::audit-modal`). It requires

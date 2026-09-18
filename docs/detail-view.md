@@ -935,7 +935,25 @@ custom `mount()` that replaces `$detailData` wholesale.
   `rules` the Laravel validation rules applied per file (`mimes:pdf,jpg`, `max:2048` — they also
   produce the `accept` attribute and the displayed size limit), `multiple` allows more than one
   file. It dispatches `files-updated` (with the current `files` array) after every add or remove
-  and `files-cleared` after `clearFiles()`.
+  and `files-cleared` after `clearFiles()`. A selection larger than one request may carry is
+  uploaded in CONSECUTIVE requests (see "Upload limits" below) — the host needs no configuration
+  for it, but `files-updated` fires once per batch rather than once per selection.
+
+#### Upload limits
+
+The browser posts a whole selection to Livewire in ONE request, and PHP turns that request away
+when it holds more than `max_file_uploads` files (20 by default) or more than `post_max_size`
+bytes. It does so before any application code runs and answers with a warning instead of a
+response, so the upload fails with nothing in the log and nothing on the screen.
+
+The dropzone therefore reads both limits (`Noerd\Support\UploadLimits`) and splits a larger
+selection into batches that fit, uploading them one after another. Forty files reach a server that
+accepts twenty; the reader sees `Uploading 20 of 40...` while it runs. Nothing about this is
+configurable in the application — `max_file_uploads` is a PHP-level limit that no validation rule
+can raise — and nothing in a consuming module has to change.
+
+A batch the server still refuses (a proxy limit, a failed request) now surfaces as a message on the
+dropzone instead of failing silently.
 - **`<x-noerd::dashboard-card title="..." heroicon="..." :value="$count" />`** — the square tile used
   on app dashboards. `route` opens a route modal, `component` a component modal (the fallback when
   the route is not registered), `arguments` are passed to either, `rewriteUrl: false` keeps the URL

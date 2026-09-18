@@ -5,6 +5,7 @@ use Livewire\Attributes\Modelable;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Noerd\Support\UploadLimits;
 
 new class extends Component {
     use WithFileUploads;
@@ -89,6 +90,22 @@ new class extends Component {
         $this->dispatch('files-cleared');
     }
 
+    /**
+     * What one upload request may carry. A larger selection is uploaded in
+     * consecutive requests by the Alpine side — PHP refuses an oversized one
+     * without an error the page could show.
+     *
+     * @return array{files: int, bytes: int}
+     */
+    #[Computed]
+    public function uploadChunk(): array
+    {
+        return [
+            'files' => UploadLimits::maxFilesPerRequest(),
+            'bytes' => UploadLimits::maxBytesPerRequest(),
+        ];
+    }
+
     #[Computed]
     public function accept(): string
     {
@@ -147,10 +164,15 @@ new class extends Component {
     }
 }; ?>
 
-<div class="w-full">
+{{-- The Alpine scope wraps the whole component: the dropzone area, the upload
+     error and the file list all read its state. --}}
+<div class="w-full"
+     x-data="noerdDropzone({ maxFiles: {{ $this->uploadChunk['files'] }}, maxBytes: {{ $this->uploadChunk['bytes'] }} })"
+     data-upload-refused="{{ __('The server refused the upload. Try fewer or smaller files.') }}"
+     data-upload-failed="{{ __('Upload failed. Please try again.') }}"
+     data-upload-progress="{{ __('Uploading :done of :total...') }}">
     {{-- Dropzone Area --}}
     <div
-        x-data="noerdDropzone()"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop($event)"
@@ -169,7 +191,7 @@ new class extends Component {
                     <span>{{ __('Select file') }}</span>
                     <input
                         id="file-upload-{{ $this->getId() }}"
-                        wire:model.live="temporaryFiles"
+                        @change="handleSelect($event)"
                         type="file"
                         class="sr-only"
                         accept="{{ $this->accept }}"
@@ -191,15 +213,24 @@ new class extends Component {
         </div>
 
         {{-- Upload Progress --}}
-        <div wire:loading wire:target="temporaryFiles" class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg">
+        <div x-show="uploading" x-cloak class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg">
             <div class="text-center">
                 <svg class="animate-spin h-8 w-8 text-brand-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="mt-2 text-sm text-gray-600">{{ __('Uploading...') }}</p>
+                <p class="mt-2 text-sm text-gray-600">
+                    <span x-show="totalCount <= chunkSize">{{ __('Uploading...') }}</span>
+                    <span x-show="totalCount > chunkSize" x-cloak
+                          x-text="$el.closest('[data-upload-progress]').dataset.uploadProgress.replace(':done', uploadedCount).replace(':total', totalCount)"></span>
+                </p>
             </div>
         </div>
+    </div>
+
+    <div x-show="uploadError" x-cloak x-transition
+         class="mt-2 p-3 rounded bg-red-50 border border-red-200 text-sm text-red-700">
+        <span x-text="uploadError"></span>
     </div>
 
     @error('temporaryFiles.*')
