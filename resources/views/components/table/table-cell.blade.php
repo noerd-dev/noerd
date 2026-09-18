@@ -350,19 +350,21 @@
                 @if ($value && $relationRoute)
                     <button
                         @click.stop="$modalRoute({{ \Illuminate\Support\Js::from($relationRoute) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $columnConfig['modalComponent'] ?? null])) }})"
-                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
+                        title="{{ $value }}"
+                        class="ml-1.5 inline-flex max-w-[calc(100%-0.75rem)] min-w-0 cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
                     >
-                        {{ $value }}
+                        <span class="truncate">{{ $value }}</span>
                     </button>
                 @elseif ($value && isset($columnConfig['modalComponent']))
                     <button
                         @click.stop="$modal({{ \Illuminate\Support\Js::from($columnConfig['modalComponent']) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }})"
-                        class="ml-1.5 inline-flex cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
+                        title="{{ $value }}"
+                        class="ml-1.5 inline-flex max-w-[calc(100%-0.75rem)] min-w-0 cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
                     >
-                        {{ $value }}
+                        <span class="truncate">{{ $value }}</span>
                     </button>
                 @elseif ($value)
-                    <span class="px-1.5 py-0.5 text-sm">{{ $value }}</span>
+                    <span class="block truncate px-1.5 py-0.5 text-sm" title="{{ $value }}">{{ $value }}</span>
                 @endif
             @elseif ($type === 'colored_text')
                 <div
@@ -371,22 +373,25 @@
                     @else
                         wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     @endif
-                    class="inline-flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5"
+                    class="inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1.5 px-1.5 py-0.5"
                 >
                     @if (is_array($value) && isset($value['prefix']))
-                        <span class="text-sm {{ $value['prefixClass'] ?? '' }}">{{ $value['prefix'] }}</span>
+                        <span class="shrink-0 text-sm {{ $value['prefixClass'] ?? '' }}">{{ $value['prefix'] }}</span>
                     @endif
                     @if (is_array($value) && isset($value['text']) && $value['text'] !== '')
-                        <span class="inline-flex items-center px-2 rounded text-sm font-medium {{ $value['class'] ?? '' }}">
+                        <span
+                            title="{{ $value['text'] }}"
+                            class="truncate px-2 rounded text-sm font-medium {{ $value['class'] ?? '' }}"
+                        >
                             {{ $value['text'] }}
                         </span>
                     @elseif (!is_array($value) && $value !== '' && $value !== null)
-                        <span class="text-sm">{{ $value }}</span>
+                        <span class="truncate text-sm" title="{{ $value }}">{{ $value }}</span>
                     @endif
                     @if (is_array($value) && ! empty($value['icon']))
                         <x-icon
                             name="{{ $value['icon'] }}"
-                            class="w-4 h-4 {{ $value['iconClass'] ?? 'text-gray-500' }}"
+                            class="w-4 h-4 shrink-0 {{ $value['iconClass'] ?? 'text-gray-500' }}"
                         />
                     @endif
                 </div>

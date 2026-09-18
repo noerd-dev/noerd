@@ -72,9 +72,7 @@ new class extends Component {
                         <div class="inline-block mb-2">
                             <x-noerd::app-icon
                                     :icon="$tenantApp->icon"
-                                    class="{{ $selectedApp === $tenantApp->name  ? 'stroke-brand-primary border-brand-primary' :
-                                'stroke-black border-transparent hover:border-gray-500!' }}
-                                border-l-2"/>
+                                    class="{{ $selectedApp === $tenantApp->name ? 'stroke-brand-primary' : 'stroke-black' }}"/>
                         </div>
 
                         <div @class([

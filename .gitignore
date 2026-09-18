@@ -17,6 +17,9 @@ node_modules/
 *.swp
 *.swo
 
+# Claude Code (local, private: agent memory, local settings)
+.claude/
+
 # Temporary files
 *.tmp
 *.temp

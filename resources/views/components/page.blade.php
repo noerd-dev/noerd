@@ -57,8 +57,13 @@
             shortcuts: @js($shortcuts),
             deleteMessage: @js(__('Are you sure you want to delete this entry?')),
         })"
-        @class(['flex flex-col', '-mx-8' => $disableModal])
+        data-noerd-page
+        @class(['flex flex-col', '-mx-(--noerd-page-inset)' => $disableModal])
         @unless ($disableModal)
+            {{-- isModal / isNestedPage are resolved by noerdPage: only the outermost page
+                 of a modal takes the modal chrome, a page nested in another page (a full
+                 list inside a detail tab) takes neither the modal nor the viewport height.
+                 typeof keeps a published bundle older than this view from throwing. --}}
             :class="isModal
                 ? '-m-6 -mt-12 flex flex-col max-h-[calc(100dvh-64px)] transition-[min-height,max-height] duration-200 ease-out ' +
                   (isRight
@@ -66,7 +71,7 @@
                       : modalFullscreen
                         ? 'sm:min-h-[100dvh] sm:max-h-[100dvh]'
                         : 'sm:min-h-0 sm:max-h-[calc(100dvh-7rem)]')
-                : 'h-[calc(100dvh_-_2.9375rem_-_var(--banner-height,0px)_-_var(--impersonation-banner-height,0px)_-_var(--environment-banner-height,0px))]'"
+                : (typeof isNestedPage !== 'undefined' && isNestedPage) ? '' : 'h-[calc(100dvh_-_2.9375rem_-_var(--banner-height,0px)_-_var(--impersonation-banner-height,0px)_-_var(--environment-banner-height,0px))]'"
         @endunless
     @endunless
 >
@@ -77,14 +82,17 @@
              replace the form body with the friendly denied state — no footer. --}}
         {{ $header ?? '' }}
 
-        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
+        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 [--noerd-page-inset:1.5rem]">
             @include('noerd::components.object-access-denied')
         </div>
     @else
         {{ $header ?? '' }}
         {{ $table ?? '' }}
 
-        <div class="flex-1 min-h-0 px-6 overflow-y-auto{{ $bodyPadding ? ' pt-6 pb-8' : '' }}{{ $hasCurrentTab ? ' flex flex-col' : '' }}">
+        {{-- The body publishes its px-6 as --noerd-page-inset, so a disableModal page
+             nested anywhere inside it (tab panel, detail-list, widget) breaks out by
+             exactly this padding and sits flush with the page edge. --}}
+        <div class="flex-1 min-h-0 px-6 [--noerd-page-inset:1.5rem] overflow-y-auto{{ $bodyPadding ? ' pt-6 pb-8' : '' }}{{ $hasCurrentTab ? ' flex flex-col' : '' }}">
             @if (! empty($pageDetailActionsLayout['actions']))
                 <x-noerd::detail-actions :layout="$pageDetailActionsLayout" :modelId="$pageComponent->modelId ?? null" :urls="$pageDetailActionUrls" />
             @endif

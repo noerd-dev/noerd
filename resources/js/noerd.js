@@ -523,10 +523,22 @@ document.addEventListener('alpine:init', () => {
     // Keyboard shortcut support for detail pages
     Alpine.data('noerdPage', ({ currentTab, shortcuts, deleteMessage }) => ({
         currentTab,
+        // Both shadow the inherited scope for this page and everything inside it.
+        // The modal panel sets `isModal` for its whole subtree, so a full page nested
+        // in another page (e.g. a list embedded in a detail tab) used to take the
+        // modal chrome too: negative margins that overflow the tab panel, the modal
+        // max-height and the header space reserved for the panel controls.
+        isModal: false,
+        isNestedPage: false,
         _parsedShortcuts: {},
         _keydownHandler: null,
 
         init() {
+            // Runs before the root's :class binding (x-data initialises first).
+            const parent = this.$el.parentElement;
+            this.isNestedPage = Boolean(parent?.closest('[data-noerd-page]'));
+            this.isModal = ! this.isNestedPage && Boolean(parent && Alpine.$data(parent)?.isModal);
+
             for (const [action, str] of Object.entries(shortcuts || {})) {
                 this._parsedShortcuts[action] = parseShortcut(str);
             }

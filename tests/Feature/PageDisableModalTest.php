@@ -17,7 +17,7 @@ describe('Page disableModal fallback', function (): void {
     });
 
     /** The page root breaks out of the surrounding padding via a negative horizontal margin. */
-    $breakout = '/<div\b[^>]*\bclass="[^"]*-mx-8[^"]*"/';
+    $breakout = '/<div\b[^>]*\bclass="[^"]*-mx-\(--noerd-page-inset\)[^"]*"/';
 
     it('does not apply the breakout style by default', function () use ($breakout): void {
         $html = Livewire::test('noerd-test::page-chrome-list')
