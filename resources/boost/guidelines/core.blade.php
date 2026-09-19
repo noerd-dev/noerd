@@ -187,6 +187,11 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 ### Install Command Required for Every App Module
 - Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) MUST ship a `noerd:install-{module}` command. New submodules always get one — never rely on the manual `noerd:make-app` flow.
 - The command extends `Illuminate\Console\Command`, uses the `HasModuleInstallation` and `RequiresNoerdInstallation` traits, and implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` calls `$this->runModuleInstallation()` (which copies the YAML configs, registers the app via a published migration and runs migrations).
+- `RequiresNoerdInstallation::ensureNoerdInstalled()` INSTALLS the base package on the fly when a
+  command named `noerd:install*` runs on a project without `config/noerd.php` (it calls
+  `noerd:install`, forwarding the shared `--force`/`--migrate`/`--build`/`--demo` options) — installing
+  a module is a valid first command. Every other command (update, scaffold, demo) still aborts with the
+  hint to run `noerd:install`; never re-implement that guard per module.
 - Register the command in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`.
 - The `noerd:make-module` scaffolder generates this command and its ServiceProvider registration automatically, from `src/Commands/stubs/module/install-command.stub`.
 - Every such module MUST also ship a `noerd:update-{module}` command — a slim subclass of the install

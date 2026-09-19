@@ -194,7 +194,13 @@ The traits behind every `noerd:install-{module}` command — covered in full in 
 | `ensureDashboardWidget(array $widget, array $legacyComponents = []): void` | Adds a dashboard widget when missing |
 | `ensureSetupNavigation(string $blockTitle, array $entry): void` | Adds an entry to the setup navigation when missing |
 
-`RequiresNoerdInstallation` contributes `ensureNoerdInstalled(): bool` (aborts with a hint when `noerd:install` has not run) and `assignAppToTenants(string $appName): void`.
+`RequiresNoerdInstallation` contributes `ensureNoerdInstalled(?bool $autoInstall = null): bool` and
+`assignAppToTenants(string $appName): void`. On a project where `noerd:install` has not run yet, an
+INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself — forwarding the options both
+commands share (`--force`, `--migrate`, `--build`, `--demo`) — and continues once the base package is
+in place; it only aborts with the manual hint when that installation did not complete. Every other
+command (update, scaffold, demo) keeps aborting with the hint. Pass `$autoInstall` explicitly to
+override the decision, which `shouldAutoInstallNoerd()` otherwise derives from the command name.
 
 
 ## GuardedByObjectPermission (Eloquent models)
