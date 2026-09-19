@@ -163,6 +163,18 @@ public function handle(): int
 A command started that way skips its own tenant question (`Noerd\Support\ModuleInstallContext`) —
 the user started one installation and answers one question about tenants.
 
+### npm runs once, at the end
+
+`noerd:install-{module}` on a fresh project installs the base package on the way, and that
+installer sets up the frontend. It does NOT run node there: `npm install` and `npm run build` are
+handed to the module command and run at the end of its installation, so they see the module's files
+and whatever it pulled in (the website boilerplate behind the CMS) instead of compiling a project
+they have not been added to yet. The build question is asked once, by the command the user started.
+
+A module command needs no code for it — `askForNpmBuild()` picks the handed-over work up. If the
+installation dies first, it says which command to run by hand.
+
+
 ### The closing callout
 
 A finished installation ends with a `{Module} is ready` box linking the module's own app route
