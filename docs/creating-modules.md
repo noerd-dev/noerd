@@ -112,7 +112,9 @@ Artisan commands; `noerd:make-module` generates both from its stubs:
   Its `handle()` calls `$this->runModuleInstallation()`, which copies the YAML configs into
   `app-configs/{module}/`, registers the tenant app and runs the migrations. With `--scaffold`
   (declared by the generated command) it runs silently right after `noerd:make-app` — configs,
-  registration and the tenant assignment question only, no migration or build prompt.
+  registration and the tenant assignment question only, no migration or build prompt. On a project
+  where the base package is not installed yet, the command runs `noerd:install` first and then
+  continues — installing a module is a valid first command in a fresh project.
 - **`noerd:update-{module}`** — a slim subclass of the install command whose `handle()` calls
   `$this->runModuleUpdate()` (never `runModuleInstallation()`, which prompts for the tenant
   assignment) plus the module's idempotent post-install steps. `noerd:update-all` discovers every
