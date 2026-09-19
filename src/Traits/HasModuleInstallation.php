@@ -6,7 +6,9 @@ namespace Noerd\Traits;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Noerd\Models\TenantApp;
+use Noerd\Support\ModuleInstallContext;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -77,6 +79,38 @@ trait HasModuleInstallation
     protected function getAdditionalSubdirectories(): array
     {
         return [];
+    }
+
+    /**
+     * Tenant apps this module cannot work without — the CMS needs MEDIA for its
+     * image pickers, so a tenant that gets the CMS must be able to get MEDIA too.
+     *
+     * They are assigned to exactly the tenants the module's own app was assigned
+     * to, in the SAME prompt: a dependency never asks a question of its own.
+     * Assignment is additive only — deselecting a tenant here never removes an
+     * app another module may equally depend on.
+     *
+     * Example: ['MEDIA']
+     *
+     * @return array<string>
+     */
+    protected function getRequiredAppKeys(): array
+    {
+        return [];
+    }
+
+    /**
+     * Run another module's install command as a DEPENDENCY of this one: the
+     * nested command publishes its configs and registers its app, but skips its
+     * own tenant prompt — this module assigns it through getRequiredAppKeys().
+     *
+     * @param  array<string, mixed>  $arguments
+     */
+    protected function installDependencyModule(string $command, array $arguments = []): int
+    {
+        return (int) ModuleInstallContext::asDependency(
+            fn(): int => Artisan::call($command, $arguments, $this->output),
+        );
     }
 
     /**
@@ -347,7 +381,7 @@ trait HasModuleInstallation
             return Command::FAILURE;
         }
 
-        $this->assignAppToTenants($appKey, compact: true);
+        $this->assignAppToTenants($appKey, compact: true, alsoAssign: $this->requiredAppKeysFor($appKey));
 
         return Command::SUCCESS;
     }
@@ -357,18 +391,57 @@ trait HasModuleInstallation
      *
      * Always offered — both on a fresh install and when the app already exists
      * (the update path) — so tenant assignment is never silently skipped.
+     *
+     * Except while this module is installed as a DEPENDENCY of another one: the
+     * app that requires it names it in getRequiredAppKeys() and assigns it in
+     * its own prompt, so asking here would be a second question about tenants
+     * the user never started an installation for.
      */
     protected function promptAppTenantAssignment(string $appKey): void
     {
+        if (ModuleInstallContext::isDependencyInstall()) {
+            $this->line('');
+            $this->comment("Tenant assignment for '{$this->getModuleName()}' follows the app that requires it.");
+
+            return;
+        }
+
         $this->line('');
         if ($this->confirm('Would you like to assign the app to tenants now?', true)) {
-            $this->assignAppToTenants($appKey);
+            $this->assignAppToTenants($appKey, alsoAssign: $this->requiredAppKeysFor($appKey));
         }
 
         $this->line('');
         $this->comment('Note: On non-local systems (staging/production), tenant assignment');
         $this->comment('must be done manually after deployment using:');
         $this->line('  php artisan noerd:assign-apps-to-tenant');
+    }
+
+    /**
+     * The required apps that are actually registered, without the module's own
+     * app. A module may name an app whose package is not installed here — that
+     * is a missing optional dependency, not a reason to fail the installation.
+     *
+     * @return array<string>
+     */
+    protected function requiredAppKeysFor(string $appKey): array
+    {
+        $keys = array_values(array_unique(array_filter(
+            array_map(strtoupper(...), $this->getRequiredAppKeys()),
+            static fn(string $key): bool => $key !== $appKey,
+        )));
+
+        if ($keys === []) {
+            return [];
+        }
+
+        $registered = TenantApp::whereIn('name', $keys)->pluck('name')->all();
+
+        foreach (array_diff($keys, $registered) as $missing) {
+            $this->warn("Required app '{$missing}' is not installed — assign it manually once its module is installed.");
+        }
+
+        return array_values(array_intersect($keys, $registered));
     }
 
     /**
