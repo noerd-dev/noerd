@@ -210,6 +210,11 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   BEFORE `runModuleInstallation()` (so the dependency's app row exists when the tenant prompt runs).
   The nested command then skips its own tenant question — one installation, one question about
   tenants. Never `Artisan::call()` a sibling install command directly.
+- npm runs ONCE, at the END of the installation the user started: a base installation running for a
+  module hands `npm install` / `npm run build` to that command (`ModuleInstallContext::deferNpm()`),
+  so node sees the module's files — and whatever it pulled in — instead of compiling a project it
+  has not been added to yet. `askForNpmBuild()` picks the work up; never run node from a module
+  command yourself.
 - A finished installation closes with a generic `{Module} is ready` callout linking the module's own
   app route (`getAppRoute()`); `runModuleInstallation()` prints it, a module never adds its own. It
   is skipped for a dependency install, and `noerd:install` skips its "Application ready" box while

@@ -333,9 +333,28 @@ trait HasModuleInstallation
             return Command::SUCCESS;
         } catch (Exception $e) {
             $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
+            $this->warnAboutDeferredNpm();
 
             return Command::FAILURE;
         }
+    }
+
+    /**
+     * A base installation that ran for this command handed its npm work over —
+     * say so when the installation died before it could be done, otherwise the
+     * project is left with build tooling in package.json and no node_modules.
+     */
+    protected function warnAboutDeferredNpm(): void
+    {
+        if (! ModuleInstallContext::hasDeferredNpm()) {
+            return;
+        }
+
+        ModuleInstallContext::takeDeferredNpmPackages();
+        ModuleInstallContext::takeDeferredNpmBuild();
+
+        $this->warn('The frontend was not set up. Run it manually once the error is fixed:');
+        $this->warn('  npm install && npm run build');
     }
 
     /**
@@ -977,6 +996,11 @@ trait HasModuleInstallation
      */
     protected function askForNpmBuild(): void
     {
+        // A base installation that ran for this command handed its npm work over
+        // — the packages are installed here, where the module's files exist.
+        $this->installDeferredNpmPackages();
+        ModuleInstallContext::takeDeferredNpmBuild();
+
         $this->line('');
 
         if ($this->confirm('Would you like to run "npm run build" to compile frontend assets?', true)) {

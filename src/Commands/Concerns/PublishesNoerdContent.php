@@ -20,7 +20,9 @@ use Noerd\Services\FrontendScaffolder;
 trait PublishesNoerdContent
 {
     use PublishesConfigDirectory;
+
     use RegistersBoostPackage;
+    use RunsNpmBuild;
 
     /**
      * Copy directory contents recursively (see PublishesConfigDirectory).
@@ -110,7 +112,8 @@ trait PublishesNoerdContent
 
             $this->displayFrontendSummary($scaffolder->scaffold());
 
-            // Install whatever the scaffolder added to package.json
+            // Install whatever the scaffolder added to package.json — deferred
+            // to the end of the run while this is a module's base installation.
             $this->installNpmPackages($scaffolder->missingNpmPackages());
 
             // Update Livewire component layout
@@ -154,37 +157,6 @@ trait PublishesNoerdContent
         }
     }
 
-    /**
-     * Install the npm packages the scaffolder added to package.json
-     *
-     * @param  array<int, string>  $packages
-     */
-    protected function installNpmPackages(array $packages): void
-    {
-        if ($packages === []) {
-            $this->line('<comment>All required npm packages are already declared.</comment>');
-
-            return;
-        }
-
-        $this->line('<comment>Installing npm packages...</comment>');
-
-        // Process handles the working directory and argument escaping — the
-        // previous string-built `cd <path> && npm install ...` broke on paths
-        // with spaces and discarded npm's diagnostics on failure.
-        $result = Process::path(base_path())
-            ->timeout(300)
-            ->run(array_merge(['npm', 'install'], $packages, ['--save-dev']));
-
-        if ($result->failed()) {
-            $this->warn('Failed to install npm packages:');
-            $this->warn(mb_trim($result->errorOutput() ?: $result->output()));
-            $this->warn('You may need to run the following manually:');
-            $this->warn('npm install ' . implode(' ', $packages) . ' --save-dev');
-        } else {
-            $this->line('<info>NPM packages installed successfully.</info>');
-        }
-    }
 
     /**
      * Detect the installed Node version so the scaffolder can pin compatible build tooling

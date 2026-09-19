@@ -315,6 +315,16 @@ class NoerdInstallCommand extends Command
     {
         $this->newLine();
 
+        // Installed for a module: the build belongs at the end of THAT run, once
+        // the module's files are in place — otherwise node compiles a project the
+        // module has not been added to yet, and asks the same question twice.
+        if (ModuleInstallContext::isDependencyInstall()) {
+            ModuleInstallContext::deferNpm(build: true);
+            $this->line('<comment>The frontend build runs once the module installation has finished.</comment>');
+
+            return;
+        }
+
         $shouldBuild = $this->boolOption('build');
 
         if (! $shouldBuild && ! $this->input->isInteractive()) {
