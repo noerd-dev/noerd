@@ -163,6 +163,16 @@ public function handle(): int
 A command started that way skips its own tenant question (`Noerd\Support\ModuleInstallContext`) —
 the user started one installation and answers one question about tenants.
 
+### The closing callout
+
+A finished installation ends with a `{Module} is ready` box linking the module's own app route
+(`getAppRoute()`, e.g. `/cms`), falling back to `/noerd-apps` when that route is not registered.
+Nothing to implement — `runModuleInstallation()` prints it.
+
+It is skipped for a module installed as a dependency, and the base installer's own
+"Application ready" box is skipped while it runs for a module install: one installation ends with
+one box, at the end.
+
 ## Customization
 
 After creation, customize the module:
