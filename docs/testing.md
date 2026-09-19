@@ -244,6 +244,44 @@ it('publishes the module configs', function (): void {
 });
 ```
 
+### A moved base path does not move vendor:publish
+
+An install-command test usually moves the application's base path aside so the command publishes
+into a throwaway directory:
+
+```php
+$this->app->setBasePath($this->hostPath);
+```
+
+`vendor:publish` does NOT follow: it resolves its targets from the paths the service providers
+registered when they BOOTED, against the base path of that moment. A publish therefore writes into
+the REAL installation, and `--force` makes it silent — this is how a test run used to reset the
+developer's own `config/livewire.php` to the Livewire default and break every route test that
+followed it.
+
+The core's own publishes are guarded (`PublishesNoerdContent::publishTargetsCurrentInstallation()`,
+which skips with a warning when the registered target lies outside `base_path()`). A module command
+that publishes through `vendor:publish` guards it the same way, or its test asserts the published
+file instead of relying on the moved path.
+
+A test must also never move a directory the whole test run shares (`storage/fonts`, `public/`)
+aside: a parallel worker uses it at the same time, and a failing assertion never restores it. Point
+the application at a throwaway path instead (`app()->useStoragePath(...)`) and restore it in a
+`finally`.
+
+### The base package is installed on the fly
+
+`noerd:install-{module}` runs `noerd:install` when `config/noerd.php` is missing — installing a
+module is a valid first command in a fresh project. A test that does not want the real installer to
+run registers a stand-in for it:
+
+```php
+$this->app[Kernel::class]->registerCommand(new ZzFakeNoerdInstallCommand());
+```
+
+It must declare the same options the real command does (`--force`, `--migrate`, `--build`,
+`--demo`, `--no-demo`), so a forwarded option never makes the input throw.
+
 ## Factories
 
 A factory's `definition()` must produce a fully valid, persistable record: every non-relation scalar

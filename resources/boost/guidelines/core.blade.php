@@ -214,6 +214,12 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   app route (`getAppRoute()`); `runModuleInstallation()` prints it, a module never adds its own. It
   is skipped for a dependency install, and `noerd:install` skips its "Application ready" box while
   it runs for one — one installation ends with one box, at the end.
+- `vendor:publish` does NOT follow a moved base path — it resolves its targets from what the service
+  providers registered when they BOOTED, so a command running against a throwaway `setBasePath()`
+  (an install-command test) writes into the REAL installation, silently with `--force`. Guard every
+  publish with `PublishesNoerdContent::publishTargetsCurrentInstallation($tag)`. A test likewise
+  never moves a run-wide shared directory (`storage/fonts`, `public/`) aside — point the app at a
+  throwaway path (`useStoragePath()`) and restore it in a `finally`.
 - Reference: the `install-command.stub` / `update-command.stub` rendered by `noerd:make-module` (`src/Commands/stubs/module/`) and `docs/creating-modules.md`.
 
 ### Eloquent Models: $guarded instead of $fillable

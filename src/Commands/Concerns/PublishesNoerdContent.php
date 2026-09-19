@@ -7,6 +7,7 @@ namespace Noerd\Commands\Concerns;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\ServiceProvider;
 use Noerd\Services\FrontendScaffolder;
 
 /**
@@ -45,11 +46,47 @@ trait PublishesNoerdContent
      */
     protected function publishNoerdAssets(): void
     {
+        if (! $this->publishTargetsCurrentInstallation('noerd-assets')) {
+            $this->warn('Skipping the noerd asset publish: it would write outside this installation.');
+
+            return;
+        }
+
         $this->call('vendor:publish', [
             '--tag' => 'noerd-assets',
             '--force' => true,
             '--no-interaction' => true,
         ]);
+    }
+
+    /**
+     * Whether `vendor:publish --tag={$tag}` would write into the installation
+     * this command is installing into.
+     *
+     * vendor:publish resolves its targets from the paths the service providers
+     * registered when they BOOTED — against the base path the application had
+     * then. A command running with a moved base path (a test fixture, a build
+     * tool) would therefore overwrite the real installation's files instead of
+     * the ones it is publishing into, and `--force` makes that silent. So a
+     * publish only runs while its targets still lie inside base_path().
+     */
+    protected function publishTargetsCurrentInstallation(string $tag): bool
+    {
+        $paths = ServiceProvider::pathsToPublish(null, $tag);
+
+        if ($paths === []) {
+            return false;
+        }
+
+        $base = mb_rtrim(base_path(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+        foreach ($paths as $target) {
+            if (! str_starts_with((string) $target, $base)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -171,6 +208,14 @@ trait PublishesNoerdContent
         $configPath = base_path('config/livewire.php');
 
         if (! File::exists($configPath)) {
+            // livewire:config is vendor:publish --force behind a nicer name.
+            if (! $this->publishTargetsCurrentInstallation('livewire:config')) {
+                $this->warn('Skipping the Livewire config publish: it would write outside this installation.');
+                $this->warn('Please set component_layout to noerd::layouts.app manually.');
+
+                return;
+            }
+
             $this->line('<comment>Publishing Livewire config file...</comment>');
             $this->call('livewire:config', ['--no-interaction' => true]);
         }
