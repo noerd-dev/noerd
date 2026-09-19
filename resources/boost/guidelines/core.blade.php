@@ -184,37 +184,34 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   register the package(s) in `boost.json` and run `boost:update`, so the rendered agent rules
   follow the installed version — never edit the generated `<laravel-boost-guidelines>` block by hand.
 
-### Install Command Required for Every App Module
-- Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) MUST ship a `noerd:install-{module}` command. New submodules always get one — never rely on the manual `noerd:make-app` flow.
-- The command extends `Illuminate\Console\Command`, uses the `HasModuleInstallation` and `RequiresNoerdInstallation` traits, and implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` calls `$this->runModuleInstallation()` (which copies the YAML configs, registers the app via a published migration and runs migrations).
-- `RequiresNoerdInstallation::ensureNoerdInstalled()` INSTALLS the base package on the fly when a
+### Install and Update Command Required for Every Module
+- Every module MUST ship a `noerd:install-{module}` AND a `noerd:update-{module}` command. New submodules always get both — never rely on the manual `noerd:make-app` flow. `noerd:update-all` discovers every command named `noerd:update-{module}`, so a missing one silently drops the module out of the project-wide update.
+- A TENANT APP (has `app-configs/{module}/` with a `navigation.yml`): the install command extends `Illuminate\Console\Command`, uses the `HasModuleInstallation` trait and implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` is `return $this->runModuleInstallation();`; the update command is a slim subclass whose `handle()` is `return $this->runModuleUpdate();` (never `runModuleInstallation()`, which prompts for the tenant assignment).
+- A SUPPORT MODULE (no tenant app, no navigation) uses the `InstallsNoerdModule` trait, implements only `getModuleName()` and calls `runSupportModuleInstallation()` / `runSupportModuleUpdate()`. Never use `HasModuleInstallation` with dummy getters for it.
+- What a module publishes is DECLARED, never coded: `getConfigFiles()` (PHP config into `config/` — install asks before overwriting, an update NEVER overwrites an existing config, not even under `--force`), a `{module}/app-configs/setup/` folder (setup-app YAML), `getAppConfigsDir()` (YAML of a support module's screens), `getAdditionalSubdirectories()`. Skills and the `boost.json` registration need no declaration. NEVER hand-roll a `publishConfig()`, a recursive copy loop, a migration `confirm()` or a shell-out (`exec('composer require …')` — the command only exists once the package is installed).
+- Files beyond the declared ones (the auditing migration via `PublishesAuditMigration`, a patch to a host config file) go into `publishModuleExtras(bool $update)` — it runs BEFORE the migration prompt, on install and update, idempotent.
+- The module's own steps — `ensureSetupNavigation()`, `ensureQuickMenuButton()`, `ensureDashboardWidget()`, seeds — go into `ensureModuleSetup()`. It runs at the end of the installation (after the migration prompt) AND on every update, so it MUST be idempotent, ask nothing and guard tables that may not be migrated yet. Never wrap them in `if ($result === 0) { … }` around the run methods, and never write host files before the run method (it is what verifies the base package).
+- Nothing migrates or builds implicitly: `askForMigration()` / `askForNpmBuild()` skip in a non-interactive run unless the command declares and receives `--migrate` / `--build`.
+- `RequiresNoerdInstallation::ensureNoerdInstalled()` (part of both traits) INSTALLS the base package on the fly when a
   command named `noerd:install*` runs on a project without `config/noerd.php` (it calls
-  `noerd:install`, forwarding the shared `--force`/`--migrate`/`--build`/`--demo` options, plus
-  `--no-demo` unless the caller asked for the demo) — installing a module is a valid first command. Every other command (update, scaffold, demo) still aborts with the
+  `noerd:install` as a dependency, forwarding the shared `--force`/`--migrate`/`--build`/`--demo`
+  options) — installing a module is a valid first command. Every other command (update, scaffold, demo) still aborts with the
   hint to run `noerd:install`; never re-implement that guard per module.
-- Register the command in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`.
-- The `noerd:make-module` scaffolder generates this command and its ServiceProvider registration automatically, from `src/Commands/stubs/module/install-command.stub`.
-- Every such module MUST also ship a `noerd:update-{module}` command — a slim subclass of the install
-  command whose `handle()` calls `$this->runModuleUpdate()` (never `runModuleInstallation()`, which
-  prompts for the tenant assignment) plus the module's *idempotent* post-install steps (e.g.
-  `ensureDashboardWidget()`), never the install-only ones. A module without an `app-configs/` folder
-  republishes its config instead.
-  Register it next to the install command. `noerd:update-all` discovers every command named
-  `noerd:update-{module}`, so a missing one silently drops the module out of the project-wide update.
-- A module that cannot work without ANOTHER tenant app (the CMS without `MEDIA`) declares it as
-  `getRequiredAppKeys(): ['MEDIA']` on its install command — never by asking a second time. The
-  required app is assigned to exactly the tenants the module's app was assigned to, in the SAME
-  prompt, and ADDITIVELY: deselecting a tenant never removes an app another module may need. An app
-  whose package is not installed is warned about, never fatal.
-- A module that installs that dependency itself calls `$this->installDependencyModule('noerd:install-{dep}')`
-  BEFORE `runModuleInstallation()` (so the dependency's app row exists when the tenant prompt runs).
-  The nested command then skips its own tenant question — one installation, one question about
-  tenants. Never `Artisan::call()` a sibling install command directly.
+- Register both commands in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`. The `noerd:make-module` scaffolder generates them and the registration from `src/Commands/stubs/module/`.
+- A module that cannot work without ANOTHER module (the CMS without media) declares it as
+  `getRequiredModules(): ['MEDIA' => 'noerd:install-media']` on its install command. A required
+  module whose app is not registered yet is installed first, AS A DEPENDENCY
+  (`ModuleInstallContext`): it publishes and registers with its defaults and asks NOTHING — no
+  title, no tenants, no migration, no build, no closing callout. Its app is then assigned to exactly
+  the tenants the module's app was assigned to, in the SAME prompt, and ADDITIVELY: deselecting a
+  tenant never removes an app another module may need. An app whose package is not installed is
+  warned about, never fatal. Never `Artisan::call()` a sibling install command directly and never
+  copy an `install{X}IfNeeded()` method between modules.
 - npm runs ONCE, at the END of the installation the user started: a base installation running for a
   module hands `npm install` / `npm run build` to that command (`ModuleInstallContext::deferNpm()`),
   so node sees the module's files — and whatever it pulled in — instead of compiling a project it
-  has not been added to yet. `askForNpmBuild()` picks the work up; never run node from a module
-  command yourself.
+  has not been added to yet. `askForNpmBuild()` (tenant app) / `finishDeferredNpm()` (support module)
+  pick the work up inside the run methods; never run node from a module command yourself.
 - A finished installation closes with a generic `{Module} is ready` callout linking the module's own
   app route (`getAppRoute()`); `runModuleInstallation()` prints it, a module never adds its own. It
   is skipped for a dependency install, and `noerd:install` skips its "Application ready" box while

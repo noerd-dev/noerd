@@ -8,23 +8,33 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 use function Laravel\Prompts\callout;
 
 use Laravel\Prompts\Elements\Link;
 use Laravel\Prompts\Elements\NumberedList;
+
+use function Laravel\Prompts\multiselect;
+
+use Noerd\Events\TenantAppAssigned;
+use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Support\ModuleInstallContext;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * Install/update contract of a module that IS a tenant app: on top of
+ * InstallsNoerdModule it publishes the app's own app-configs folder with its
+ * navigation, registers the tenant-app row and assigns the app to tenants.
+ *
+ *     public function handle(): int { return $this->runModuleInstallation(); }
+ *     // update command (subclass): return $this->runModuleUpdate();
+ */
 trait HasModuleInstallation
 {
-    use \Noerd\Commands\Concerns\PublishesConfigDirectory;
-    use \Noerd\Commands\Concerns\RegistersBoostPackage;
-    use \Noerd\Commands\Concerns\RunsNpmBuild;
+    use InstallsNoerdModule;
 
     /** @var array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int} */
     private array $installResults = [
@@ -36,15 +46,7 @@ trait HasModuleInstallation
 
     private ?string $installedAppKey = null;
 
-    private ?string $targetAppKey = null;
-
     private ?string $appTitle = null;
-
-    /**
-     * Get the module name for display purposes.
-     * Example: "Business Hours"
-     */
-    abstract protected function getModuleName(): string;
 
     /**
      * Get the module key (kebab-case).
@@ -59,8 +61,8 @@ trait HasModuleInstallation
     abstract protected function getDefaultAppTitle(): string;
 
     /**
-     * Get the app icon view path.
-     * Example: "business-hours::icons.app"
+     * Get the app icon: a heroicon reference or a Blade icon view.
+     * Example: "heroicon:outline:clock" or "business-hours::icons.app"
      */
     abstract protected function getAppIcon(): string;
 
@@ -72,43 +74,53 @@ trait HasModuleInstallation
 
     /**
      * Get the source directory for content files.
-     * Example: base_path('app-modules/business-hours/app-configs/business-hours')
+     * Example: dirname(__DIR__, 2) . '/app-configs/business-hours'
      */
     abstract protected function getSourceDir(): string;
 
     /**
-     * Get additional subdirectories to copy (beyond lists and details).
-     * Example: ['collections', 'forms'] for CMS
+     * Modules this one cannot work without, as tenant-app key => install command
+     * — the CMS needs the media library for its image pickers:
      *
-     * @return array<string>
+     *     return ['MEDIA' => 'noerd:install-media'];
+     *
+     * A module that is not installed yet is installed first, as a DEPENDENCY: it
+     * publishes and registers, but asks no questions of its own. Its app is then
+     * assigned along with this one (getRequiredAppKeys()).
+     *
+     * @return array<string, string>
      */
-    protected function getAdditionalSubdirectories(): array
+    protected function getRequiredModules(): array
     {
         return [];
     }
 
     /**
-     * Tenant apps this module cannot work without — the CMS needs MEDIA for its
-     * image pickers, so a tenant that gets the CMS must be able to get MEDIA too.
-     *
-     * They are assigned to exactly the tenants the module's own app was assigned
-     * to, in the SAME prompt: a dependency never asks a question of its own.
-     * Assignment is additive only — deselecting a tenant here never removes an
-     * app another module may equally depend on.
-     *
-     * Example: ['MEDIA']
+     * Tenant apps this module cannot work without. They are assigned to exactly
+     * the tenants the module's own app was assigned to, in the SAME prompt: a
+     * dependency never asks a question of its own. Assignment is additive only —
+     * deselecting a tenant here never removes an app another module may equally
+     * depend on. Defaults to the apps of getRequiredModules().
      *
      * @return array<string>
      */
     protected function getRequiredAppKeys(): array
     {
-        return [];
+        return array_keys($this->getRequiredModules());
+    }
+
+    /**
+     * The module root: the source dir is always {module}/app-configs/{key}.
+     */
+    protected function getModuleRoot(): string
+    {
+        return dirname($this->getSourceDir(), 2);
     }
 
     /**
      * Run another module's install command as a DEPENDENCY of this one: the
-     * nested command publishes its configs and registers its app, but skips its
-     * own tenant prompt — this module assigns it through getRequiredAppKeys().
+     * nested command publishes its configs and registers its app, but asks no
+     * questions — this module assigns it through getRequiredAppKeys().
      *
      * @param  array<string, mixed>  $arguments
      */
@@ -120,7 +132,8 @@ trait HasModuleInstallation
     }
 
     /**
-     * Run the module update process (YML config files only).
+     * Run the module update process: republish the YAML configs and the module
+     * resources, then the module's idempotent setup steps.
      */
     protected function runModuleUpdate(): int
     {
@@ -128,77 +141,34 @@ trait HasModuleInstallation
             return Command::FAILURE;
         }
 
-        $sourceDir = $this->getSourceDir();
-
-        if (! is_dir($sourceDir)) {
-            $this->error("Source directory not found: {$sourceDir}");
-
-            return Command::FAILURE;
-        }
-
-        $targetDir = base_path('app-configs/' . $this->getModuleKey());
-
         // Self-heal: when the app is registered (its tenant_apps row exists) but the
         // app-configs folder was never published — e.g. the app was added directly via
-        // a migration/seeder, so runModuleInstallation() diverts here — the update would
-        // otherwise dead-end with "Run the install command first" while install keeps
-        // diverting back to update. Create the folder and publish the configs into it.
-        if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
-                $this->error("Failed to create target directory: app-configs/{$this->getModuleKey()}/");
+        // a migration/seeder, so runModuleInstallation() diverts here — the update
+        // creates the folder instead of dead-ending with "run the install command".
+        $targetDir = $this->prepareTargetDir();
 
-                return Command::FAILURE;
-            }
-            $this->info("Created target directory: app-configs/{$this->getModuleKey()}/");
+        if ($targetDir === null) {
+            return Command::FAILURE;
         }
 
         $this->info("Updating {$this->getModuleName()} configurations...");
         $this->line('');
 
         try {
-            $this->copyConfigSubdirectories($sourceDir, $targetDir);
+            $this->publishAppConfigs($targetDir);
 
-            // Copy navigation.yml
-            $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
-            $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+            $navSource = $this->getSourceDir() . DIRECTORY_SEPARATOR . 'navigation.yml';
             if (file_exists($navSource)) {
-                $displayPath = $this->getModuleKey() . '/navigation.yml';
-
-                if (file_exists($navTarget)) {
-                    if (! $this->option('force')) {
-                        $choice = $this->choice(
-                            "File already exists: {$displayPath}. What do you want to do?",
-                            ['skip', 'overwrite', 'overwrite-all'],
-                            'skip',
-                        );
-
-                        if ($choice === 'skip') {
-                            $this->line("<comment>Skipped:</comment> {$displayPath}");
-                            $this->installResults['skipped_files']++;
-                        } else {
-                            if ($choice === 'overwrite-all') {
-                                $this->input->setOption('force', true);
-                            }
-                            copy($navSource, $navTarget);
-                            $this->line("<comment>Overwriting:</comment> {$displayPath}");
-                            $this->installResults['overwritten_files']++;
-                        }
-                    } else {
-                        copy($navSource, $navTarget);
-                        $this->line("<comment>Overwriting:</comment> {$displayPath}");
-                        $this->installResults['overwritten_files']++;
-                    }
-                } else {
-                    copy($navSource, $navTarget);
-                    $this->line("<info>Copying:</info> {$displayPath}");
-                    $this->installResults['copied_files']++;
-                }
+                $this->installResults[$this->publishFile(
+                    $navSource,
+                    $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml',
+                    $this->getModuleKey() . '/navigation.yml',
+                )]++;
             }
 
-            $this->publishSkills(refreshCopies: true);
-            $this->registerBoostPackage($this->getModuleRoot());
-
-            $this->displayInstallSummary();
+            $this->publishModuleResources(update: true);
+            $this->displayPublishSummary($this->installResults);
+            $this->ensureModuleSetup();
 
             $this->line('');
             $this->info("{$this->getModuleName()} configurations updated!");
@@ -242,7 +212,7 @@ trait HasModuleInstallation
      */
     protected function runModuleInstallation(): int
     {
-        // Ensure noerd:install has been run first
+        // An install command is a legitimate entry point into a fresh project.
         if (! $this->ensureNoerdInstalled()) {
             return Command::FAILURE;
         }
@@ -251,10 +221,12 @@ trait HasModuleInstallation
             return $this->runScaffoldInstallation();
         }
 
+        $this->installRequiredModules();
+
         // If the module is already installed, run as update instead to prevent
         // duplicate tenant app entries and overwriting customized navigation.
         $appKey = $this->deriveAppKey($this->getModuleKey());
-        if (TenantApp::where('name', $appKey)->exists()) {
+        if ($this->tenantAppRegistered($appKey)) {
             $this->info("{$this->getModuleName()} is already installed. Running update instead...");
             $this->line('');
 
@@ -262,7 +234,7 @@ trait HasModuleInstallation
 
             // Tenant assignment must be offered on the update path too, otherwise
             // re-running install on an existing app would silently skip it.
-            if ($updateResult === 0) {
+            if ($updateResult === Command::SUCCESS) {
                 $this->promptAppTenantAssignment($appKey);
                 $this->displayModuleReady();
             }
@@ -273,46 +245,22 @@ trait HasModuleInstallation
         $this->info("Installing {$this->getModuleName()}...");
         $this->line('');
 
-        $isHidden = $this->confirm(
-            "Should {$this->getModuleName()} be installed as a hidden app (not shown in main navigation)?",
-            false,
-        );
+        // A dependency asks nothing: it is installed with its defaults.
+        $this->appTitle = ModuleInstallContext::isDependencyInstall()
+            ? $this->getDefaultAppTitle()
+            : $this->ask('App title', $this->getDefaultAppTitle());
 
-        $sourceDir = $this->getSourceDir();
+        $targetDir = $this->prepareTargetDir();
 
-        if (! is_dir($sourceDir)) {
-            $this->error("Source directory not found: {$sourceDir}");
-
+        if ($targetDir === null) {
             return Command::FAILURE;
         }
 
-        $this->line('');
-        $this->info('New app configuration:');
-        $this->appTitle = $this->ask('App title', $this->getDefaultAppTitle());
-        $this->targetAppKey = $this->getModuleKey();
-        $this->line("<comment>App folder:</comment> app-configs/{$this->targetAppKey}/");
-
-        $targetDir = base_path('app-configs/' . $this->targetAppKey);
-
-        // Create target directory if it doesn't exist
-        if (! is_dir($targetDir)) {
-            if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
-                $this->error("Failed to create target directory: {$targetDir}");
-
-                return Command::FAILURE;
-            }
-            $this->info("Created target directory: app-configs/{$this->targetAppKey}/");
-        }
-
         try {
-            $this->copyConfigSubdirectories($sourceDir, $targetDir);
-
-            $this->installAsNewApp($sourceDir, $targetDir, $isHidden);
-
-            $this->publishSkills(refreshCopies: false);
-            $this->registerBoostPackage($this->getModuleRoot());
-
-            $this->displayInstallSummary();
+            $this->publishAppConfigs($targetDir);
+            $this->installAsNewApp($this->getSourceDir(), $targetDir);
+            $this->publishModuleResources(update: false);
+            $this->displayPublishSummary($this->installResults);
 
             $this->line('');
             $this->info("{$this->getModuleName()} successfully installed!");
@@ -322,12 +270,9 @@ trait HasModuleInstallation
                 $this->promptAppTenantAssignment($this->installedAppKey);
             }
 
-            // Ask to run migrations
             $this->askForMigration();
-
-            // Ask to run npm build
+            $this->ensureModuleSetup();
             $this->askForNpmBuild();
-
             $this->displayModuleReady();
 
             return Command::SUCCESS;
@@ -340,24 +285,6 @@ trait HasModuleInstallation
     }
 
     /**
-     * A base installation that ran for this command handed its npm work over —
-     * say so when the installation died before it could be done, otherwise the
-     * project is left with build tooling in package.json and no node_modules.
-     */
-    protected function warnAboutDeferredNpm(): void
-    {
-        if (! ModuleInstallContext::hasDeferredNpm()) {
-            return;
-        }
-
-        ModuleInstallContext::takeDeferredNpmPackages();
-        ModuleInstallContext::takeDeferredNpmBuild();
-
-        $this->warn('The frontend was not set up. Run it manually once the error is fixed:');
-        $this->warn('  npm install && npm run build');
-    }
-
-    /**
      * The post-scaffold install: publish configs, register the app and ask for the
      * tenant assignment — nothing else. Existing files are overwritten without
      * asking (the module was scaffolded a moment ago), the tenant-app migration is
@@ -367,41 +294,30 @@ trait HasModuleInstallation
     protected function runScaffoldInstallation(): int
     {
         $appKey = $this->deriveAppKey($this->getModuleKey());
-        $sourceDir = $this->getSourceDir();
-
-        if (! is_dir($sourceDir)) {
-            $this->error("Source directory not found: {$sourceDir}");
-
-            return Command::FAILURE;
-        }
 
         if ($this->input->hasOption('force')) {
             $this->input->setOption('force', true);
         }
 
         $this->appTitle = $this->getDefaultAppTitle();
-        $this->targetAppKey = $this->getModuleKey();
-        $targetDir = base_path('app-configs/' . $this->targetAppKey);
+        $targetDir = $this->prepareTargetDir(quiet: true);
 
-        if (! is_dir($targetDir) && ! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
-            $this->error("Failed to create target directory: {$targetDir}");
-
+        if ($targetDir === null) {
             return Command::FAILURE;
         }
 
         try {
-            $this->silently(function () use ($sourceDir, $targetDir, $appKey): void {
-                $this->copyConfigSubdirectories($sourceDir, $targetDir);
+            $this->silently(function () use ($targetDir, $appKey): void {
+                $this->publishAppConfigs($targetDir);
 
                 if (TenantApp::where('name', $appKey)->exists()) {
                     // Registered by an earlier attempt: refresh the navigation only.
                     $this->ensureTenantAppRegistered($appKey);
                 } else {
-                    $this->installAsNewApp($sourceDir, $targetDir, false);
+                    $this->installAsNewApp($this->getSourceDir(), $targetDir);
                 }
 
-                $this->publishSkills(refreshCopies: true);
-                $this->registerBoostPackage($this->getModuleRoot());
+                $this->publishModuleResources(update: true);
             });
         } catch (Exception $e) {
             $this->error("Error installing {$this->getModuleName()}: " . $e->getMessage());
@@ -415,13 +331,40 @@ trait HasModuleInstallation
     }
 
     /**
+     * Install every module of getRequiredModules() whose app is not registered yet.
+     * A failing dependency is reported, never fatal: the required app is then
+     * simply missing from the assignment (requiredAppKeysFor() says so).
+     */
+    protected function installRequiredModules(): void
+    {
+        foreach ($this->getRequiredModules() as $appKey => $command) {
+            if ($this->tenantAppRegistered(mb_strtoupper($appKey))) {
+                continue;
+            }
+
+            $this->line('');
+            $this->info("{$this->getModuleName()} requires " . mb_strtoupper($appKey) . ", running {$command}...");
+
+            try {
+                $arguments = $this->input->hasOption('force') && $this->option('force') ? ['--force' => true] : [];
+
+                if ($this->installDependencyModule($command, $arguments) !== Command::SUCCESS) {
+                    $this->warn("{$command} did not complete.");
+                }
+            } catch (Exception $e) {
+                $this->warn("Failed to run {$command}: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
      * Prompt the user to assign the app to tenants.
      *
      * Always offered — both on a fresh install and when the app already exists
      * (the update path) — so tenant assignment is never silently skipped.
      *
      * Except while this module is installed as a DEPENDENCY of another one: the
-     * app that requires it names it in getRequiredAppKeys() and assigns it in
+     * app that requires it names it in getRequiredModules() and assigns it in
      * its own prompt, so asking here would be a second question about tenants
      * the user never started an installation for.
      */
@@ -473,6 +416,128 @@ trait HasModuleInstallation
     }
 
     /**
+     * Assign a specific app to selected tenants
+     *
+     * @param  string  $appName  The name/key of the TenantApp (e.g., 'BUSINESS-HOURS')
+     * @param  bool  $compact  Only the selection and the final count — no header, no per-tenant lines
+     * @param  array<string>  $alsoAssign  Apps the module cannot work without (getRequiredAppKeys()).
+     *                                     They follow the same selection, but ADDITIVELY: a tenant that
+     *                                     loses this app keeps them, because another module may need them.
+     */
+    protected function assignAppToTenants(string $appName, bool $compact = false, array $alsoAssign = []): void
+    {
+        $app = TenantApp::where('name', $appName)->first();
+
+        if (! $app) {
+            $this->warn("App '{$appName}' not found in database.");
+
+            return;
+        }
+
+        $tenants = Tenant::orderBy('name')->get();
+
+        if ($tenants->isEmpty()) {
+            $this->warn('No tenants found.');
+
+            return;
+        }
+
+        $currentTenantIds = $app->tenants()->pluck('tenants.id')->map(fn($id): int => (int) $id)->all();
+
+        $tenantChoices = [];
+        foreach ($tenants as $tenant) {
+            $status = in_array((int) $tenant->id, $currentTenantIds, true) ? ' [already assigned]' : '';
+            $tenantChoices[$tenant->id] = "{$tenant->name}{$status}";
+        }
+
+        if (! $compact) {
+            $this->line('');
+            $this->info("Assign '{$app->title}' to tenants:");
+            $this->comment('Use ↑/↓ to navigate, Space to select, Enter to confirm');
+            $this->line('');
+        }
+
+        $selectedTenantIds = array_map('intval', multiselect(
+            label: "Which tenants should '{$app->title}' be assigned to?",
+            options: $tenantChoices,
+            default: $tenants->pluck('id')->toArray(),
+            required: false,
+        ));
+
+        foreach ($tenants as $tenant) {
+            $isSelected = in_array((int) $tenant->id, $selectedTenantIds, true);
+            $wasAssigned = in_array((int) $tenant->id, $currentTenantIds, true);
+
+            if ($isSelected && ! $wasAssigned) {
+                $tenant->tenantApps()->attach($app->id);
+                TenantAppAssigned::dispatch($tenant->id, $appName);
+                if (! $compact) {
+                    $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
+                }
+            } elseif (! $isSelected && $wasAssigned) {
+                $tenant->tenantApps()->detach($app->id);
+                if (! $compact) {
+                    $this->line("<comment>✗ '{$app->title}' removed from '{$tenant->name}'</comment>");
+                }
+            }
+        }
+
+        $finalCount = $app->fresh()->tenants()->count();
+        if (! $compact) {
+            $this->line('');
+        }
+        $this->info("'{$app->title}' is now assigned to {$finalCount} tenant(s).");
+
+        $this->assignRequiredApps($alsoAssign, $selectedTenantIds, $compact);
+    }
+
+    /**
+     * Give every tenant that just got the app the apps it cannot work without.
+     * Purely additive — a required app is never detached, it may be the reason
+     * another installed module works.
+     *
+     * @param  array<string>  $appNames
+     * @param  array<int|string>  $tenantIds
+     */
+    protected function assignRequiredApps(array $appNames, array $tenantIds, bool $compact = false): void
+    {
+        if ($appNames === [] || $tenantIds === []) {
+            return;
+        }
+
+        $tenants = Tenant::whereIn('id', array_map('intval', $tenantIds))->orderBy('name')->get();
+
+        foreach ($appNames as $appName) {
+            $required = TenantApp::where('name', $appName)->first();
+
+            if (! $required) {
+                continue;
+            }
+
+            $assignedIds = $required->tenants()->pluck('tenants.id')->map('intval')->all();
+            $attached = 0;
+
+            foreach ($tenants as $tenant) {
+                if (in_array((int) $tenant->id, $assignedIds, true)) {
+                    continue;
+                }
+
+                $tenant->tenantApps()->attach($required->id);
+                TenantAppAssigned::dispatch($tenant->id, $appName);
+                $attached++;
+
+                if (! $compact) {
+                    $this->line("<info>✓ '{$required->title}' assigned to '{$tenant->name}' (required)</info>");
+                }
+            }
+
+            if ($attached > 0) {
+                $this->info("'{$required->title}' is required and was assigned to {$attached} tenant(s).");
+            }
+        }
+    }
+
+    /**
      * The closing "{Module} is ready" callout of an installation, pointing at the
      * app's own route — the place the user wants to go after installing it.
      *
@@ -520,34 +585,27 @@ trait HasModuleInstallation
     /**
      * Install as a new standalone app.
      */
-    protected function installAsNewApp(string $sourceDir, string $targetDir, bool $isHidden): void
+    protected function installAsNewApp(string $sourceDir, string $targetDir): void
     {
         // Copy navigation.yml first, before app registration which may abort early
         $navSource = $sourceDir . DIRECTORY_SEPARATOR . 'navigation.yml';
         $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
 
         if (file_exists($navSource)) {
-            $navContent = file_get_contents($navSource);
-            $nav = Yaml::parse($navContent);
-            $nav[0]['name'] = $this->targetAppKey;
+            $nav = Yaml::parse((string) file_get_contents($navSource));
+            $nav[0]['name'] = $this->getModuleKey();
             $nav[0]['title'] = $this->appTitle;
-            $nav[0]['route'] = $this->targetAppKey;
-            $nav[0]['hidden'] = $isHidden;
+            $nav[0]['route'] = $this->getModuleKey();
             file_put_contents($navTarget, Yaml::dump($nav, 10, 2));
-            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->targetAppKey}/navigation.yml");
+            $this->line("<info>Copied navigation.yml to:</info> app-configs/{$this->getModuleKey()}/navigation.yml");
             $this->installResults['copied_files']++;
         }
 
-        // App title was set in runModuleInstallation(), key is derived from module key
         $appKey = $this->deriveAppKey($this->getModuleKey());
 
-        // Fixed values
-        $appIcon = $this->getAppIcon();
-        $appRoute = $this->getAppRoute();
-
         $this->line("<comment>App key:</comment> {$appKey}");
-        $this->line("<comment>App icon:</comment> {$appIcon}");
-        $this->line("<comment>Main route:</comment> {$appRoute}");
+        $this->line("<comment>App icon:</comment> {$this->getAppIcon()}");
+        $this->line("<comment>Main route:</comment> {$this->getAppRoute()}");
 
         // Publish the (idempotent) migration so non-interactive deploys
         // (php artisan migrate) also register the app.
@@ -613,8 +671,10 @@ trait HasModuleInstallation
         $existingMigrations = glob(database_path("migrations/*_add_{$this->getModuleKey()}_tenant_app.php"));
         if (! empty($existingMigrations)) {
             $this->warn("Migration for {$this->getModuleName()} already exists.");
-            // No prompt in the silent scaffold run — it would render invisibly.
-            if ($this->isScaffoldInstall() || ! $this->confirm('Do you want to create a new migration anyway?', false)) {
+            // No prompt in a silent run (scaffold, dependency) — the existing one is reused.
+            if ($this->isScaffoldInstall()
+                || ModuleInstallContext::isDependencyInstall()
+                || ! $this->confirm('Do you want to create a new migration anyway?', false)) {
                 return basename($existingMigrations[0]);
             }
         }
@@ -661,356 +721,6 @@ trait HasModuleInstallation
     }
 
     /**
-     * Copy every standard app-config subdirectory (lists, details, pages,
-     * settings, plus the module's getAdditionalSubdirectories()) from the
-     * module source into the project. Shared by install and update — the two
-     * flows used to carry identical copies of this sequence.
-     */
-    protected function copyConfigSubdirectories(string $sourceDir, string $targetDir): void
-    {
-        $subdirectories = array_merge(
-            ['lists', 'details', 'pages', 'settings'],
-            $this->getAdditionalSubdirectories(),
-        );
-
-        foreach ($subdirectories as $subdir) {
-            $source = $sourceDir . DIRECTORY_SEPARATOR . $subdir;
-            if (is_dir($source)) {
-                $this->copyDirectoryContents($source, $targetDir . DIRECTORY_SEPARATOR . $subdir);
-            }
-        }
-    }
-
-    /**
-     * Copy directory contents recursively, accumulating the module-wide
-     * install counters (see PublishesConfigDirectory).
-     */
-    protected function copyDirectoryContents(string $sourceDir, string $targetDir): void
-    {
-        $results = $this->publishConfigDirectory($sourceDir, $targetDir, base_path('app-configs'));
-
-        foreach ($results as $key => $count) {
-            $this->installResults[$key] += $count;
-        }
-    }
-
-    /**
-     * The module root (composer.json, resources/boost, skills/): the source dir
-     * is always {module}/app-configs/{key}.
-     */
-    protected function getModuleRoot(): string
-    {
-        return dirname($this->getSourceDir(), 2);
-    }
-
-    /**
-     * Publish all bundled Claude Code skills (every subdir of {module}/skills/)
-     * into base_path('.claude/skills'). Prefers a relative symlink so the
-     * skill auto-updates with the module; falls back to a recursive copy.
-     *
-     * When $refreshCopies is true (update mode), stale copies are replaced.
-     * Symlinks are left alone (they reference source live).
-     */
-    protected function publishSkills(bool $refreshCopies = false): void
-    {
-        $skillsRoot = $this->getModuleRoot() . '/skills';
-
-        if (! is_dir($skillsRoot)) {
-            return;
-        }
-
-        $entries = glob($skillsRoot . '/*', GLOB_ONLYDIR) ?: [];
-        if (empty($entries)) {
-            return;
-        }
-
-        $targetSkillsDir = base_path('.claude/skills');
-
-        if (! is_dir($targetSkillsDir) && ! mkdir($targetSkillsDir, 0755, true) && ! is_dir($targetSkillsDir)) {
-            $this->warn('Could not create .claude/skills directory; skills not published.');
-
-            return;
-        }
-
-        foreach ($entries as $sourcePath) {
-            $resolved = realpath($sourcePath);
-            if ($resolved === false) {
-                continue;
-            }
-            $this->publishSingleSkill($resolved, $targetSkillsDir, basename($sourcePath), $refreshCopies);
-        }
-    }
-
-    /**
-     * Display the installation summary.
-     */
-    protected function displayInstallSummary(): void
-    {
-        $this->displayPublishSummary($this->installResults);
-    }
-
-    /**
-     * Ensure a button exists in the global quick-menu config (app-configs/quick-menu.yml).
-     * Rewrites any button still pointing at one of the $legacyComponents to the new
-     * component name. An existing entry with the same component is REPLACED wholesale
-     * (stale keys like the removed per-module `policy:` gates drop off on re-install),
-     * except its `apps:` list, which is UNIONED with the new one — several modules may
-     * contribute the same button (e.g. the booking family's customer select), and the
-     * union keeps the result independent of the install order. Otherwise the button is
-     * prepended.
-     *
-     * @param  array{component: string, app?: string, apps?: string[], policy?: string}  $button
-     * @param  string[]  $legacyComponents
-     */
-    protected function ensureQuickMenuButton(array $button, array $legacyComponents = []): void
-    {
-        $configPath = base_path('app-configs/quick-menu.yml');
-
-        $config = file_exists($configPath)
-            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
-            : [];
-        $buttons = $config['buttons'] ?? [];
-
-        foreach ($buttons as $i => $existing) {
-            if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
-                $buttons[$i]['component'] = $button['component'];
-            }
-        }
-
-        $replaced = false;
-        foreach ($buttons as $i => $existing) {
-            if (($existing['component'] ?? null) !== ($button['component'] ?? null)) {
-                continue;
-            }
-
-            $merged = $button;
-            $apps = array_values(array_unique(array_merge(
-                array_map('strval', (array) ($existing['apps'] ?? [])),
-                array_map('strval', (array) ($button['apps'] ?? [])),
-            )));
-            if ($apps !== []) {
-                $merged['apps'] = $apps;
-            }
-
-            $buttons[$i] = $merged;
-            $replaced = true;
-            break;
-        }
-
-        if (! $replaced) {
-            $buttons = [$button, ...$buttons];
-        }
-
-        if ($buttons === ($config['buttons'] ?? [])) {
-            $this->line('<comment>Quick-menu already contains the button.</comment>');
-
-            return;
-        }
-
-        $dir = dirname($configPath);
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $config['buttons'] = $buttons;
-        file_put_contents($configPath, Yaml::dump($config, 10, 2));
-        $this->line('<info>Quick-menu config updated:</info> app-configs/quick-menu.yml');
-    }
-
-    /**
-     * Ensure a widget exists in the global dashboard-widgets config
-     * (app-configs/dashboard-widgets.yml). Rewrites any widget still pointing at one of
-     * the $legacyComponents to the new component name, then appends the widget if it is
-     * not present yet. Matches on `component` only — an installation may re-tune
-     * width/height without the installer duplicating or overwriting the entry — and
-     * appends (unlike the quick-menu prepend) so the first-installed module keeps the
-     * first slot on the dashboard. An existing entry's access keys are migrated: a
-     * stale `policy:` (the removed per-module tenant gates would fail closed) is
-     * dropped whenever the new widget declares `app:`/`apps:`, which are copied over.
-     *
-     * @param  array{component: string, app?: string, apps?: string[], policy?: string, width?: int, height?: int}  $widget
-     * @param  string[]  $legacyComponents
-     */
-    protected function ensureDashboardWidget(array $widget, array $legacyComponents = []): void
-    {
-        $configPath = base_path('app-configs/dashboard-widgets.yml');
-
-        $config = file_exists($configPath)
-            ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
-            : [];
-        $widgets = $config['widgets'] ?? [];
-
-        foreach ($widgets as $i => $existing) {
-            if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
-                $widgets[$i]['component'] = $widget['component'];
-            }
-        }
-
-        $present = false;
-        foreach ($widgets as $i => $existing) {
-            if (($existing['component'] ?? null) !== $widget['component']) {
-                continue;
-            }
-
-            $present = true;
-
-            if (isset($widget['app']) || isset($widget['apps'])) {
-                unset($widgets[$i]['policy'], $widgets[$i]['app'], $widgets[$i]['apps']);
-                foreach (['app', 'apps'] as $key) {
-                    if (isset($widget[$key])) {
-                        $widgets[$i][$key] = $widget[$key];
-                    }
-                }
-            }
-
-            break;
-        }
-
-        if (! $present) {
-            $widgets[] = $widget;
-        }
-
-        if (array_values($widgets) === array_values($config['widgets'] ?? [])) {
-            $this->line('<comment>Dashboard-widgets config already contains the widget.</comment>');
-
-            return;
-        }
-
-        $widgets = array_values($widgets);
-
-        $dir = dirname($configPath);
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $config['widgets'] = $widgets;
-        file_put_contents($configPath, Yaml::dump($config, 10, 2));
-        $this->line('<info>Dashboard-widgets config updated:</info> app-configs/dashboard-widgets.yml');
-    }
-
-    /**
-     * Ensure a navigation entry exists in a block of the project's setup navigation
-     * (app-configs/setup/navigation.yml). Matches on the entry's `route`, so calling
-     * this repeatedly never duplicates the entry. Creates the named block if absent.
-     * An existing entry with the same route is REPLACED wholesale when it differs —
-     * module-owned entries are owned by the module, so title changes and removed
-     * keys (e.g. a dropped `config:` gate) propagate on re-install. The same applies
-     * across blocks: an entry with that route found in ANY other block is removed, so
-     * a module that regroups its entries MOVES them instead of duplicating them.
-     *
-     * Only the project copy is written — never the module's install template
-     * (app-modules/noerd/app-configs/setup/navigation.yml): an entry naming a route
-     * of an uninstalled module would otherwise ship to every installation. Stale
-     * entries are additionally tolerated at render time — the sidebar skips entries
-     * whose route is not registered.
-     *
-     * @param  array{title: string, route: string, heroicon?: string}  $entry
-     */
-    protected function ensureSetupNavigation(string $blockTitle, array $entry): void
-    {
-        $configPath = base_path('app-configs/setup/navigation.yml');
-
-        if (! file_exists($configPath)) {
-            $this->warn('app-configs/setup/navigation.yml not found; navigation entry was not added.');
-
-            return;
-        }
-
-        $navigation = Yaml::parse(file_get_contents($configPath) ?: '') ?? [];
-
-        $blockIndex = null;
-        foreach ($navigation[0]['block_menus'] ?? [] as $i => $block) {
-            if (($block['title'] ?? null) === $blockTitle) {
-                $blockIndex = $i;
-                break;
-            }
-        }
-
-        if ($blockIndex === null) {
-            $navigation[0]['block_menus'][] = ['title' => $blockTitle, 'navigations' => []];
-            $blockIndex = array_key_last($navigation[0]['block_menus']);
-        }
-
-        $movedFromOtherBlock = false;
-        foreach ($navigation[0]['block_menus'] as $i => $block) {
-            if ($i === $blockIndex) {
-                continue;
-            }
-
-            $navigations = $block['navigations'] ?? [];
-            if (! is_array($navigations) || $navigations === []) {
-                continue;
-            }
-
-            $remaining = array_values(array_filter(
-                $navigations,
-                fn(array $existing): bool => ($existing['route'] ?? null) !== $entry['route'],
-            ));
-
-            if (count($remaining) === count($navigations)) {
-                continue;
-            }
-
-            $navigation[0]['block_menus'][$i]['navigations'] = $remaining;
-            $movedFromOtherBlock = true;
-        }
-
-        foreach ($navigation[0]['block_menus'][$blockIndex]['navigations'] ?? [] as $index => $existing) {
-            if (($existing['route'] ?? null) !== $entry['route']) {
-                continue;
-            }
-
-            if ($existing === $entry && ! $movedFromOtherBlock) {
-                $this->line("<comment>Setup navigation already contains:</comment> {$entry['title']}");
-
-                return;
-            }
-
-            $navigation[0]['block_menus'][$blockIndex]['navigations'][$index] = $entry;
-            file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
-            $this->line("<info>Setup navigation entry replaced:</info> {$blockTitle} → {$entry['title']}");
-
-            return;
-        }
-
-        $navigation[0]['block_menus'][$blockIndex]['navigations'][] = $entry;
-        file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
-        $this->line("<info>Setup navigation updated:</info> {$blockTitle} → {$entry['title']}");
-    }
-
-    /**
-     * Ask the user if they want to run migrations.
-     */
-    protected function askForMigration(): void
-    {
-        $this->line('');
-        $this->info('It is recommended to run migrations to ensure all database tables are up to date.');
-
-        if ($this->confirm('Would you like to run php artisan migrate now?', true)) {
-            $this->call('migrate');
-        }
-    }
-
-    /**
-     * Ask the user if they want to run npm build.
-     */
-    protected function askForNpmBuild(): void
-    {
-        // A base installation that ran for this command handed its npm work over
-        // — the packages are installed here, where the module's files exist.
-        $this->installDeferredNpmPackages();
-        ModuleInstallContext::takeDeferredNpmBuild();
-
-        $this->line('');
-
-        if ($this->confirm('Would you like to run "npm run build" to compile frontend assets?', true)) {
-            $this->executeNpmBuild();
-        } else {
-            $this->line('<comment>Skipping npm build. You can run it manually later with: npm run build</comment>');
-        }
-    }
-
-    /**
      * The tenant-app key for a module key (umlauts transliterated, uppercase).
      */
     protected function deriveAppKey(string $moduleKey): string
@@ -1022,95 +732,53 @@ trait HasModuleInstallation
         ));
     }
 
-    private function publishSingleSkill(string $source, string $skillsDir, string $name, bool $refreshCopies): void
+    /**
+     * Whether the app row exists. The table is missing while the base package's
+     * migrations have not run yet — that reads as "not registered", never a fatal.
+     */
+    private function tenantAppRegistered(string $appKey): bool
     {
-        $target = $skillsDir . '/' . $name;
-
-        if (is_link($target)) {
-            $this->line("<comment>Claude skill already linked:</comment> .claude/skills/{$name}");
-
-            return;
-        }
-
-        if (is_dir($target)) {
-            if (! $refreshCopies) {
-                $this->line("<comment>Claude skill already published:</comment> .claude/skills/{$name}");
-
-                return;
-            }
-            $this->removeDirectoryTree($target);
-            $this->line("<comment>Refreshing Claude skill:</comment> .claude/skills/{$name}");
-        } elseif (file_exists($target)) {
-            @unlink($target);
-        }
-
-        $relativeSource = $this->relativePath(from: $skillsDir, to: $source);
-
-        if (@symlink($relativeSource, $target)) {
-            $this->line("<info>Published Claude skill:</info> .claude/skills/{$name} → {$relativeSource}");
-
-            return;
-        }
-
-        $this->warn("Symlink failed for skill '{$name}'; copying files instead.");
-        $this->copyDirectoryTree($source, $target);
-        $this->line("<info>Published Claude skill (copied):</info> .claude/skills/{$name}");
+        return Schema::hasTable('tenant_apps') && TenantApp::where('name', $appKey)->exists();
     }
 
-    private function relativePath(string $from, string $to): string
+    /**
+     * The project's app-configs/{key} folder, created when missing. Null when the
+     * module source is missing or the folder cannot be created (already reported).
+     */
+    private function prepareTargetDir(bool $quiet = false): ?string
     {
-        $fromParts = explode('/', mb_rtrim($from, '/'));
-        $toParts = explode('/', mb_rtrim($to, '/'));
+        $sourceDir = $this->getSourceDir();
 
-        while ($fromParts && $toParts && $fromParts[0] === $toParts[0]) {
-            array_shift($fromParts);
-            array_shift($toParts);
+        if (! is_dir($sourceDir)) {
+            $this->error("Source directory not found: {$sourceDir}");
+
+            return null;
         }
 
-        return str_repeat('../', count($fromParts)) . implode('/', $toParts);
+        $targetDir = base_path('app-configs/' . $this->getModuleKey());
+
+        if (! is_dir($targetDir)) {
+            if (! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
+                $this->error("Failed to create target directory: app-configs/{$this->getModuleKey()}/");
+
+                return null;
+            }
+
+            if (! $quiet) {
+                $this->info("Created target directory: app-configs/{$this->getModuleKey()}/");
+            }
+        }
+
+        return $targetDir;
     }
 
-    private function copyDirectoryTree(string $source, string $destination): void
+    /**
+     * Publish the app's own YAML folders, accumulating the run's counters.
+     */
+    private function publishAppConfigs(string $targetDir): void
     {
-        if (! is_dir($destination) && ! mkdir($destination, 0755, true) && ! is_dir($destination)) {
-            return;
+        foreach ($this->copyConfigSubdirectories($this->getSourceDir(), $targetDir) as $key => $count) {
+            $this->installResults[$key] += $count;
         }
-
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST,
-        );
-
-        foreach ($iterator as $item) {
-            $target = $destination . '/' . $iterator->getSubPathname();
-            if ($item->isDir()) {
-                if (! is_dir($target)) {
-                    mkdir($target, 0755, true);
-                }
-            } else {
-                copy($item->getPathname(), $target);
-            }
-        }
-    }
-
-    private function removeDirectoryTree(string $path): void
-    {
-        if (! is_dir($path) || is_link($path)) {
-            @unlink($path);
-
-            return;
-        }
-        foreach (scandir($path) ?: [] as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-            $full = $path . '/' . $entry;
-            if (is_dir($full) && ! is_link($full)) {
-                $this->removeDirectoryTree($full);
-            } else {
-                @unlink($full);
-            }
-        }
-        @rmdir($path);
     }
 }

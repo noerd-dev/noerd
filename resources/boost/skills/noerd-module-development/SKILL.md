@@ -54,12 +54,19 @@ app-modules/{module}/
 
 ## 2. Mandatory install + update commands
 
-- `noerd:install-{module}` — extends `Illuminate\Console\Command`, uses `HasModuleInstallation` +
-  `RequiresNoerdInstallation`, implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`,
-  `getAppIcon()`, `getAppRoute()`, `getSourceDir()`; `handle()` → `$this->runModuleInstallation()`.
-- `noerd:update-{module}` — slim subclass whose `handle()` → `$this->runModuleUpdate()` plus only
-  idempotent post-install steps. `noerd:update-all` discovers it by name; a missing one silently
-  drops the module from project-wide updates.
+- `noerd:install-{module}` — extends `Illuminate\Console\Command`, uses `HasModuleInstallation`,
+  implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`,
+  `getAppRoute()`, `getSourceDir()`; `handle()` → `return $this->runModuleInstallation();`.
+- `noerd:update-{module}` — slim subclass whose `handle()` → `return $this->runModuleUpdate();`.
+  `noerd:update-all` discovers it by name; a missing one silently drops the module from
+  project-wide updates.
+- A support module (no tenant app) uses `InstallsNoerdModule` instead: only `getModuleName()`,
+  `runSupportModuleInstallation()` / `runSupportModuleUpdate()`.
+- Declare, never code: `getConfigFiles()` (PHP config), `{module}/app-configs/setup/` (setup YAML),
+  `getRequiredModules()` (`['MEDIA' => 'noerd:install-media']` — installed first as a silent
+  dependency and assigned along), `ensureModuleSetup()` (setup navigation, quick-menu button,
+  widget, seeds — idempotent, runs on install AND update). No own `publishConfig()`, copy loop,
+  migration prompt or `exec('composer …')`.
 - Register both in the ServiceProvider inside `if ($this->app->runningInConsole())`.
 - The tenant app name stored in `tenant_apps` is the UPPERCASE module key (`INVENTORY`) — gates
   and test traits must match it exactly.

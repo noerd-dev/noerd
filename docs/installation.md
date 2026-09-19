@@ -30,16 +30,17 @@ php artisan noerd:install
 The install command can be run in a fresh or an existing Laravel application. During installation, you will be guided through the following steps:
 
 1. **Create a default tenant** — Your first organization or environment.
-2. **Create an admin user** — Or assign an existing user as admin.
+2. **Create an admin user** — The first user of the installation, a super admin. When users already exist the step is skipped; promote one with `php artisan noerd:promote-admin {user_id}`.
 3. **Install demo data (recommended)** — Sets up a fully working Demo Customers app with model, migration, YAML configuration, and navigation — so you can explore Noerd's features right away.
 
 If you skip any of these steps, you can run them later with the respective [Artisan commands](artisan-commands.md).
 
 Besides the interactive steps, `noerd:install` publishes the setup app configs to `app-configs/setup/`,
 publishes `config/noerd.php`, sets `component_layout` in `config/livewire.php` to `noerd::layouts.app`
-(publishing the Livewire config first when needed), adds an `app-modules` test suite to
-`phpunit.xml`, creates the `app-modules/` directory, scaffolds the frontend (see below) and publishes
-the public assets to `public/vendor/noerd` (`vendor:publish --tag=noerd-assets`). Non-interactive
+(publishing the Livewire config first when needed), scaffolds the frontend (see below) and publishes
+the public assets to `public/vendor/noerd` (`vendor:publish --tag=noerd-assets`). What only a project
+with LOCAL modules needs — the `app-modules/` directory, its Composer path repository and the
+`app-modules` test suite in `phpunit.xml` — is set up by `noerd:make-module` with the first module. Non-interactive
 runs (CI) pass `--force --migrate --build --demo` explicitly — see
 [noerd:install](artisan-commands.md#noerdinstall).
 
@@ -104,9 +105,8 @@ Nothing has to be imported in `resources/js/app.js`: Livewire ships its own runt
 Alpine) and noerd loads its compiled bundle through `<x-noerd::assets />`. Put your project's own
 CSS in `resources/css/app.css` below the injected directives.
 
-The installer pins **vite `^8`** with **laravel-vite-plugin `^3`**, or falls back to vite `^7` /
-laravel-vite-plugin `^2` when the installed Node version is older than `^20.19 || >=22.12`. A
-summary table lists every file as `created`, `patched`, `skipped` or `warning`.
+The installer pins **vite `^8`** with **laravel-vite-plugin `^3`**, which need Node
+`^20.19 || >=22.12` (see the requirements above). A summary table lists every file as `created`, `patched`, `skipped` or `warning`.
 
 Afterwards, build the assets:
 

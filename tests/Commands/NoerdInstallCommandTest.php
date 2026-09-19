@@ -59,37 +59,20 @@ class ZzInstallFixtureCommand extends NoerdInstallCommand
         return 0;
     }
 
-    protected function copyDirectoryContents(string $sourceDir, string $targetDir): array
+    protected function publishSetupAppConfigs(): bool
     {
         if (! static::$recordStepsOnly) {
-            return parent::copyDirectoryContents($sourceDir, $targetDir);
+            return parent::publishSetupAppConfigs();
         }
 
-        static::$steps[] = 'copyDirectoryContents';
+        static::$steps[] = 'publishSetupAppConfigs';
 
-        return [
-            'created_dirs' => 0,
-            'copied_files' => 0,
-            'skipped_files' => 0,
-            'overwritten_files' => 0,
-        ];
+        return true;
     }
 
-    protected function displaySummary(array $results): void
+    protected function updateLivewireConfig(): void
     {
-        if (! static::$recordStepsOnly) {
-            parent::displaySummary($results);
-        }
-    }
-
-    protected function ensureAppModulesDirectory(): void
-    {
-        $this->step('ensureAppModulesDirectory', fn() => parent::ensureAppModulesDirectory());
-    }
-
-    protected function updatePhpunitXml(): void
-    {
-        $this->step('updatePhpunitXml', fn() => parent::updatePhpunitXml());
+        $this->step('updateLivewireConfig', fn() => parent::updateLivewireConfig());
     }
 
     protected function publishNoerdConfig(): void

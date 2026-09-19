@@ -57,14 +57,19 @@ class InvoicingInstallCommand extends Command
 
     public function handle(): int
     {
-        $this->publishAuditingMigrationIfNeeded();
-
         return $this->runModuleInstallation();
+    }
+
+    // Runs with the publishing steps, before the migration prompt.
+    protected function publishModuleExtras(bool $update): void
+    {
+        $this->publishAuditingMigrationIfNeeded();
     }
 }
 ```
 
-Run `php artisan migrate` afterwards.
+The installation's migration prompt then creates the table; an existing installation picks the
+migration up with `noerd:update-{module}` followed by `php artisan migrate`.
 
 ## Opening the modal
 

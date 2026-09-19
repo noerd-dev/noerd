@@ -35,24 +35,14 @@ final class FrontendScaffolder
     public const JS_ENTRY = 'resources/js/app.js';
 
     /**
-     * Build tooling emitted into a package.json that does not exist yet.
-     *
-     * laravel-vite-plugin 3.x peers vite ^8 and requires Node ^20.19 || >=22.12, so older Node
-     * versions get the previous major pair instead (see LEGACY_BUILD_PACKAGES).
+     * Build tooling emitted into a package.json that does not exist yet. laravel-vite-plugin 3.x
+     * peers vite ^8 and requires Node ^20.19 || >=22.12 — the Node version noerd documents.
      *
      * @var array<string, string>
      */
     private const BUILD_PACKAGES = [
         'vite' => '^8.0',
         'laravel-vite-plugin' => '^3.0',
-    ];
-
-    /**
-     * @var array<string, string>
-     */
-    private const LEGACY_BUILD_PACKAGES = [
-        'vite' => '^7.0',
-        'laravel-vite-plugin' => '^2.0',
     ];
 
     /**
@@ -103,12 +93,8 @@ final class FrontendScaffolder
 
     /**
      * @param  string  $basePath  Application root the scaffold is written into.
-     * @param  string|null  $nodeVersion  Detected `node -v` output; null falls back to the current tooling.
      */
-    public function __construct(
-        private readonly string $basePath,
-        private readonly ?string $nodeVersion = null,
-    ) {}
+    public function __construct(private readonly string $basePath) {}
 
     /**
      * Create every missing piece of the frontend scaffold and patch the pieces that exist.
@@ -143,7 +129,7 @@ final class FrontendScaffolder
      */
     private function ensurePackageJson(): void
     {
-        $packages = array_merge($this->buildPackages(), self::TAILWIND_PACKAGES);
+        $packages = array_merge(self::BUILD_PACKAGES, self::TAILWIND_PACKAGES);
         $existing = $this->read('package.json');
 
         if ($existing === null) {
@@ -156,7 +142,7 @@ final class FrontendScaffolder
 
             $this->missingNpmPackages = $this->toNpmSpecs($packages);
 
-            $this->record('package.json', self::ACTION_CREATED, $this->buildToolingDetail());
+            $this->record('package.json', self::ACTION_CREATED, 'vite ' . self::BUILD_PACKAGES['vite'] . ', laravel-vite-plugin ' . self::BUILD_PACKAGES['laravel-vite-plugin'] . '.');
 
             return;
         }
@@ -437,55 +423,6 @@ final class FrontendScaffolder
         // Add your application's own JavaScript below.
 
         JS;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function buildPackages(): array
-    {
-        return $this->nodeSupportsCurrentTooling() ? self::BUILD_PACKAGES : self::LEGACY_BUILD_PACKAGES;
-    }
-
-    private function buildToolingDetail(): string
-    {
-        if ($this->nodeSupportsCurrentTooling()) {
-            return 'vite ' . self::BUILD_PACKAGES['vite'] . ', laravel-vite-plugin ' . self::BUILD_PACKAGES['laravel-vite-plugin'] . '.';
-        }
-
-        return 'Node ' . ($this->nodeVersion ?? 'unknown') . ' is below ^20.19 || >=22.12, pinned vite '
-            . self::LEGACY_BUILD_PACKAGES['vite'] . ' / laravel-vite-plugin ' . self::LEGACY_BUILD_PACKAGES['laravel-vite-plugin'] . '.';
-    }
-
-    /**
-     * laravel-vite-plugin 3.x declares engines.node ^20.19.0 || >=22.12.0.
-     */
-    private function nodeSupportsCurrentTooling(): bool
-    {
-        if ($this->nodeVersion === null) {
-            return true;
-        }
-
-        if (preg_match('/(\d+)\.(\d+)\.(\d+)/', $this->nodeVersion, $matches) !== 1) {
-            return true;
-        }
-
-        $major = (int) $matches[1];
-        $minor = (int) $matches[2];
-
-        if ($major === 20) {
-            return $minor >= 19;
-        }
-
-        if ($major === 21) {
-            return false;
-        }
-
-        if ($major === 22) {
-            return $minor >= 12;
-        }
-
-        return $major > 22;
     }
 
     /**

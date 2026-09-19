@@ -6,14 +6,11 @@ namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use Noerd\Commands\Concerns\PublishesNoerdContent;
-use Noerd\Commands\Concerns\RunsNpmBuild;
 
 class NoerdUpdateCommand extends Command
 {
     use PublishesNoerdContent;
-    use RunsNpmBuild;
 
     protected $signature = 'noerd:update {--force : Overwrite existing files without asking} {--build : Run npm build after update}';
 
@@ -23,45 +20,14 @@ class NoerdUpdateCommand extends Command
     {
         $this->info('Updating noerd content...');
 
-        $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
-        $targetDir = base_path('app-configs/setup');
-
-        if (! File::isDirectory($sourceDir)) {
-            $this->error("Source directory not found: {$sourceDir}");
-            return self::FAILURE;
-        }
-
-        // Create target directory if it doesn't exist
-        if (! File::isDirectory($targetDir)) {
-            if (! File::makeDirectory($targetDir, 0755, true)) {
-                $this->error("Failed to create target directory: {$targetDir}");
+        try {
+            if (! $this->publishNoerdContent()) {
                 return self::FAILURE;
             }
 
-            $this->info("Created target directory: {$targetDir}");
-        }
-
-        try {
-            // 1. Copy setup files
-            $results = $this->copyDirectoryContents($sourceDir, $targetDir);
-            $this->displaySummary($results);
-
-            // 2. Update configs
-            $this->updatePhpunitXml();
-            $this->publishNoerdConfig();
-
-            // 3. Setup frontend assets (creates what is missing, patches what exists)
-            $this->setupFrontendAssets();
-
-            // 4. Refresh published fonts + built Vite assets
-            $this->publishNoerdAssets();
-
-            // 5. Register the package in boost.json and render the agent guidelines
-            $this->registerNoerdBoostPackage();
-
-            // 6. Optional: npm build (only if --build flag is set)
             if ($this->option('build')) {
-                $this->runNpmBuildWithoutPrompt();
+                $this->newLine();
+                $this->executeNpmBuild();
             }
 
             $this->info('Noerd content successfully updated!');
@@ -69,16 +35,8 @@ class NoerdUpdateCommand extends Command
             return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error updating noerd content: ' . $e->getMessage());
+
             return self::FAILURE;
         }
-    }
-
-    /**
-     * Run npm build without prompting the user
-     */
-    protected function runNpmBuildWithoutPrompt(): void
-    {
-        $this->newLine();
-        $this->executeNpmBuild();
     }
 }

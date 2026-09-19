@@ -33,6 +33,8 @@ class ZzModuleInstallFixtureCommand extends Command
 
     public static int $boostUpdateCalls = 0;
 
+    public static int $setupCalls = 0;
+
     protected $signature = 'noerd:install-zz-install-fixture {--force : Overwrite existing files without asking} {--scaffold : Silent post-scaffold run}';
 
     protected $description = 'Test fixture install command';
@@ -72,6 +74,11 @@ class ZzModuleInstallFixtureCommand extends Command
         // Nested so that publishSkills() (dirname twice + /skills) lands inside the
         // disposable tests-tmp tree and finds nothing to publish.
         return base_path('tests-tmp/module/app-configs/' . ZZ_MODULE_KEY);
+    }
+
+    protected function ensureModuleSetup(): void
+    {
+        static::$setupCalls++;
     }
 
     protected function boostUpdateAvailable(): bool
@@ -121,7 +128,6 @@ afterEach(function (): void {
 function runZzModuleInstall(object $test): void
 {
     $test->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true])
-        ->expectsConfirmation('Should Zz Install Fixture be installed as a hidden app (not shown in main navigation)?', 'no')
         ->expectsQuestion('App title', 'Zz Install Fixture')
         ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
         ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
@@ -199,6 +205,31 @@ describe('ensure app', function (): void {
         runZzModuleInstall($this);
 
         expect(TenantApp::where('name', ZZ_MODULE_APP_KEY)->count())->toBe(1);
+    });
+});
+
+describe('module setup hook', function (): void {
+    it('runs the idempotent setup steps on install and again on every update', function (): void {
+        ZzModuleInstallFixtureCommand::$setupCalls = 0;
+
+        runZzModuleInstall($this);
+
+        expect(ZzModuleInstallFixtureCommand::$setupCalls)->toBe(1);
+
+        // Re-running install on a registered app takes the update path.
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true])
+            ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+            ->assertExitCode(0);
+
+        expect(ZzModuleInstallFixtureCommand::$setupCalls)->toBe(2);
+    });
+
+    it('no longer writes the unread hidden key into the published navigation', function (): void {
+        runZzModuleInstall($this);
+
+        $navigation = Yaml::parseFile(base_path('app-configs/' . ZZ_MODULE_KEY . '/navigation.yml'));
+
+        expect($navigation[0])->not->toHaveKey('hidden');
     });
 });
 

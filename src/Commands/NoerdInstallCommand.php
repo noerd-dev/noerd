@@ -6,7 +6,6 @@ namespace Noerd\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\callout;
 use function Laravel\Prompts\confirm;
@@ -14,7 +13,6 @@ use function Laravel\Prompts\confirm;
 use Laravel\Prompts\Elements\Link;
 use Laravel\Prompts\Elements\NumberedList;
 use Noerd\Commands\Concerns\PublishesNoerdContent;
-use Noerd\Commands\Concerns\RunsNpmBuild;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -23,14 +21,12 @@ use Noerd\Support\ModuleInstallContext;
 class NoerdInstallCommand extends Command
 {
     use PublishesNoerdContent;
-    use RunsNpmBuild;
 
     protected $signature = 'noerd:install
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking (required to migrate in non-interactive runs)}
                             {--build : Run npm build without asking (required to build in non-interactive runs)}
-                            {--demo : Install the demo app without asking (required to install it in non-interactive runs)}
-                            {--no-demo : Never install the demo app and do not ask for it}';
+                            {--demo : Install the demo app without asking (required to install it in non-interactive runs)}';
 
     protected $description = 'Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin';
 
@@ -38,61 +34,20 @@ class NoerdInstallCommand extends Command
     {
         $this->info('Installing noerd content...');
 
-        $sourceDir = dirname(__DIR__, 2) . '/app-configs/setup';
-        $targetDir = base_path('app-configs/setup');
-
-        if (! File::isDirectory($sourceDir)) {
-            $this->error("Source directory not found: {$sourceDir}");
-            return self::FAILURE;
-        }
-
-        // Create target directory if it doesn't exist
-        if (! File::isDirectory($targetDir)) {
-            if (! File::makeDirectory($targetDir, 0755, true)) {
-                $this->error("Failed to create target directory: {$targetDir}");
+        try {
+            if (! $this->publishNoerdContent()) {
                 return self::FAILURE;
             }
 
-            $this->info("Created target directory: {$targetDir}");
-        }
-
-        try {
-            $results = $this->copyDirectoryContents($sourceDir, $targetDir);
-
-            $this->displaySummary($results);
-
-            // Ensure app-modules directory exists
-            $this->ensureAppModulesDirectory();
-
-            // Update phpunit.xml with modules testsuite
-            $this->updatePhpunitXml();
-
-            // Publish noerd config file
-            $this->publishNoerdConfig();
-
-            // Setup frontend assets and configuration
-            $this->setupFrontendAssets();
-
-            // Publish fonts + built Vite assets to public/vendor/noerd
-            $this->publishNoerdAssets();
-
-            // Register the package in boost.json and render the agent guidelines
-            $this->registerNoerdBoostPackage();
-
-            // Run migrations and setup admin user
             $this->runMigrationsAndSetupAdmin();
-
-            // Ask to run npm build
             $this->runNpmBuild();
-
-            // Offer the demo app as the last installation step.
             $this->installDemoApp();
-
             $this->displayApplicationReady();
 
             return self::SUCCESS;
         } catch (Exception $e) {
             $this->error('Error installing noerd content: ' . $e->getMessage());
+
             return self::FAILURE;
         }
     }
@@ -101,13 +56,14 @@ class NoerdInstallCommand extends Command
      * Ask whether to install the demo app and run noerd:demo on confirmation.
      * Non-interactive runs never install the demo implicitly — a CI/deploy
      * invocation must opt in with --demo instead of inheriting the prompt default.
-     * --no-demo skips the question altogether and wins over --demo: it is what a
-     * module install command passes when it installs the base package on the fly,
-     * where a demo app was never the point of the run.
+     *
+     * Installed for a module (`noerd:install-cms` on a fresh project), the question
+     * is skipped unless that command was given --demo: someone installing a module
+     * is setting up that module, not looking for the demo.
      */
     protected function installDemoApp(): void
     {
-        if ($this->boolOption('no-demo')) {
+        if (ModuleInstallContext::isDependencyInstall() && ! $this->boolOption('demo')) {
             return;
         }
 
@@ -143,7 +99,7 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Setup an admin user - either create a new one or promote an existing user.
+     * Create the first admin user of a fresh installation.
      * Skipped in non-interactive runs: an admin needs prompted credentials, and
      * `noerd:make-admin-user` accepts them as options for scripted setups.
      */
@@ -158,106 +114,21 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        $userCount = NoerdUser::count();
+        if (NoerdUser::count() > 0) {
+            $this->line('<comment>Users already exist, skipping. Promote one with: php artisan noerd:promote-admin {user_id}</comment>');
 
-        if ($userCount === 0) {
-            $this->setupNewAdminUser();
-        } else {
-            $this->setupExistingAdminUser();
+            return;
         }
-    }
-
-    /**
-     * Create a new admin user when no users exist. Delegates to
-     * noerd:make-admin-user, which owns the prompts and their validation —
-     * the first user of an installation becomes super admin.
-     */
-    protected function setupNewAdminUser(): void
-    {
-        $this->line('<comment>No users found in the database.</comment>');
 
         if (! $this->confirm('Would you like to create an admin user now?', true)) {
-            $this->line('Skipping admin user creation. You can create one later.');
+            $this->line('Skipping admin user creation. Create one later with: php artisan noerd:make-admin-user');
+
             return;
         }
 
+        // noerd:make-admin-user owns the prompts and their validation — the first
+        // user of an installation becomes super admin.
         $this->call('noerd:make-admin-user', ['--super-admin' => true]);
-    }
-
-    /**
-     * Promote an existing user to admin
-     */
-    protected function setupExistingAdminUser(): void
-    {
-        $users = NoerdUser::all();
-        $adminUsers = $users->filter(fn(NoerdUser $user) => $user->isAdminOfAnyTenant());
-
-        if ($adminUsers->isNotEmpty()) {
-            $this->line('<comment>Admin user(s) already exist:</comment>');
-            foreach ($adminUsers as $admin) {
-                $this->line("  - {$admin->name} ({$admin->email})");
-            }
-
-            if (! $this->confirm('Would you like to make another user an admin?', false)) {
-                return;
-            }
-        } else {
-            $this->line("<comment>Found {$users->count()} user(s) in the database, but none are admins.</comment>");
-
-            if (! $this->confirm('Would you like to select a user to make admin?', true)) {
-                $this->line('Skipping admin setup. You can do this later using: php artisan noerd:promote-admin {user_id}');
-                return;
-            }
-        }
-
-        // Build options for choice prompt
-        $options = $users->mapWithKeys(function (NoerdUser $user) {
-            $adminTag = $user->isAdminOfAnyTenant() ? ' [ADMIN]' : '';
-            return [$user->id => "{$user->name} ({$user->email}){$adminTag}"];
-        })->toArray();
-
-        $selectedLabel = $this->choice(
-            'Select a user to make admin:',
-            $options,
-            null,
-        );
-
-        // Map the chosen label back to its user id. Strict comparison on
-        // purpose: a loose array_search() matches the first label for any
-        // non-string answer and would resolve to the wrong user.
-        $selectedUserId = array_search($selectedLabel, $options, true);
-        $selectedUser = $selectedUserId === false ? null : NoerdUser::find($selectedUserId);
-
-        if (! $selectedUser) {
-            $this->error('Could not resolve the selected user. Skipping admin setup.');
-            return;
-        }
-
-        if ($selectedUser->isAdminOfAnyTenant()) {
-            $this->line("<comment>User '{$selectedUser->name}' is already an admin.</comment>");
-            return;
-        }
-
-        $this->makeUserAdmin($selectedUser);
-    }
-
-    /**
-     * Make a user admin by calling the noerd:promote-admin command
-     */
-    protected function makeUserAdmin(NoerdUser $user): void
-    {
-        $this->line("Making user '{$user->name}' an admin...");
-
-        $exitCode = $this->call('noerd:promote-admin', [
-            'user_id' => $user->id,
-        ]);
-
-        if ($exitCode === 0) {
-            $this->newLine();
-            $this->info("User '{$user->name}' is now an admin!");
-        } else {
-            $this->error("Failed to make user '{$user->name}' an admin.");
-        }
     }
 
     /**

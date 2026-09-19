@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use function Laravel\Prompts\text;
 
 use Noerd\Commands\Concerns\AsksForHeroicon;
+use Noerd\Commands\Concerns\PreparesModuleWorkspace;
 use Noerd\Traits\RequiresNoerdInstallation;
 
 /**
@@ -24,6 +25,7 @@ use Noerd\Traits\RequiresNoerdInstallation;
 class MakeModuleCommand extends Command
 {
     use AsksForHeroicon;
+    use PreparesModuleWorkspace;
     use RequiresNoerdInstallation;
 
     protected $signature = 'noerd:make-module                            {name? : The name of the module}
@@ -112,6 +114,9 @@ class MakeModuleCommand extends Command
             $this->createTranslations();
             $this->createAgentDocs();
             $this->createGitkeep();
+            // A local module needs the path repository and the phpunit suite — set up
+            // here, with the first module, rather than by noerd:install.
+            $this->prepareModuleWorkspace();
             $this->updateMainComposerJson();
 
             $this->line('');
@@ -289,25 +294,25 @@ class MakeModuleCommand extends Command
     private function updateMainComposerJson(): void
     {
         $composerJsonPath = base_path('composer.json');
-        $definition = json_decode($this->filesystem->get($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
-
-        if (! isset($definition['require'])) {
-            $definition['require'] = [];
-        }
+        // Decoded into objects so an empty `{}` of the host is written back unchanged.
+        $definition = json_decode($this->filesystem->get($composerJsonPath), false, 512, JSON_THROW_ON_ERROR);
 
         $composerName = "noerd/{$this->moduleName}";
+        $require = (array) ($definition->require ?? []);
 
-        if (! isset($definition['require'][$composerName])) {
-            $definition['require'][$composerName] = '*';
-            $definition['require'] = $this->sortComposerPackages($definition['require']);
-
-            $json = json_encode(
-                $definition,
-                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
-            );
-            $this->filesystem->put($composerJsonPath, $json . "\n");
-            $this->line("<info>Updated:</info> main composer.json (added {$composerName})");
+        if (isset($require[$composerName])) {
+            return;
         }
+
+        $require[$composerName] = '*';
+        $definition->require = (object) $this->sortComposerPackages($require);
+
+        $json = json_encode(
+            $definition,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+        );
+        $this->filesystem->put($composerJsonPath, $json . "\n");
+        $this->line("<info>Updated:</info> main composer.json (added {$composerName})");
     }
 
     private function getStub(string $name): string

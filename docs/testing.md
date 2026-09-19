@@ -236,11 +236,24 @@ Add a short comment above every allowance explaining why it is legitimate.
 
 ## Install and update commands
 
-Every module's `noerd:update-{module}` command gets one standard test built on the global helper:
+Every tenant app's `noerd:update-{module}` command gets one standard test built on the global helper:
 
 ```php
 it('publishes the module configs', function (): void {
     assertModuleUpdateCommandPublishesConfigs('noerd:update-inventory', dirname(__DIR__, 2), 'inventory');
+});
+```
+
+A support module (no `app-configs/{module}/` folder) asserts what it declares instead — the
+published config and the entries `ensureModuleSetup()` writes. Its INSTALL command is testable
+under `--no-interaction`: nothing migrates implicitly, so the run publishes and stops
+(`SupportModuleInstallationTest` in the noerd package is the reference):
+
+```php
+it('publishes the config', function (): void {
+    $this->artisan('noerd:install-payment', ['--no-interaction' => true])->assertExitCode(0);
+
+    expect(File::exists(config_path('payment.php')))->toBeTrue();
 });
 ```
 
@@ -280,7 +293,7 @@ $this->app[Kernel::class]->registerCommand(new ZzFakeNoerdInstallCommand());
 ```
 
 It must declare the same options the real command does (`--force`, `--migrate`, `--build`,
-`--demo`, `--no-demo`), so a forwarded option never makes the input throw.
+`--demo`), so a forwarded option never makes the input throw.
 
 ## Factories
 

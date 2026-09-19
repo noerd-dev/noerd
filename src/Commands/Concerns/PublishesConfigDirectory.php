@@ -72,39 +72,56 @@ trait PublishesConfigDirectory
                 continue;
             }
 
-            if (File::exists($targetPath)) {
-                if (! $this->option('force')) {
-                    $choice = $this->choice(
-                        "File already exists: {$displayPath}. What do you want to do?",
-                        ['skip', 'overwrite', 'overwrite-all'],
-                        'skip',
-                    );
-
-                    if ($choice === 'skip') {
-                        $this->line("<comment>Skipped:</comment> {$displayPath}");
-                        $results['skipped_files']++;
-
-                        continue;
-                    }
-                    if ($choice === 'overwrite-all') {
-                        // Set force option for remaining files
-                        $this->input->setOption('force', true);
-                    }
-                }
-
-                $this->line("<comment>Overwriting:</comment> {$displayPath}");
-                $results['overwritten_files']++;
-            } else {
-                $this->line("<info>Copying:</info> {$displayPath}");
-                $results['copied_files']++;
-            }
-
-            if (! File::copy($sourcePath, $targetPath)) {
-                throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
-            }
+            $results[$this->publishFile($sourcePath, $targetPath, $displayPath)]++;
         }
 
         return $results;
+    }
+
+    /**
+     * Publish ONE file: an existing target prompts skip/overwrite/overwrite-all
+     * (or is overwritten under --force). Returns the counter the outcome belongs
+     * to, so callers keep their summary without repeating the decision tree.
+     *
+     * @return 'copied_files'|'skipped_files'|'overwritten_files'
+     */
+    protected function publishFile(string $sourcePath, string $targetPath, string $displayPath): string
+    {
+        $outcome = 'copied_files';
+
+        if (File::exists($targetPath)) {
+            if (! $this->option('force')) {
+                $choice = $this->choice(
+                    "File already exists: {$displayPath}. What do you want to do?",
+                    ['skip', 'overwrite', 'overwrite-all'],
+                    'skip',
+                );
+
+                if ($choice === 'skip') {
+                    $this->line("<comment>Skipped:</comment> {$displayPath}");
+
+                    return 'skipped_files';
+                }
+
+                if ($choice === 'overwrite-all') {
+                    // Set force option for remaining files
+                    $this->input->setOption('force', true);
+                }
+            }
+
+            $this->line("<comment>Overwriting:</comment> {$displayPath}");
+            $outcome = 'overwritten_files';
+        } else {
+            $this->line("<info>Copying:</info> {$displayPath}");
+        }
+
+        File::ensureDirectoryExists(dirname($targetPath));
+
+        if (! File::copy($sourcePath, $targetPath)) {
+            throw new Exception("Failed to copy file: {$sourcePath} to {$targetPath}");
+        }
+
+        return $outcome;
     }
 
     /**

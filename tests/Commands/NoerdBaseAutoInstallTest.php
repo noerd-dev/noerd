@@ -39,8 +39,7 @@ class ZzFakeNoerdInstallCommand extends Command
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking}
                             {--build : Run npm build without asking}
-                            {--demo : Install the demo app without asking}
-                            {--no-demo : Never install the demo app and do not ask for it}';
+                            {--demo : Install the demo app without asking}';
 
     public function handle(): int
     {
@@ -49,7 +48,7 @@ class ZzFakeNoerdInstallCommand extends Command
             'force' => (bool) $this->option('force'),
             'migrate' => (bool) $this->option('migrate'),
             'demo' => (bool) $this->option('demo'),
-            'no-demo' => (bool) $this->option('no-demo'),
+            'asDependency' => Noerd\Support\ModuleInstallContext::isDependencyInstall(),
         ];
         BaseInstallRecorder::$installed = BaseInstallRecorder::$succeeds;
 
@@ -139,7 +138,9 @@ it('skips the demo app on an implicit base installation', function (): void {
     $this->artisan('noerd:install-zz-base-fixture', ['--no-interaction' => true])
         ->assertExitCode(0);
 
-    expect(BaseInstallRecorder::$options['no-demo'])->toBeTrue()
+    // No flag travels for it: the base installer runs as a dependency and skips
+    // the demo question on its own.
+    expect(BaseInstallRecorder::$options['asDependency'])->toBeTrue()
         ->and(BaseInstallRecorder::$options['demo'])->toBeFalse();
 });
 
@@ -147,8 +148,7 @@ it('asks for the demo app when the module command was given --demo', function ()
     $this->artisan('noerd:install-zz-demo-fixture', ['--demo' => true, '--no-interaction' => true])
         ->assertExitCode(0);
 
-    expect(BaseInstallRecorder::$options['demo'])->toBeTrue()
-        ->and(BaseInstallRecorder::$options['no-demo'])->toBeFalse();
+    expect(BaseInstallRecorder::$options['demo'])->toBeTrue();
 });
 
 it('fails with the manual instruction when the base installation did not complete', function (): void {
@@ -179,8 +179,7 @@ class ZzDemoStepProbeCommand extends Noerd\Commands\NoerdInstallCommand
     protected $signature = 'noerd:install-zz-demo-probe
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking}
-                            {--demo : Install the demo app without asking}
-                            {--no-demo : Never install the demo app and do not ask for it}';
+                            {--demo : Install the demo app without asking}';
 
     public function handle(): int
     {
@@ -203,7 +202,7 @@ class ZzFakeNoerdDemoCommand extends Command
     }
 }
 
-describe('--no-demo', function (): void {
+describe('demo app during a module install', function (): void {
     beforeEach(function (): void {
         BaseInstallRecorder::$demoCalls = 0;
 
@@ -212,24 +211,21 @@ describe('--no-demo', function (): void {
         $kernel->registerCommand(new ZzFakeNoerdDemoCommand());
     });
 
-    it('skips the demo question and the demo install', function (): void {
-        $this->artisan('noerd:install-zz-demo-probe', ['--no-demo' => true])
-            ->doesntExpectOutputToContain('Demo App')
-            ->assertExitCode(0);
+    it('skips the demo question while the base is installed for a module', function (): void {
+        Noerd\Support\ModuleInstallContext::asDependency(function (): void {
+            $this->artisan('noerd:install-zz-demo-probe')
+                ->doesntExpectOutputToContain('Demo App')
+                ->assertExitCode(0);
+        });
 
         expect(BaseInstallRecorder::$demoCalls)->toBe(0);
     });
 
-    it('wins over --demo', function (): void {
-        $this->artisan('noerd:install-zz-demo-probe', ['--no-demo' => true, '--demo' => true])
-            ->assertExitCode(0);
-
-        expect(BaseInstallRecorder::$demoCalls)->toBe(0);
-    });
-
-    it('installs the demo app when only --demo is given', function (): void {
-        $this->artisan('noerd:install-zz-demo-probe', ['--demo' => true])
-            ->assertExitCode(0);
+    it('still installs the demo app for a module command that was given --demo', function (): void {
+        Noerd\Support\ModuleInstallContext::asDependency(function (): void {
+            $this->artisan('noerd:install-zz-demo-probe', ['--demo' => true])
+                ->assertExitCode(0);
+        });
 
         expect(BaseInstallRecorder::$demoCalls)->toBe(1);
     });

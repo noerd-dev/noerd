@@ -37,7 +37,7 @@ final class NpmRecorder
 /** The real installer's npm steps, with node replaced by a recorder. */
 class ZzNpmInstallProbeCommand extends Noerd\Commands\NoerdInstallCommand
 {
-    protected $signature = 'noerd:install-zz-npm-probe {--build} {--migrate} {--force} {--demo} {--no-demo}';
+    protected $signature = 'noerd:install-zz-npm-probe {--build} {--migrate} {--force} {--demo}';
 
     public function handle(): int
     {
