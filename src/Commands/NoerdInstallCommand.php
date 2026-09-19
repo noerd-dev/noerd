@@ -28,7 +28,8 @@ class NoerdInstallCommand extends Command
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking (required to migrate in non-interactive runs)}
                             {--build : Run npm build without asking (required to build in non-interactive runs)}
-                            {--demo : Install the demo app without asking (required to install it in non-interactive runs)}';
+                            {--demo : Install the demo app without asking (required to install it in non-interactive runs)}
+                            {--no-demo : Never install the demo app and do not ask for it}';
 
     protected $description = 'Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin';
 
@@ -99,9 +100,16 @@ class NoerdInstallCommand extends Command
      * Ask whether to install the demo app and run noerd:demo on confirmation.
      * Non-interactive runs never install the demo implicitly — a CI/deploy
      * invocation must opt in with --demo instead of inheriting the prompt default.
+     * --no-demo skips the question altogether and wins over --demo: it is what a
+     * module install command passes when it installs the base package on the fly,
+     * where a demo app was never the point of the run.
      */
     protected function installDemoApp(): void
     {
+        if ($this->boolOption('no-demo')) {
+            return;
+        }
+
         $this->newLine();
 
         $shouldInstallDemo = $this->boolOption('demo');
