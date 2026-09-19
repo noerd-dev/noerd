@@ -18,6 +18,7 @@ use Noerd\Commands\Concerns\RunsNpmBuild;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Support\ModuleInstallContext;
 
 class NoerdInstallCommand extends Command
 {
@@ -331,9 +332,18 @@ class NoerdInstallCommand extends Command
 
     /**
      * Display the closing "Application ready" callout with the next steps.
+     *
+     * Skipped while the base package is installed as part of a module install on
+     * a fresh project (`noerd:install-cms` on a project without `config/noerd.php`):
+     * that command closes with its own callout, and a second "ready" box halfway
+     * through the run reads like the installation already finished.
      */
     protected function displayApplicationReady(): void
     {
+        if (ModuleInstallContext::isDependencyInstall()) {
+            return;
+        }
+
         $url = mb_rtrim((string) config('app.url'), '/');
         $appsUrl = $url . '/noerd-apps';
 

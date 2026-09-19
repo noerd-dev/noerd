@@ -11,6 +11,7 @@ use function Laravel\Prompts\multiselect;
 use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Support\ModuleInstallContext;
 
 trait RequiresNoerdInstallation
 {
@@ -63,7 +64,12 @@ trait RequiresNoerdInstallation
         $this->info('Noerd base package has not been installed yet — running "php artisan noerd:install" first.');
         $this->line('');
 
-        $exitCode = $this->call('noerd:install', $this->noerdInstallOptions());
+        // As a dependency: the base installer skips its closing "Application ready"
+        // callout, so the run ends with the module's own one instead of showing a
+        // finished-looking box halfway through.
+        $exitCode = (int) ModuleInstallContext::asDependency(
+            fn(): int => $this->call('noerd:install', $this->noerdInstallOptions()),
+        );
 
         if ($exitCode !== Command::SUCCESS || ! $this->isNoerdInstalled()) {
             $this->line('');

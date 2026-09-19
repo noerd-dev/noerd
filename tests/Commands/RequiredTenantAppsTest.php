@@ -7,6 +7,7 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Illuminate\Testing\PendingCommand;
 use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -164,16 +165,23 @@ function zzRegisterRequiredApp(): TenantApp
  *
  * @param  array<int>  $tenantIds
  */
-function zzRunHostInstall(object $test, array $tenantIds): void
+function zzHostInstallCommand(object $test, array $tenantIds): PendingCommand
 {
-    $test->artisan('noerd:install-zz-required-host', ['--force' => true])
+    return $test->artisan('noerd:install-zz-required-host', ['--force' => true])
         ->expectsConfirmation('Should Zz Required Host be installed as a hidden app (not shown in main navigation)?', 'no')
         ->expectsQuestion('App title', 'Zz Required Host')
         ->expectsConfirmation('Would you like to assign the app to tenants now?', 'yes')
         ->expectsQuestion("Which tenants should 'Zz Required Host' be assigned to?", $tenantIds)
         ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
-        ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no')
-        ->assertExitCode(0);
+        ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no');
+}
+
+/**
+ * @param  array<int>  $tenantIds
+ */
+function zzRunHostInstall(object $test, array $tenantIds): void
+{
+    zzHostInstallCommand($test, $tenantIds)->assertExitCode(0);
 }
 
 beforeEach(function (): void {
@@ -286,5 +294,37 @@ describe('dependency installs', function (): void {
         ModuleInstallContext::asDependency(fn(): null => null);
 
         expect(ModuleInstallContext::isDependencyInstall())->toBeFalse();
+    });
+});
+
+describe('closing callout', function (): void {
+    it('links the module\'s own app route when the install finished', function (): void {
+        // The user installed this app to open it — the box points at its route,
+        // not at the generic apps page.
+        // uri, component, route name — getAppRoute() returns the name 'zz-required-host'.
+        registerTestLivewireRoute('zz-required-host', 'zz-required-host-page', 'zz-required-host');
+
+        zzHostInstallCommand($this, [$this->tenantA->id])
+            ->expectsOutputToContain('Zz Required Host is ready')
+            ->expectsOutputToContain('/zz-required-host')
+            ->assertExitCode(0);
+    });
+
+    it('falls back to the apps page when the app route is not registered', function (): void {
+        zzHostInstallCommand($this, [$this->tenantA->id])
+            ->expectsOutputToContain('/noerd-apps')
+            ->assertExitCode(0);
+    });
+
+    it('prints no callout for a module installed as a dependency', function (): void {
+        ModuleInstallContext::asDependency(function (): void {
+            $this->artisan('noerd:install-zz-required-dep', ['--force' => true])
+                ->expectsConfirmation('Should Zz Required Dep be installed as a hidden app (not shown in main navigation)?', 'no')
+                ->expectsQuestion('App title', 'Zz Required Dep')
+                ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
+                ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no')
+                ->doesntExpectOutputToContain('Zz Required Dep is ready')
+                ->assertExitCode(0);
+        });
     });
 });

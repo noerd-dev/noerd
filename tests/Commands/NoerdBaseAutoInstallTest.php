@@ -234,3 +234,39 @@ describe('--no-demo', function (): void {
         expect(BaseInstallRecorder::$demoCalls)->toBe(1);
     });
 });
+
+/**
+ * The real installer, cut down to its closing callout: the box says the whole
+ * application is ready, which is wrong in the middle of a module installation.
+ */
+class ZzReadyCalloutProbeCommand extends Noerd\Commands\NoerdInstallCommand
+{
+    protected $signature = 'noerd:install-zz-ready-probe';
+
+    public function handle(): int
+    {
+        $this->displayApplicationReady();
+
+        return self::SUCCESS;
+    }
+}
+
+describe('Application ready callout', function (): void {
+    beforeEach(function (): void {
+        $this->app[Kernel::class]->registerCommand(new ZzReadyCalloutProbeCommand());
+    });
+
+    it('closes a base installation the user started', function (): void {
+        $this->artisan('noerd:install-zz-ready-probe')
+            ->expectsOutputToContain('Application ready')
+            ->assertExitCode(0);
+    });
+
+    it('is suppressed while the base is installed for a module install', function (): void {
+        Noerd\Support\ModuleInstallContext::asDependency(function (): void {
+            $this->artisan('noerd:install-zz-ready-probe')
+                ->doesntExpectOutputToContain('Application ready')
+                ->assertExitCode(0);
+        });
+    });
+});

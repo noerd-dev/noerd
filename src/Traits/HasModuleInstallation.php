@@ -7,6 +7,12 @@ namespace Noerd\Traits;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+
+use function Laravel\Prompts\callout;
+
+use Laravel\Prompts\Elements\Link;
+use Laravel\Prompts\Elements\NumberedList;
 use Noerd\Models\TenantApp;
 use Noerd\Support\ModuleInstallContext;
 use RecursiveDirectoryIterator;
@@ -258,6 +264,7 @@ trait HasModuleInstallation
             // re-running install on an existing app would silently skip it.
             if ($updateResult === 0) {
                 $this->promptAppTenantAssignment($appKey);
+                $this->displayModuleReady();
             }
 
             return $updateResult;
@@ -320,6 +327,8 @@ trait HasModuleInstallation
 
             // Ask to run npm build
             $this->askForNpmBuild();
+
+            $this->displayModuleReady();
 
             return Command::SUCCESS;
         } catch (Exception $e) {
@@ -442,6 +451,51 @@ trait HasModuleInstallation
         }
 
         return array_values(array_intersect($keys, $registered));
+    }
+
+    /**
+     * The closing "{Module} is ready" callout of an installation, pointing at the
+     * app's own route — the place the user wants to go after installing it.
+     *
+     * Skipped for a module installed as a DEPENDENCY of another one: the run
+     * belongs to the app the user asked for, and that one closes with its box.
+     */
+    protected function displayModuleReady(): void
+    {
+        if (ModuleInstallContext::isDependencyInstall()) {
+            return;
+        }
+
+        callout("{$this->getModuleName()} is ready", [
+            'You can start your local development using:',
+            new NumberedList([
+                'Run: php artisan dev',
+                'Open: ' . new Link($this->appReadyUrl()) . ' and log in with your admin user',
+            ]),
+            'New to noerd? Check out the ' . new Link('https://noerd.dev', 'documentation') . '.',
+            'Now go build an amazing business app!',
+        ]);
+    }
+
+    /**
+     * The URL the closing callout links to: the module's own app route, falling
+     * back to the apps page when that route is not registered (the module's
+     * service provider may not be booted yet) or needs parameters.
+     */
+    protected function appReadyUrl(): string
+    {
+        $appsUrl = mb_rtrim((string) config('app.url'), '/') . '/noerd-apps';
+        $route = $this->getAppRoute();
+
+        if (! Route::has($route)) {
+            return $appsUrl;
+        }
+
+        try {
+            return route($route);
+        } catch (Exception) {
+            return $appsUrl;
+        }
     }
 
     /**
