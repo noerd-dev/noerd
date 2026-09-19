@@ -35,12 +35,18 @@ new class extends Component {
         ]);
 
         foreach ($this->temporaryFiles as $file) {
-            // Convert the TemporaryUploadedFile into the plain array shape consumers of this component expect
+            // Convert the TemporaryUploadedFile into the plain array shape consumers of this component expect.
+            //
+            // These scalars are for DISPLAY only. `$files` is a public Livewire
+            // property, so the client can replace the whole array — which is why
+            // no file system path is published here: a consumer reading one and
+            // opening it would turn every authenticated user into an arbitrary
+            // file reader. The upload itself travels as the signed `_original`
+            // reference; resolve it with Noerd\Support\DropzoneFile::resolve().
             $this->files[] = [
                 'name' => $file->getClientOriginalName(),
                 'extension' => $file->getClientOriginalExtension(),
                 'size' => $file->getSize(),
-                'path' => $file->getRealPath(),
                 'mime_type' => $file->getMimeType(),
                 // Keep the original object as well, for display
                 '_original' => $file
