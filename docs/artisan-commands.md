@@ -69,6 +69,7 @@ php artisan noerd:install --force --migrate --build --demo --no-interaction
 | `--migrate` | Run the migrations without asking — required to migrate in non-interactive runs; forwarded to `noerd:demo` as `--migrate --seed` |
 | `--build` | Run `npm run build` without asking — required to build in non-interactive runs |
 | `--demo` | Install the demo app without asking — required to install it in non-interactive runs |
+| `--no-demo` | Never install the demo app and do not ask for it; wins over `--demo`. A module install command passes it when it installs the base package on the fly |
 
 The public assets (fonts + built Vite bundle) can also be republished on their own with
 `php artisan vendor:publish --tag=noerd-assets`.

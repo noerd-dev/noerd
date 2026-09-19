@@ -88,6 +88,10 @@ trait RequiresNoerdInstallation
      * --no-interaction, --quiet and the verbosity flags are forwarded by
      * Command::call() itself.
      *
+     * The demo app is skipped unless the caller asked for it: someone installing
+     * a module is setting up that module, not looking for the demo — so the
+     * implicit base installation must not stop to ask about it.
+     *
      * @return array<string, bool>
      */
     protected function noerdInstallOptions(): array
@@ -98,6 +102,10 @@ trait RequiresNoerdInstallation
             if ($this->getDefinition()->hasOption($option) && (bool) $this->option($option)) {
                 $options['--' . $option] = true;
             }
+        }
+
+        if (! isset($options['--demo'])) {
+            $options['--no-demo'] = true;
         }
 
         return $options;

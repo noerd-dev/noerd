@@ -198,7 +198,9 @@ The traits behind every `noerd:install-{module}` command — covered in full in 
 `assignAppToTenants(string $appName): void`. On a project where `noerd:install` has not run yet, an
 INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself — forwarding the options both
 commands share (`--force`, `--migrate`, `--build`, `--demo`) — and continues once the base package is
-in place; it only aborts with the manual hint when that installation did not complete. Every other
+in place; it only aborts with the manual hint when that installation did not complete. Unless the
+module command was given `--demo`, that run is passed `--no-demo`: someone installing a module is
+setting up that module, so the base installation never stops to ask about the demo app. Every other
 command (update, scaffold, demo) keeps aborting with the hint. Pass `$autoInstall` explicitly to
 override the decision, which `shouldAutoInstallNoerd()` otherwise derives from the command name.
 

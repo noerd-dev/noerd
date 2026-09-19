@@ -24,6 +24,8 @@ final class BaseInstallRecorder
 
     /** Whether the fake noerd:install actually leaves the base installed. */
     public static bool $succeeds = true;
+
+    public static int $demoCalls = 0;
 }
 
 /**
@@ -37,7 +39,8 @@ class ZzFakeNoerdInstallCommand extends Command
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking}
                             {--build : Run npm build without asking}
-                            {--demo : Install the demo app without asking}';
+                            {--demo : Install the demo app without asking}
+                            {--no-demo : Never install the demo app and do not ask for it}';
 
     public function handle(): int
     {
@@ -45,6 +48,8 @@ class ZzFakeNoerdInstallCommand extends Command
         BaseInstallRecorder::$options = [
             'force' => (bool) $this->option('force'),
             'migrate' => (bool) $this->option('migrate'),
+            'demo' => (bool) $this->option('demo'),
+            'no-demo' => (bool) $this->option('no-demo'),
         ];
         BaseInstallRecorder::$installed = BaseInstallRecorder::$succeeds;
 
@@ -76,6 +81,12 @@ class ZzBaseFixtureInstallCommand extends Command
     }
 }
 
+/** A module install command that declares --demo itself. */
+class ZzBaseFixtureDemoInstallCommand extends ZzBaseFixtureInstallCommand
+{
+    protected $signature = 'noerd:install-zz-demo-fixture {--force : Overwrite existing files without asking} {--demo : Install the demo app}';
+}
+
 /** A module update command: it must keep asking for noerd:install. */
 class ZzBaseFixtureUpdateCommand extends ZzBaseFixtureInstallCommand
 {
@@ -94,6 +105,7 @@ beforeEach(function (): void {
     // which would otherwise really publish into the host and run migrations.
     $kernel->registerCommand(new ZzFakeNoerdInstallCommand());
     $kernel->registerCommand(new ZzBaseFixtureInstallCommand());
+    $kernel->registerCommand(new ZzBaseFixtureDemoInstallCommand());
     $kernel->registerCommand(new ZzBaseFixtureUpdateCommand());
 });
 
@@ -119,7 +131,24 @@ it('forwards the options it shares with noerd:install', function (): void {
     $this->artisan('noerd:install-zz-base-fixture', ['--force' => true, '--no-interaction' => true])
         ->assertExitCode(0);
 
-    expect(BaseInstallRecorder::$options)->toBe(['force' => true, 'migrate' => false]);
+    expect(BaseInstallRecorder::$options['force'])->toBeTrue()
+        ->and(BaseInstallRecorder::$options['migrate'])->toBeFalse();
+});
+
+it('skips the demo app on an implicit base installation', function (): void {
+    $this->artisan('noerd:install-zz-base-fixture', ['--no-interaction' => true])
+        ->assertExitCode(0);
+
+    expect(BaseInstallRecorder::$options['no-demo'])->toBeTrue()
+        ->and(BaseInstallRecorder::$options['demo'])->toBeFalse();
+});
+
+it('asks for the demo app when the module command was given --demo', function (): void {
+    $this->artisan('noerd:install-zz-demo-fixture', ['--demo' => true, '--no-interaction' => true])
+        ->assertExitCode(0);
+
+    expect(BaseInstallRecorder::$options['demo'])->toBeTrue()
+        ->and(BaseInstallRecorder::$options['no-demo'])->toBeFalse();
 });
 
 it('fails with the manual instruction when the base installation did not complete', function (): void {
@@ -139,4 +168,69 @@ it('keeps asking for noerd:install on a command that is not an install command',
         ->assertExitCode(1);
 
     expect(BaseInstallRecorder::$calls)->toBe(0);
+});
+
+/**
+ * The real installer, cut down to the demo step: everything before it writes
+ * into the host tree, and only the demo decision is under test here.
+ */
+class ZzDemoStepProbeCommand extends Noerd\Commands\NoerdInstallCommand
+{
+    protected $signature = 'noerd:install-zz-demo-probe
+                            {--force : Overwrite existing files without asking}
+                            {--migrate : Run migrations without asking}
+                            {--demo : Install the demo app without asking}
+                            {--no-demo : Never install the demo app and do not ask for it}';
+
+    public function handle(): int
+    {
+        $this->installDemoApp();
+
+        return self::SUCCESS;
+    }
+}
+
+/** Stand-in for noerd:demo, which would otherwise publish into the host tree. */
+class ZzFakeNoerdDemoCommand extends Command
+{
+    protected $signature = 'noerd:demo {--force} {--migrate} {--seed}';
+
+    public function handle(): int
+    {
+        BaseInstallRecorder::$demoCalls++;
+
+        return self::SUCCESS;
+    }
+}
+
+describe('--no-demo', function (): void {
+    beforeEach(function (): void {
+        BaseInstallRecorder::$demoCalls = 0;
+
+        $kernel = $this->app[Kernel::class];
+        $kernel->registerCommand(new ZzDemoStepProbeCommand());
+        $kernel->registerCommand(new ZzFakeNoerdDemoCommand());
+    });
+
+    it('skips the demo question and the demo install', function (): void {
+        $this->artisan('noerd:install-zz-demo-probe', ['--no-demo' => true])
+            ->doesntExpectOutputToContain('Demo App')
+            ->assertExitCode(0);
+
+        expect(BaseInstallRecorder::$demoCalls)->toBe(0);
+    });
+
+    it('wins over --demo', function (): void {
+        $this->artisan('noerd:install-zz-demo-probe', ['--no-demo' => true, '--demo' => true])
+            ->assertExitCode(0);
+
+        expect(BaseInstallRecorder::$demoCalls)->toBe(0);
+    });
+
+    it('installs the demo app when only --demo is given', function (): void {
+        $this->artisan('noerd:install-zz-demo-probe', ['--demo' => true])
+            ->assertExitCode(0);
+
+        expect(BaseInstallRecorder::$demoCalls)->toBe(1);
+    });
 });
