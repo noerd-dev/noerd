@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\multiselect;
 
+use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 
@@ -124,8 +125,11 @@ trait RequiresNoerdInstallation
      *
      * @param  string  $appName  The name/key of the TenantApp (e.g., 'BUSINESS-HOURS')
      * @param  bool  $compact  Only the selection and the final count — no header, no per-tenant lines
+     * @param  array<string>  $alsoAssign  Apps the module cannot work without (HasModuleInstallation::getRequiredAppKeys()).
+     *                                     They follow the same selection, but ADDITIVELY: a tenant that
+     *                                     loses this app keeps them, because another module may need them.
      */
-    protected function assignAppToTenants(string $appName, bool $compact = false): void
+    protected function assignAppToTenants(string $appName, bool $compact = false, array $alsoAssign = []): void
     {
         $app = TenantApp::where('name', $appName)->first();
 
@@ -178,6 +182,7 @@ trait RequiresNoerdInstallation
 
             if ($isSelected && ! $wasAssigned) {
                 $tenant->tenantApps()->attach($app->id);
+                TenantAppAssigned::dispatch($tenant->id, $appName);
                 if (! $compact) {
                     $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
                 }
@@ -194,5 +199,53 @@ trait RequiresNoerdInstallation
             $this->line('');
         }
         $this->info("'{$app->title}' is now assigned to {$finalCount} tenant(s).");
+
+        $this->assignRequiredApps($alsoAssign, $selectedTenantIds, $compact);
+    }
+
+    /**
+     * Give every tenant that just got the app the apps it cannot work without.
+     * Purely additive — a required app is never detached, it may be the reason
+     * another installed module works.
+     *
+     * @param  array<string>  $appNames
+     * @param  array<int|string>  $tenantIds
+     */
+    protected function assignRequiredApps(array $appNames, array $tenantIds, bool $compact = false): void
+    {
+        if ($appNames === [] || $tenantIds === []) {
+            return;
+        }
+
+        $tenants = Tenant::whereIn('id', array_map('intval', $tenantIds))->orderBy('name')->get();
+
+        foreach ($appNames as $appName) {
+            $required = TenantApp::where('name', $appName)->first();
+
+            if (! $required) {
+                continue;
+            }
+
+            $assignedIds = $required->tenants()->pluck('tenants.id')->map('intval')->all();
+            $attached = 0;
+
+            foreach ($tenants as $tenant) {
+                if (in_array((int) $tenant->id, $assignedIds, true)) {
+                    continue;
+                }
+
+                $tenant->tenantApps()->attach($required->id);
+                TenantAppAssigned::dispatch($tenant->id, $appName);
+                $attached++;
+
+                if (! $compact) {
+                    $this->line("<info>✓ '{$required->title}' assigned to '{$tenant->name}' (required)</info>");
+                }
+            }
+
+            if ($attached > 0) {
+                $this->info("'{$required->title}' is required and was assigned to {$attached} tenant(s).");
+            }
+        }
     }
 }

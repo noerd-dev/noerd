@@ -201,6 +201,15 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   republishes its config instead.
   Register it next to the install command. `noerd:update-all` discovers every command named
   `noerd:update-{module}`, so a missing one silently drops the module out of the project-wide update.
+- A module that cannot work without ANOTHER tenant app (the CMS without `MEDIA`) declares it as
+  `getRequiredAppKeys(): ['MEDIA']` on its install command — never by asking a second time. The
+  required app is assigned to exactly the tenants the module's app was assigned to, in the SAME
+  prompt, and ADDITIVELY: deselecting a tenant never removes an app another module may need. An app
+  whose package is not installed is warned about, never fatal.
+- A module that installs that dependency itself calls `$this->installDependencyModule('noerd:install-{dep}')`
+  BEFORE `runModuleInstallation()` (so the dependency's app row exists when the tenant prompt runs).
+  The nested command then skips its own tenant question — one installation, one question about
+  tenants. Never `Artisan::call()` a sibling install command directly.
 - Reference: the `install-command.stub` / `update-command.stub` rendered by `noerd:make-module` (`src/Commands/stubs/module/`) and `docs/creating-modules.md`.
 
 ### Eloquent Models: $guarded instead of $fillable

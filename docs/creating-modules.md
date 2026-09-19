@@ -126,6 +126,43 @@ Register both in the module's ServiceProvider inside
 See [Reusable Traits](traits.md) for the two traits and [Artisan Commands](artisan-commands.md)
 for `noerd:update-all`.
 
+### Modules that require another app
+
+A module that cannot work without another tenant app — the CMS needs `MEDIA` for its image
+pickers — declares it in the install command:
+
+```php
+/**
+ * @return array<string>
+ */
+protected function getRequiredAppKeys(): array
+{
+    return ['MEDIA'];
+}
+```
+
+The required app is then assigned to exactly the tenants the module's own app was assigned to, in
+the same prompt. Assignment is **additive only**: deselecting a tenant removes the module's app but
+never the required one, which another installed module may equally depend on. A required app whose
+package is not installed is reported as a warning — it is a missing optional dependency, not a
+reason to fail the installation.
+
+When the module installs that dependency itself, it runs the nested install command through
+`installDependencyModule()` **before** `runModuleInstallation()`, so the dependency's app exists by
+the time the tenant prompt runs:
+
+```php
+public function handle(): int
+{
+    $this->installDependencyModule('noerd:install-media');
+
+    return $this->runModuleInstallation();
+}
+```
+
+A command started that way skips its own tenant question (`Noerd\Support\ModuleInstallContext`) —
+the user started one installation and answers one question about tenants.
+
 ## Customization
 
 After creation, customize the module:
