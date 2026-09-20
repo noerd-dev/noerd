@@ -17,7 +17,7 @@
             "name": "Johannes Brock"
         }
     ],
-    "version": "v0.16.36",
+    "version": "v0.16.37",
     "license": "MIT",
     "require": {
         "php": "^8.3",
