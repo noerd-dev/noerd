@@ -64,7 +64,11 @@ The generated module already follows every convention the shipped modules use �
   (`resources/views/components/icons/app.blade.php`) by hand and return `{module}::icons.app` instead.
 - **Tenant-app migration**: `app-configs/stubs/add_{module}_tenant_app.php.stub` — the install
   command publishes it into the project's `database/migrations/`, so a deploy registers the app
-  through `php artisan migrate` without the interactive install.
+  through `php artisan migrate` without the interactive install. The update command publishes it
+  too when the app is registered but the host has no such migration yet (from the row's current
+  title, icon and route). This is the ONE way an app is registered: a module ships no registering
+  migration of its own in `database/migrations/` — it would register the app in every project
+  that merely has the package installed, and make the install command divert to its update path.
 - **Composer**: `noerd/noerd` is required at the core version the module was scaffolded with
   (`composer.json` `require`), and `tests/` is autoloaded PSR-4 as `Noerd\{Module}\Tests\` so the
   module's own test traits (`tests/Traits/`) resolve without extra configuration. The command also

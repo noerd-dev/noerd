@@ -166,6 +166,7 @@ trait HasModuleInstallation
                 )]++;
             }
 
+            $this->ensureRegistrationMigration();
             $this->publishModuleResources(update: true);
             $this->displayPublishSummary($this->installResults);
             $this->ensureModuleSetup();
@@ -679,25 +680,57 @@ trait HasModuleInstallation
             }
         }
 
-        // Read stub and replace placeholders
-        $content = file_get_contents($stubPath);
-        $content = str_replace([
-            '{{APP_TITLE}}',
-            '{{APP_NAME}}',
-            '{{APP_ICON}}',
-            '{{APP_ROUTE}}',
-        ], [
+        $this->writeRegistrationMigration(
+            $stubPath,
+            $targetPath,
             $this->appTitle ?? $this->getDefaultAppTitle(),
-            $this->deriveAppKey($this->getModuleKey()),
             $this->getAppIcon(),
             $this->getAppRoute(),
-        ], $content);
-
-        file_put_contents($targetPath, $content);
+        );
 
         $this->line("<info>✓ Migration published:</info> database/migrations/{$filename}");
 
         return $filename;
+    }
+
+    /**
+     * An app that is registered in THIS database must also be registered by a
+     * plain `php artisan migrate` on the next one (staging, production, a
+     * colleague's machine): the update path publishes the registering migration
+     * when the host has none. That is the case for an app whose row came from
+     * somewhere else than this command — runModuleInstallation() then diverts to
+     * the update path and never reaches publishMigration().
+     *
+     * The file carries what the row says (a title changed in Setup → Apps
+     * included) and is not run here: the row exists, and the migration is
+     * idempotent. Asks nothing, so it is safe in noerd:update-all.
+     */
+    protected function ensureRegistrationMigration(): void
+    {
+        $stubPath = $this->getMigrationStubPath();
+        $pattern = database_path("migrations/*_add_{$this->getModuleKey()}_tenant_app.php");
+
+        if (! file_exists($stubPath) || ! empty(glob($pattern)) || ! Schema::hasTable('tenant_apps')) {
+            return;
+        }
+
+        $app = TenantApp::where('name', $this->deriveAppKey($this->getModuleKey()))->first();
+
+        if (! $app) {
+            return;
+        }
+
+        $filename = date('Y_m_d_His') . "_add_{$this->getModuleKey()}_tenant_app.php";
+
+        $this->writeRegistrationMigration(
+            $stubPath,
+            database_path("migrations/{$filename}"),
+            (string) $app->title,
+            (string) $app->icon,
+            (string) $app->route,
+        );
+
+        $this->line("<info>✓ Migration published:</info> database/migrations/{$filename} — commit it, so a deployment registers the app");
     }
 
     /**
@@ -730,6 +763,26 @@ trait HasModuleInstallation
             ['AE', 'OE', 'UE', 'SS', 'AE', 'OE', 'UE', '-'],
             $moduleKey,
         ));
+    }
+
+    /**
+     * Render the tenant-app migration stub into the host's migrations directory.
+     */
+    private function writeRegistrationMigration(string $stubPath, string $targetPath, string $title, string $icon, string $route): void
+    {
+        $escape = static fn(string $value): string => addcslashes($value, "'\\");
+
+        $content = str_replace(
+            ['{{APP_TITLE}}', '{{APP_NAME}}', '{{APP_ICON}}', '{{APP_ROUTE}}'],
+            [$escape($title), $this->deriveAppKey($this->getModuleKey()), $escape($icon), $escape($route)],
+            (string) file_get_contents($stubPath),
+        );
+
+        if (! is_dir(dirname($targetPath))) {
+            mkdir(dirname($targetPath), 0755, true);
+        }
+
+        file_put_contents($targetPath, $content);
     }
 
     /**
