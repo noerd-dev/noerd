@@ -46,6 +46,11 @@ trait PublishesNoerdContent
 
     /**
      * Publish the setup app's YAML configs into the host's app-configs/setup.
+     *
+     * Published quietly: the setup app is the package's own content, the same
+     * ~15 files on every installation, and naming each one buries the steps the
+     * reader has to act on (the admin user, the migrations) in a wall of paths.
+     * The summary reports what happened; a prompt for an existing file still shows.
      */
     protected function publishSetupAppConfigs(): bool
     {
@@ -57,7 +62,7 @@ trait PublishesNoerdContent
             return false;
         }
 
-        $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/setup')));
+        $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/setup'), quiet: true));
 
         return true;
     }
