@@ -57,6 +57,7 @@ final class ListCellFormatter
             'currency' => is_numeric($value) ? CurrencyHelper::format((float) $value) : (string) ($value ?? ''),
             'date' => FormatHelper::date($value),
             'datetime' => FormatHelper::dateTime($value),
+            'number' => is_numeric($value) ? FormatHelper::number((float) $value, 2) : (string) ($value ?? ''),
             'bool', 'boolean' => self::truthy($value) ? __('Yes') : __('No'),
             'badge' => __(self::badgeLabel($value, $column['options'] ?? [])),
             default => (string) ($value ?? ''),

@@ -119,9 +119,10 @@ it('generates a composer.json requiring the scaffolding core version', function 
     expect($composer['require']['noerd/noerd'])->toMatch('/^\^\d+\.\d+$/')
         ->and($composer['require'])->toHaveKey('php')
         ->and($composer['license'])->toBe('MIT')
-        // Test-only autoloading never ships in a consumer's production autoloader.
-        ->and($composer['autoload']['psr-4'])->not->toHaveKey('Noerd\\ZzWidget\\Tests\\')
-        ->and($composer['autoload-dev']['psr-4'])->toHaveKey('Noerd\\ZzWidget\\Tests\\');
+        // Composer only dumps the dev autoload of the ROOT package: a host running the
+        // module's tests resolves its test traits only from the production autoload.
+        ->and($composer['autoload']['psr-4'])->toHaveKey('Noerd\\ZzWidget\\Tests\\')
+        ->and($composer)->not->toHaveKey('autoload-dev');
 });
 
 it('registers the chosen heroicon and app title through the install command', function (): void {

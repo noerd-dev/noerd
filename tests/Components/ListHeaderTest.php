@@ -113,6 +113,15 @@ describe('headerControls', function (): void {
             ->and(array_keys($controls['primary']))->toBe([0]);
     });
 
+    it('takes the default shortcut of the first action from the new_entry config key', function (): void {
+        config(['noerd.keyboard_shortcuts.new_entry' => 'q']);
+
+        $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
+
+        expect($html)->toContain('e.key.toLowerCase() === &quot;q&quot;')
+            ->not->toContain('e.key.toLowerCase() === &quot;n&quot;');
+    });
+
     it('reports the search field and the CSV export', function (): void {
         $controls = Livewire::test(CollapsingHeaderListComponent::class)->instance()->headerControls();
 

@@ -142,6 +142,15 @@ describe('format()', function (): void {
             ->and(ListCellFormatter::format(null, ['type' => 'currency']))->toBe('');
     });
 
+    it('writes a number cell in the reader locale, like the table cell does', function (): void {
+        zzCellFormatterUser(formatLocale: 'de-DE');
+
+        expect(ListCellFormatter::format(1234.5, ['type' => 'number']))->toBe('1.234,5')
+            ->and(ListCellFormatter::format(0.126, ['type' => 'number']))->toBe('0,13')
+            ->and(ListCellFormatter::format('n/a', ['type' => 'number']))->toBe('n/a')
+            ->and(ListCellFormatter::format(null, ['type' => 'number']))->toBe('');
+    });
+
     it('writes a date cell in the reader locale', function (): void {
         zzCellFormatterUser(formatLocale: 'de-DE');
 
@@ -190,7 +199,6 @@ describe('format()', function (): void {
             ->and(ListCellFormatter::format(null, $column))->toBe('');
     })->with([
         [['type' => 'text']],
-        [['type' => 'number']],
         [['type' => 'colored_text']],
         [[]],
     ]);

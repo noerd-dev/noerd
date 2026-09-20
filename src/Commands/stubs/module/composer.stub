@@ -11,11 +11,7 @@
         "psr-4": {
             "Noerd\\{{ModuleName}}\\": "src/",
             "Noerd\\{{ModuleName}}\\Database\\Factories\\": "database/factories/",
-            "Noerd\\{{ModuleName}}\\Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
+            "Noerd\\{{ModuleName}}\\Database\\Seeders\\": "database/seeders/",
             "Noerd\\{{ModuleName}}\\Tests\\": "tests/"
         }
     },

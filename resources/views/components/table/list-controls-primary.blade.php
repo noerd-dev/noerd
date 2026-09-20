@@ -14,7 +14,7 @@
                 // $actionIndex is the position in the FULL YAML action list
                 // (headerControls() preserves it), so pulling the secondary buttons
                 // out keeps the shortcut the YAML assigned.
-                $effectiveShortcut = $actionItem['shortcut'] ?? ($actionIndex === 0 ? 'n' : null);
+                $effectiveShortcut = $actionItem['shortcut'] ?? ($actionIndex === 0 ? config('noerd.keyboard_shortcuts.new_entry', 'n') : null);
                 $shortcut = $effectiveShortcut !== null
                     ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
                     : null;
