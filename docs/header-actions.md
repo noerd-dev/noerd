@@ -69,7 +69,7 @@ Every action component is mounted with the same two parameters, in both contexts
 
 Rules for the component itself:
 
-- **Single collapsing root.** Use `<div class="contents">` as the root and render the button inside it only when visible. A hidden action must render an empty root — never `@if` around the root element.
+- **Single collapsing root.** Use `<div class="contents">` as the root and render the button inside it only when visible. A hidden action must render an empty root — never `@if` around the root element. The slot wrapper hides itself while no registered action rendered a button, so an empty root leaves no gap.
 - **Gate in `mount()`.** Compute visibility and any derived state once in `mount()` and store it in `#[Locked]` properties. Authorization is entirely the action's responsibility.
 - **Mount-time params only.** The params are passed once at mount. The header re-renders on every Livewire update of the host (e.g. each search keystroke), but nested Livewire components with stable keys are skipped on parent re-renders — your action is mounted once per page lifecycle and never re-runs its gating per keystroke. Do not read live host state.
 - Open modals with the noerd modal system (the Alpine `$modal(...)` magic or `Noerd::modal(...)`), never with a hand-rolled overlay.
@@ -151,9 +151,3 @@ Registered with `$registry->registerListAction('my-module::list-header-action-ex
 - Modal headers of details and pages — the detail slot is the form block, not the header
 - `*-page` components whose page YAML declares no `fields:` (their embedded detail carries the actions)
 - Details and pages that render no `noerd::components.detail.block` at all (a hand-built body without a YAML form)
-
-## Design Guidance
-
-Keep each action a SINGLE-purpose component — one function per component, and
-register list and detail variants separately: the two slots share no markup,
-and a combined component ends up branching on its context everywhere.

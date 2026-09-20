@@ -1,12 +1,10 @@
 # Creating Modules
 
-Using modules is completely optional. The application works perfectly fine without any modules.
-
-The module approach is very inspired by https://github.com/InterNACHI/modular
-
-Use the `noerd:make-module` Artisan command to create a new module with complete directory structure —
-or choose **Module** in `php artisan noerd:make-app`, which asks the same questions, calls
-`noerd:make-module` for you and runs the Composer and install steps (see [Create an App](make-app.md)).
+Modules are optional — an app can live in the project root just as well. A module is a Composer
+package under `app-modules/{module}` (the approach is inspired by
+[InterNACHI/modular](https://github.com/InterNACHI/modular)). Scaffold one with `noerd:make-module`,
+or choose **Module** in `php artisan noerd:make-app`, which asks the same questions and runs the
+Composer and install steps for you (see [Create an App](make-app.md)).
 
 ## Quick Start
 
@@ -21,8 +19,10 @@ The command will ask for:
 Every prompt has an option for scripted runs (`noerd:make-module inventory --title=Inventory --icon=cube`).
 
 The scaffold contains **no model**: it is the module plumbing plus a dashboard. Every record type is
-added afterwards with `noerd:make-resource` (see [Adding resources](#adding-resources)).
-
+added afterwards with `noerd:make-resource` (see [Adding resources](#adding-resources)). With the
+first local module the command also prepares the host: it creates `app-modules/`, adds the
+`app-modules/*` path repository to `composer.json` and the `app-modules` test suite to `phpunit.xml`
+(both idempotent).
 
 ## Next Steps
 
@@ -45,9 +45,6 @@ it and stays re-runnable.
 
 ## What the scaffold gives you
 
-The generated module already follows every convention the shipped modules use — there is nothing to
-"harden" before the first migrate:
-
 - **Routes** (`routes/{module}-routes.php`): one group behind `['noerd', 'app-access:{module}']`
   (tenant must have the app assigned, see [Authentication](auth.md)) with the dashboard route
   `{module}`. `noerd:make-resource` appends the list and detail routes following the **naming
@@ -58,8 +55,8 @@ The generated module already follows every convention the shipped modules use �
   by the module's main route `{module}` and linked as the first navigation entry — every app ships
   its own dashboard, a module exactly like a root app.
 - **Tenant app**: the app's `name` is the **UPPERCASE** module key (`INVENTORY`) — gates and test
-  traits compare it exactly; `getAppRoute()` returns the module key so the app tile opens the
-  dashboard route; `getAppIcon()` returns the chosen heroicon (`heroicon:outline:cube`). A module
+  traits compare it exactly; `getAppRoute()` returns the ROUTE NAME of the dashboard (the module
+  key), so the app tile opens it; `getAppIcon()` returns the chosen heroicon (`heroicon:outline:cube`). A module
   ships **no icon file** — only when no heroicon fits, add a Blade icon
   (`resources/views/components/icons/app.blade.php`) by hand and return `{module}::icons.app` instead.
 - **Tenant-app migration**: `app-configs/stubs/add_{module}_tenant_app.php.stub` — the install
@@ -70,8 +67,9 @@ The generated module already follows every convention the shipped modules use �
   migration of its own in `database/migrations/` — it would register the app in every project
   that merely has the package installed, and make the install command divert to its update path.
 - **Composer**: `noerd/noerd` is required at the core version the module was scaffolded with
-  (`composer.json` `require`), and `tests/` is autoloaded PSR-4 as `Noerd\{Module}\Tests\` so the
-  module's own test traits (`tests/Traits/`) resolve without extra configuration. The command also
+  (`composer.json` `require`). `Noerd\{Module}\Tests\` → `tests/` sits in the production
+  `autoload` block, not in `autoload-dev`: Composer only dumps the dev autoload of the ROOT package,
+  so a host would never find the module's test traits (`tests/Traits/`) otherwise. The command also
   adds `noerd/{module}` to the project's root `composer.json`.
 - **Agent guidelines**: `resources/boost/guidelines/core.blade.php`, `AGENTS.md` and `CLAUDE.md`
   (see [AI Agents](ai-agents.md)).
@@ -209,25 +207,17 @@ reason to fail the installation. (`getRequiredAppKeys()` — by default the keys
 
 ### npm runs once, at the end
 
-`noerd:install-{module}` on a fresh project installs the base package on the way, and that
-installer sets up the frontend. It does NOT run node there: `npm install` and `npm run build` are
-handed to the module command and run at the end of its installation, so they see the module's files
-and whatever it pulled in (the website boilerplate behind the CMS) instead of compiling a project
-they have not been added to yet. The build question is asked once, by the command the user started.
-
-A module command needs no code for it — a tenant app's `askForNpmBuild()` and a support module's
-`finishDeferredNpm()` pick the handed-over work up. If the installation dies first, it says which
-command to run by hand.
+When `noerd:install-{module}` installs the base package on the way (fresh project), the base
+installer does not run node: `npm install` and `npm run build` are deferred to the END of the module
+installation, so they see the module's files too, and the build question is asked once. A module
+command needs no code for it (`askForNpmBuild()` / a support module's `finishDeferredNpm()` pick the
+work up); if the installation dies first, it says which command to run by hand.
 
 ### The closing callout
 
-A finished installation ends with a `{Module} is ready` box linking the module's own app route
-(`getAppRoute()`, e.g. `/cms`), falling back to `/noerd-apps` when that route is not registered.
-Nothing to implement — `runModuleInstallation()` prints it.
-
-It is skipped for a module installed as a dependency, and the base installer's own
-"Application ready" box is skipped while it runs for a module install: one installation ends with
-one box, at the end.
+`runModuleInstallation()` ends with ONE `{Module} is ready` box linking the URL of the route
+`getAppRoute()` names (e.g. `/cms`), or `/noerd-apps` when that route is not registered. A module
+installed as a dependency and the base installer running for a module install print no box.
 
 ## Customization
 
@@ -281,7 +271,7 @@ $this->detailData['custom_attributes']['my_key'];
 
 | Directory / file | Purpose |
 |-----------|---------|
-| `app-configs/{module}/` | YAML configuration templates (`lists/`, `details/`, `pages/`, `navigation.yml`) — copied into the project by the install command; the generators write both copies, keep them in sync |
+| `app-configs/{module}/` | YAML configuration templates (`lists/`, `details/`, `pages/`, `navigation.yml`; add `settings/` by hand when the module has a settings page) — copied into the project by the install command; the generators write both copies, keep them in sync |
 | `app-configs/stubs/add_{module}_tenant_app.php.stub` | The tenant-app migration published by the install command |
 | `database/migrations/`, `database/factories/`, `database/seeders/` | Database migrations, factories and seeders (module-owned) |
 | `resources/boost/guidelines/core.blade.php` | Module-specific rules for AI coding agents, rendered by Laravel Boost; the install/update command registers the package in the host's `boost.json` (see [AI Agents](ai-agents.md)) |
@@ -292,7 +282,7 @@ $this->detailData['custom_attributes']['my_key'];
 | `src/Commands/` | `{Module}InstallCommand`, `{Module}UpdateCommand` |
 | `src/Models/` | Eloquent models (`$guarded`, `BelongsToTenant`) |
 | `src/Providers/` | ServiceProvider |
-| `tests/` | Pest tests, `tests/Traits/` for module test traits (see [Testing](testing.md)) |
+| `tests/` | Pest tests (`tests/Components/` scaffolded), `tests/Traits/` for module test traits (see [Testing](testing.md)) |
 | `AGENTS.md`, `CLAUDE.md` | Contributor notes for humans and AI agents working on the module |
 
 ## Next Steps

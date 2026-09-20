@@ -68,29 +68,16 @@ php artisan noerd:make-resource {Model} --app=my-app
 
 ## Non-interactive use
 
-For install scripts, every prompt has an option (the full option table is in
-[Artisan Commands](artisan-commands.md#noerdmake-app)):
+Every prompt has an option (full table: [Artisan Commands](artisan-commands.md#noerdmake-app)):
 
 ```bash
 php artisan noerd:make-app --title="Inventory Management" --name=INVENTORY \
     --icon=heroicon:outline:users --active=1
 ```
 
-Pass `--route=` only when the app tile should open an existing route instead — no dashboard is
-generated then:
-
-```bash
-php artisan noerd:make-app --title="Inventory Management" --name=INVENTORY \
-    --icon=heroicon:outline:users --route=inventory.index
-```
-
-Module mode needs `--module`; a scripted run scaffolds the module and prints the Composer and
-install steps instead of running them:
-
-```bash
-php artisan noerd:make-app --title="Inventory Management" --name=INVENTORY \
-    --icon=heroicon:outline:users --module
-```
+Add `--route=inventory.index` when the app tile should open an existing route instead (no dashboard
+is generated), or `--module` for module mode — a scripted module run scaffolds the module and
+prints the Composer and install steps instead of running them.
 
 If you visit /noerd-apps again, you should now see your created app in the sidebar; opening it
 shows the generated dashboard.

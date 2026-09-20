@@ -6,15 +6,8 @@ Lists display data in a table format with search, pagination, and actions.
 
 ## File Locations
 
-YAML Configuration:
-```bash
-app-configs/{app}/lists/{name}-list.yml
-```
-
-Livewire Component:
-```bash
-app-modules/{module}/resources/views/components/{name}-list.blade.php
-```
+- YAML: `app-configs/{app}/lists/{name}-list.yml`
+- Livewire component: `app-modules/{module}/resources/views/components/{name}-list.blade.php`
 
 List YAML files always live DIRECTLY in `lists/` — never in subfolders. A nested Livewire
 component name (dots from a blade subfolder, e.g. `booking::bookings.types-list`) still
@@ -91,7 +84,7 @@ columns:
 | `label` | Column header (translation key) | |
 | `width` | Relative column weight — widths are normalised across all columns (a column with `width: 2` is twice as wide as one with `width: 1`) | `1` |
 | `minWidth` | Minimum width in pixels (`min-width`) | none |
-| `align` | Text alignment (`left`, `right`; `number`/`currency` auto-align right) | `left` |
+| `align` | Text alignment (`left`, `center`, `right`; `number`/`currency` auto-align right) | `left` |
 | `type` | Display type (see Column Types below) | `text` |
 | `options` | `value`/`label` pairs for the `badge` type (see below) | |
 | `readOnly` | Renders the cell input of the `text`, `id`, `number` and `currency` types read-only. Set to `false` to allow inline editing (see Inline Editing below) | `true` |
@@ -103,8 +96,10 @@ columns:
 
 ## Column Types
 
-Every rendering mode (table, card grid, widget list, CSV export) formats a cell value through the
-same `Noerd\Support\ListCellFormatter`, so a column type looks identical everywhere.
+A column type looks the same in every rendering mode: the table cell, the card grid and the widget
+list format `date`, `datetime`, `number` and `currency` through the same `FormatHelper` /
+`CurrencyHelper` calls (grid and widget via `Noerd\Support\ListCellFormatter`) and resolve `badge`
+labels the same way. The [CSV export](#csv-export) writes amounts without the currency symbol.
 
 | Type | Description |
 |------|-------------|
@@ -118,11 +113,11 @@ same `Noerd\Support\ListCellFormatter`, so a column type looks identical everywh
 | `inversebool` | Read-only icon: green checkmark when true, nothing when false |
 | `checkbox` | Editable checkbox bound to a component property via `wireModel` (see Inline Editing below) |
 | `badge` | Neutral badge; the raw value is translated to a label via the column's `options` (`value`/`label` pairs). Columns mirroring a paired detail `type: select` field get this automatically |
-| `badge_with_text` | Badge with optional text (value must be array with `badge` and `text` keys) |
+| `badge_with_text` | Badge with optional text — the row value is an array with `badge`, `text` and an optional `variant` (`primary` default, `danger`, `success`, `warning`, `neutral`) |
 | `relationBadge` | Badge showing the display title of a foreign-key value (resolved via the registered relation types) |
 | `customAttribute` | Value from the `custom_attributes` JSON column, normalized for display (translatable arrays are resolved to the active language) |
 | `colored_text` | Text with optional color classes; the row value may be an array with `text`, `class`, `prefix`, `prefixClass`, `icon` keys |
-| `relation_link` | Clickable link that opens a modal (requires `idField` plus either `route` or `modalComponent` in the column config; in route mode `idParam` defaults to `modelId`) |
+| `relation_link` | Clickable chip that opens the related record as a modal: `route` (preferred) and/or `modalComponent` (fallback) name the target, `idField` the row field holding its id (default `id`), `idParam` the argument it is passed as (default `modelId`, in both modes). Without a resolvable target the value renders as plain text |
 
 **Automatic typing:** Columns without an explicit `type` are typed from the database schema
 (`boolean` → `bool`, numeric → `number`, `date`/`datetime` → matching type), and columns whose
@@ -277,43 +272,18 @@ See [Modal System](modal.md#route-modals).
 
 ### Row click always opens the record by route
 
-Declaring `$detailRoute` is not optional: every list whose rows open a record opens it by
-route, so the address bar points at the record after the click, the link is shareable and
-a reload brings it back. Never override `listAction()` to open a component modal, a list
-narrowed by the clicked row, or anything else that has no URL.
-
-A record without an editable form — mirrored or read-only data such as a synced Toggl
-client or an import log line — still gets its own `*-detail`:
-
-- the detail YAML marks the fields `readonly: true` and embeds the related rows through
-  `lists:` (the narrowed list the row used to open directly);
-- the component renders no save bar and overrides `store()` / `delete()` as no-ops;
-- the module registers `Route::livewire('{app}/{entity}/{modelId}', 'module::{entity}-detail')`
-  and the list opens it via `$detailRoute` (+ `$detailComponent` as fallback).
-
-```php
-// clients-list.blade.php — the row opens the read-only client, not its time entries
-public ?string $detailRoute = 'toggl-integration.client.detail';
-public $detailComponent = 'toggl-integration::client-detail';
-```
-
-```yaml
-# details/client-detail.yml — the narrowed list moves INTO the record
-title: Toggl Client
-fields:
-  - name: detailData.name
-    label: Name
-    type: text
-    readonly: true
-lists:
-  - title: Time Entries
-    component: toggl-integration::time-entries-list
-    arguments:
-      clientId: $modelId
-```
-
-Component modals opened from a list row are reserved for pickers (`selectAction`, see
+Declaring `$detailRoute` is not optional: every list whose rows open a record opens it by route, so
+the address bar points at the record after the click. Never override `listAction()` to open a
+component modal, a list narrowed by the clicked row, or anything else that has no URL — see
+[Route modal or component modal?](modal.md#route-modal-or-component-modal). Component modals
+opened from a list row are reserved for pickers (`selectAction`, see
 [Multi-Select](#multi-select--bulk-actions)) — a selection is not a URL.
+
+A record without an editable form (mirrored or read-only data such as a synced client or an import
+log line) still gets its own `*-detail`: the detail YAML marks the fields `readonly: true` and
+embeds the related rows through [`lists:`](detail-view.md#embedded-lists) (the narrowed list the
+row used to open directly), the component renders no save bar and overrides `store()` / `delete()`
+as no-ops, and the module registers `Route::livewire('{app}/{entity}/{modelId}', …)` for it.
 
 ### Custom Query Logic
 
@@ -337,7 +307,7 @@ new class extends Component {
             ->paginate($this->perPage);
 
         foreach ($rows as $row) {
-            $row->price_preview = number_format($row->grossPrice(), 2, ',', '.');
+            $row->price_preview = CurrencyHelper::format($row->grossPrice());
         }
 
         return $this->buildList($rows);
@@ -345,9 +315,12 @@ new class extends Component {
 }; ?>
 ```
 
-`listQuery()` applies search, sort and the Excel-style column filters. It does NOT apply the header
+`listQuery()` applies search, sort and the Excel-style column filters, and eager-loads the relations
+of dotted relation columns (`category.name`) itself. It does NOT apply the header
 dropdown filters (`listFilters`) — a list with such filters calls `$this->applyListFilters($query)`
-on the builder itself (see [List Filters](list-filters.md#how-filters-work)).
+on the builder itself (see [List Filters](list-filters.md#how-filters-work)). A list that renders a
+YAML under another name passes it to both calls: `listQuery($model, 'other-list')` and
+`buildList($rows, 'other-list')`.
 
 Never leave a custom query in `with()` once `$listModel` is declared: the generic trait
 features (row click, select-all, bulk delete) resolve the list via `listData()` and would
@@ -390,56 +363,48 @@ the YAML hides the row):
 
 ## Key Concepts
 
-- **Trait:** `NoerdList` provides all necessary properties and methods
-- **$listModel:** The Eloquent model backing the list — required for the trait defaults and the module-contributed header actions
-- **$detailRoute:** Named detail route opened by `listAction()` — rewrites the browser URL to the record (preferred)
-- **$detailComponent:** The detail component opened by `listAction()` when no `$detailRoute` is registered
-- **listData():** Builds the list config; override it for custom queries, always ending in `return $this->buildList($rows);`
-- **listAction(mixed $modelId = null, array $relations = []):** Trait default opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; only override it to add modal arguments — never to open a component modal or a narrowed list instead of the record (see "Row click always opens the record by route")
-- **buildList():** Generates the list configuration from the YAML
-- **Deep links:** `?{entity}Id=5` opens that record's modal over the list, `?create=1` the create modal. `mountList()` reads them once on mount; the parameter name derives from the component name (`items-list` → `itemId`, via `getDeepLinkParam()`) — no override needed. A list whose name does not follow the `{entities}-list` convention declares `protected string $listEntity = 'item';` (select event and deep-link parameter derive from it) or `protected string $deepLinkParam = 'itemId';` directly
-- **`<x-noerd::list />`:** Renders the table
+- **`<x-noerd::list />`** renders the table; the `NoerdList` trait provides every property and method.
+- **Deep links:** `?{entity}Id=5` opens that record's modal over the list, `?create=1` the create
+  modal. `mountList()` reads them once on mount; the parameter name derives from the component name
+  (`items-list` → `itemId`).
 - **Object permissions:** Read/write/delete denial via the optional `noerd.object-*` gates (see
-  `AccessHelper` in extension-registries.md) hides rows, header actions and the delete bulk action. The permission target is the model resolved
-  by `listQuery()` / the declared `$listModel`. A repository-backed list without `$listModel`
-  declares it explicitly — `public ?string $objectPermissionModel = Item::class;` — otherwise it
-  stays unrestricted
+  [Permissions](permissions.md)) hides rows, header actions and the delete bulk action. The
+  permission target is the model resolved by `listQuery()` / the declared `$listModel`. A
+  repository-backed list without `$listModel` declares it explicitly —
+  `public ?string $objectPermissionModel = Item::class;` — otherwise it stays unrestricted.
 
 ### Component API
 
 | Member | Purpose |
 |--------|---------|
+| `$listModel` | The Eloquent model backing the list — required for the trait defaults and the module-contributed header actions |
+| `?string $detailRoute` / `$detailComponent` | Named detail route a row click opens (URL rewritten) and the component fallback when that route is not registered |
+| `listData()` | Builds the list; override it for custom queries, always ending in `return $this->buildList($rows);` (`buildList()` generates the list configuration from the YAML) |
+| `listAction(mixed $modelId = null, array $relations = [])` | Opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; override it only to add modal arguments |
 | `?string $filter` (`#[Url]`) | Free-form list filter carried as `?filter=…`. The trait never reads it — a list seeds its own `listFilters` or query from it in `mount()` |
 | `string $listActionMethod` | Public method a row click dispatches to (default `listAction`; pickers pass `selectAction`). `openListRow()` only ever calls PUBLIC methods by this name |
 | `selectAction($modelId)` | Picker row action: dispatches `noerdRelationSelected` and `{entity}Selected` (`items-list` → `itemSelected`) with `($modelId, $context)`, then `closeTopModal` |
 | `updateRow($id, $column, $value)` | Inline-editing hook — a no-op unless overridden (see Inline Editing) |
-| `refreshList()` | Re-renders the list (`$refresh`). Listens to `refreshList-{component}` (the full name incl. namespace, e.g. `inventory::items-list`) and to the name after the last dot; a detail's `closeModalProcess()` dispatches it for its paired list |
+| `refreshList()` | Re-renders the list (`$refresh`). Listens to `refreshList-{name}`, where `{name}` is `listConfigComponent()` — by default the full component name incl. namespace (`inventory::items-list`) — and to the name after the last dot; a detail's `closeModalProcess()` dispatches it for its paired list |
 | `exportCsv()` | Streams the CSV download (see CSV Export) |
+| `getAllowedListFilterColumns()` (protected) | Whitelist of header `listFilters` keys (see [List Filters](list-filters.md#security)) |
+| `mountList()` / `loadListFilters()` (protected) | Mount-time setup (per-page, filters, view, sort, deep links) — call `mountList()` first in a custom `mount()` |
 | `componentName()` (protected) | The name the YAML config, session keys and events resolve by — Livewire's component name; override only in unregistered test fixtures |
 | `listConfigComponent()` (protected) | The name the list YAML resolves under — declare `protected string $listConfigComponent = 'other-list';` when a component renders another list's YAML |
 | `getListEntity()`, `getSelectEvent()`, `getDeepLinkParam()` (protected) | The singular entity (`items-list` → `item`), the picker event (`itemSelected`) and the deep-link parameter (`itemId`), all derived from the component name — configure them with `protected string $listEntity` / `$selectEvent` / `$deepLinkParam` |
 
-The naming hooks (`listConfigComponent()`, `getListEntity()`, `getSelectEvent()`, `getDeepLinkParam()`)
-resolve in a fixed order: a method override wins over the configured property, the property wins
-over the derivation from the component name. Declare the properties `protected` — the trait
-declares none of them itself (a class redeclaring a trait property with another default is a PHP
-fatal), and a public one would be client-writable:
+The naming hooks resolve in a fixed order: a method override wins over the configured property, the
+property over the derivation from the component name. Declare the properties `protected` — the
+trait declares none of them itself (a class redeclaring a trait property with another default is a
+PHP fatal), and a public one would be client-writable:
 
 ```php
-new class extends Component {
-    use NoerdList;
-
-    public $listModel = Item::class;
-
     // Renders the YAML of items-list under another component name
     protected string $listConfigComponent = 'items-list';
 
     // 'inventory-stock-list' would otherwise derive 'inventoryStock'
     protected string $listEntity = 'item';
-};
 ```
-| `getAllowedListFilterColumns()` (protected) | Whitelist of header `listFilters` keys (see [List Filters](list-filters.md#security)) |
-| `mountList()` / `loadListFilters()` (protected) | Mount-time setup (per-page, filters, view, sort, deep links) — call `mountList()` first in a custom `mount()` |
 
 ## Default Sorting
 
@@ -451,10 +416,6 @@ defaultSort:
   field: name
   direction: asc   # optional, desc when omitted
 ```
-
-**Keys:**
-- `field`: Column name to sort by
-- `direction`: `asc` (A-Z) or `desc` (Z-A); omitted means `desc`
 
 `mountList()` applies the YAML default whenever the user has not sorted the list yet; a sort the
 user picks in the header is persisted per list in the session and always wins over the YAML
@@ -468,15 +429,14 @@ See [List Search](list-search.md) for more details on search and sorting.
 
 ## Actions
 
-List components support multiple action buttons via the `actions` array in the YAML configuration.
-
-**YAML Configuration:**
+Header buttons come from the `actions` array of the list YAML; no `actions` key means no button.
 
 ```yaml
 actions:
   - label: Import
     action: openImportModal
     heroicon: arrow-up-tray
+    style: secondary
   - label: New Item
     route: inventory.item.detail
 ```
@@ -484,73 +444,36 @@ actions:
 | Property | Description |
 |----------|-------------|
 | `label` | Translation key for the button text |
-| `route` | (optional) Named route opened as a modal — use this instead of `action: listAction` for the "New …" button |
+| `route` | Named route opened as a modal — use it for the "New …" button: it opens the detail route and writes `/inventory/item/new?modal=true` into the address bar |
 | `arguments` | (optional, with `route`) Arguments passed to the modal |
-| `action` | Livewire method name to call (used when no `route` is given) |
+| `action` | Livewire method called when no `route` is given. `action: listAction` is the component-based "New …" for a list whose detail has no route |
 | `heroicon` | (optional) Heroicon name for the button icon |
-| `style` | (optional) Set to `secondary` for secondary button style. Default is primary |
+| `style` | (optional) `secondary`; buttons are primary by default and render side by side |
+| `shortcut` | (optional) Keyboard shortcut of this button. The FIRST action defaults to `noerd.keyboard_shortcuts.new_entry` (`n`), further actions have none (see [Keyboard Shortcuts](keyboard-shortcuts.md)) |
 
-**Button layout:**
-- All buttons are primary style by default
-- Set `style: secondary` on individual actions for secondary style
-- Keyboard shortcut (N) applies only to the first button
-- Buttons are displayed side by side
-- No `actions` key means no button is rendered
-
-**Where the controls render:** the standard list header (`noerd::components.table.list-header`,
-rendered by `<x-noerd::list />`) is two rows: the title row carries the title with its record
-count and, right-aligned, every button (CSV export, `style: secondary` and primary YAML actions);
-the filter row below carries the search field, the filters in a horizontally scrolling strip, the
-registry list actions and the pagination summary with its page buttons (owner:
-[List Filters](list-filters.md#header-layout-title-row--filter-row)). A component with its OWN
-custom `<x-slot:header>` (e.g. a list nested in tab panels) gets the same controls injected in one
-row by `x-noerd::modal-title` (`noerd::components.table.list-controls`): wrap the custom title in
-`<x-noerd::modal-title>` and they appear top right automatically — never hand-roll a search field
-or action buttons in a list header. Two props on `x-noerd::modal-title` tune the
-injection:
-
-| Prop | Description |
-|------|-------------|
-| `:listControls="false"` | Suppresses the injection (for headers without a real list behind them) |
-| `listControlsShow` | Alpine expression gating the controls' visibility, e.g. `currentTab === 2` |
-
-**Standard single action (most common):**
-
-```yaml
-title: Items
-actions:
-  - label: New Item
-    route: inventory.item.detail
-```
-
-`route:` opens the detail route as a modal and writes `/inventory/item/new?modal=true` into the
-address bar. `action: listAction` is the component-based equivalent and stays valid for
-lists whose detail has no route.
-
-**Multiple actions with icon:**
-
-```yaml
-title: Stock Movements
-actions:
-  - label: Import
-    action: openImportModal
-    heroicon: arrow-up-tray
-  - label: New Movement
-    action: listAction
-```
-
-**PHP method for custom actions:**
+A custom action method matches the `listAction()` signature:
 
 ```php
+use Noerd\Facades\Noerd;
+
 public function openImportModal(mixed $modelId = null, array $relations = []): void
 {
     Noerd::modal('inventory::stock-import-modal');
 }
 ```
 
-Requires the facade import: `use Noerd\Facades\Noerd;`
+**Where the controls render:** the standard header is two rows — title row (title, record count,
+every button) and filter row (search, filters, registry actions, pagination); see
+[List Filters → Header layout](list-filters.md#header-layout-title-row--filter-row). A component
+with its OWN `<x-slot:header>` (e.g. a list nested in tab panels) wraps its title in
+`<x-noerd::modal-title>` and gets the same controls injected top right in one row
+(`noerd::components.table.list-controls`) — never hand-roll a search field or action buttons in a
+list header. Two props tune the injection:
 
-Custom methods must accept `(mixed $modelId = null, array $relations = [])` parameters to match the expected signature.
+| Prop | Description |
+|------|-------------|
+| `:listControls="false"` | Suppresses the injection (for headers without a real list behind them) |
+| `listControlsShow` | Alpine expression gating the controls' visibility, e.g. `currentTab === 2` |
 
 ## Pagination
 
@@ -717,22 +640,16 @@ The low-level flag (used internally by `<x-noerd::detail-lists>`):
 
 **Notes:**
 
-- `noerd::components.list` reads the flag via `$compact = $compact ?? ($this->compact ?? false);`,
-  so the behaviour is generic — never duplicate it per module.
-- Compact mode also removes pagination, so only the first `perPage` rows are shown. Use it for
-  narrowly-scoped lists (e.g. records that belong to the current detail record).
-- A list embedded with `disableModal` breaks out of its host by `--noerd-page-inset`
-  (`-mx-(--noerd-page-inset)`, default `2rem`). The noerd page body declares its own `px-6` as that
-  inset, so a list nested anywhere inside a detail or page (a tab panel, `<x-noerd::detail-list>`,
-  a widget) sits flush with the page edge without any wrapper — never re-pad it by hand. A host
-  that wants the list to stay inside (the widget card) resets `[--noerd-page-inset:0px]`.
-- A full page nested inside another noerd page (e.g. a complete list with its own header in a
-  detail tab) is detected by `noerdPage` (`isNestedPage`): it takes neither the modal chrome nor the
-  viewport height of the outer page, and its header buttons reserve no space for the modal controls.
-- `disableModal` never needs to be passed to `<x-noerd::page>` in the component's own view —
-  the page component reads the flag from the Livewire component automatically
-  (`$disableModal = $disableModal ?? (($__livewire ?? null)?->disableModal ?? false);`). An explicit
-  `:disableModal="true"` attribute still overrides the property.
+- The behaviour is generic in `noerd::components.list` — never duplicate it per module. Only the
+  first `perPage` rows show, so use it for narrowly-scoped lists (records of the current record).
+- A list embedded with `disableModal` breaks out of its host by `--noerd-page-inset`; the noerd
+  page body declares its `px-6` as that inset, so a list nested anywhere in a detail or page (tab
+  panel, `<x-noerd::detail-list>`, widget) sits flush with the page edge — never re-pad it by hand.
+  A host that wants the list to stay inside (the widget card) resets `[--noerd-page-inset:0px]`.
+- A full page nested inside another noerd page (a complete list with its own header in a detail
+  tab) is detected automatically: it takes neither the modal chrome nor the viewport height of the
+  outer page. `disableModal` never needs to be passed to `<x-noerd::page>` in the component's own
+  view — the page reads it from the Livewire component; an explicit attribute still overrides it.
 
 ## Multiple List Views (View Switcher)
 
@@ -759,37 +676,30 @@ app-configs/inventory/lists/
   same view key.
 
 **Cross-app enumeration** — the dropdown lists the views of EVERY app allowed for the tenant, not
-just the session's current app. A list name that exists in several apps (e.g. `items-list` in
-`inventory` and `warehouse`) yields one entry per app, each labelled with its source app rendered
-with reduced opacity — e.g. "Items (Warehouse)":
+just the current app. A list name that exists in several apps (`items-list` in `inventory` and
+`warehouse`) yields one entry per app, each labelled with its source app (the `TenantApp` title,
+`Setup` for the setup folder) at reduced opacity — "Items (Warehouse)". The entry's own label is
+the view file's translated `title`.
 
-- Every entry shows its source app label (the `TenantApp` title; `Setup` for the setup folder).
-- Current-app entries use plain view keys (`default`, `low-stock`); other apps' entries use composite
-  `{app}::{key}` keys (`warehouse::default`, `warehouse::low-stock`). `::` is therefore reserved and
-  cannot appear in view keys.
-- Selecting another app's view renders that app's YAML via explicit-app resolution
+- Current-app entries use plain view keys (`default`, `low-stock`), other apps' entries composite
+  `{app}::{key}` keys (`warehouse::low-stock`) — `::` is therefore reserved too. Ordering: current
+  app first; `default` leads each app group, the remaining variants alphabetical.
+- Selecting another app's view renders that app's YAML
   (`StaticConfigHelper::getListConfigForApp()`); the session's selected app is NOT changed.
-- Ordering: current app first, then the other allowed apps; `default` leads each app group,
-  remaining variants alphabetical.
-- The dropdown label is the view file's `title` (translated via `__()`).
 
 **Behaviour:**
 
-- The switcher only renders when ≥2 entries exist (across all apps), and never in compact/embedded
-  lists or pickers.
-- The selected view is remembered per list in the session (`listView.{component}`) — as the
-  composite `{app}::{key}` when it belongs to another app. If the view's YAML is removed, the list
-  silently falls back to the default view.
-- The active view is also reflected in the URL as `?view={key}` (plain `low-stock`, composite
-  `{app}--low-stock` — `--` instead of `::` keeps `%3A%3A` encoding out of the URL — or `default` for
-  the standard view), so a shared link opens the same view — the default view included. On page
-  load the URL param takes precedence over the session-saved view (and is persisted to the session,
-  in `::` form); an unknown key falls back to the session/default. Single-view lists never carry
-  the param; embedded compact lists and pickers never read or write it.
-- Because the whole config is swapped, the view's own `searchableColumns`, `actions`,
-  `notSortableColumns` and column types all apply automatically. DB-driven layout overrides key
-  per view file (e.g. `items-list--low-stock`), app-agnostic — a restriction on `low-stock` also
-  hides every other app's `{app}::low-stock` entry.
+- The switcher renders only with ≥2 entries (across all apps), never in compact/embedded lists or
+  pickers.
+- The selected view is remembered per list in the session (`listView.{component}`, composite for
+  another app's view) and mirrored in the URL as `?view={key}` — `default` for the base view,
+  composite keys written `{app}--low-stock` (keeps `%3A%3A` out of the URL). On page load the URL
+  wins over the session; an unknown or removed view silently falls back to the default. Single-view
+  lists never carry the param; compact lists and pickers never read or write it.
+- The whole config is swapped, so the view's own `searchableColumns`, `actions`,
+  `notSortableColumns`, `defaultSort` and column types apply. DB-driven layout overrides key per
+  view file (`items-list--low-stock`), app-agnostic — a restriction on `low-stock` also hides every
+  other app's `{app}::low-stock` entry.
 
 **Generic API:**
 
@@ -823,11 +733,15 @@ protected function prepareCsvExport(): array
 }
 ```
 
-- The export button appears in the list header next to the search field
-- The file streams with a UTF-8 BOM and `;` as delimiter (Excel-friendly); headers are the
-  translated column labels; rows are read lazily in chunks
+- The export button renders in the title row of the list header, with the secondary buttons
+- `exportCsv()` aborts with 403 when the object read permission of the list model is denied
+- The file streams with a UTF-8 BOM and the delimiter of `FormatHelper::csvDelimiter()`
+  (`noerd.format.csv_delimiter`, `;` by default — Excel-friendly); headers are the translated column
+  labels; rows are read lazily in chunks
 - `formatCsvValue($value, $column)` formats each cell by column type (`bool` → Yes/No, `badge` →
-  the translated option label, dates/currency accordingly) — override it for custom formats
+  the translated option label, dates in the user's locale, `currency` / `number` as a locale
+  decimal without symbol via `FormatHelper::decimal()`) and neutralises spreadsheet formulas (a text
+  value starting with `=`, `+`, `-`, `@`, tab or CR gets a leading `'`) — override it for custom formats
 - `prepareExportRow($row)` is an optional per-row hook (e.g. to eager-compute accessors)
 
 ## Grid Mode (Card Layout)
@@ -859,42 +773,29 @@ the object-permission handling stay exactly as in table mode.
 
 **Card content** is derived from the `columns` array: the first column with a non-empty value
 renders as the bold card title, every remaining column as a secondary line; empty values are
-skipped entirely (so a missing `name` falls through to the next column as the title). Column types
-are honored like in minimal mode: `currency`, `date`, `datetime`, `bool` are formatted, `badge`
-renders as a translated pill; everything else renders as text (`data_get`, so dotted fields work).
+skipped (a missing `name` falls through to the next column as the title). Column types are honored:
+`currency`, `number`, `date`, `datetime`, `bool` are formatted, `badge` renders as a translated
+pill; everything else renders as text (`data_get`, so dotted fields work).
 
 **Cards per row**: `gridColumns` (`1`–`6`, default `4`) sets the count at the largest breakpoint;
 smaller viewports collapse responsively (1 column on mobile, 2 from `sm`, 3 from `lg`). The classes
-come from a static map — Tailwind cannot generate class names at runtime, so only these values are
-supported; an unknown value falls back to `4`.
+come from a static map (Tailwind cannot generate class names at runtime); an unknown value falls
+back to `4`.
 
 **Row click** behaves exactly like a table row click (`openListRow` → `$detailRoute` /
-`$detailComponent`, or a custom `listAction()` override), including the keyboard navigation
-(arrow keys + Enter) and picker mode. In `multiSelect` mode each card gets a checkbox in its
-top-right corner wired to `toggleRecordSelection`.
+`$detailComponent`), including keyboard navigation (arrow keys + Enter) and picker mode. In
+`multiSelect` mode each card gets a checkbox wired to `toggleRecordSelection`.
 
-**Column filters and sorting** are offered as a **control bar above the cards**
-(`noerd::components.list.grid-controls`), since grid mode renders neither the header funnels nor the
-sort headers:
-
-- **Left: one labeled funnel button per filterable column**, opening the very same popover as the
-  header funnel of a table list (see [List Filters](list-filters.md)).
-- **Right: a sort dropdown** listing every sortable column — the same rule as the table header
-  (`NoerdList::isSortableColumn()`: not `action`, not dotted, not in `notSortableColumns`), so
-  relation/JSON paths are absent there as well; the query cannot order by them. Picking a column
-  calls `sortBy()` (re-picking the active column flips the direction); below a separator, two
-  entries set the direction explicitly via `setSortDirection()`. The trigger names the active
-  column (`Sort by: Name`) with an up/down icon, or reads just `Sort by` while the list sorts on a
-  column that is not part of the YAML (the technical `id` default).
-
-The bar sits above the empty state too, so a filter that matches nothing stays clearable; active
-filters additionally show as chips next to the list title. Compact/embedded grid lists render no
-control bar at all (they apply no column filters, and the table variant hides its header there too).
+**Column filters and sorting** render as a control bar above the cards
+(`noerd::components.list.grid-controls`), since grid mode has no table header: left one labeled
+funnel button per filterable column, opening the same popover as the header funnel (see
+[List Filters](list-filters.md)); right a sort dropdown listing every sortable column
+([`isSortableColumn()`](list-search.md) — relation/JSON paths are absent) plus two entries for the
+direction (`setSortDirection()`). The bar sits above the empty state too, so a filter that matches
+nothing stays clearable. Compact/embedded grid lists render no control bar.
 
 **Not rendered in grid mode** (thead-only features): the select-all checkbox, `showLineNumbers` and
-the summary footer.
-
-A list mounted as a **minimal widget** ignores `displayMode` — minimal mode takes precedence.
+the summary footer. A list mounted as a **minimal widget** ignores `displayMode`.
 
 ## Minimal Mode (List Widgets)
 

@@ -51,7 +51,9 @@ rule for the full dotted path via `validateFromLayout()`.
 
 The default persister normalizes `''` to null and updates the related record
 (creating and linking it for a BelongsTo, `updateOrCreate` for HasOne /
-MorphOne). When the write is domain logic, declare it:
+MorphOne). Any other relation type (HasMany, BelongsToMany, …) throws a
+`LogicException` — declare `persistUsing` for it. When the write is domain
+logic, declare it as well:
 
 ```php
 RelationFormDefinition::make(relation: 'defaultInvoiceAddress', fields: [...])
@@ -64,7 +66,8 @@ RelationFormDefinition::make(relation: 'defaultInvoiceAddress', fields: [...])
 ```
 
 A `persistUsing` closure owns the write entirely, including its own
-normalization. Definitions are rebuilt on every call and never serialized into
+normalization. It receives only the keys declared in `fields:` — anything else
+in the form data is dropped before the closure runs. Definitions are rebuilt on every call and never serialized into
 Livewire state.
 
 ## Conditional validation

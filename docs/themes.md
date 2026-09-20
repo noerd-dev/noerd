@@ -1,7 +1,8 @@
 # Themes
 
 A **theme** controls how detail forms (and the hand-written chrome around them, e.g. position
-tables and buttons) are rendered. Noerd ships four built-in themes:
+tables and buttons) are rendered. Noerd ships five built-in themes — three selectable form themes
+and two internal ones:
 
 | Theme | Layout |
 |-------|--------|
@@ -91,7 +92,7 @@ resources/views/themes/
     belongs-to-many.blade.php
     color-hex.blade.php
     email.blade.php, phone.blade.php, file.blade.php, image.blade.php, icon.blade.php,
-    rich-text.blade.php, translatable-*.blade.php … (every element)
+    rich-text.blade.php, translatable-*.blade.php … (every element except `spacer`, which has none)
     relation-field.blade.php
     polymorphic-relation-field.blade.php
   compact/
@@ -99,76 +100,12 @@ resources/views/themes/
   numbered/
     theme.yml + the elements numbered restyles
   settings/
-    theme.yml only (see settings-page.md)
+    theme.yml only — label, hidden, gridClasses, fullWidthRows, numbersRows (see settings-page.md)
   display/
     theme.yml + one-line elements including noerd::components.detail.display-value
 ```
 
-## Display Theme (read-only text)
-
-`display` renders a field's VALUE as plain text — the label left (fixed width, truncated with the
-full text as tooltip), the value right — instead of a control. It is the way to show read-only
-information inside a form: a row of facts above the inputs, a customer block in an ordering modal,
-a preview. Three ways to use it, all through the ordinary `theme:` key:
-
-```yaml
-title: Order
-fields:
-  - type: block                     # 1. a read-only row above the inputs
-    theme: display
-    colspan: 12
-    fields:
-      - name: detailData.customer_name
-        label: Customer
-        colspan: 4
-      - name: detailData.customer_phone
-        label: Phone
-        type: phone
-        colspan: 4
-      - name: detailData.total
-        label: Total
-        type: currency
-        colspan: 4
-  - name: detailData.created_at    # 2. a single read-only field between inputs
-    label: Created
-    type: datetime
-    theme: display
-    colspan: 6
-  - name: detailData.note
-    label: Note
-    type: textarea
-    colspan: 12
-```
-
-```yaml
-theme: display                      # 3. the whole layout as text (e.g. a page YAML with fields)
-fields:
-  - name: detailData.email
-    label: Email
-    type: email
-    hideIfEmpty: true
-```
-
-- The field `type` still decides HOW the value is written: `currency` through `CurrencyHelper`,
-  `date`/`datetime`/`time` through `FormatHelper` in the reader's locale, `number` as a quantity,
-  `checkbox` as Yes/No, `select`/`picklist`/`setupCollectionSelect` as the option's translated
-  label, `phone` as a `tel:` link, `email` as a `mailto:` link, `textarea` with preserved line
-  breaks, relation fields as their resolved title. Every other type (text, and the types the
-  theme ships no element for — `image`, `richText`, `translatable*`, `file`, `button`) shows the
-  raw value, or falls back to the default theme's read-only control.
-- `hideIfEmpty: true` drops a field whose value is blank, so the grid closes up (a customer without
-  a phone number shows no "Phone" row). The key is honoured ONLY in a text-only theme — an input
-  never disappears because it is empty.
-- `highlight` and `previousValue` (see [Detail View](detail-view.md#highlighted-fields)) work
-  unchanged; the tint sits on the field wrapper.
-- The theme is `hidden` (never offered in System Settings) and `textOnly` (see below). An enforced
-  system theme leaves `display` alone.
-- The row markup lives ONCE in `noerd::components.detail.display-value`; the theme's element
-  templates are one-line includes handing it a `format`. A project theme that wants another look
-  for read-only rows copies the folder, keeps `textOnly: true` and restyles the partial include.
-- What the display theme is NOT: a permission. The value is not editable because there is no
-  control, but a `store()` that mass-assigns `detailData` still writes whatever the payload holds.
-  The security boundary stays the `store()`/`delete()` guards.
+### Missing elements
 
 A theme folder does **not** have to ship every element: a missing element falls back to the
 `default` theme's template (and finally to the renderer registered on the field type). The element
@@ -190,7 +127,8 @@ elements it really restyles.
 
 The theme name is the folder name. Every key is optional: a missing `label` shows the folder
 name as headline in System Settings, every other missing key keeps the value of the `default`
-theme (the constructor defaults of `Noerd\Support\ThemeDefinition`):
+theme (the constructor defaults of `Noerd\Support\ThemeDefinition`); unknown keys are ignored. The
+built-in `compact/theme.yml`, annotated (`hidden` and `textOnly` added for completeness):
 
 ```yaml
 label: Compact                          # display label in System Settings
@@ -217,8 +155,65 @@ sectionPadding: py-3                    # body padding of the position card
 totalsPadding: pt-2                     # vertical rhythm of the totals footer
 ```
 
-The minimal `theme.yml` of the built-in `settings` theme is three keys (`label`, `hidden`,
-`fullWidthRows`) — everything else comes from the defaults.
+## Display Theme (read-only text)
+
+`display` renders a field's VALUE as plain text — the label left (fixed width, truncated with the
+full text as tooltip), the value right — instead of a control. It is the way to show read-only
+information inside a form: a row of facts above the inputs, a customer block in an ordering modal,
+a preview. It is selected through the ordinary `theme:` key — on a nested block, on a single field,
+or top-level for a whole layout (e.g. a page YAML with `fields:`):
+
+```yaml
+title: Order
+fields:
+  - type: block                     # a read-only row above the inputs
+    theme: display
+    colspan: 12
+    fields:
+      - name: detailData.customer_name
+        label: Customer
+        colspan: 4
+      - name: detailData.customer_phone
+        label: Phone
+        type: phone
+        hideIfEmpty: true
+        colspan: 4
+      - name: detailData.total
+        label: Total
+        type: currency
+        colspan: 4
+  - name: detailData.created_at    # a single read-only field between inputs
+    label: Created
+    type: datetime
+    theme: display
+    colspan: 6
+  - name: detailData.note          # an ordinary input
+    label: Note
+    type: textarea
+    colspan: 12
+```
+
+- The field `type` decides HOW the value is written: `currency` through `CurrencyHelper`,
+  `date`/`datetime`/`datetime-local`/`time` through `FormatHelper` in the reader's locale, `number`
+  as a quantity, `checkbox` as Yes/No, `select`/`picklist`/`setupCollectionSelect` as the option's
+  translated label, `phone` as a `tel:` link, `email` as a `mailto:` link, `textarea` with
+  preserved line breaks, relation fields as their resolved title, everything else as the raw
+  value. `type: datetime` exists for the display theme only — a control needs `datetime-local`.
+- **The theme ships no element for** `image`, `file`, `richText`, `translatable*`, `belongsToMany`,
+  `colorHex`, `icon` and `button`: such a field falls back to the default theme's CONTROL, which is
+  editable unless the field declares `readonly: true`.
+- `hideIfEmpty: true` drops a field whose value is blank, so the grid closes up. The key is
+  honoured ONLY in a text-only theme — an input never disappears because it is empty.
+- `highlight` and `previousValue` (see [Detail View](detail-view.md#highlighted-fields)) work
+  unchanged; the tint sits on the field wrapper.
+- The theme is `hidden` (never offered in System Settings) and `textOnly`; an enforced system theme
+  leaves it alone.
+- The row markup lives ONCE in `noerd::components.detail.display-value`; the theme's element
+  templates are one-line includes handing it a `format`. A project theme that wants another look
+  for read-only rows copies the folder, keeps `textOnly: true` and restyles that partial.
+- `display` is NOT a permission: there is no control, but a `store()` that mass-assigns
+  `detailData` still writes whatever the payload holds. The security boundary stays the
+  `store()`/`delete()` guards.
 
 ## Creating a New Theme
 
@@ -257,8 +252,8 @@ the `registerPath()` snippet.
 
 ### Programmatic registration (escape hatch)
 
-For dynamically built definitions a `ThemeDefinition` can still be registered directly — it wins
-over a discovered `theme.yml` of the same name:
+A dynamically built `ThemeDefinition` can be registered directly — it wins over a discovered
+`theme.yml` of the same name. Prefer the folder + `theme.yml`:
 
 ```php
 use Noerd\Services\ThemeRegistry;
@@ -270,8 +265,6 @@ app(ThemeRegistry::class)->register(new ThemeDefinition(
     fullWidthRows: true,
 ));
 ```
-
-Prefer the folder + `theme.yml` approach — it is the documented, copyable mechanism.
 
 ## Element Resolution
 
@@ -294,11 +287,9 @@ The grid wrapper emits `data-theme="{theme}"` for non-default themes. The resolu
 `Noerd\Support\ThemeElementResolver`; discovery and metadata in `Noerd\Services\ThemeRegistry`
 (a singleton — themes are discovered lazily and cached per request).
 
-Every element template supports a `readonly` state (`$field['readonly']`): the detail block forces
-it onto all fields when the hosting component's object permission denies writing, so a custom theme
-must honor it too (readonly attribute on inputs, `disabled` on selects/checkboxes, hidden picker
-and upload affordances). See "Read-Only Rendering on Write-Denied Objects" in
-[detail-view.md](detail-view.md).
+A custom theme's elements must honor `$field['readonly']` — the detail block forces it onto every
+field of a write-denied object, see
+[Read-Only Rendering](detail-view.md#read-only-rendering-on-write-denied-objects).
 
 ## Buttons Follow the Theme
 
@@ -314,11 +305,9 @@ and any other button in the form chrome — without touching the call sites.
 - A theme without `buttonClasses` renders buttons exactly like the default theme.
 - `buttonClasses` may include a corner rounding (e.g. `rounded-none` in the numbered theme for
   square buttons) — the button then skips its default `rounded-sm`.
-- The context lives exactly as long as the render: `renderingNoerdPage()` sets it, `renderedNoerdPage()`
-  restores whatever was active before. Nesting therefore works (an embedded detail hands the context
-  back to its hosting page, whose footer still renders in the page theme), while chrome rendered
-  AFTER the page — the layout's app bar and quick-menu buttons — stays on the default theme instead
-  of inheriting a form theme it never belonged to.
+- The context lives exactly as long as the render (`renderingNoerdPage()` sets it,
+  `renderedNoerdPage()` restores the previous one): an embedded detail hands it back to its hosting
+  page, and chrome rendered after the page (app bar, quick menu) stays on the default theme.
 
 The `button` **field type** (`type: button` in a YAML) is a normal theme element
 (`themes/{name}/button.blade.php`) and restyles per theme like any input.
@@ -334,11 +323,7 @@ configured per installation, see [Configurable Columns](detail-view.md#configura
 
 ## Theme vs. Brand
 
-Two orthogonal concepts:
-
 - **Theme** (`noerd.theme.default`, `NOERD_THEME`): the FORM LAYOUT system documented here.
 - **Brand** (`noerd.brand.active`, `NOERD_BRAND`): the color palette (sidebar, appbar, `brand-*`
   CSS variables), served by `Noerd\Services\BrandService` with the presets `default`, `sand`,
   `white` (see [Brand](brand.md)).
-
-`NOERD_THEME` selects the form theme; `NOERD_BRAND` selects the color palette.

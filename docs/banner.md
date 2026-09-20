@@ -35,8 +35,8 @@ banners:
 | Property | Description |
 |----------|-------------|
 | `priority` | Required — entries without a priority are ignored. The highest-priority active banner is shown |
-| `type` | Visual style: `danger`, `warning`, `info`, `success` |
-| `message` | Static text message |
+| `type` | Visual style: `danger`, `warning`, `info`, `success`; omitted or unknown → `warning` |
+| `message` | Static text, rendered as written — it is NOT passed through `__()`. Use a `component` for a translated or computed text |
 | `component` | Dynamic Livewire component (alternative to `message`), namespaced: `{module}::banner.{name}` |
 | `dismissible` | Allow users to close the banner |
 
@@ -48,26 +48,6 @@ banners:
 | `warning` | Yellow | Important notices, expiring features |
 | `info` | Blue | General information, announcements |
 | `success` | Green | Positive confirmations |
-
-## Static vs Dynamic Banners
-
-**Static Banner:** Use `message` for simple text.
-
-```yaml
-- priority: 100
-  type: danger
-  message: "System maintenance at 2 AM"
-  dismissible: false
-```
-
-**Dynamic Banner:** Use `component` for complex logic.
-
-```yaml
-- priority: 50
-  type: warning
-  component: inventory::banner.demo-expiry
-  dismissible: true
-```
 
 ## Creating a Dynamic Component
 
@@ -113,9 +93,8 @@ Translation labels use English text as the key; add the German mapping to the mo
 
 ## Key Concepts
 
-- **Single active banner:** When multiple banners are configured, only the highest-priority
-  non-dismissed banner renders. Dismissing it reveals the next one
-- **Component name:** `{module}::banner.{name}` for components in the module's `banner/` subdirectory
-- **Dismissible banners:** Users can close them; the dismissal is stored in the session
-  (`dismissed_banners`) and resets on the next login/session
-- **Non-dismissible banners:** Always visible until removed from the configuration
+- **Single active banner:** only the highest-priority non-dismissed banner renders; dismissing it
+  reveals the next one. A non-dismissible banner stays until it is removed from the configuration
+- **Dismissals** live in the session (`dismissed_banners`) and reset with it. They are stored by
+  position in the priority-sorted list, so adding or removing a banner shifts which one a user has
+  dismissed

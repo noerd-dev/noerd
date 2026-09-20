@@ -84,25 +84,26 @@ the Demo Customers app into your project (see the Example Application page of th
 
 ## YAML in Action
 
-A full CRUD screen is two YAML files plus two slim components that `noerd:make-resource`
-generates for you (the list declares its model and detail route, the detail its model — nothing
-else).
+A full CRUD screen is two YAML files (a list and a detail) plus two slim components that
+`noerd:make-resource` generates for you — the list declares its model and detail route, the detail
+its model, nothing else.
 
-**`app-configs/demo/lists/demo-customers-list.yml`**
+**`app-configs/demo/lists/demo-customers-list.yml`** (excerpt)
 
 ```yaml
 title: Demo Customers
 defaultSort:
   field: name
   direction: asc
+searchableColumns:
+  - name
+  - company_name
 actions:
   - label: New Demo Customer
     route: demo-customer.detail
 columns:
   - field: name
     label: Name
-  - field: company_name
-    label: Company
   - field: status
     label: Status
   - field: revenue
@@ -111,54 +112,12 @@ columns:
   - field: contract_start
     label: Contract Start
     type: date
-  - field: is_active
-    label: Active
-    type: bool
 ```
 
-**`app-configs/demo/details/demo-customer-detail.yml`** (excerpt)
-
-```yaml
-title: Demo Customer
-description: 'A showcase of the field types a detail YAML can use'
-tabs:
-  - number: 1
-    label: General
-  - number: 2
-    label: Details
-fields:
-  - name: detailData.name
-    label: Name
-    type: text
-    colspan: 6
-    required: true
-  - name: detailData.demo_category_id
-    label: Category
-    type: select
-    optionsMethod: categoryOptions
-    colspan: 6
-  - name: detailData.status
-    label: Status
-    type: select
-    colspan: 3
-    options:
-      - value: new
-        label: New
-      - value: in_progress
-        label: In Progress
-  - name: detailData.email
-    label: Email
-    type: email
-    colspan: 6
-  - name: detailData.revenue
-    label: Revenue
-    type: currency
-    colspan: 4
-    tab: 2
-```
-
-Both files are shipped with the package (`demo/app-configs/demo/`) and installed by
-`php artisan noerd:demo`.
+The detail form is configured the same way (`details/demo-customer-detail.yml`: tabs, fields with
+`type`, `colspan`, `required`). Both files ship with the package (`demo/app-configs/demo/`) and are
+installed by `php artisan noerd:demo` — see the
+[Example Application](docs/example-application.md).
 
 ## Need Help?
 

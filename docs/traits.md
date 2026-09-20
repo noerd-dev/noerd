@@ -85,16 +85,13 @@ The preview modal is `noerd::email-preview-modal`; the test mail is `Noerd\Mail\
 | Value | Resolves to |
 |-------|-------------|
 | `today` | Today |
-| `this_week` | 7 days ago |
+| `this_week` | Start of the current week (`startOfWeek()`) |
 | `this_month` | Start of the current month |
 | `last_month` | Start of the previous month |
 | `this_quarter` | First day of the current quarter |
 | `last_quarter` | First day of the previous quarter |
 | `this_year` | Start of the current year |
-| `one_week` | One week ago |
-| `one_month` | One month ago |
-| `one_year` | One year ago |
-| anything else | Parsed as a date via `resolveCustomDate()` (`null` when unparseable) |
+| anything else | Parsed with `Carbon::parse()` via `resolveCustomDate()` — a raw date string (`2026-01-01`) is a valid option value; unparseable → `null`, the filter is ignored |
 
 **Customizing the columns** — declare the two properties on the component (both default to
 `created_at`). Set BOTH: "Show From" and "Show Until" are independent filters, and a list that
@@ -122,7 +119,7 @@ override wins over the property.
 
 ## TenantFilterTrait (list components)
 
-`Noerd\Traits\TenantFilterTrait` provides a tenant dropdown for lists that show records across tenants (admin screens). `getTenantsListFilter(): array` returns a `Picklist` filter on the `tenant_id` column with one option per tenant from `NoerdAuth::user()?->adminTenants` (an empty picklist without an authenticated noerd user).
+`Noerd\Traits\TenantFilterTrait` provides a tenant dropdown for lists that show records across tenants (admin screens). `getTenantsListFilter(): array` returns a `Picklist` filter on the `tenant_id` column with one option per tenant from `NoerdAuth::user()?->administeredTenants()` — every tenant for a super admin, the ADMIN-profile memberships otherwise (an empty picklist without an authenticated noerd user).
 
 ```php
 use Noerd\Traits\NoerdList;
@@ -194,24 +191,28 @@ module (a support module uses it directly and implements only `getModuleName()`)
 | `runSupportModuleInstallation(): int` / `runSupportModuleUpdate(): int` | The same two flows for a module without a tenant app |
 | `getConfigFiles()`, `getAppConfigsDir()`, `getAdditionalSubdirectories()`, `getRequiredModules()`, `publishModuleExtras()`, `ensureModuleSetup()` | What a module declares instead of coding it — see [creating-modules.md](creating-modules.md#install-and-update-commands-required) |
 | `askForMigration(): void` | Offers `php artisan migrate`; skipped for a dependency install and in a non-interactive run without `--migrate` |
+
+`Noerd\Commands\Concerns\WritesHostAppConfigs` (part of `InstallsNoerdModule`, so tenant apps and
+support modules alike have it) contributes the idempotent host-YAML writers, called from
+`ensureModuleSetup()`:
+
+| Method | Description |
+|--------|-------------|
 | `ensureQuickMenuButton(array $button, array $legacyComponents = []): void` | Adds a quick-menu button when missing |
 | `ensureDashboardWidget(array $widget, array $legacyComponents = []): void` | Adds a dashboard widget when missing |
 | `ensureSetupNavigation(string $blockTitle, array $entry): void` | Adds an entry to the setup navigation when missing |
 
-The building blocks live in `Noerd\Commands\Concerns` (`PublishesModuleConfig`, `PublishesSkills`,
-`WritesHostAppConfigs`, `PublishesConfigDirectory`, `RegistersBoostPackage`, `RunsNpmBuild`) and can
+The other building blocks in `Noerd\Commands\Concerns` (`PublishesModuleConfig`, `PublishesSkills`,
+`PublishesConfigDirectory`, `RegistersBoostPackage`, `RunsNpmBuild`, `GuardsPublishTargets`, …) can
 be used on their own by a command that is not a module installer.
 
 `RequiresNoerdInstallation` (part of `InstallsNoerdModule`, also usable alone) contributes
-`ensureNoerdInstalled(?bool $autoInstall = null): bool`. On a project where `noerd:install` has not
-run yet, an INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself — forwarding the
-options both commands share (`--force`, `--migrate`, `--build`, `--demo`) — and continues once the
-base package is in place; it only aborts with the manual hint when that installation did not
-complete. That base installation runs as a dependency: it skips the demo app question (unless the
-module command was given `--demo`), hands its npm work to the module command and prints no closing
-callout. Every other command (update, scaffold, demo) keeps aborting with the hint. Pass
-`$autoInstall` explicitly to override the decision, which `shouldAutoInstallNoerd()` otherwise
-derives from the command name.
+`ensureNoerdInstalled(?bool $autoInstall = null): bool`. On a project without `config/noerd.php` an
+INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself as a dependency — forwarding
+`--force`, `--migrate`, `--build`, `--demo`; no demo question, no closing callout, npm deferred to
+the module command — and aborts with the manual hint only when that installation did not complete.
+Every other command (update, scaffold, demo) aborts with the hint. `$autoInstall` overrides the
+decision `shouldAutoInstallNoerd()` otherwise derives from the command name.
 
 ## GuardedByObjectPermission (Eloquent models)
 
@@ -233,39 +234,23 @@ for module use.
 
 ## Helpers
 
-Static helpers under `Noerd\Helpers` that the traits and components build on:
+Static helpers under `Noerd\Helpers`; each is documented on its owning page:
 
 - **`TenantHelper`** — the tenant/app session API. `currentTenantId()` is the authenticated noerd
-  user's selected tenant — the single resolver both `TenantScope` and the `BelongsToTenant` stamp
-  read (`null` in console, queue and guest contexts). `getSelectedTenantId()` is the session
-  selection (read-only; in a single-tenant installation it falls back to the only tenant, memoized
-  per request), `getSelectedTenant()` the memoized `Tenant` model, `setSelectedTenantId()` writes
-  the session and persists the choice on the user, `hasTenant()` checks it. `getSelectedApp()` /
-  `setSelectedApp()` / `hasApp()` hold the app selected in the sidebar (the `app-access` middleware
-  selects the route's app). `clear()` forgets both session keys,
-  `clearCache()` drops the request memos (call it in tests after mutating tenants or tenant apps).
-- **`NoerdAuth`** — guard-explicit access to the noerd user (see [Authentication](auth.md)).
-- **`AccessHelper`** — every permission check (see [Permissions](permissions.md)).
-- **`FormatHelper`** — ICU formatting in the reader's locale: `locale()` / `tenantLocale()`
-  (user → tenant → config → language default), `date()`, `dateTime()`, `time()`, `decimal()`,
-  `number()`, `percent()`, the `document*()` variants for PDFs and receipts (tenant locale),
-  `csvDelimiter()`, `numberSymbols()` — see [Currency, Numbers & Dates](formatting.md).
-- **`CurrencyHelper`** — `codeForTenant()` (ISO code from `noerd_settings`, fallback
-  `config('noerd.currency.default')`), `format($value)` (reader's locale), `formatForDocument($value)`
-  (tenant locale), `formatIn($value, $currency)`, `configForTenant()`, `options()`,
-  `clearCache()`.
-- **`IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers).
-- **`StaticConfigHelper`** — resolves every YAML config: `getListConfig()`, `getComponentFields()`
-  (details), `getPageFields()`, `getSettingsFields()`, `getNavigationStructure()`, the list-view
-  discovery (`getListViews()`) and the model↔component name mapping. Its lookup order and the
-  `noerd.layout-overrides` binding are described in
-  [Extension Registries](extension-registries.md#layout-overrides-noerdlayout-overrides-binding).
-- **`SetupCollectionHelper`** — the lookup tables: `getAllCollections()`, `getCollectionFields()`,
-  `getCollectionTable()` and `selectOptions($collectionKey)` for picklist-style selects — see
-  [Setup Collections](setup-collections.md).
-- **`KeyboardShortcutHelper::parse($configKey, $default)`** — turns a configured shortcut string
-  into its modifier/key parts for the list and detail bindings — see
-  [Keyboard Shortcuts](keyboard-shortcuts.md).
-- **`ThemeHelper`** — `forTenant()` (`['theme' => …, 'enforced' => …]` from `noerd_settings`
-  with `config('noerd.theme')` as fallback), `fromLayout($layout)` and `clearCache()` — see
-  [Themes](themes.md).
+  user's selected tenant — the single resolver `TenantScope` and the `BelongsToTenant` stamp read
+  (`null` in console, queue and guest contexts). `getSelectedTenantId()` / `getSelectedTenant()`
+  read the session selection (memoized per request), `setSelectedTenantId()` writes it and persists
+  it on the user, `hasTenant()` checks it; `getSelectedApp()` / `setSelectedApp()` / `hasApp()`
+  hold the app selected in the sidebar. `clear()` forgets both session keys, `clearCache()` drops
+  the request memos (call it in tests after mutating tenants or tenant apps).
+- **`NoerdAuth`** — guard-explicit access to the noerd user → [Authentication](auth.md)
+- **`AccessHelper`** — every permission check → [Permissions](permissions.md)
+- **`FormatHelper`**, **`CurrencyHelper`** — ICU formatting → [Currency, Numbers & Dates](formatting.md)
+- **`ThemeHelper`** — the tenant's form theme → [Themes](themes.md)
+- **`StaticConfigHelper`** — resolves every YAML config (lists, details, pages, settings,
+  navigation, list views) →
+  [Extension Registries](extension-registries.md#layout-overrides-noerdlayout-overrides-binding)
+- **`SetupCollectionHelper`** — lookup tables and `selectOptions()` → [Setup Collections](setup-collections.md)
+- **`KeyboardShortcutHelper::parse($configKey, $default)`** — a configured shortcut string as
+  modifier/key parts → [Keyboard Shortcuts](keyboard-shortcuts.md)
+- **`IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers)

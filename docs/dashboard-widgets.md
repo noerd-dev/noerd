@@ -28,10 +28,8 @@ widgets:
 
 ### Tile-unit sizing
 
-App tiles are `9rem` (`w-36`) with a `1.5rem` gutter (`mr-6`/`mt-6`). A widget spanning `n` units
-measures `n * 9rem + (n - 1) * 1.5rem`, so a `width: 2` widget aligns exactly with two app tiles
-(`19.5rem`). The renderer emits the size as an inline `style` (the values come from YAML at runtime,
-so Tailwind's JIT can never generate classes for them).
+A widget spanning `n` units measures `n * 9rem + (n - 1) * 1.5rem` (app tile + gutter), so
+`width: 2` aligns exactly with two app tiles. The size is emitted as an inline `style`.
 
 The widget row is hidden entirely when the YAML is missing, empty, or no widget passes its checks.
 
@@ -122,7 +120,7 @@ $this->ensureDashboardWidget([
 ```
 
 `ensureDashboardWidget(array $widget, array $legacyComponents = [])` (in
-`Noerd\Traits\HasModuleInstallation`) creates the YAML when missing, rewrites entries still pointing
+`Noerd\Commands\Concerns\WritesHostAppConfigs`, available to every module installer) creates the YAML when missing, rewrites entries still pointing
 at one of the `$legacyComponents` names (a renamed widget component), and **appends** the widget if
 absent. It matches on `component` only, so an installation may re-tune `width`/`height` without a
 re-run duplicating or resetting the entry. When the installer declares `app`/`apps`, an existing

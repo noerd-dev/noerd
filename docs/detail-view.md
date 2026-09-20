@@ -6,15 +6,8 @@ Detail pages display and edit individual records with forms.
 
 ## File Locations
 
-### YAML Configuration:
-```text
-app-configs/{app}/details/{name}-detail.yml
-```
-
-### Livewire Component:
-```text
-app-modules/{module}/resources/views/components/{name}-detail.blade.php
-```
+- YAML: `app-configs/{app}/details/{name}-detail.yml`
+- Livewire component: `app-modules/{module}/resources/views/components/{name}-detail.blade.php`
 
 ## YAML Configuration
 
@@ -67,6 +60,7 @@ fields:
 | `tabs` | Array of tab definitions |
 | `fields` | Array of form field definitions |
 | `actions` | Array of action button definitions rendered above the form (see [Detail Actions](#detail-actions)) |
+| `lists` | Compact lists rendered below the form (see [Embedded Lists](#embedded-lists)) |
 | `positions` | Column configuration of the detail's position (line item) table (see [Configurable Columns](#configurable-columns)) |
 
 > **Note:** `relations:` (Relation Box) and `widgets:` are PAGE concerns — they live in the
@@ -86,7 +80,7 @@ plus the Blade slots below) or a **link** that opens something else. Tabs are re
 | `component` | Livewire component opened as a MODAL via `$modal(...)` — it is never embedded inline. Also the fallback for a `modalRoute` that is not registered |
 | `arguments` | Arguments passed to the modal (`modalRoute` and `component`): the `$modelId` token resolves to the current record id, `$property` to any public property of the component, everything else passes through unchanged |
 | `route` | Named route the tab navigates to (`wire:navigate`); rendered active while the current request matches it |
-| `routable` | With `component`: the tab additionally links to the generic `noerd.component-page` route (`/noerd/component-page/{componentName}`) so the component is addressable as a full page |
+| `routable` | With `component`: the tab additionally links to the generic `noerd.component-page` route (`/{prefix}/component-page/{componentName}`, prefix = `config('noerd.routes.prefix')`, default `noerd`) so the component is addressable as a full page |
 | `requiresId` | Only show the tab when editing an existing record |
 | `permission` | Gate ability required to see the tab; `permissionModel` (optional) is passed as the ability's model argument |
 | `viewExists` | View name — the tab is hidden when that view is not registered (safe reference to an optional module) |
@@ -162,30 +156,20 @@ expression for reactive visibility on top of the tab switch:
 
 ## Field Properties
 
-| Property | Description |
-|----------|-------------|
-| `name` | Property path (e.g., `detailData.name`) |
-| `label` | Field label (translation key) |
-| `helpText` | Explanation shown as a tooltip behind a question-mark icon next to the label (translation key); works in every theme |
-| `type` | Field type (`text`, `textarea`, `checkbox`, a registered `*Relation` type, …) |
-| `required` | Mark field as required |
-| `readonly` | Render the field read-only/disabled (also forced on every field when the user's object permission denies writing, see below) |
-| `colspan` | Grid column span (1-12) |
-| `tab` | Tab number (defaults to 1) |
-| `theme` | Per-field theme override (see [Themes](themes.md)) |
-| `number` | Explicit row number in the `numbered` theme (defaults to auto-increment) |
-| `highlight` | Render the field's control with a highlight fill (see [Highlighted Fields](#highlighted-fields)); normally stamped at runtime, not written in YAML |
-| `previousValue` | Render `was: …` under the field (see [Highlighted Fields](#highlighted-fields)) |
+Every entry of `fields` needs `name` (the property path, e.g. `detailData.name`), `label`
+(translation key) and `type` (`text` when omitted). The keys shared by all field types —
+`colspan`, `tab`, `required`, `readonly`, `default`, `helpText`, `placeholder`, `showIf` /
+`showIfNot`, `theme`, `number`, … — are listed under
+[Field Types → Common Options](field-types.md#common-options); the types themselves in
+[Field Types](field-types.md).
 
 ## Highlighted Fields
 
 A form can mark individual fields as carrying a value the reader did not enter themselves — a
 proposal from an AI agent, a value copied from another record. Two optional field keys drive it:
-
-| Key | Effect |
-|-----|--------|
-| `highlight` | Fills the field's control with a light amber tint and adds a tooltip on the label ("This value was proposed for you") |
-| `previousValue` | Renders `was: …` under the field — what it held before the proposal replaced it |
+`highlight: true` fills the field's control with a light amber tint and adds a tooltip on the label
+("This value was proposed for you"); `previousValue` renders `was: …` under the field — what it
+held before the proposal replaced it.
 
 Both are normally **stamped onto the layout at runtime** rather than written into the YAML: a
 component that renders a proposal walks its `$pageLayout` with `Noerd\Support\LayoutFields::map()`
@@ -230,193 +214,94 @@ with zero component code. Relation forms are declared on the model via the
 
 ## Themes
 
-A detail form renders in one of several **themes**, selected by the top-level `theme:` key in the
-detail YAML (per-field and nested-block overrides are supported), or system-wide under
-**Setup → System Settings**. A theme is a self-contained folder of element templates plus a
-`theme.yml` — copying the folder creates a new theme.
-
-```yaml
-title: Account
-theme: compact
-fields:
-  - name: detailData.name
-    label: Name
-    type: text
-    colspan: 6
-  - name: detailData.notes
-    label: Notes
-    type: textarea
-    colspan: 12
-    theme: default   # per-field override
-```
-
-See **[Themes](themes.md)** for the full reference: built-in themes, `theme.yml` keys, creating a
-new theme in a project or module, element resolution, theme-aware buttons and the system-wide
-default with enforcement.
+The top-level `theme:` key selects the form layout (`default`, `compact`, `numbered`, or any
+discovered theme); a single field or nested block may override it with its own `theme:`, and an
+admin can set — and enforce — a system-wide default under **Setup → System Settings**. See
+[Themes](themes.md) for the built-in themes, `theme.yml`, custom themes and element resolution.
 
 ## Read-Only Rendering on Write-Denied Objects
 
 When the object gates (see `AccessHelper`) deny saving the detail's `$detailModel` — write for an
-existing record, create for a new one — the whole YAML form renders read-only, in every theme.
-The mechanism is a single seam in the detail block: it consults the hosting component's
-`canSaveObject()` (falling back to `canWriteObject()` on bespoke components that expose only that)
-and forces `readonly: true` onto every field before the element templates and relation-field props
-are resolved. Text inputs/textareas get the `readonly`
-attribute, selects/picklists/checkboxes are `disabled`, upload and picker affordances are hidden,
-the rich-text editor becomes non-editable, and `type: button` fields render disabled. Relation
-field components additionally guard their wire-reachable mutators (`clear()`, selection) on the
-server.
+existing record, create for a new one — the whole YAML form renders read-only, in every theme. The
+detail block consults the hosting component's `canSaveObject()` (falling back to
+`canWriteObject()`) and forces `readonly: true` onto every field: inputs and textareas become
+`readonly`, selects, picklists, checkboxes and `type: button` fields `disabled`, upload and picker
+affordances are hidden, the rich-text editor is non-editable, and relation fields guard their
+mutators (`clear()`, selection) on the server.
 
-Notes:
-
-- The client-side readonly state is a UX affordance — the security boundary stays the
-  `store()`/`delete()` guards in `NoerdDetail`/`NoerdPage`.
-- Hand-written markup in tab slots (custom `tab1` content, embedded components) is NOT covered by
-  the generic mechanism. Hosts with such markup consult `$this->canSaveObject()` themselves and
-  disable their controls accordingly.
-- Components without `canSaveObject()`/`canWriteObject()` (no `NoerdDetail`/`NoerdPage`) are
-  never restricted.
-- A field that should show a value as TEXT by design (not a disabled input) uses the `display`
-  theme instead of `readonly: true` — per field, per nested block or for the whole layout; see
-  [Display Theme](themes.md#display-theme-read-only-text).
+- This is a UX affordance — the security boundary stays the `store()`/`delete()` guards in
+  `NoerdDetail`/`NoerdPage`.
+- Hand-written markup in tab slots is NOT covered: such hosts consult `$this->canSaveObject()`
+  themselves. Components without `canSaveObject()`/`canWriteObject()` are never restricted.
+- A value that should be TEXT by design (not a disabled input) uses the
+  [display theme](themes.md#display-theme-read-only-text) instead of `readonly: true`.
 
 ## Position Tables
 
-Documents with line items (orders, quotes, invoices) render their **positions** as a hand-written
-table, not through the YAML field grid. That table still
-follows the active theme — never hardcode a control class string in a module again.
-
-Generic components, all in the noerd module:
+Documents with line items (orders, quotes, invoices) render their **positions** as a table next to
+the YAML field grid. The table follows the active theme, and its columns are configuration.
 
 | Component | Props | Renders |
 |---|---|---|
 | `<x-noerd::positions.section>` | `theme`, `title`, `description` | The white card, the standard block head and a body whose padding follows the theme |
-| `<x-noerd::positions.table>` | `theme`, `columns` | `<table>` + `<thead>`; in a numbering theme a leading `#` column is prepended |
-| `<x-noerd::positions.row>` | `theme`, `number`, `colspan`, `details` slot | A full `<tbody>` (so it can be a row component's root); banded with a leading number cell in a numbering theme |
-| `<x-noerd::positions.cell>` | `theme`, `width` | One `<td>` with the theme's padding |
-| `<x-noerd::positions.totals>` | `theme`, `net`, `gross`, `taxes`, `currency`, `locale` | Total Net / one row per tax rate / Total Gross |
-| `<x-noerd::forms.control>` | `theme`, `type` | A bare `<input>`/`<select>` styled by the theme; every `wire:*`/`step`/`disabled` attribute passes through |
-
-`columns` entries are either a plain label or `['label' => …, 'class' => 'w-32']`; an empty label
-marks the trailing action column. Labels are translated with `__()`.
-
-`taxes` accepts both shapes in use across the modules — a `rate => amount` map (`['19' => 4.2]`) and
-a list of rows (`[['tax_rate' => 19, 'tax_total' => 4.2]]`) — so a caller passes `$model->taxes`
-unchanged.
-
-**Parent detail/page blade** — read the theme once from the trait and hand it down:
-
-```blade
-@php $positionsTheme = $this->detailTheme(); @endphp
-
-<x-noerd::positions.section :theme="$positionsTheme" title="Positions">
-    <x-noerd::positions.table
-        :theme="$positionsTheme"
-        :columns="[['label' => 'Quantity', 'class' => 'w-32'], 'Name', '']"
-    >
-        @foreach($model->positions as $position)
-            <livewire:module::position
-                :key="$position->id"
-                :$position
-                :theme="$positionsTheme"
-                :number="$loop->iteration"
-            />
-        @endforeach
-    </x-noerd::positions.table>
-
-    <x-noerd::positions.totals
-        :theme="$positionsTheme"
-        :net="$model->total_net"
-        :gross="$model->total_gross"
-        :taxes="$model->taxes"
-    />
-</x-noerd::positions.section>
-```
-
-**Row component** — accepts the theme and its row number as props (never call `detailTheme()` here:
-a row component has no page layout of its own):
-
-```php
-public string $theme = 'default';
-public ?int $number = null;
-
-public function mount($position, string $theme = 'default', ?int $number = null): void { … }
-```
-
-```blade
-<x-noerd::positions.row :theme="$theme" :number="$number" :colspan="3">
-    <x-noerd::positions.cell :theme="$theme" width="w-32">
-        <x-noerd::forms.control :theme="$theme" type="number" wire:change="store" wire:model="quantity"/>
-    </x-noerd::positions.cell>
-    …
-    <x-slot:details>
-        {{-- optional full-width row beneath, e.g. a rich-text description --}}
-    </x-slot:details>
-</x-noerd::positions.row>
-```
-
-`colspan` is the number of columns declared on the table; `positions.row` adds the number column
-itself when the theme numbers rows, so the details row never has to be adjusted per theme.
-
-**`$this->detailTheme()`** lives on the `NoerdPage` trait (and therefore on `NoerdDetail`). It
-normalizes `$pageLayout` — an unregistered theme falls back to `default`.
-
-In the `numbered` theme a position table gets a leading `#` column and gray banded rows, matching
-the numbered form rows above it.
-
-Note that `controlClasses` describes the control *inside a position row*; the element templates in
-the theme folders (`themes/{name}/`) keep their own (slightly smaller) class strings.
+| `<x-noerd::positions.table>` | `theme`, `columns`, `actions` | `<table>` + `<thead>` from the resolved columns plus the empty action header (`:actions="false"` omits it); a numbering theme prepends a `#` column |
+| `<x-noerd::positions.row>` | `theme`, `number`, `colspan`, `details` slot | A full `<tbody>` (so it can be a row component's root), banded with a leading number cell in a numbering theme; the optional `details` slot is a full-width row beneath |
+| `<x-noerd::positions.cells>` | `theme`, `columns` | One theme control per editable column (`wire:model="row.{field}"`, `wire:change="{change}"`), a disabled control for readonly columns, text for array values |
+| `<x-noerd::positions.cell>` | `theme`, `width` | One `<td>` with the theme's padding — for the row's own cells (trash button) |
+| `<x-noerd::positions.totals>` | `theme`, `net`, `gross`, `taxes`, `currency`, `locale` | Total Net / one row per tax rate / Total Gross. `taxes` accepts a `rate => amount` map or a list of `['tax_rate' => …, 'tax_total' => …]` rows, so `$model->taxes` passes unchanged |
+| `<x-noerd::forms.control>` | `theme`, `type` | A bare `<input>`/`<select>` styled by the theme's `controlClasses`; `wire:*`, `step`, `disabled` pass through |
 
 ### Configurable Columns
 
-Which columns a position table shows is **configuration**: an installation removes a column, makes
-it wider or narrower, relabels it, reorders the columns or adds further columns of the position
-model's table — in the detail YAML, without touching the module:
+Which columns a position table shows is **configuration**: an installation removes a column,
+resizes, relabels or reorders it, or adds further columns of the position model's table — in the
+detail YAML, without touching the module:
 
 ```yaml
-title: Order
-theme: compact
 positions:
   columns:
     - field: quantity
-      width: w-20
+    - field: unit
+      label: Unit
+      type: select
+      optionsMethod: unitOptions
+      placeholder: '-'
+      width: w-28
     - field: name
-      width: w-96
-    - field: comment
-      label: Comment
-    - field: wishes
-      label: Wishes
-      readonly: true
-    - field: price
+      label: Name
+      width: w-auto
+    - field: amount
+    - field: tax_amount
+    - field: total_gross
+    - field: delivery_date
+      label: Delivery Date
+      type: date
+      width: w-40
 ```
 
-**The YAML is the only source of a table's columns.** The code contributes nothing but the columns
-the module's calculation depends on: the module declares them through
-`Noerd\Contracts\DefinesPositionColumns`; `Noerd\Support\Positions\PositionColumnResolver` merges
-them with the YAML. A module ships the table it wants as `positions:` block in its detail YAML.
-
-**Resolution rules**
+**The YAML is the only source of a table's columns**; a module ships the table it wants as
+`positions:` block in its detail YAML. The code contributes only the columns the module's
+calculation depends on — the catalog (`Noerd\Contracts\DefinesPositionColumns`), which
+`Noerd\Support\Positions\PositionColumnResolver` merges with the YAML:
 
 - **Catalog columns can never be removed.** Without `positions.columns` exactly these render, in
-  catalog order — there is no other code default.
-- **With `positions.columns`:** the YAML order wins.
-  - A **catalog column** may override only `label` and `width`. `type`, `readonly`, `change`,
-    `step` and `options` always come from the catalog. One the YAML leaves out is re-inserted
-    after the nearest preceding catalog column that is present (or at the start).
-  - **Every other column is declared in the YAML.** It is accepted when it is a real column of the
-    position model's table, not a system column (`id`, `tenant_id`, `created_at`, `updated_at`,
-    `deleted_at`) and not in the catalog's `forbidden()` list. Allowed keys: `label` (default: the
-    headline of the field), `width` (default `w-32`), `type` (`text` default, `number`, `date`,
-    `checkbox`, `select`), for a select `options` (a `value`/`label` list) or `optionsMethod` (a
-    `PicklistRegistry` provider returning `value => label`) plus `placeholder` (the text of the
-    leading empty option), `step`, `readonly`. Its change handler is always `store`.
-  - An **invalid entry** (unknown, system or forbidden field, missing `field`, duplicate) is dropped
-    with a `Log::warning` — a YAML mistake never breaks the page.
-- A column whose model value is an **array or JSON** is always rendered read-only as text: a list of
-  scalars is comma-joined, a list of arrays/objects joins each item's scalar values.
+  catalog order. In the YAML a catalog column may override only `label` and `width` (`type`,
+  `readonly`, `change`, `step`, `options` come from the catalog); one the YAML leaves out is
+  re-inserted after the nearest preceding catalog column that is present (or at the start).
+- **Every other column is declared in the YAML**, in YAML order. It must be a real column of the
+  position model's table, not a system column (`id`, `tenant_id`, `created_at`, `updated_at`,
+  `deleted_at`) and not in the catalog's `forbidden()` list. Keys: `label` (default: the headline
+  of the field), `width` (default `w-32`), `type` (`text` default, `number`, `date`, `checkbox`,
+  `select`), for a select `options` (`value`/`label` list) or `optionsMethod` (a `PicklistRegistry`
+  provider returning `value => label`) plus `placeholder` (the leading empty option), `step`,
+  `readonly`. Its change handler is always `store`.
+- An **invalid entry** (unknown, system or forbidden field, missing `field`, duplicate) is dropped
+  with a `Log::warning` — a YAML mistake never breaks the page.
+- A column whose value is an **array or JSON** always renders read-only as text (scalars
+  comma-joined; for a list of arrays/objects each item's scalar values).
 
-**The catalog** — only the columns the module's calculation depends on; list the logic-bearing
-fields outside the catalog in `forbidden()`:
+**The catalog** lists the calculation columns and, in `forbidden()`, the logic-bearing fields that
+must never become a column:
 
 ```php
 use Noerd\Contracts\DefinesPositionColumns;
@@ -441,45 +326,22 @@ class InvoicePositionColumns implements DefinesPositionColumns
 }
 ```
 
-`PositionColumn` is immutable (`make()`, `label()`, `type()` with the shorthands `text()`, `number($step)`,
-`date()`, `checkbox()`, `select($options)`, `width()`, `readonly()`, `onChange()`, `step()`,
-`options()`, `placeholder()`); the resolver marks catalog columns `locked`. Resolved columns travel
-to row components as plain arrays (`toArray()` / `fromArray()`).
+`PositionColumn` is immutable (`make()`, `label()`, `type()` with the shorthands `text()`,
+`number($step)`, `date()`, `checkbox()`, `select($options)`, `width()`, `readonly()`, `onChange()`,
+`step()`, `options()`, `placeholder()`); the resolver marks catalog columns `locked`. Resolved
+columns travel to row components as plain arrays (`toArray()` / `fromArray()`).
 
-**The shipped YAML** declares everything else — the name, a unit select fed by a picklist, a date:
-
-```yaml
-positions:
-  columns:
-    - field: quantity
-    - field: unit
-      label: Unit
-      type: select
-      optionsMethod: unitOptions
-      placeholder: '-'
-      width: w-28
-    - field: name
-      label: Name
-      width: w-auto
-    - field: amount
-    - field: tax_amount
-    - field: total_gross
-    - field: delivery_date
-      label: Delivery Date
-      type: date
-      width: w-40
-```
-
-**Registration** — the module wires detail, catalog and position model once in its provider's
-`boot()` ([PositionTableRegistry](extension-registries.md#positiontableregistry)); layout tooling uses
-the same entry to let an admin edit the columns in the UI:
+**Registration** — once in the module provider's `boot()`
+([PositionTableRegistry](extension-registries.md#positiontableregistry)); layout tooling uses the
+same entry to let an admin edit the columns in the UI:
 
 ```php
 app(PositionTableRegistry::class)->register('accounting::invoice-detail', InvoicePositionColumns::class, InvoicePosition::class);
 ```
 
-**Detail blade** — resolve once with `NoerdPage::positionColumns()` and hand the columns to the
-table and to every row:
+**Detail blade** — read the theme (`$this->detailTheme()`, on `NoerdPage` and therefore
+`NoerdDetail`; an unregistered theme falls back to `default`) and the columns
+(`$this->positionColumns()`) once and hand both to the table and to every row:
 
 ```blade
 @php
@@ -499,14 +361,15 @@ table and to every row:
             />
         @endforeach
     </x-noerd::positions.table>
+
+    <x-noerd::positions.totals :theme="$positionsTheme" :net="$invoice->total_net"
+        :gross="$invoice->total_gross" :taxes="$invoice->taxes" />
 </x-noerd::positions.section>
 ```
 
-With resolved columns the table appends the empty action header itself (`:actions="false"` omits
-it). The legacy `label`/`class` shape of `columns` keeps working unchanged.
-
 **Row component** — `Noerd\Traits\NoerdPositionRow` provides `$position`, `$row` (attribute → value,
-the `wire:model` target), the `#[Locked]` `$columns`, `$theme` and `$number`:
+the `wire:model` target), the `#[Locked]` `$columns`, `$theme` and `$number`. A row component never
+calls `detailTheme()` itself — it has no page layout:
 
 ```php
 use Noerd\Traits\NoerdPositionRow;
@@ -547,42 +410,36 @@ new class extends Component
 ```
 
 - `initPositionRow()` fills `row` for every column (dates as `Y-m-d`, arrays unchanged).
-- `<x-noerd::positions.cells>` renders a theme control per editable column
-  (`wire:model="row.{field}"`, `wire:change="{change}"`), a disabled control for readonly columns and
-  text for array values. The trash cell stays in the row component, so it keeps its own
-  `wire:confirm`.
 - `editablePositionValues()` returns only the editable, NOT locked fields of the resolved columns.
-  Because `$columns` is locked, a client cannot add a field to it — a tampered `row.*` key is never
-  written.
-- `positionColumnCount()` is the column count plus the action column, for `positions.row :colspan`.
+  Because `$columns` is locked, a client cannot add a field — a tampered `row.*` key is never written.
+- `positionColumnCount()` is the column count plus the action column; `positions.row` adds the
+  number column itself in a numbering theme.
 - `delete()` deletes the position and dispatches `positionDeleted`; override it when needed.
 
 ## Detail Actions
 
-Action buttons render a row above the form. Each button calls a Livewire method on the detail component itself. Use this for record-level operations such as "Transfer to Account" or "Generate PDF".
+Action buttons render as a row above the form — for record-level operations such as "Archive" or
+"Generate PDF". A button calls a public Livewire method of the detail component (`action:`), opens
+a modal (`route:` / `modalComponent:`) or is a link (`url:`).
 
 ### Automatic Rendering
 
-`<x-noerd::page>` renders the actions row automatically as the first element of the page body
-whenever the component's `$pageLayout` carries an `actions:` array — a detail blade needs NO
-`<x-noerd::detail-actions>` include. Adding an action is purely a YAML change.
+`<x-noerd::page>` renders the row as the first element of the page body whenever the component's
+`$pageLayout` carries an `actions:` array — a detail blade needs NO `<x-noerd::detail-actions>`
+include, adding an action is purely a YAML change. The auto-render is skipped for embedded details,
+quick-create dialogs and components without a `$pageLayout` (lists — the list-level `actions:` key
+is a different concept).
 
-The auto-render is skipped for embedded details, quick-create dialogs, and components without a
-`$pageLayout` property (e.g. lists — the list-level `actions:` key is a different concept).
-
-A blade opts out via the `detailActions` attribute — do this when the layout needs custom logic
-(e.g. conditionally suppressing the actions) and render `<x-noerd::detail-actions>` explicitly
-instead (otherwise the row would render twice):
+Opt out with `:detailActions="false"` and render the component yourself (otherwise the row would
+appear twice) when the layout needs custom logic, for hand-built action layouts, or for a detail
+that must show its actions while **embedded** in a hosting page (the embedded chrome renders only
+the slot):
 
 ```blade
 <x-noerd::page :detailActions="false">
     ...
     <x-noerd::detail-actions :layout="$condition ? $pageLayout : []" :modelId="$modelId" />
 ```
-
-The explicit component also remains the right tool for hand-built (non-YAML) action layouts, and
-for a detail that must show its actions when rendered **embedded** in a hosting page (the embedded
-chrome renders only the slot, so the auto-render never runs there).
 
 ### YAML Configuration
 
@@ -648,36 +505,27 @@ actions:
 
 ### Conditional Actions
 
-`showIf` / `showIfNot` mirror the field- and tab-level conditions: the button carries an Alpine
-`x-show` bound to the detail component's state, so it follows a status property without a page
-reload. Both keys may sit on the same action (combined with AND):
+`showIf` / `showIfNot` work like the field- and tab-level conditions: the button carries an Alpine
+`x-show` bound to the component's state, so it follows a status property without a reload. The
+string form checks a public property (or a dotted path such as `detailData.is_business`) for
+truthiness, the object form compares against a value; both keys on one action combine with AND:
 
 ```yaml
 actions:
   - label: Publish
     action: publish
-    heroicon: check
     showIf: hasStock
     showIfNot: isPublished
-  - label: Unpublish
-    action: unpublish
-    heroicon: x-mark
-    showIf: isPublished
-```
-
-The string form checks a public property for truthiness (`hasAccount`, or a dotted path into an
-array property such as `detailData.is_business`). The object form compares against a value:
-
-```yaml
+  - label: Reopen
+    action: reopen
     showIf:
       field: detailData.status
-      value: open
+      value: closed
 ```
 
-Use it for record STATE that changes while the modal is open. Structural conditions keep their own
-keys: `requiresId` for "record not saved yet" and `viewExists` for "module not installed". When
-EVERY action is conditional, the action bar itself is hidden along with its buttons, so a fully
-suppressed row leaves no empty box behind.
+Use it for record STATE that changes while the modal is open; `requiresId` ("not saved yet") and
+`viewExists` ("module not installed") stay the structural conditions. When EVERY action is
+conditional, the action bar hides along with its buttons.
 
 ### Link Actions
 
@@ -703,17 +551,6 @@ actions:
 An action whose `url:` neither is a literal URL nor resolves through the `urls` map is not rendered
 at all, so YAML may reference a URL an installation does not provide.
 
-### Livewire Method
-
-Define a public method matching each `action` on the detail component:
-
-```php
-public function archive(): void
-{
-    // validation / business logic
-}
-```
-
 ## Relation Box
 
 The Relation Box (a grid of clickable tiles showing related record counts) is a PAGE feature:
@@ -724,22 +561,24 @@ the `relations:` array lives in the page YAML (`pages/{entity}-page.yml`) and th
 ## Embedded Lists
 
 Render one or more **compact lists** below the form — e.g. the stock movements of an item, or one
-parts list per assembly of a product. Each list renders a section heading (styled like the detail
-block title) and the referenced list component in its
-[compact](list-view.md#compact-mode-embedded-lists), full-width variant — `compact` and
-`disableModal` are applied automatically. There are two ways to use it:
+parts list per assembly of a product. Each entry renders a section heading (styled like the block
+title) and the list component in its [compact](list-view.md#compact-mode-embedded-lists),
+full-width variant (`compact` and `disableModal` are applied automatically): no header, no
+pagination, only the first `perPage` rows — use it for record-scoped lists.
 
-- **YAML-driven** — `<x-noerd::detail-lists>` (plural) for a fixed set of lists declared in the YAML.
-- **Blade-direct** — `<x-noerd::detail-list>` (singular) for dynamic cases (e.g. a `@foreach` loop)
-  where the number of lists depends on data and cannot be expressed in YAML.
-
-`<x-noerd::detail-lists>` simply loops the YAML `lists` array and delegates each entry to
-`<x-noerd::detail-list>`, so both share the same rendering.
+| Key / prop | Description |
+|------------|-------------|
+| `component` | The list Livewire component to embed (e.g. `inventory::stock-movements-list`) |
+| `arguments` | Mount arguments of the list. In YAML the `$modelId` token resolves to the current record id and static values pass through; the Blade prop takes real values (no token resolution) |
+| `title` / `description` | (optional) Section heading and sub-heading (translation keys), rendered via `detail.block-head` |
+| `lazy` | (optional) Lazy-load the list |
+| `wireKey` | (optional, Blade only) Explicit `wire:key`; defaults to `detail-list-{component}-` + an md5 hash of the arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
 
 ### YAML-driven: `<x-noerd::detail-lists>`
 
-The list counterpart to `<x-noerd::tab-content>`: a single line in the Blade, fully driven by a
-`lists` array in the YAML. Place it after `<x-noerd::tab-content>`:
+For a fixed set of lists: one line in the Blade after `<x-noerd::tab-content>`, driven by the
+`lists` array of the YAML (each entry is delegated to `<x-noerd::detail-list>`). Nothing renders
+until the record is saved (`$modelId` is set) or while `lists` is empty.
 
 ```blade
 <x-noerd::detail-lists :layout="$pageLayout" :modelId="$modelId" />
@@ -753,20 +592,9 @@ lists:
       itemId: $modelId
 ```
 
-| Property | Description |
-|----------|-------------|
-| `title` | (optional) Section heading above the list (translation key), rendered via `detail.block-head` |
-| `description` | (optional) Sub-heading text (translation key) |
-| `component` | The list Livewire component to embed (e.g. `inventory::stock-movements-list`) |
-| `arguments` | Arguments passed to the list; the `$modelId` token resolves to the current record id, static values pass through unchanged |
-| `lazy` | (optional) Lazy-load the list |
-
-Nothing is rendered until the record is saved (`$modelId` is set) or when `lists` is empty.
-
 ### Blade-direct: `<x-noerd::detail-list>`
 
-For dynamic cases that YAML cannot express — e.g. rendering one list **per related record** in a loop.
-Pass the values directly as props:
+For dynamic cases YAML cannot express — e.g. one list **per related record** in a loop:
 
 ```blade
 @foreach ($product->assemblies as $assembly)
@@ -778,18 +606,6 @@ Pass the values directly as props:
         :wireKey="$assembly->id . '-parts'" />
 @endforeach
 ```
-
-| Prop | Description |
-|------|-------------|
-| `component` | The list Livewire component to embed (e.g. `inventory::parts-list`) |
-| `arguments` | Array of mount params for the list (real values — no `$modelId` token resolution here) |
-| `title` | (optional) Section heading (translation key) |
-| `description` | (optional) Sub-heading text (translation key) |
-| `lazy` | (optional) Lazy-load the list (passed through to Livewire via the params array) |
-| `wireKey` | (optional) Explicit `wire:key`; defaults to `detail-list-{component}-` + an md5 hash of the arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |
-
-The embedded list is always compact (no header, no pagination — only the first `perPage` rows), so use
-it for record-scoped lists.
 
 ## Livewire Component
 
@@ -833,16 +649,18 @@ new class extends Component {
     <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($modelId)"
-            :modelId="$modelId ?? null"/>
+        <x-noerd::delete-save-bar :showDelete="isset($modelId)"/>
     </x-slot:footer>
 </x-noerd::page>
 ```
 
 The trait defaults hydrate `$detailData` from `$detailModel` on mount, validate via
-`validateFromLayout()`, persist on `store()` with
-`updateOrCreate(['id' => $modelId], $this->writableDetailData($modelClass))`, and delete + close
-the modal on `delete()`. `writableDetailData()` reduces the client-controlled `$detailData` to the
+`validateFromLayout()` and persist `$this->writableDetailData($modelClass)` on `store()`: with a
+`$modelId` the record is resolved through the scoped query (`find()`) and updated
+(`fill()->save()`) — an id that does not resolve for this user (another tenant's, a deleted or an
+invented one) stores NOTHING, because `$modelId` is URL-bound and therefore client-controlled.
+Without a `$modelId` the record is created. `delete()` deletes the record and closes the modal.
+`writableDetailData()` reduces the client-controlled `$detailData` to the
 top-level keys the detail YAML on disk binds (`detailData.*`, recursing into blocks), strips the
 relation-form keys (see [Relation Forms](relation-forms.md)) and always drops `id`, `tenant_id`,
 `created_at` and `updated_at` — a crafted request can never inject columns the form does not show.
@@ -878,10 +696,22 @@ new class extends Component {
 
         $this->validateFromLayout();
 
-        $item = Item::updateOrCreate(
-            ['id' => $this->modelId],
-            $this->writableDetailData(Item::class),
-        );
+        $payload = $this->writableDetailData(Item::class);
+
+        // Never updateOrCreate(['id' => $this->modelId], …): $modelId is client-controlled, and
+        // an id the scoped query cannot resolve must not end up as an INSERT with that id.
+        if ($this->modelId) {
+            $item = Item::find($this->modelId);
+
+            if (! $item) {
+                return;
+            }
+
+            $item->fill($payload)->save();
+        } else {
+            $item = Item::create($payload);
+        }
+
         $item->tags()->sync($this->tagIds);
 
         $this->finishStore($item);
@@ -889,9 +719,8 @@ new class extends Component {
 };
 ```
 
-Reference: `demo/views/demo-customer-detail.blade.php` (the shipped demo app). `initDetail()`,
-`finishStore()`, `storeProcess()` and `writableDetailData()` are `protected` — they are called
-from inside the component, never from outside.
+`initDetail()`, `finishStore()`, `storeProcess()` and `writableDetailData()` are `protected` —
+they are called from inside the component, never from outside.
 
 The same applies to `mount()`: override it only for extra logic and call `$this->initDetail()`
 first. Typical additions:
@@ -910,15 +739,14 @@ custom `mount()` that replaces `$detailData` wholesale.
 
 ## Key Concepts
 
-- **Trait:** `NoerdDetail` provides `$detailData`, `$modelId`, `$pageLayout`, `$relationTitles` and helper methods
+- **Trait:** `NoerdDetail` provides `$detailData` (array, the form binding), `$modelId`, `$pageLayout`, `$relationTitles` and `mount()` / `store()` / `delete()` — override only for custom behavior
 - **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions
-- **Properties:** `$detailData` (array) for form binding, `$modelId` (from trait) for the record ID
-- **mount() / store() / delete():** Provided by the trait — only override for custom behavior
 - **validateFromLayout():** Validates against the `required:` flags of the YAML (plus relation-form rules)
 - **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); declare `protected string $listComponent = 'inventory::stock-list';` when the list does not follow the plural convention (overriding the method stays possible for a dynamic target and wins over the property)
 - **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); `getDetailComponent()` is the hook for a component that renders another component's detail YAML — declare `protected string $detailConfigComponent = 'item-detail';` (NOT `$detailComponent`, which on lists names the modal a row click opens). The trait declares neither property; keep them `protected`
-- The Eloquent model is **never** stored as a component property
+- The Eloquent model is **never** stored as a property of a detail or page component (the one exception is a position row: `NoerdPositionRow::$position`)
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
+- **Extension slots:** `<x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />` marks a position where other modules mount their own Livewire components — see [DetailSlotsRegistry](extension-registries.md#detailslotsregistry)
 
 ## Further UI Components
 
@@ -926,48 +754,45 @@ custom `mount()` that replaces `$detailData` wholesale.
   array with `label`, `action`, optional `heroicon`, `confirm`, `disabled`; `type: separator`
   renders a divider, `type: status` a colored status chip (`variant: success|warning|neutral`).
 - **`<x-noerd::code-snippet label="..." language="blade">`** — renders the slot content as a dark
-  code panel with a copy button; useful on settings pages that show embed codes.
-- **`<x-noerd::help-tooltip text="...">`** — the question-mark tooltip used by `helpText`; can be
-  placed manually next to custom labels.
+  code panel with a copy button (embed codes on settings pages).
+- **`<x-noerd::help-tooltip text="...">`** — the question-mark tooltip used by `helpText`, for
+  custom labels.
+- **`<x-noerd::dashboard-card title="..." heroicon="..." :value="$count" />`** — the square tile of
+  app dashboards. `route` opens a route modal, `component` a component modal (the fallback when the
+  route is not registered), `arguments` go to either, `rewriteUrl: false` keeps the URL when the
+  card opens a filtered list, `external` makes it a plain link in a new tab, `image` / `heroicon`
+  set the icon, `value` renders a figure below the title, `background` overrides the tile color.
+- **`<x-noerd::action-message on="saved">Saved.</x-noerd::action-message>`** — a transient
+  confirmation line: listens for the Livewire event named in `on`, fades out after two seconds.
+- **`<x-noerd::rich-text :content="$text" />`** — renders the (tenant-editable) HTML produced by
+  `<x-noerd::forms.tiptap>` through `Noerd\Support\HtmlSanitizer`: the editor's tag subset
+  survives, every other element is unwrapped to its text, `script`/`style`/`iframe`/form elements
+  are removed with their content, attributes outside the allow-list (so all `on*` handlers) are
+  stripped and `href`/`src` may only use http, https, mailto or tel.
 - **`<livewire:noerd::dropzone wire:model="files" :rules="[...]" multiple />`** — a drag-and-drop
-  file upload. `files` is the `#[Modelable]` array the host binds to (one entry per file with
-  `name`, `extension`, `size`, `path`, `mime_type` and the original upload under `_original`),
-  `rules` the Laravel validation rules applied per file (`mimes:pdf,jpg`, `max:2048` — they also
-  produce the `accept` attribute and the displayed size limit), `multiple` allows more than one
-  file. It dispatches `files-updated` (with the current `files` array) after every add or remove
-  and `files-cleared` after `clearFiles()`. A selection larger than one request may carry is
-  uploaded in CONSECUTIVE requests (see "Upload limits" below) — the host needs no configuration
-  for it, but `files-updated` fires once per batch rather than once per selection.
+  file upload. `files` is the `#[Modelable]` array the host binds to, one entry per file with
+  `name`, `extension`, `size`, `mime_type` and the upload itself under `_original`. `rules` are the
+  Laravel validation rules applied per file (`mimes:pdf,jpg`, `max:2048` — they also produce the
+  `accept` attribute and the displayed size limit), `multiple` allows more than one file. It
+  dispatches `files-updated` (with the current `files` array) after every add or remove and
+  `files-cleared` after `clearFiles()`.
+
+  The array is a public Livewire property, so every scalar in it is client-controlled — it
+  deliberately carries NO file path. Get the upload back ONLY through
+  `Noerd\Support\DropzoneFile::resolve($file)` (`?UploadedFile`, `null` for an entry that is not a
+  real, still-present upload) or `DropzoneFile::resolveAll($files)`; `DropzoneFile::stream($upload)`
+  opens a read stream. They trust nothing but the signed `_original` reference.
 
 #### Upload limits
 
-The browser posts a whole selection to Livewire in ONE request, and PHP turns that request away
-when it holds more than `max_file_uploads` files (20 by default) or more than `post_max_size`
-bytes. It does so before any application code runs and answers with a warning instead of a
-response, so the upload fails with nothing in the log and nothing on the screen.
-
-The dropzone therefore reads both limits (`Noerd\Support\UploadLimits`) and splits a larger
-selection into batches that fit, uploading them one after another. Forty files reach a server that
-accepts twenty; the reader sees `Uploading 20 of 40...` while it runs. Nothing about this is
-configurable in the application — `max_file_uploads` is a PHP-level limit that no validation rule
-can raise — and nothing in a consuming module has to change.
-
-A batch the server still refuses (a proxy limit, a failed request) now surfaces as a message on the
-dropzone instead of failing silently.
-- **`<x-noerd::dashboard-card title="..." heroicon="..." :value="$count" />`** — the square tile used
-  on app dashboards. `route` opens a route modal, `component` a component modal (the fallback when
-  the route is not registered), `arguments` are passed to either, `rewriteUrl: false` keeps the URL
-  when the card opens a filtered list, `external` turns the card into a plain link in a new tab,
-  `image` / `heroicon` set the icon, `value` renders a figure below the title and `background`
-  overrides the tile color.
-- **`<x-noerd::action-message on="saved">Saved.</x-noerd::action-message>`** — a transient
-  confirmation line. It listens for the Livewire event named in `on` and fades itself out after two
-  seconds; the slot replaces the default text.
-- **`<x-noerd::rich-text :content="$text" />`** — renders the (tenant-editable) HTML produced by
-  `<x-noerd::forms.tiptap>`. The content passes through `Noerd\Support\HtmlSanitizer` first: the
-  editor's tag subset survives, every other element is unwrapped to its text, `script`/`style`/
-  `iframe`/form elements are removed with their content, attributes outside the allow-list (so all
-  `on*` handlers) are stripped and `href`/`src` may only use http, https, mailto or tel.
+The browser posts a whole selection to Livewire in ONE request, and PHP refuses a request holding
+more than `max_file_uploads` files (20 by default) or more than `post_max_size` bytes — before any
+application code runs, with nothing in the log and nothing on the screen. The dropzone therefore
+reads both limits (`Noerd\Support\UploadLimits`) and uploads a larger selection in consecutive
+batches that fit (`Uploading 20 of 40...`); `files-updated` fires once per batch rather than once
+per selection. Nothing is configurable and nothing in a consuming module has to change —
+`max_file_uploads` is a PHP-level limit no validation rule can raise. A batch the server still
+refuses (a proxy limit, a failed request) surfaces as a message on the dropzone.
 
 ## Naming Conventions
 

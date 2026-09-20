@@ -13,8 +13,8 @@ Settings pages differ from details/pages in four hard rules:
 2. **No grid** — every field renders stacked, full width, in the built-in `settings`
    theme. A `theme:` key in the YAML is ignored; the tenant-wide form theme (even an
    enforced one) does not apply either.
-3. **No URL model parameter** — a settings page never declares `$detailPrimary` and never
-   uses `$modelId`; the URL stays clean (`/inventory/settings`, not `?settingsId=`).
+3. **No URL model parameter** — by convention a settings page declares no `$detailPrimary`
+   and never uses `$modelId`; the URL stays clean (`/inventory/settings`, not `?settingsId=`).
 4. **No delete path** — the singleton row is created on first save
    (`updateOrCreate(['tenant_id' => …])`) and never deleted from the page.
 
@@ -69,10 +69,14 @@ hydrated into its property; `store()` validates from the layout and persists eve
 with `updateOrCreate(['tenant_id' => $tenantId], …)`, writing only the keys the settings
 YAML binds for that property (`id`, `tenant_id` and timestamps are always stripped). Both
 are guarded: `canWriteObject()` checks the object-write gate of every declared model.
+`canSaveObject()` — what the save button and the save shortcut key off — is overridden to
+mean exactly that write check (saving a singleton is always a write, even when the row
+does not exist yet); `canDeleteObject()` checks the delete gate of every declared model.
 
 ### Custom mount / store
 
-Like `NoerdDetail`, the trait methods are overridable. A custom `mount()` starts with
+The trait composes `NoerdDetail` (`validateFromLayout()`, relation fields, picklist
+providers and `setFieldValue` work as in a detail), and its methods are overridable. A custom `mount()` starts with
 `$this->initSettings()` (protected); a custom `store()` (extra validation, cache busting)
 keeps the guard and ends with the reusable tail:
 
@@ -139,17 +143,10 @@ the layout-override hook and the tenant theme setting and forces `theme: setting
 Select options may come from component methods (`optionsMethod:` on `type: select`,
 `picklistField:` on `type: picklist`) exactly like in a detail YAML.
 
-## The `settings` theme
-
-The built-in theme folder `resources/views/themes/settings/` contains only a `theme.yml`
-(`fullWidthRows: true` — every element template falls back to the default theme). It is
-marked `hidden: true`, so it never appears in the Setup → System Settings theme picker.
-See [Themes](themes.md).
-
-## Install / update
-
-The `settings/` folder is published by the module install/update commands exactly like
-`lists/`, `details/` and `pages/` (`HasModuleInstallation`).
+The `settings` theme is an internal theme (`hidden: true`, `fullWidthRows: true`; every
+element falls back to the default theme) — see [Themes](themes.md). The `settings/` folder
+is published by the module install/update commands exactly like `lists/`, `details/` and
+`pages/`.
 
 ## Reference
 

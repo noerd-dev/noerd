@@ -13,12 +13,14 @@ That's it. No migrations, no models, no controllers required.
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| `title` | Yes | Singular title (e.g., "Customer") |
+| `title` | Yes* | Singular title (e.g., "Customer") |
 | `titleList` | No | Plural title for the list view (e.g., "Customers"); defaults to the filename |
 | `key` | No | Unique identifier in UPPERCASE (e.g., "CUSTOMERS"); defaults to the UPPERCASED filename (`Noerd\Support\SetupCollectionDefinitionData`) |
-| `buttonList` | No | Button text for creating new entries |
+| `buttonList` | No | Button text for creating new entries (default `New Entry`). **`yaml` mode only** — a database-mode definition does not store it |
 | `description` | No | Optional description shown in the detail view |
-| `fields` | Yes | Array of field definitions |
+| `fields` | Yes* | Array of field definitions |
+
+\* By convention — a missing `title` resolves to an empty string, missing `fields` to an empty form.
 
 ## Example: Simple Collection
 
@@ -33,27 +35,6 @@ description: ''
 fields:
   - name: detailData.name
     label: Name
-    type: text
-    colspan: 6
-```
-
-## Example: Collection with Multiple Fields
-
-**File:** `app-configs/setup/collections/invoice_templates.yml`
-
-```yaml
-title: Invoice Template
-titleList: Invoice Templates
-key: INVOICE_TEMPLATES
-buttonList: 'New Template'
-description: ''
-fields:
-  - name: detailData.name
-    label: Name
-    type: text
-    colspan: 6
-  - name: detailData.template_path
-    label: Template Path
     type: text
     colspan: 6
 ```
@@ -94,11 +75,8 @@ In database mode a tenant without definition rows has no usable collections at a
   source for the new tenant (`Noerd\Support\SetupCollectionDefinitionImport`), so a fresh tenant
   starts with the same collections a YAML-mode installation has. Nothing happens in `yaml` mode.
 - **Newly shipped YAML definitions are NOT imported automatically.** When a module update publishes
-  a new collection YAML, run the import again — it is idempotent and updates existing rows in place:
-
-  ```bash
-  php artisan noerd:setup-collections:import-yaml --all-tenants
-  ```
+  a new collection YAML, run the import again (see [Switching Modes](#switching-modes)) — it is
+  idempotent and updates existing rows in place.
 
 `php artisan noerd:make-collection` always writes a YAML file and therefore has no effect in
 database mode; it warns about that. Create the collection in Setup → Collection Definitions instead,
@@ -110,10 +88,10 @@ Two Artisan commands move definitions between the two storages (see
 [Artisan Commands](artisan-commands.md)):
 
 ```bash
-# yaml -> database
+# yaml -> database   (--tenant-id= | --all-tenants, --dry-run, --delete removes the YAML files afterwards)
 php artisan noerd:setup-collections:import-yaml --all-tenants
 
-# database -> yaml
+# database -> yaml   (--tenant-id=, --force overwrites existing files, --delete removes the rows afterwards)
 php artisan noerd:setup-collections:export-yaml --tenant-id=1
 ```
 
@@ -141,6 +119,7 @@ Use the `setupCollectionSelect` field type in your detail YAML files to create a
 | `valueField` | No | Entry field stored as the option value (e.g. `code`); without it the entry id is stored |
 | `live` | No | Enable real-time updates |
 | `required` | No | Show required indicator |
+| `readonly` | No | Renders the select disabled |
 
 ### SetupCollectionHelper
 
@@ -166,31 +145,25 @@ $options = SetupCollectionHelper::selectOptions('countries', 'name', 'code');
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `getCollectionFields(string $collection)` | `?array` | Returns the full YAML configuration including fields |
+| `getCollectionFields(?string $collection)` | `?array` | Returns the full YAML configuration including fields |
 | `getCollectionTable(string $collection)` | `array` | Returns column definitions for list display |
 | `getAllCollections()` | `array` | Returns all collections with their metadata |
 | `selectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null)` | `array` | `[['value' => …, 'label' => …], …]` built from the current tenant's entries — the same resolution the `setupCollectionSelect` element and the list picklist badges use |
 
 The helper reads from the active storage mode transparently — the same API works in `yaml` and
-`database` mode.
+`database` mode. `selectOptions()` is memoized per request, tenant and language; call
+`SetupCollectionHelper::clearSelectOptionsCache()` after writing entries (tests).
 
 ## Available Field Types
 
-All standard field types are supported in Setup Collections. See the
-[Field Types Reference](field-types.md) for the complete list, including:
-
-- `text`, `email`, `number`, `date`, `time`, `datetime-local`
-- `textarea`
-- `select`, `picklist`
-- `checkbox`
-- Registered relation types (`{x}Relation`, see [Relation Field Types](relation-field-types.md))
-- `translatableText`, `translatableTextarea`
-- And more...
+`noerd:make-collection` and the database-mode definition editor offer the curated list
+`SetupCollectionHelper::FIELD_TYPES`: `text`, `textarea`, `translatableText`,
+`translatableTextarea`, `translatableRichText`, `image`, `email`, `tel`, `checkbox`, `select`,
+`date`, `datetime`, `number` — deliberately without structural and relation types. A hand-written
+YAML (`yaml` mode) may use any registered type of the [Field Types Reference](field-types.md).
 
 ## Best Practices
 
-1. **Use UPPERCASE keys**: The `key` property should be UPPERCASE and unique (e.g., `CUSTOMERS`, `INVOICE_TEMPLATES`)
-2. **Scaffold with `noerd:make-collection`**: it writes the block-style YAML for you (see [Artisan Commands](artisan-commands.md#noerdmake-collection))
-3. **Keep collections simple**: Setup Collections are best for lookup tables with a few fields
-4. **Use meaningful names**: The filename becomes the collection identifier, so use clear, descriptive names
-5. **Localize labels**: Use English text as labels — they double as translation keys (map them in `de.json`)
+1. **Scaffold with `noerd:make-collection`**: it writes the block-style YAML for you (see [Artisan Commands](artisan-commands.md#noerdmake-collection))
+2. **Keep collections simple**: Setup Collections are best for lookup tables with a few fields; the
+   filename is the collection identifier, the UPPERCASE `key` must be unique

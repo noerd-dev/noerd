@@ -43,28 +43,16 @@ class Invoice extends Model implements Auditable
 The `audits` table comes from the auditing package. A module's install or update command publishes
 its migration through the `PublishesAuditMigration` trait (see
 [Reusable Traits](traits.md#publishesauditmigration-artisan-commands)) — the call is idempotent and
-skips when `database_path('migrations')` already holds a `*_create_audits_table.php`:
+skips when `database_path('migrations')` already holds a `*_create_audits_table.php` or the `audits`
+table already exists (a project that squashed its migrations into a schema dump):
 
 ```php
-use Illuminate\Console\Command;
-use Noerd\Traits\HasModuleInstallation;
-use Noerd\Traits\PublishesAuditMigration;
+use PublishesAuditMigration;   // next to HasModuleInstallation on the install command
 
-class InvoicingInstallCommand extends Command
+// Runs with the publishing steps, before the migration prompt — on install and update.
+protected function publishModuleExtras(bool $update): void
 {
-    use HasModuleInstallation;
-    use PublishesAuditMigration;
-
-    public function handle(): int
-    {
-        return $this->runModuleInstallation();
-    }
-
-    // Runs with the publishing steps, before the migration prompt.
-    protected function publishModuleExtras(bool $update): void
-    {
-        $this->publishAuditingMigrationIfNeeded();
-    }
+    $this->publishAuditingMigrationIfNeeded();
 }
 ```
 
