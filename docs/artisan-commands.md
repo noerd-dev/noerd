@@ -12,8 +12,8 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 
 | Command | Description |
 |---------|-------------|
-| `noerd:install` | Install noerd content to the local content directory |
-| `noerd:update` | Update noerd content files without running installation setup |
+| `noerd:install` | Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin |
+| `noerd:update` | Refresh the published setup app configs, `config/noerd.php`, frontend scaffold and public assets — no migration, no prompts for tenant or admin |
 | `noerd:update-all` | Run `noerd:update` and every installed module's `noerd:update-{module}` command |
 | `noerd:demo` | Install demo data (models, migrations, views, configs, routes) |
 | `noerd:publish-home` | Publish the noerd-apps view for customization |
@@ -109,11 +109,9 @@ php artisan noerd:update-all --force
 | `--except=` | Skip a command; module key or full name (`--except=inventory`, `--except=noerd:update`). Repeatable |
 
 **Run order:** `noerd:update` → the module updates alphabetically → commands implementing
-`Noerd\Contracts\RunsAfterModuleUpdates` last. The marker interface is for a module update that
-touches what the core publishes (e.g. one that re-adds its entries to
-`app-configs/setup/navigation.yml`, which `noerd:update --force` rewrites from the core template).
-The module updates in between only write into their own `app-configs/{module}/` and are sorted
-purely for a reproducible run.
+`Noerd\Contracts\RunsAfterModuleUpdates` last — the marker interface for a module update that
+touches what the core publishes (e.g. re-adding its entries to `app-configs/setup/navigation.yml`,
+which `noerd:update --force` rewrites from the core template).
 
 **Discovery** is dynamic: every command named `noerd:update-{module}` that is registered by a loaded
 service provider takes part — nothing is hardcoded, so a newly installed module is picked up
@@ -233,13 +231,9 @@ php artisan noerd:make-tenant
 
 ## noerd:make-app
 
-Creates a new app (TenantApp) that can be assigned to tenants. Without options the command runs as
-an interactive wizard that first asks whether the app lives in the **project** or becomes a
-**module** under `app-modules/{app}` (see [Create an App](make-app.md)). Every app comes with
-its own dashboard: in the project the command runs `noerd:make-dashboard` and stores the generated
-`{app}.dashboard` route as the app's main route; in module mode it hands the scaffold to
-`noerd:make-module`, registers the package with Composer and runs the generated `noerd:install-{app}`
-in its silent scaffold mode (only the tenant assignment is asked).
+Creates a new app (TenantApp) with its own dashboard, in the **project** or as a **module** under
+`app-modules/{app}`. Without options it runs as an interactive wizard — see
+[Create an App](make-app.md) for the flow.
 
 ```bash
 php artisan noerd:make-app
@@ -268,10 +262,9 @@ php artisan noerd:assign-apps-to-tenant
 
 ## noerd:make-module
 
-Creates a new module with its directory structure, dashboard, routes, navigation, translations,
-the tenant-app migration stub, the install and update commands and the ServiceProvider. It
-generates no model — record types are added with `noerd:make-resource {Model} --app={module}`.
-`noerd:make-app` uses it for the module mode.
+Scaffolds a module under `app-modules/{module}` (dashboard, routes, navigation, install/update
+commands, ServiceProvider — no model). `noerd:make-app` uses it for the module mode. See
+[Creating Modules](creating-modules.md) for the generated structure and the install flow.
 
 ```bash
 php artisan noerd:make-module
@@ -288,15 +281,8 @@ php artisan noerd:make-module inventory --title="Inventory" --icon=cube
 | `--icon=` | The heroicon of the tenant app, as a bare name (`cube`) or in the stored form `heroicon:outline:cube`; the wizard offers a searchable Heroicon picker. Required in non-interactive runs |
 | `--no-hints` | Do not print the next steps (`noerd:make-app` runs them itself) |
 
-With the first local module the command also prepares the host: it creates `app-modules/`, adds
-the `app-modules/*` path repository to `composer.json` and the `app-modules` test suite to
-`phpunit.xml` (both idempotent) — `noerd:install` leaves a project without local modules alone.
-
-The generated `noerd:install-{module}` command accepts `--migrate`, `--build` and `--scaffold` besides `--force`: the silent
-run `noerd:make-app` uses right after the scaffold — configs are published, the app registered,
-and the only question is the tenant assignment (no migration or `npm run build` prompt).
-
-See [Creating Modules](creating-modules.md) for the generated structure.
+The generated `noerd:install-{module}` command accepts `--force`, `--migrate`, `--build` and
+`--scaffold` (the silent run `noerd:make-app` uses: only the tenant assignment is asked).
 
 ## noerd:make-resource
 
@@ -341,11 +327,8 @@ The command creates four files:
 ### Module apps
 
 When the app is a module (`app-modules/{app}/composer.json` exists), every `noerd:make-*`
-generator targets the module instead of the project root: Blade components go into
-`app-modules/{app}/resources/views/components/` and are referenced with the `{app}::` Livewire
-namespace, routes are appended to `app-modules/{app}/routes/{app}-routes.php`, and YAML files and
-navigation entries are written into **both** copies (`app-modules/{app}/app-configs/{app}/` and
-`app-configs/{app}/`). See [Creating Modules](creating-modules.md#adding-resources).
+generator writes into the module instead of the project root — see
+[Creating Modules](creating-modules.md#adding-resources).
 
 ### Interactive app selection
 

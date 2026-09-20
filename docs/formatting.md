@@ -51,9 +51,10 @@ always wins over the locale — leave the keys unset to let the locale decide.
 | `formatForDocument(float $value, ?int $tenantId = null)` | Amounts on **documents** (PDF, receipt, customer e-mail) — tenant currency, tenant locale |
 | `formatIn(float $value, string $currency, ?string $locale = null)` | An amount in an explicit currency (e.g. the stored currency of an imported bank transaction) |
 | `codeForTenant(?int $tenantId = null)` | The ISO code — for payment payloads, exports, APIs |
+| `symbol(?int $tenantId = null, ?string $locale = null)` | The currency symbol alone, as the reader's locale writes it |
 | `configForTenant(?int $tenantId = null, ?string $locale = null)` | Code, symbol, separators and symbol position for the reader's locale (consumed by the `input-currency` field) |
-| `options()` | The tenant setting's select options with a sample per currency |
-| `CURRENCIES` | The supported currencies (`EUR`, `USD`, `GBP`, `CHF`, `CZK`, `DKK`) |
+| `options(?string $locale = null)` | The tenant setting's select options with a sample per currency |
+| `CURRENCIES`, `DEFAULT_CURRENCY` | The supported currencies (`EUR`, `USD`, `GBP`, `CHF`, `CZK`, `DKK`) and the last-resort default (`EUR`) |
 | `clearCache()` | Drop the memoized currency resolution (tests, after a settings save) |
 
 ### `Noerd\Helpers\FormatHelper`
@@ -66,12 +67,13 @@ always wins over the locale — leave the keys unset to let the locale decide.
 | `documentDecimal($value, $decimals, ?int $tenantId)` | The same on documents |
 | `number($value, $maxDecimals = 2)` | Quantities — trailing zeros dropped |
 | `percent($value, $decimals = 0)` | Percentages (`19 %` / `19%`) |
-| `locale()`, `tenantLocale()` | The resolved locales, e.g. to pass into `Carbon::locale()` |
+| `locale(?int $tenantId = null)`, `tenantLocale(?int $tenantId = null)` | The resolved reader / tenant locale, e.g. to pass into `Carbon::locale()` |
 | `csvDelimiter()` | The CSV column separator (`config('noerd.format.csv_delimiter')`, default `;`) |
 | `numberSymbols(string $locale)` | The ICU decimal and grouping separators of a locale (`['decimal' => ',', 'group' => '.']`) — for client-side formatters |
 | `clearCache()` | Drop the memoized locale resolution (tests, after a settings save) |
 
-Every method accepts an explicit `$locale` as its last parameter when the reader is known.
+The UI formatters (`date()`, `dateTime()`, `time()`, `decimal()`, `number()`, `percent()`) accept an
+explicit `?string $locale` as their last parameter; the `document*()` methods take the tenant id instead.
 
 ### `Noerd\Support\Locales`
 
@@ -82,9 +84,7 @@ Every method accepts an explicit `$locale` as its last parameter when the reader
 | `isSupported(?string $locale)` | Whether a code is on the list (`null` and unknown codes are `false`) |
 | `normalize(string $locale)` | Canonical casing of a tag (`de_de`, `de-de` → `de-DE`); a code without a region is only lower-cased — use `defaultFor()` to reach a supported locale |
 | `defaultFor(?string $language)` | The locale a bare language code maps to (`de` → `de-DE`) |
-| `label(string $locale, ?string $displayLanguage = null)` | The picker label with a sample (`Deutsch (Deutschland) · 1.234,56 · 31.12.2026`) |
-| `sample(string $locale)` | Just the sample part of the label |
-| `options(?string $displayLanguage = null)` | `locale => label` for the locale pickers |
+| `options(?string $displayLanguage = null)` | `locale => label` for the locale pickers; a label carries a sample (`Deutsch (Deutschland) · 1.234,56 · 31.12.2026`) |
 
 ## Rules for module code
 
@@ -118,9 +118,7 @@ Every method accepts an explicit `$locale` as its last parameter when the reader
 ],
 ```
 
-`noerd:install` publishes the config; `noerd:update` refreshes it. The two locale columns arrive
-with the package migrations — an existing installation runs `php artisan migrate` after upgrading
-(`noerd:update` does not migrate).
+`noerd:install` publishes the config; `noerd:update` refreshes it.
 
 ## Testing
 

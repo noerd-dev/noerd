@@ -11,8 +11,8 @@ Registries with their own documentation are not repeated here:
 - `ProfileRegistry` — additional user profiles, and `ActionPermissionRegistry` — named actions
   beyond CRUD, see [permissions.md](permissions.md)
 
-Documented on this page: `TopBarRegistry`, `PicklistRegistry`, `DynamicNavigationRegistry`,
-`RelationBoxRegistry`, `DetailSlotsRegistry`, `ComponentAccessGuard`, the overridable null bindings
+Documented on this page: `TopBarRegistry`, `PicklistRegistry`, `PositionTableRegistry`,
+`DynamicNavigationRegistry`, `RelationBoxRegistry`, `DetailSlotsRegistry`, `ComponentAccessGuard`, the overridable null bindings
 and the authorization gates.
 
 ## TopBarRegistry
@@ -338,6 +338,7 @@ any authenticated user of the tenant.
 | `registerAdminComponents(array $componentNames): void` | Add module-owned admin components to the allow-list; idempotent |
 | `allows(?string $componentName): bool` | Whether the current user may mount the component (`true` for every name not on the list, and for `null`) |
 | `authorize(?string $componentName): void` | `abort(403)` when `allows()` is false |
+| `flushRegisteredComponents(): void` | Reset the process-global allow-list of module registrations (a test process booting several applications) |
 
 **Registering** from a module service provider's `boot()`:
 
@@ -441,7 +442,7 @@ from the authorization gates the module defines. See
 
 ### Authorization gates
 
-The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\Helpers\AccessHelper`. An undefined gate falls back to the **profile baseline** (see `docs/permissions.md`): Admin/User profiles — and users without a profile — may do everything, ReadOnly may only read and open apps. A defined gate decides alone and is expected to incorporate the baseline itself.
+The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\Helpers\AccessHelper`. An undefined gate falls back to the **profile baseline** (see [Permissions & Profiles](permissions.md#abilities)). A defined gate decides alone and is expected to incorporate the baseline itself.
 
 | Gate (constant on `AccessHelper`) | Argument | Consulted by |
 |-----------------------------------|----------|--------------|
@@ -452,7 +453,7 @@ The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\He
 | `noerd.object-delete` (`OBJECT_DELETE_GATE`) | `class-string $modelClass` | Delete buttons and bulk delete hidden/blocked |
 | `noerd.action` (`ACTION_GATE`) | `string $actionKey` (registered in the `ActionPermissionRegistry`, see [permissions.md](permissions.md#named-action-checks)) | `action-permission:{key}` middleware and manual `canPerformAction()` call sites |
 
-Always go through the helper (`AccessHelper::canAccessApp()`, `::canReadObject()`, `::canWriteObject()`, `::canCreateObject()`, `::canDeleteObject()`, `::canPerformAction()`) — it short-circuits null arguments and applies the baseline for undefined gates. Detail/page components additionally expose `canSaveObject()`, which picks create (new record, no `$modelId` yet) or write (update) for the form's current state — the save button, save shortcut and readonly rendering key off it.
+Always check through the `AccessHelper` methods (listed in [Permissions & Profiles](permissions.md#abilities)) — they short-circuit null arguments and apply the baseline for undefined gates.
 
 **Defining a gate** (e.g. in a service provider's `boot()`):
 

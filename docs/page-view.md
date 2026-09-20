@@ -18,8 +18,7 @@ concerns". The split:
 
 **Details are pure model forms.** Their YAML (`details/{entity}-detail.yml`, mandatory) contains
 only `title`, `description`, `theme`, `quickCreate`, `tabs`, `fields`, `actions`, `lists` and
-`positions`
-(see [Detail Properties](detail-view.md#detail-properties)). `widgets:` and `relations:` do NOT
+`positions` (see [Detail Properties](detail-view.md#detail-properties)). `widgets:` and `relations:` do NOT
 belong in a detail YAML — they are page concerns. A detail opened standalone (e.g. from a relation
 field) therefore renders just the form, without widgets or relation box.
 
@@ -57,7 +56,7 @@ widgets:
 |----------|-------------|
 | `title` | Page title (translation key) |
 | `detail` | The embedded detail Livewire component (full name, e.g. `inventory::warehouse-detail`). Drives the generic store roundtrip |
-| `details` | A list of embedded detail components saved by the same Save button (see [Several embedded details](#several-embedded-details)). The first entry — or `detail:` when both are given — is the PRIMARY detail whose record is the page's own |
+| `details` | A list of embedded detail components saved by the same Save button (see [Several embedded details](#several-embedded-details)). The first entry — or `detail:` when both are given — is the PRIMARY detail whose record is the page's own; a component named twice is embedded once |
 | `quickCreate` | Opt-in for the narrow quick-create modal on new records (also sizes the modal via noerd-modal) |
 | `tabs` | Page-level tabs (e.g. Media, Activity Log) — rendered by the page blade via `<x-noerd::tabs>`; same properties as [detail tabs](detail-view.md#tab-properties) |
 | `relations` | Relation Box tiles (see [Relation Box](#relation-box) below). Each tile may carry `route:` next to `component:` |
@@ -153,15 +152,13 @@ new class extends Component {
 
 ## Relation Box
 
-A Relation Box renders a grid of clickable tiles (6 per row), each showing a heroicon, a label and the related record count, e.g. `Contacts (5)`. Clicking a tile opens the related list component as a modal, filtered by the current record. Use it instead of relation tabs when you want an overview of all relations at a glance.
+A grid of clickable tiles (6 per row), each showing a heroicon, a label and the related record
+count, e.g. `Contacts (5)`. Clicking a tile opens the related list as a modal, narrowed by the
+current record. Use it instead of relation tabs for an overview of all relations at a glance.
 
-It is rendered via the generic `<x-noerd::detail-relations>` component, a thin wrapper around the `<livewire:noerd::relation-box>` Livewire component. The box only renders when `modelId`, `modelClass` and at least one tile (a YAML `relations` entry or a registry contribution, see below) are present, and refreshes its counts automatically when a list modal closes (`#[On('closeTopModal')]`).
-
-Besides the page YAML, an optional module can contribute tiles programmatically via the `RelationBoxRegistry` — e.g. an invoicing module appends an Invoices tile to the customer page without the customer module knowing about it. Contributed tiles render after the YAML tiles; see [extension-registries.md](extension-registries.md#relationboxregistry).
-
-### Blade Usage
-
-Place the component between the header slot and the page body:
+Place the generic component between the header slot and the page body (see
+[Component structure](#component-structure)); the tiles are the `relations:` entries of the page
+YAML shown [above](#the-optional-page-yaml):
 
 ```blade
 <x-noerd::detail-relations
@@ -170,33 +167,10 @@ Place the component between the header slot and the page body:
     :modelClass="\Vendor\Inventory\Models\Warehouse::class" />
 ```
 
-| Prop | Description |
-|------|-------------|
-| `layout` | The page's `$pageLayout` (provides the `relations` array) |
-| `modelId` | The current record id; tiles are hidden when empty |
-| `modelClass` | Fully-qualified Eloquent model class used to load the record and count relations |
-
-### YAML Configuration
-
-```yaml
-title: Warehouse
-detail: inventory::warehouse-detail
-relations:
-  - label: Sub-Warehouses
-    heroicon: building-office-2
-    relation: children
-    component: inventory::warehouses-list
-    arguments:
-      parentWarehouseId: $modelId
-  - label: Items
-    heroicon: cube
-    relation: items
-    component: inventory::items-list
-    arguments:
-      warehouseId: $modelId
-```
-
-### Relation Properties
+`<x-noerd::detail-relations>` wraps the `<livewire:noerd::relation-box>` component. It renders only
+when `modelId`, `modelClass` (a fully-qualified Eloquent model class, used to load the record and
+count the relations) and at least one tile are present, and refreshes its counts when a list modal
+closes (`#[On('closeTopModal')]`).
 
 | Property | Description |
 |----------|-------------|
@@ -206,6 +180,12 @@ relations:
 | `route` | Named route of the list, opened as a modal. The browser URL is deliberately NOT rewritten — the tile opens the list NARROWED by the current record, which a plain list route cannot express |
 | `component` | List component opened as a modal on click (e.g. `inventory::items-list`) — also the fallback when `route` is not registered |
 | `arguments` | Arguments passed to the modal; the `$modelId` token resolves to the current record id, static values pass through unchanged |
+
+An optional module can contribute tiles through the `RelationBoxRegistry` — e.g. an invoicing module
+appends an Invoices tile to the customer page without the customer module knowing about it.
+Registry tiles render after the YAML tiles and may additionally carry a `count` closure (instead of
+`relation`) and a `visible` closure, both receiving the record; see
+[Extension Registries](extension-registries.md#relationboxregistry).
 
 ## Generic store roundtrip
 
@@ -225,8 +205,9 @@ The save flow between page and embedded detail is fully generic — no per-compo
    `afterEmbeddedDetailStored(Model $model)`.
 
 Live form sync: an embedded detail mirrors its form state via **`detailDataUpdated-{detail}`**
-(payload `detailData` + `detail`; `NoerdDetail::updatedDetailData()` → `syncPayload()`, override
-the latter to filter the payload). The page merges the primary detail's state in
+(payload `detailData` + `detail`): `NoerdDetail::updatedDetailData()` calls the protected
+`syncEmbeddedDetailData()`, which dispatches `syncPayload()`. Override `syncPayload()` to filter the
+payload; a detail with its own `updatedDetailData()` hook calls `syncEmbeddedDetailData()` itself. The page merges the primary detail's state in
 `embeddedDetailDataUpdated()` (override to add side effects, e.g. a change counter for a live
 preview).
 

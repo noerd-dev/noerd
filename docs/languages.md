@@ -15,18 +15,10 @@ own, independent language management for its content; see its documentation.
 
 ## Language vs. locale
 
-A language is not a number format. Noerd keeps the two apart:
-
-| | Language | Locale |
-|---|---|---|
-| **Decides** | Translation strings, translatable fields | How `1234.56`, the 3rd of September and an amount are written |
-| **List** | Per tenant, extensible (Setup → Languages) | Fixed in the core (`Noerd\Support\Locales::SUPPORTED`, e.g. `de-DE`, `en-US`) |
-| **Per user** | Profile → Language | Profile → Locale (backend UI: lists, details, dashboards) |
-| **Per tenant** | Default language for new users | Setup → System Settings → Locale (documents: PDFs, receipts, customer e-mails) |
-
-A user may combine German as the language with `en-US` as the locale and gets German labels with
-`$1,234.56` and `09/03/2026`. Everything about locales and the currency lives in
-[Currency, Numbers & Dates](formatting.md).
+A language selects translation strings and translatable fields; it is NOT a number format. How
+amounts, numbers and dates are written is the **locale** (fixed list in the core, per tenant for
+documents, per user for the backend UI) — German labels with `en-US` formats is a valid combination.
+See [Currency, Numbers & Dates](formatting.md).
 
 ---
 
@@ -64,34 +56,24 @@ English → Danish:
 }
 ```
 
-Put that file in **your own project**, at:
+Put that file in **your own project** as `lang/da.json`. Laravel merges the project's
+`lang/{code}.json` *last*, so it overrides whatever noerd and the modules ship (each package
+registers its `resources/lang/de.json` via `loadJsonTranslationsFrom()`) — corrections to existing
+German wording go into the project's `lang/de.json` the same way, never into a module. An
+untranslated key falls back to the English source text.
 
-```text
-lang/da.json
+The `de.json` files shipped with noerd and the modules are the complete list of translatable keys:
+
+```bash
+cat vendor/noerd/*/resources/lang/de.json | grep -o '"[^"]*":' | sort -u
 ```
-
-> **This is the important part:** Laravel merges the project's `lang/{code}.json`
-> *last*, so it overrides whatever noerd and the modules ship (each package registers its
-> `resources/lang/de.json` via `loadJsonTranslationsFrom()`). You never have to edit a module
-> or send a pull request to Noerd — everything can live in your own repository,
-> including corrections to existing German or English wording (`lang/de.json`).
-
-Any key you do not translate falls back to the English source text, so you can start
-with the 50 strings your users see most and grow the file over time.
 
 ### Step 3 — Laravel's own messages (optional)
 
-Validation errors, date formats and pagination come from Laravel itself and are read from
-the host application's `lang/` directory — the noerd package ships no `lang/` folder of its
-own. To translate them, add:
-
-```text
-lang/da/validation.php
-```
-
-Copy your application's `lang/en/validation.php` as a starting point (`php artisan lang:publish`
-publishes it), or fetch the community translation for your language from
-[Laravel Lang](https://github.com/Laravel-Lang/lang).
+Validation errors and pagination come from Laravel itself and are read from the host application's
+`lang/` directory — the noerd package ships no `lang/` folder of its own. Add `lang/da/validation.php`
+(copy `lang/en/validation.php`, published by `php artisan lang:publish`, or take the community
+translation from [Laravel Lang](https://github.com/Laravel-Lang/lang)).
 
 ### Step 4 — Pick the language
 
@@ -100,19 +82,6 @@ administrator can also set it for someone else in the user detail screen. The ch
 stored per user (`noerd_user_settings.locale`, exposed as `NoerdUser::$locale`) and applied on
 every request — including Livewire updates — by the `Noerd\Middleware\SetUserLocale`
 middleware, which noerd pushes onto the global `web` group (see [Authentication](auth.md)).
-
-### Finding the strings to translate
-
-The English keys are the texts you see in the UI. To collect them systematically, the
-`de.json` files that ship with noerd and the modules are the complete list of translatable
-strings:
-
-```bash
-cat vendor/noerd/*/resources/lang/de.json | grep -o '"[^"]*":' | sort -u
-```
-
-Take the left-hand side (the English key) and write your Danish value for it in
-`lang/da.json`.
 
 ---
 
@@ -127,14 +96,9 @@ someone fills them in.
 
 ### Recognising a translatable field
 
-- **In a form**, the input has a **light blue frame** and the label carries a small
-  language icon. Hovering the icon explains that the value belongs to the language
-  currently selected in the switcher. Switch the language and the value changes.
-- **In a list**, the cell has a **subtle blue background**. A plain cell (e.g. a country
-  code) holds the same value in every language.
-
-The marker works in every theme (`default`, `compact`, `numbered`) and needs no
-configuration — it follows the field type.
+In a form a translatable input has a light blue frame and a language icon on its label; in a list
+the cell has a subtle blue background. The marker follows the field type in every theme and needs no
+configuration.
 
 ---
 

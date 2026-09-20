@@ -17,8 +17,8 @@ vendor/bin/pest tests/Feature/ListViewsTest.php
 
 The suite runs on [Orchestra Testbench](https://packages.tools/testbench) with the built-in sqlite
 `:memory:` connection (`NOERD_TESTBENCH_DB`, see `phpunit.xml`). `Noerd\Tests\TestCase` links the
-package into the testbench skeleton and publishes its `app-configs` and `config/noerd.php` — the
-same thing `noerd:install` does in a real project — so `StaticConfigHelper` finds the YAML files.
+package into the testbench skeleton and publishes its `app-configs` and `config/noerd.php` —
+mirroring `noerd:install` — so `StaticConfigHelper` finds the YAML files.
 The published `app-configs` copy is compared file by file against the package on every run and
 refreshed whenever any package YAML changed, so the suite never runs against stale configs.
 `Noerd\Tests\TestCase` also registers the `noerd-test::` Livewire namespace for the fixture
@@ -41,13 +41,11 @@ In this mode the host's `tests/Pest.php` is loaded and the package's `tests/Pest
 Every test file therefore binds its test case itself with `uses(Noerd\Tests\TestCase::class);` —
 keep that line in every new test file.
 
-The testbench skeleton (`vendor/orchestra/testbench-core/laravel`) is shared and persistent: other
-packages' suites symlink their module and publish their YAML copies into the same
-skeleton, and those files survive between runs. `Noerd\Tests\TestCase` must NOT remove foreign
-`app-modules` symlinks or `app-configs` folders — interleaved suites in the same workspace depend on
-them. Consequently, tests must never assume the skeleton contains only noerd's files: write uniquely
-named (`zz*`) runtime fixtures, clean them up in `afterEach`, and never write through the
-`app-modules/noerd` symlink (it points into the real package working tree).
+The testbench skeleton (`vendor/orchestra/testbench-core/laravel`) is shared by every Testbench
+suite of the workspace and persists between runs. Never assume it contains only noerd's files and
+never remove foreign `app-modules` symlinks or `app-configs` folders: write uniquely named (`zz*`)
+runtime fixtures, clean them up in `afterEach`, and never write through the `app-modules/noerd`
+symlink (it points into the real package working tree).
 
 ## Where module tests live
 
@@ -72,8 +70,9 @@ beforeEach(function (): void {
 });
 ```
 
-`Creates{Module}User` is the module's own trait in `tests/Traits/` (autoloaded via the module's
-`Noerd\{Module}\Tests\` PSR-4 entry). It builds a user whose tenant has the app — note the
+`Creates{Module}User` is the module's own trait in `tests/Traits/`. The module's
+`Noerd\{Module}\Tests\` PSR-4 entry sits in the production `autoload` block — a host never loads a
+dependency's `autoload-dev`. It builds a user whose tenant has the app — note the
 **uppercase** tenant-app name, which gates compare exactly:
 
 ```php
@@ -257,43 +256,26 @@ it('publishes the config', function (): void {
 });
 ```
 
-### A moved base path does not move vendor:publish
+### Rules for install-command tests
 
-An install-command test usually moves the application's base path aside so the command publishes
-into a throwaway directory:
-
-```php
-$this->app->setBasePath($this->hostPath);
-```
-
-`vendor:publish` does NOT follow: it resolves its targets from the paths the service providers
-registered when they BOOTED, against the base path of that moment. A publish therefore writes into
-the REAL installation, and `--force` makes it silent — this is how a test run used to reset the
-developer's own `config/livewire.php` to the Livewire default and break every route test that
-followed it.
-
-The core's own publishes are guarded (`PublishesNoerdContent::publishTargetsCurrentInstallation()`,
-which skips with a warning when the registered target lies outside `base_path()`). A module command
-that publishes through `vendor:publish` guards it the same way, or its test asserts the published
-file instead of relying on the moved path.
-
-A test must also never move a directory the whole test run shares (`storage/fonts`, `public/`)
-aside: a parallel worker uses it at the same time, and a failing assertion never restores it. Point
-the application at a throwaway path instead (`app()->useStoragePath(...)`) and restore it in a
-`finally`.
-
-### The base package is installed on the fly
-
-`noerd:install-{module}` runs `noerd:install` when `config/noerd.php` is missing — installing a
-module is a valid first command in a fresh project. A test that does not want the real installer to
-run registers a stand-in for it:
+- **`vendor:publish` ignores a moved base path.** A test usually calls
+  `$this->app->setBasePath($this->hostPath)` so the command publishes into a throwaway directory,
+  but `vendor:publish` resolves its targets from the paths the providers registered when they
+  booted — it writes into the REAL installation, silently under `--force`. The core's publishes are
+  guarded (`PublishesNoerdContent::publishTargetsCurrentInstallation()` skips with a warning when
+  the target lies outside `base_path()`); a module command that publishes through `vendor:publish`
+  guards it the same way, or its test asserts the published file instead.
+- **Never move a directory the whole run shares** (`storage/fonts`, `public/`) aside — a parallel
+  worker uses it, and a failing assertion never restores it. Point the application at a throwaway
+  path (`app()->useStoragePath(...)`) and restore it in a `finally`.
+- **The base package is installed on the fly:** `noerd:install-{module}` runs `noerd:install` when
+  `config/noerd.php` is missing. A test that does not want the real installer registers a stand-in
+  declaring the same options (`--force`, `--migrate`, `--build`, `--demo`), so a forwarded option
+  never makes the input throw:
 
 ```php
 $this->app[Kernel::class]->registerCommand(new ZzFakeNoerdInstallCommand());
 ```
-
-It must declare the same options the real command does (`--force`, `--migrate`, `--build`,
-`--demo`), so a forwarded option never makes the input throw.
 
 ## Factories
 
@@ -306,7 +288,7 @@ The package ships factories for its own models under `database/factories/`:
 
 | Factory | Notes |
 |---------|-------|
-| `NoerdUserFactory` | States `adminUser()`, `withExampleTenant()`, `withSelectedApp($app)` and `superAdmin()` (the installation-wide flag) |
+| `NoerdUserFactory` | States `adminUser()`, `withExampleTenant()`, `withSelectedApp($app)`, `unverified()` and `superAdmin()` (the installation-wide flag) |
 | `TenantFactory` | A plain tenant |
 | `TenantAppFactory` | A tenant app row — attach it to a tenant with `$tenant->tenantApps()->attach(...)` |
 | `NoerdSettingsFactory` | The per-tenant settings singleton (`currency`, `locale`, detail theme) — the fixture for formatting tests |
@@ -314,11 +296,9 @@ The package ships factories for its own models under `database/factories/`:
 
 ## Shared databases and parallel runs
 
-Testbench's sqlite `:memory:` isolates the package suite. If you point module tests at a shared
-MySQL test database, never run two suites against it at the same time — a `migrate:fresh` of one
-run drops the tables under the other. Isolate a second session with its own database name
-(`DB_DATABASE=noerd_test_<name> php artisan test …`).
-
+- Testbench's sqlite `:memory:` isolates the package suite. Never run two suites against one shared
+  MySQL test database at the same time — a `migrate:fresh` of one run drops the tables under the
+  other. Give a second session its own database (`DB_DATABASE=noerd_test_<name> php artisan test …`).
 - **Never `vendor/bin/pest --parallel` in a host that has Orchestra Testbench installed** (every
   host running module suites has): Pest's Laravel parallel handler disables itself as soon as
   Testbench is present, so all workers run `migrate:fresh` against the SAME database. Use

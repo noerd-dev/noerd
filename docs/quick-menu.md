@@ -5,27 +5,10 @@ The quick menu displays action buttons in the header area for fast access to com
 ## Buttons Are App-Independent
 
 The quick menu is tenant scoped, not app scoped: it renders the same buttons with the same targets
-no matter which app is selected in the app bar. A quick menu button must therefore never read
-`TenantHelper::getSelectedApp()` (directly or through a helper that falls back to it) to decide
-where it links or what it shows.
-
-When a button's target only makes sense per app, render **one button per app the tenant runs**
-instead of one button that changes meaning — e.g. a tenant running several storefront apps gets one
-button per storefront, each pinned to its own app:
-
-```php
-foreach ($tenant->tenantApps as $tenantApp) {
-    if (! AccessHelper::canUseApp($tenantApp->name)) {
-        continue;
-    }
-
-    $this->storefrontLinks[] = [
-        'label' => $tenantApp->title,
-        'url' => route('storefront.home', ['app' => $tenantApp->name]), // app passed explicitly
-    ];
-}
-```
-
+no matter which app is selected in the app bar. A button must therefore never read
+`TenantHelper::getSelectedApp()` (directly or through a helper that falls back to it). When a target
+only makes sense per app, render **one button per app the tenant runs** — each labelled with that
+app's title and pinned to it with an explicit argument — instead of one button that changes meaning.
 App-specific entry points belong in that app's navigation, dashboard or header actions.
 
 ## File Location
@@ -118,35 +101,11 @@ new class extends Component {
 </div>
 ```
 
-### Example: Website Link Button
-
-`app-modules/website/resources/views/components/quick-menu/website-link.blade.php`
-
-```php
-<?php
-
-use Livewire\Component;
-
-new class extends Component {
-    public string $websiteUrl = '';
-
-    public function mount(): void
-    {
-        $this->websiteUrl = config('app.website_url', '/');
-    }
-}; ?>
-
-<div class="hidden lg:flex">
-    <a href="{{ $websiteUrl }}" target="_blank">
-        <x-noerd::button variant="pill">{{ __('Website') }}</x-noerd::button>
-    </a>
-</div>
-```
-
 ## Registering a Button from a Module Installer
 
-A module's install command adds its quick menu button idempotently via
-`HasModuleInstallation::ensureQuickMenuButton()` — a new entry is prepended to
+A module's install/update command adds its quick menu button idempotently from
+`ensureModuleSetup()` via `ensureQuickMenuButton()` (`Noerd\Commands\Concerns\WritesHostAppConfigs`,
+available to tenant apps and support modules alike) — a new entry is prepended to
 `app-configs/quick-menu.yml`; an entry with the same `component` is replaced by the installer's
 definition (with the `apps` lists of both merged):
 
@@ -165,12 +124,11 @@ See [Creating Modules](creating-modules.md) for the install-command context.
 
 ## Key Concepts
 
-- **App-independent:** Buttons never depend on the selected app — see above
-- **Component name:** `{module}::quick-menu.{name}` for components in the module's `quick-menu/` subdirectory
-- **Responsive:** Use `hidden lg:flex` to show buttons only on larger screens
-- **Polling:** Use `wire:poll` for live updates (e.g., stock counts)
-- **Modal integration:** Open records with `$modalRoute(...)`, dialogs with `$modal(...)` — see [Modal System](modal.md)
-- **Styling:** Use `<x-noerd::button variant="pill">` — it follows the active theme and brand;
-  don't hand-roll Tailwind button classes
-- **Tenant switcher:** The quick menu row also hosts the tenant switcher (shown when
-  `noerd.features.multi_tenant` is on and the user has more than one tenant)
+- **Responsive / live:** `hidden lg:flex` shows a button only on larger screens; `wire:poll` keeps a
+  count current. Many buttons scroll horizontally instead of wrapping
+- **Modals:** open records with `$modalRoute(...)`, dialogs with `$modal(...)` — see [Modal System](modal.md)
+- **Styling:** `<x-noerd::button variant="pill">` follows the active theme and brand — never
+  hand-roll Tailwind button classes
+- **Tenant switcher:** the quick menu row also hosts the tenant switcher — shown while
+  `noerd.features.multi_tenant` is on and the user can access more than one tenant, or is an admin
+  with `noerd.features.new_tenant` enabled

@@ -53,12 +53,15 @@ $relationFieldRegistry->register('itemRelation', RelationFieldDefinition::model(
 
 ```php
 $relationFieldRegistry->register('quoteRelation', RelationFieldDefinition::model(
-    listComponent: 'quotes-list',
-    detailComponent: 'quote-detail',
+    listComponent: 'quoting::quotes-list',
     modelClass: Quote::class,
-    titleResolver: fn (Quote $quote): string => $quote->number . ' (' . \Number::currency($quote->total_net, in: 'EUR', locale: 'de') . ')',
+    titleResolver: fn (Quote $quote): string => $quote->number . ' (' . CurrencyHelper::format($quote->total_net) . ')',
 ));
 ```
+
+The resolved title passes through `RelationFieldDefinition::normalizeDisplayValue()`: a translatable
+(JSON) value resolves to the selected language, otherwise to the first non-empty translation — so
+`titleResolver: 'name'` also works on a translatable column.
 
 ## Custom Renderer Component
 
@@ -125,7 +128,8 @@ column that stores the selected type:
 ```
 
 Polymorphic fields render through the shared Livewire component
-`noerd-polymorphic-relation-field`, which shows a type selector next to the relation input.
+`noerd-polymorphic-relation-field`, which shows a type selector next to the relation input. An
+allowed type that is not registered (its module is not installed) is dropped from the selector.
 
 ## Runtime Behaviour
 
@@ -135,9 +139,6 @@ Polymorphic fields render through the shared Livewire component
   returns `null` when no such type is registered: the list cell `relationBadge` resolves its
   title through it, and tools that derive fields from the database schema (the Plus layout
   editor) use it to offer a foreign key as the matching relation field on a detail
-- All registered relation types render through the shared Livewire component `noerd-relation-field`
-  (polymorphic types through `noerd-polymorphic-relation-field`), unless the definition names a
-  custom `fieldComponent`
 - Selection uses the generic event `noerdRelationSelected`; the `{entity}Selected` event (or the
   definition's `selectEvent`) is dispatched as well, so detail components can listen with
   `#[On('itemSelected')]`
@@ -156,6 +157,8 @@ Polymorphic fields render through the shared Livewire component
       $this->detailData['unit_price'] = $item->price;
   }
   ```
+- **Read-only:** `readonly` is enforced on the server — a read-only field ignores a selection and
+  `clear()`; hiding the affordances is not the guard
 - **Owner scoping:** the detail block passes the owning detail's Livewire id as `owner`. The
   picker context becomes `{fieldName}@{owner}` (`RelationFieldComponent::selectionContext()`) and
   `setFieldValue` carries the owner, so two stacked details sharing a field name never adopt each
@@ -168,7 +171,6 @@ Polymorphic fields render through the shared Livewire component
   fallback (see [Modals](modal.md#route-modals))
 - Registering a relation type automatically registers a matching field type in the
   `FieldTypeRegistry` — no separate field-type registration is needed
-- Unregistered relation types fail explicitly during rendering
 
 ### Theme Templates
 
@@ -182,6 +184,6 @@ The behaviour lives once in the abstract `Noerd\Livewire\RelationFieldComponent`
 by editing the two templates — no PHP is duplicated.
 
 The numbered templates render inside `<x-noerd::detail.numbered-row>` and need the row number:
-`RelationFieldRegistry` puts `number` into the component props whenever the detail block numbered
-the field (i.e. only in a theme with `numbersRows`), and the base class exposes it as
-`$this->numberedRowField()`.
+`RelationFieldRegistry` puts `number` into the component props whenever the field carries one — the
+detail block numbers fields in a theme with `numbersRows`, and a `number:` declared in the YAML
+travels in every theme. The base class exposes it as `$this->numberedRowField()`.

@@ -13,31 +13,8 @@ app-configs/{app}/navigation.yml
 For example: `app-configs/inventory/navigation.yml` (the module ships its template at
 `app-modules/inventory/app-configs/inventory/navigation.yml` — keep both copies in sync)
 
-## Navigation Structure
-
-```yaml
-- title: Inventory
-  name: inventory
-  route: inventory
-  block_menus:
-    - title: Stock
-      navigations:
-        - title: Items
-          route: inventory.items
-          heroicon: archive-box
-          newRoute: inventory.item.detail
-          newComponent: inventory::item-detail
-        - title: Categories
-          route: inventory.categories
-          heroicon: tag
-          newRoute: inventory.category.detail
-          newComponent: inventory::category-detail
-    - title: Settings
-      navigations:
-        - title: Settings
-          route: inventory.settings
-          heroicon: cog-6-tooth
-```
+A navigation file is a list with one app entry: app metadata on top, `block_menus` with their
+`navigations` below — see the [full example](#full-example).
 
 ## Top-Level Properties
 
@@ -61,7 +38,7 @@ there. Whether an app shows up in the app bar is not a navigation key — it is 
 |----------|-------------|
 | `title` | Block heading (translation key). Users can collapse a block; the state is kept in the session |
 | `navigations` | The entries of the block (see below) |
-| `route` | A block with a `route` and no `navigations` renders as a single top-level entry |
+| `route` | A block with a `route` and no `navigations` renders as a single top-level entry. `config:` / `superAdmin:` are entry keys and are not evaluated on it |
 | `heroicon` | Icon for the single-entry form |
 | `style` | `list` (default) or `buttons` — renders the block's entries as buttons |
 | `dynamic` | Provider type resolved through the `DynamicNavigationRegistry` — the block's entries are generated at runtime (e.g. the Setup collections). See [Extension Registries](extension-registries.md) |
@@ -79,7 +56,7 @@ there. Whether an app shows up in the app bar is not a navigation key — it is 
 | `modalRoute` | Named route opened as a MODAL instead of navigating |
 | `component` | Livewire component opened as a modal — fallback for `modalRoute` |
 | `arguments` | Arguments passed to the modal opened by `modalRoute`/`component` — and, merged with the quick-create keys, to the "+" target |
-| `newRoute` | Named detail route opened as a modal by the "+" button (preferred) |
+| `newRoute` | Named detail route opened as a modal by the "+" button (preferred). The "+" renders only on a plain `route:` entry — not on `link:`, `modalRoute:` or `component:` entries |
 | `newComponent` | Livewire component opened by the "+" button — fallback for `newRoute` |
 | `quickCreate` | With `newRoute`/`newComponent`: open the "+" target as a narrow quick-create modal (`modelId: null`, `quickCreate: true`) |
 | `config` | The entry is hidden unless `config(...)` with this key is truthy (e.g. `noerd.features.currency`) |
@@ -87,16 +64,8 @@ there. Whether an app shows up in the app bar is not a navigation key — it is 
 
 ### Route vs. component
 
-`route:` always means *navigate to that page*. To open something as a modal, use the
-separate keys:
-
-```yaml
-- title: Items
-  route: inventory.items              # the list page this entry links to
-  newRoute: inventory.item.detail     # the "+" button opens /inventory/item/new?modal=true
-  newComponent: inventory::item-detail  # fallback when the route is not registered
-  heroicon: archive-box
-```
+`route:` always means *navigate to that page*; opening something as a modal uses the separate keys
+(`modalRoute:`/`component:` for the entry itself, `newRoute:`/`newComponent:` for its "+" button).
 
 Route names follow the module convention (see [Creating Modules](creating-modules.md)):
 `{module}.{entities}` for the list page, `{module}.{entity}.detail` for the record, and

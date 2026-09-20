@@ -1,17 +1,9 @@
 # Installation
 
-## Noerd Package
-
-noerd is a Laravel Livewire boilerplate for building admin panels and business applications. It provides a solid foundation with multi-tenancy, declarative configuration, and a library of ready-to-use components.
+noerd is a Laravel Livewire package for building multi-tenant admin panels and business
+applications from YAML-configured lists, details and navigation.
 
 ![Noerd Example App](/assets/app1.png "Title")
-
-### Core Features
-- **Multi-Tenancy** — Built on a flexible multi-tenant architecture with complete data isolation. Users can belong to multiple tenants, manage environments like development, staging, and production, and handle multiple clients or enterprise groups from a single installation.
-- **YAML-Based Configuration** — Define lists, detail views, forms, and navigation through simple YAML files. Customize your instance without touching code—just configure tables, detail-views, and navigations to fit your needs.
-- **Multi-Language Admin Panel** — A fully translatable interface with built-in language management.
-- **App Management** — Create custom business apps for purchasing, sales, or any department, or install ready-made app modules built on noerd.
-- **AI-Powered Development** — An AI-ready boilerplate designed for rapidly building apps and tools. The YAML-driven architecture enables AI assistants to generate and modify components efficiently.
 
 ## Requirements
 
@@ -27,13 +19,19 @@ composer require noerd/noerd
 php artisan noerd:install
 ```
 
-The install command can be run in a fresh or an existing Laravel application. During installation, you will be guided through the following steps:
+The install command can be run in a fresh or an existing Laravel application. It asks, in this order:
 
-1. **Create a default tenant** — Your first organization or environment.
-2. **Create an admin user** — The first user of the installation, a super admin. When users already exist the step is skipped; promote one with `php artisan noerd:promote-admin {user_id}`.
-3. **Install demo data (recommended)** — Sets up a fully working Demo Customers app with model, migration, YAML configuration, and navigation — so you can explore Noerd's features right away.
+1. **Run the migrations** — declining ends the setup steps 2 and 3 (they need the tables); run
+   `php artisan migrate` yourself later.
+2. **Create a default tenant** — your first organization or environment. Skipped when a tenant exists.
+3. **Create an admin user** — the first user of the installation, a super admin. When users already
+   exist the step is skipped; promote one with `php artisan noerd:promote-admin {user_id}`.
+4. **Run `npm run build`** — compiles the frontend assets (see [Frontend](#frontend)).
+5. **Install the Demo App (recommended)** — a working Demo Customers app with model, migration, YAML
+   configuration and navigation (see [Example Application](example-application.md)).
 
-If you skip any of these steps, you can run them later with the respective [Artisan commands](artisan-commands.md).
+Every skipped step can be run later with the respective [Artisan command](artisan-commands.md). The
+closing box names the next step: `php artisan dev` starts the local development processes.
 
 Besides the interactive steps, `noerd:install` publishes the setup app configs to `app-configs/setup/`,
 publishes `config/noerd.php`, sets `component_layout` in `config/livewire.php` to `noerd::layouts.app`
@@ -60,11 +58,9 @@ runs (CI) pass `--force --migrate --build --demo` explicitly — see
 | `setup_languages` | Per-tenant admin-panel languages |
 | `noerd_logins` | Login history (IP, user agent, impersonating admin) recorded on every login |
 
-The mixed table names are intentional: the tenancy tables (`tenants`, `tenant_apps`, `tenant_app`,
-`users_tenants`) and the `setup_*` tables keep their short names, everything user- and
-settings-related is prefixed `noerd_*`. Password resets use Laravel's default `password_reset_tokens`
-table, which the standard `0001_01_01_000000_create_users_table` migration of every Laravel
-application creates — noerd does not ship it.
+Password resets use Laravel's default `password_reset_tokens` table, which the standard
+`0001_01_01_000000_create_users_table` migration of every Laravel application creates — noerd does
+not ship it.
 
 ### Routes
 
@@ -75,17 +71,14 @@ All core routes are named with the `noerd.` prefix. The `/setup` area (middlewar
 `noerd.setup-collection-definition.detail`, `noerd.setup-languages`, `noerd.setup-language.detail`
 and `noerd.system-settings`. The apps dashboard is `noerd.apps` (`/noerd-apps`); under the
 configurable URL prefix live `noerd.profile`, `noerd.no-tenant`, `noerd.component-page`,
-`noerd.home` (a redirect to the apps dashboard, for starter kits that link `/home`) and the
+`noerd.home` (`/noerd/home`, a redirect to the apps dashboard) and the
 auth routes (`noerd.login`, `noerd.password.request`, `noerd.password.reset`). See
 [Authentication](auth.md#routes--url-prefix).
 
 ### Authentication
 
-noerd ships its own auth stack: at runtime it registers a dedicated `noerd` guard, a `noerd_users`
-provider (backed by `Noerd\Models\NoerdUser`) and a matching password broker. Your application's
-`config/auth.php` and `.env` are **never modified** — noerd coexists with any existing auth setup
-(Laravel Nova, Breeze, a custom guard, ...). See [Authentication](auth.md) for details, overrides
-and the coexistence recipe.
+noerd registers its own `noerd` guard at runtime and never modifies `config/auth.php` or `.env`, so
+it coexists with any existing auth setup — see [Authentication](auth.md).
 
 ## Frontend
 

@@ -46,9 +46,11 @@ route. Because it is unnamed and registered before the host's routes, a starter 
 `NoerdServiceProvider` registers two shared route middleware groups:
 
 ```php
-$router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', 'verified', EnsureTenantMembership::class]);
+$router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':noerd', EnsureTenantMembership::class]);
 $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':noerd']);
 ```
+
+There is no `verified` middleware in the group — noerd routes do not enforce e-mail verification.
 
 `Noerd\Middleware\EnsureTenantMembership` re-checks on every request that the user still belongs
 to the tenant selected in the session; a revoked membership falls back to another tenant of the
@@ -105,7 +107,7 @@ guard. They resolve the user explicitly through `Noerd\Helpers\NoerdAuth`:
 ```php
 use Noerd\Helpers\NoerdAuth;
 
-NoerdAuth::guardName();   // 'noerd' (configured guard)
+NoerdAuth::guardName();   // 'noerd' (the NoerdAuth::GUARD constant)
 NoerdAuth::guard();       // StatefulGuard instance
 NoerdAuth::user();        // ?Authenticatable
 NoerdAuth::id();          // int|string|null
@@ -135,8 +137,8 @@ session state (the `noerd` session key and `impersonating_from`); the host sessi
 Whenever the noerd guard adopts a user — the `Login` event and every `Authenticated` event
 (session-resumed requests, `actingAs()` in tests) — the `Noerd\Listeners\InitializeTenantSession`
 listener seeds the tenant session from the user's persisted tenant selection (or the first tenant
-the user belongs to) if no tenant is selected yet; `Login` additionally records the login in
-`noerd_logins`.
+the user belongs to) if no tenant is selected yet. A second `Login` listener,
+`Noerd\Listeners\RecordLogin`, records the login in `noerd_logins`.
 
 **Caveat — packages with their own guard list:** packages that resolve the acting user from a
 configured guard list (e.g. `owen-it/laravel-auditing` via `config/audit.php` → `user.guards`)

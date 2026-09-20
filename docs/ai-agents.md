@@ -29,7 +29,10 @@ registration is involved.
    every module through its `noerd:install-{module}` / `noerd:update-{module}` command (and thus
    `noerd:update-all`) — the step is idempotent and never removes an entry.
 
-Without a `boost.json` the commands only print a hint — Boost stays optional. A package without an
+Without a `boost.json` the commands only print a hint — Boost stays optional. A package that is not
+resolvable under `vendor/{name}` is NOT registered (Boost would drop it again, see below), and
+`boost:update` runs once per process unless a new entry was added — `noerd:update-all` renders the
+rules once, not per module. A package without an
 install command (e.g. `noerd/modal`) is registered by hand:
 
 ```json

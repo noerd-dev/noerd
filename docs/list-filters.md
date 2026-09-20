@@ -124,26 +124,17 @@ The generic list header is **two rows at every viewport width** — and neither 
      with icon-only previous/next buttons — the same partial the footer renders
      (`noerd::components.table.list-pagination-nav`).
 
-The strip is built exactly like the quick-menu: `overflow-x-scroll` (not `auto`) keeps the 6px
-scrollbar track permanently reserved and `-mb-[6px]` pulls it out of the layout, so nothing shifts
-when scrolling becomes possible; `noerd-scrollbar-idle` hides the thumb while nothing overflows,
-kept in sync by the `noerdScrollShadow` Alpine data (a `ResizeObserver` that only toggles that
-class — it never measures widths to position anything). Every control in the strip is `shrink-0`,
-so an overflowing filter set scrolls rather than squeezing, wrapping or collapsing.
+The strip is built like the quick-menu: every control is `shrink-0`, so an overflowing filter set
+scrolls rather than squeezing, wrapping or collapsing, and the scrollbar track is permanently
+reserved so nothing shifts when scrolling becomes possible. Popovers are safe inside it (the
+picklist filter is a native `<select>`, the date dropdown anchors its panels with `x-anchor.fixed`).
 
-Popovers are safe inside the strip: the picklist filter is a native `<select>`, the date dropdown
-anchors its panels with `x-anchor.fixed` (a scroll container clips absolutely positioned children on
-both axes), and chips have none. The view switcher sits on the title row.
-
-There is no drawer, no funnel button and no breakpoint-specific stacking at any width. What each
-list header actually renders is resolved ONCE by `NoerdList::headerControls()` (with
-`hasCollapsibleControls()` / `hasHeaderControls()` on top). The header rows and
-`x-noerd::modal-title` all read that — never re-derive "does this list have a search field / a
-secondary action" from `$listSettings` at a call site.
-
-This is a single generic feature of `list-header.blade.php` — never rebuild a list header per
-module, never add breakpoint stacking or a drawer to one, and never position header controls with
-JavaScript.
+There is no drawer, no funnel button and no breakpoint-specific stacking at any width. What a list
+header renders is resolved ONCE by `NoerdList::headerControls()`; the header rows and
+`x-noerd::modal-title` read that — never re-derive "does this list have a search field / a
+secondary action" from `$listSettings` at a call site. It is a single generic feature of
+`list-header.blade.php`: never rebuild a list header per module and never position header controls
+with JavaScript.
 
 ### Architecture
 
@@ -155,7 +146,6 @@ JavaScript.
   `list-controls-registry` and `list-pagination-nav` (filter row); `NoerdList::headerControls()`
   resolves which of them exist. A list host with its own custom header slot gets the one-row
   `list-controls` injected by `x-noerd::modal-title` instead
-- Tests: `tests/Unit/ColumnFilterParserTest.php`, `tests/Feature/NoerdListColumnFilterTest.php`, `tests/Components/ListHeaderTest.php`, `tests/Components/ListPaginationTest.php` (package root)
 
 ## How Filters Work
 
@@ -168,17 +158,7 @@ JavaScript.
 
 `listQuery()` applies search, sort and the Excel-style column filters, but NOT the header
 `listFilters`. A list that declares header filters therefore overrides `listData()` and calls
-`applyListFilters()` on the builder:
-
-```php
-public function listData(): array
-{
-    $query = $this->listQuery($this->listModel);
-    $this->applyListFilters($query);
-
-    return $this->buildList($query->paginate($this->perPage));
-}
-```
+`applyListFilters()` on the builder (see [Using the Filter in a Component](#using-the-filter-in-a-component)).
 
 `applyListFilters()` only touches whitelisted columns (see [Security](#security)); `Picklist`
 filters become `where(column, value)`, `ShowFrom`/`ShowUntil` filters become `>=` / `<=` on the
@@ -211,54 +191,20 @@ protected function getCategoryListFilter(): array
 
 ## Creating a Filter Trait
 
-Filters should be extracted into reusable traits so multiple list components can share them.
-
-File location: `app-modules/{module}/src/Traits/{Name}FilterTrait.php`
-
-The noerd package ships ready-made filter traits — `ShowFromFilterTrait` (date ranges),
+Extract a filter into a trait so several lists can share it — file location
+`app-modules/{module}/src/Traits/{Name}FilterTrait.php`, containing nothing but the
+`get{Name}ListFilter()` method above. The noerd package ships `ShowFromFilterTrait` (date ranges),
 `TenantFilterTrait` and `SetupLanguageFilterTrait` — see [Reusable Traits](traits.md).
-
-Example: `app-modules/inventory/src/Traits/CategoryFilterTrait.php`
-
-```php
-<?php
-
-namespace Noerd\Inventory\Traits;
-
-use Noerd\Inventory\Models\Category;
-
-trait CategoryFilterTrait
-{
-    protected function getCategoryListFilter(): array
-    {
-        return [
-            'label' => __('Category'),
-            'column' => 'category_id',
-            'type' => 'Picklist',
-            'options' => Category::query()->orderBy('name')->pluck('name', 'id')->toArray(),
-        ];
-    }
-}
-```
 
 Option values do not have to be stored values — a year filter may offer `"{$year}-01-01" => $year`
 and transform the selection into a date range in the query (see [Filter Preselection](#filter-preselection)).
 
 ## Using the Filter in a Component
 
-To add filters to a list component:
-
-1. Use the filter trait
-2. The `NoerdList` trait auto-discovers all methods matching `get*ListFilter` via its default `tableFilters()` implementation
+Use the trait — `NoerdList::tableFilters()` auto-discovers every `get*ListFilter` method — and
+apply the filters in `listData()`:
 
 ```php
-<?php
-
-use Livewire\Component;
-use Noerd\Traits\NoerdList;
-use Noerd\Inventory\Models\Item;
-use Noerd\Inventory\Traits\CategoryFilterTrait;
-
 new class extends Component {
     use NoerdList;
     use CategoryFilterTrait;
@@ -266,8 +212,6 @@ new class extends Component {
     public $listModel = Item::class;
     public ?string $detailRoute = 'inventory.item.detail';
     public $detailComponent = 'inventory::item-detail';
-
-    // tableFilters() is auto-discovered from the trait — no override needed
 
     public function listData(): array
     {
@@ -279,7 +223,7 @@ new class extends Component {
 };
 ```
 
-You only need to override `tableFilters()` if you want to conditionally show filters:
+Override `tableFilters()` only to show filters conditionally:
 
 ```php
 #[Computed]

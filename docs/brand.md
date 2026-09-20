@@ -25,36 +25,21 @@ Every preset defines the same 10 color keys. Each key becomes a CSS custom prope
 `--color-{key}` (e.g. `brand-primary` → `--color-brand-primary`), which backs the Tailwind
 utilities `bg-brand-primary`, `text-brand-primary-text`, `border-brand-border`, and so on.
 
-| Key | Colors |
-|-----|--------|
-| `brand-bg` | Page background (the `<body>`) |
-| `brand-navi` | Sidebar navigation background |
-| `brand-navi-hover` | Sidebar navigation item hover state |
-| `brand-primary` | Primary buttons and accents |
-| `brand-primary-text` | Text on primary surfaces |
-| `brand-secondary` | Secondary buttons |
-| `brand-secondary-text` | Text on secondary surfaces |
-| `brand-danger` | Danger buttons (e.g. delete) |
-| `brand-danger-text` | Text on danger surfaces |
-| `brand-border` | Emphasized borders (e.g. primary button outline) |
+| Key | Colors | Env override |
+|-----|--------|--------------|
+| `brand-bg` | Page background (the `<body>`) | `NOERD_COLOR_BRAND_BG` |
+| `brand-navi` | Sidebar navigation background | `NOERD_COLOR_BRAND_NAVI` |
+| `brand-navi-hover` | Sidebar navigation item hover state | `NOERD_COLOR_BRAND_NAVI_HOVER` |
+| `brand-primary` | Primary buttons and accents | `NOERD_COLOR_BRAND_PRIMARY` |
+| `brand-primary-text` | Text on primary surfaces | `NOERD_COLOR_BRAND_PRIMARY_TEXT` |
+| `brand-secondary` | Secondary buttons | `NOERD_COLOR_BRAND_SECONDARY` |
+| `brand-secondary-text` | Text on secondary surfaces | `NOERD_COLOR_BRAND_SECONDARY_TEXT` |
+| `brand-danger` | Danger buttons (e.g. delete) | `NOERD_COLOR_BRAND_DANGER` |
+| `brand-danger-text` | Text on danger surfaces | `NOERD_COLOR_BRAND_DANGER_TEXT` |
+| `brand-border` | Emphasized borders (e.g. primary button outline) | `NOERD_COLOR_BRAND_BORDER` |
 
-## Per-Color Overrides
-
-Every color key can be overridden individually via an environment variable — on top of whichever
+Every key can be overridden individually through its environment variable — on top of whichever
 preset is active:
-
-| Color key | Environment variable |
-|-----------|----------------------|
-| `brand-bg` | `NOERD_COLOR_BRAND_BG` |
-| `brand-navi` | `NOERD_COLOR_BRAND_NAVI` |
-| `brand-navi-hover` | `NOERD_COLOR_BRAND_NAVI_HOVER` |
-| `brand-primary` | `NOERD_COLOR_BRAND_PRIMARY` |
-| `brand-primary-text` | `NOERD_COLOR_BRAND_PRIMARY_TEXT` |
-| `brand-secondary` | `NOERD_COLOR_BRAND_SECONDARY` |
-| `brand-secondary-text` | `NOERD_COLOR_BRAND_SECONDARY_TEXT` |
-| `brand-danger` | `NOERD_COLOR_BRAND_DANGER` |
-| `brand-danger-text` | `NOERD_COLOR_BRAND_DANGER_TEXT` |
-| `brand-border` | `NOERD_COLOR_BRAND_BORDER` |
 
 ```env
 NOERD_BRAND=sand
@@ -128,16 +113,10 @@ Two options, both in the project (never in the noerd module):
 
     'presets' => [
         'acme' => [
-            'brand-bg'             => '#f8fafc',
-            'brand-navi'           => '#0f172a',
-            'brand-navi-hover'     => '#1e293b',
-            'brand-primary'        => '#1d4ed8',
-            'brand-primary-text'   => '#ffffff',
-            'brand-secondary'      => '#ffffff',
-            'brand-secondary-text' => '#374151',
-            'brand-danger'         => '#fecaca',
-            'brand-danger-text'    => '#374151',
-            'brand-border'         => '#1d4ed8',
+            'brand-bg'      => '#f8fafc',
+            'brand-navi'    => '#0f172a',
+            'brand-primary' => '#1d4ed8',
+            // … all 10 keys of the table above
         ],
     ],
 

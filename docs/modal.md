@@ -2,40 +2,15 @@
 
 A modal system for Livewire 4 that opens any Livewire component in a modal — no traits, no modifications to your component code.
 
-## Installation
-If you're using noerd/noerd, the noerd/modal package is already included as a dependency. To use noerd/modal standalone, install it via Composer:
+## Setup
 
-```bash
-composer require noerd/modal
-```
-
-The package auto-registers via Laravel's Service Provider system.
-
-## Layout Setup
-
-Add the modal assets to your layout's `<head>`:
-
-```blade
-<head>
-    ...
-    <x-noerd::noerd-modal-assets/>
-    ...
-</head>
-```
-
-Add the modal component at the beginning of `<body>` (before other Livewire components):
-
-```blade
-<body x-data>
-    <livewire:noerd-modal::noerd-modal /> <!-- must be loaded before livewire components -->
-
-    {{ $slot }}
-</body>
-```
-
-The noerd layout (`noerd::layouts.app`) already contains both. The default panel position comes from
-`config('noerd-modal.position')` (`center` or `right`, published as `config/noerd-modal.php`); every
-call may override it per modal.
+`noerd/modal` is a dependency of `noerd/noerd`, and the noerd layout (`noerd::layouts.app`) already
+contains the two pieces it needs: `<x-noerd::noerd-modal-assets/>` in `<head>` and
+`<livewire:noerd-modal::noerd-modal />` at the beginning of an `x-data` `<body>`, before every other
+Livewire component. A hand-written layout (or a standalone use of the package,
+`composer require noerd/modal`) adds the same two lines. The default panel position comes from
+`config('noerd-modal.position')` (`center` or `right`; publish with
+`php artisan vendor:publish --tag=noerd-modal-config`); every call may override it per modal.
 
 ## Opening Modals
 
@@ -67,7 +42,7 @@ Alpine magics (`resources/js/noerd-modal.js` of `noerd/modal`):
 | `source` | Component whose `refreshList-{name}` event fires when the modal closes. PHP sets it to the current Livewire component, the magics resolve the Livewire component the clicked element belongs to — pass it only to refresh a DIFFERENT component |
 | `position` | `center` or `right`; `null` = `config('noerd-modal.position')` |
 | `size` | `default` or `narrow`; `null` = `default` |
-| `quickCreate` | PHP only: adds `quickCreate: true` to the arguments and defaults `size` to `narrow` |
+| `quickCreate` | PHP only: adds `quickCreate: true` to the arguments and defaults `size` to `narrow`. Rarely needed — see [Quick-create](#quick-create-narrow-panel-for-new-records) |
 | `fallbackComponent` | Component opened when the route name is not registered (see [Fallback component](#fallback-component)) |
 | `rewriteUrl` | `false` resolves the route but keeps the browser URL (see [Suppressing the URL rewrite](#suppressing-the-url-rewrite)) |
 
@@ -105,53 +80,27 @@ Noerd::modal('inventory::item-detail', ['modelId' => 123], 'right', 'narrow');
 
 Both paths dispatch the same Livewire event `noerdModal` to the modal stack component.
 
-### Parameters in Components
+Arguments are bound to the target component's public properties by name
+(`public ?int $modelId = null;` receives `123` from `{ modelId: 123 }`).
 
-Parameters are automatically bound to public properties:
+### Quick-create: narrow panel for new records
 
-```php
-<?php
-
-use Livewire\Component;
-
-new class extends Component
-{
-    public ?int $modelId = null; // Set to 123 when opened with { modelId: 123 }
-};
-?>
-
-<div class="p-4">
-    @if($modelId)
-        Editing record: {{ $modelId }}
-    @else
-        Creating new record
-    @endif
-</div>
-```
+A `*-detail` or `*-page` whose YAML sets `quickCreate: true` opens in the `narrow` panel whenever it
+is opened WITHOUT a `modelId` — by component or by route, from PHP, Blade or YAML, with no flag at
+the call site (an explicit `size` wins). The dialog then shows only the required (and
+`quickCreate: true`) fields; after the first save `resizeTopModal` widens it to the full form. See
+[Page View](page-view.md#quick-create-lifecycle).
 
 ## Closing Modals
 
-### Automatic Methods
-
-- **Escape Key**: Pressing Escape closes the topmost modal
-- **Close Button**: Built-in X button in the top-right corner
-
-### Programmatic Methods
-
-From within a Livewire component:
+The Escape key and the X button in the top-right corner close the topmost modal. From a Livewire
+component:
 
 ```php
 // Close the topmost modal
 $this->dispatch('closeTopModal');
-```
 
-With the `NoerdDetail` trait (automatically refreshes the source list):
-
-```php
-// Close modal and refresh the associated list
-$this->closeModalProcess('inventory::items-list');
-
-// Close modal and auto-detect list component
+// NoerdDetail / NoerdPage: close and refresh the paired list
 $this->closeModalProcess($this->getListComponent());
 ```
 
@@ -163,7 +112,7 @@ Events handled by the modal stack component (`noerd-modal::noerd-modal`):
 |-------|-------------|
 | `noerdModal` | Opens a modal — dispatched by `Noerd::modal()` / `Noerd::modalRoute()` and the `$modal` / `$modalRoute` magics. Never dispatch it by hand; the facade and the magics are the API |
 | `closeTopModal` | Closes the topmost modal, restores the URL and fires `refreshList-{source}` for its source component |
-| `closeAllModals` | Closes the whole stack |
+| `closeAllModals` | Closes the whole stack: restores the URL and fires `refreshList-{source}` for EVERY modal in it |
 | `resizeTopModal` | Changes the panel size of the topmost modal (`size: 'default'` or `'narrow'`) |
 
 Events dispatched by the modal stack:
@@ -279,18 +228,11 @@ that lies.
 
 ## Modal Stacking
 
-The modal system supports unlimited nested modals:
-
-- Each modal gets a unique key and iteration number
-- Only the topmost modal responds to Escape key
-- Z-index is managed automatically
-- Closing a modal reveals the one beneath
-
-Example flow:
-1. Open `items-list` → Click row
-2. Opens `item-detail` (modal 1)
-3. Click "Add Supplier" → Opens `supplier-detail` (modal 2)
-4. Press Escape → Closes modal 2, modal 1 remains
+Modals nest without limit: each gets its own key and stacking depth, only the topmost one responds
+to Escape and to keyboard shortcuts, and closing it reveals the one beneath. The whole stack
+re-renders on every stack update (open, close, resize), which RE-MOUNTS the Livewire children of
+every open modal — `mount()` of a component that can be opened in a modal must be free of side
+effects (no writes, no dispatches, no counters).
 
 ## Fullscreen Mode
 
