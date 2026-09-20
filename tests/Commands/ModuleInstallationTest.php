@@ -233,6 +233,78 @@ describe('module setup hook', function (): void {
     });
 });
 
+describe('registration migration', function (): void {
+    beforeEach(function (): void {
+        // The fixture ships a stub here only; every other test runs without one.
+        $stubDir = base_path('tests-tmp/module/app-configs/stubs');
+        File::ensureDirectoryExists($stubDir);
+        File::put($stubDir . '/add_' . ZZ_MODULE_KEY . '_tenant_app.php.stub', <<<'STUB'
+            <?php
+
+            use Illuminate\Database\Migrations\Migration;
+            use Illuminate\Support\Facades\DB;
+
+            return new class () extends Migration {
+                public function up(): void
+                {
+                    if (! DB::table('tenant_apps')->where('name', '{{APP_NAME}}')->exists()) {
+                        DB::table('tenant_apps')->insert([
+                            'title' => '{{APP_TITLE}}',
+                            'name' => '{{APP_NAME}}',
+                            'icon' => '{{APP_ICON}}',
+                            'route' => '{{APP_ROUTE}}',
+                            'is_active' => true,
+                        ]);
+                    }
+                }
+            };
+            STUB);
+
+        $this->publishedMigrations = fn(): array => File::glob(database_path('migrations/*_add_' . ZZ_MODULE_KEY . '_tenant_app.php'));
+        File::delete(($this->publishedMigrations)());
+    });
+
+    afterEach(function (): void {
+        File::delete(($this->publishedMigrations)());
+    });
+
+    it('publishes the registering migration on update when the app row came from elsewhere', function (): void {
+        // Registered by a module migration or a seeder: install diverts to the
+        // update path, which used to leave the host without the migration — the
+        // next deployment then never registered the app.
+        $app = registerZzModuleApp();
+        $app->update(['title' => "Zz Owner's Title"]);
+
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true])
+            ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+            ->expectsOutputToContain('Migration published')
+            ->assertExitCode(0);
+
+        $published = ($this->publishedMigrations)();
+
+        expect($published)->toHaveCount(1);
+
+        // The file carries what the ROW says (an apostrophe must not break it) and
+        // registers exactly that app on a database that does not have it yet.
+        TenantApp::where('name', ZZ_MODULE_APP_KEY)->delete();
+        (require $published[0])->up();
+
+        expect(TenantApp::where('name', ZZ_MODULE_APP_KEY)->value('title'))->toBe("Zz Owner's Title");
+    });
+
+    it('never publishes a second registering migration', function (): void {
+        registerZzModuleApp();
+
+        foreach ([1, 2] as $run) {
+            $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true])
+                ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+                ->assertExitCode(0);
+        }
+
+        expect(($this->publishedMigrations)())->toHaveCount(1);
+    });
+});
+
 describe('tenant prompt', function (): void {
     it('offers tenant assignment when re-running install on an already-installed app', function (): void {
         registerZzModuleApp();

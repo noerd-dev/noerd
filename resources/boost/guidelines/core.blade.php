@@ -197,6 +197,7 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   `noerd:install` as a dependency, forwarding the shared `--force`/`--migrate`/`--build`/`--demo`
   options) — installing a module is a valid first command. Every other command (update, scaffold, demo) still aborts with the
   hint to run `noerd:install`; never re-implement that guard per module.
+- The tenant app is registered ONE way: the stub `app-configs/stubs/add_{module}_tenant_app.php.stub`, published into the host's `database/migrations/` by the install command (and by the update command when the app is registered but the host has none), so a deployment that only runs `php artisan migrate` registers the app. NEVER ship a second, registering migration in the module's own `database/migrations/` — it registers the app wherever the package is merely installed and makes the install command divert to its update path.
 - Register both commands in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`. The `noerd:make-module` scaffolder generates them and the registration from `src/Commands/stubs/module/`.
 - A module that cannot work without ANOTHER module (the CMS without media) declares it as
   `getRequiredModules(): ['MEDIA' => 'noerd:install-media']` on its install command. A required
