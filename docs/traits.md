@@ -163,47 +163,55 @@ public function tableFilters(): array
 
 ## PublishesAuditMigration (Artisan commands)
 
-`Noerd\Traits\PublishesAuditMigration` is for install/update commands of modules that use `owen-it/laravel-auditing`. `publishAuditingMigrationIfNeeded(): void` checks `database_path('migrations')` for an existing `*_create_audits_table.php`; when none exists it runs `vendor:publish` with `--provider=OwenIt\Auditing\AuditingServiceProvider --tag=migrations` and reports the result on the command output. Re-running is a no-op. The screen behind those records is the [Activity Log modal](audit-log.md).
+`Noerd\Traits\PublishesAuditMigration` is for install/update commands of modules that use `owen-it/laravel-auditing`. `publishAuditingMigrationIfNeeded(): void` checks `database_path('migrations')` for an existing `*_create_audits_table.php` and the database for an existing `audits` table (a project that squashed its migrations into a schema dump has the table but no file); when neither exists it runs `vendor:publish` with `--provider=OwenIt\Auditing\AuditingServiceProvider --tag=migrations` and reports the result on the command output. Re-running is a no-op. The screen behind those records is the [Activity Log modal](audit-log.md).
 
 ```php
 class MyModuleInstallCommand extends Command
 {
+    use HasModuleInstallation;
     use PublishesAuditMigration;
 
-    public function handle(): int
+    // Before the migration prompt, on install and update.
+    protected function publishModuleExtras(bool $update): void
     {
         $this->publishAuditingMigrationIfNeeded();
-        // ...
-
-        return 0;
     }
 }
 ```
 
-## HasModuleInstallation / RequiresNoerdInstallation (install commands)
+## InstallsNoerdModule / HasModuleInstallation (install commands)
 
-The traits behind every `noerd:install-{module}` command — covered in full in [creating-modules.md](creating-modules.md). A command implements the abstract getters (`getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()`, `getSourceDir()`) and calls the trait helpers:
+The traits behind every `noerd:install-{module}` / `noerd:update-{module}` command — covered in
+full in [creating-modules.md](creating-modules.md). `InstallsNoerdModule` is the contract of every
+module (a support module uses it directly and implements only `getModuleName()`);
+`HasModuleInstallation` builds on it for a tenant app and adds the abstract getters
+`getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()`, `getSourceDir()`.
 
 | Method | Description |
 |--------|-------------|
-| `runModuleInstallation(): int` | The whole flow: verifies noerd is installed, copies the app-config YAMLs, registers the tenant app, runs migrations; re-running switches to the update path |
-| `runModuleUpdate(): int` | The idempotent update path used by `noerd:update-{module}`: re-publishes the app-config YAMLs (creating a missing `app-configs/{module}/` folder) and refreshes published skills; never prompts for tenant assignment |
-| `publishSkills(bool $refreshCopies = false): void` | Links or copies the module's `skills/*` folders into the project's `.claude/skills/` (see [AI Agents](ai-agents.md)) |
-| `publishMigration(): ?string` | Publishes the module's app-registration migration stub into the project |
+| `runModuleInstallation(): int` | Tenant app: verifies noerd is installed, installs `getRequiredModules()`, copies the app-config YAMLs, registers the tenant app, asks for the tenants, offers the migration, runs `ensureModuleSetup()`, offers the build; re-running switches to the update path |
+| `runModuleUpdate(): int` | Tenant app: re-publishes the app-config YAMLs (creating a missing `app-configs/{module}/` folder) and the module resources, runs `ensureModuleSetup()`; never migrates, never asks about tenants |
+| `runSupportModuleInstallation(): int` / `runSupportModuleUpdate(): int` | The same two flows for a module without a tenant app |
+| `getConfigFiles()`, `getAppConfigsDir()`, `getAdditionalSubdirectories()`, `getRequiredModules()`, `publishModuleExtras()`, `ensureModuleSetup()` | What a module declares instead of coding it — see [creating-modules.md](creating-modules.md#install-and-update-commands-required) |
+| `askForMigration(): void` | Offers `php artisan migrate`; skipped for a dependency install and in a non-interactive run without `--migrate` |
 | `ensureQuickMenuButton(array $button, array $legacyComponents = []): void` | Adds a quick-menu button when missing |
 | `ensureDashboardWidget(array $widget, array $legacyComponents = []): void` | Adds a dashboard widget when missing |
 | `ensureSetupNavigation(string $blockTitle, array $entry): void` | Adds an entry to the setup navigation when missing |
 
-`RequiresNoerdInstallation` contributes `ensureNoerdInstalled(?bool $autoInstall = null): bool` and
-`assignAppToTenants(string $appName): void`. On a project where `noerd:install` has not run yet, an
-INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself — forwarding the options both
-commands share (`--force`, `--migrate`, `--build`, `--demo`) — and continues once the base package is
-in place; it only aborts with the manual hint when that installation did not complete. Unless the
-module command was given `--demo`, that run is passed `--no-demo`: someone installing a module is
-setting up that module, so the base installation never stops to ask about the demo app. Every other
-command (update, scaffold, demo) keeps aborting with the hint. Pass `$autoInstall` explicitly to
-override the decision, which `shouldAutoInstallNoerd()` otherwise derives from the command name.
+The building blocks live in `Noerd\Commands\Concerns` (`PublishesModuleConfig`, `PublishesSkills`,
+`WritesHostAppConfigs`, `PublishesConfigDirectory`, `RegistersBoostPackage`, `RunsNpmBuild`) and can
+be used on their own by a command that is not a module installer.
 
+`RequiresNoerdInstallation` (part of `InstallsNoerdModule`, also usable alone) contributes
+`ensureNoerdInstalled(?bool $autoInstall = null): bool`. On a project where `noerd:install` has not
+run yet, an INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself — forwarding the
+options both commands share (`--force`, `--migrate`, `--build`, `--demo`) — and continues once the
+base package is in place; it only aborts with the manual hint when that installation did not
+complete. That base installation runs as a dependency: it skips the demo app question (unless the
+module command was given `--demo`), hands its npm work to the module command and prints no closing
+callout. Every other command (update, scaffold, demo) keeps aborting with the hint. Pass
+`$autoInstall` explicitly to override the decision, which `shouldAutoInstallNoerd()` otherwise
+derives from the command name.
 
 ## GuardedByObjectPermission (Eloquent models)
 

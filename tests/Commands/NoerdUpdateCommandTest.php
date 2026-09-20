@@ -16,8 +16,8 @@ uses(TestCase::class);
  |
  | The command runs against a THROWAWAY base path, so neither the skeleton's
  | published app-configs nor its config/noerd.php are touched. Only the two
- | frontend steps are neutralised — they would scaffold a package.json and
- | shell out to npm.
+ | frontend steps and the Livewire layout patch are neutralised — they would
+ | scaffold a package.json, shell out to npm and publish config/livewire.php.
  */
 class ZzNoerdUpdateFixtureCommand extends NoerdUpdateCommand
 {
@@ -27,6 +27,8 @@ class ZzNoerdUpdateFixtureCommand extends NoerdUpdateCommand
                             {--build : Run npm build after update}';
 
     protected function setupFrontendAssets(): void {}
+
+    protected function updateLivewireConfig(): void {}
 
     protected function publishNoerdAssets(): void {}
 
@@ -111,7 +113,7 @@ it('fails when the target directory cannot be created', function (): void {
 
     try {
         $this->artisan('test:noerd-update', ['--force' => true, '--no-interaction' => true])
-            ->expectsOutputToContain('Failed to create target directory')
+            ->expectsOutputToContain('Failed to create directory')
             ->assertExitCode(1);
     } finally {
         restore_error_handler();

@@ -665,8 +665,8 @@ trait GeneratesResourceFiles
     /**
      * Append the entry to the last block of every navigation copy. The file is
      * parsed and dumped again rather than appended as text: an installed copy is
-     * written by the install command with `hidden:` as its LAST key, so text
-     * appended after it would be read as part of that value.
+     * re-dumped by the install command, so its key order is not the template's
+     * and text appended to the end may land behind the wrong key.
      */
     protected function addNavigation(bool $useSingularRoute = false): void
     {

@@ -68,10 +68,10 @@ A module created with `php artisan noerd:make-module` already contains:
 - `AGENTS.md` and a `CLAUDE.md` that imports it (`@AGENTS.md`).
 
 A module may additionally ship Claude Code skills in a top-level `skills/{skill-name}/` folder:
-`noerd:install-{module}` / `noerd:update-{module}` (`HasModuleInstallation::publishSkills()`) link
+`noerd:install-{module}` / `noerd:update-{module}` (`PublishesSkills::publishSkills()`) link
 or copy every such folder into the project's `.claude/skills/` independently of Boost.
 
-The module's install and update commands (`HasModuleInstallation`) add the Composer package name
+The module's install and update commands (`InstallsNoerdModule`, which `HasModuleInstallation` builds on) add the Composer package name
 to the `packages` array of the host's `boost.json` and run `php artisan boost:update` — as soon as
 the module ships a guideline or Boost skills, nothing has to be configured by hand (Boost ≥ 2).
 Boost skills are optional: create `resources/boost/skills/{skill-name}/SKILL.md` with a YAML front

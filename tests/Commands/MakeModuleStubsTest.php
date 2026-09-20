@@ -231,6 +231,40 @@ it('adds the module to the main composer.json with plain json functions', functi
     File::deleteDirectory($tempBasePath);
 });
 
+it('prepares the host for a local module without touching what the host already has', function (): void {
+    $tempBasePath = storage_path('framework/testing/zz-make-module-host');
+    File::deleteDirectory($tempBasePath);
+    File::ensureDirectoryExists($tempBasePath);
+    // An empty object must survive the rewrite as `{}` — decoded into arrays it
+    // would come back as `[]`, which Composer rejects for "allow-plugins".
+    File::put($tempBasePath . '/composer.json', "{\n    \"name\": \"zz/host\",\n    \"config\": {\n        \"allow-plugins\": {}\n    }\n}\n");
+    File::put($tempBasePath . '/phpunit.xml', "<phpunit>\n    <testsuites>\n        <testsuite name=\"Feature\"><directory>tests/Feature</directory></testsuite>\n    </testsuites>\n</phpunit>\n");
+
+    $originalBasePath = $this->app->basePath();
+    $this->app->setBasePath($tempBasePath);
+
+    try {
+        $method = new ReflectionMethod($this->command, 'prepareModuleWorkspace');
+        $method->invoke($this->command);
+        // Idempotent: a second module must not add a second repository or suite.
+        $method->invoke($this->command);
+    } finally {
+        $this->app->setBasePath($originalBasePath);
+    }
+
+    $composer = File::get($tempBasePath . '/composer.json');
+    $phpunit = File::get($tempBasePath . '/phpunit.xml');
+
+    expect(json_decode($composer, true)['repositories'])->toBe([
+        ['type' => 'path', 'url' => 'app-modules/*', 'options' => ['symlink' => true]],
+    ])
+        ->and($composer)->toContain('"allow-plugins": {}')
+        ->and(mb_substr_count($phpunit, './app-modules/*/tests'))->toBe(1)
+        ->and(is_dir($tempBasePath . '/app-modules'))->toBeTrue();
+
+    File::deleteDirectory($tempBasePath);
+});
+
 it('leaves no placeholder in a rendered stub', function (string $stub): void {
     $content = ($this->renderStub)($stub);
 

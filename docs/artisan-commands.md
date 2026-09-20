@@ -53,8 +53,8 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 ## noerd:install
 
 Installs the Noerd Framework and performs basic configuration: publishes the setup app configs,
-`config/noerd.php` and the frontend files, patches `config/livewire.php` and `phpunit.xml`, publishes
-the public assets, runs the migrations, creates the default tenant and admin user and optionally
+`config/noerd.php` and the frontend files, patches `config/livewire.php`, publishes
+the public assets, runs the migrations, creates the default tenant and the first admin user and optionally
 installs the demo app (see [Installation](installation.md)).
 
 ```bash
@@ -69,7 +69,10 @@ php artisan noerd:install --force --migrate --build --demo --no-interaction
 | `--migrate` | Run the migrations without asking — required to migrate in non-interactive runs; forwarded to `noerd:demo` as `--migrate --seed` |
 | `--build` | Run `npm run build` without asking — required to build in non-interactive runs |
 | `--demo` | Install the demo app without asking — required to install it in non-interactive runs |
-| `--no-demo` | Never install the demo app and do not ask for it; wins over `--demo`. A module install command passes it when it installs the base package on the fly |
+
+Run by a module install command on a fresh project (`noerd:install-cms`), the base installation
+skips the demo app question, hands `npm install` / `npm run build` to that command and prints no
+closing callout — see [Creating Modules](creating-modules.md#npm-runs-once-at-the-end).
 
 The public assets (fonts + built Vite bundle) can also be republished on their own with
 `php artisan vendor:publish --tag=noerd-assets`.
@@ -285,7 +288,11 @@ php artisan noerd:make-module inventory --title="Inventory" --icon=cube
 | `--icon=` | The heroicon of the tenant app, as a bare name (`cube`) or in the stored form `heroicon:outline:cube`; the wizard offers a searchable Heroicon picker. Required in non-interactive runs |
 | `--no-hints` | Do not print the next steps (`noerd:make-app` runs them itself) |
 
-The generated `noerd:install-{module}` command accepts `--scaffold` besides `--force`: the silent
+With the first local module the command also prepares the host: it creates `app-modules/`, adds
+the `app-modules/*` path repository to `composer.json` and the `app-modules` test suite to
+`phpunit.xml` (both idempotent) — `noerd:install` leaves a project without local modules alone.
+
+The generated `noerd:install-{module}` command accepts `--migrate`, `--build` and `--scaffold` besides `--force`: the silent
 run `noerd:make-app` uses right after the scaffold — configs are published, the app registered,
 and the only question is the tenant assignment (no migration or `npm run build` prompt).
 

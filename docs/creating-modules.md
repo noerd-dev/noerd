@@ -103,65 +103,105 @@ uses `BelongsToTenant`) and a nullable `custom_attributes` JSON column cast to `
 
 ## Install and update commands (required)
 
-Every module that is a tenant app (has `app-configs/{module}/` with a `navigation.yml`) ships two
-Artisan commands; `noerd:make-module` generates both from its stubs:
+Every module ships two Artisan commands; `noerd:make-module` generates both from its stubs. What a
+module publishes is DECLARED, never coded — no module carries its own `publishConfig()`, copy loop,
+migration prompt or `composer require` call.
+
+**A tenant app** (has `app-configs/{module}/` with a `navigation.yml`):
 
 - **`noerd:install-{module}`** — extends `Illuminate\Console\Command`, uses the
-  `HasModuleInstallation` and `RequiresNoerdInstallation` traits and implements `getModuleName()`,
-  `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`.
-  Its `handle()` calls `$this->runModuleInstallation()`, which copies the YAML configs into
-  `app-configs/{module}/`, registers the tenant app and runs the migrations. With `--scaffold`
-  (declared by the generated command) it runs silently right after `noerd:make-app` — configs,
-  registration and the tenant assignment question only, no migration or build prompt. On a project
-  where the base package is not installed yet, the command runs `noerd:install` first and then
-  continues — installing a module is a valid first command in a fresh project.
-- **`noerd:update-{module}`** — a slim subclass of the install command whose `handle()` calls
-  `$this->runModuleUpdate()` (never `runModuleInstallation()`, which prompts for the tenant
-  assignment) plus the module's idempotent post-install steps. `noerd:update-all` discovers every
-  command named `noerd:update-{module}` — a module without one silently drops out of the
-  project-wide update.
+  `HasModuleInstallation` trait and implements `getModuleName()`, `getModuleKey()`,
+  `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` is
+  `return $this->runModuleInstallation();` — that copies the YAML configs into
+  `app-configs/{module}/`, registers the tenant app, asks which tenants get it, offers
+  `php artisan migrate`, runs the module's setup steps and offers the frontend build. With
+  `--scaffold` (declared by the generated command) it runs silently right after `noerd:make-app` —
+  configs, registration and the tenant assignment question only. On a project where the base
+  package is not installed yet, the command runs `noerd:install` first and then continues —
+  installing a module is a valid first command in a fresh project.
+- **`noerd:update-{module}`** — a slim subclass of the install command whose `handle()` is
+  `return $this->runModuleUpdate();`. It republishes, never migrates and never asks about tenants.
+  `noerd:update-all` discovers every command named `noerd:update-{module}` — a module without one
+  silently drops out of the project-wide update.
 
-Register both in the module's ServiceProvider inside
+**A support module** (no tenant app, no navigation — payment, notifications, …) uses the
+`InstallsNoerdModule` trait, implements only `getModuleName()` and calls
+`runSupportModuleInstallation()` / `runSupportModuleUpdate()`. `HasModuleInstallation` builds on
+the same trait, so everything below applies to both kinds.
+
+| Declare | Effect |
+|---------|--------|
+| `getConfigFiles(): array` — `['inventory.php']`, or `['x.php' => 'stubs/x.php.stub']` | Published into the host's `config/`. Install: an existing file is kept unless the user agrees or `--force`. Update: an existing file is **never** overwritten (not even under `--force` — `noerd:update-all --force` must not reset a host's settings); missing top-level keys are reported |
+| a `{module}/app-configs/setup/` folder (collections, lists, details) | Published into `app-configs/setup/`; existing files are kept unless `--force`. The navigation is never copied — use `ensureSetupNavigation()` |
+| `getAppConfigsDir(): ?string` (support modules) | YAML of screens that hang in other apps' navigation, published into `app-configs/{folder}/` |
+| `getAdditionalSubdirectories(): array` | Extra app-config folders beyond `lists`, `details`, `pages`, `settings` (the CMS ships `forms`) |
+| `getRequiredModules(): array` | Modules installed first and assigned along — see below |
+| `publishModuleExtras(bool $update): void` | Files beyond the declared ones — the auditing migration (`PublishesAuditMigration`), a patch to a host config file. Runs with the publishing steps, **before** the migration prompt, on install and update; idempotent, asks nothing |
+| `ensureModuleSetup(): void` | The module's own steps: `ensureSetupNavigation()`, `ensureQuickMenuButton()`, `ensureDashboardWidget()`, seeds. Runs at the end of the installation (after the migration prompt) **and on every update** — it must be idempotent, ask nothing, and guard tables the user may not have migrated yet |
+
+The Claude skills of a top-level `skills/` folder and the Boost registration (`boost.json`) are
+handled by both flows without any declaration.
+
+```php
+class InventoryInstallCommand extends Command
+{
+    use HasModuleInstallation;
+
+    protected $signature = 'noerd:install-inventory {--force} {--migrate} {--build} {--scaffold}';
+
+    public function handle(): int
+    {
+        return $this->runModuleInstallation();
+    }
+
+    protected function getConfigFiles(): array
+    {
+        return ['inventory.php'];
+    }
+
+    protected function ensureModuleSetup(): void
+    {
+        $this->ensureQuickMenuButton(['apps' => ['INVENTORY'], 'component' => 'inventory::quick-menu.low-stock']);
+    }
+
+    // getModuleName(), getModuleKey(), getDefaultAppTitle(), getAppIcon(), getAppRoute(), getSourceDir()
+}
+```
+
+Nothing migrates or builds implicitly: in a non-interactive run (CI, deploy) the migration and the
+build are skipped unless the command declares and receives `--migrate` / `--build`.
+
+Register both commands in the module's ServiceProvider inside
 `if ($this->app->runningInConsole()) { $this->commands([...]); }`.
-See [Reusable Traits](traits.md) for the two traits and [Artisan Commands](artisan-commands.md)
+See [Reusable Traits](traits.md) for the traits and [Artisan Commands](artisan-commands.md)
 for `noerd:update-all`.
 
-### Modules that require another app
+### Modules that require another module
 
 A module that cannot work without another tenant app — the CMS needs `MEDIA` for its image
-pickers — declares it in the install command:
+pickers — declares it in the install command, as tenant-app key => install command:
 
 ```php
 /**
- * @return array<string>
+ * @return array<string, string>
  */
-protected function getRequiredAppKeys(): array
+protected function getRequiredModules(): array
 {
-    return ['MEDIA'];
+    return ['MEDIA' => 'noerd:install-media'];
 }
 ```
+
+`runModuleInstallation()` installs every required module whose app is not registered yet, **as a
+dependency** (`Noerd\Support\ModuleInstallContext`): the nested command publishes and registers
+with its defaults but asks NOTHING — no app title, no tenants, no migration, no build, no closing
+callout. The user started one installation and answers each question once. `--force` is forwarded.
 
 The required app is then assigned to exactly the tenants the module's own app was assigned to, in
 the same prompt. Assignment is **additive only**: deselecting a tenant removes the module's app but
 never the required one, which another installed module may equally depend on. A required app whose
 package is not installed is reported as a warning — it is a missing optional dependency, not a
-reason to fail the installation.
-
-When the module installs that dependency itself, it runs the nested install command through
-`installDependencyModule()` **before** `runModuleInstallation()`, so the dependency's app exists by
-the time the tenant prompt runs:
-
-```php
-public function handle(): int
-{
-    $this->installDependencyModule('noerd:install-media');
-
-    return $this->runModuleInstallation();
-}
-```
-
-A command started that way skips its own tenant question (`Noerd\Support\ModuleInstallContext`) —
-the user started one installation and answers one question about tenants.
+reason to fail the installation. (`getRequiredAppKeys()` — by default the keys of
+`getRequiredModules()` — may name an app that has no install command of its own.)
 
 ### npm runs once, at the end
 
@@ -171,9 +211,9 @@ handed to the module command and run at the end of its installation, so they see
 and whatever it pulled in (the website boilerplate behind the CMS) instead of compiling a project
 they have not been added to yet. The build question is asked once, by the command the user started.
 
-A module command needs no code for it — `askForNpmBuild()` picks the handed-over work up. If the
-installation dies first, it says which command to run by hand.
-
+A module command needs no code for it — a tenant app's `askForNpmBuild()` and a support module's
+`finishDeferredNpm()` pick the handed-over work up. If the installation dies first, it says which
+command to run by hand.
 
 ### The closing callout
 

@@ -46,14 +46,14 @@ For example: `app-configs/inventory/navigation.yml` (the module ships its templa
 | `title` | Display name of the app (translation key) |
 | `name` | Unique identifier for the app |
 | `route` | The app's main route |
-| `hidden` | Hide the top-level menu item |
 | `block_menus` | Groups of navigation items (see below) |
 | `sub_menu` | Optional flat secondary menu |
 
-`title`, `name`, `route` and `hidden` are app metadata: `noerd:install-{module}` writes them into the
-installed copy from the app title and the "hidden app" answer given during installation plus the app
-key (`HasModuleInstallation::installAsNewApp()`), so a module template only needs sensible defaults
-there.
+`title`, `name` and `route` are app metadata: `noerd:install-{module}` writes them into the
+installed copy from the app title given during installation plus the app key
+(`HasModuleInstallation::installAsNewApp()`), so a module template only needs sensible defaults
+there. Whether an app shows up in the app bar is not a navigation key — it is the tenant's
+`tenant_app.is_hidden` flag (Setup → Apps).
 
 ## Block Properties (`block_menus[]`)
 
@@ -120,7 +120,6 @@ breaking the sidebar.
 ```yaml
 - title: Inventory
   name: inventory
-  hidden: false
   route: inventory
   block_menus:
     - title: Stock

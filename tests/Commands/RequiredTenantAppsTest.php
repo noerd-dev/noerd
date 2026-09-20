@@ -22,7 +22,7 @@ uses(RefreshDatabase::class);
 
 /**
  * A module that cannot work without another app (the CMS without MEDIA) names it
- * in getRequiredAppKeys(). The required app is then assigned to exactly the
+ * in getRequiredModules() (or, for an app without an install command, getRequiredAppKeys()). The required app is then assigned to exactly the
  * tenants the module's own app was assigned to — in the SAME prompt, and never
  * removed again, because another installed module may equally depend on it.
  *
@@ -122,16 +122,36 @@ class ZzRequiredDepInstallCommand extends ZzRequiredFixtureCommand
     }
 }
 
-/** The command that installs the dependency, exactly the way the CMS installs media. */
-class ZzRequiredParentInstallCommand extends ZzRequiredHostInstallCommand
+/** A module that DECLARES its dependency, exactly the way the CMS declares media. */
+class ZzRequiredParentInstallCommand extends ZzRequiredFixtureCommand
 {
     protected $signature = 'noerd:install-zz-required-parent {--force : Overwrite existing files without asking}';
 
+    protected $description = 'Test fixture install command declaring a required module';
+
     public function handle(): int
     {
-        $this->installDependencyModule('noerd:install-zz-required-dep', ['--force' => true]);
-
         return $this->runModuleInstallation();
+    }
+
+    protected function getModuleName(): string
+    {
+        return 'Zz Required Parent';
+    }
+
+    protected function getModuleKey(): string
+    {
+        return 'zz-required-parent';
+    }
+
+    protected function getDefaultAppTitle(): string
+    {
+        return 'Zz Required Parent';
+    }
+
+    protected function getRequiredModules(): array
+    {
+        return ['ZZ-REQUIRED-DEP' => 'noerd:install-zz-required-dep'];
     }
 }
 
@@ -168,7 +188,6 @@ function zzRegisterRequiredApp(): TenantApp
 function zzHostInstallCommand(object $test, array $tenantIds): PendingCommand
 {
     return $test->artisan('noerd:install-zz-required-host', ['--force' => true])
-        ->expectsConfirmation('Should Zz Required Host be installed as a hidden app (not shown in main navigation)?', 'no')
         ->expectsQuestion('App title', 'Zz Required Host')
         ->expectsConfirmation('Would you like to assign the app to tenants now?', 'yes')
         ->expectsQuestion("Which tenants should 'Zz Required Host' be assigned to?", $tenantIds)
@@ -244,7 +263,6 @@ describe('required apps', function (): void {
         zzRegisterRequiredApp();
 
         $this->artisan('noerd:install-zz-required-host', ['--force' => true])
-            ->expectsConfirmation('Should Zz Required Host be installed as a hidden app (not shown in main navigation)?', 'no')
             ->expectsQuestion('App title', 'Zz Required Host')
             ->expectsConfirmation('Would you like to assign the app to tenants now?', 'yes')
             ->expectsQuestion("Which tenants should 'Zz Required Host' be assigned to?", [$this->tenantA->id])
@@ -262,7 +280,6 @@ describe('required apps', function (): void {
 
     it('warns instead of failing when the required app is not installed', function (): void {
         $this->artisan('noerd:install-zz-required-host', ['--force' => true])
-            ->expectsConfirmation('Should Zz Required Host be installed as a hidden app (not shown in main navigation)?', 'no')
             ->expectsQuestion('App title', 'Zz Required Host')
             ->expectsConfirmation('Would you like to assign the app to tenants now?', 'yes')
             ->expectsQuestion("Which tenants should 'Zz Required Host' be assigned to?", [$this->tenantA->id])
@@ -276,24 +293,53 @@ describe('required apps', function (): void {
 });
 
 describe('dependency installs', function (): void {
-    it('does not ask a dependency module about tenants', function (): void {
+    it('asks a dependency module nothing at all', function (): void {
+        // No expectation is registered: any prompt would fail the run.
         ModuleInstallContext::asDependency(function (): void {
             $this->artisan('noerd:install-zz-required-dep', ['--force' => true])
-                ->expectsConfirmation('Should Zz Required Dep be installed as a hidden app (not shown in main navigation)?', 'no')
-                ->expectsQuestion('App title', 'Zz Required Dep')
                 ->expectsOutputToContain("Tenant assignment for 'Zz Required Dep' follows the app that requires it.")
-                ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
-                ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no')
                 ->assertExitCode(0);
         });
 
-        expect(TenantApp::where('name', 'ZZ-REQUIRED-DEP')->first()->tenants()->count())->toBe(0);
+        $app = TenantApp::where('name', 'ZZ-REQUIRED-DEP')->first();
+
+        expect($app->title)->toBe('Zz Required Dep')
+            ->and($app->tenants()->count())->toBe(0);
     });
 
     it('asks about tenants again once the dependency install finished', function (): void {
         ModuleInstallContext::asDependency(fn(): null => null);
 
         expect(ModuleInstallContext::isDependencyInstall())->toBeFalse();
+    });
+
+    it('installs a declared required module first and assigns it in the same prompt', function (): void {
+        $this->artisan('noerd:install-zz-required-parent', ['--force' => true])
+            ->expectsOutputToContain('Zz Required Parent requires ZZ-REQUIRED-DEP, running noerd:install-zz-required-dep')
+            ->expectsQuestion('App title', 'Zz Required Parent')
+            ->expectsConfirmation('Would you like to assign the app to tenants now?', 'yes')
+            ->expectsQuestion("Which tenants should 'Zz Required Parent' be assigned to?", [$this->tenantA->id])
+            ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
+            ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no')
+            ->assertExitCode(0);
+
+        $required = TenantApp::where('name', 'ZZ-REQUIRED-DEP')->first();
+
+        expect($required)->not->toBeNull()
+            ->and($required->tenants()->pluck('tenants.id')->all())->toBe([$this->tenantA->id])
+            ->and(is_dir(base_path('app-configs/zz-required-dep')))->toBeTrue();
+    });
+
+    it('does not reinstall a required module that is registered already', function (): void {
+        zzRegisterRequiredApp();
+
+        $this->artisan('noerd:install-zz-required-parent', ['--force' => true])
+            ->doesntExpectOutputToContain('running noerd:install-zz-required-dep')
+            ->expectsQuestion('App title', 'Zz Required Parent')
+            ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
+            ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
+            ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no')
+            ->assertExitCode(0);
     });
 });
 
@@ -319,10 +365,6 @@ describe('closing callout', function (): void {
     it('prints no callout for a module installed as a dependency', function (): void {
         ModuleInstallContext::asDependency(function (): void {
             $this->artisan('noerd:install-zz-required-dep', ['--force' => true])
-                ->expectsConfirmation('Should Zz Required Dep be installed as a hidden app (not shown in main navigation)?', 'no')
-                ->expectsQuestion('App title', 'Zz Required Dep')
-                ->expectsConfirmation('Would you like to run php artisan migrate now?', 'no')
-                ->expectsConfirmation('Would you like to run "npm run build" to compile frontend assets?', 'no')
                 ->doesntExpectOutputToContain('Zz Required Dep is ready')
                 ->assertExitCode(0);
         });

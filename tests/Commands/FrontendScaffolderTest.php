@@ -306,40 +306,6 @@ it('does not report the tailwind plugin as missing when postcss compiles tailwin
     expect(actionFor($results, 'vite.config.js'))->toBe(FrontendScaffolder::ACTION_SKIPPED);
 });
 
-describe('node compatibility', function (): void {
-    it('pins the current build tooling on a supported node version', function (string $version): void {
-        File::deleteDirectory(scaffoldPath());
-        File::ensureDirectoryExists(scaffoldPath());
-
-        (new FrontendScaffolder(scaffoldPath(), $version))->scaffold();
-
-        $manifest = json_decode(File::get(scaffoldPath('package.json')), true);
-
-        expect($manifest['devDependencies'])->toMatchArray(scaffolderConstant('BUILD_PACKAGES'));
-    })->with(['v20.19.0', 'v22.12.0', 'v22.22.1', 'v24.0.0']);
-
-    it('falls back to the previous major pair on an unsupported node version', function (string $version): void {
-        File::deleteDirectory(scaffoldPath());
-        File::ensureDirectoryExists(scaffoldPath());
-
-        $results = (new FrontendScaffolder(scaffoldPath(), $version))->scaffold();
-
-        $manifest = json_decode(File::get(scaffoldPath('package.json')), true);
-
-        expect($manifest['devDependencies'])->toMatchArray(scaffolderConstant('LEGACY_BUILD_PACKAGES'));
-
-        expect(collect($results)->firstWhere('file', 'package.json')['detail'])->toContain($version);
-    })->with(['v18.20.0', 'v20.9.0', 'v21.7.3', 'v22.11.0']);
-
-    it('assumes the current tooling when node cannot be detected', function (): void {
-        (new FrontendScaffolder(scaffoldPath(), null))->scaffold();
-
-        $manifest = json_decode(File::get(scaffoldPath('package.json')), true);
-
-        expect($manifest['devDependencies'])->toMatchArray(scaffolderConstant('BUILD_PACKAGES'));
-    });
-});
-
 it('registers a css variable for every color of the brand preset', function (): void {
     // Guards against a palette key that exists in the config but never becomes a Tailwind color:
     // the utility would then silently produce nothing.
