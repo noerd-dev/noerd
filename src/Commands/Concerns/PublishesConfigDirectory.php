@@ -22,9 +22,11 @@ trait PublishesConfigDirectory
     /**
      * @param  string|null  $displayBase  base path stripped from printed paths;
      *                                    defaults to the source directory
+     * @param  bool  $quiet  print no per-file line — the caller reports the counts
+     *                       instead. Prompts are never suppressed.
      * @return array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int}
      */
-    protected function publishConfigDirectory(string $sourceDir, string $targetDir, ?string $displayBase = null): array
+    protected function publishConfigDirectory(string $sourceDir, string $targetDir, ?string $displayBase = null, bool $quiet = false): array
     {
         $results = [
             'created_dirs' => 0,
@@ -45,7 +47,9 @@ trait PublishesConfigDirectory
             if (! File::makeDirectory($targetDir, 0755, true)) {
                 throw new Exception("Failed to create directory: {$targetDir}");
             }
-            $this->line('<info>Created directory:</info> ' . $display($targetDir));
+            if (! $quiet) {
+                $this->line('<info>Created directory:</info> ' . $display($targetDir));
+            }
             $results['created_dirs']++;
         }
 
@@ -65,14 +69,16 @@ trait PublishesConfigDirectory
                     if (! File::makeDirectory($targetPath, 0755, true)) {
                         throw new Exception("Failed to create directory: {$targetPath}");
                     }
-                    $this->line("<info>Created directory:</info> {$displayPath}");
+                    if (! $quiet) {
+                        $this->line("<info>Created directory:</info> {$displayPath}");
+                    }
                     $results['created_dirs']++;
                 }
 
                 continue;
             }
 
-            $results[$this->publishFile($sourcePath, $targetPath, $displayPath)]++;
+            $results[$this->publishFile($sourcePath, $targetPath, $displayPath, $quiet)]++;
         }
 
         return $results;
@@ -83,9 +89,12 @@ trait PublishesConfigDirectory
      * (or is overwritten under --force). Returns the counter the outcome belongs
      * to, so callers keep their summary without repeating the decision tree.
      *
+     * $quiet drops the per-file line only — the prompt still renders, or an
+     * interactive run would wait for an answer to a question nobody sees.
+     *
      * @return 'copied_files'|'skipped_files'|'overwritten_files'
      */
-    protected function publishFile(string $sourcePath, string $targetPath, string $displayPath): string
+    protected function publishFile(string $sourcePath, string $targetPath, string $displayPath, bool $quiet = false): string
     {
         $outcome = 'copied_files';
 
@@ -98,7 +107,9 @@ trait PublishesConfigDirectory
                 );
 
                 if ($choice === 'skip') {
-                    $this->line("<comment>Skipped:</comment> {$displayPath}");
+                    if (! $quiet) {
+                        $this->line("<comment>Skipped:</comment> {$displayPath}");
+                    }
 
                     return 'skipped_files';
                 }
@@ -109,9 +120,11 @@ trait PublishesConfigDirectory
                 }
             }
 
-            $this->line("<comment>Overwriting:</comment> {$displayPath}");
+            if (! $quiet) {
+                $this->line("<comment>Overwriting:</comment> {$displayPath}");
+            }
             $outcome = 'overwritten_files';
-        } else {
+        } elseif (! $quiet) {
             $this->line("<info>Copying:</info> {$displayPath}");
         }
 
