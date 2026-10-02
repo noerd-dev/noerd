@@ -124,3 +124,17 @@ it('resolves the target of the apps page from the tenant record too', function (
         ->call('openApp', 'ZZ_NOT_MY_APP')
         ->assertForbidden();
 });
+
+it('shows the configured application version at the bottom of the app bar', function (): void {
+    $this->actingAs(NoerdUser::factory()->adminUser()->create());
+    config(['noerd.app_version' => 'v9.8.7-zz']);
+
+    expect(Livewire::test('noerd::layout.app-bar')->html())->toContain('v9.8.7-zz');
+});
+
+it('renders no version footer without a configured version', function (): void {
+    $this->actingAs(NoerdUser::factory()->adminUser()->create());
+    config(['noerd.app_version' => null]);
+
+    expect(Livewire::test('noerd::layout.app-bar')->html())->not->toContain('text-[10px] text-gray-500');
+});

@@ -72,6 +72,11 @@ return [
         'navigation_width' => env('NOERD_SIDEBAR_NAVIGATION_WIDTH', '280px'),
     ],
 
+    // Release of the host application (e.g. a git tag like "v1.7.4"), shown at
+    // the bottom of the app bar. Empty = nothing is shown. The host decides
+    // where the value comes from; noerd only displays it.
+    'app_version' => env('NOERD_APP_VERSION'),
+
     'generators' => [
         'search_modules' => true,
         'modules_path' => 'app-modules',

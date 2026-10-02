@@ -133,6 +133,9 @@ itself. The brand palette is CSS-first, no `tailwind.config.js` is needed (see [
   [Currency, Numbers & Dates](formatting.md)
 - `theme.default` / `theme.enforced` — system-wide form theme (see [Themes](themes.md))
 - `brand.active` — color palette (see [Brand](brand.md))
+- `app_version` (`NOERD_APP_VERSION`) — the release of your application (e.g. `v1.2.3`), shown
+  at the bottom of the app bar; empty hides it. Resolve it however your deployment works — an
+  environment variable, or `git describe --tags` evaluated once by `config:cache`
 
 If [Laravel Boost](ai-agents.md) is installed, `noerd:install` and `noerd:update` also register
 `noerd/noerd` in `boost.json` and render the framework rules into your agent files.
