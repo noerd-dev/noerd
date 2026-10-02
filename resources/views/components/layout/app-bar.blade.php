@@ -86,6 +86,13 @@ new class extends Component {
                     </button>
                 @endforeach
             </div>
+
+            @php($appVersion = (string) config('noerd.app_version'))
+            @if (filled($appVersion))
+                <div class="shrink-0 truncate px-1 py-2 text-center text-[10px] text-gray-500" title="{{ $appVersion }}">
+                    {{ $appVersion }}
+                </div>
+            @endif
         </div>
     @endif
 </div>
