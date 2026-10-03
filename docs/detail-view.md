@@ -163,6 +163,21 @@ Every entry of `fields` needs `name` (the property path, e.g. `detailData.name`)
 [Field Types → Common Options](field-types.md#common-options); the types themselves in
 [Field Types](field-types.md).
 
+## Computed Fields
+
+A field with a `method:` key shows the result of a model method instead of an input:
+
+```yaml
+- name: detailData.last_order
+  label: Last order
+  type: date
+  method: lastOrder
+```
+
+The value lives in `$computedValues`, not in `$detailData`, so it is never saved. It is shown as
+text in the `display` theme and computed before every render. A new record shows it empty. Only
+methods marked with `#[ComputedValue]` are called — see [Computed Columns](computed-columns.md).
+
 ## Highlighted Fields
 
 A form can mark individual fields as carrying a value the reader did not enter themselves — a

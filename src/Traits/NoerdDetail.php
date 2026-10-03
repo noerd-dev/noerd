@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Support\ComputedFields;
 use Noerd\Support\LayoutDefaults;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\RelationFormSync;
@@ -28,6 +30,13 @@ trait NoerdDetail
     }
 
     public array $relationTitles = [];
+
+    /**
+     * Values of the layout's computed fields (e.g. `method:`), keyed by field key
+     * (`detailData.last_order` → `last_order`). Kept apart from $detailData on
+     * purpose: a computed value is never input, so no store path may persist it.
+     */
+    public array $computedValues = [];
 
     public function mount(): void
     {
@@ -179,6 +188,7 @@ trait NoerdDetail
         $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+        $this->computeComputedFields();
     }
 
     protected function initDetail(): void
@@ -306,6 +316,10 @@ trait NoerdDetail
     {
         $keys = [];
         LayoutFields::walk($fields, function (array $field) use (&$keys): void {
+            if (ComputedFields::isComputed($field)) {
+                return;
+            }
+
             $name = $field['name'] ?? null;
             if (is_string($name) && str_starts_with($name, 'detailData.')) {
                 $keys[] = Str::before(Str::after($name, 'detailData.'), '.');
@@ -354,6 +368,45 @@ trait NoerdDetail
         $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+    }
+
+    /**
+     * Compute the computed fields of the layout for the persisted record. Runs
+     * before every render (a saved record or a changed related record shows
+     * fresh values) and costs nothing for layouts without one. The fields are
+     * re-bound to `computedValues.{key}` and shown as text
+     * (ComputedFields::prepareLayout()) — idempotent, so custom mount()s that
+     * replace $pageLayout are covered as well. A new record shows them empty.
+     */
+    protected function computeComputedFields(): void
+    {
+        $fields = ComputedFields::fields($this->pageLayout['fields'] ?? []);
+        if ($fields === []) {
+            $this->computedValues = [];
+
+            return;
+        }
+
+        $this->pageLayout = ComputedFields::prepareLayout($this->pageLayout);
+
+        $values = array_fill_keys(
+            array_map(fn(array $field): string => ComputedFields::valueKey($field['name']), $fields),
+            null,
+        );
+
+        $record = ! $this->objectReadBlocked && $this->modelId && isset($this->detailModel)
+            ? $this->detailModel::find($this->modelId)
+            : null;
+
+        if ($record instanceof Model) {
+            foreach (app(ComputedColumnRegistry::class)->groupByProvider($fields) as [$provider, $providerFields]) {
+                foreach ($provider->detailValues($record, $providerFields) as $name => $value) {
+                    $values[ComputedFields::valueKey((string) $name)] = $value;
+                }
+            }
+        }
+
+        $this->computedValues = $values;
     }
 
     /**
@@ -445,7 +498,7 @@ trait NoerdDetail
     protected function extractRulesFromFields(array $fields, array &$rules): void
     {
         LayoutFields::walk($fields, function (array $field) use (&$rules): void {
-            if (isset($field['name']) && ($field['required'] ?? false)) {
+            if (isset($field['name']) && ($field['required'] ?? false) && ! ComputedFields::isComputed($field)) {
                 $rules[$field['name']] = ['required'];
             }
         });

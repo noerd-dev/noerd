@@ -405,6 +405,31 @@ public function register(): void
 }
 ```
 
+### ComputedColumnRegistry
+
+Providers that compute list columns and detail fields without a stored value (see
+[Computed Columns](computed-columns.md)). The core registers `Noerd\Support\ModelMethodColumns`
+(`method:`); a package adds its own provider in its provider's `boot()`:
+
+```php
+app(\Noerd\Services\ComputedColumnRegistry::class)->register(MyColumns::class);
+```
+
+A provider implements `Noerd\Contracts\ComputedColumnProvider`:
+
+| Method | Description |
+|--------|-------------|
+| `handles(array $item): bool` | Whether the provider computes this column/field (it recognises its own YAML key) |
+| `prepareQuery(Builder $query, array $columns): void` | Prepare the list query (eager loads, subselects) — must be idempotent |
+| `isSortable(string $modelClass, array $column): bool` | Whether the list may order by the column |
+| `applyOrder(Builder $query, array $column, string $direction): void` | Order by a sortable column |
+| `isFilterable(string $modelClass, array $column): bool` | Whether the header funnel is offered for the column |
+| `applyFilter(Builder $query, array $column, string $type, string $raw): void` | Apply one column filter (`ColumnFilterParser` syntax) |
+| `fillRows(iterable $rows, array $columns): void` | Compute the values for the fetched rows and expose each under the column's `field` |
+| `detailValues(Model $model, array $fields): array` | The values of a record's computed fields, keyed by field `name` |
+
+The first registered provider whose `handles()` accepts an item computes it.
+
 ### Layout overrides (`noerd.layout-overrides` binding)
 
 Applies user/tenant layout overrides to a freshly parsed YAML config. `StaticConfigHelper` consults the optional container binding `StaticConfigHelper::LAYOUT_OVERRIDES_BINDING` (`'noerd.layout-overrides'`) right after `Yaml::parse()` for every list, detail and page config — the core itself never knows which package (if any) stores overrides.
