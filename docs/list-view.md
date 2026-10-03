@@ -93,6 +93,7 @@ columns:
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
 | `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
 | `wireClick` / `wireClickField` | For `colored_text`: custom `wire:click` method plus the row field passed as its argument | / `id` |
+| `method` | Shows the result of a `#[ComputedValue]` model method instead of a stored value (see Computed Columns below) | |
 
 ## Column Types
 
@@ -743,6 +744,25 @@ protected function prepareCsvExport(): array
   decimal without symbol via `FormatHelper::decimal()`) and neutralises spreadsheet formulas (a text
   value starting with `=`, `+`, `-`, `@`, tab or CR gets a leading `'`) — override it for custom formats
 - `prepareExportRow($row)` is an optional per-row hook (e.g. to eager-compute accessors)
+
+## Computed Columns
+
+A column with a `method:` key shows the result of a model method instead of a stored attribute.
+`field` names the value (any name that is not a table column), `type` formats it:
+
+```yaml
+columns:
+  - field: last_order
+    label: Last order
+    type: date
+    method: lastOrder
+```
+
+- Only a method marked with `#[ComputedValue]` is called; its `with:` relations are eager-loaded
+  once per page.
+- A method column is display only: it lands in `notSortableColumns`, gets no filter funnel and is
+  never searched.
+- Details, the security rule and the registry for further providers: [Computed Columns](computed-columns.md).
 
 ## Grid Mode (Card Layout)
 

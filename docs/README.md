@@ -23,6 +23,7 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 - [Page View](page-view.md) — page chrome around a record: relation box, widgets, embedded detail
 - [Settings Pages](settings-page.md) — tenant-singleton forms with `NoerdSettingsPage`
 - [Field Types](field-types.md) — reference of all YAML field types and the `FieldTypeRegistry`
+- [Computed Columns](computed-columns.md) — list columns and detail fields computed by a model method (`method:`)
 - [Relation Field Types](relation-field-types.md) — registered `{x}Relation` pickers and their events
 - [Relation Forms](relation-forms.md) — editing a related model's fields inside a detail form
 - [Modal System](modal.md) — route modals vs. component modals, opening, closing, results

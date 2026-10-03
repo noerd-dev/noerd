@@ -67,6 +67,7 @@ use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\ActionPermissionRegistry;
 use Noerd\Services\BrandService;
+use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
@@ -89,6 +90,7 @@ use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LayoutState;
 use Noerd\Support\LockedPropertiesHook;
+use Noerd\Support\ModelMethodColumns;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\SchemaColumnCache;
@@ -142,6 +144,15 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(PositionTableRegistry::class);
         $this->app->singleton(BrandService::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
+        // Providers of list columns / detail fields without a stored value; the
+        // core computes `method:` itself, packages register further providers.
+        $this->app->singleton(ComputedColumnRegistry::class, function (): ComputedColumnRegistry {
+            $registry = new ComputedColumnRegistry();
+            $registry->register(ModelMethodColumns::class);
+
+            return $registry;
+        });
+        $this->app->singleton(ModelMethodColumns::class);
 
         // Bind the Setup collection definition repository based on the shared mode toggle.
         $this->app->singleton(SetupCollectionDefinitionRepositoryContract::class, function ($app) {

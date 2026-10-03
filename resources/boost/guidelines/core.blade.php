@@ -1210,6 +1210,25 @@ YAML, and never rebuilt per module: the fill lives once in `noerd::components.de
 
 - Reference: `docs/detail-view.md` ("Highlighted Fields")
 
+### Computed Columns and Fields (`method:`)
+
+A list column or a detail field with a `method:` key shows the result of a model method instead of
+a stored value (`method: lastOrder` → `Customer::lastOrder()`).
+
+- The method must be public, non-static, without required parameters and marked with
+  `#[Noerd\Attributes\ComputedValue]` — anything else is never called (renders empty, logged).
+  Declare the relations it reads with `#[ComputedValue(with: ['orders'])]`, so a list eager-loads
+  them once per page instead of once per row
+- Never add an `$appends` entry, an accessor for display only or a hand-built `listData()` just to
+  SHOW a derived value — use a `#[ComputedValue]` method and a `method:` column/field in the YAML
+  (both synced copies)
+- List: `field` is the value's name (not a table column), `type` formats it; a method column is
+  display only (no sort, filter or search)
+- Detail: the value lives in `$computedValues`, never in `$detailData` — re-bound to
+  `computedValues.{key}`, rendered in the `display` theme, never persisted
+- Further providers (other YAML keys) register on `Noerd\Services\ComputedColumnRegistry`
+- Reference: `docs/computed-columns.md`
+
 ### Empty Spacer Columns in Detail/Block Layouts
 Fields in a detail/block layout flow into a 12-column grid via auto-placement, so removing a field makes
 the following field move up into the freed slot. To keep a deliberate empty column (e.g. leave the right

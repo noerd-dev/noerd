@@ -23,8 +23,10 @@ use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ColumnFilterParser;
+use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\RelationTitleResolver;
+use Noerd\Support\ComputedFields;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\ListCellFormatter;
 use Noerd\Support\SchemaColumnCache;
@@ -323,6 +325,13 @@ trait NoerdList
         // Refuse a column the query could not order by rather than let the header appear
         // to sort and do nothing (see isSortableColumn()).
         if (! $this->isSortableColumn($field, $this->getListConfig()['notSortableColumns'] ?? [])) {
+            return;
+        }
+
+        // A computed column is no table column: its provider decides whether
+        // the query can be ordered by it.
+        $computedColumn = $this->computedColumn($field);
+        if ($computedColumn !== null && ! $this->isSortableComputedColumn($computedColumn)) {
             return;
         }
 
@@ -737,7 +746,12 @@ trait NoerdList
 
         [$query, $columns, $filename] = $this->prepareCsvExport();
 
-        return response()->streamDownload(function () use ($query, $columns): void {
+        $computedColumns = ComputedFields::columns($columns);
+        if ($computedColumns !== [] && $query instanceof Builder) {
+            $this->prepareComputedColumns($query, $computedColumns);
+        }
+
+        return response()->streamDownload(function () use ($query, $columns, $computedColumns): void {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
 
@@ -747,16 +761,23 @@ trait NoerdList
                 $columns,
             ), $delimiter);
 
-            $query->lazy(200)->each(function ($row) use ($handle, $columns, $delimiter): void {
-                $this->prepareExportRow($row);
-                $line = [];
-                foreach ($columns as $column) {
-                    $line[] = $this->formatCsvValue(
-                        data_get($row, $column['field'] ?? ''),
-                        $column,
-                    );
+            // Chunked, so computed columns are filled once per chunk, not per row.
+            $query->lazy(200)->chunk(200)->each(function ($rows) use ($handle, $columns, $delimiter, $computedColumns): void {
+                if ($computedColumns !== []) {
+                    $this->fillComputedColumns($computedColumns, $rows->collect());
                 }
-                fputcsv($handle, $line, $delimiter);
+
+                foreach ($rows as $row) {
+                    $this->prepareExportRow($row);
+                    $line = [];
+                    foreach ($columns as $column) {
+                        $line[] = $this->formatCsvValue(
+                            data_get($row, $column['field'] ?? ''),
+                            $column,
+                        );
+                    }
+                    fputcsv($handle, $line, $delimiter);
+                }
             });
 
             fclose($handle);
@@ -1129,6 +1150,20 @@ trait NoerdList
         $this->applyColumnFilters($query, $modelClass);
         $this->eagerLoadRelationColumns($query);
 
+        $computedColumns = ComputedFields::columns($listConfig['columns'] ?? []);
+        if ($computedColumns !== []) {
+            $this->prepareComputedColumns($query, $computedColumns);
+        }
+
+        // A sortable computed column orders through its provider (e.g. by an
+        // aggregate subselect); the client-writable $sortField is re-checked here.
+        $sortComputedColumn = $this->computedColumn($this->sortField);
+        if ($sortComputedColumn !== null && $this->isSortableComputedColumn($sortComputedColumn)) {
+            app(ComputedColumnRegistry::class)->providerFor($sortComputedColumn)?->applyOrder($query, $sortComputedColumn, $this->sortAsc ? 'asc' : 'desc');
+
+            return $query;
+        }
+
         // $sortField is client-writable (sortBy() enforces isSortableColumn(),
         // a raw property update does not). Ordering by a column the model hides
         // — password, remember_token, api_token — turns the list into an
@@ -1194,11 +1229,20 @@ trait NoerdList
 
         return $this->filterableColumnCache = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
             ->pluck('field')
-            ->filter(fn($field): bool => is_string($field)
-                && $field !== 'action'
-                && (self::isDottedField($field)
+            ->filter(function ($field) use ($table): bool {
+                if (! is_string($field) || $field === 'action') {
+                    return false;
+                }
+
+                $computedColumn = $this->computedColumn($field);
+                if ($computedColumn !== null) {
+                    return $this->isFilterableComputedColumn($computedColumn);
+                }
+
+                return self::isDottedField($field)
                     ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
-                    : self::tableHasColumn($table, $field)))
+                    : self::tableHasColumn($table, $field);
+            })
             ->values()
             ->all();
     }
@@ -1284,6 +1328,14 @@ trait NoerdList
                 continue;
             }
 
+            // filterableColumnFields() admitted it, so its provider can filter it.
+            $computedColumn = $this->computedColumn($field);
+            if ($computedColumn !== null) {
+                app(ComputedColumnRegistry::class)->providerFor($computedColumn)?->applyFilter($query, $computedColumn, (string) ($computedColumn['type'] ?? 'text'), $raw);
+
+                continue;
+            }
+
             // A relation path (`defaultDeliveryAddress.locality`) filters through a
             // whereHas() subquery on the related table — a join would collide with
             // the base table's column names. JSON paths take precedence and fall
@@ -1349,7 +1401,7 @@ trait NoerdList
         $columnTypeMap = $this->schemaColumnTypeMap($model->getTable());
 
         foreach ($listSettings['columns'] ?? [] as $i => $column) {
-            if (isset($column['type'])) {
+            if (isset($column['type']) || ComputedFields::isComputed($column)) {
                 continue;
             }
             $field = $column['field'] ?? null;
@@ -1432,6 +1484,7 @@ trait NoerdList
 
         $listSettings = $this->applyAutoColumnTypes($listSettings, $rows);
         $listSettings = $this->applyPicklistBadges($listSettings);
+        $this->fillComputedColumns($listSettings['columns'] ?? [], $rows);
         $this->primeRelationBadgeTitles($listSettings, $rows);
 
         // Object permissions: strip the affordances the current user may not use.
@@ -1469,11 +1522,20 @@ trait NoerdList
         // buildList() REPLACES the config, so anything derived from it must go too.
         $this->headerControlsCache = null;
 
+        // Computed columns their provider cannot order by render without a sort
+        // button — isSortableColumn() reads them from notSortableColumns.
+        $notSortableColumns = $listSettings['notSortableColumns'] ?? [];
+        foreach (ComputedFields::columns($listSettings['columns'] ?? []) as $computedColumn) {
+            if (! $this->isSortableComputedColumn($computedColumn)) {
+                $notSortableColumns[] = $computedColumn['field'];
+            }
+        }
+
         return $this->builtListConfigCache = [
             'listId' => $this->listId,
             'sortField' => $this->sortField,
             'sortAsc' => $this->sortAsc,
-            'notSortableColumns' => $listSettings['notSortableColumns'] ?? [],
+            'notSortableColumns' => array_values(array_unique($notSortableColumns)),
             'rows' => $rows,
             'listSettings' => $listSettings,
             'listColumnFilters' => $this->listColumnFilters,
@@ -1517,7 +1579,7 @@ trait NoerdList
 
         foreach ($listSettings['columns'] ?? [] as $i => $column) {
             $field = $column['field'] ?? null;
-            if ($field === null || isset($column['options'])) {
+            if ($field === null || isset($column['options']) || ComputedFields::isComputed($column)) {
                 continue;
             }
 
@@ -1642,6 +1704,110 @@ trait NoerdList
         }
 
         return $prefix . Str::singular(Str::before($last, '-list')) . '-detail';
+    }
+
+    /**
+     * The computed column (a column a ComputedColumnRegistry provider handles,
+     * e.g. one with a `method:` key) of the active list config for a field, or
+     * null when the field is none.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function computedColumn(?string $field): ?array
+    {
+        if ($field === null || $field === '') {
+            return null;
+        }
+
+        foreach (ComputedFields::columns($this->getListConfig($this->listQueryConfigName)['columns'] ?? []) as $column) {
+            if ($column['field'] === $field) {
+                return $column;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The model class computed columns are evaluated against — the class the
+     * last listQuery() resolved, else the declared $listModel or
+     * $objectPermissionModel (sortBy() runs in a request before any query was built).
+     */
+    protected function computedModelClass(): ?string
+    {
+        if ($this->resolvedModelClass !== null) {
+            return $this->resolvedModelClass;
+        }
+
+        foreach (['listModel', 'objectPermissionModel'] as $property) {
+            if (property_exists($this, $property) && is_string($this->{$property})) {
+                return $this->{$property};
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $column
+     */
+    protected function isSortableComputedColumn(array $column): bool
+    {
+        $modelClass = $this->computedModelClass();
+        $provider = app(ComputedColumnRegistry::class)->providerFor($column);
+
+        return $modelClass !== null && $provider !== null && $provider->isSortable($modelClass, $column);
+    }
+
+    /**
+     * @param  array<string, mixed>  $column
+     */
+    protected function isFilterableComputedColumn(array $column): bool
+    {
+        $modelClass = $this->computedModelClass();
+        $provider = app(ComputedColumnRegistry::class)->providerFor($column);
+
+        return $modelClass !== null && $provider !== null && $provider->isFilterable($modelClass, $column);
+    }
+
+    /**
+     * Let every provider prepare the query for the computed columns it handles.
+     *
+     * @param  array<int, array<string, mixed>>  $columns
+     */
+    protected function prepareComputedColumns(Builder $query, array $columns): void
+    {
+        foreach (app(ComputedColumnRegistry::class)->groupByProvider($columns) as [$provider, $providerColumns]) {
+            $provider->prepareQuery($query, $providerColumns);
+        }
+    }
+
+    /**
+     * Compute the computed columns of the current page once for all rows, so
+     * every cell reads its value with data_get() like a stored attribute.
+     *
+     * @param  array<int, mixed>  $columns
+     */
+    protected function fillComputedColumns(array $columns, mixed $rows): void
+    {
+        $computedColumns = ComputedFields::columns($columns);
+        if ($computedColumns === []) {
+            return;
+        }
+
+        $collection = match (true) {
+            $rows instanceof LengthAwarePaginator, $rows instanceof Paginator => $rows->getCollection(),
+            $rows instanceof Collection => $rows,
+            default => null,
+        };
+
+        if ($collection === null || $collection->isEmpty()) {
+            return;
+        }
+
+        foreach (app(ComputedColumnRegistry::class)->groupByProvider($computedColumns) as [$provider, $providerColumns]) {
+            $provider->fillRows($collection, $providerColumns);
+        }
     }
 
     /**

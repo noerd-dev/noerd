@@ -67,6 +67,7 @@ These options are available for most field types:
 | `theme` | string | - | Per-field theme override (see [Themes](themes.md)); `display` renders the value as read-only text |
 | `hideIfEmpty` | bool | `false` | Skip the field while its value is blank — honoured only in a text-only theme such as `display` (see [Display Theme](themes.md#display-theme-read-only-text)) |
 | `number` | int | - | Explicit row number in the `numbered` theme (defaults to auto-increment) |
+| `method` | string | - | Show the result of a `#[ComputedValue]` model method instead of an input (see [Computed Columns](computed-columns.md)) |
 
 `readonly` is also forced onto every field while the user's object permission denies saving — see
 [Read-Only Rendering](detail-view.md#read-only-rendering-on-write-denied-objects).
