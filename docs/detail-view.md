@@ -761,7 +761,9 @@ custom `mount()` that replaces `$detailData` wholesale.
   app dashboards. `route` opens a route modal, `component` a component modal (the fallback when the
   route is not registered), `arguments` go to either, `rewriteUrl: false` keeps the URL when the
   card opens a filtered list, `external` makes it a plain link in a new tab, `image` / `heroicon`
-  set the icon, `value` renders a figure below the title, `background` overrides the tile color.
+  set the icon, `value` renders a figure below the title (a number is shown as a whole number in the
+  reader's locale, any other string as is — pass amounts already formatted, e.g.
+  `CurrencyHelper::format($sum)`), `background` overrides the tile color.
 - **`<x-noerd::action-message on="saved">Saved.</x-noerd::action-message>`** — a transient
   confirmation line: listens for the Livewire event named in `on`, fades out after two seconds.
 - **`<x-noerd::rich-text :content="$text" />`** — renders the (tenant-editable) HTML produced by

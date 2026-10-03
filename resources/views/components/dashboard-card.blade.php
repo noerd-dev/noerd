@@ -46,7 +46,9 @@
         <div class="w-full text-gray-500">{{ $title }}</div>
 
         @isset($value)
-            <div class="text-2xl font-semibold">{{ \Noerd\Helpers\FormatHelper::decimal((float) $value, 0) }}</div>
+            {{-- A number is a count and is formatted here; any other string arrives already
+                 formatted (an amount from CurrencyHelper, a percentage) and renders as is. --}}
+            <div class="text-2xl font-semibold">{{ is_numeric($value) ? \Noerd\Helpers\FormatHelper::decimal((float) $value, 0) : $value }}</div>
         @endisset
     </div>
 </a>
