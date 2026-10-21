@@ -60,8 +60,43 @@ final class ListCellFormatter
             'number' => is_numeric($value) ? FormatHelper::number((float) $value, 2) : (string) ($value ?? ''),
             'bool', 'boolean' => self::truthy($value) ? __('Yes') : __('No'),
             'badge' => __(self::badgeLabel($value, $column['options'] ?? [])),
+            'preview' => (string) (self::preview($value)['url'] ?? ''),
             default => (string) ($value ?? ''),
         };
+    }
+
+    /**
+     * The picture of a `preview` cell: a URL string, or an array carrying `url`
+     * (an image) or `icon` (a heroicon name shown on a tile coloured by `class`,
+     * with an optional `label` such as the file extension). The core never knows
+     * where a picture comes from — the list row hands it over ready to render.
+     * Null when there is nothing to show.
+     *
+     * @return array{url: ?string, icon: ?string, class: string, label: string}|null
+     */
+    public static function preview(mixed $value): ?array
+    {
+        if (is_string($value)) {
+            $value = ['url' => $value];
+        }
+
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $url = is_string($value['url'] ?? null) && $value['url'] !== '' ? $value['url'] : null;
+        $icon = is_string($value['icon'] ?? null) && $value['icon'] !== '' ? $value['icon'] : null;
+
+        if ($url === null && $icon === null) {
+            return null;
+        }
+
+        return [
+            'url' => $url,
+            'icon' => $icon,
+            'class' => (string) ($value['class'] ?? 'bg-gray-100 text-gray-500'),
+            'label' => (string) ($value['label'] ?? ''),
+        ];
     }
 
     /**

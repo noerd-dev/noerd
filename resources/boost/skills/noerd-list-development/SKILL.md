@@ -93,7 +93,9 @@ Checklist of optional YAML features (all generic, never re-implement in the comp
   either row
 - `multiSelect: true` + `bulkActions:` (`deleteSelected` is built in; custom bulk methods read
   `$this->selectedRecordIds`)
-- `displayMode: grid` + `gridColumns:` — card layout, row click unchanged
+- `displayMode: grid` + `gridColumns:` — card layout, row click unchanged; a `type: preview`
+  column (image URL or `url`/`icon`/`class`/`label` set in `listData()`) puts a picture on top of
+  each card
 - `type: badge` + `options:` — manual badge when no paired detail field exists
 - column filters / search: see `list-filters.md` / `list-search.md` (they need `$listModel`)
 - alternate views: sibling file `{entities}-list--{key}.yml` (complete standalone config)

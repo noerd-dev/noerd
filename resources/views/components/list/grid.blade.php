@@ -3,7 +3,8 @@
      so $rows, $table, $listId, $listSettings, $multiSelect, $selectedRecordIds,
      $actions and $relations are available. Column filters and the sort control are
      offered as a bar above the cards (list/grid-controls) instead of the header
-     funnels and sort headers. The remaining thead-only features (select-all, line
+     funnels and sort headers. A `preview` column renders as the picture on top of the
+     card (list/preview). The remaining thead-only features (select-all, line
      numbers, summary) are not rendered in grid mode. --}}
 @php
     // Tailwind cannot generate class names at runtime — every supported
@@ -35,8 +36,15 @@
                     // non-empty value renders as the bold card title, the remaining
                     // columns as secondary lines; empty values are skipped entirely.
                     $cells = [];
+                    $cardPreview = null;
                     foreach ($table as $column) {
                         if (($column['field'] ?? null) === 'action') {
+                            continue;
+                        }
+                        // A preview is the picture on top of the card, never its title
+                        // or a line; the first one that has something to show wins.
+                        if (($column['type'] ?? 'text') === 'preview') {
+                            $cardPreview ??= \Noerd\Support\ListCellFormatter::preview(data_get($row, $column['field'] ?? null));
                             continue;
                         }
                         $value = \Noerd\Support\ListCellFormatter::scalar(data_get($row, $column['field'] ?? null));
@@ -73,6 +81,11 @@
                             />
                         </div>
                     @endif
+                    @if ($cardPreview)
+                        <div class="mb-2 w-full">
+                            @include('noerd::components.list.preview', ['preview' => $cardPreview, 'previewSize' => 'card'])
+                        </div>
+                    @endif
                     @foreach ($cells as $index => $cell)
                         @if ($cell['isBadge'])
                             <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
@@ -88,7 +101,7 @@
                             </span>
                         @endif
                     @endforeach
-                    @if ($cells === [])
+                    @if ($cells === [] && ! $cardPreview)
                         <span class="font-medium text-gray-400">&mdash;</span>
                     @endif
                 </button>

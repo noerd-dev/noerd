@@ -366,6 +366,15 @@
                 @elseif ($value)
                     <span class="block truncate px-1.5 py-0.5 text-sm" title="{{ $value }}">{{ $value }}</span>
                 @endif
+            @elseif ($type === 'preview')
+                @php
+                    $cellPreview = \Noerd\Support\ListCellFormatter::preview($value);
+                @endphp
+                @if ($cellPreview)
+                    <div class="px-1.5 py-0.5">
+                        @include('noerd::components.list.preview', ['preview' => $cellPreview, 'previewSize' => 'cell'])
+                    </div>
+                @endif
             @elseif ($type === 'colored_text')
                 <div
                     @if (isset($columnConfig['wireClick']))

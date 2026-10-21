@@ -1531,6 +1531,13 @@ trait NoerdList
             }
         }
 
+        // A preview is a picture, there is nothing to order by.
+        foreach ($listSettings['columns'] ?? [] as $column) {
+            if (($column['type'] ?? null) === 'preview' && is_string($column['field'] ?? null)) {
+                $notSortableColumns[] = $column['field'];
+            }
+        }
+
         return $this->builtListConfigCache = [
             'listId' => $this->listId,
             'sortField' => $this->sortField,
@@ -1855,7 +1862,7 @@ trait NoerdList
             'currency', 'number' => is_numeric($value)
                 ? FormatHelper::decimal((float) $value)
                 : $this->neutralizeCsvFormula((string) ($value ?? '')),
-            'badge' => $this->neutralizeCsvFormula(ListCellFormatter::format($value, $column)),
+            'badge', 'preview' => $this->neutralizeCsvFormula(ListCellFormatter::format($value, $column)),
             default => $this->neutralizeCsvFormula((string) ($value ?? '')),
         };
     }

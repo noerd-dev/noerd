@@ -118,6 +118,7 @@ labels the same way. The [CSV export](#csv-export) writes amounts without the cu
 | `relationBadge` | Badge showing the display title of a foreign-key value (resolved via the registered relation types) |
 | `customAttribute` | Value from the `custom_attributes` JSON column, normalized for display (translatable arrays are resolved to the active language) |
 | `colored_text` | Text with optional color classes; the row value may be an array with `text`, `class`, `prefix`, `prefixClass`, `icon` keys |
+| `preview` | A picture: the picture on top of the card in grid mode, a small square in the table and widget list. The row value is an image URL, or an array with `url` (image) or `icon` (heroicon name shown on a tile coloured by `class`, with a short `label` such as a file extension). The list row supplies the value — the core does not know where pictures come from. Never sortable or filterable; the CSV export writes the URL |
 | `relation_link` | Clickable chip that opens the related record as a modal: `route` (preferred) and/or `modalComponent` (fallback) name the target, `idField` the row field holding its id (default `id`), `idParam` the argument it is passed as (default `modelId`, in both modes). Without a resolvable target the value renders as plain text |
 
 **Automatic typing:** Columns without an explicit `type` are typed from the database schema
@@ -795,7 +796,16 @@ the object-permission handling stay exactly as in table mode.
 renders as the bold card title, every remaining column as a secondary line; empty values are
 skipped (a missing `name` falls through to the next column as the title). Column types are honored:
 `currency`, `number`, `date`, `datetime`, `bool` are formatted, `badge` renders as a translated
-pill; everything else renders as text (`data_get`, so dotted fields work).
+pill; everything else renders as text (`data_get`, so dotted fields work). A `preview` column is
+never the title or a line: the first one with a value renders as the picture on top of the card
+(an image, or an icon tile for a file without a thumbnail — see Column Types). Computing the value
+is the component's job, typically in `listData()`:
+
+```php
+$row->preview = $media->hasRenderableThumbnail()
+    ? ['url' => $media->thumbnailUrl()]
+    : ['icon' => 'document-text', 'class' => 'bg-red-50 text-red-600', 'label' => 'pdf'];
+```
 
 **Cards per row**: `gridColumns` (`1`–`6`, default `4`) sets the count at the largest breakpoint;
 smaller viewports collapse responsively (1 column on mobile, 2 from `sm`, 3 from `lg`). The classes
