@@ -649,7 +649,9 @@ columns:
   below; the classes come from a static map (Tailwind cannot generate class names at runtime)
 - Card content derives from `columns`: first non-empty value = bold title, remaining columns =
   secondary lines, empty values skipped; column types are honored (`currency`, `date`, `bool`,
-  `badge` pill, …)
+  `badge` pill, …). A `type: preview` column (value: an image URL, or `url`/`icon`+`class`+`label`
+  computed by the list row) renders as the picture on top of the card — never hand-roll a tile
+  grid for thumbnails
 - Row click behaves exactly like a table row (`openListRow` → `$detailRoute`/`$detailComponent` or
   a custom `listAction()` override), incl. keyboard nav, picker mode and per-card multi-select
   checkboxes

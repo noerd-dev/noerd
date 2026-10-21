@@ -205,6 +205,59 @@ it('renders no grid sort dropdown when no column is sortable', function () use (
     expect($html)->not->toContain('wire:key="grid-sort-');
 });
 
+$previewColumns = [
+    ['field' => 'picture', 'label' => 'Picture', 'type' => 'preview'],
+    ['field' => 'name', 'label' => 'Name', 'type' => 'text'],
+];
+
+it('renders a preview url as the picture on top of the card, never as its title', function () use ($previewColumns): void {
+    $html = Livewire::test(TestableGridListComponent::class)
+        ->set('rowsData', [['id' => 1, 'picture' => '/thumbs/zz-receipt.jpg', 'name' => 'Alice']])
+        ->set('configData', ['displayMode' => 'grid', 'columns' => $previewColumns])
+        ->html();
+
+    expect($html)->toContain('src="/thumbs/zz-receipt.jpg"')
+        ->and(preg_match('/font-medium[^>]*>\s*Alice\s*</', $html))->toBe(1)
+        ->and($html)->not->toContain('>/thumbs/zz-receipt.jpg<');
+});
+
+it('renders a preview without url as an icon tile with its label', function () use ($previewColumns): void {
+    $html = Livewire::test(TestableGridListComponent::class)
+        ->set('rowsData', [[
+            'id' => 1,
+            'picture' => ['icon' => 'document-text', 'class' => 'bg-red-50 text-red-600', 'label' => 'pdf'],
+            'name' => 'Alice',
+        ]])
+        ->set('configData', ['displayMode' => 'grid', 'columns' => $previewColumns])
+        ->html();
+
+    expect($html)->toContain('bg-red-50 text-red-600')
+        ->toContain('>pdf<')
+        ->not->toContain('<img');
+});
+
+it('renders no picture for an empty preview value', function () use ($previewColumns): void {
+    $html = Livewire::test(TestableGridListComponent::class)
+        ->set('rowsData', [['id' => 1, 'picture' => null, 'name' => 'Alice']])
+        ->set('configData', ['displayMode' => 'grid', 'columns' => $previewColumns])
+        ->html();
+
+    expect($html)->not->toContain('<img')
+        ->not->toContain('aspect-[4/3]');
+});
+
+it('renders a preview column as a small picture in the table and never offers to sort by it', function () use ($previewColumns): void {
+    $html = Livewire::test(TestableGridListComponent::class)
+        ->set('rowsData', [['id' => 1, 'picture' => '/thumbs/zz-receipt.jpg', 'name' => 'Alice']])
+        ->set('configData', ['columns' => $previewColumns])
+        ->html();
+
+    expect($html)->toContain('<table')
+        ->toContain('src="/thumbs/zz-receipt.jpg"')
+        ->toContain("sortBy('name')")
+        ->not->toContain("sortBy('picture')");
+});
+
 /**
  * Minimal list component that renders the generic noerd list view from a directly
  * provided array config, so the grid display mode can be tested in isolation.
