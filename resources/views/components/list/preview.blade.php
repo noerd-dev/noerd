@@ -1,7 +1,8 @@
 {{-- The picture of a `preview` column (see ListCellFormatter::preview()): an image, or a
      coloured tile with a heroicon and a short label (e.g. the extension of a file that has
      no thumbnail). Included with $preview (the normalised array) and $previewSize
-     (`card` = the top of a grid card, `cell` = a small square in a table cell). --}}
+     (`card` = the top of a grid card, `cell` = a small square in a table cell). The image is
+     cropped from its top edge: a document thumbnail shows its head, never its middle. --}}
 @php
     $previewIsCard = ($previewSize ?? 'cell') === 'card';
 @endphp
@@ -11,7 +12,7 @@
         alt="{{ $preview['label'] }}"
         loading="lazy"
         @class([
-            'object-cover',
+            'object-cover object-top',
             'aspect-[4/3] w-full rounded-md bg-gray-50' => $previewIsCard,
             'h-10 w-10 rounded' => ! $previewIsCard,
         ])
