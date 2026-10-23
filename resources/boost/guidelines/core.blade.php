@@ -1212,6 +1212,23 @@ YAML, and never rebuilt per module: the fill lives once in `noerd::components.de
 
 - Reference: `docs/detail-view.md` ("Highlighted Fields")
 
+### Custom Cell Renderers in Lists (`cell:`)
+
+A list column that needs its own look (a green badge for incoming amounts, an icon per status) keeps
+its real `type` and names a registered renderer with `cell:`:
+
+- The module registers it in its provider's `boot()`:
+  `app(Noerd\Services\ListCellRendererRegistry::class)->register('{key}', '{module}::cells.{view}')`.
+  The view gets `$value` (raw), `$text` (formatted by the column `type`), `$row` and `$column` and
+  renders the content only — row click, alignment and padding stay the core's
+- `type` keeps deciding sort, column filter, search, alignment, CSV and the formatted text, so the
+  column stays the real database column
+- NEVER replace a real column by a derived `*_display` field (`colored_text`) just to change its
+  look, and never add a hard-coded type branch to `table-cell.blade.php` for one module's look
+- An unknown key or a missing view falls back to the type rendering (logged once) — a YAML naming an
+  uninstalled module's renderer never breaks a list
+- Reference: `docs/list-view.md` ("Custom Cell Renderers")
+
 ### Computed Columns and Fields (`method:`)
 
 A list column or a detail field with a `method:` key shows the result of a model method instead of

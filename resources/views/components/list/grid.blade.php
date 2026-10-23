@@ -48,6 +48,13 @@
                             continue;
                         }
                         $value = \Noerd\Support\ListCellFormatter::scalar(data_get($row, $column['field'] ?? null));
+                        $rendererView = \Noerd\Support\ListCellRenderer::viewFor($column);
+                        if ($rendererView !== null) {
+                            if (\Noerd\Support\ListCellFormatter::format($value, $column) !== '') {
+                                $cells[] = ['text' => '', 'isBadge' => false, 'view' => $rendererView, 'data' => \Noerd\Support\ListCellRenderer::data($value, $row, $column)];
+                            }
+                            continue;
+                        }
                         $isBadge = ($column['type'] ?? 'text') === 'badge';
                         $text = $isBadge
                             ? \Noerd\Support\ListCellFormatter::badgeLabel($value, $column['options'] ?? [])
@@ -87,7 +94,9 @@
                         </div>
                     @endif
                     @foreach ($cells as $index => $cell)
-                        @if ($cell['isBadge'])
+                        @if (isset($cell['view']))
+                            <span class="text-sm text-gray-500">@include($cell['view'], $cell['data'])</span>
+                        @elseif ($cell['isBadge'])
                             <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
                                 {{ __($cell['text']) }}
                             </span>

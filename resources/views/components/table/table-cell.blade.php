@@ -141,6 +141,19 @@
                 {{ __($label) }}
             </x-noerd::button>
         </div>
+    @elseif ($cellRendererView = \Noerd\Support\ListCellRenderer::viewFor($columnConfig ?? []))
+        {{-- A registered `cell:` renderer draws the content; row click,
+             alignment and padding stay the core's. --}}
+        <div
+            wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+            @class([
+                'flex cursor-pointer items-center px-1.5 py-0.5',
+                'justify-end' => ($columnConfig['align'] ?? 'left') === 'right',
+                'justify-center' => ($columnConfig['align'] ?? 'left') === 'center',
+            ])
+        >
+            @include($cellRendererView, \Noerd\Support\ListCellRenderer::data($value, $rowData ?? [], $columnConfig ?? []))
+        </div>
     @else
         @if ($type === 'bool' || $type === 'boolean')
             @if (\Noerd\Support\ListCellFormatter::truthy($value))

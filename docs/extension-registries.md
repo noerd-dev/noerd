@@ -430,6 +430,20 @@ A provider implements `Noerd\Contracts\ComputedColumnProvider`:
 
 The first registered provider whose `handles()` accepts an item computes it.
 
+### ListCellRendererRegistry
+
+Custom looks of list cells (see [List View](list-view.md#custom-cell-renderers-cell)). A package
+registers a key and the Blade view that renders it; a list column opts in with `cell: {key}` next to
+its `type`:
+
+```php
+app(\Noerd\Services\ListCellRendererRegistry::class)->register('signedAmount', 'accounting::cells.signed-amount');
+```
+
+The view receives `$value`, `$text` (formatted by the column type), `$row` and `$column`.
+`Noerd\Support\ListCellRenderer::viewFor($column)` resolves a column (null for no, an unknown or a
+missing renderer — the cell then renders by its type).
+
 ### Layout overrides (`noerd.layout-overrides` binding)
 
 Applies user/tenant layout overrides to a freshly parsed YAML config. `StaticConfigHelper` consults the optional container binding `StaticConfigHelper::LAYOUT_OVERRIDES_BINDING` (`'noerd.layout-overrides'`) right after `Yaml::parse()` for every list, detail and page config — the core itself never knows which package (if any) stores overrides.

@@ -62,7 +62,9 @@
                                     $badgeValue = \Noerd\Support\ListCellFormatter::scalar($cellValue);
                                     $badgeLabel = $isBadge ? \Noerd\Support\ListCellFormatter::badgeLabel($cellValue, $column['options'] ?? []) : $badgeValue;
                                 @endphp
-                                @if (($column['type'] ?? 'text') === 'preview')
+                                @if ($minimalRendererView = \Noerd\Support\ListCellRenderer::viewFor($column))
+                                    @include($minimalRendererView, \Noerd\Support\ListCellRenderer::data($cellValue, $row, $column))
+                                @elseif (($column['type'] ?? 'text') === 'preview')
                                     @php
                                         $minimalPreview = \Noerd\Support\ListCellFormatter::preview($cellValue);
                                     @endphp
