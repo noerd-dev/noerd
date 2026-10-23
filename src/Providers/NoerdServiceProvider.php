@@ -72,6 +72,7 @@ use Noerd\Services\DetailSlotsRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Services\ListCellRendererRegistry;
 use Noerd\Services\NavigationService;
 use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
@@ -134,6 +135,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->singleton(DetailSlotsRegistry::class);
         $this->app->singleton(RelationBoxRegistry::class);
         $this->app->singleton(FieldTypeRegistry::class);
+        $this->app->singleton(ListCellRendererRegistry::class);
         $this->app->singleton(ThemeRegistry::class);
         $this->app->singleton(NoerdManager::class);
         // Autowired: its only dependency is the FieldTypeRegistry singleton above.

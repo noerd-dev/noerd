@@ -94,6 +94,7 @@ columns:
 | `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
 | `wireClick` / `wireClickField` | For `colored_text`: custom `wire:click` method plus the row field passed as its argument | / `id` |
 | `method` | Shows the result of a `#[ComputedValue]` model method instead of a stored value (see Computed Columns below) | |
+| `cell` | Key of a registered cell renderer that draws the cell instead of the type's default markup; `type` keeps deciding filter, sort, alignment, CSV and the formatted text (see Custom Cell Renderers below) | |
 
 ## Column Types
 
@@ -232,6 +233,42 @@ Cells are read-only by default. Two column types opt into editing:
   ```
 
 `bool` and `inversebool` cells are read-only icons — use `checkbox` for a toggleable boolean.
+
+## Custom Cell Renderers (`cell:`)
+
+A column may look different from its type's default without losing what the type does: `cell:`
+names a renderer a module registered, `type` stays the real data type. Sorting, the column filter,
+search, alignment, the CSV export and the formatted text keep following `type` — only the markup of
+the cell changes, in the table, the card grid and the widget list alike.
+
+```yaml
+columns:
+  - field: amount
+    label: Amount
+    type: currency        # filter, sort, right alignment, CSV
+    cell: signedAmount    # the look
+```
+
+The module registers the renderer in its provider's `boot()`:
+
+```php
+app(\Noerd\Services\ListCellRendererRegistry::class)->register('signedAmount', 'accounting::cells.signed-amount');
+```
+
+The view receives `$value` (the raw value), `$text` (the value formatted by the column's `type`),
+`$row` (the row) and `$column` (the YAML column). It renders the content only — the core keeps the
+row click, the alignment and the padding:
+
+```blade
+@if ((float) $value > 0)
+    <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-sm font-medium text-green-700">{{ $text }}</span>
+@else
+    <span class="text-sm">{{ $text }}</span>
+@endif
+```
+
+An unknown key or a missing view falls back to the type's rendering (logged once as a warning), so
+a list YAML that names the renderer of a module that is not installed never breaks.
 
 ## Livewire Component
 
