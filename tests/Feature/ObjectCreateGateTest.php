@@ -36,6 +36,12 @@ class ZzCreateGateDetail extends Component
     {
         return '<div></div>';
     }
+
+    /** No field layout: the persisted columns are declared as hand-built inputs. */
+    protected function additionalDetailFields(): array
+    {
+        return ['detailData.name', 'detailData.uuid'];
+    }
 }
 
 class ZzCreateGateList extends Component

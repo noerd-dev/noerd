@@ -10,6 +10,7 @@ use Livewire\Attributes\On;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\PicklistRegistry;
+use Noerd\Support\ClientWritablePaths;
 use Noerd\Support\ComputedFields;
 use Noerd\Support\LayoutDefaults;
 use Noerd\Support\LayoutFields;
@@ -145,6 +146,13 @@ trait NoerdDetail
             return;
         }
 
+        // A readonly field, or an unbound key below a nested root, is no input:
+        // the relation field components refuse to emit for them, and a
+        // client-dispatched event must not get around that.
+        if (! ClientWritablePaths::forComponent($this)->allows($field)) {
+            return;
+        }
+
         $key = str_replace('detailData.', '', $field);
         $detailData = $this->detailData;
         data_set($detailData, $key, $value);
@@ -250,10 +258,15 @@ trait NoerdDetail
     /**
      * Reduce the client-controlled $detailData to the columns the form is actually
      * allowed to persist before mass assignment. A detail YAML is a pure model
-     * form, so only its declared fields may be written — this prevents a crafted
-     * request from injecting extra $detailData keys (roles, prices, ownership FKs,
-     * tenant_id) into a model that uses $guarded = []. Identity and tenant columns
-     * are never client-assignable regardless of the layout.
+     * form, so only its declared fields may be written — plus the hand-built
+     * inputs the component declares in additionalDetailFields(). This prevents a
+     * crafted request from injecting extra $detailData keys (roles, prices,
+     * ownership FKs, tenant_id) into a model that uses $guarded = []. Fails
+     * CLOSED: a component that declares no field at all persists nothing.
+     * Identity and tenant columns are never client-assignable regardless of the
+     * layout. Which values the client may change inside a declared key
+     * (readonly fields, unbound keys of custom_attributes) is decided on the
+     * update channel by ClientWriteGuardHook.
      *
      * @return array<string, mixed>
      */
@@ -261,15 +274,23 @@ trait NoerdDetail
     {
         $data = RelationFormSync::strip($modelClass, $this->detailData);
 
-        // The whitelist is derived from the YAML on disk, NOT from $this->pageLayout,
-        // which is itself a client-writable public property.
-        return $this->reduceToWritableKeys($data, $this->writableDetailDataKeys($modelClass));
+        // The whitelist comes from the form layout (the locked $pageLayout and the
+        // YAML on disk) and the declared hand-built inputs — never from client input.
+        $allowed = $this->writableDetailDataKeys($modelClass);
+
+        foreach ($this->additionalDetailFields() as $name) {
+            if (is_string($name) && str_starts_with($name, 'detailData.')) {
+                $allowed[] = Str::before(Str::after($name, 'detailData.'), '.');
+            }
+        }
+
+        return $this->reduceToWritableKeys($data, array_values(array_unique($allowed)));
     }
 
     /**
-     * Keep only the allowed top-level keys (when any are known) and always drop
-     * the identity/tenant/timestamp columns — those are set by the framework, not
-     * by the client payload.
+     * Keep only the allowed top-level keys and always drop the
+     * identity/tenant/timestamp columns — those are set by the framework, not by
+     * the client payload. No allowed key means nothing is writable.
      *
      * @param  array<string, mixed>  $data
      * @param  array<int, string>  $allowed
@@ -277,9 +298,7 @@ trait NoerdDetail
      */
     protected function reduceToWritableKeys(array $data, array $allowed): array
     {
-        if ($allowed !== []) {
-            $data = array_intersect_key($data, array_flip($allowed));
-        }
+        $data = array_intersect_key($data, array_flip($allowed));
 
         unset($data['id'], $data['tenant_id'], $data['created_at'], $data['updated_at']);
 
@@ -287,23 +306,26 @@ trait NoerdDetail
     }
 
     /**
-     * Top-level $detailData keys the active layout binds (recursing into blocks),
-     * read from the authoritative on-disk YAML. Empty when the component ships no
-     * field layout (e.g. legacy hand-built pages) — the caller then falls back to
-     * stripping only the identity/tenant columns.
+     * Top-level $detailData keys the form binds (recursing into blocks): those of
+     * the resolved $pageLayout — a locked property the client cannot rewrite, which
+     * also carries layouts a component builds at runtime — and those of the
+     * on-disk detail YAML. Empty when the component has no field layout at all
+     * (hand-built `*-page` components) — such a component declares its inputs in
+     * additionalDetailFields() or persists in its own store().
      *
      * @return array<int, string>
      */
     protected function writableDetailDataKeys(string $modelClass): array
     {
+        $keys = $this->writableKeysFromFields($this->pageLayout['fields'] ?? []);
+
         $component = $this->getDetailComponent();
-        if (Str::endsWith($component, '-page')) {
-            return [];
+        if (! Str::endsWith($component, '-page')) {
+            $fields = StaticConfigHelper::getComponentFields($component, $modelClass)['fields'] ?? [];
+            $keys = [...$keys, ...$this->writableKeysFromFields($fields)];
         }
 
-        $fields = StaticConfigHelper::getComponentFields($component, $modelClass)['fields'] ?? [];
-
-        return $this->writableKeysFromFields($fields);
+        return array_values(array_unique($keys));
     }
 
     /**

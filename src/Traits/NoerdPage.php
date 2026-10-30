@@ -410,6 +410,20 @@ trait NoerdPage
     }
 
     /**
+     * Form paths a hand-built input binds that no layout field declares, as full
+     * field names (`detailData.notes`, `detailData.custom_attributes.sap_number`).
+     * The client may only change what the layout or this list declares: the
+     * default store() persists these keys too, and a nested path opens exactly
+     * that key below a nested root such as `custom_attributes`.
+     *
+     * @return list<string>
+     */
+    protected function additionalDetailFields(): array
+    {
+        return [];
+    }
+
+    /**
      * The registered relation definition of a layout field, or null when the
      * layout declares no such field or the field is not a relation type.
      */

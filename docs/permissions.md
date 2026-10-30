@@ -182,6 +182,16 @@ A violation throws Livewire's `CannotUpdateLockedPropertyException`. The practic
 bind any of these properties to `wire:model`** and never pass the three mount-protected ones as
 modal arguments — set them as literal property defaults on the component instead.
 
+## Client-writable form paths
+
+Livewire lets the client update every public property it was sent. Beyond the locked properties
+above, `Noerd\Support\ClientWriteGuardHook` keeps the update channel of every `NoerdPage`
+component away from what the form does not let the user edit: `readonly: true` fields and the
+unbound keys below a nested root such as `custom_attributes`. Such updates are reverted to the
+value the server rendered; `setFieldValue` refuses them as well. Inputs a Blade binds without a
+layout field are declared in `additionalDetailFields()`. Details:
+[Detail View](detail-view.md#what-the-client-may-change).
+
 ## Query-level read guard (opt-in trait)
 
 The generic read guards cover the NoerdList/NoerdDetail render paths. Data
