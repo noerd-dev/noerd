@@ -56,7 +56,6 @@ widgets:
 |----------|-------------|
 | `title` | Page title (translation key) |
 | `detail` | The embedded detail Livewire component (full name, e.g. `inventory::warehouse-detail`). Drives the generic store roundtrip |
-| `details` | A list of embedded detail components saved by the same Save button (see [Several embedded details](#several-embedded-details)). The first entry — or `detail:` when both are given — is the PRIMARY detail whose record is the page's own; a component named twice is embedded once |
 | `quickCreate` | Opt-in for the narrow quick-create modal on new records (also sizes the modal via noerd-modal) |
 | `tabs` | Page-level tabs (e.g. Media, Activity Log) — rendered by the page blade via `<x-noerd::tabs>`; same properties as [detail tabs](detail-view.md#tab-properties) |
 | `relations` | Relation Box tiles (see [Relation Box](#relation-box) below). Each tile may carry `route:` next to `component:` |
@@ -134,20 +133,15 @@ new class extends Component {
   chrome-less (no header/footer/scroll wrapper), the page owns all chrome.
 - The list refreshed when the page closes is derived from the component name with its namespace
   kept (`inventory::warehouse-page` → `inventory::warehouses-list`; `getListComponent()` strips
-  `-page` and `-detail` alike). A list that does not follow the plural convention is declared as
-  `protected string $listComponent = 'inventory::stock-list';` on the page (the trait declares no
-  such property itself — keep it `protected`); overriding `getListComponent()` stays the escape
-  hatch for a dynamic target and wins over the property. The same shape configures the YAML the
-  page's detail resolves under: `protected string $detailConfigComponent` / `getDetailComponent()`.
+  `-page` and `-detail` alike). A page whose list does not follow the plural convention overrides
+  `getListComponent()`; `getDetailComponent()` is the matching hook for the YAML the page's detail
+  resolves under.
 - `$detailPrimary` binds `$modelId` (`int|string|null`) to the page's URL parameter
   (`?warehouseId=5`) via the trait's `queryStringNoerdPage()` — never redeclare `$modelId` or add
   a `#[Url]` attribute. The embedded detail may declare the SAME alias (it does, for standalone
   use): an `embedded: true` instance skips the binding automatically, so page and detail never
   compete for the URL parameter.
-- `openRelationDetail($fieldName)` opens the record behind a `detailData` foreign key as a modal —
-  target route and component come from the field's registered relation definition in the layout
-  (route first, component as fallback); `setPreselect()` /
-  `preselect()` hand a preselected filter value between a page and a related list through the
+- `setPreselect()` / `preselect()` hand a preselected filter value between a page and a related list through the
   session (see [Detail View](detail-view.md#custom-store--delete-logic)).
 
 ## Relation Box
@@ -192,12 +186,12 @@ Registry tiles render after the YAML tiles and may additionally carry a `count` 
 The save flow between page and embedded detail is fully generic — no per-component events:
 
 1. The page footer's Save calls `NoerdPage::store()`, which dispatches
-   **`storeDetail-{detail}`** for every embedded detail (suffix = the full component name from
-   the YAML `detail:` / `details:` keys).
+   **`storeDetail-{detail}`** to the embedded detail (suffix = the full component name from
+   the YAML `detail:` key).
 2. The detail listens (via `getListeners()`), runs its normal `store()` — identical to a
    standalone save — and ends in `finishStore($model)`.
-3. `finishStore()` (protected) dispatches **`detailStored-{detail}`** with the payload `modelId`
-   and `detail` (the reporting component's name). For the primary detail the page adopts the id
+3. `finishStore()` (protected) dispatches **`detailStored-{detail}`** with the payload `modelId`.
+   The page adopts the id
    (`embeddedDetailStored()`), refreshes its `$detailData` snapshot (merge — page-owned keys
    survive), runs `storeProcess()` and finally the protected hook
    **`afterEmbeddedDetailStored($model)`**.
@@ -205,48 +199,11 @@ The save flow between page and embedded detail is fully generic — no per-compo
    `afterEmbeddedDetailStored(Model $model)`.
 
 Live form sync: an embedded detail mirrors its form state via **`detailDataUpdated-{detail}`**
-(payload `detailData` + `detail`): `NoerdDetail::updatedDetailData()` calls the protected
+(payload `detailData`): `NoerdDetail::updatedDetailData()` calls the protected
 `syncEmbeddedDetailData()`, which dispatches `syncPayload()`. Override `syncPayload()` to filter the
-payload; a detail with its own `updatedDetailData()` hook calls `syncEmbeddedDetailData()` itself. The page merges the primary detail's state in
+payload; a detail with its own `updatedDetailData()` hook calls `syncEmbeddedDetailData()` itself. The page merges the detail's state in
 `embeddedDetailDataUpdated()` (override to add side effects, e.g. a change counter for a live
 preview).
-
-## Several embedded details
-
-A page may embed MORE than one detail — a second form of the same record, or a related
-record such as a settings row — and save all of them with its single Save button:
-
-```yaml
-title: Warehouse
-detail: inventory::warehouse-detail          # the primary: the page's own record
-details:
-  - inventory::warehouse-pricing-detail      # saved by the same Save button
-```
-
-```blade
-@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))
-
-@if ($modelId)
-    @livewire('inventory::warehouse-pricing-detail', ['modelId' => $modelId, 'embedded' => true], key('embedded-detail-pricing'))
-@endif
-```
-
-- `embeddedDetailComponents()` lists every embedded detail, the primary first (`detail:`, or the
-  first entry of `details:`). `store()` dispatches `storeDetail-*` to all of them; the listeners
-  `detailStored-*` / `detailDataUpdated-*` are registered for each.
-- Every detail validates and persists on its own, behind its own object permission. The default
-  `store()` writes only the fields its own YAML declares, so two slim details of the SAME model
-  each persist their own columns.
-- Only the primary detail's report changes the page: its id is adopted, its data merged. An
-  ADDITIONAL detail's report only sets the success indicator and runs the protected no-op hooks
-  **`afterAdditionalDetailStored(string $detail, int $modelId)`** and
-  **`afterAdditionalDetailDataUpdated(string $detail, array $detailData)`** — its keys (`name`, …)
-  must never clobber the page mirror. Override the hooks for a preview or a reload.
-- An additional detail that is a child record of the primary is rendered only once the record
-  exists (`@if ($modelId)`, the same rule as embedded lists). Each embed needs its own
-  `wire:key`; there is still exactly ONE `<x-noerd::delete-save-bar>` on the page.
-- Each embedded detail carries its own module-contributed header actions on its form block
-  (see [Header Actions](header-actions.md)).
 
 ## References
 

@@ -207,27 +207,15 @@ trait NoerdDetail
 
     /**
      * Shared store tail for details: run the post-store chrome and report the
-     * persisted record to a hosting page (`detailStored-{name}`, payload `modelId`
-     * plus `detail` = this component's name, so a page embedding several details
-     * knows which one reported). Standalone the event simply has no listener.
+     * persisted record to a hosting page (`detailStored-{name}`, payload `modelId`).
+     * Standalone the event simply has no listener.
      * Custom store() overrides end with this call.
      */
     protected function finishStore(Model $model): void
     {
         $this->storeProcess($model);
 
-        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id, detail: $this->componentName());
-    }
-
-    protected function returnsArray(string $method): bool
-    {
-        if (! method_exists($this, $method)) {
-            return false;
-        }
-
-        $returnType = (new ReflectionMethod($this, $method))->getReturnType();
-
-        return $returnType instanceof ReflectionNamedType && $returnType->getName() === 'array';
+        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id);
     }
 
     /**
@@ -241,10 +229,12 @@ trait NoerdDetail
         }
 
         $reflection = new ReflectionMethod($this, $method);
+        $returnType = $reflection->getReturnType();
 
         return $reflection->isPublic()
             && $reflection->getNumberOfRequiredParameters() === 0
-            && $this->returnsArray($method);
+            && $returnType instanceof ReflectionNamedType
+            && $returnType->getName() === 'array';
     }
 
     /**
@@ -336,7 +326,7 @@ trait NoerdDetail
     protected function syncEmbeddedDetailData(): void
     {
         if ($this->embedded) {
-            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload(), detail: $this->componentName());
+            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload());
         }
     }
 
@@ -399,10 +389,8 @@ trait NoerdDetail
             : null;
 
         if ($record instanceof Model) {
-            foreach (app(ComputedColumnRegistry::class)->groupByProvider($fields) as [$provider, $providerFields]) {
-                foreach ($provider->detailValues($record, $providerFields) as $name => $value) {
-                    $values[ComputedFields::valueKey((string) $name)] = $value;
-                }
+            foreach (app(ComputedColumnRegistry::class)->detailValues($record, $fields) as $name => $value) {
+                $values[ComputedFields::valueKey($name)] = $value;
             }
         }
 

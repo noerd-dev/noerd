@@ -6,11 +6,7 @@ namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -19,21 +15,20 @@ use Livewire\WithPagination;
 use LogicException;
 use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
-use Noerd\Helpers\FormatHelper;
-use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\ComputedFields;
-use Noerd\Support\LayoutFields;
-use Noerd\Support\ListCellFormatter;
+use Noerd\Support\CsvListExporter;
+use Noerd\Support\ListColumnIntrospection;
+use Noerd\Support\ListPermissions;
+use Noerd\Support\PicklistBadges;
 use Noerd\Support\SchemaColumnCache;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Throwable;
 
 trait NoerdList
 {
@@ -41,20 +36,6 @@ trait NoerdList
     use RoutedModal;
     use WithoutUrlPagination;
     use WithPagination;
-
-    protected const COLUMN_TYPE_MAP = [
-        'tinyint' => 'bool',
-        'boolean' => 'bool',
-        'integer' => 'number',
-        'bigint' => 'number',
-        'smallint' => 'number',
-        'decimal' => 'number',
-        'float' => 'number',
-        'double' => 'number',
-        'date' => 'date',
-        'datetime' => 'datetime',
-        'timestamp' => 'datetime',
-    ];
 
     protected const MAX_PER_PAGE = 200;
 
@@ -179,41 +160,20 @@ trait NoerdList
      */
     protected ?string $listQueryConfigName = null;
 
-    /** @var array<string, array<string, array<int, array{value: mixed, label: string}>>> */
-    protected array $picklistOptionCache = [];
-
     /** @var array<int, string>|null Request cache for filterableColumnFields(). */
     protected ?array $filterableColumnCache = null;
-
-    /**
-     * Request cache for relationColumnPath(), keyed by column field. Keeps the
-     * relation-method probing (one model instantiation per segment) to a single
-     * run per field and request.
-     *
-     * @var array<string, array{relation: string, column: string, table: string}|null>|null
-     */
-    protected ?array $relationColumnPathCache = null;
 
     /** @var array<string, mixed>|null Last buildList() result, memoized per request. */
     protected ?array $builtListConfigCache = null;
 
-    /** @var array<string, mixed>|null */
-    protected ?array $headerControlsCache = null;
-
-    /** @var array<string, bool>|null Request cache for isJsonColumnPath(), keyed by column field. */
-    protected ?array $jsonColumnPathCache = null;
-
     /** @var array<string, array<string, mixed>> Request memo for getListConfig() (incl. layout overrides). */
     protected array $listConfigMemo = [];
-
-    /** One reusable instance of the resolved model, for table/cast introspection. */
-    private ?Model $resolvedModelInstanceMemo = null;
 
     /**
      * Whether a column field addresses a nested path rather than a real DB column — e.g. a custom
      * attribute (`custom_attributes.sap_number`) or a relation (`customer.name`). Such fields resolve at
      * render time via data_get(); the database cannot sort or search on them. Column filters are the
-     * exception: a path into a JSON-cast column filters via the arrow operator (see isJsonColumnPath()).
+     * exception: a path into a JSON-cast column filters via the arrow operator (see ListColumnIntrospection::isJsonPath()).
      */
     public static function isDottedField(string $field): bool
     {
@@ -331,7 +291,7 @@ trait NoerdList
         // A computed column is no table column: its provider decides whether
         // the query can be ordered by it.
         $computedColumn = $this->computedColumn($field);
-        if ($computedColumn !== null && ! $this->isSortableComputedColumn($computedColumn)) {
+        if ($computedColumn !== null && ! app(ComputedColumnRegistry::class)->isSortable($this->computedModelClass(), $computedColumn)) {
             return;
         }
 
@@ -422,7 +382,7 @@ trait NoerdList
         $picklistOptions = $this->picklistOptionsFromDetail();
         $model = $this->resolvedModelInstance();
         $schemaTypes = $model !== null
-            ? $this->schemaColumnTypeMap($model->getTable())
+            ? ListColumnIntrospection::schemaTypes($model->getTable())
             : [];
 
         $chips = [];
@@ -470,10 +430,6 @@ trait NoerdList
      */
     public function headerControls(): array
     {
-        if ($this->headerControlsCache !== null) {
-            return $this->headerControlsCache;
-        }
-
         $config = $this->builtListConfig();
         $settings = $config['listSettings'] ?? [];
 
@@ -483,7 +439,7 @@ trait NoerdList
         $isPicker = $this->returnsSelection;
         $actions = $isPicker ? [] : ($settings['actions'] ?? []);
 
-        return $this->headerControlsCache = [
+        return [
             'search' => ! ($settings['disableSearch'] ?? false) && ! ($config['objectAccessDenied'] ?? false),
             'csv' => $this->enableCsvExport,
             'secondary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') === 'secondary'),
@@ -523,9 +479,9 @@ trait NoerdList
      */
     public function findListAction(int|string $id): void
     {
-        $listData = $this->resolvedListConfig()['rows'] ?? [];
+        $listData = $this->builtListConfig()['rows'] ?? [];
 
-        $item = is_array($listData) ? ($listData[$id] ?? null) : $listData->getCollection()->get($id);
+        $item = ListColumnIntrospection::rows($listData)?->get($id);
         if (! $item) {
             return;
         }
@@ -644,7 +600,7 @@ trait NoerdList
 
         // Building the list query once populates resolvedModelClass and
         // listQueryConfigName for the checks below.
-        $this->resolvedListConfig();
+        $this->builtListConfig();
 
         // The method is public (Livewire-callable), but must only act when the
         // list's YAML actually declares this bulk action — a list that never
@@ -682,7 +638,6 @@ trait NoerdList
         // The guard checks above resolved (and memoized) the pre-delete list —
         // drop it so the re-render queries the surviving rows.
         $this->builtListConfigCache = null;
-        $this->headerControlsCache = null;
         $this->resetPage();
     }
 
@@ -693,12 +648,10 @@ trait NoerdList
      */
     public function visibleRowIds(): array
     {
-        $rows = $this->resolvedListConfig()['rows'] ?? null;
-        if ($rows === null) {
+        $collection = ListColumnIntrospection::rows($this->builtListConfig()['rows'] ?? null);
+        if ($collection === null) {
             return [];
         }
-
-        $collection = is_array($rows) ? collect($rows) : $rows->getCollection();
 
         return $collection
             ->map(fn($row): int|string => $this->normalizeRecordId(is_array($row) ? ($row['id'] ?? 0) : $row->id))
@@ -706,14 +659,6 @@ trait NoerdList
             ->values()
             ->all();
     }
-
-    /**
-     * Inline cell editing (editable list columns dispatch
-     * `updateRow(id, column, value)` via wire:change). The base implementation
-     * is a deliberate no-op — a list opts into persistence by overriding this
-     * method with the same signature.
-     */
-    public function updateRow(int|string|null $id = null, ?string $column = null, mixed $value = null): void {}
 
     #[Computed]
     public function tableFilters(): array
@@ -741,82 +686,48 @@ trait NoerdList
     public function exportCsv(): StreamedResponse
     {
         // Populates resolvedModelClass so the read check sees the actual model.
-        $this->resolvedListConfig();
+        $this->builtListConfig();
         abort_unless(AccessHelper::canReadObject($this->objectPermissionModelClass()), 403);
 
         [$query, $columns, $filename] = $this->prepareCsvExport();
 
         $computedColumns = ComputedFields::columns($columns);
-        if ($computedColumns !== [] && $query instanceof Builder) {
-            $this->prepareComputedColumns($query, $computedColumns);
+        if ($computedColumns !== []) {
+            app(ComputedColumnRegistry::class)->prepareQuery($query, $computedColumns);
         }
 
-        return response()->streamDownload(function () use ($query, $columns, $computedColumns): void {
-            $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF");
-
-            $delimiter = FormatHelper::csvDelimiter();
-            fputcsv($handle, array_map(
-                fn(array $column): string => __($column['label'] ?? $column['field'] ?? ''),
-                $columns,
-            ), $delimiter);
-
-            // Chunked, so computed columns are filled once per chunk, not per row.
-            $query->lazy(200)->chunk(200)->each(function ($rows) use ($handle, $columns, $delimiter, $computedColumns): void {
-                if ($computedColumns !== []) {
-                    $this->fillComputedColumns($computedColumns, $rows->collect());
-                }
-
-                foreach ($rows as $row) {
-                    $this->prepareExportRow($row);
-                    $line = [];
-                    foreach ($columns as $column) {
-                        $line[] = $this->formatCsvValue(
-                            data_get($row, $column['field'] ?? ''),
-                            $column,
-                        );
-                    }
-                    fputcsv($handle, $line, $delimiter);
-                }
-            });
-
-            fclose($handle);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return CsvListExporter::stream(
+            $query,
+            $columns,
+            $filename,
+            prepareChunk: $computedColumns === [] ? null : fn($rows) => app(ComputedColumnRegistry::class)->fillRows($rows, $computedColumns),
+            prepareRow: $this->prepareExportRow(...),
+            format: $this->formatCsvValue(...),
+        );
     }
 
     /**
-     * The buildList() result, computed at most once per request. The header
-     * chrome (modal-title's generic list controls) and the list body both read
-     * this — for with()-style components Livewire evaluates with() before the
-     * view renders, so the cache is already populated when a custom header
-     * slot executes; slim components compute it lazily here.
+     * The buildList() result, computed at most once per request, whatever the
+     * component's style: lists declaring $listModel build it via listData(),
+     * lists with a custom with() return it as view data. The header chrome, the
+     * list body and the generic actions (row click, select-all, bulk delete) all
+     * read it — without the memo each of them would run the paginated query
+     * again. Mutating actions (deleteSelected) clear it so the re-render
+     * queries fresh rows.
      *
      * @return array<string, mixed>
      */
     public function builtListConfig(): array
     {
-        return $this->builtListConfigCache ??= $this->resolvedListConfig();
-    }
+        if ($this->builtListConfigCache !== null) {
+            return $this->builtListConfigCache;
+        }
 
-    /**
-     * The table's schema columns keyed by column name, introspected at most once
-     * per table and process (see SchemaColumnCache) — on an 8-column list the
-     * uncached Schema::hasColumn() calls used to mean a two-digit number of
-     * metadata queries per render.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    protected static function tableColumns(string $table): array
-    {
-        return SchemaColumnCache::columns($table);
-    }
+        if (property_exists($this, 'listModel') && $this->listModel) {
+            return $this->builtListConfigCache ??= $this->listData();
+        }
 
-    /**
-     * Cached replacement for Schema::hasColumn() (see tableColumns()).
-     */
-    protected static function tableHasColumn(string $table, string $column): bool
-    {
-        return SchemaColumnCache::hasColumn($table, $column);
+        return $this->builtListConfigCache ??= method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
     }
 
     protected function mountList(): void
@@ -910,9 +821,8 @@ trait NoerdList
 
         // Deep-link support: ?{entity}Id=5 opens the record's modal over the
         // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
-        // updates POST to /livewire/update and carry no page query, and the
-        // former `rendering()` hook was both accidental-initial-load-only and
-        // silently disabled by any component defining its own rendering().
+        // updates POST to /livewire/update and carry no page query. A list
+        // needs no rendering() hook of its own for this.
         $deepLinkId = (int) request()->query($this->getDeepLinkParam());
         if ($deepLinkId) {
             $this->listAction($deepLinkId);
@@ -975,31 +885,6 @@ trait NoerdList
     }
 
     /**
-     * The list config regardless of the component's style: lists declaring
-     * $listModel build it via listData(), lists with a custom with() already
-     * return it as view data. Lets generic trait features (row click, select-all,
-     * bulk delete) work for both without assuming one style.
-     *
-     * @return array<string, mixed>
-     */
-    protected function resolvedListConfig(): array
-    {
-        // Memoized per request: actions like toggleSelectAllVisible() resolve the
-        // list before the render does — without the memo each resolution runs the
-        // full paginated query again. Mutating actions (deleteSelected) clear the
-        // cache so their re-render queries fresh rows.
-        if ($this->builtListConfigCache !== null) {
-            return $this->builtListConfigCache;
-        }
-
-        if (property_exists($this, 'listModel') && $this->listModel) {
-            return $this->listData();
-        }
-
-        return method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
-    }
-
-    /**
      * Columns the header filters (listFilters) may constrain — every declared
      * table filter column. Override to allow additional keys.
      */
@@ -1041,57 +926,47 @@ trait NoerdList
     }
 
     /*
-     | The naming hooks below derive their value from the component name and
-     | may be configured per component through a PROTECTED property of the same
-     | name ($listConfigComponent, $selectEvent, $deepLinkParam, $listEntity).
-     | The trait declares none of them — PHP fatals when a class redeclares a
-     | trait property with a different default — so each hook reads the
-     | property through `??` and falls back to the derivation. Overriding the
-     | method itself stays possible for dynamic cases.
+     | The naming hooks below derive their value from the component name;
+     | override the method for a component that does not follow the convention.
      */
 
     /**
      * The name this list's YAML config resolves under — the component's own
-     * name. Configure `protected string $listConfigComponent` when a component
-     * renders another list's YAML.
+     * name. Override when a component renders another list's YAML.
      */
     protected function listConfigComponent(): string
     {
-        return $this->listConfigComponent ?? $this->componentName();
+        return $this->componentName();
     }
 
     /**
      * Get the event name for select mode.
      * Derives from COMPONENT: 'customers-list' -> 'customerSelected'
      * Strips any Livewire namespace prefix: 'booking-members::customers-list' -> 'customerSelected'
-     * Configure `protected string $selectEvent` to dispatch another name.
      */
     protected function getSelectEvent(): string
     {
-        return $this->selectEvent ?? Str::camel($this->getListEntity()) . 'Selected';
+        return Str::camel($this->getListEntity()) . 'Selected';
     }
 
     /**
      * Get the URL query parameter that deep-links a record of this list.
      * Derives from COMPONENT: 'products-list' -> 'productId'
-     * Configure `protected string $deepLinkParam` for another parameter name.
      */
     protected function getDeepLinkParam(): string
     {
-        return $this->deepLinkParam ?? Str::camel($this->getListEntity()) . 'Id';
+        return Str::camel($this->getListEntity()) . 'Id';
     }
 
     /**
      * Get the singular entity name of this list.
      * Derives from COMPONENT: 'customers-list' -> 'customer'
      * Strips any Livewire namespace prefix: 'booking-members::customers-list' -> 'customer'
-     * Configure `protected string $listEntity` when the list name does not
-     * follow the `{entities}-list` convention — the select event and the deep
-     * link parameter derive from it.
+     * The select event and the deep link parameter derive from it.
      */
     protected function getListEntity(): string
     {
-        return $this->listEntity ?? $this->deriveListEntity();
+        return $this->deriveListEntity();
     }
 
     protected function dispatchSelectionEvents(mixed $modelId = null): void
@@ -1110,9 +985,6 @@ trait NoerdList
     {
         if ($this->resolvedModelClass !== $modelClass || $this->listQueryConfigName !== $configName) {
             $this->filterableColumnCache = null;
-            $this->relationColumnPathCache = null;
-            $this->jsonColumnPathCache = null;
-            $this->resolvedModelInstanceMemo = null;
         }
         $this->resolvedModelClass = $modelClass;
         $this->listQueryConfigName = $configName;
@@ -1133,7 +1005,7 @@ trait NoerdList
                 ? $listConfig['searchableColumns']
                 : collect($listConfig['columns'] ?? [])->pluck('field')->filter()->toArray();
 
-            $validFields = array_filter($searchableFields, fn($f) => is_string($f) && self::tableHasColumn($table, $f));
+            $validFields = array_filter($searchableFields, fn($f) => is_string($f) && SchemaColumnCache::hasColumn($table, $f));
 
             if (! empty($validFields)) {
                 // Contains match with escaped LIKE wildcards — same rule and
@@ -1148,17 +1020,20 @@ trait NoerdList
         }
 
         $this->applyColumnFilters($query, $modelClass);
-        $this->eagerLoadRelationColumns($query);
+        $eagerLoads = ListColumnIntrospection::eagerLoads($modelClass, $this->getListConfig($configName)['columns'] ?? []);
+        if ($eagerLoads !== []) {
+            $query->with($eagerLoads);
+        }
 
         $computedColumns = ComputedFields::columns($listConfig['columns'] ?? []);
         if ($computedColumns !== []) {
-            $this->prepareComputedColumns($query, $computedColumns);
+            app(ComputedColumnRegistry::class)->prepareQuery($query, $computedColumns);
         }
 
         // A sortable computed column orders through its provider (e.g. by an
         // aggregate subselect); the client-writable $sortField is re-checked here.
         $sortComputedColumn = $this->computedColumn($this->sortField);
-        if ($sortComputedColumn !== null && $this->isSortableComputedColumn($sortComputedColumn)) {
+        if ($sortComputedColumn !== null && app(ComputedColumnRegistry::class)->isSortable($this->computedModelClass(), $sortComputedColumn)) {
             app(ComputedColumnRegistry::class)->providerFor($sortComputedColumn)?->applyOrder($query, $sortComputedColumn, $this->sortAsc ? 'asc' : 'desc');
 
             return $query;
@@ -1169,40 +1044,13 @@ trait NoerdList
         // — password, remember_token, api_token — turns the list into an
         // oracle over that value, so hidden attributes are never sortable.
         $hidden = $this->resolvedModelInstance()?->getHidden() ?? [];
-        $sortField = self::tableHasColumn($table, $this->sortField)
+        $sortField = SchemaColumnCache::hasColumn($table, $this->sortField)
             && ! in_array($this->sortField, $hidden, true)
                 ? $this->sortField
                 : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');
 
         return $query;
-    }
-
-    /**
-     * Eager-load the relations behind dotted relation columns
-     * (`customer.name`, `defaultDeliveryAddress.locality`) so rendering them does
-     * not lazy-load once per row. JSON-column paths (custom_attributes.x) resolve
-     * in memory and are skipped. Relation paths are validated by relationColumnPath().
-     */
-    protected function eagerLoadRelationColumns(Builder $query): void
-    {
-        $relations = [];
-
-        foreach ($this->getListConfig($this->listQueryConfigName)['columns'] ?? [] as $column) {
-            $field = $column['field'] ?? null;
-            if (! is_string($field) || ! self::isDottedField($field) || $this->isJsonColumnPath($field)) {
-                continue;
-            }
-
-            $path = $this->relationColumnPath($field);
-            if ($path !== null) {
-                $relations[$path['relation']] = true;
-            }
-        }
-
-        if ($relations !== []) {
-            $query->with(array_keys($relations));
-        }
     }
 
     /**
@@ -1236,66 +1084,15 @@ trait NoerdList
 
                 $computedColumn = $this->computedColumn($field);
                 if ($computedColumn !== null) {
-                    return $this->isFilterableComputedColumn($computedColumn);
+                    return app(ComputedColumnRegistry::class)->isFilterable($this->computedModelClass(), $computedColumn);
                 }
 
                 return self::isDottedField($field)
                     ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
-                    : self::tableHasColumn($table, $field);
+                    : SchemaColumnCache::hasColumn($table, $field);
             })
             ->values()
             ->all();
-    }
-
-    /**
-     * Whether a dotted column field addresses a path inside a JSON column of the
-     * resolved model (e.g. `custom_attributes.sap_number`): the base segment must
-     * be a real table column that the model casts to an array/object, so the
-     * query can filter it via the JSON arrow operator. Relation paths
-     * (`customer.name`) have no such column and stay unfilterable.
-     */
-    protected function isJsonColumnPath(string $field): bool
-    {
-        if ($this->resolvedModelClass === null) {
-            return false;
-        }
-
-        $this->jsonColumnPathCache ??= [];
-
-        if (array_key_exists($field, $this->jsonColumnPathCache)) {
-            return $this->jsonColumnPathCache[$field];
-        }
-
-        $model = $this->resolvedModelInstance();
-        $base = Str::before($field, '.');
-
-        return $this->jsonColumnPathCache[$field] = self::tableHasColumn($model->getTable(), $base)
-            && $model->hasCast($base, ['array', 'json', 'object', 'collection']);
-    }
-
-    /**
-     * Resolve a dotted column field into a relation filter target: everything
-     * before the last dot is the (possibly nested) relation path handed to
-     * whereHas(), the last segment the column on the related table — e.g.
-     * `defaultDeliveryAddress.locality` => relation `defaultDeliveryAddress`,
-     * column `locality`. Returns null whenever a segment is not a relation
-     * method or the column does not exist, so a YAML typo never breaks the list.
-     *
-     * @return array{relation: string, column: string, table: string}|null
-     */
-    protected function relationColumnPath(string $field): ?array
-    {
-        if ($this->resolvedModelClass === null) {
-            return null;
-        }
-
-        $this->relationColumnPathCache ??= [];
-
-        if (array_key_exists($field, $this->relationColumnPathCache)) {
-            return $this->relationColumnPathCache[$field];
-        }
-
-        return $this->relationColumnPathCache[$field] = $this->resolveRelationColumnPath($field);
     }
 
     /**
@@ -1316,7 +1113,7 @@ trait NoerdList
         }
 
         $table = $this->resolvedModelInstance()->getTable();
-        $schemaTypes = $this->schemaColumnTypeMap($table);
+        $schemaTypes = ListColumnIntrospection::schemaTypes($table);
         $yamlTypes = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
             ->filter(fn($column): bool => isset($column['field'], $column['type']))
             ->pluck('type', 'field')
@@ -1336,138 +1133,35 @@ trait NoerdList
                 continue;
             }
 
-            // A relation path (`defaultDeliveryAddress.locality`) filters through a
-            // whereHas() subquery on the related table — a join would collide with
-            // the base table's column names. JSON paths take precedence and fall
-            // through to the arrow-operator branch below.
+            // A relation path (`defaultDeliveryAddress.locality`) filters on the
+            // related table; JSON paths take precedence and use the arrow operator.
             $relationPath = self::isDottedField($field) && ! $this->isJsonColumnPath($field)
                 ? $this->relationColumnPath($field)
                 : null;
             if ($relationPath !== null) {
                 $relationType = $yamlTypes[$field]
-                    ?? $this->schemaColumnTypeMap($relationPath['table'])[$relationPath['column']]
+                    ?? ListColumnIntrospection::schemaTypes($relationPath['table'])[$relationPath['column']]
                     ?? 'text';
 
-                // Empty includes rows without a related record at all, so it is the
-                // negation of "a related record with a set value exists".
-                $wantEmpty = ColumnFilterParser::emptiness($raw);
-                if ($wantEmpty !== null) {
-                    $notEmpty = fn(Builder $related) => ColumnFilterParser::applyNotEmpty($related, $relationPath['column'], $relationType);
-                    $wantEmpty
-                        ? $query->whereDoesntHave($relationPath['relation'], $notEmpty)
-                        : $query->whereHas($relationPath['relation'], $notEmpty);
-
-                    continue;
-                }
-
-                $query->whereHas(
-                    $relationPath['relation'],
-                    fn(Builder $related) => ColumnFilterParser::apply($related, $relationPath['column'], $relationType, $raw),
-                );
+                ColumnFilterParser::applyRelation($query, $relationPath['relation'], $relationPath['column'], $relationType, $raw);
 
                 continue;
             }
 
-            // Same type resolution as the rendered header cell: explicit YAML type,
-            // else a detail-picklist column counts as badge, else the schema type.
-            $type = $yamlTypes[$field] ?? null;
+            // The type the header cell renders with (buildList()): an explicit YAML
+            // type, else the schema type, else a badge for a detail-picklist column.
+            $type = $yamlTypes[$field] ?? $schemaTypes[$field] ?? null;
             if (($type === null || $type === 'text') && in_array($field, $picklistFields, true)) {
                 $type = 'badge';
             }
-            $type ??= $schemaTypes[$field] ?? 'text';
 
             // A JSON path (custom_attributes.x) filters via the arrow operator on
             // its base column; it has no schema type, so YAML/picklist typing
             // applies with text as the fallback.
             $column = self::isDottedField($field) ? str_replace('.', '->', $field) : $field;
 
-            ColumnFilterParser::apply($query, $column, $type, $raw);
+            ColumnFilterParser::apply($query, $column, $type ?? 'text', $raw);
         }
-    }
-
-    /**
-     * Auto-detect column types from database schema for columns without explicit type in YAML.
-     */
-    protected function applyAutoColumnTypes(array $listSettings, mixed $rows): array
-    {
-        // With zero rows (e.g. a column filter matching nothing) no model instance can
-        // be pulled from the result set — fall back to the class listQuery() resolved,
-        // so bool/date columns keep their type and the filter popover keeps its UI.
-        $model = $this->resolveModelFromRows($rows) ?? $this->resolvedModelInstance();
-        if (! $model) {
-            return $listSettings;
-        }
-
-        $columnTypeMap = $this->schemaColumnTypeMap($model->getTable());
-
-        foreach ($listSettings['columns'] ?? [] as $i => $column) {
-            if (isset($column['type']) || ComputedFields::isComputed($column)) {
-                continue;
-            }
-            $field = $column['field'] ?? null;
-            if ($field && isset($columnTypeMap[$field])) {
-                $listSettings['columns'][$i]['type'] = $columnTypeMap[$field];
-            }
-        }
-
-        // Auto-align number/currency columns to the right (matching cell alignment)
-        foreach ($listSettings['columns'] ?? [] as $i => $column) {
-            if (isset($column['align'])) {
-                continue;
-            }
-            $type = $column['type'] ?? 'text';
-            if (in_array($type, ['number', 'currency'], true)) {
-                $listSettings['columns'][$i]['align'] = 'right';
-            }
-        }
-
-        return $listSettings;
-    }
-
-    /**
-     * Map of column name => noerd column type for the given table, derived from
-     * the DB schema. Shared by auto column typing and the column filters.
-     *
-     * @return array<string, string>
-     */
-    protected function schemaColumnTypeMap(string $table): array
-    {
-        $columnTypeMap = [];
-        foreach (self::tableColumns($table) as $name => $col) {
-            $normalized = mb_strtolower(preg_replace('/\(.*\)/', '', $col['type_name']));
-            if (isset(self::COLUMN_TYPE_MAP[$normalized])) {
-                $columnTypeMap[$name] = self::COLUMN_TYPE_MAP[$normalized];
-            }
-        }
-
-        return $columnTypeMap;
-    }
-
-    /**
-     * One shared instance of the resolved model class for table-name and cast
-     * introspection — the render path asks for it many times per request.
-     */
-    protected function resolvedModelInstance(): ?Model
-    {
-        if ($this->resolvedModelClass === null) {
-            return null;
-        }
-
-        return $this->resolvedModelInstanceMemo ??= new $this->resolvedModelClass();
-    }
-
-    protected function resolveModelFromRows(mixed $rows): ?Model
-    {
-        if ($rows instanceof LengthAwarePaginator
-            || $rows instanceof Paginator) {
-            $first = $rows->getCollection()->first();
-        } elseif ($rows instanceof Collection) {
-            $first = $rows->first();
-        } else {
-            return null;
-        }
-
-        return $first instanceof Model ? $first : null;
     }
 
     /**
@@ -1482,51 +1176,28 @@ trait NoerdList
             ? $config
             : $this->getListConfig($config);
 
-        $listSettings = $this->applyAutoColumnTypes($listSettings, $rows);
-        $listSettings = $this->applyPicklistBadges($listSettings);
+        // With zero rows (e.g. a column filter matching nothing) no model can be
+        // pulled from the result set — fall back to the class listQuery() resolved,
+        // so bool/date columns keep their type and the filter popover keeps its UI.
+        $listSettings = ListColumnIntrospection::applyAutoTypes(
+            $listSettings,
+            ListColumnIntrospection::firstModel($rows) ?? $this->resolvedModelInstance(),
+        );
+        $listSettings = PicklistBadges::apply($listSettings, $this->picklistOptionsFromDetail());
         $this->fillComputedColumns($listSettings['columns'] ?? [], $rows);
-        $this->primeRelationBadgeTitles($listSettings, $rows);
+        app(RelationTitleResolver::class)->primeColumns($listSettings['columns'] ?? [], ListColumnIntrospection::rows($rows));
 
         // Object permissions: strip the affordances the current user may not use.
         // In-memory lists (no model class) stay unrestricted.
         $permissionModel = $this->objectPermissionModelClass();
         $objectAccessDenied = ! AccessHelper::canReadObject($permissionModel);
-        if ($objectAccessDenied) {
-            unset($listSettings['actions']);
-        } else {
-            // "New …" buttons (action: listAction, or a route-opened record) are
-            // CREATE affordances; every other header action stays gated by write.
-            $canCreate = AccessHelper::canCreateObject($permissionModel);
-            $canWrite = AccessHelper::canWriteObject($permissionModel);
-            if (! $canCreate || ! $canWrite) {
-                $listSettings['actions'] = array_values(array_filter(
-                    $listSettings['actions'] ?? [],
-                    function (array $action) use ($canCreate, $canWrite): bool {
-                        $isCreate = ($action['action'] ?? null) === 'listAction' || isset($action['route']);
-
-                        return $isCreate ? $canCreate : $canWrite;
-                    },
-                ));
-                if ($listSettings['actions'] === []) {
-                    unset($listSettings['actions']);
-                }
-            }
-        }
-        if (! AccessHelper::canDeleteObject($permissionModel)) {
-            $listSettings['bulkActions'] = array_values(array_filter(
-                $listSettings['bulkActions'] ?? [],
-                fn(array $action): bool => ($action['action'] ?? null) !== 'deleteSelected',
-            ));
-        }
-
-        // buildList() REPLACES the config, so anything derived from it must go too.
-        $this->headerControlsCache = null;
+        $listSettings = ListPermissions::strip($listSettings, $permissionModel);
 
         // Computed columns their provider cannot order by render without a sort
         // button — isSortableColumn() reads them from notSortableColumns.
         $notSortableColumns = $listSettings['notSortableColumns'] ?? [];
         foreach (ComputedFields::columns($listSettings['columns'] ?? []) as $computedColumn) {
-            if (! $this->isSortableComputedColumn($computedColumn)) {
+            if (! app(ComputedColumnRegistry::class)->isSortable($this->computedModelClass(), $computedColumn)) {
                 $notSortableColumns[] = $computedColumn['field'];
             }
         }
@@ -1571,146 +1242,21 @@ trait NoerdList
     }
 
     /**
-     * Render columns that mirror a detail picklist (a `type: select` field with
-     * inline options) as translated badges. The option labels are read from the
-     * paired detail YAML — no per-list configuration is needed. A column that
-     * already declares an explicit type or its own options is left untouched, so a
-     * list can still opt in manually with `type: badge` + `options`.
-     */
-    protected function applyPicklistBadges(array $listSettings): array
-    {
-        $optionsByField = $this->picklistOptionsFromDetail();
-        if ($optionsByField === []) {
-            return $listSettings;
-        }
-
-        foreach ($listSettings['columns'] ?? [] as $i => $column) {
-            $field = $column['field'] ?? null;
-            if ($field === null || isset($column['options']) || ComputedFields::isComputed($column)) {
-                continue;
-            }
-
-            $type = $column['type'] ?? null;
-            if ($type !== null && $type !== 'text') {
-                continue;
-            }
-
-            if (isset($optionsByField[$field])) {
-                $listSettings['columns'][$i]['type'] = 'badge';
-                $listSettings['columns'][$i]['options'] = $optionsByField[$field];
-            }
-        }
-
-        return $listSettings;
-    }
-
-    /**
-     * Resolve the titles of every `relationBadge` column for the current page in
-     * one query per column instead of one per cell: the resolver's per-id memo is
-     * primed with a whereIn batch, so the table cells only read memoized values.
-     */
-    protected function primeRelationBadgeTitles(array $listSettings, mixed $rows): void
-    {
-        $badgeFields = [];
-        foreach ($listSettings['columns'] ?? [] as $column) {
-            if (($column['type'] ?? null) === 'relationBadge' && isset($column['field'])) {
-                $badgeFields[] = $column['field'];
-            }
-        }
-        if ($badgeFields === []) {
-            return;
-        }
-
-        if ($rows instanceof LengthAwarePaginator || $rows instanceof Paginator) {
-            $collection = $rows->getCollection();
-        } elseif ($rows instanceof Collection) {
-            $collection = $rows;
-        } elseif (is_array($rows)) {
-            $collection = collect($rows);
-        } else {
-            return;
-        }
-
-        if ($collection->isEmpty()) {
-            return;
-        }
-
-        $resolver = app(RelationTitleResolver::class);
-        foreach ($badgeFields as $field) {
-            $resolver->prime($field, $collection->map(fn($row) => data_get($row, $field))->all());
-        }
-    }
-
-    /**
-     * Map of `field => options` for every `type: select` field (with inline
-     * options) declared in this list's paired detail YAML. Memoised per request.
+     * Map of `field => options` for every select field of this list's paired
+     * detail YAML — the source of the automatic picklist badges.
      *
      * @return array<string, array<int, array{value: mixed, label: string}>>
      */
     protected function picklistOptionsFromDetail(): array
     {
         $detailComponent = $this->pairedDetailComponent();
-        if ($detailComponent === null) {
-            return [];
-        }
 
-        if (array_key_exists($detailComponent, $this->picklistOptionCache)) {
-            return $this->picklistOptionCache[$detailComponent];
-        }
-
-        $fields = StaticConfigHelper::tryGetComponentFields($detailComponent)['fields'] ?? [];
-        $map = [];
-        LayoutFields::walk($fields, function (array $field) use (&$map): void {
-            if (! isset($field['name'])) {
-                return;
-            }
-
-            // A value-storing collection select (valueField) resolves its badge
-            // labels from the tenant's collection entries — same source as the
-            // form element. Id-storing collection selects stay excluded (their
-            // columns are FK ids, not picklist values).
-            if (($field['type'] ?? null) === 'setupCollectionSelect'
-                && ! empty($field['collectionKey'])
-                && ! empty($field['valueField'])) {
-                $options = SetupCollectionHelper::selectOptions(
-                    $field['collectionKey'],
-                    $field['displayField'] ?? 'name',
-                    $field['valueField'],
-                );
-
-                if ($options !== []) {
-                    $map[Str::after($field['name'], 'detailData.')] = $options;
-                }
-
-                return;
-            }
-
-            if (($field['type'] ?? null) !== 'select' || empty($field['options'])) {
-                return;
-            }
-
-            $map[Str::after($field['name'], 'detailData.')] = $field['options'];
-        });
-
-        return $this->picklistOptionCache[$detailComponent] = $map;
+        return $detailComponent === null ? [] : PicklistBadges::optionsFromDetail($detailComponent);
     }
 
-    /**
-     * The detail component paired with this list by convention
-     * (`{x}-list` → `{x}-detail`, preserving any dotted subfolder), or null when
-     * this component is not a standard list.
-     */
     protected function pairedDetailComponent(): ?string
     {
-        $name = Str::afterLast($this->componentName(), '::');
-        $prefix = Str::contains($name, '.') ? Str::beforeLast($name, '.') . '.' : '';
-        $last = Str::afterLast($name, '.');
-
-        if (! Str::endsWith($last, '-list')) {
-            return null;
-        }
-
-        return $prefix . Str::singular(Str::before($last, '-list')) . '-detail';
+        return PicklistBadges::pairedDetail($this->componentName());
     }
 
     /**
@@ -1756,40 +1302,6 @@ trait NoerdList
     }
 
     /**
-     * @param  array<string, mixed>  $column
-     */
-    protected function isSortableComputedColumn(array $column): bool
-    {
-        $modelClass = $this->computedModelClass();
-        $provider = app(ComputedColumnRegistry::class)->providerFor($column);
-
-        return $modelClass !== null && $provider !== null && $provider->isSortable($modelClass, $column);
-    }
-
-    /**
-     * @param  array<string, mixed>  $column
-     */
-    protected function isFilterableComputedColumn(array $column): bool
-    {
-        $modelClass = $this->computedModelClass();
-        $provider = app(ComputedColumnRegistry::class)->providerFor($column);
-
-        return $modelClass !== null && $provider !== null && $provider->isFilterable($modelClass, $column);
-    }
-
-    /**
-     * Let every provider prepare the query for the computed columns it handles.
-     *
-     * @param  array<int, array<string, mixed>>  $columns
-     */
-    protected function prepareComputedColumns(Builder $query, array $columns): void
-    {
-        foreach (app(ComputedColumnRegistry::class)->groupByProvider($columns) as [$provider, $providerColumns]) {
-            $provider->prepareQuery($query, $providerColumns);
-        }
-    }
-
-    /**
      * Compute the computed columns of the current page once for all rows, so
      * every cell reads its value with data_get() like a stored attribute.
      *
@@ -1802,18 +1314,11 @@ trait NoerdList
             return;
         }
 
-        $collection = match (true) {
-            $rows instanceof LengthAwarePaginator, $rows instanceof Paginator => $rows->getCollection(),
-            $rows instanceof Collection => $rows,
-            default => null,
-        };
+        // Hand-built array rows carry no models a provider could fill.
+        $collection = is_array($rows) ? null : ListColumnIntrospection::rows($rows);
 
-        if ($collection === null || $collection->isEmpty()) {
-            return;
-        }
-
-        foreach (app(ComputedColumnRegistry::class)->groupByProvider($computedColumns) as [$provider, $providerColumns]) {
-            $provider->fillRows($collection, $providerColumns);
+        if ($collection !== null) {
+            app(ComputedColumnRegistry::class)->fillRows($collection, $computedColumns);
         }
     }
 
@@ -1830,7 +1335,6 @@ trait NoerdList
             $customName ?? '',
             $this->listView ?? '',
             $this->listViewApp ?? '',
-            $this->listActionMethod,
         ]);
         if (array_key_exists($memoKey, $this->listConfigMemo)) {
             return $this->listConfigMemo[$memoKey];
@@ -1851,54 +1355,21 @@ trait NoerdList
 
     protected function prepareExportRow(mixed $row): void {}
 
+    /**
+     * One CSV cell (CsvListExporter::formatValue()); override to change the
+     * notation of a column.
+     *
+     * @param  array<string, mixed>  $column
+     */
     protected function formatCsvValue(mixed $value, array $column): string
     {
-        $type = $column['type'] ?? 'text';
-
-        return match ($type) {
-            'bool', 'boolean' => ListCellFormatter::truthy($value) ? __('Yes') : __('No'),
-            'date' => FormatHelper::date($value),
-            'datetime' => FormatHelper::dateTime($value),
-            'currency', 'number' => is_numeric($value)
-                ? FormatHelper::decimal((float) $value)
-                : $this->neutralizeCsvFormula((string) ($value ?? '')),
-            'badge', 'preview' => $this->neutralizeCsvFormula(ListCellFormatter::format($value, $column)),
-            default => $this->neutralizeCsvFormula((string) ($value ?? '')),
-        };
+        return CsvListExporter::formatValue($value, $column);
     }
 
     /**
-     * Excel/Sheets interpret a cell starting with =, +, -, @, tab or CR as a
-     * formula, so a value like `=HYPERLINK(...)` in a user-entered text field
-     * would execute on open. Prefix a single quote to keep such a value literal.
-     */
-    protected function neutralizeCsvFormula(string $value): string
-    {
-        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
-            return "'" . $value;
-        }
-
-        return $value;
-    }
-
-    /**
-     * @param  array<int, array{value: mixed, label: string}>  $options
-     */
-    protected function badgeLabel(mixed $value, array $options): string
-    {
-        return ListCellFormatter::badgeLabel($value, $options);
-    }
-
-    /**
-     * Get the event listeners for the component.
-     * Dynamically registers the refreshList listener based on the config name.
-     *
-     * OVERRIDE CONTRACT: a component defining its own getListeners() replaces
-     * this set entirely and silently disconnects the framework events — always
-     * merge: `return parent-style via the trait alias + [...]` (see
-     * NoerdDetail's pageGetListeners alias for the pattern). #[On] attributes
-     * are no alternative here: the event names embed getName()/config-derived
-     * values, which attribute interpolation cannot express.
+     * The refreshList listener under the config name (and the name after the
+     * last dot). Same override contract as NoerdPage::getListeners(): merge,
+     * never replace.
      */
     protected function getListeners(): array
     {
@@ -1912,6 +1383,28 @@ trait NoerdList
         }
 
         return $listeners;
+    }
+
+    /**
+     * One shared instance of the class listQuery() resolved, for table-name and
+     * cast lookups; null before the first listQuery() call.
+     */
+    protected function resolvedModelInstance(): ?Model
+    {
+        return $this->resolvedModelClass === null ? null : ListColumnIntrospection::instance($this->resolvedModelClass);
+    }
+
+    private function isJsonColumnPath(string $field): bool
+    {
+        return $this->resolvedModelClass !== null && ListColumnIntrospection::isJsonPath($this->resolvedModelClass, $field);
+    }
+
+    /**
+     * @return array{relation: string, column: string, table: string}|null
+     */
+    private function relationColumnPath(string $field): ?array
+    {
+        return $this->resolvedModelClass === null ? null : ListColumnIntrospection::relationPath($this->resolvedModelClass, $field);
     }
 
     private function deriveListEntity(): string
@@ -1954,65 +1447,6 @@ trait NoerdList
         }
 
         return StaticConfigHelper::getListConfig($name, $this->listModel ?? null);
-    }
-
-    /**
-     * @return array{relation: string, column: string, table: string}|null
-     */
-    private function resolveRelationColumnPath(string $field): ?array
-    {
-        $segments = explode('.', $field);
-        $column = (string) array_pop($segments);
-
-        if ($segments === [] || $column === '') {
-            return null;
-        }
-
-        $model = new $this->resolvedModelClass();
-        foreach ($segments as $segment) {
-            $related = $this->resolveRelatedModel($model, $segment);
-            if ($related === null) {
-                return null;
-            }
-            $model = $related;
-        }
-
-        $table = $model->getTable();
-        if (! Schema::hasTable($table) || ! self::tableHasColumn($table, $column)) {
-            return null;
-        }
-
-        return [
-            'relation' => implode('.', $segments),
-            'column' => $column,
-            'table' => $table,
-        ];
-    }
-
-    /**
-     * The related model behind one relation segment, or null when the method is
-     * not a callable no-argument relation. Calling the method is unavoidable to
-     * learn the related class, so it is guarded by reflection and try/catch.
-     */
-    private function resolveRelatedModel(Model $model, string $method): ?Model
-    {
-        if ($method === '' || ! method_exists($model, $method)) {
-            return null;
-        }
-
-        try {
-            $reflection = new ReflectionMethod($model, $method);
-
-            if (! $reflection->isPublic() || $reflection->isStatic() || $reflection->getNumberOfRequiredParameters() > 0) {
-                return null;
-            }
-
-            $relation = $model->{$method}();
-        } catch (Throwable) {
-            return null;
-        }
-
-        return $relation instanceof Relation ? $relation->getRelated() : null;
     }
 
     /**

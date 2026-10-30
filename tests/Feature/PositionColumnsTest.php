@@ -370,7 +370,9 @@ describe('NoerdPositionRow + positions.cells', function (): void {
             }
         });
 
-        $columns = Livewire::test('zz-position-host-detail')->instance()->positionColumns(ZzPositionColumns::class, ZzPosition::class);
+        app(\Noerd\Services\PositionTableRegistry::class)->register('zz-position-host-detail', ZzPositionColumns::class, ZzPosition::class);
+
+        $columns = Livewire::test('zz-position-host-detail')->instance()->positionColumns();
 
         expect(array_column($columns, 'field'))->toBe(['quantity', 'price', 'total', 'comment', 'name']);
     });

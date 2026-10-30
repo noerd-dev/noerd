@@ -1,5 +1,5 @@
 {{-- The configurable cells of a position row: one <x-noerd::positions.cell> per
-     resolved column (`$this->positionColumns(...)`), bound to `row.{field}` of a
+     resolved column (`$this->positionColumns()`), bound to `row.{field}` of a
      component using the NoerdPositionRow trait.
 
      - editable column → a theme control with `wire:model="row.{field}"` and

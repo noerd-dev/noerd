@@ -215,8 +215,7 @@
                 <div class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
                     <input
                         type="text"
-                        wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
-                        @if ($readOnly ?? true) readonly @endif
+                        readonly
                         id="cell-{{ $cellId }}"
                         class="cursor-pointer underline w-auto border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent text-sm py-0.5 px-1.5 @if(in_array($type, ['number'])) text-right @endif"
                         value="{{ $value }}"
@@ -247,7 +246,7 @@
                 <input
                     type="text"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-                    @if ($readOnly ?? true) readonly @endif
+                    readonly
                     id="cell-{{ $cellId }}"
                     class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
                     value="{{ is_numeric($value) ? \Noerd\Helpers\FormatHelper::number((float) $value, 2) : ($value ?? '') }}"
@@ -256,7 +255,7 @@
                 <input
                     type="text"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-                    @if ($readOnly ?? true) readonly @endif
+                    readonly
                     id="cell-{{ $cellId }}"
                     class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-right text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
                     value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}"
@@ -422,8 +421,7 @@
                     {{-- Only a real text-like input type reaches the browser; an unknown column type renders as text. --}}
                     type="{{ in_array($type, ['text', 'email', 'tel', 'url'], true) ? $type : 'text' }}"
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-                    wire:change="updateRow({{ $id ?? null }}, '{{ $columnValue ?? null }}', $event.target.value)"
-                    @if ($readOnly ?? true) readonly @endif
+                    readonly
                     id="cell-{{ $cellId }}"
                     @if ($isTranslatableCell)
                         title="{{ __('This field is translatable. The value belongs to the language selected in the language switcher.') }}"

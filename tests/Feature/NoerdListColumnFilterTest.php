@@ -191,6 +191,22 @@ describe('filtering by type', function (): void {
     });
 });
 
+describe('type resolution', function (): void {
+    it('filters a schema-typed column the way it renders, even when the paired detail offers picklist options', function (): void {
+        createColumnFilterRelationTables();
+        ColumnFilterOwner::create(['city' => 'Berlin', 'rating' => 3]);
+        $high = ColumnFilterOwner::create(['city' => 'Hamburg', 'rating' => 9]);
+
+        $component = Livewire::test(TestablePicklistNumberColumnFilterListComponent::class)
+            ->call('setColumnFilter', 'rating', '>5');
+
+        $rendered = collect($component->instance()->builtListConfig()['listSettings']['columns'])->keyBy('field');
+
+        expect($rendered['rating']['type'])->toBe('number')
+            ->and(filterListIds($component))->toBe([$high->id]);
+    });
+});
+
 describe('json paths', function (): void {
     it('ignores filters on dotted fields without a json base column', function (): void {
         NoerdUser::factory()->count(2)->create();
@@ -893,5 +909,49 @@ class TestableColumnFilterChipListComponent extends TestableColumnFilterListComp
                 ],
             ],
         ];
+    }
+}
+
+/**
+ * An integer column without a YAML type whose paired detail offers select options:
+ * it renders auto-typed as number, so it must filter as a number too.
+ */
+class TestablePicklistNumberColumnFilterListComponent extends Component
+{
+    use NoerdList;
+
+    public function with(): array
+    {
+        return [
+            'listConfig' => $this->buildList(
+                $this->listQuery(ColumnFilterOwner::class)->paginate($this->perPage),
+            ),
+        ];
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'testable-picklist-number-column-filter-list';
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Owners',
+            'columns' => [
+                ['field' => 'city', 'label' => 'City'],
+                ['field' => 'rating', 'label' => 'Rating'],
+            ],
+        ];
+    }
+
+    protected function picklistOptionsFromDetail(): array
+    {
+        return ['rating' => [['value' => 3, 'label' => 'Three'], ['value' => 9, 'label' => 'Nine']]];
     }
 }
