@@ -19,7 +19,8 @@ final class EmptyNumberFieldHook extends ComponentHook
 {
     public function call($method, $params, $returnEarly, $metadata, $componentContext): void
     {
-        if ($method !== 'store') {
+        // An embedded detail saves through the storeDetail-{name} event.
+        if (LivewireAction::effectiveMethod($this->component, (string) $method, is_array($params) ? $params : []) !== 'store') {
             return;
         }
 

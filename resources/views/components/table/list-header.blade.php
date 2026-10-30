@@ -74,7 +74,7 @@
 
                         @foreach ($listViews as $viewKey => $view)
                             <x-noerd::action-menu-item
-                                wire:click="switchListView('{{ $viewKey }}')"
+                                wire:click="switchListView({{ \Illuminate\Support\Js::from((string) $viewKey) }})"
                                 :active="$viewKey === $activeListView"
                             >
                                 {{ __($view['title']) }}

@@ -296,10 +296,13 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
   EVERY module's `settings-page` — give an admin-only component a name that is unique across all
   installed modules (`toggl-settings-page`) before registering it.
 - NEVER bind a locked component property to `wire:model` and never pass `detailModel`/`listModel`/
-  `objectPermissionModel` as modal arguments: `LockedPropertiesHook` rejects client updates to the
-  identity/config properties of every NoerdList/NoerdPage component with
-  `CannotUpdateLockedPropertyException` (reference: `docs/permissions.md`, "Locked component
-  surface").
+  `objectPermissionModel`/`settingsModels`/`pageLayout`/`listView` as modal arguments:
+  `LockedPropertiesHook` rejects client updates to the identity/config properties of every
+  NoerdList/NoerdPage component with `CannotUpdateLockedPropertyException` (reference:
+  `docs/permissions.md`, "Locked component surface"). Switches like `enableCsvExport` are set in
+  `mount()`, never as a redeclared property default.
+- A value rendered into a Livewire directive argument (`wire:click="method(...)"`) is JavaScript:
+  render it with `{{ \Illuminate\Support\Js::from($value) }}`, never as `'{{ $value }}'`.
 - An operation beyond CRUD ("start production run") is a NAMED ACTION: register it in the module
   provider's `boot()` via `app(ActionPermissionRegistry::class)->register('{module}_{action}', 'Label')`
   (snake_case keys, `[a-z0-9_]` — e.g. `production_start_run`) and guard the call site with the

@@ -129,7 +129,13 @@ write.
   before any record data is loaded; `store()`/`delete()` are no-ops without the
   matching ability — enforced even for custom overrides by the global
   `WriteGuardHook`; fields render readonly, save/delete buttons and keyboard
-  shortcuts are hidden.
+  shortcuts are hidden. The hook also covers a save or delete triggered by an
+  event (`storeDetail-{name}` → `store()`): such a listener runs inside the same
+  Livewire trigger, so a denied one aborts the request with 403 instead of being
+  skipped. `embeddedDetailStored()` adopts a record only for a user who may save
+  and never repoints a page that already shows one.
+- **Position rows (`NoerdPositionRow`):** `store()`/`delete()` of a row require
+  the write permission of the position model, through the same `WriteGuardHook`.
 - **Apps:** `AppAccessMiddleware`, the app bar, the home
   tiles and the allowed-app config discovery all consult `canAccessApp()`.
 - **Admin-only components:** `/setup` routes run through `SetupMiddleware`
@@ -171,16 +177,26 @@ or `NoerdPage` (and therefore `NoerdDetail`).
 | `listView`, `listViewApp` | Render another app's list view |
 | `settingsModels` | Repoint which model `persistSettings()` writes and which property it reads |
 | `pageLayout` | Skip `validateFromLayout()` and mount attacker-chosen nested components |
+| `objectReadBlocked` | Render the content of a read-denied page |
+| `enableCsvExport` | Export a list that does not offer the CSV download |
+| `minimal`, `minimalLimit` | Page past `MAX_PER_PAGE` through the widget mode (the limit is clamped as well) |
 
-**Additionally rejected as MOUNT ARGUMENTS** — `detailModel`, `listModel` and
-`objectPermissionModel`. Livewire assigns mount parameters to matching public properties before any
-update hook runs, and the modal stack takes those arguments straight from the client; no legitimate
-caller passes them, because a component declares them itself. Properties like `listActionMethod` or
+**Additionally rejected as MOUNT ARGUMENTS** — `detailModel`, `listModel`,
+`objectPermissionModel`, `settingsModels`, `pageLayout`, `objectReadBlocked`, `listView` and
+`listViewApp`. Livewire assigns mount parameters to matching public properties before any update hook
+runs, and the modal stack takes those arguments straight from the client; no legitimate caller passes
+them, because a component declares or resolves them itself. Properties like `listActionMethod` or
 `context` are deliberately *not* mount-protected — the relation-field picker passes them.
 
 A violation throws Livewire's `CannotUpdateLockedPropertyException`. The practical rule: **never
-bind any of these properties to `wire:model`** and never pass the three mount-protected ones as
-modal arguments — set them as literal property defaults on the component instead.
+bind any of these properties to `wire:model`** and never pass the mount-protected ones as modal
+arguments — set them as literal property defaults or in `mount()` instead.
+
+**Values rendered into Livewire directives.** An argument of `wire:click="method(...)"` is a
+JavaScript expression: render it with `{{ \Illuminate\Support\Js::from($value) }}`, never as
+`'{{ $value }}'` — Blade's HTML escaping is undone by the browser inside the attribute. The list
+views do this for row ids, sort fields, view keys and filter chips; column filters (`?cf[...]`)
+are only accepted for columns of the list.
 
 ## Client-writable form paths
 
@@ -226,8 +242,8 @@ must run inside a denied user's request lifts the guard explicitly with
 ## Known boundaries
 
 - Custom PUBLIC methods on components (`approve()`, `duplicate()`, custom bulk
-  actions) are NOT guarded generically — only `store`/`delete` run through the
-  `WriteGuardHook`. Guard such methods yourself (an object ability check or a
+  actions, a position row's `moveUp()`) are NOT guarded generically — only
+  `store`/`delete` run through the `WriteGuardHook`. Guard such methods yourself (an object ability check or a
   named action check).
 - A list with a hand-built query in `listData()` bypasses `listQuery()`'s
   read-denial row filter — give the model the `GuardedByObjectPermission`

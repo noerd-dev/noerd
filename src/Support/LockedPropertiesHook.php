@@ -53,6 +53,14 @@ final class LockedPropertiesHook extends ComponentHook
         // embedded list/widget mounts, so a client rewrite means skipped
         // validation and attacker-chosen nested components.
         'pageLayout',
+        // Set by the read guard when the object permission denies reading; a
+        // client reset would let the page chrome render the denied content.
+        'objectReadBlocked',
+        // Server-side switches of the list: the CSV export a component enables
+        // in mount(), and the widget mode whose row limit bypasses MAX_PER_PAGE.
+        'enableCsvExport',
+        'minimal',
+        'minimalLimit',
     ];
 
     /**
@@ -62,9 +70,10 @@ final class LockedPropertiesHook extends ComponentHook
      * assigns mount parameters to matching public properties before any of that
      * runs (SupportNestingComponents::setParametersToMatchingProperties), and
      * the modal stack takes those arguments straight from the client. These
-     * three decide WHICH model the generic query reads and WHICH class the
-     * object gates are checked against, and no legitimate caller passes them —
-     * a component declares them itself. Properties like listActionMethod or
+     * decide WHICH model the generic query reads or a settings page writes,
+     * WHICH class the object gates are checked against, the layout and the read
+     * guard state, and no legitimate caller passes them — a component declares
+     * or resolves them itself. Properties like listActionMethod or
      * context are deliberately NOT here: the relation-field picker passes them.
      *
      * @var array<int, string>
@@ -73,6 +82,14 @@ final class LockedPropertiesHook extends ComponentHook
         'detailModel',
         'listModel',
         'objectPermissionModel',
+        // Decides which model a settings page loads into the browser and writes.
+        'settingsModels',
+        'pageLayout',
+        'objectReadBlocked',
+        // The active list view is restored from the URL/session against the
+        // views this user may see — a mount argument would skip that check.
+        'listView',
+        'listViewApp',
     ];
 
     /**
