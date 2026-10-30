@@ -15,12 +15,10 @@ uses(TestCase::class, RefreshDatabase::class);
 
 /*
  | The naming hooks of the component traits (list config name, select event,
- | deep-link parameter, list entity, detail config name, paired list, and the
- | ShowFrom/ShowUntil date columns) resolve in a fixed order: a method override
- | wins over a configured property, the property wins over the derivation.
- | The traits declare none of the properties (a class redeclaring a trait
- | property with another default is a PHP fatal), so every hook must survive
- | the property being absent.
+ | deep-link parameter, list entity, detail config name, paired list) derive
+ | their value from the component name; a method override replaces the
+ | derivation. The ShowFrom/ShowUntil date columns additionally accept a
+ | configured property (method override > property > created_at).
  */
 
 function zzInvokeHook(object $component, string $method): mixed
@@ -51,56 +49,19 @@ function zzListComponent(string $name): Component
 }
 
 dataset('list naming hooks', [
-    'listConfigComponent' => ['listConfigComponent', 'listConfigComponent', 'zz-gadgets-list', 'zz-other-list'],
-    'selectEvent' => ['getSelectEvent', 'selectEvent', 'zzGadgetSelected', 'zzPartSelected'],
-    'deepLinkParam' => ['getDeepLinkParam', 'deepLinkParam', 'zzGadgetId', 'zzPartId'],
-    'listEntity' => ['getListEntity', 'listEntity', 'zz-gadget', 'zz-part'],
+    'listConfigComponent' => ['listConfigComponent', 'zz-gadgets-list'],
+    'selectEvent' => ['getSelectEvent', 'zzGadgetSelected'],
+    'deepLinkParam' => ['getDeepLinkParam', 'zzGadgetId'],
+    'listEntity' => ['getListEntity', 'zz-gadget'],
 ]);
 
-it('derives the list naming hooks from the component name without a property', function (string $method, string $property, string $derived): void {
-    $component = zzListComponent('zz-gadgets-list');
-
-    expect(property_exists($component, $property))->toBeFalse()
-        ->and(zzInvokeHook($component, $method))->toBe($derived);
+it('derives the list naming hooks from the component name', function (string $method, string $derived): void {
+    expect(zzInvokeHook(zzListComponent('zz-gadgets-list'), $method))->toBe($derived);
 })->with('list naming hooks');
 
-it('lets a configured property win over the derivation of the list naming hooks', function (string $method, string $property, string $derived, string $configured): void {
+it('lets a method override replace the derivation of the list naming hooks', function (string $method): void {
     $component = new class extends Component {
         use NoerdList;
-
-        protected string $listConfigComponent = 'zz-other-list';
-
-        protected string $selectEvent = 'zzPartSelected';
-
-        protected string $deepLinkParam = 'zzPartId';
-
-        protected string $listEntity = 'zz-part';
-
-        public function render(): string
-        {
-            return '<div></div>';
-        }
-
-        protected function componentName(): string
-        {
-            return 'zz-gadgets-list';
-        }
-    };
-
-    expect(zzInvokeHook($component, $method))->toBe($configured);
-})->with('list naming hooks');
-
-it('lets a method override win over the configured property of the list naming hooks', function (string $method, string $property): void {
-    $component = new class extends Component {
-        use NoerdList;
-
-        protected string $listConfigComponent = 'zz-ignored-list';
-
-        protected string $selectEvent = 'zzIgnoredSelected';
-
-        protected string $deepLinkParam = 'zzIgnoredId';
-
-        protected string $listEntity = 'zz-ignored';
 
         public function render(): string
         {
@@ -136,11 +97,9 @@ it('lets a method override win over the configured property of the list naming h
     expect(zzInvokeHook($component, $method))->toBe('zz-method');
 })->with('list naming hooks');
 
-it('derives the select event and deep-link parameter from a configured list entity', function (): void {
+it('derives the select event and deep-link parameter from an overridden list entity', function (): void {
     $component = new class extends Component {
         use NoerdList;
-
-        protected string $listEntity = 'zz-widget';
 
         public function render(): string
         {
@@ -151,6 +110,11 @@ it('derives the select event and deep-link parameter from a configured list enti
         {
             return 'zz-gadgets-list';
         }
+
+        protected function getListEntity(): string
+        {
+            return 'zz-widget';
+        }
     };
 
     expect(zzInvokeHook($component, 'getSelectEvent'))->toBe('zzWidgetSelected')
@@ -158,11 +122,11 @@ it('derives the select event and deep-link parameter from a configured list enti
 });
 
 dataset('page naming hooks', [
-    'detailConfigComponent' => ['getDetailComponent', 'detailConfigComponent', 'zz-gadget-detail', 'zz-other-detail'],
-    'listComponent' => ['getListComponent', 'listComponent', 'zz-gadgets-list', 'zz-other-list'],
+    'detailComponent' => ['getDetailComponent', 'zz-gadget-detail'],
+    'listComponent' => ['getListComponent', 'zz-gadgets-list'],
 ]);
 
-it('derives the page naming hooks from the component name without a property', function (string $method, string $property, string $derived): void {
+it('derives the page naming hooks from the component name', function (string $method, string $derived): void {
     $component = new class extends Component {
         use NoerdDetail;
 
@@ -177,39 +141,12 @@ it('derives the page naming hooks from the component name without a property', f
         }
     };
 
-    expect(property_exists($component, $property))->toBeFalse()
-        ->and(zzInvokeHook($component, $method))->toBe($derived);
+    expect(zzInvokeHook($component, $method))->toBe($derived);
 })->with('page naming hooks');
 
-it('lets a configured property win over the derivation of the page naming hooks', function (string $method, string $property, string $derived, string $configured): void {
-    $component = new class extends Component {
-        use NoerdPage;
-
-        protected string $detailConfigComponent = 'zz-other-detail';
-
-        protected string $listComponent = 'zz-other-list';
-
-        public function render(): string
-        {
-            return '<div></div>';
-        }
-
-        protected function componentName(): string
-        {
-            return 'zz-gadget-page';
-        }
-    };
-
-    expect(zzInvokeHook($component, $method))->toBe($configured);
-})->with('page naming hooks');
-
-it('lets a method override win over the configured property of the page naming hooks', function (string $method): void {
+it('lets a method override replace the derivation of the page naming hooks', function (string $method): void {
     $component = new class extends Component {
         use NoerdDetail;
-
-        protected string $detailConfigComponent = 'zz-ignored-detail';
-
-        protected string $listComponent = 'zz-ignored-list';
 
         public function render(): string
         {
@@ -235,11 +172,9 @@ it('lets a method override win over the configured property of the page naming h
     expect(zzInvokeHook($component, $method))->toBe('zz-method');
 })->with('page naming hooks');
 
-it('refreshes the paired list a page configures when it closes', function (): void {
+it('refreshes the paired list a page overrides when it closes', function (): void {
     $component = new class extends Component {
         use NoerdPage;
-
-        protected string $listComponent = 'zz-configured-list';
 
         public function render(): string
         {
@@ -249,6 +184,11 @@ it('refreshes the paired list a page configures when it closes', function (): vo
         public function closePaired(): void
         {
             $this->closeModalProcess($this->getListComponent());
+        }
+
+        protected function getListComponent(): string
+        {
+            return 'zz-configured-list';
         }
 
         protected function componentName(): string
@@ -358,8 +298,8 @@ it('writes the configured ShowFrom/ShowUntil columns into the list query', funct
     expect($wheres->all())->toBe(['valuta_date >= 2026-01-01', 'booked_at <= 2026-03-31']);
 });
 
-it('keeps the naming-hook properties out of the client-writable surface', function (): void {
-    $properties = ['listConfigComponent', 'detailConfigComponent', 'listComponent', 'listEntity', 'selectEvent', 'deepLinkParam', 'showFromDateColumn', 'showUntilDateColumn'];
+it('keeps the ShowFrom/ShowUntil column properties out of the client-writable surface', function (): void {
+    $properties = ['showFromDateColumn', 'showUntilDateColumn'];
 
     $hook = new \Noerd\Support\LockedPropertiesHook();
     $hook->setComponent(new class {

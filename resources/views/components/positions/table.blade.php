@@ -4,7 +4,7 @@
         empty label marks the trailing action column:
         :columns="[['label' => 'Quantity', 'class' => 'w-32'], 'Name', '']"
 
-     2. Resolved position columns (`$this->positionColumns(...)`, entries carrying a
+     2. Resolved position columns (`$this->positionColumns()`, entries carrying a
         `field`): the header renders `label` + `width`, and `actions` (default true)
         appends the empty action header matching the row's trash cell.
 

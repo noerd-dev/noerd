@@ -87,7 +87,6 @@ columns:
 | `align` | Text alignment (`left`, `center`, `right`; `number`/`currency` auto-align right) | `left` |
 | `type` | Display type (see Column Types below) | `text` |
 | `options` | `value`/`label` pairs for the `badge` type (see below) | |
-| `readOnly` | Renders the cell input of the `text`, `id`, `number` and `currency` types read-only. Set to `false` to allow inline editing (see Inline Editing below) | `true` |
 | `wireModel` / `wireModelField` / `live` | For the `checkbox` type: the array property the checkbox binds to, an optional sub-key, and whether the binding is `wire:model.live` (see Inline Editing below) | / / `false` |
 | `translatable` | Marks the column as language-dependent — the cell gets a subtle blue background so an editor sees that the value belongs to the selected language (see [Languages](languages.md)) | `false` |
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
@@ -200,24 +199,7 @@ Put the action column last — it right-aligns its control in the cell.
 
 ### Inline Editing
 
-Cells are read-only by default. Two column types opt into editing:
-
-- **`text` / `id` cells with `readOnly: false`** dispatch `updateRow($id, $column, $value)` on the
-  list component via `wire:change`. `NoerdList::updateRow()` is a deliberate no-op — a list opts
-  into persistence by overriding it with the same signature:
-
-  ```php
-  public function updateRow(int|string|null $id = null, ?string $column = null, mixed $value = null): void
-  {
-      // The column name arrives from the client — only accept what is meant to be editable.
-      if (! in_array($column, ['name', 'sku'], true)) {
-          return;
-      }
-
-      Item::query()->whereKey($id)->update([$column => $value]);
-  }
-  ```
-- **`type: checkbox`** binds the cell to an array property of the component: `wireModel` names the
+Cells are read-only. The one editable column type is **`type: checkbox`**, which binds the cell to an array property of the component: `wireModel` names the
   property, the row id is the key, and an optional `wireModelField` addresses a sub-key
   (`permissions.{id}.read`). With `live: true` the binding is `wire:model.live`, otherwise it is
   deferred until the next request. A row that does not carry the column's field renders no checkbox.
@@ -423,27 +405,13 @@ the YAML hides the row):
 | `?string $filter` (`#[Url]`) | Free-form list filter carried as `?filter=…`. The trait never reads it — a list seeds its own `listFilters` or query from it in `mount()` |
 | `string $listActionMethod` | Public method a row click dispatches to (default `listAction`; pickers pass `selectAction`). `openListRow()` only ever calls PUBLIC methods by this name |
 | `selectAction($modelId)` | Picker row action: dispatches `noerdRelationSelected` and `{entity}Selected` (`items-list` → `itemSelected`) with `($modelId, $context)`, then `closeTopModal` |
-| `updateRow($id, $column, $value)` | Inline-editing hook — a no-op unless overridden (see Inline Editing) |
 | `refreshList()` | Re-renders the list (`$refresh`). Listens to `refreshList-{name}`, where `{name}` is `listConfigComponent()` — by default the full component name incl. namespace (`inventory::items-list`) — and to the name after the last dot; a detail's `closeModalProcess()` dispatches it for its paired list |
 | `exportCsv()` | Streams the CSV download (see CSV Export) |
 | `getAllowedListFilterColumns()` (protected) | Whitelist of header `listFilters` keys (see [List Filters](list-filters.md#security)) |
 | `mountList()` / `loadListFilters()` (protected) | Mount-time setup (per-page, filters, view, sort, deep links) — call `mountList()` first in a custom `mount()` |
 | `componentName()` (protected) | The name the YAML config, session keys and events resolve by — Livewire's component name; override only in unregistered test fixtures |
-| `listConfigComponent()` (protected) | The name the list YAML resolves under — declare `protected string $listConfigComponent = 'other-list';` when a component renders another list's YAML |
-| `getListEntity()`, `getSelectEvent()`, `getDeepLinkParam()` (protected) | The singular entity (`items-list` → `item`), the picker event (`itemSelected`) and the deep-link parameter (`itemId`), all derived from the component name — configure them with `protected string $listEntity` / `$selectEvent` / `$deepLinkParam` |
-
-The naming hooks resolve in a fixed order: a method override wins over the configured property, the
-property over the derivation from the component name. Declare the properties `protected` — the
-trait declares none of them itself (a class redeclaring a trait property with another default is a
-PHP fatal), and a public one would be client-writable:
-
-```php
-    // Renders the YAML of items-list under another component name
-    protected string $listConfigComponent = 'items-list';
-
-    // 'inventory-stock-list' would otherwise derive 'inventoryStock'
-    protected string $listEntity = 'item';
-```
+| `listConfigComponent()` (protected) | The name the list YAML resolves under — override it when a component renders another list's YAML |
+| `getListEntity()`, `getSelectEvent()`, `getDeepLinkParam()` (protected) | The singular entity (`items-list` → `item`), the picker event (`itemSelected`) and the deep-link parameter (`itemId`), all derived from the component name — override the method for a list that does not follow the `{entities}-list` convention |
 
 ## Default Sorting
 
@@ -782,6 +750,9 @@ protected function prepareCsvExport(): array
   decimal without symbol via `FormatHelper::decimal()`) and neutralises spreadsheet formulas (a text
   value starting with `=`, `+`, `-`, `@`, tab or CR gets a leading `'`) — override it for custom formats
 - `prepareExportRow($row)` is an optional per-row hook (e.g. to eager-compute accessors)
+- A screen that exports outside a list (a dedicated export page) streams its query in the same
+  notation with `Noerd\Support\CsvListExporter::stream($query, $columns, $filename)` — never a
+  second CSV writer
 
 ## Computed Columns
 

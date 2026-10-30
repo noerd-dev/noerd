@@ -548,7 +548,7 @@ When a list column displays a picklist/select value, it must ALWAYS be shown as 
 option's label translated into the currently active language — never the raw database value. This is a
 single generic feature in `NoerdList` + the list views; never duplicate it per module.
 
-- **Automatic:** `NoerdList::applyPicklistBadges()` (called from `buildList()`) derives the option
+- **Automatic:** `buildList()` (via `Noerd\Support\PicklistBadges`) derives the option
   labels from the list's **paired detail YAML** (`{x}-list` → `{x}-detail`, e.g. `campaigns-list` →
   `campaign-detail`) and renders the matching columns (`type: select` fields with inline `options`) as a
   translated badge via the `badge` cell type. No per-list configuration is needed — adding the column to
@@ -900,27 +900,21 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
 `NoerdPage` trait (NoerdDetail composes it — never duplicate functionality between the two).
 
 - A page MAY ship a YAML at `app-configs/{app}/pages/{entity}-page.yml` (+ module copy, both in
-  sync). Keys: `title`, `detail:` (the embedded detail component, e.g. `crm::account-detail`),
-  `details:` (a list of FURTHER embedded details saved by the same Save button — the first of
-  `detail:`/`details:` is the primary whose record is the page's own), `quickCreate`, `tabs`,
+  sync). Keys: `title`, `detail:` (the embedded detail component, e.g. `crm::account-detail`,
+  whose record is the page's own), `quickCreate`, `tabs`,
   `relations`, `widgets`, `fields`. A missing page YAML is fine
   (`StaticConfigHelper::getPageFields()` is silent on miss).
 - **Detail YAMLs are pure model forms** (mandatory): only `title`, `description`, `theme`,
   `quickCreate`, `tabs`, `fields`, `actions`, `lists` and `positions`. `widgets:` and `relations:` NEVER belong in
   a detail YAML — they are page concerns. A detail opened standalone renders just the form.
 - The save roundtrip page↔detail is generic via trait events: page `store()` dispatches
-  `storeDetail-{detail}` to EVERY embedded detail (`embeddedDetailComponents()`); the detail's
-  `store()` ends in `finishStore($model)` which dispatches `detailStored-{detail}` (payload
-  `modelId` + `detail` = the reporting component); for the primary detail the page adopts the id
-  and runs the protected hook `afterEmbeddedDetailStored($model)` (override for page-owned
-  persistence, e.g. product groups); an ADDITIONAL detail (`details:`) only sets the success
-  indicator and runs `afterAdditionalDetailStored($detail, $modelId)` — its id is never adopted,
-  its data never merged. Live form sync runs via `detailDataUpdated-{detail}` (`syncPayload()`
-  filters the payload; the primary is merged, an additional one reaches
-  `afterAdditionalDetailDataUpdated()`). Every embedded detail validates and persists behind its
-  own guard and needs its own `wire:key`; an additional child-record detail renders only once
-  `$modelId` is set; the page keeps exactly ONE `<x-noerd::delete-save-bar>`. Never dispatch a
-  `component:` key in an event payload — Livewire reserves it (`ref`, `el`, `self`, `to` too).
+  `storeDetail-{detail}` to the embedded detail; the detail's `store()` ends in
+  `finishStore($model)` which dispatches `detailStored-{detail}` (payload `modelId`); the page
+  adopts the id and runs the protected hook `afterEmbeddedDetailStored($model)` (override for
+  page-owned persistence, e.g. product groups). Live form sync runs via
+  `detailDataUpdated-{detail}` (`syncPayload()` filters the payload). The page keeps exactly ONE
+  `<x-noerd::delete-save-bar>`. Never dispatch a `component:` key in an event payload — Livewire
+  reserves it (`ref`, `el`, `self`, `to` too).
 - Embed the detail in the page blade via
   `@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))` —
   `x-noerd::page` renders embedded components chrome-less automatically. Two rules for EVERY

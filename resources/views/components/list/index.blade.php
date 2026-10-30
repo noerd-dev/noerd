@@ -219,7 +219,6 @@
                                                                 'column' => $index,
                                                                 'label' => $column['label'] ?? '',
                                                                 'value' => data_get($row, $column['field']) ?? '',
-                                                                'readOnly' => $column['readOnly'] ?? true,
                                                                 'id' => $row['id'],
                                                                 'columnValue' => $column['field'],
                                                                 'type' => $column['type'] ?? 'text',

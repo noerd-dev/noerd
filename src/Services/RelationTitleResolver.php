@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -42,6 +43,25 @@ final class RelationTitleResolver
         $key = $this->memoKey($fkColumn, $id);
 
         return $this->titles[$key] ??= $this->resolve($fkColumn, $id);
+    }
+
+    /**
+     * Prime the memo for every `type: relationBadge` column of a list page, so
+     * the table cells only read memoized titles.
+     *
+     * @param  array<int, array<string, mixed>>  $columns
+     */
+    public function primeColumns(array $columns, ?Collection $rows): void
+    {
+        if ($rows === null || $rows->isEmpty()) {
+            return;
+        }
+
+        foreach ($columns as $column) {
+            if (($column['type'] ?? null) === 'relationBadge' && isset($column['field'])) {
+                $this->prime($column['field'], $rows->map(fn($row) => data_get($row, $column['field']))->all());
+            }
+        }
     }
 
     /**
