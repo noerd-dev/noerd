@@ -278,7 +278,7 @@ For a field of type X with registered renderer target T under active theme θ:
   `mod::components.name-{θ}`). This suffix convention is only needed for third-party livewire
   field types.
 - **Relation fields** are the exception that proves the rule: the two Livewire components
-  (`noerd-relation-field`, `noerd-polymorphic-relation-field`) delegate their markup to the theme
+  (`noerd::noerd-relation-field`, `noerd::noerd-polymorphic-relation-field`) delegate their markup to the theme
   templates `relation-field.blade.php` / `polymorphic-relation-field.blade.php`, so a copied theme
   folder restyles them like any other element.
 - Unknown theme names silently fall back to `default` — a YAML typo never breaks a detail page.

@@ -769,11 +769,10 @@ trait NoerdList
         $urlView = (! $this->compact && ! $this->returnsSelection) ? $this->listViewParam : null;
         if ($urlView !== null && $urlView !== '') {
             // The URL carries '--' instead of '::' as the app separator (no
-            // '%3A%3A' noise); decode it back to the composite key. A hand-typed
-            // legacy '::' still parses as-is.
-            if (! str_contains($urlView, '::') && str_contains($urlView, '--')) {
-                $urlView = Str::replaceFirst('--', '::', $urlView);
-            }
+            // '%3A%3A' noise); decode it back to the composite key.
+            $urlView = str_contains($urlView, '::')
+                ? ''
+                : Str::replaceFirst('--', '::', $urlView);
             [$urlApp, $urlKey] = StaticConfigHelper::parseListViewKey($urlView);
             if ($urlApp !== null && $urlApp === StaticConfigHelper::getCurrentApp()) {
                 $urlView = $urlKey;

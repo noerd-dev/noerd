@@ -47,7 +47,7 @@ $relationFieldRegistry->register('itemRelation', RelationFieldDefinition::model(
 | `titleResolver` | Model attribute name or callback that returns the display title (default `'name'`) |
 | `selectEvent` | Custom selection event name; defaults to the `{entity}Selected` convention derived from the list component without its namespace (`inventory::items-list` → `itemSelected`) |
 | `detailRoute` | Named `Route::livewire()` route opened as a modal for existing values — preferred over `detailComponent` when the record is addressable (see [Modals](modal.md#route-modals)); `detailComponent` stays as the fallback when the route is not registered |
-| `fieldComponent` | Livewire component rendering the field in the detail form; `null` (default) uses the generic `noerd-relation-field` input. See [Custom Renderer Component](#custom-renderer-component) |
+| `fieldComponent` | Livewire component rendering the field in the detail form; `null` (default) uses the generic `noerd::noerd-relation-field` input. See [Custom Renderer Component](#custom-renderer-component) |
 
 ## Custom Title Resolver
 
@@ -66,7 +66,7 @@ The resolved title passes through `RelationFieldDefinition::normalizeDisplayValu
 ## Custom Renderer Component
 
 By default every relation type renders as the generic readonly input with a clear button and a
-magnifier (`noerd-relation-field`). A module can replace that markup for a single relation type —
+magnifier (`noerd::noerd-relation-field`). A module can replace that markup for a single relation type —
 e.g. render an address as a clickable card — by passing its own Livewire component as
 `fieldComponent`:
 
@@ -128,7 +128,7 @@ column that stores the selected type:
 ```
 
 Polymorphic fields render through the shared Livewire component
-`noerd-polymorphic-relation-field`, which shows a type selector next to the relation input. An
+`noerd::noerd-polymorphic-relation-field`, which shows a type selector next to the relation input. An
 allowed type that is not registered (its module is not installed) is dropped from the selector.
 
 ## Runtime Behaviour

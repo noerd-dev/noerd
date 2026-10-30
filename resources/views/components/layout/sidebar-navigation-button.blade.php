@@ -46,9 +46,6 @@ new class extends Component {
                     @click="$modal({{ \Illuminate\Support\Js::from($naviModalComponent) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}); if(! isDesktop) showSidebar = false"
                 @endif
                 class="{{ $activeClass }} flex w-full cursor-pointer items-center gap-x-3 rounded-xl border p-3 text-left text-gray-900 transition-colors">
-            @isset($navi['icon'])
-                <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
-            @endisset
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-6 h-6 shrink-0 text-gray-700"/>
             @endisset
@@ -63,9 +60,6 @@ new class extends Component {
             <a wire:navigate href="{{ $navi['link'] }}" @isset($navi['external']) target="_blank" @endisset
                @click="if(! isDesktop) showSidebar = false"
                class="{{ $activeClass }} flex items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
-                @isset($navi['icon'])
-                    <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
-                @endisset
                 @isset($navi['heroicon'])
                     <x-icon name="{{$navi['heroicon']}}" class="w-6 h-6 shrink-0 text-gray-700"/>
                 @endisset
@@ -81,9 +75,6 @@ new class extends Component {
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
            @click="if(! isDesktop) showSidebar = false"
            class="{{ $activeClass }} flex items-center gap-x-3 rounded-xl border p-3 text-gray-900 transition-colors">
-            @isset($navi['icon'])
-                <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-6 h-6 shrink-0 text-gray-700"/>
-            @endisset
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-6 h-6 shrink-0 text-gray-700"/>
             @endisset

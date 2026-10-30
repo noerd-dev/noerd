@@ -361,8 +361,9 @@ public function boot(): void
   screen therefore never locks down a same-named screen of another module — `cms::settings-page`
   and `hr::settings-page` are different components
 - A name written WITHOUT a namespace matches a registered entry by its bare name alone
-  (`tenants-list`, `.tenants-list`): it cannot be attributed to a module, and the core registers its
-  own screens under a bare component location as well (`Livewire::addLocation`). Consequence: a host
+  (`settings-page`, `.settings-page`): it cannot be attributed to a module, and a module that also
+  registers a bare component location (`Livewire::addLocation`) is reachable that way. The core's
+  own components exist only under `noerd::`. Consequence: a host
   component mounted bare under a name that collides with a registered one becomes admin-only too —
   the deliberate fail-closed choice
 - The guard only closes the admin bypass at the dynamic-mount seams; components that are not on the

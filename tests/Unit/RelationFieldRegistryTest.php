@@ -26,7 +26,7 @@ it('registers a relation type and exposes it via field type registry', function 
     $fieldTypeDefinition = $fieldTypeRegistry->resolve('customerRelation');
 
     expect($fieldTypeDefinition?->kind)->toBe('livewire');
-    expect($fieldTypeDefinition?->target)->toBe('noerd-relation-field');
+    expect($fieldTypeDefinition?->target)->toBe('noerd::noerd-relation-field');
     expect($fieldTypeDefinition?->resolveProps([
         'name' => 'detailData.customer_id',
         'label' => 'Customer',

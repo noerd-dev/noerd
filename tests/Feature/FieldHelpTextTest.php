@@ -110,7 +110,7 @@ describe('Field helpText tooltip', function (): void {
             titleResolver: 'name',
         ));
 
-        Livewire::test('noerd-relation-field', [
+        Livewire::test('noerd::noerd-relation-field', [
             'relationType' => 'helpTextRelation',
             'fieldName' => 'detailData.help_text_test_id',
             'label' => 'Help Text Test',

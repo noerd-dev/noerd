@@ -94,10 +94,10 @@ final class ComponentAccessGuard
      * bypass at the dynamic-mount seams.
      *
      * Matching is namespace-aware, with ONE deliberate exception: a name written
-     * WITHOUT a namespace matches an admin entry by its bare name alone. That
-     * exception is what keeps the guard closed for noerd's own screens, which
-     * are registered both namespaced and bare (Livewire::addLocation), so
-     * `noerd::tenants-list` and `tenants-list` mount the very same component.
+     * WITHOUT a namespace matches an admin entry by its bare name alone. Modules
+     * that also register an un-namespaced location (Livewire::addLocation) make
+     * `module::screen` and `screen` mount the very same component — the
+     * exception keeps the guard closed for both spellings.
      * The namespace of a namespaced name is never dropped, though: modules
      * register their screens under their own namespace only, so `cms::settings-page`
      * being admin-only must not lock down `hr::settings-page` as well.

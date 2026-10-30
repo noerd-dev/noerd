@@ -31,7 +31,7 @@ describe('Relation field theme templates', function (): void {
     ];
 
     it('renders the default template with the label above the control', function () use ($props): void {
-        $component = Livewire::test('noerd-relation-field', $props)
+        $component = Livewire::test('noerd::noerd-relation-field', $props)
             ->assertSuccessful()
             ->assertDontSeeHtml('tabular-nums');
 
@@ -39,7 +39,7 @@ describe('Relation field theme templates', function (): void {
     });
 
     it('renders the compact template with the label to the left', function () use ($props): void {
-        $component = Livewire::test('noerd-relation-field', $props + ['theme' => 'compact'])
+        $component = Livewire::test('noerd::noerd-relation-field', $props + ['theme' => 'compact'])
             ->assertSuccessful();
 
         assertElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
@@ -49,7 +49,7 @@ describe('Relation field theme templates', function (): void {
     });
 
     it('renders the numbered relation-field template inside the numbered row chrome', function () use ($props): void {
-        $component = Livewire::test('noerd-relation-field', $props + ['theme' => 'numbered', 'number' => 7])
+        $component = Livewire::test('noerd::noerd-relation-field', $props + ['theme' => 'numbered', 'number' => 7])
             ->assertSuccessful()
             ->assertSeeHtml('bg-zinc-100')
             ->assertSeeHtml('tabular-nums')
@@ -61,7 +61,7 @@ describe('Relation field theme templates', function (): void {
     });
 
     it('falls back to the default template for a theme without a relation template', function () use ($props): void {
-        $component = Livewire::test('noerd-relation-field', $props + ['theme' => 'does-not-exist'])
+        $component = Livewire::test('noerd::noerd-relation-field', $props + ['theme' => 'does-not-exist'])
             ->assertSuccessful();
 
         assertNoElementHasClasses($component->html(), ['w-36', 'shrink-0', 'truncate']);
@@ -69,7 +69,7 @@ describe('Relation field theme templates', function (): void {
 
     it('keeps the inherited selection listener working on every theme', function () use ($props): void {
         foreach (['default', 'compact', 'numbered'] as $theme) {
-            Livewire::test('noerd-relation-field', $props + ['theme' => $theme])
+            Livewire::test('noerd::noerd-relation-field', $props + ['theme' => $theme])
                 ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.theme_test_id')
                 ->assertSet('value', 42)
                 ->assertDispatched('setFieldValue');
@@ -99,7 +99,7 @@ describe('Polymorphic relation field theme templates', function (): void {
     ];
 
     it('renders the compact template', function () use ($props): void {
-        $component = Livewire::test('noerd-polymorphic-relation-field', $props + ['theme' => 'compact'])
+        $component = Livewire::test('noerd::noerd-polymorphic-relation-field', $props + ['theme' => 'compact'])
             ->assertSuccessful()
             ->assertSeeHtml('h-7');
 
@@ -107,7 +107,7 @@ describe('Polymorphic relation field theme templates', function (): void {
     });
 
     it('renders the numbered polymorphic relation-field template inside the numbered row chrome', function () use ($props): void {
-        $component = Livewire::test('noerd-polymorphic-relation-field', $props + ['theme' => 'numbered', 'number' => 3])
+        $component = Livewire::test('noerd::noerd-polymorphic-relation-field', $props + ['theme' => 'numbered', 'number' => 3])
             ->assertSuccessful()
             ->assertSeeHtml('bg-zinc-100')
             ->assertSeeHtml('tabular-nums')

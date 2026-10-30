@@ -1,7 +1,7 @@
 {{-- Position table whose density follows the active theme. `columns` accepts two shapes:
 
-     1. Legacy header labels — an entry may be an array to add a width class, and an
-        empty label marks the trailing action column:
+     1. Plain header labels (a hand-built table without a column catalog) — an entry may
+        be an array to add a width class, and an empty label marks the trailing action column:
         :columns="[['label' => 'Quantity', 'class' => 'w-32'], 'Name', '']"
 
      2. Resolved position columns (`$this->positionColumns()`, entries carrying a
