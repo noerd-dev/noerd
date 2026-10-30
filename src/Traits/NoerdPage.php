@@ -321,6 +321,20 @@ trait NoerdPage
         $this->detailData = array_merge($this->detailData, $detailData);
     }
 
+    /**
+     * Form paths a hand-built input binds that no layout field declares, as full
+     * field names (`detailData.notes`, `detailData.custom_attributes.sap_number`).
+     * The client may only change what the layout or this list declares: the
+     * default store() persists these keys too, and a nested path opens exactly
+     * that key below a nested root such as `custom_attributes`.
+     *
+     * @return list<string>
+     */
+    protected function additionalDetailFields(): array
+    {
+        return [];
+    }
+
     protected function initPage(): void
     {
         // The page YAML (pages/{name}.yml) is OPTIONAL — hand-built pages keep

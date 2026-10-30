@@ -55,7 +55,7 @@ These options are available for most field types:
 | `colspan` | int | `3` | Width in grid columns (1-12) |
 | `default` | mixed | - | Value the form starts with while the field is null (see [Default Values](#default-values)) |
 | `required` | bool | `false` | Show required indicator on label |
-| `readonly` | bool | `false` | Make field read-only |
+| `readonly` | bool | `false` | Make field read-only — enforced on the server too: a client update of the field is discarded (see [Detail View](detail-view.md#what-the-client-may-change)) |
 | `live` | bool | `false` | Enable real-time updates (`wire:model.live.debounce`) |
 | `placeholder` | string | - | Placeholder text (translation key); supported by text-like inputs (`text`, `email`, `phone`, `textarea`, …), selects and picklists |
 | `tab` | int | `1` | Tab number for multi-tab forms |

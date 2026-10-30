@@ -84,6 +84,7 @@ use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
+use Noerd\Support\ClientWriteGuardHook;
 use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
 use Noerd\Support\EmptyNumberFieldHook;
@@ -125,6 +126,7 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(QuickCreateExitHook::class);
         ComponentHookRegistry::register(RelationFormPersistHook::class);
         ComponentHookRegistry::register(LockedPropertiesHook::class);
+        ComponentHookRegistry::register(ClientWriteGuardHook::class);
         ComponentHookRegistry::register(WriteGuardHook::class);
         ComponentHookRegistry::register(EmptyNumberFieldHook::class);
         ComponentHookRegistry::register(ComponentAccessHook::class);

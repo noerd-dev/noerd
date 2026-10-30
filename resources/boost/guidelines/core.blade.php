@@ -330,6 +330,12 @@ Modules must NEVER be modified for project-specific data fields — neither the 
 - Rename migrations (e.g., `additional_fields` → `custom_attributes`) belong in the **module** so existing installations get the rename on module update
 - YAML detail/list configurations in `app-configs/` must NOT be modified for project-specific fields. Use `custom_attributes` in the project's Blade views instead
 - Project-specific Blade views that need custom_attributes fields should override the module's view or add custom logic in the project
+- An input the Blade binds without a layout field (`wire:model="detailData.custom_attributes.my_key"`)
+  MUST be declared in the component's `additionalDetailFields()` (full field names). The client may
+  only change what the layout or that list declares: below a key the layout binds only nested
+  (`custom_attributes`), an undeclared key is reverted, and a `readonly: true` field keeps the
+  server's value (`ClientWriteGuardHook`). A component without any declared field persists nothing
+  through the default `store()`
 
 **Access patterns:**
 ```php

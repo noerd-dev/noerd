@@ -676,9 +676,11 @@ The trait defaults hydrate `$detailData` from `$detailModel` on mount, validate 
 invented one) stores NOTHING, because `$modelId` is URL-bound and therefore client-controlled.
 Without a `$modelId` the record is created. `delete()` deletes the record and closes the modal.
 `writableDetailData()` reduces the client-controlled `$detailData` to the
-top-level keys the detail YAML on disk binds (`detailData.*`, recursing into blocks), strips the
+top-level keys the form binds (`detailData.*`, recursing into blocks — from the resolved
+`$pageLayout` and the detail YAML on disk) plus the keys of `additionalDetailFields()`, strips the
 relation-form keys (see [Relation Forms](relation-forms.md)) and always drops `id`, `tenant_id`,
 `created_at` and `updated_at` — a crafted request can never inject columns the form does not show.
+It fails CLOSED: a component without any declared field persists nothing.
 Both `store()` and `delete()` are guarded by `canSaveObject()` / `canDeleteObject()`.
 
 **Success indicator.** The transient "Successfully saved" feedback the save bar shows left of its
@@ -687,6 +689,35 @@ buttons is its own component, `<x-noerd::success-indicator :message="..." />`, b
 after three seconds. A component with a save action that does not use the save bar — an editor modal,
 a screen with custom footer buttons — renders it in its footer instead of a status banner and sets
 the property to `true` after persisting.
+
+### What the Client May Change
+
+`Noerd\Support\ClientWriteGuardHook` guards the Livewire update
+channel of every `NoerdPage`/`NoerdDetail` component (`Noerd\Support\ClientWritablePaths` derives
+the rules from `$pageLayout`, a locked property):
+
+- a field with `readonly: true` keeps the value the server rendered — a crafted
+  `$wire.set('detailData.code', …)`, a replaced `detailData` array or a client-dispatched
+  `setFieldValue` is discarded;
+- a key the layout binds only through nested paths — `custom_attributes` above all — is a
+  NESTED ROOT: the client may change exactly the bound paths below it
+  (`detailData.custom_attributes.sap_number`); every other key keeps the server's value.
+
+The values are reverted, not rejected: a read-only currency input still sends its parsed value on
+blur, and that must not break the page. Server-side writes — `mount()`, actions, `*Selected`
+handlers, a value a component writes into a readonly field before `store()` — never pass the update
+channel and are untouched.
+
+An input the Blade binds without a layout field
+(`wire:model="detailData.custom_attributes.sap_number"`, or every field of a hand-built `*-page`
+that uses the default `store()`) must be declared, as full field names:
+
+```php
+protected function additionalDetailFields(): array
+{
+    return ['detailData.notes', 'detailData.custom_attributes.sap_number'];
+}
+```
 
 ### Custom Store / Delete Logic
 

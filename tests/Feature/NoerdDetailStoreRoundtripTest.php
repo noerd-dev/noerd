@@ -30,6 +30,12 @@ class ZzStoreRoundtripComponent extends Component
         return '<div></div>';
     }
 
+    /** No field layout: the persisted columns are declared as hand-built inputs. */
+    protected function additionalDetailFields(): array
+    {
+        return ['detailData.name', 'detailData.uuid'];
+    }
+
     protected function componentName(): string
     {
         return 'zz-store-roundtrip-page';

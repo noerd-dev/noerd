@@ -26,6 +26,12 @@ new class extends Component {
             ],
         ];
     }
+
+    /** The tenant's uuid column has no form field — declared as a hand-built input. */
+    protected function additionalDetailFields(): array
+    {
+        return ['detailData.uuid'];
+    }
 }; ?>
 
 <x-noerd::page>
