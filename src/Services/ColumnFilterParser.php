@@ -90,6 +90,27 @@ final class ColumnFilterParser
     }
 
     /**
+     * Apply a filter on a column of a related table through a whereHas()
+     * subquery (a join would collide with the base table's column names).
+     * "Empty" includes rows without a related record at all, so it is the
+     * negation of "a related record with a set value exists".
+     */
+    public static function applyRelation(Builder $query, string $relation, string $field, string $type, string $raw): void
+    {
+        $wantEmpty = self::emptiness($raw);
+
+        if ($wantEmpty === null) {
+            $query->whereHas($relation, fn(Builder $related) => self::apply($related, $field, $type, $raw));
+
+            return;
+        }
+
+        $notEmpty = fn(Builder $related) => self::applyNotEmpty($related, $field, $type);
+
+        $wantEmpty ? $query->whereDoesntHave($relation, $notEmpty) : $query->whereHas($relation, $notEmpty);
+    }
+
+    /**
      * Restrict the query to rows whose value is set: NOT NULL, and — for
      * string-like targets — not the empty string.
      */

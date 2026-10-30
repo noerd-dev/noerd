@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use function Laravel\Prompts\select;
 
 use Noerd\Models\TenantApp;
+use Noerd\Support\ListColumnIntrospection;
 use Symfony\Component\Yaml\Yaml;
 
 trait GeneratesResourceFiles
@@ -43,26 +44,6 @@ trait GeneratesResourceFiles
         'datetime' => 'datetime',
         'timestamp' => 'datetime',
         'json' => 'textarea',
-    ];
-
-    protected const TYPE_MAP_LIST = [
-        'varchar' => 'text',
-        'string' => 'text',
-        'char' => 'text',
-        'text' => 'text',
-        'longtext' => 'text',
-        'mediumtext' => 'text',
-        'tinyint' => 'bool',
-        'boolean' => 'bool',
-        'integer' => 'number',
-        'bigint' => 'number',
-        'smallint' => 'number',
-        'decimal' => 'number',
-        'float' => 'number',
-        'double' => 'number',
-        'date' => 'date',
-        'datetime' => 'datetime',
-        'timestamp' => 'datetime',
     ];
 
     protected const MAX_LIST_COLUMNS = 8;
@@ -763,7 +744,7 @@ trait GeneratesResourceFiles
             return null;
         }
 
-        return self::TYPE_MAP_LIST[$normalized] ?? 'text';
+        return ListColumnIntrospection::columnType($normalized) ?? 'text';
     }
 
     protected function guessColumnWidth(string $yamlType): int

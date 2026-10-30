@@ -774,9 +774,6 @@ first. Typical additions:
 - `setPreselect('customer_id', $id)` / `preselect('customer_id')` — the shared `listFilters`
   session bucket: a page seeds it so a related list opens pre-filtered, and a new record adopts
   the value by calling the matching `customerSelected()` method when it exists
-- `openRelationDetail($fieldName)` — open the record a `detailData` foreign key points at; the
-  target route and component are read from the field's registered relation definition in the
-  layout (route first, component as fallback)
 
 Initial field values are **not** such a case: they are
 configuration and belong in the YAML (`default:`, or the first option of a select) — see
@@ -788,8 +785,8 @@ custom `mount()` that replaces `$detailData` wholesale.
 - **Trait:** `NoerdDetail` provides `$detailData` (array, the form binding), `$modelId`, `$pageLayout`, `$relationTitles` and `mount()` / `store()` / `delete()` — override only for custom behavior
 - **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions
 - **validateFromLayout():** Validates against the `required:` flags of the YAML (plus relation-form rules)
-- **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); declare `protected string $listComponent = 'inventory::stock-list';` when the list does not follow the plural convention (overriding the method stays possible for a dynamic target and wins over the property)
-- **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); `getDetailComponent()` is the hook for a component that renders another component's detail YAML — declare `protected string $detailConfigComponent = 'item-detail';` (NOT `$detailComponent`, which on lists names the modal a row click opens). The trait declares neither property; keep them `protected`
+- **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); override it when the list does not follow the plural convention
+- **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); override `getDetailComponent()` for a component that renders another component's detail YAML
 - The Eloquent model is **never** stored as a property of a detail or page component (the one exception is a position row: `NoerdPositionRow::$position`)
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
 - **Extension slots:** `<x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />` marks a position where other modules mount their own Livewire components — see [DetailSlotsRegistry](extension-registries.md#detailslotsregistry)

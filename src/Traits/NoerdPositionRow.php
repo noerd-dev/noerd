@@ -14,7 +14,7 @@ use Noerd\Support\Positions\PositionColumn;
 /**
  * Row component of a YAML-configurable position table.
  *
- * The hosting detail resolves the columns once (`$this->positionColumns(...)`)
+ * The hosting detail resolves the columns once (`$this->positionColumns()`)
  * and hands them to every row; the row binds one `row.{field}` value per
  * column and renders them with `<x-noerd::positions.cells>`. The resolved
  * columns are #[Locked], so the client can never widen the set of fields

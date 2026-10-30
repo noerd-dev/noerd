@@ -91,8 +91,10 @@ use Noerd\Support\EmptyNumberFieldHook;
 use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LayoutState;
+use Noerd\Support\ListColumnIntrospection;
 use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\ModelMethodColumns;
+use Noerd\Support\PicklistBadges;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\SchemaColumnCache;
@@ -186,11 +188,15 @@ class NoerdServiceProvider extends ServiceProvider
             // may point at a DIFFERENT database (testbench sqlite vs. host
             // MySQL) whose tables share names, so it must reset here too.
             SchemaColumnCache::clear();
+            ListColumnIntrospection::clear();
         });
 
         // Migrations change what the schema cache describes — never keep
         // serving the pre-migration column listing.
-        Event::listen(MigrationsEnded::class, fn() => SchemaColumnCache::clear());
+        Event::listen(MigrationsEnded::class, function (): void {
+            SchemaColumnCache::clear();
+            ListColumnIntrospection::clear();
+        });
 
         // Under Octane booted() fires once per WORKER, not per request — the
         // same flush must run before every request, or one user's memoized
@@ -475,6 +481,7 @@ class NoerdServiceProvider extends ServiceProvider
         FormatHelper::clearCache();
         NoerdSettings::clearCache();
         SetupCollectionHelper::clearSelectOptionsCache();
+        PicklistBadges::clear();
         DatabaseSetupCollectionDefinitionRepository::resetCache();
         $this->app->make(ThemeRegistry::class)->clearCache();
     }

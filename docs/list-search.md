@@ -42,7 +42,7 @@ columns:
 ```
 
 If `searchableColumns` is not defined, all `columns[].field` values are candidates. In both cases
-only **real columns of the model's table** are searched (`tableHasColumn()`): dotted fields
+only **real columns of the model's table** are searched: dotted fields
 (`custom_attributes.x`, `category.name`), accessors and computed fields are skipped silently. For
 large tables, index the searchable columns.
 

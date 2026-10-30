@@ -102,29 +102,12 @@ it('registers the store roundtrip listeners when the page yaml declares a detail
     ]);
 });
 
-it('registers the roundtrip listeners for every detail of a details list, the shorthand deduplicated', function (): void {
+it('ignores a detail entry that is not a component name', function (): void {
     $page = new NoerdPageFixturePage();
-    $page->pageLayout = [
-        'detail' => 'crm::zz-fixture-detail',
-        'details' => ['crm::zz-fixture-detail', 'crm::zz-other-detail', ''],
-    ];
+    $page->pageLayout = ['detail' => ''];
 
-    expect($page->embeddedDetailComponents())->toBe(['crm::zz-fixture-detail', 'crm::zz-other-detail'])
-        ->and($page->embeddedDetailComponent())->toBe('crm::zz-fixture-detail')
-        ->and($page->exposedListeners())->toBe([
-            'refreshList-zz-fixture-page' => 'refreshList',
-            'detailStored-crm::zz-fixture-detail' => 'embeddedDetailStored',
-            'detailDataUpdated-crm::zz-fixture-detail' => 'embeddedDetailDataUpdated',
-            'detailStored-crm::zz-other-detail' => 'embeddedDetailStored',
-            'detailDataUpdated-crm::zz-other-detail' => 'embeddedDetailDataUpdated',
-        ]);
-});
-
-it('takes the first entry of a details list as the primary detail', function (): void {
-    $page = new NoerdPageFixturePage();
-    $page->pageLayout = ['details' => ['crm::zz-first-detail', 'crm::zz-second-detail']];
-
-    expect($page->embeddedDetailComponent())->toBe('crm::zz-first-detail');
+    expect($page->embeddedDetailComponent())->toBeNull()
+        ->and($page->exposedListeners())->toBe(['refreshList-zz-fixture-page' => 'refreshList']);
 });
 
 it('registers the storeDetail trigger on details', function (): void {
