@@ -38,6 +38,12 @@ final class ThemeDefinition
         public string $rowClasses = 'w-full',
         public string $sectionPadding = 'py-8',
         public string $totalsPadding = 'pt-6',
+        /**
+         * The `size` of the icon buttons in a position row (`sm` | `md`) — the
+         * module row components hand it to x-noerd::button, so it is part of the
+         * theme contract even though the core itself never reads it.
+         */
+        public string $controlSize = 'md',
         public ?string $buttonClasses = null,
     ) {}
 
@@ -80,6 +86,7 @@ final class ThemeDefinition
             rowClasses: $string('rowClasses'),
             sectionPadding: $string('sectionPadding'),
             totalsPadding: $string('totalsPadding'),
+            controlSize: $string('controlSize'),
             buttonClasses: is_string($data['buttonClasses'] ?? null) && $data['buttonClasses'] !== ''
                 ? $data['buttonClasses']
                 : null,
