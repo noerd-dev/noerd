@@ -69,7 +69,8 @@ it and stays re-runnable.
 - **Composer**: `noerd/noerd` is required at the core version the module was scaffolded with
   (`composer.json` `require`). `Noerd\{Module}\Tests\` → `tests/` sits in the production
   `autoload` block, not in `autoload-dev`: Composer only dumps the dev autoload of the ROOT package,
-  so a host would never find the module's test traits (`tests/Traits/`) otherwise. The command also
+  so a host would never find the module's test classes (`tests/Traits/`, a standalone `TestCase`)
+  otherwise. The command also
   adds `noerd/{module}` to the project's root `composer.json`.
 - **Service provider**: `src/Providers/{Module}ServiceProvider.php` extends
   `Noerd\Providers\NoerdModuleServiceProvider` and declares `protected string $moduleKey` plus
@@ -334,7 +335,7 @@ $this->detailData['custom_attributes']['my_key'];
 | `src/Commands/` | `{Module}InstallCommand`, `{Module}UpdateCommand` |
 | `src/Models/` | Eloquent models (`$guarded`, `BelongsToTenant`) |
 | `src/Providers/` | ServiceProvider |
-| `tests/` | Pest tests (`tests/Components/` scaffolded), `tests/Traits/` for module test traits (see [Testing](testing.md)) |
+| `tests/` | Pest tests: `tests/Feature/ModuleBoundaryTest.php` is generated (`assertModuleBoundary()`), the user fixture is `actingAsNoerdUserForApp()`, `tests/Traits/` holds only module-specific fixtures (see [Testing](testing.md)) |
 | `AGENTS.md`, `CLAUDE.md` | Contributor notes for humans and AI agents working on the module |
 
 ## Next Steps

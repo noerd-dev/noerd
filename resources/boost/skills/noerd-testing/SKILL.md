@@ -32,15 +32,23 @@ Not composer-autoloaded (test code must never load in production). Suites bindin
 
 | Helper | Use |
 |---|---|
+| `actingAsNoerdUserForApp($appKey, $tenantAttributes = [], $profile = null, $appAttributes = [])` | the module fixture: user on a fresh tenant that runs the app (row created, assigned via `Tenant::assignApp()`), tenant + app selected, authenticated on the noerd guard; `createNoerdUserForApp()` = the same without authentication, `ensureTenantApp('MEDIA')` = a further app row |
 | `validDetailPayload(Model::class, $overrides)` | complete factory-sourced `detailData` for store-success tests |
 | `requiredLayoutFields($component)` | required field names from the live `pageLayout` for validation tests |
 | `registerTestLivewireRoute($uri, $component, $name)` | register a named `Route::livewire()` inside a test (route-vs-component mechanics) |
-| `assertModuleDependenciesDeclared($moduleDir, $allowedPackages = [])` | module-independence guard: fails when another module's namespace appears without a `require` entry |
+| `assertModuleBoundary($moduleDir)` | the ONE boundary test of a module: dependency guard + forbidden namespaces, allowances and forbidden entries read from `composer.json` `extra.noerd.boundary` (`assertModuleDependenciesDeclared()` / `assertModuleDoesNotReference()` are its parts) |
 | `assertModuleUpdateCommandPublishesConfigs($command, $moduleDir, $moduleKey)` | the standard proof for a `noerd:update-{module}` command |
 | `zzNormalizeSpaces($value)` | collapse ICU's U+00A0 / U+202F spaces to plain ones before asserting a formatted value |
 
 ## 3. Recipes
 
+**Module setup:** `uses(Tests\TestCase::class, RefreshDatabase::class);` plus
+`beforeEach(function (): void { $this->user = actingAsNoerdUserForApp('INVENTORY'); $this->tenantId = $this->user->selected_tenant_id; });`
+— a module trait under `tests/Traits/` only adds module-specific fixtures (settings rows, a second
+app via `ensureTenantApp()` + `$tenant->assignApp()`) on top of the helper.
+**Boundary test:** `it('keeps its module boundary', fn () => assertModuleBoundary(dirname(__DIR__, 2)));`
+— allowances (`"allowed": {"pkg": "reason"}`) and `"forbidden": ["Noerd\\Party\\"]` live in
+`composer.json` `extra.noerd.boundary`, never in the test.
 **Detail store (create):**
 ```php
 Livewire::test('module::thing-detail')
@@ -87,7 +95,11 @@ in the test that needs them.
   `php artisan test --parallel` is the parallel runner, and Testbench-bound suites run sequentially.
 - After attaching/detaching tenant apps mid-test call `TenantHelper::clearCache()` before the next
   `Livewire::test()` — the selected tenant is memoized per process.
-- Module test traits (`CreatesModuleUser`, …) live in `app-modules/{module}/tests/Traits/`.
+- A module's own Testbench suite (standalone CI) binds `Noerd\Tests\ModuleTestCase` with
+  `protected array $moduleProviders = [...]` — the core setup plus the module's providers, each
+  module linked into the skeleton; every test file still binds the module's TestCase via `uses()`.
+- Module test traits live in `app-modules/{module}/tests/Traits/` and build on
+  `actingAsNoerdUserForApp()` — never a hand-rolled tenant + user + `tenant_apps` fixture.
 
 ## Done when
 

@@ -10,10 +10,11 @@ use Noerd\Enums\Profile;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Tests\Support\CreatesProfileUsers;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class, CreatesProfileUsers::class);
 
 /*
  | The core's profile baseline: with NO gates defined, the per-tenant profile
@@ -41,7 +42,7 @@ beforeEach(function (): void {
 });
 
 it('leaves a user without a profile unrestricted', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(null));
+    $this->actingAs($this->createNoerdUserWithProfile(null));
 
     expect(AccessHelper::canReadObject(Tenant::class))->toBeTrue()
         ->and(AccessHelper::canWriteObject(Tenant::class))->toBeTrue()
@@ -52,7 +53,7 @@ it('leaves a user without a profile unrestricted', function (): void {
 });
 
 it('leaves a USER profile unrestricted', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::User));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::User));
 
     expect(AccessHelper::canWriteObject(Tenant::class))->toBeTrue()
         ->and(AccessHelper::canCreateObject(Tenant::class))->toBeTrue()
@@ -62,7 +63,7 @@ it('leaves a USER profile unrestricted', function (): void {
 });
 
 it('restricts a READ_ONLY profile to reading and opening apps', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::ReadOnly));
 
     expect(AccessHelper::canReadObject(Tenant::class))->toBeTrue()
         ->and(AccessHelper::canAccessApp('ANY_APP'))->toBeTrue()
@@ -77,7 +78,7 @@ it('treats an unknown, module-registered profile key like USER', function (): vo
     // in the registering module's gates. The core baseline itself must stay
     // permissive for keys it does not know — a missing or foreign assignment
     // never locks an installation out.
-    $user = createNoerdUserWithProfile(null);
+    $user = $this->createNoerdUserWithProfile(null);
     $user->tenants()->updateExistingPivot(
         Noerd\Helpers\TenantHelper::getSelectedTenantId(),
         ['profile_key' => 'ZZ_MODULE_PROFILE'],
@@ -91,7 +92,7 @@ it('treats an unknown, module-registered profile key like USER', function (): vo
 });
 
 it('lets an ADMIN profile bypass the baseline', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::Admin));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::Admin));
 
     expect(AccessHelper::canWriteObject(Tenant::class))->toBeTrue()
         ->and(AccessHelper::canDeleteObject(Tenant::class))->toBeTrue()
@@ -99,7 +100,7 @@ it('lets an ADMIN profile bypass the baseline', function (): void {
 });
 
 it('lets a super admin bypass the baseline regardless of an assigned profile', function (): void {
-    $user = createNoerdUserWithProfile(Profile::ReadOnly);
+    $user = $this->createNoerdUserWithProfile(Profile::ReadOnly);
     $user->forceFill(['super_admin' => true])->save();
     $this->actingAs($user->fresh());
 
@@ -115,7 +116,7 @@ it('never restricts guests through the baseline', function (): void {
 });
 
 it('lets a defined gate replace the baseline in both directions', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::ReadOnly));
 
     // A permission layer (noerd-plus) may WIDEN a restrictive baseline …
     Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => true);
@@ -127,7 +128,7 @@ it('lets a defined gate replace the baseline in both directions', function (): v
 });
 
 it('makes store() a no-op for a READ_ONLY profile', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::ReadOnly));
 
     $countBefore = Tenant::query()->count();
 
@@ -150,7 +151,7 @@ it('makes store() a no-op for a READ_ONLY profile', function (): void {
 });
 
 it('makes delete() a no-op for a READ_ONLY profile', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::ReadOnly));
 
     $tenant = Tenant::factory()->create();
 

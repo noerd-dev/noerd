@@ -7,9 +7,10 @@ use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
 use Noerd\Services\ProfileRegistry;
+use Noerd\Tests\Support\CreatesProfileUsers;
 use Noerd\Tests\TestCase;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class, CreatesProfileUsers::class);
 
 /*
  | The ProfileRegistry: built-in profiles plus module-registered ones drive
@@ -53,7 +54,7 @@ it('renders registered profiles in the user detail picker', function (): void {
 it('labels the profile badge of a registered profile', function (): void {
     app(ProfileRegistry::class)->register('ZZ_MODULE_PROFILE', fn(): string => 'Zz Module Profile');
 
-    $user = createNoerdUserWithProfile(null);
+    $user = $this->createNoerdUserWithProfile(null);
     $user->tenants()->updateExistingPivot(
         Noerd\Helpers\TenantHelper::getSelectedTenantId(),
         ['profile_key' => 'ZZ_MODULE_PROFILE'],

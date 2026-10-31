@@ -183,6 +183,16 @@ it('declares the module key and both commands on the module service provider', f
         ->not->toContain('addNamespace');
 });
 
+it('generates the one boundary test every module ships, driven by composer.json', function (): void {
+    $content = ($this->renderStub)('module-boundary-test.stub');
+
+    expect($content)
+        ->toContain('uses(Tests\\TestCase::class);')
+        ->toContain('assertModuleBoundary(dirname(__DIR__, 2));')
+        ->toContain('extra.noerd.boundary')
+        ->not->toContain('assertModuleDependenciesDeclared');
+});
+
 it('generates a blade-renderable boost guideline for the module', function (): void {
     $content = ($this->renderStub)('boost-guideline.stub');
 

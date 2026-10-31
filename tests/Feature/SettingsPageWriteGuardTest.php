@@ -11,6 +11,7 @@ use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Tests\Support\ZzSettingsProfile;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdSettingsPage;
 
@@ -28,7 +29,7 @@ uses(TestCase::class, RefreshDatabase::class);
  */
 
 beforeEach(function (): void {
-    ensureZzSettingsProfilesTable();
+    ZzSettingsProfile::ensureTable();
 
     $user = NoerdUser::factory()->create();
     $tenant = Tenant::factory()->create();

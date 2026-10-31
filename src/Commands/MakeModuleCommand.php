@@ -108,6 +108,7 @@ class MakeModuleCommand extends Command
             $this->createServiceProvider();
             $this->createInstallCommand();
             $this->createUpdateCommand();
+            $this->createBoundaryTest();
             $this->createRoutes();
             $this->createTenantAppMigrationStub();
             $this->createDashboard();
@@ -155,6 +156,7 @@ class MakeModuleCommand extends Command
             'database/factories',
             'database/seeders',
             'routes',
+            'tests/Feature',
             'tests/Traits',
             'tests/Components',
             "app-configs/{$this->moduleName}/lists",
@@ -199,6 +201,17 @@ class MakeModuleCommand extends Command
         $path = "{$this->basePath}/src/Commands/{$this->moduleNameStudly}UpdateCommand.php";
         $this->filesystem->put($path, $content);
         $this->line('<info>Created:</info> update command');
+    }
+
+    /**
+     * The one test every module ships from day one: the boundary guard, driven
+     * by composer.json (extra.noerd.boundary) rather than by test code.
+     */
+    private function createBoundaryTest(): void
+    {
+        $content = $this->getStub('module-boundary-test.stub');
+        $this->filesystem->put("{$this->basePath}/tests/Feature/ModuleBoundaryTest.php", $content);
+        $this->line('<info>Created:</info> ModuleBoundaryTest');
     }
 
     private function createAgentDocs(): void
