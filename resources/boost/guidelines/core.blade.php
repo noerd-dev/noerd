@@ -988,7 +988,14 @@ YAML — never hand-written fields, never `NoerdDetail` with a bespoke tenant-ke
   (even enforced) are both ignored, and layout overrides NEVER apply — settings pages have no
   layout overrides at all. There are also no `custom_attributes` fields.
 - No `$detailPrimary`, no `$modelId`, no delete: the URL stays clean, the singleton row is created
-  on first save via `updateOrCreate(['tenant_id' => …])` (stripping id/tenant_id/timestamps).
+  on first save (stripping id/tenant_id/timestamps).
+- The model behind a settings page is a TENANT SINGLETON: it uses `Noerd\Traits\TenantSingleton`
+  and declares `implements Noerd\Contracts\TenantSingletonContract`:
+  `Model::forTenant(?int $tenantId = null)` is the ONE lookup (the row, or an unsaved instance with
+  the model's `tenantDefaults()` — never null, so callers never branch), `updateForTenant(array, ?int)`
+  the one write path, `existsForTenant()` the existence check; memoized per request, every global
+  scope lifted. Never write a module's own `forTenant()`/`resolveForTenant()`/`firstWhere('tenant_id', …)`,
+  never set "effective defaults" in a settings page's `mount()` — they belong in `tenantDefaults()`.
 - Blade skeleton: `<x-noerd::page>` + `<x-noerd::modal-title>` header +
   `<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId"/>` (tab slots like `tab2` may add
   extra markup) + footer `<x-noerd::delete-save-bar :show-delete="false"/>`.

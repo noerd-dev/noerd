@@ -62,6 +62,15 @@ Campaign::all();                           // only the selected tenant's rows
 - The scope only applies while a noerd user is authenticated with a selected tenant — unauthenticated contexts (queued jobs, commands) see all tenants; scope explicitly there. Only the noerd guard counts: a host guard's user (e.g. an admin panel on the `web` guard) never influences scoping (see [Authentication](auth.md))
 - Bypass the scope deliberately with `Model::withoutGlobalScopes()` plus an explicit `where('tenant_id', ...)`
 
+## TenantSingleton (Eloquent models)
+
+`Noerd\Traits\TenantSingleton` is the lookup of a model with ONE row per tenant (settings,
+counters): `forTenant(?int $tenantId = null): static` answers the row or an unsaved instance with
+the model's `tenantDefaults()`, `updateForTenant(array, ?int)` creates or updates it,
+`existsForTenant()` says whether a row was saved. Memoized per request, every global scope lifted
+(jobs read another tenant's row by id). Full reference in
+[Settings Pages → Tenant Singleton Models](settings-page.md#tenant-singleton-models).
+
 ## HasEmailPreview (Livewire components)
 
 `Noerd\Traits\HasEmailPreview` adds an email preview modal and a rate-limited "send test email" action to a detail component that edits an email template (subject + markdown body with placeholders).

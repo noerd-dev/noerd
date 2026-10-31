@@ -21,16 +21,16 @@ it('drops the request memos when the container forgets its scoped instances', fu
     $tenant = Tenant::factory()->create();
     TenantHelper::setSelectedTenantId($tenant->id);
 
-    expect(NoerdSettings::forTenant($tenant->id))->toBeNull();
+    expect(NoerdSettings::forTenant($tenant->id)->exists)->toBeFalse();
 
     // A settings row written by another process is invisible to the memo …
     NoerdSettings::query()->insert(['tenant_id' => $tenant->id, 'currency' => 'CHF']);
-    expect(NoerdSettings::forTenant($tenant->id))->toBeNull();
+    expect(NoerdSettings::forTenant($tenant->id)->exists)->toBeFalse();
 
     // … until the worker moves on to the next job.
     app()->forgetScopedInstances();
 
-    expect(NoerdSettings::forTenant($tenant->id)?->currency)->toBe('CHF');
+    expect(NoerdSettings::forTenant($tenant->id)->currency)->toBe('CHF');
 });
 
 it('keeps one bucket per name and forgets them separately', function (): void {

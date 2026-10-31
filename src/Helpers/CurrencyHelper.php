@@ -44,9 +44,10 @@ final class CurrencyHelper
      */
     public static function codeForTenant(?int $tenantId = null): string
     {
-        $code = NoerdSettings::forTenant($tenantId)?->currency;
+        // Null while the tenant has no settings row: the config decides then.
+        $code = (string) NoerdSettings::forTenant($tenantId)->currency;
 
-        if (is_string($code) && isset(self::CURRENCIES[$code])) {
+        if ($code !== '' && isset(self::CURRENCIES[$code])) {
             return $code;
         }
 

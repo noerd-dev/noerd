@@ -43,12 +43,6 @@ parameters:
 			path: src/Helpers/SetupCollectionHelper.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>detail_theme" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Helpers/ThemeHelper.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$selected_tenant_id\.$#'
 			identifier: property.notFound
 			count: 1
