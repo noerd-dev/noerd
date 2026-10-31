@@ -10,7 +10,7 @@
 
 {{-- The panels are anchored with `position: fixed` so they escape a horizontally scrolling
      filter bar (an `overflow-x` ancestor clips absolutely positioned children vertically too). --}}
-<div x-data="{ open: false, showDatePicker: false, customDate: '{{ $isCustomDate ? $value : '' }}' }"
+<div x-data="{ open: false, showDatePicker: false, customDate: @js($isCustomDate ? (string) $value : '') }"
      @click.outside="open = false; showDatePicker = false"
      class="relative {{ $full ? 'w-full' : 'shrink-0' }}">
     <button x-ref="trigger_{{ $filter['column'] }}" @click="open = !open; showDatePicker = false" type="button"

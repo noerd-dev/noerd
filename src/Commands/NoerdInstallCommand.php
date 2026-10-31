@@ -259,8 +259,9 @@ class NoerdInstallCommand extends Command
             return;
         }
 
-        $allAppIds = TenantApp::where('is_active', true)->pluck('id')->toArray();
-        $tenant->tenantApps()->sync($allAppIds);
+        foreach (TenantApp::where('is_active', true)->orderBy('id')->get() as $app) {
+            $tenant->assignApp($app);
+        }
         $this->info("All apps auto-assigned to tenant '{$tenant->name}'.");
     }
 }

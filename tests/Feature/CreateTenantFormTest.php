@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
+use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -139,6 +141,7 @@ it('copies tenant apps from current tenant to new tenant for a super admin', fun
     $tenantName = 'Test Tenant';
 
     $this->actingAs($admin);
+    Event::fake([TenantAppAssigned::class]);
 
     Livewire::test($testSettings['componentName'])
         ->set('name', $tenantName)
@@ -147,9 +150,15 @@ it('copies tenant apps from current tenant to new tenant for a super admin', fun
 
     $createdTenant = Tenant::where('name', $tenantName)->first();
 
-    // Verify apps were copied to new tenant
+    // Verify apps were copied to new tenant — through assignApp(), so the
+    // modules hear about the copy exactly like about any other assignment.
     expect($createdTenant->tenantApps->contains($app1->id))->toBeTrue();
     expect($createdTenant->tenantApps->contains($app2->id))->toBeTrue();
+    Event::assertDispatchedTimes(TenantAppAssigned::class, 2);
+    Event::assertDispatched(
+        TenantAppAssigned::class,
+        fn(TenantAppAssigned $event): bool => $event->tenantId === $createdTenant->id && $event->appName === 'APP2',
+    );
 });
 
 it('updates user selected_tenant_id to new tenant', function () use ($testSettings): void {

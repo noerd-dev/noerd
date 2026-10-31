@@ -286,7 +286,11 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
 - Assigning an app to a tenant (or removing it) is a SUPER ADMIN decision: Setup → Apps lets a
   tenant admin only reorder and hide the assigned apps, and a tenant created by a tenant admin
   starts without apps. Never add a screen that attaches `tenant_apps` for a mere tenant admin;
-  system flows (install commands, provisioning services) assign apps without a user.
+  system flows (install commands, provisioning services) assign apps without a user — ALWAYS
+  through `Tenant::assignApp($app, $pivot)` (the app row, its id or its name), never with
+  `tenantApps()->attach()`/`sync()`: that one method fires `Noerd\Events\TenantAppAssigned` for a
+  newly held app, which modules listen for (an app folder, a hidden companion app), and is a no-op
+  for an app the tenant already holds.
 - All checks go through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
   `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`). Create
   and write are SEPARATE abilities: `canSaveObject()` on detail/page components picks create (new

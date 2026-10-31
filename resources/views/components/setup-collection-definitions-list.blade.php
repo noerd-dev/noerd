@@ -1,12 +1,11 @@
 <?php
 
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
+use Noerd\Models\SetupCollection;
 use Noerd\Support\SetupCollectionDefinitionData;
 use Noerd\Traits\NoerdList;
-use Noerd\Helpers\NoerdAuth;
 
 new class extends Component
 {
@@ -24,18 +23,11 @@ new class extends Component
     {
         $repository = app(SetupCollectionDefinitionRepositoryContract::class);
 
-        $collectionMeta = DB::table('setup_collections')
-            ->leftJoin('setup_collection_entries', 'setup_collection_entries.setup_collection_id', '=', 'setup_collections.id')
-            ->where('setup_collections.tenant_id', NoerdAuth::user()->selected_tenant_id)
-            ->select(
-                'setup_collections.collection_key',
-                DB::raw('count(setup_collection_entries.id) as entry_count'),
-            )
-            ->groupBy('setup_collections.collection_key')
-            ->get()
-            ->keyBy('collection_key');
-
-        $entryCounts = $collectionMeta->pluck('entry_count', 'collection_key')->toArray();
+        // The tenant's buckets with their entry counts — the model is tenant-scoped.
+        $entryCounts = SetupCollection::query()
+            ->withCount('entries')
+            ->pluck('entries_count', 'collection_key')
+            ->all();
 
         $items = [];
         foreach ($repository->all() as $definition) {
