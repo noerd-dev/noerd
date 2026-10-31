@@ -4,6 +4,17 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Setup Routes
+|--------------------------------------------------------------------------
+|
+| These routes power the setup screens, where tenant administrators may
+| manage the users, tenants, apps and system settings. The "setup"
+| middleware keeps everyone else out and selects the setup app.
+|
+*/
+
 Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function (): void {
     // The setup landing page IS the users list; noerd.setup stays a second name
     // for the same screen because host modules and tests link to it.
@@ -27,7 +38,17 @@ Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function
     Route::livewire('system-settings', 'noerd::system-settings-page')->name('noerd.system-settings');
 });
 
-// Every other core screen lives under the configurable URL prefix
+/*
+|--------------------------------------------------------------------------
+| Core Routes
+|--------------------------------------------------------------------------
+|
+| The remaining core screens live beneath a configurable URL prefix,
+| which you may change via the "noerd.routes.prefix" option. Only
+| the apps overview and the "/login" shortcut stay at the root.
+|
+*/
+
 $prefix = config('noerd.routes.prefix', 'noerd');
 
 Route::group(['middleware' => ['noerd']], function (): void {

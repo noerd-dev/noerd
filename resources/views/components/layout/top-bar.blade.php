@@ -5,6 +5,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\TopBarRegistry;
+use Noerd\Support\Impersonation;
 use Noerd\Support\LayoutState;
 
 new class extends Component {
@@ -29,7 +30,7 @@ new class extends Component {
         // Drop noerd's session state but do NOT invalidate the whole
         // session: a host guard (e.g. Nova) may share the session cookie.
         Session::forget('noerd');
-        Session::forget('impersonating_from');
+        Impersonation::forget();
         Session::regenerate();
         Session::regenerateToken();
 

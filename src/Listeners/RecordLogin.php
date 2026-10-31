@@ -7,6 +7,7 @@ namespace Noerd\Listeners;
 use Illuminate\Auth\Events\Login;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdLogin;
+use Noerd\Support\Impersonation;
 
 /**
  * Persists every successful noerd login. The listener hangs off the framework
@@ -22,11 +23,9 @@ class RecordLogin
             return;
         }
 
-        $impersonatorId = session('impersonating_from');
-
         NoerdLogin::create([
             'user_id' => $event->user->getAuthIdentifier(),
-            'impersonated_by_id' => $impersonatorId ? (int) $impersonatorId : null,
+            'impersonated_by_id' => Impersonation::impersonatorId(),
             'ip_address' => request()->ip(),
             'user_agent' => mb_substr((string) request()->userAgent(), 0, 1000) ?: null,
             'remember' => (bool) $event->remember,

@@ -3,7 +3,7 @@
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
-use Noerd\Helpers\TenantHelper;
+use Noerd\Support\Impersonation;
 
 new class extends Component {
     #[Locked]
@@ -14,7 +14,7 @@ new class extends Component {
 
     public function mount(): void
     {
-        if (session('impersonating_from')) {
+        if (Impersonation::active()) {
             $this->isImpersonating = true;
             $this->userName = NoerdAuth::user()?->name ?? '';
         }
@@ -22,15 +22,7 @@ new class extends Component {
 
     public function stopImpersonating(): void
     {
-        abort_unless(session()->has('impersonating_from'), 403);
-
-        $originalUserId = session('impersonating_from');
-        session()->forget('impersonating_from');
-
-        // Clear tenant session so InitializeTenantSession will set the correct tenant
-        TenantHelper::clear();
-
-        NoerdAuth::guard()->loginUsingId($originalUserId);
+        Impersonation::stop();
 
         $this->redirect('/');
     }

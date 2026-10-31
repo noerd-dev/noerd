@@ -2,8 +2,8 @@
 
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
-use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Support\Impersonation;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\TenantFilterTrait;
 
@@ -18,36 +18,11 @@ new class extends Component {
 
     public function loginAsUser(int $userId): void
     {
-        if (! NoerdAuth::user()->isAdmin()) {
-            abort(403);
-        }
+        $target = NoerdUser::find($userId);
 
-        // Impersonation never nests: a second hop would overwrite the origin
-        // and strand the original admin in the impersonated account.
-        abort_if(session()->has('impersonating_from'), 403);
+        abort_unless($target instanceof NoerdUser, 403);
 
-        // A super admin administers the installation, so every account it can
-        // see on this screen is impersonatable; a tenant admin stays confined
-        // to the members of the tenants it administers.
-        if (! NoerdAuth::user()->isSuperAdmin()) {
-            $tenantIds = NoerdAuth::user()->adminTenants()->pluck('tenants.id');
-            $isMember = NoerdUser::whereKey($userId)
-                ->whereHas('tenants', fn($relationQuery) => $relationQuery->whereIn('tenant_id', $tenantIds))
-                ->exists();
-
-            abort_unless($isMember, 403);
-        }
-
-        // A super admin is never impersonatable from a tenant-admin screen:
-        // attaching such an account to one's own tenant would otherwise be a
-        // direct path to a full takeover.
-        abort_if(NoerdUser::whereKey($userId)->value('super_admin'), 403);
-        session(['impersonating_from' => NoerdAuth::id()]);
-
-        // Clear tenant session so InitializeTenantSession will set the correct tenant
-        TenantHelper::clear();
-
-        NoerdAuth::guard()->loginUsingId($userId);
+        Impersonation::start($target);
 
         $this->redirect('/');
     }
