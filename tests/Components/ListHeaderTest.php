@@ -269,22 +269,20 @@ class CustomHeaderListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList([['id' => 1, 'name' => 'Alice']], [
-                'title' => 'Things',
-                'actions' => [
-                    [
-                        'label' => 'New Thing',
-                        'action' => 'listAction',
-                    ],
+        return $this->buildList([['id' => 1, 'name' => 'Alice']], [
+            'title' => 'Things',
+            'actions' => [
+                [
+                    'label' => 'New Thing',
+                    'action' => 'listAction',
                 ],
-                'columns' => [
-                    ['field' => 'name', 'label' => 'Name'],
-                ],
-            ]),
-        ];
+            ],
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+            ],
+        ]);
     }
 
     public function render(): string
@@ -313,25 +311,20 @@ class CollapsingHeaderListComponent extends Component
         return ['column' => 'color', 'label' => 'Color', 'options' => ['red' => 'Red']];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function with(): array
+    public function listData(): array
     {
         $this->enableCsvExport = true;
 
-        return [
-            'listConfig' => $this->buildList([['id' => 1, 'name' => 'Alice']], [
-                'title' => 'Things',
-                'actions' => [
-                    ['label' => 'New Thing', 'action' => 'listAction'],
-                    ['label' => 'Export', 'action' => 'exportSecondary', 'style' => 'secondary'],
-                ],
-                'columns' => [
-                    ['field' => 'name', 'label' => 'Name'],
-                ],
-            ]),
-        ];
+        return $this->buildList([['id' => 1, 'name' => 'Alice']], [
+            'title' => 'Things',
+            'actions' => [
+                ['label' => 'New Thing', 'action' => 'listAction'],
+                ['label' => 'Export', 'action' => 'exportSecondary', 'style' => 'secondary'],
+            ],
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+            ],
+        ]);
     }
 
     public function exportSecondary(mixed $modelId = null, array $relations = []): void {}
@@ -350,17 +343,15 @@ class PrimaryOnlyHeaderListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList([['id' => 1, 'name' => 'Alice']], [
-                'title' => 'Things',
-                'listSettings' => ['disableSearch' => true],
-                'disableSearch' => true,
-                'actions' => [['label' => 'New Thing', 'action' => 'listAction']],
-                'columns' => [['field' => 'name', 'label' => 'Name']],
-            ]),
-        ];
+        return $this->buildList([['id' => 1, 'name' => 'Alice']], [
+            'title' => 'Things',
+            'listSettings' => ['disableSearch' => true],
+            'disableSearch' => true,
+            'actions' => [['label' => 'New Thing', 'action' => 'listAction']],
+            'columns' => [['field' => 'name', 'label' => 'Name']],
+        ]);
     }
 
     public function render(): string
@@ -377,18 +368,16 @@ class BareHeaderListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList([['id' => 1, 'name' => 'Alice']], [
-                'title' => 'Things',
-                'listSettings' => ['disableSearch' => true],
-                'disableSearch' => true,
-                'columns' => [
-                    ['field' => 'name', 'label' => 'Name'],
-                ],
-            ]),
-        ];
+        return $this->buildList([['id' => 1, 'name' => 'Alice']], [
+            'title' => 'Things',
+            'listSettings' => ['disableSearch' => true],
+            'disableSearch' => true,
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+            ],
+        ]);
     }
 
     public function render(): string

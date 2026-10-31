@@ -275,11 +275,9 @@ class TestableGridListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList($this->rowsData, $this->configData),
-        ];
+        return $this->buildList($this->rowsData, $this->configData);
     }
 
     public function render(): string
@@ -300,13 +298,11 @@ class TestableGridFilterListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(NoerdUser::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(NoerdUser::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string

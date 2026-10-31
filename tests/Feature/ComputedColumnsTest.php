@@ -125,11 +125,9 @@ class ZzComputedListComponent extends Component
         $this->enableCsvExport = true;
     }
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList($this->listQuery(ZzComputedHost::class)->paginate($this->perPage)),
-        ];
+        return $this->buildList($this->listQuery(ZzComputedHost::class)->paginate($this->perPage));
     }
 
     public function render(): string

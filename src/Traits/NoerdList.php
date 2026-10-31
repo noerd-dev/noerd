@@ -220,9 +220,24 @@ trait NoerdList
         );
     }
 
+    /**
+     * The rows and the built config of this list — the ONE source every
+     * consumer reads (see builtListConfig()). The trait's version queries the
+     * declared $listModel; a list whose rows are not one model (a repository, a
+     * raw query) overrides it and returns buildList($rows, $config) itself.
+     */
     public function listData(): array
     {
-        $rows = $this->listQuery($this->listModel)->paginate($this->clampPerPage($this->perPage));
+        $modelClass = property_exists($this, 'listModel') ? $this->listModel : null;
+
+        if (! is_string($modelClass) || $modelClass === '') {
+            throw new LogicException(sprintf(
+                '%s declares no $listModel: declare the model the list shows, or override listData() and return buildList($rows, $config).',
+                static::class,
+            ));
+        }
+
+        $rows = $this->listQuery($modelClass)->paginate($this->clampPerPage($this->perPage));
 
         return $this->buildList($rows);
     }
@@ -739,27 +754,17 @@ trait NoerdList
     }
 
     /**
-     * The buildList() result, computed at most once per request, whatever the
-     * component's style: lists declaring $listModel build it via listData(),
-     * lists with a custom with() return it as view data. The header chrome, the
-     * list body and the generic actions (row click, select-all, bulk delete) all
-     * read it — without the memo each of them would run the paginated query
-     * again. Mutating actions (deleteSelected) clear it so the re-render
-     * queries fresh rows.
+     * The listData() result, computed at most once per request. The header
+     * chrome, the list body and the generic actions (row click, select-all,
+     * bulk delete) all read it — without the memo each of them would run the
+     * paginated query again. Mutating actions (deleteSelected) clear it so the
+     * re-render queries fresh rows.
      *
      * @return array<string, mixed>
      */
     protected function builtListConfig(): array
     {
-        if ($this->builtListConfigCache !== null) {
-            return $this->builtListConfigCache;
-        }
-
-        if (property_exists($this, 'listModel') && $this->listModel) {
-            return $this->builtListConfigCache ??= $this->listData();
-        }
-
-        return $this->builtListConfigCache ??= method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
+        return $this->builtListConfigCache ??= $this->listData();
     }
 
     protected function mountList(): void

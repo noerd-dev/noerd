@@ -16,7 +16,11 @@ new class extends Component
 
     public $detailComponent = 'noerd::setup-collection-definition-detail';
 
-    public function with(): array
+    /**
+     * The rows are the collection definitions of the repository, not a model —
+     * searched, sorted and paginated here.
+     */
+    public function listData(): array
     {
         $repository = app(SetupCollectionDefinitionRepositoryContract::class);
 
@@ -70,19 +74,17 @@ new class extends Component
             $page,
         );
 
-        return [
-            'listConfig' => $this->buildList($rows, [
-                'title' => __('Collection Definitions'),
-                'actions' => [['label' => __('New Collection Definition'), 'action' => 'listAction']],
-                'disableSearch' => false,
-                'columns' => [
-                    ['field' => 'titleList', 'label' => __('Title (plural)')],
-                    ['field' => 'key', 'label' => __('Key')],
-                    ['field' => 'fieldCount', 'label' => __('Fields')],
-                    ['field' => 'entryCount', 'label' => __('Entries')],
-                ],
-            ]),
-        ];
+        return $this->buildList($rows, [
+            'title' => __('Collection Definitions'),
+            'actions' => [['label' => __('New Collection Definition'), 'action' => 'listAction']],
+            'disableSearch' => false,
+            'columns' => [
+                ['field' => 'titleList', 'label' => __('Title (plural)')],
+                ['field' => 'key', 'label' => __('Key')],
+                ['field' => 'fieldCount', 'label' => __('Fields')],
+                ['field' => 'entryCount', 'label' => __('Entries')],
+            ],
+        ]);
     }
 } ?>
 

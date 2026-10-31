@@ -50,13 +50,11 @@ class ZzCreateGateList extends Component
 
     public $listModel = Tenant::class;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(Tenant::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(Tenant::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string
@@ -87,9 +85,14 @@ beforeEach(function (): void {
     Livewire::component('zz-create-gate-list', ZzCreateGateList::class);
 });
 
+function zzBuiltListConfig($component): array
+{
+    return \Livewire\invade($component->instance())->builtListConfig();
+}
+
 function listActionLabels($component): array
 {
-    $actions = $component->viewData('listConfig')['listSettings']['actions'] ?? [];
+    $actions = zzBuiltListConfig($component)['listSettings']['actions'] ?? [];
 
     return array_column($actions, 'label');
 }
@@ -157,7 +160,7 @@ it('strips every action when reading is denied', function (): void {
     $component = Livewire::test('zz-create-gate-list');
 
     expect(listActionLabels($component))->toBe([])
-        ->and($component->viewData('listConfig')['objectAccessDenied'])->toBeTrue();
+        ->and(zzBuiltListConfig($component)['objectAccessDenied'])->toBeTrue();
 });
 
 it('keeps every action when nothing is denied', function (): void {

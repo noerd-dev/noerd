@@ -21,13 +21,14 @@ below points into that folder — read the referenced page before building the f
   a slim component contains nothing else (reference: `src/Commands/stubs/resource/list.blade.stub`). Only when custom
   query logic is needed, override `listData()` (reference: `docs/list-view.md`, "Custom Query Logic"): build the query
   via `$this->listQuery($this->listModel)` (chain additional wheres/eager loads and
-  `->paginate($this->perPage)`) and end with `return $this->buildList($rows);`. Never leave a custom
-  query in `with()` once `$listModel` is declared — the generic trait features (row click,
-  select-all, bulk delete) resolve the list via `listData()`. Extra view data (e.g. a footer
-  `summary`) stays in a slim `with()` returning only the extra keys, sharing the query with
-  `listData()` via a private helper. `listQuery()` applies search, sort and the Excel-style column
-  filters from the YAML config — a manually built query gets none of these and renders no filter
-  funnels in the header. A manual query (and no `$listModel`) is only acceptable when technically
+  `->paginate($this->perPage)`) and end with `return $this->buildList($rows);`. `listData()` is the
+  ONE source of a list's rows and config — a `with()` never returns a `listConfig`, the view does
+  not read it; the generic trait features (row click, select-all, bulk delete) resolve the list via
+  `listData()`. Extra view data (e.g. a footer `summary`) stays in a slim `with()` returning only
+  the extra keys, sharing the query with `listData()` via a private helper. `listQuery()` applies
+  search, sort, the header filters and the Excel-style column filters from the YAML config — a
+  manually built query gets none of these and renders no filter funnels in the header. A manual
+  query (and no `$listModel`) is only acceptable when technically
   required (rows not backed by a single Eloquent model, repository/raw queries) — such lists
   intentionally show no column filters. A hand-written "contains" match always goes through
   `ColumnFilterParser::applyLikeContains($query, $field, $value)` — never a bare

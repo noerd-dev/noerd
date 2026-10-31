@@ -124,14 +124,12 @@ class PaginatedListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(NoerdUser::class)->orderBy('id')->paginate($this->perPage),
-                'paginated-list',
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(NoerdUser::class)->orderBy('id')->paginate($this->perPage),
+            'paginated-list',
+        );
     }
 
     public function render(): string

@@ -342,11 +342,16 @@ new class extends Component {
 columns (`category.name`) itself. A list that renders a YAML under another name passes it to both
 calls: `listQuery($model, 'other-list')` and `buildList($rows, 'other-list')`.
 
-Never leave a custom query in `with()` once `$listModel` is declared: the generic trait
-features (row click, select-all, bulk delete) resolve the list via `listData()` and would
-operate on the wrong rows. Extra view data (e.g. a footer summary) stays in a slim `with()`
-that returns only the extra keys — share the query between `listData()` and `with()` via a
-private helper method:
+`listData()` is the ONE source of a list's rows and built config: the view, the header chrome
+and the generic trait features (row click, select-all, bulk delete) all read it through the
+per-request memo `builtListConfig()`. A `with()` never returns a `listConfig` — the view does not
+read it. A list whose rows are not one model (a repository, a raw query, rows assembled in PHP)
+overrides `listData()` without a `$listModel` and returns `buildList($rows, $config)` with an inline
+config array and a `LengthAwarePaginator` (reference: `noerd::setup-collection-definitions-list`);
+such a list shows no column filters and declares its permission target with
+`$objectPermissionModel`. Extra view data (e.g. a footer summary) stays in a slim `with()` that
+returns only the extra keys — share the query between `listData()` and `with()` via a private
+helper method:
 
 ```php
 private function filteredQuery(): Builder

@@ -223,12 +223,6 @@ parameters:
 			path: src/Traits/NoerdDetail.php
 
 		-
-			message: '#^Call to function method_exists\(\) with \$this\(Noerd\\Tools\\PHPStan\\ListHost\) and ''with'' will always evaluate to false\.$#'
-			identifier: function.impossibleType
-			count: 1
-			path: src/Traits/NoerdList.php
-
-		-
 			message: '#^Call to function is_string\(\) with class\-string\<Noerd\\Contracts\\DefinesPositionColumns\> will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -262,12 +256,6 @@ parameters:
 			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\ListHost\:\:\$availableListViews\.$#'
 			identifier: property.notFound
 			count: 5
-			path: tools/phpstan/TraitHosts.php
-
-		-
-			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\ListHost\:\:\$listModel\.$#'
-			identifier: property.notFound
-			count: 1
 			path: tools/phpstan/TraitHosts.php
 
 		-

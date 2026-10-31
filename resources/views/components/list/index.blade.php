@@ -16,10 +16,9 @@
     @include('noerd::components.list.minimal')
 @else
     @php
-        // Auto-fetch listConfig from parent Livewire component if not provided.
-        // builtListConfig() memoizes the buildList() result, so a with()-style
-        // component (whose view data Livewire already computed) is not queried
-        // a second time; slim components ($listModel only) compute it here.
+        // Auto-fetch listConfig from the parent Livewire component if not provided:
+        // builtListConfig() memoizes the listData() result, so the header chrome,
+        // the body and the generic actions share one query per request.
         $listConfig = $listConfig ?? $this->builtListConfig();
         // Compact mode hides the list header and the pagination footer (e.g. for embedded lists)
         $compact ??= ($this->compact ?? false);

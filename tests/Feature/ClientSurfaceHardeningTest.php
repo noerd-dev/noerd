@@ -40,13 +40,11 @@ class ZzHardeningList extends Component
 {
     use NoerdList;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(Tenant::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(Tenant::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string

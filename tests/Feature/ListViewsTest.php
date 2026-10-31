@@ -592,9 +592,9 @@ class TestableSingleViewRenderComponent extends TestableSingleViewComponent
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return ['listConfig' => $this->buildList([['id' => 1, 'name' => 'Alice']])];
+        return $this->buildList([['id' => 1, 'name' => 'Alice']]);
     }
 
     public function render(): string
