@@ -1,11 +1,11 @@
 <?php
 
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Facades\Noerd;
-use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
@@ -22,9 +22,14 @@ new class extends Component
     public ?string $detailPrimary = 'setupCollectionId';
 
     // No $detailModel: the form layout comes from the collection definition
-    // (collectionLayout), not from a detail YAML.
+    // (collectionLayout), not from a detail YAML. Both are server state: the
+    // layout decides which fields store() writes, the key which collection —
+    // neither is ever a client update.
 
+    #[Locked]
     public ?array $collectionLayout = null;
+
+    #[Locked]
     public ?string $collectionKey = null;
     /** Plain uploads of the image fields (the image element binds `imageUploads.{field}`). */
     public array $imageUploads = [];
@@ -76,9 +81,8 @@ new class extends Component
 
         $this->validateFromLayout();
 
-        // Find or create the parent Collection
+        // Find or create the parent Collection (tenant-scoped by the model).
         $parentCollection = SetupCollection::firstOrCreate([
-            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
             'collection_key' => mb_strtoupper($this->collectionKey),
         ], [
             'name' => ucfirst($this->collectionKey),
@@ -88,7 +92,6 @@ new class extends Component
         $convertedEntryData = SetupFieldTypeConverter::convertCollectionData($this->detailData, $this->collectionKey);
 
         $data = [
-            'tenant_id' => NoerdAuth::user()->selected_tenant_id,
             'setup_collection_id' => $parentCollection->id,
             'data' => $convertedEntryData,
             'sort' => (int) ($this->detailData['sort'] ?? 0),
@@ -173,7 +176,7 @@ new class extends Component
 <x-noerd::page>
     <x-slot:header>
         <x-noerd::modal-title>
-            {{ $collectionLayout['title'] ?? __('Entry') }}
+            {{ $pageLayout['title'] ?? __('Entry') }}
 
             <x-slot:actions>
                 <livewire:noerd::setup-language-switcher/>
@@ -189,7 +192,7 @@ new class extends Component
             </div>
         </div>
 
-        <x-noerd::tab-content :layout="$collectionLayout" :modelId="$modelId" />
+        <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
     @else
         <div class="text-center py-8">
             <p class="text-gray-500">{{ __('Collection not found') }}</p>

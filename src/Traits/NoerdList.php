@@ -858,10 +858,11 @@ trait NoerdList
         // Deep-link support: ?{entity}Id=5 opens the record's modal over the
         // list, ?create=1 the create modal. Mount-only BY DESIGN — Livewire
         // updates POST to /livewire/update and carry no page query. A list
-        // needs no rendering() hook of its own for this.
-        $deepLinkId = (int) request()->query($this->getDeepLinkParam());
-        if ($deepLinkId) {
-            $this->listAction($deepLinkId);
+        // needs no rendering() hook of its own for this. The id keeps its
+        // shape (an integer key stays an int, a ULID stays a string).
+        $deepLinkId = request()->query($this->getDeepLinkParam());
+        if (is_scalar($deepLinkId) && mb_trim((string) $deepLinkId) !== '') {
+            $this->listAction($this->normalizeRecordId(mb_trim((string) $deepLinkId)));
         } elseif (request()->query('create')) {
             $this->listAction();
         }

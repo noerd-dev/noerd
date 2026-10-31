@@ -348,7 +348,9 @@ class MakeAppCommand extends Command
         );
 
         if (! empty($selectedTenantIds)) {
-            $tenantApp->tenants()->sync($selectedTenantIds);
+            foreach ($tenants->whereIn('id', array_map('intval', $selectedTenantIds)) as $tenant) {
+                $tenant->assignApp($tenantApp);
+            }
             $this->info('App assigned to ' . count($selectedTenantIds) . ' tenant(s).');
         } else {
             $this->comment('No tenants selected.');

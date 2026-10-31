@@ -100,6 +100,9 @@ final class LockedPropertiesHook extends NoerdComponentHook
         // Decides which model a settings page loads into the browser and writes.
         'settingsModels',
         'pageLayout',
+        // The collection definition a setup-collection entry form renders and
+        // writes into — derived from the collection key, never handed in.
+        'collectionLayout',
         'objectReadBlocked',
         // The active list view is restored from the URL/session against the
         // views this user may see — a mount argument would skip that check.

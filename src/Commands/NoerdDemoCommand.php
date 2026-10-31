@@ -215,7 +215,7 @@ ROUTE;
         $tenants = Tenant::all();
 
         foreach ($tenants as $tenant) {
-            $app->tenants()->syncWithoutDetaching([$tenant->id]);
+            $tenant->assignApp($app);
         }
 
         if ($tenants->isNotEmpty()) {

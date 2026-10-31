@@ -98,11 +98,24 @@ describe('deep link', function (): void {
             ->assertNotDispatched('noerdModal');
     });
 
-    it('ignores a non-numeric deep link param', function (): void {
-        Livewire::withQueryParams(['zzDeepLinkProductId' => 'abc'])
+    it('keeps a non-numeric deep link id as a string (ULID keys)', function (): void {
+        Livewire::withQueryParams(['zzDeepLinkProductId' => '01J9ZZDEEPLINK'])
+            ->test(ZzDeepLinkProductsListComponent::class)
+            ->assertDispatched(
+                'noerdModal',
+                fn(string $event, array $params): bool => ($params['arguments']['modelId'] ?? null) === '01J9ZZDEEPLINK',
+            );
+    });
+
+    it('ignores an empty or array deep link param', function (mixed $value): void {
+        Livewire::withQueryParams(['zzDeepLinkProductId' => $value])
             ->test(ZzDeepLinkProductsListComponent::class)
             ->assertNotDispatched('noerdModal');
-    });
+    })->with([
+        'empty' => [''],
+        'blank' => ['  '],
+        'array' => [['1']],
+    ]);
 
     it('opens the create detail via the create param', function (): void {
         Livewire::withQueryParams(['create' => 1])

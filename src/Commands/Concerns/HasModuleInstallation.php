@@ -17,7 +17,6 @@ use Laravel\Prompts\Elements\NumberedList;
 
 use function Laravel\Prompts\multiselect;
 
-use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Support\ModuleInstallContext;
@@ -500,8 +499,7 @@ trait HasModuleInstallation
             $wasAssigned = in_array((int) $tenant->id, $currentTenantIds, true);
 
             if ($isSelected && ! $wasAssigned) {
-                $tenant->tenantApps()->attach($app->id);
-                TenantAppAssigned::dispatch($tenant->id, $appName);
+                $tenant->assignApp($app);
                 if (! $compact) {
                     $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
                 }
@@ -553,8 +551,7 @@ trait HasModuleInstallation
                     continue;
                 }
 
-                $tenant->tenantApps()->attach($required->id);
-                TenantAppAssigned::dispatch($tenant->id, $appName);
+                $tenant->assignApp($required);
                 $attached++;
 
                 if (! $compact) {

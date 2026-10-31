@@ -4,7 +4,6 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
-use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
@@ -63,7 +62,6 @@ new class extends Component
         // for a tenant that is already provisioned.
         if ($this->collectionKey) {
             SetupCollection::firstOrCreate([
-                'tenant_id' => NoerdAuth::user()->selected_tenant_id,
                 'collection_key' => mb_strtoupper($this->collectionKey),
             ], [
                 'name' => $this->collectionLayout['titleList'] ?? ucfirst($this->collectionKey),
@@ -92,12 +90,12 @@ new class extends Component
         }
 
         // The bucket row is created on mount — rendering never writes.
-        $parentCollectionId = SetupCollection::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
+        $parentCollectionId = SetupCollection::query()
             ->where('collection_key', mb_strtoupper($this->collectionKey))
             ->value('id');
 
-        // Get collection entries
-        $query = SetupCollectionEntry::where('tenant_id', NoerdAuth::user()->selected_tenant_id)
+        // Get collection entries (both models are tenant-scoped)
+        $query = SetupCollectionEntry::query()
             ->where('setup_collection_id', $parentCollectionId ?? 0)
             ->orderBy('sort', 'asc')
             ->orderBy('created_at', 'desc');

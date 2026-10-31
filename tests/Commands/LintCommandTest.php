@@ -20,10 +20,17 @@ beforeEach(function (): void {
     File::ensureDirectoryExists($this->lintDir . '/zzlint/details');
     File::ensureDirectoryExists($this->lintDir . '/zzlint/lists');
 
+    // The command always lints the application's own app-configs as well: a
+    // throwaway base path keeps the host's configuration (and its findings)
+    // out of these assertions.
+    $this->originalBasePath = $this->app->basePath();
+    $this->app->setBasePath($this->lintDir);
+
     app(PicklistRegistry::class)->register('zzLintOptions', fn(): array => []);
 });
 
 afterEach(function (): void {
+    $this->app->setBasePath($this->originalBasePath);
     File::deleteDirectory($this->lintDir);
 });
 

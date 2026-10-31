@@ -67,7 +67,7 @@
             @foreach ([['', __('All')], ['1', __('Yes')], ['0', __('No')]] as [$optionValue, $optionLabel])
                 <button
                     type="button"
-                    @click="$wire.setColumnFilter('{{ $field }}', '{{ $optionValue }}'); open = false"
+                    @click="$wire.setColumnFilter(@js($field), @js($optionValue)); open = false"
                     class="block w-full rounded px-3 py-1.5 text-left text-sm {{ $filterValue === $optionValue ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
                 >
                     {{ $optionLabel }}
@@ -77,7 +77,7 @@
             <div class="max-h-64 overflow-y-auto">
                 <button
                     type="button"
-                    @click="$wire.setColumnFilter('{{ $field }}', ''); open = false"
+                    @click="$wire.setColumnFilter(@js($field), ''); open = false"
                     class="block w-full rounded px-3 py-1.5 text-left text-sm {{ $filterValue === '' ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
                 >
                     {{ __('All') }}
@@ -85,7 +85,7 @@
                 @foreach ([['=', true, __('(Empty)')], ['!=', false, __('(Not empty)')]] as [$emptinessExpression, $emptinessState, $emptinessLabel])
                     <button
                         type="button"
-                        @click="$wire.setColumnFilter('{{ $field }}', '{{ $emptinessExpression }}'); open = false"
+                        @click="$wire.setColumnFilter(@js($field), @js($emptinessExpression)); open = false"
                         class="block w-full rounded px-3 py-1.5 text-left text-sm {{ $filterEmptiness === $emptinessState ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
                     >
                         {{ $emptinessLabel }}
@@ -94,7 +94,7 @@
                 @foreach ($filterOptions as $option)
                     <button
                         type="button"
-                        @click="$wire.setColumnFilter('{{ $field }}', @js((string) $option['value'])); open = false"
+                        @click="$wire.setColumnFilter(@js($field), @js((string) $option['value'])); open = false"
                         class="block w-full rounded px-3 py-1.5 text-left text-sm {{ $filterValue === (string) $option['value'] ? 'bg-gray-100 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
                     >
                         {{ __($option['label'] ?? $option['value']) }}
@@ -107,7 +107,7 @@
                     @foreach ([['=', true, __('Empty')], ['!=', false, __('Not empty')]] as [$emptinessExpression, $emptinessState, $emptinessLabel])
                         <button
                             type="button"
-                            @click="value = ''; $wire.setColumnFilter('{{ $field }}', '{{ $emptinessExpression }}'); open = false"
+                            @click="value = ''; $wire.setColumnFilter(@js($field), @js($emptinessExpression)); open = false"
                             class="flex-1 rounded-md border px-2 py-1 text-xs {{ $filterEmptiness === $emptinessState ? 'border-brand-primary bg-gray-100 font-medium text-brand-primary' : 'border-zinc-300 text-gray-700 hover:bg-gray-50' }}"
                         >
                             {{ $emptinessLabel }}
@@ -119,7 +119,7 @@
                     x-model="value"
                     x-ref="filterInput"
                     x-init="$watch('open', (o) => o && $nextTick(() => $refs.filterInput.focus()))"
-                    @keydown.enter.prevent="$wire.setColumnFilter('{{ $field }}', value); open = false"
+                    @keydown.enter.prevent="$wire.setColumnFilter(@js($field), value); open = false"
                     placeholder="{{ $placeholder }}"
                     class="focus:ring-brand-border w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm focus:ring-2 focus:outline-none"
                 />
@@ -135,7 +135,7 @@
                     @endif
                     <button
                         type="button"
-                        @click="$wire.setColumnFilter('{{ $field }}', value); open = false"
+                        @click="$wire.setColumnFilter(@js($field), value); open = false"
                         class="bg-brand-primary rounded-md px-3 py-1 text-sm text-brand-primary-text hover:opacity-90"
                     >
                         {{ __('Apply') }}

@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Noerd\Events\TenantAppAssigned;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\TenantApp;
@@ -32,10 +31,7 @@ new class extends Component {
         if (in_array($appId, $assignedIds, true)) {
             $tenant->tenantApps()->detach($appId);
         } else {
-            $maxSort = $tenant->tenantApps()->max('sort_order') ?? -1;
-            $tenant->tenantApps()->attach($appId, ['sort_order' => $maxSort + 1]);
-
-            TenantAppAssigned::dispatch($tenant->id, (string) TenantApp::whereKey($appId)->value('name'));
+            $tenant->assignApp($appId);
         }
 
         $this->loadApps();

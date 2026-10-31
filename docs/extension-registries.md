@@ -507,3 +507,25 @@ Gate::define(AccessHelper::APP_GATE, function (?Authenticatable $user, string $a
 - The `$user` parameter MUST be nullable (`?Authenticatable`) — some call sites (config discovery, unauthenticated rendering) run for guests, and a non-nullable closure silently denies every guest check
 - The gate user is resolved from noerd's own auth guard (`AccessHelper` checks via `Gate::forUser(NoerdAuth::user())`), never from the host application's default guard — see `docs/auth.md`
 - Once a gate is defined, host-app `Gate::before`/`after` hooks apply to it (standard Laravel semantics); undefined gates are never touched
+
+## Tenant App Assignment (`Tenant::assignApp()`)
+
+An app reaches a tenant through ONE method, whatever triggers it — the Setup → Apps screen, a module's
+`noerd:install-{module}` (including the apps it requires), `noerd:install`, `noerd:demo`, a copied tenant,
+a provisioning service:
+
+```php
+$tenant->assignApp($app);                                   // a TenantApp row …
+$tenant->assignApp('CRM');                                  // … or its stored name …
+$tenant->assignApp($appId, ['is_hidden' => true, 'sort_order' => 3]); // … or its id, with pivot values
+```
+
+`assignApp()` attaches the pivot row (the sort order defaults to the end of the tenant's app bar),
+fires `Noerd\Events\TenantAppAssigned` with the tenant id and the app name, and returns `true`. An
+app the tenant already holds — or a name/id no `tenant_apps` row carries — returns `false` and fires
+nothing, so a repeated installer run stays quiet.
+
+Modules listen for the event in their service provider to pull in whatever an app of theirs needs
+alongside it (an app folder in the media library, a hidden companion app) — the core knows no module,
+and a module never patches the assignment screens. Never write `tenantApps()->attach()` or `sync()`
+in a module: the listeners of the other modules would not hear it.
