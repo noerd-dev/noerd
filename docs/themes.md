@@ -144,6 +144,7 @@ fullWidthRows: false                    # true: ignore per-field colspan (one fi
 numbersRows: false                      # true: automatic row numbering (numbered theme)
 spacerClass: h-7                        # height of the `spacer` field type
 controlClasses: 'block h-7 w-full …'    # bare control inside a position row (x-noerd::forms.control)
+controlSize: sm                         # `size` of the icon buttons in a position row (`sm` | `md`), handed to x-noerd::button
 buttonClasses: 'h-7 px-2.5 py-1 text-xs'  # default size of x-noerd::button under this theme
                                         # (unset: buttons render like the default theme)
 tableClasses: 'table w-full'            # the position <table>
