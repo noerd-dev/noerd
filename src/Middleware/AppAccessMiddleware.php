@@ -53,15 +53,8 @@ class AppAccessMiddleware
             $appNames,
         )));
 
-        // In single-tenant mode every app is assigned — only the per-app
-        // authorization gate (see AccessHelper) applies.
-        $assignedRows = config('noerd.features.multi_tenant')
-            ? $tenant->tenantApps()->namedAny($appNames)->get()
-            : null;
-
-        $assignedNames = $assignedRows
-            ? $assignedRows->pluck('name')->map(fn(string $name): string => mb_strtolower($name))->all()
-            : $appNames;
+        $assignedRows = $tenant->tenantApps()->namedAny($appNames)->get();
+        $assignedNames = $assignedRows->pluck('name')->map(fn(string $name): string => mb_strtolower($name))->all();
 
         // The route's apps the tenant runs, in ROUTE order — the first one wins.
         $assigned = array_values(array_filter(
@@ -99,9 +92,9 @@ class AppAccessMiddleware
      * selection yet, or one that is no longer valid for this tenant).
      *
      * @param  list<string>  $assigned  lowercase names of the route's apps the tenant runs, in route order
-     * @param  Collection<int, TenantApp>|null  $assignedRows  their rows with the pivot, null in single-tenant mode
+     * @param  Collection<int, TenantApp>  $assignedRows  their rows with the pivot
      */
-    private function selectApp(Tenant $tenant, string $matchingApp, array $assigned, ?Collection $assignedRows): void
+    private function selectApp(Tenant $tenant, string $matchingApp, array $assigned, Collection $assignedRows): void
     {
         $selected = TenantHelper::getSelectedApp();
         $selectedLower = $selected ? mb_strtolower($selected) : null;
@@ -111,12 +104,10 @@ class AppAccessMiddleware
         }
 
         $hidden = $assignedRows
-            ? $assignedRows
-                ->filter(fn(TenantApp $app): bool => (bool) $app->pivot->is_hidden)
-                ->map(fn(TenantApp $app): string => mb_strtolower($app->name))
-                ->values()
-                ->all()
-            : [];
+            ->filter(fn(TenantApp $app): bool => (bool) $app->pivot->is_hidden)
+            ->map(fn(TenantApp $app): string => mb_strtolower($app->name))
+            ->values()
+            ->all();
 
         $visibleCandidates = array_values(array_diff($assigned, $hidden));
 
@@ -140,10 +131,6 @@ class AppAccessMiddleware
 
     private function tenantRunsApp(Tenant $tenant, string $appName): bool
     {
-        if (! config('noerd.features.multi_tenant')) {
-            return true;
-        }
-
         return $tenant->tenantApps()->namedAny([$appName])->exists();
     }
 }

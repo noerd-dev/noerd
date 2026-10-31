@@ -29,17 +29,21 @@ A queued job runs in the tenant of the request or job that dispatched it (the pa
 `NoerdServiceProvider::JOB_TENANT_KEY`), and the dispatcher's own context is restored when a job
 runs synchronously.
 
-Where no tenant is known at all, `noerd.tenancy.missing_context` (`NOERD_TENANCY_MISSING_CONTEXT`)
-decides what a tenant-scoped query or create does:
+Where no tenant is known at all — no signed-in noerd user and no `TenantContext` — a tenant-scoped
+query or a create without `tenant_id` throws `Noerd\Exceptions\MissingTenantContextException`.
+There is no setting that loosens this: a query without a tenant would see every tenant's rows.
+Code that runs without a user names its tenant:
 
-| Mode | Query | Create without `tenant_id` |
-|------|-------|----------------------------|
-| `unscoped` (default) | no filter | allowed |
-| `audit` | no filter; the first call per model and request is logged with its file and line | allowed, logged |
-| `empty` | no rows (fails closed), reported to the error handler | `MissingTenantContextException` |
-| `throw` | `MissingTenantContextException` | `MissingTenantContextException` |
+| Situation | Pattern |
+|-----------|---------|
+| The record knows its tenant (job, webhook, PDF by hash, command for one record) | `TenantContext::run($model->tenant_id, fn () => …)` — jobs dispatched inside inherit the tenant |
+| A cron over all tenants | the selecting query `->acrossTenants()`, the work per row in `TenantContext::run($row->tenant_id, …)` |
+| A cron per tenant | loop over `Tenant`, body in `TenantContext::run($tenant->id, …)` |
+| A public frontend or token API | its middleware calls `TenantContext::set($tenantId)` (for Livewire also as persistent middleware) |
+| Data that belongs to no tenant (platform mails, untracked log rows) | `TenantContext::system(fn () => …)` — never around code that dispatches jobs or creates tenant data, `system()` gives a job no tenant |
+| One query for a known tenant | `Model::query()->ofTenant($id)` |
 
-Run an installation in `audit` mode to find the call sites that still rely on an unscoped query.
+A signed-in noerd user without a selected tenant sees no rows (the query is not thrown, it is empty).
 
 The trait does not touch `$fillable`; use `$guarded` (the noerd standard).
 
@@ -59,8 +63,8 @@ Campaign::all();                           // only the selected tenant's rows
 
 **Important:**
 
-- The scope only applies while a noerd user is authenticated with a selected tenant — unauthenticated contexts (queued jobs, commands) see all tenants; scope explicitly there. Only the noerd guard counts: a host guard's user (e.g. an admin panel on the `web` guard) never influences scoping (see [Authentication](auth.md))
-- Bypass the scope deliberately with `Model::withoutGlobalScopes()` plus an explicit `where('tenant_id', ...)`
+- The tenant comes from the `TenantContext` or the noerd user's selected tenant. Only the noerd guard counts: a host guard's user (e.g. an admin panel on the `web` guard, a website customer, an employee account) never influences scoping (see [Authentication](auth.md))
+- Lift ONLY the tenant filter with `ofTenant($id)` / `acrossTenants()`; `withoutGlobalScopes()` also drops soft deletes and the object read guard, and it does not reach eager loads, `whereHas` or lazy relations of the results — those stay scoped
 
 ## TenantSingleton (Eloquent models)
 

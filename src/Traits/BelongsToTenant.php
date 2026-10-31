@@ -7,10 +7,10 @@ namespace Noerd\Traits;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Noerd\Exceptions\MissingTenantContextException;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Scopes\TenantScope;
-use Noerd\Support\MissingTenantContext;
 use Noerd\Support\TenantContext;
 
 trait BelongsToTenant
@@ -30,8 +30,10 @@ trait BelongsToTenant
                 $model->setAttribute('tenant_id', $tenantId);
             }
 
+            // Without a tenant the record would belong to nobody — refused
+            // unless the code said "every tenant" with TenantContext::system().
             if (! $model->getAttribute('tenant_id') && ! TenantContext::isSystem()) {
-                MissingTenantContext::applyToCreate($model::class);
+                throw MissingTenantContextException::forCreate($model::class);
             }
         });
     }

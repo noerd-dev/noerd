@@ -149,13 +149,13 @@ it('never hydrates a foreign tenant definition into the detail', function (): vo
 it('seeds a newly created tenant from the shipped YAML definitions', function (): void {
     $tenant = Tenant::factory()->create();
 
-    $definitions = SetupCollectionDefinition::where('tenant_id', $tenant->id)->get();
+    $definitions = SetupCollectionDefinition::query()->ofTenant($tenant->id)->get();
 
     // The countries collection ships with the package and is what every tenant
     // starts with — its entries are seeded alongside, so without the definition
     // the tenant would hold data it cannot render.
     expect($definitions->pluck('filename')->all())->toContain('countries')
-        ->and(SetupCollection::where('tenant_id', $tenant->id)->where('collection_key', 'COUNTRIES')->exists())->toBeTrue();
+        ->and(SetupCollection::query()->ofTenant($tenant->id)->where('collection_key', 'COUNTRIES')->exists())->toBeTrue();
 });
 
 it('leaves a newly created tenant untouched in yaml mode', function (): void {
@@ -163,7 +163,7 @@ it('leaves a newly created tenant untouched in yaml mode', function (): void {
 
     $tenant = Tenant::factory()->create();
 
-    expect(SetupCollectionDefinition::where('tenant_id', $tenant->id)->count())->toBe(0);
+    expect(SetupCollectionDefinition::query()->ofTenant($tenant->id)->count())->toBe(0);
 });
 
 it('derives the definitions UI flag from the mode instead of a second config key', function (): void {

@@ -95,6 +95,11 @@ in the test that needs them.
   `php artisan test --parallel` is the parallel runner, and Testbench-bound suites run sequentially.
 - After attaching/detaching tenant apps mid-test call `TenantHelper::clearCache()` before the next
   `Livewire::test()` — the selected tenant is memoized per process.
+- Tenant-scoped queries THROW without a tenant. A component test runs as a signed-in noerd user
+  (`actingAsNoerdUserForApp()` / `actingAs($user, 'noerd')`); an assertion or fixture lookup outside
+  a user uses `Model::query()->ofTenant($tenantId)`; a factory `create()` outside a user passes
+  `tenant_id`. Never set a global `TenantContext` in a fixture — a test of a command, job, webhook or
+  public route without a user is the proof that the production code brings its own context.
 - A module's own Testbench suite (standalone CI) binds `Noerd\Tests\ModuleTestCase` with
   `protected array $moduleProviders = [...]` — the core setup plus the module's providers, each
   module linked into the skeleton; every test file still binds the module's TestCase via `uses()`.

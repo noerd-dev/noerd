@@ -69,14 +69,14 @@ it('creates the row on the first update and updates it afterwards', function ():
 
     expect($created->exists)->toBeTrue()
         ->and($created->limit)->toBe(10)
-        ->and(ZzSingletonSetting::query()->count())->toBe(1);
+        ->and(ZzSingletonSetting::query()->acrossTenants()->count())->toBe(1);
 
     $updated = ZzSingletonSetting::updateForTenant(['limit' => 42]);
 
     expect($updated->id)->toBe($created->id)
         ->and($updated->color)->toBe('red')
         ->and($updated->limit)->toBe(42)
-        ->and(ZzSingletonSetting::query()->count())->toBe(1);
+        ->and(ZzSingletonSetting::query()->acrossTenants()->count())->toBe(1);
 });
 
 it('memoizes the row per request and drops the memo on save', function (): void {

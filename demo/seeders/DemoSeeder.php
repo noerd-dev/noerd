@@ -9,6 +9,7 @@ use App\Models\DemoCustomer;
 use App\Models\DemoTag;
 use Illuminate\Database\Seeder;
 use Noerd\Models\Tenant;
+use Noerd\Support\TenantContext;
 
 class DemoSeeder extends Seeder
 {
@@ -22,6 +23,13 @@ class DemoSeeder extends Seeder
             return;
         }
 
+        // The demo models are tenant-scoped and the seeder runs without a
+        // signed-in user: everything happens in the tenant's own context.
+        TenantContext::run($tenant->id, fn() => $this->seedTenant($tenant));
+    }
+
+    private function seedTenant(Tenant $tenant): void
+    {
         if (DemoCategory::where('tenant_id', $tenant->id)->exists()) {
             $this->command?->line('<comment>Demo seed data already exists — skipping.</comment>');
 

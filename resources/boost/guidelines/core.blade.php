@@ -144,6 +144,22 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   rotation every page touching the row dies. Use a `CastsAttributes` cast that catches
   `DecryptException` and returns `null`, so the module degrades to "not configured".
 
+### Tenant Context (BelongsToTenant)
+- A tenant-scoped model (`BelongsToTenant`) is filtered by the `TenantContext` or the signed-in noerd
+  user's selected tenant. Where neither is known — console, queue, public frontends, token APIs,
+  webhooks — a query or a create without `tenant_id` THROWS `MissingTenantContextException`. There is
+  no setting to loosen this, and noerd is always multi-tenant. A website or employee guard's user is
+  no noerd user.
+- Code without a user names its tenant: the record's tenant → `TenantContext::run($model->tenant_id, fn () => …)`
+  (jobs dispatched inside inherit it); a cron over all tenants → the selecting query `->acrossTenants()`,
+  the work per row in `TenantContext::run($row->tenant_id, …)`; a public frontend / token API → its
+  middleware calls `TenantContext::set()` (persistent for Livewire); one query for a known tenant →
+  `->ofTenant($id)`; tenant-less data (platform mail log rows) → `TenantContext::system()`, never around
+  code that dispatches jobs or creates tenant data.
+- `ofTenant()` / `acrossTenants()` lift ONLY the tenant filter. `withoutGlobalScopes()` also drops soft
+  deletes and the read guard and does not reach eager loads, `whereHas` or lazy relations — those stay
+  scoped and throw. Reference: `docs/traits.md` ("Tenant context").
+
 ### Module Independence
 - Every module in `app-modules/` is independent: no `use` of another optional module's classes, views
   or YAML; seeders, migrations, factories and tests live in the module; no module code in the host's
