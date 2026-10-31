@@ -99,14 +99,12 @@ class ZzCellRendererMinimalList extends Component
         $this->minimal = true;
     }
 
-    public function with(): array
+    public function listData(): array
     {
         return [
-            'listConfig' => [
-                'listId' => 'zz-cell-renderer',
-                'rows' => new LengthAwarePaginator([['id' => 1, 'name' => 'Gadget', 'amount' => 3]], 1, 10),
-                'listSettings' => ['columns' => [['field' => 'amount', 'label' => 'Amount', 'type' => 'number', 'cell' => 'zzSigned']]],
-            ],
+            'listId' => 'zz-cell-renderer',
+            'rows' => new LengthAwarePaginator([['id' => 1, 'name' => 'Gadget', 'amount' => 3]], 1, 10),
+            'listSettings' => ['columns' => [['field' => 'amount', 'label' => 'Amount', 'type' => 'number', 'cell' => 'zzSigned']]],
         ];
     }
 

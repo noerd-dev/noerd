@@ -67,16 +67,14 @@ class ZzShowMoreListComponent extends Component
         $this->minimalColumns = ['name'];
     }
 
-    public function with(): array
+    public function listData(): array
     {
         return [
-            'listConfig' => [
-                'listId' => 'zz-show-more',
-                // A paginator with more total rows than shown is what makes the
-                // minimal list render its "Show more" control.
-                'rows' => new LengthAwarePaginator([['id' => 1, 'name' => 'First']], 2, 1),
-                'listSettings' => ['columns' => [['field' => 'name', 'label' => 'Name']]],
-            ],
+            'listId' => 'zz-show-more',
+            // A paginator with more total rows than shown is what makes the
+            // minimal list render its "Show more" control.
+            'rows' => new LengthAwarePaginator([['id' => 1, 'name' => 'First']], 2, 1),
+            'listSettings' => ['columns' => [['field' => 'name', 'label' => 'Name']]],
         ];
     }
 

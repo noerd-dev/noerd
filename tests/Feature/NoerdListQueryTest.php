@@ -104,13 +104,11 @@ class ZzListQueryComponent extends Component
     /** @var array<int, string> */
     public static array $searchable = [];
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(NoerdUser::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(NoerdUser::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string

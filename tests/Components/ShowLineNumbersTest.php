@@ -64,11 +64,9 @@ class TestableLineNumbersListComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList($this->rowsData, $this->configData),
-        ];
+        return $this->buildList($this->rowsData, $this->configData);
     }
 
     public function render(): string

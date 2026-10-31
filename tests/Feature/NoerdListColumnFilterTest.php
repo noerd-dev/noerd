@@ -179,7 +179,7 @@ describe('filtering by type', function (): void {
         NoerdUser::factory()->create();
 
         $component = Livewire::test(TestableColumnFilterListComponent::class);
-        $listConfig = $component->instance()->with()['listConfig'];
+        $listConfig = \Livewire\invade($component->instance())->builtListConfig();
 
         expect($listConfig['filterableColumns'])->toBe([
             'name',
@@ -279,7 +279,7 @@ describe('json paths', function (): void {
         ColumnFilterJsonItem::create(['name' => 'A', 'custom_attributes' => []]);
 
         $component = Livewire::test(TestableJsonColumnFilterListComponent::class);
-        $listConfig = $component->instance()->with()['listConfig'];
+        $listConfig = \Livewire\invade($component->instance())->builtListConfig();
 
         expect($listConfig['filterableColumns'])->toBe([
             'name',
@@ -336,7 +336,7 @@ describe('relation paths', function (): void {
         ColumnFilterRecord::create(['name' => 'A', 'owner_id' => null]);
 
         $component = Livewire::test(TestableRelationColumnFilterListComponent::class);
-        $listConfig = $component->instance()->with()['listConfig'];
+        $listConfig = \Livewire\invade($component->instance())->builtListConfig();
 
         expect($listConfig['filterableColumns'])->toBe([
             'name',
@@ -610,13 +610,11 @@ class TestableColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(NoerdUser::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(NoerdUser::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string
@@ -671,13 +669,11 @@ class TestableJsonColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(ColumnFilterJsonItem::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(ColumnFilterJsonItem::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string
@@ -737,13 +733,11 @@ class TestableBlankColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(ColumnFilterBlankItem::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(ColumnFilterBlankItem::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string
@@ -814,13 +808,11 @@ class TestableRelationColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(ColumnFilterRecord::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(ColumnFilterRecord::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string
@@ -920,13 +912,11 @@ class TestablePicklistNumberColumnFilterListComponent extends Component
 {
     use NoerdList;
 
-    public function with(): array
+    public function listData(): array
     {
-        return [
-            'listConfig' => $this->buildList(
-                $this->listQuery(ColumnFilterOwner::class)->paginate($this->perPage),
-            ),
-        ];
+        return $this->buildList(
+            $this->listQuery(ColumnFilterOwner::class)->paginate($this->perPage),
+        );
     }
 
     public function render(): string

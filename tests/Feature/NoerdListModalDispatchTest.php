@@ -210,9 +210,9 @@ abstract class ZzListDispatchComponent extends Component
     /**
      * @return array<string, mixed>
      */
-    public function with(): array
+    public function listData(): array
     {
-        return ['listConfig' => ['rows' => $this->listRows()]];
+        return ['rows' => $this->listRows()];
     }
 
     public function render(): string

@@ -1,10 +1,8 @@
 @php
-    // Self-contained, like list/index.blade.php: pull the config straight from the component.
-    // A component with its own with() keeps its custom query; the slim syntax
-    // (only $listModel declared) gets the generic trait query via listData().
-    $listConfig = (method_exists($this, 'with') ? ($this->with()['listConfig'] ?? null) : null)
-        ?? (isset($this->listModel) ? $this->listData() : null)
-        ?? [];
+    // Self-contained, like list/index.blade.php: the config comes from the
+    // component's listData() — the trait's query for the slim syntax, the
+    // component's own rows when it overrides the method — memoized per request.
+    $listConfig = $this->builtListConfig();
 
     $listId = $listConfig['listId'] ?? '';
     $rows = $listConfig['rows'] ?? [];

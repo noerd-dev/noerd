@@ -64,7 +64,8 @@ new class extends Component {
 - Custom query: override `listData()` only —
   `$rows = $this->listQuery($this->listModel)->where(...)->with(...)->paginate($this->perPage); return $this->buildList($rows);`
   Keep extra view data (e.g. a summary) in a slim `with()` that shares the query via a private
-  helper. Never put the query into `with()` once `$listModel` is declared.
+  helper. `with()` never returns a `listConfig` — the view reads `listData()` only; a list whose
+  rows are not one model overrides `listData()` and returns `buildList($rows, $config)`.
 
 ## 3. Create the YAML — `lists/{entities}-list.yml` in BOTH places
 
