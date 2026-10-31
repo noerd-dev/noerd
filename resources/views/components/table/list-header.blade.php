@@ -27,7 +27,8 @@
     @php
         $controls = $this->headerControls();
         $filterChips = $this->activeColumnFilterChips;
-        $hasFilters = (bool) $this->tableFilters || $filterChips !== [];
+        $headerFilters = $this->headerFilters();
+        $hasFilters = $headerFilters !== [] || $filterChips !== [];
         $paginator = isset($rows) && ! is_array($rows) ? $rows : null;
 
         // The filter row exists only when something belongs in it. Pagination
@@ -38,7 +39,7 @@
             'host' => $this,
             'controls' => $controls,
             'listRelations' => $relations ?? [],
-            'tableFilters' => $this->tableFilters,
+            'tableFilters' => $headerFilters,
             'listFilters' => $this->listFilters,
             'chips' => $filterChips,
             'hasClearAll' => collect($this->listFilters)->filter()->isNotEmpty() || count($filterChips) > 1,

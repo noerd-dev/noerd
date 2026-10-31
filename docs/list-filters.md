@@ -1,6 +1,8 @@
 # List Filters
 
-Lists can be filtered using dropdown filters (`tableFilters`). Dropdown filters allow users to narrow results by selecting a value (e.g. year, language).
+Lists can be filtered using **header filters** — dropdowns in the filter row that narrow the rows
+by a value (a status, a year, a language). They are declared in the list YAML (`filters:`) or on
+the component, and `listQuery()` applies them — see [Header Filters](#header-filters) below.
 
 In addition, every list gets Excel-style **column filters** automatically — see [Column Filters](#column-filters-excel-style) below.
 
@@ -77,7 +79,7 @@ no column filters.
 
 ### Behavior
 
-- Multiple column filters combine with AND — and stack with the search field and the header `listFilters` (when the list applies them, see [How Filters Work](#how-filters-work))
+- Multiple column filters combine with AND — and stack with the search field and the header filters (see [Header Filters](#header-filters))
 - Setting or clearing a filter resets pagination to page 1
 - Filters persist per component in the session (`listColumnFilters.{component}`), like sorting
 - Filters are mirrored into the URL as `?cf[column]=expression` — a shared link reproduces the exact
@@ -147,142 +149,125 @@ with JavaScript.
   resolves which of them exist. A list host with its own custom header slot gets the one-row
   `list-controls` injected by `x-noerd::modal-title` instead
 
-## How Filters Work
+## Header Filters
 
-1. A component defines filter options via `tableFilters()` (computed property)
-2. The `list-header.blade.php` template renders the filter UI (dropdowns)
-3. When a user selects a filter value, it is stored in `$listFilters` and persisted in the session
-   (`storeActiveListFilters()`)
-4. The component applies the filters to its query with `$this->applyListFilters($query)` — or with
-   custom logic where a dropdown value has to be transformed first
+A header filter is a dropdown in the filter row. Its selection is stored in `$listFilters` (and in
+the session, see [Session Persistence](#session-persistence)) and `listQuery()` applies it to the
+query — a list never applies its header filters itself, and never overrides `listData()` just to
+have them. A filter is declared in one of two places, and the two combine:
 
-`listQuery()` applies search, sort and the Excel-style column filters, but NOT the header
-`listFilters`. A list that declares header filters therefore overrides `listData()` and calls
-`applyListFilters()` on the builder (see [Using the Filter in a Component](#using-the-filter-in-a-component)).
+1. **In the list YAML** (`filters:`) — the normal case: a filter on a column of the table
+2. **On the component** — a method `get{Name}ListFilter()` returning a `Noerd\Support\ListFilter`
+   (or its array form), for a filter whose options or query need PHP
 
-`applyListFilters()` only touches whitelisted columns (see [Security](#security)); `Picklist`
-filters become `where(column, value)`, `ShowFrom`/`ShowUntil` filters become `>=` / `<=` on the
-date columns of the [`ShowFromFilterTrait`](traits.md).
+### Filters in the list YAML
 
-## Defining a Filter
-
-Each filter is defined by a method following the naming convention `get{Name}ListFilter()`. The method must return an array with these keys:
+```yaml
+title: Invoices
+filters:
+  - label: Status
+    column: status
+    options:
+      - value: open
+        label: Open
+      - value: paid
+        label: Paid
+    default: open
+  - label: Year
+    column: invoice_date
+    type: years
+  - label: Customer
+    column: party_id
+    type: model
+    model: Noerd\Party\Models\Party
+    labelColumn: name
+  - label: Show from
+    column: invoice_date
+    type: dateFrom
+```
 
 | Key | Description |
 |-----|-------------|
-| `label` | Display label for the dropdown |
-| `column` | Database column to filter on |
-| `type` | `Picklist` (dropdown, default), `ShowFrom` or `ShowUntil` (date-range dropdowns provided by `ShowFromFilterTrait`) |
-| `options` | Associative array of `value => label` pairs |
+| `label` | The dropdown label (a translation key); also its "all" entry |
+| `column` | The column the selection constrains |
+| `type` | `picklist` (default): equality on `column`. `years`: the distinct years of the date column, newest first — a selection narrows to that calendar year (portable: no `YEAR()` in the list's SQL). `model`: one option per row of `model`, the id as value and `labelColumn` (default `name`) as label; the model's global scopes apply, so the options are the tenant's rows. `dateFrom` / `dateUntil`: a dropdown of relative periods (today, this week, this month, last month, this quarter, last quarter, this year) plus a date picker, compared with `>=` / `<=` |
+| `options` | `picklist` only: the options, as in a detail select (`value` + `label` entries, labels are translation keys) or as a `value: label` map |
+| `optionsMethod` | `picklist` only: the name of a [`PicklistRegistry`](extension-registries.md#picklistregistry) provider that builds the options |
+| `default` | The selection assumed while the reader has not chosen anything (see [Defaults](#defaults)) |
 
-Example:
+Keep both synced copies of the list YAML in sync (`app-configs/` and the module's `app-configs/`).
+
+### Filters on the component
+
+`NoerdList::tableFilters()` collects the YAML filters and every `get*ListFilter()` method of the
+component. A method returns a `ListFilter`:
 
 ```php
-protected function getCategoryListFilter(): array
+use Noerd\Support\ListFilter;
+
+protected function getCategoryListFilter(): ListFilter
 {
-    return [
-        'label' => __('Category'),
-        'column' => 'category_id',
-        'type' => 'Picklist',
-        'options' => Category::query()->orderBy('name')->pluck('name', 'id')->toArray(),
-    ];
+    return ListFilter::model(__('Category'), 'category_id', Category::class, 'name');
+}
+
+protected function getYearListFilter(): ListFilter
+{
+    return ListFilter::years(__('Year'), 'invoice_date');
 }
 ```
 
-## Creating a Filter Trait
+| Constructor | Filter |
+|-------------|--------|
+| `ListFilter::options($label, $column, $options)` | A fixed list — `value => label` pairs or detail-select entries; a closure builds them at render time and receives the list's model class |
+| `ListFilter::model($label, $column, Model::class, $labelColumn = 'name', ?Closure $scope = null)` | One option per model row; `$scope` narrows or orders the query |
+| `ListFilter::years($label, $column)` | The distinct years of a date column |
+| `ListFilter::dateFrom($label, $column)` / `dateUntil(...)` | The relative-period dropdown with a date picker |
+| `->default($value)` | The initial selection |
+| `->apply(fn (Builder $query, string $value) => …)` | The constraint of a virtual column (see below) |
+| `->manual()` | The component applies the filter in its own query |
 
-Extract a filter into a trait so several lists can share it — file location
-`app-modules/{module}/src/Traits/{Name}FilterTrait.php`, containing nothing but the
-`get{Name}ListFilter()` method above. The noerd package ships `ShowFromFilterTrait` (date ranges),
-`TenantFilterTrait` and `SetupLanguageFilterTrait` — see [Reusable Traits](traits.md).
+The array form of earlier versions (`['label' => …, 'column' => …, 'type' => 'Picklist', 'options' => […]]`,
+also `ShowFrom` / `ShowUntil`) is still accepted — `ListFilter::fromArray()` turns it into a filter.
 
-Option values do not have to be stored values — a year filter may offer `"{$year}-01-01" => $year`
-and transform the selection into a date range in the query (see [Filter Preselection](#filter-preselection)).
-
-## Using the Filter in a Component
-
-Use the trait — `NoerdList::tableFilters()` auto-discovers every `get*ListFilter` method — and
-apply the filters in `listData()`:
-
-```php
-new class extends Component {
-    use NoerdList;
-    use CategoryFilterTrait;
-
-    public $listModel = Item::class;
-    public ?string $detailRoute = 'inventory.item.detail';
-    public $detailComponent = 'inventory::item-detail';
-
-    public function listData(): array
-    {
-        $query = $this->listQuery($this->listModel);
-        $this->applyListFilters($query);
-
-        return $this->buildList($query->paginate($this->perPage));
-    }
-};
-```
-
-Override `tableFilters()` only to show filters conditionally:
+Extract a shared filter into a trait (`app-modules/{module}/src/Traits/{Name}FilterTrait.php`,
+holding nothing but the `get{Name}ListFilter()` method) so several lists can use it. Override
+`tableFilters()` only to show filters conditionally:
 
 ```php
 #[Computed]
 public function tableFilters(): array
 {
-    if (Category::query()->count() < 2) {
-        return [];
-    }
-
-    return [$this->getCategoryListFilter()];
+    return Category::query()->count() < 2 ? [] : [$this->getCategoryListFilter()];
 }
 ```
 
-## Filter Preselection
+### Virtual columns
 
-A dropdown value does not have to be applied verbatim: derive the actual constraint in `listData()`
-and apply it to the query yourself instead of calling `applyListFilters()`. This is useful when the
-value needs to be transformed — e.g. a year selection into a date range, with the current year as
-the default while nothing is selected:
+A filter does not have to sit on a column of the table. A `ListFilter` with an `apply()` closure
+puts its own constraint on the query — a scope, a relation, an aggregate:
 
 ```php
-protected function getYearListFilter(): array
+protected function getReceiptListFilter(): ListFilter
 {
-    $options = [];
-    foreach (range(now()->year, now()->year - 5) as $year) {
-        $options["{$year}-01-01"] = (string) $year;
-    }
-
-    return [
-        'label' => __('Year'),
-        'column' => 'created_at',
-        'type' => 'Picklist',
-        'options' => $options,
-    ];
-}
-
-private function dateRange(): array
-{
-    $date = isset($this->listFilters['created_at'])
-        ? Carbon::parse($this->listFilters['created_at'])
-        : Carbon::today();
-
-    return [
-        $date->copy()->startOfYear()->toDateString(),
-        $date->copy()->endOfYear()->toDateString(),
-    ];
-}
-
-public function listData(): array
-{
-    [$from, $until] = $this->dateRange();
-
-    $rows = $this->listQuery($this->listModel)
-        ->whereBetween('created_at', [$from, $until])
-        ->paginate($this->perPage);
-
-    return $this->buildList($rows);
+    return ListFilter::options(__('Receipt'), 'receipt_status', [
+        'missing' => __('Without receipt'),
+        'present' => __('With receipt'),
+    ])->apply(fn (Builder $query, string $value) => $query->hasReceipt($value === 'present'));
 }
 ```
+
+A list that reads the value in its own query (`$this->listFilters['tenant_id']` inside a
+`whereHas()` the component builds anyway) marks the filter `->manual()`. Without a closure, a
+filter on a column the table does not have is never written into the SQL — the dropdown renders,
+the query stays untouched.
+
+### Defaults
+
+`default` (YAML) / `->default()` is the selection assumed while the filter has no stored value:
+`loadListFilters()` writes it into `$listFilters` on mount, so the list opens narrowed (open
+invoices, future bookings, active vouchers). The first change the reader makes is persisted like any
+other selection; "Clear all filters" stores the empty selection, so "all" survives a reload. A
+default is configuration — never set `$this->listFilters[...]` in `mount()` or `rendering()`.
 
 ## Session Persistence
 
@@ -308,14 +293,20 @@ public function storeActiveListFilters(): void
 
 ## Security
 
-The `NoerdList` trait extracts allowed columns from the `tableFilters()` output. Only columns returned by the filter methods can be filtered on, preventing users from manipulating filter parameters to query arbitrary columns.
+Only a declared filter is ever applied: `applyListFilters()` resolves each `$listFilters` key
+against the declared filters (`listFilterDefinitions()`), so a client cannot constrain arbitrary
+columns by writing into the array. The value is bound as a query parameter, never interpolated.
 
 To allow additional keys (e.g. a filter seeded via `setPreselect()` that no dropdown declares),
-override the whitelist on the component:
+override the whitelist on the component — such a key constrains the column of that name by
+equality, provided the table has it:
 
 ```php
 protected function getAllowedListFilterColumns(): array
 {
-    return ['category_id', 'created_at'];
+    return [...parent::getAllowedListFilterColumns(), 'category_id'];
 }
 ```
+
+`applyListFilters()` runs once per builder: a component that still calls it on the query
+`listQuery()` returned adds nothing a second time.

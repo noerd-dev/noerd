@@ -4,17 +4,31 @@ use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
 use Noerd\Support\Impersonation;
+use Noerd\Support\ListFilter;
 use Noerd\Traits\NoerdList;
-use Noerd\Traits\TenantFilterTrait;
 
 new class extends Component {
     use NoerdList;
-    use TenantFilterTrait;
 
     public $listModel = NoerdUser::class;
     public ?string $detailRoute = 'noerd.user.detail';
 
     public $detailComponent = 'noerd::noerd-user-page';
+
+    /**
+     * The tenant dropdown mirrors the list scope: every tenant for a super
+     * admin, the administered tenants for a tenant admin. Guest-safe — a list
+     * rendered without an authenticated noerd user offers an empty picklist.
+     * The membership is a pivot, not a column: listData() applies the choice.
+     */
+    protected function getTenantsListFilter(): ListFilter
+    {
+        return ListFilter::options(
+            __('Tenant'),
+            'tenant_id',
+            fn(): array => (NoerdAuth::user()?->administeredTenants() ?? collect())->pluck('name', 'id')->all(),
+        )->manual();
+    }
 
     public function loginAsUser(int $userId): void
     {

@@ -173,6 +173,17 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
 - When writing tests, they must always be in PEST format.
 - YAML files must always use block style formatting. Never use flow/inline style like `{ key: value }` or `[item1, item2]`.
 - Default sorting of a list is CONFIGURATION, never component code: set a top-level `defaultSort:` block in the list YAML (`field:` plus optional `direction: asc|desc`, `desc` when omitted) — in BOTH synced copies. `mountList()` applies it while the user has not sorted the list; a session-saved user sort always wins. There is no component API for it: never set `$this->sortField`/`$this->sortAsc` and never override `mount()` for sorting.
+- Header filters (the dropdowns of the filter row) are CONFIGURATION too: a `filters:` list in the
+  list YAML (`label`, `column`, `type: picklist|years|model|dateFrom|dateUntil`, `options` /
+  `optionsMethod` / `model` + `labelColumn`, `default`) — in BOTH synced copies. `listQuery()`
+  applies them; never call `applyListFilters()` in `listData()`, never override `listData()` only to
+  filter, never set `$this->listFilters[...]` in `mount()`/`rendering()` for a default (`default:`
+  does that). A filter that needs PHP (options from a query, a constraint on a virtual column) is a
+  `get{Name}ListFilter()` method returning `Noerd\Support\ListFilter` (`::options()`, `::model()`,
+  `::years()`, `::dateFrom()`/`::dateUntil()`; `->apply(fn (Builder $query, string $value) => …)`
+  for a virtual column, `->manual()` when the component reads the value in its own query). A
+  filter without a closure on a column the table does not have is never written into the SQL.
+  Reference: `docs/list-filters.md` ("Header Filters").
 
 ### Config, noerd:install and noerd:update
 - Configuration keys come from the package config (`vendor/noerd/noerd/config/noerd.php`); the

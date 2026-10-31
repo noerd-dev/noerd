@@ -98,6 +98,9 @@ Checklist of optional YAML features (all generic, never re-implement in the comp
   each card
 - `type: badge` + `options:` — manual badge when no paired detail field exists
 - column filters / search: see `list-filters.md` / `list-search.md` (they need `$listModel`)
+- header filters (dropdowns): `filters:` in the list YAML (`picklist|years|model|dateFrom|dateUntil`,
+  `default`), applied by `listQuery()`; a filter that needs PHP is a `get{Name}ListFilter()` method
+  returning `Noerd\Support\ListFilter` — never `applyListFilters()` in `listData()`
 - alternate views: sibling file `{entities}-list--{key}.yml` (complete standalone config)
 - `compact` (embedded) and `minimal` (widget) rendering are chosen by the host, not by YAML
 - `type: currency|date|datetime` columns are formatted by the core in the user's locale (tenant

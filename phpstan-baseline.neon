@@ -223,12 +223,6 @@ parameters:
 			path: src/Traits/NoerdDetail.php
 
 		-
-			message: '#^Call to function method_exists\(\) with \$this\(Noerd\\Tools\\PHPStan\\ListHost\) and ''resolveShowDate'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 2
-			path: src/Traits/NoerdList.php
-
-		-
 			message: '#^Call to function method_exists\(\) with \$this\(Noerd\\Tools\\PHPStan\\ListHost\) and ''with'' will always evaluate to false\.$#'
 			identifier: function.impossibleType
 			count: 1
@@ -279,5 +273,5 @@ parameters:
 		-
 			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\ListHost\:\:\$tableFilters\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: tools/phpstan/TraitHosts.php

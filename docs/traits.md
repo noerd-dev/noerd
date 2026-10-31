@@ -98,78 +98,14 @@ The rate limiting is cache-based: the cooldown key is `test-email-cooldown:{pref
 
 The preview modal is `noerd::email-preview-modal`; the test mail is `Noerd\Mail\EmailPreviewTestMail`.
 
-## ShowFromFilterTrait (list components)
-
-`Noerd\Traits\ShowFromFilterTrait` provides date-range header filters for lists: a "Show From" (rows on/after a date) and a "Show Until" (rows on/before a date) dropdown. `NoerdList::applyListFilters()` recognizes the filter types `ShowFrom`/`ShowUntil` and applies `>=` / `<=` on the configured columns.
-
-**Filter methods** (auto-discovered by `NoerdList::tableFilters()` via the `get*ListFilter` convention):
-
-- `getShowFromListFilter(): array` — type `ShowFrom`, column `show_from`
-- `getShowUntilListFilter(): array` — type `ShowUntil`, column `show_until`
-
-**Dropdown options** (`getDateFilterOptions()`): empty (no filter), `today`, `this_week`, `this_month`, `last_month`, `this_quarter`, `last_quarter`, `this_year`.
-
-**Period resolution** (`resolveShowDate(string $value): ?string`) supports these values:
-
-| Value | Resolves to |
-|-------|-------------|
-| `today` | Today |
-| `this_week` | Start of the current week (`startOfWeek()`) |
-| `this_month` | Start of the current month |
-| `last_month` | Start of the previous month |
-| `this_quarter` | First day of the current quarter |
-| `last_quarter` | First day of the previous quarter |
-| `this_year` | Start of the current year |
-| anything else | Parsed with `Carbon::parse()` via `resolveCustomDate()` — a raw date string (`2026-01-01`) is a valid option value; unparseable → `null`, the filter is ignored |
-
-**Customizing the columns** — declare the two properties on the component (both default to
-`created_at`). Set BOTH: "Show From" and "Show Until" are independent filters, and a list that
-moves only one of them keeps comparing the other boundary against the import timestamp:
-
-```php
-use Noerd\Traits\NoerdList;
-use Noerd\Traits\ShowFromFilterTrait;
-
-new class extends Component {
-    use NoerdList;
-    use ShowFromFilterTrait;
-
-    protected string $showFromDateColumn = 'published_at';
-    protected string $showUntilDateColumn = 'published_at';
-};
-```
-
-The properties must be `protected`: a public property is part of the Livewire client payload, and
-these values are written into the query as raw column names. The trait deliberately declares
-neither property — PHP fatals when a class redeclares a trait property with a different default —
-so the hooks `getShowFromDateColumn()` / `getShowUntilDateColumn()` read them through `??`. The
-methods stay overridable as the escape hatch for a column that is only known at runtime; a method
-override wins over the property.
-
-## TenantFilterTrait (list components)
-
-`Noerd\Traits\TenantFilterTrait` provides a tenant dropdown for lists that show records across tenants (admin screens). `getTenantsListFilter(): array` returns a `Picklist` filter on the `tenant_id` column with one option per tenant from `NoerdAuth::user()?->administeredTenants()` — every tenant for a super admin, the ADMIN-profile memberships otherwise (an empty picklist without an authenticated noerd user).
-
-```php
-use Noerd\Traits\NoerdList;
-use Noerd\Traits\TenantFilterTrait;
-
-new class extends Component {
-    use NoerdList;
-    use TenantFilterTrait;
-
-    // getTenantsListFilter() is auto-discovered by tableFilters()
-};
-```
-
 ## SetupLanguageFilterTrait (list components)
 
-`Noerd\Traits\SetupLanguageFilterTrait` provides language helpers for lists whose rows carry a `language` column, backed by the `Noerd\Models\SetupLanguage` model.
+`Noerd\Traits\SetupLanguageFilterTrait` provides language helpers for lists whose rows carry a `language` column, backed by the `Noerd\Models\SetupLanguage` model. Date-range and tenant header filters are no traits any more: build them with `Noerd\Support\ListFilter::dateFrom()` / `dateUntil()` / `options()` (see [List Filters](list-filters.md#header-filters)).
 
 | Method | Description |
 |--------|-------------|
 | `hasMultipleLanguages(): bool` | `true` when more than one active language exists |
-| `getLanguageListFilter(): array` | `Picklist` filter on the `language` column — one option per active language (`code => name`), default language first |
+| `getLanguageListFilter(): ListFilter` | The language dropdown on the `language` column — one option per active language (`code => name`), default language first |
 | `getDefaultLanguageCode(): string` | The default language code |
 | `getActiveTenantLanguageCodes(): array` | All active language codes |
 
