@@ -127,12 +127,6 @@ parameters:
 			path: src/Models/SetupLanguage.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>detailData" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Providers/NoerdServiceProvider.php
-
-		-
 			message: '#^Access to an undefined property Noerd\\Models\\SetupCollectionDefinition\:\:\$filename\.$#'
 			identifier: property.notFound
 			count: 2
