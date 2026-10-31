@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Noerd\Database\Factories\TenantAppFactory;
+use Noerd\Helpers\StaticConfigHelper;
 
 class TenantApp extends Model
 {
@@ -35,6 +36,16 @@ class TenantApp extends Model
     public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'tenant_app');
+    }
+
+    /**
+     * The config search roots memoise the active/allowed app folders — a
+     * tenant-app mutation (install commands, setup screens) invalidates them.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn() => StaticConfigHelper::flushRuntimeCaches());
+        static::deleted(fn() => StaticConfigHelper::flushRuntimeCaches());
     }
 
     protected static function newFactory(): TenantAppFactory

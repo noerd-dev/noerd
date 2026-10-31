@@ -13,11 +13,9 @@ use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 use Laravel\Octane\Events\RequestReceived;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
@@ -59,9 +57,6 @@ use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\SetupLanguage;
-use Noerd\Models\Tenant;
-use Noerd\Models\TenantApp;
 use Noerd\Navigation\SetupCollectionsNavigationProvider;
 use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
@@ -82,15 +77,13 @@ use Noerd\Services\RelationBoxRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
-use Noerd\Support\DefaultCountries;
+use Noerd\Support\BuiltInFieldTypes;
 use Noerd\Support\FieldContext;
-use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LayoutState;
 use Noerd\Support\ListColumnIntrospection;
 use Noerd\Support\ModelMethodColumns;
 use Noerd\Support\RequestState;
 use Noerd\Support\SchemaColumnCache;
-use Noerd\Support\SetupCollectionDefinitionImport;
 use Noerd\Support\TenantContext;
 use Noerd\Support\ThemeContext;
 use Noerd\View\Components\AppLayout;
@@ -99,6 +92,31 @@ class NoerdServiceProvider extends ServiceProvider
 {
     /** Payload key that carries the dispatching tenant into a queued job. */
     public const JOB_TENANT_KEY = 'noerd_tenant_id';
+
+    /**
+     * The registries and services of the package — one instance per container,
+     * registered by the framework right after register(). The per-request memos
+     * (scoped) and the conditional media binding stay in register().
+     *
+     * @var array<class-string, class-string>
+     */
+    public array $singletons = [
+        ActionPermissionRegistry::class => ActionPermissionRegistry::class,
+        ProfileRegistry::class => ProfileRegistry::class,
+        DynamicNavigationRegistry::class => DynamicNavigationRegistry::class,
+        ComponentSlotsRegistry::class => ComponentSlotsRegistry::class,
+        RelationBoxRegistry::class => RelationBoxRegistry::class,
+        FieldTypeRegistry::class => FieldTypeRegistry::class,
+        // Autowired: its only dependency is the FieldTypeRegistry singleton.
+        RelationFieldRegistry::class => RelationFieldRegistry::class,
+        ListCellRendererRegistry::class => ListCellRendererRegistry::class,
+        ThemeRegistry::class => ThemeRegistry::class,
+        PicklistRegistry::class => PicklistRegistry::class,
+        PositionTableRegistry::class => PositionTableRegistry::class,
+        ModelMethodColumns::class => ModelMethodColumns::class,
+        NoerdManager::class => NoerdManager::class,
+        BrandService::class => BrandService::class,
+    ];
 
     public function register(): void
     {
@@ -119,25 +137,11 @@ class NoerdServiceProvider extends ServiceProvider
         // registration here could land too late.
         NoerdHooks::register();
 
-        $this->app->singleton(ActionPermissionRegistry::class);
-        $this->app->singleton(ProfileRegistry::class);
-        $this->app->singleton(DynamicNavigationRegistry::class);
-        $this->app->singleton(ComponentSlotsRegistry::class);
-        $this->app->singleton(RelationBoxRegistry::class);
-        $this->app->singleton(FieldTypeRegistry::class);
-        $this->app->singleton(ListCellRendererRegistry::class);
-        $this->app->singleton(ThemeRegistry::class);
-        $this->app->singleton(NoerdManager::class);
-        // Autowired: its only dependency is the FieldTypeRegistry singleton above.
-        $this->app->singleton(RelationFieldRegistry::class);
-        // Singleton so the per-request FK-title lookups are memoized.
-        // Memoizes tenant-scoped titles: rebuilt for every request and job.
+        // Request-scoped memos (FK titles, the request state, the tenant
+        // context): rebuilt for every request and queued job.
         $this->app->scoped(RelationTitleResolver::class);
         $this->app->scoped(RequestState::class);
         $this->app->scoped(TenantContext::class);
-        $this->app->singleton(PicklistRegistry::class);
-        $this->app->singleton(PositionTableRegistry::class);
-        $this->app->singleton(BrandService::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
         // Providers of list columns / detail fields without a stored value; the
         // core computes `method:` itself, packages register further providers.
@@ -147,7 +151,6 @@ class NoerdServiceProvider extends ServiceProvider
 
             return $registry;
         });
-        $this->app->singleton(ModelMethodColumns::class);
 
         // Bind the Setup collection definition repository based on the shared mode toggle.
         $this->app->singleton(SetupCollectionDefinitionRepositoryContract::class, function ($app) {
@@ -209,7 +212,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->bootEventListeners();
         $this->bootRouting();
         $this->bootRegistries();
-        $this->bootFieldTypes();
+        BuiltInFieldTypes::register($this->app->make(FieldTypeRegistry::class));
 
         View::composer('noerd::layouts.app', function ($view): void {
             $view->with('showSidebar', LayoutState::sidebarVisible());
@@ -234,8 +237,8 @@ class NoerdServiceProvider extends ServiceProvider
     }
 
     /**
-     * Auth events (tenant session, login log) and the model hooks that seed a
-     * new tenant / invalidate the config search roots.
+     * Auth events (tenant session, login log) and the tenant context of
+     * requests and queued jobs.
      */
     private function bootEventListeners(): void
     {
@@ -258,30 +261,6 @@ class NoerdServiceProvider extends ServiceProvider
             TenantContext::enterJob(is_numeric($tenantId) ? (int) $tenantId : null);
         });
         Event::listen([JobProcessed::class, JobFailed::class, JobExceptionOccurred::class], fn() => TenantContext::leaveJob());
-
-        // Create default languages and setup collections when a new tenant is
-        // created — in that tenant: the creator (a console command, a sign-up,
-        // another tenant's admin) is not in it, and the defaults' own model
-        // hooks query tenant-scoped relations.
-        Tenant::created(function (Tenant $tenant): void {
-            TenantContext::run($tenant->id, function () use ($tenant): void {
-                SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
-                DefaultCountries::ensureForTenant($tenant->id);
-
-                // In database mode a tenant without definition rows has NO usable
-                // collections (empty sidebar, no layout for the country entries the
-                // line above just created), so a fresh tenant is seeded from the
-                // same YAML source the import command migrates from.
-                if (SetupCollectionDefinitionImport::isDatabaseMode()) {
-                    SetupCollectionDefinitionImport::forTenant($tenant->id);
-                }
-            });
-        });
-
-        // The config search roots memoise the active/allowed app folders — a
-        // TenantApp mutation (install commands, setup screens) invalidates them.
-        TenantApp::saved(fn() => StaticConfigHelper::flushRuntimeCaches());
-        TenantApp::deleted(fn() => StaticConfigHelper::flushRuntimeCaches());
     }
 
     /**
@@ -334,8 +313,8 @@ class NoerdServiceProvider extends ServiceProvider
         // Publishing runs ONLY in console: a live web request must never write
         // to public/ (concurrent requests race on the copy, and a production
         // public/ is typically not writable by the PHP user). noerd:install and
-        // noerd:update publish the assets explicitly; the auto-refresh below
-        // keeps a dev checkout current on any artisan invocation.
+        // noerd:update publish the assets explicitly — the provider itself never
+        // writes into the host, not even in a local checkout.
         if ($this->app->runningInConsole()) {
             // Publish public assets (fonts + built Vite assets)
             $this->publishes([
@@ -348,15 +327,6 @@ class NoerdServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../../stubs/noerd.php.stub' => config_path('noerd.php'),
             ], 'noerd-config');
-
-            // Dev-checkout convenience only: keep the published fonts and the
-            // built bundle current on any artisan call. Never on other
-            // environments — queue workers and schedulers must not write into
-            // public/; there noerd:install / noerd:update publish explicitly.
-            if ($this->app->environment('local')) {
-                $this->publishFontsIfNotExists();
-                $this->publishBuiltAssetsIfNotExist();
-            }
 
             $this->commands([
                 PromoteAdminCommand::class,
@@ -381,84 +351,6 @@ class NoerdServiceProvider extends ServiceProvider
                 ExportSetupCollectionDefinitionsCommand::class,
             ]);
         }
-    }
-
-    /**
-     * Register the shipped detail field types. Most are a plain Blade partial
-     * receiving the field array — those come from ONE map; only the three types
-     * needing extra props keep a resolver of their own. A type whose template
-     * exists in the default theme only is registered on the theme template
-     * itself (ThemeElementResolver walks the theme chain from the basename);
-     * the `noerd::components.forms.*` partials remain for the elements a view
-     * also includes directly.
-     */
-    private function bootFieldTypes(): void
-    {
-        $fieldTypeRegistry = $this->app->make(FieldTypeRegistry::class);
-
-        /** @var array<string, string> $viewOnlyTypes YAML type => Blade partial */
-        $viewOnlyTypes = [
-            'picklist' => 'noerd::components.forms.picklist',
-            'setupCollectionSelect' => 'noerd::components.forms.setup-collection-select',
-            'belongsToMany' => 'themes::default.belongs-to-many',
-            'checkbox' => 'noerd::components.forms.checkbox',
-            'richText' => 'themes::default.rich-text',
-            'translatableRichText' => 'themes::default.translatable-rich-text',
-            'translatableText' => 'noerd::components.forms.translatable-text',
-            'translatableTextarea' => 'noerd::components.forms.translatable-textarea',
-            'button' => 'themes::default.button',
-            'colorHex' => 'themes::default.color-hex',
-            'currency' => 'noerd::components.forms.input-currency',
-            'textarea' => 'noerd::components.forms.input-textarea',
-            'file' => 'noerd::components.forms.file',
-            'spacer' => 'noerd::components.forms.spacer',
-            'phone' => 'noerd::components.forms.phone',
-            'email' => 'noerd::components.forms.email',
-        ];
-
-        foreach ($viewOnlyTypes as $type => $view) {
-            $fieldTypeRegistry->register($type, FieldTypeDefinition::include(
-                $view,
-                resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => ['field' => $field],
-            ));
-        }
-
-        // A select may build its options from a component method at render time.
-        $fieldTypeRegistry->register('select', FieldTypeDefinition::include(
-            'noerd::components.forms.input-select',
-            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId): array {
-                $optionsMethod = $field['optionsMethod'] ?? null;
-
-                if ($optionsMethod && $component && method_exists($component, $optionsMethod)) {
-                    $resolved = $component->{$optionsMethod}();
-                    $options = [];
-
-                    foreach ($resolved as $value => $label) {
-                        $options[] = ['value' => $value, 'label' => $label];
-                    }
-
-                    $field['options'] = $options;
-                }
-
-                return ['field' => $field];
-            },
-        ));
-
-        $fieldTypeRegistry->register('image', FieldTypeDefinition::include(
-            'themes::default.image',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
-                'field' => $field,
-                'detailData' => $detailData,
-            ],
-        ));
-
-        $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
-            'themes::default.icon',
-            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
-                'field' => $field,
-                'iconValue' => data_get($component?->detailData ?? $detailData ?? [], Str::after($field['name'] ?? '', 'detailData.')),
-            ],
-        ));
     }
 
     /**
@@ -515,41 +407,6 @@ class NoerdServiceProvider extends ServiceProvider
                 'expire' => 60,
                 'throttle' => 60,
             ]]);
-        }
-    }
-
-    /**
-     * Automatically copy fonts to public directory if they don't exist.
-     */
-    private function publishFontsIfNotExists(): void
-    {
-        $targetPath = public_path('vendor/noerd/fonts');
-        $sourcePath = __DIR__ . '/../../public/fonts';
-
-        if (! File::exists($targetPath) && File::exists($sourcePath)) {
-            File::ensureDirectoryExists(dirname($targetPath));
-            File::copyDirectory($sourcePath, $targetPath);
-        }
-    }
-
-    /**
-     * Automatically copy built Vite assets to public directory if they don't exist.
-     */
-    private function publishBuiltAssetsIfNotExist(): void
-    {
-        $targetPath = public_path('vendor/noerd/manifest.json');
-        $sourcePath = __DIR__ . '/../../dist/build/manifest.json';
-
-        if (! File::exists($sourcePath)) {
-            return;
-        }
-
-        $shouldPublish = ! File::exists($targetPath)
-            || File::lastModified($sourcePath) > File::lastModified($targetPath);
-
-        if ($shouldPublish) {
-            File::ensureDirectoryExists(public_path('vendor/noerd'));
-            File::copyDirectory(__DIR__ . '/../../dist/build', public_path('vendor/noerd'));
         }
     }
 }

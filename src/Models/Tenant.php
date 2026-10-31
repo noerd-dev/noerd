@@ -10,6 +10,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Noerd\Database\Factories\TenantFactory;
 use Noerd\Events\TenantAppAssigned;
+use Noerd\Support\DefaultCountries;
+use Noerd\Support\SetupCollectionDefinitionImport;
+use Noerd\Support\TenantContext;
 
 /**
  * Extends Authenticatable ON PURPOSE: optional frontend modules authenticate a
@@ -81,6 +84,31 @@ class Tenant extends Authenticatable
         TenantAppAssigned::dispatch((int) $this->getKey(), (string) $tenantApp->name);
 
         return true;
+    }
+
+    /**
+     * A new tenant is seeded with its default languages, the default countries
+     * and — in database mode — the setup collection definitions, inside its
+     * own tenant context: the creator (a console command, a sign-up, another
+     * tenant's admin) is not in it, and the defaults' own model hooks query
+     * tenant-scoped relations.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Tenant $tenant): void {
+            TenantContext::run($tenant->id, function () use ($tenant): void {
+                SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
+                DefaultCountries::ensureForTenant($tenant->id);
+
+                // In database mode a tenant without definition rows has NO usable
+                // collections (empty sidebar, no layout for the country entries the
+                // line above just created), so a fresh tenant is seeded from the
+                // same YAML source the import command migrates from.
+                if (SetupCollectionDefinitionImport::isDatabaseMode()) {
+                    SetupCollectionDefinitionImport::forTenant($tenant->id);
+                }
+            });
+        });
     }
 
     protected static function newFactory(): TenantFactory
