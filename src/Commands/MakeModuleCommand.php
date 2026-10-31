@@ -13,7 +13,7 @@ use function Laravel\Prompts\text;
 
 use Noerd\Commands\Concerns\AsksForHeroicon;
 use Noerd\Commands\Concerns\PreparesModuleWorkspace;
-use Noerd\Traits\RequiresNoerdInstallation;
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 
 /**
  * Scaffolds a module: the Composer package, the ServiceProvider, the install/update

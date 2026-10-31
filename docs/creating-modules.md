@@ -112,24 +112,28 @@ migration prompt or `composer require` call.
 **A tenant app** (has `app-configs/{module}/` with a `navigation.yml`):
 
 - **`noerd:install-{module}`** — extends `Illuminate\Console\Command`, uses the
-  `HasModuleInstallation` trait and implements `getModuleName()`, `getModuleKey()`,
-  `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()`. Its `handle()` is
-  `return $this->runModuleInstallation();` — that copies the YAML configs into
-  `app-configs/{module}/`, registers the tenant app, asks which tenants get it, offers
-  `php artisan migrate`, runs the module's setup steps and offers the frontend build. With
-  `--scaffold` (declared by the generated command) it runs silently right after `noerd:make-app` —
-  configs, registration and the tenant assignment question only. On a project where the base
-  package is not installed yet, the command runs `noerd:install` first and then continues —
-  installing a module is a valid first command in a fresh project.
-- **`noerd:update-{module}`** — a slim subclass of the install command whose `handle()` is
-  `return $this->runModuleUpdate();`. It republishes, never migrates and never asks about tenants.
+  `Noerd\Commands\Concerns\HasModuleInstallation` trait and implements `getModuleName()`,
+  `getModuleKey()`, `getAppIcon()`, `getAppRoute()` and `getSourceDir()` (`getDefaultAppTitle()`
+  defaults to the module name). It declares nothing else: `handle()` comes from the trait and
+  runs `runModuleInstallation()` — that copies the YAML configs into `app-configs/{module}/`,
+  registers the tenant app, asks which tenants get it, offers `php artisan migrate`, runs the
+  module's setup steps and offers the frontend build. The shared options `--force`, `--migrate`,
+  `--build` and `--scaffold` are added to the signature by the trait (a signature that declares one
+  of them keeps its own description). With `--scaffold` it runs silently right after
+  `noerd:make-app` — configs, registration and the tenant assignment question only. On a project
+  where the base package is not installed yet, the command runs `noerd:install` first and then
+  continues — installing a module is a valid first command in a fresh project.
+- **`noerd:update-{module}`** — a subclass of the install command that carries only its
+  signature and description: the trait's `handle()` recognises the `noerd:update-` name and runs
+  `runModuleUpdate()`, which republishes, never migrates and never asks about tenants.
   `noerd:update-all` discovers every command named `noerd:update-{module}` — a module without one
   silently drops out of the project-wide update.
 
 **A support module** (no tenant app, no navigation — payment, notifications, …) uses the
-`InstallsNoerdModule` trait, implements only `getModuleName()` and calls
-`runSupportModuleInstallation()` / `runSupportModuleUpdate()`. `HasModuleInstallation` builds on
-the same trait, so everything below applies to both kinds.
+`Noerd\Commands\Concerns\InstallsNoerdModule` trait and implements only `getModuleName()`; its
+`handle()` runs `runSupportModuleInstallation()` / `runSupportModuleUpdate()` the same way
+(`--force` and `--migrate` are its shared options). `HasModuleInstallation` builds on the same
+trait, so everything below applies to both kinds.
 
 | Declare | Effect |
 |---------|--------|
@@ -149,12 +153,7 @@ class InventoryInstallCommand extends Command
 {
     use HasModuleInstallation;
 
-    protected $signature = 'noerd:install-inventory {--force} {--migrate} {--build} {--scaffold}';
-
-    public function handle(): int
-    {
-        return $this->runModuleInstallation();
-    }
+    protected $signature = 'noerd:install-inventory';
 
     protected function getConfigFiles(): array
     {

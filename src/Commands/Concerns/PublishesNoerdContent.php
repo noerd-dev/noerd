@@ -54,7 +54,7 @@ trait PublishesNoerdContent
      */
     protected function publishSetupAppConfigs(): bool
     {
-        $sourceDir = dirname(__DIR__, 3) . '/app-configs/setup';
+        $sourceDir = $this->getModuleRoot() . '/app-configs/setup';
 
         if (! File::isDirectory($sourceDir)) {
             $this->error("Source directory not found: {$sourceDir}");
@@ -72,7 +72,7 @@ trait PublishesNoerdContent
      */
     protected function registerNoerdBoostPackage(): void
     {
-        $this->registerBoostPackage(dirname(__DIR__, 3));
+        $this->registerBoostPackage($this->getModuleRoot());
     }
 
     /**
@@ -218,7 +218,7 @@ trait PublishesNoerdContent
 
         // The package root is the same wherever the package is installed (vendor/ or
         // a path repository under app-modules/).
-        $sourcePath = dirname(__DIR__, 3) . '/stubs/noerd.php.stub';
+        $sourcePath = $this->getModuleRoot() . '/stubs/noerd.php.stub';
 
         if (! File::exists($sourcePath)) {
             $this->warn("Source config stub not found: {$sourcePath}");

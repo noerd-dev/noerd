@@ -8,13 +8,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Testing\PendingCommand;
+use Noerd\Commands\Concerns\HasModuleInstallation;
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Support\ModuleInstallContext;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\HasModuleInstallation;
-use Noerd\Traits\RequiresNoerdInstallation;
 use Symfony\Component\Yaml\Yaml;
 
 uses(TestCase::class);

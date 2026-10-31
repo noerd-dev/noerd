@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Traits\RequiresNoerdInstallation;
 
 class NoerdDemoCommand extends Command
 {

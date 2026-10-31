@@ -39,4 +39,10 @@ class NoerdUpdateCommand extends Command
             return self::FAILURE;
         }
     }
+
+    /** The package root — the "module" these commands install. */
+    protected function getModuleRoot(): string
+    {
+        return dirname(__DIR__, 2);
+    }
 }

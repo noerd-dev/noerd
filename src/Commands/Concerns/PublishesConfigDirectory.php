@@ -24,9 +24,12 @@ trait PublishesConfigDirectory
      *                                    defaults to the source directory
      * @param  bool  $quiet  print no per-file line — the caller reports the counts
      *                       instead. Prompts are never suppressed.
+     * @param  bool  $keepExisting  keep an existing file silently (no prompt) unless --force —
+     *                              for files the host may have edited, published on every update
+     * @param  list<string>  $except  relative paths never published (e.g. navigation.yml)
      * @return array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int}
      */
-    protected function publishConfigDirectory(string $sourceDir, string $targetDir, ?string $displayBase = null, bool $quiet = false): array
+    protected function publishConfigDirectory(string $sourceDir, string $targetDir, ?string $displayBase = null, bool $quiet = false, bool $keepExisting = false, array $except = []): array
     {
         $results = [
             'created_dirs' => 0,
@@ -78,7 +81,11 @@ trait PublishesConfigDirectory
                 continue;
             }
 
-            $results[$this->publishFile($sourcePath, $targetPath, $displayPath, $quiet)]++;
+            if (in_array($relativePath, $except, true)) {
+                continue;
+            }
+
+            $results[$this->publishFile($sourcePath, $targetPath, $displayPath, $quiet, $keepExisting)]++;
         }
 
         return $results;
@@ -94,11 +101,16 @@ trait PublishesConfigDirectory
      *
      * @return 'copied_files'|'skipped_files'|'overwritten_files'
      */
-    protected function publishFile(string $sourcePath, string $targetPath, string $displayPath, bool $quiet = false): string
+    protected function publishFile(string $sourcePath, string $targetPath, string $displayPath, bool $quiet = false, bool $keepExisting = false): string
     {
         $outcome = 'copied_files';
 
         if (File::exists($targetPath)) {
+            // A file the host may have edited is kept without a question unless --force.
+            if ($keepExisting && ! $this->option('force')) {
+                return 'skipped_files';
+            }
+
             if (! $this->option('force')) {
                 $choice = $this->choice(
                     "File already exists: {$displayPath}. What do you want to do?",

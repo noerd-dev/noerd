@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Noerd\Commands\Concerns;
 
 use Illuminate\Support\Facades\File;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Throwable;
 
 /**
@@ -107,29 +105,35 @@ trait PublishesModuleConfig
             return;
         }
 
-        $targetDir = base_path('app-configs/setup');
-
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST,
+        $this->publishConfigDirectory(
+            $sourceDir,
+            base_path('app-configs/setup'),
+            base_path('app-configs'),
+            keepExisting: true,
+            except: ['navigation.yml'],
         );
+    }
 
-        foreach ($iterator as $item) {
-            $relativePath = mb_substr($item->getPathname(), mb_strlen($sourceDir) + 1);
-            $targetPath = $targetDir . DIRECTORY_SEPARATOR . $relativePath;
-
-            if ($item->isDir() || $relativePath === 'navigation.yml') {
-                continue;
-            }
-
-            if (File::exists($targetPath) && ! $this->option('force')) {
-                continue;
-            }
-
-            File::ensureDirectoryExists(dirname($targetPath));
-            File::copy($item->getPathname(), $targetPath);
-            $this->line("<info>Published:</info> app-configs/setup/{$relativePath}");
+    /**
+     * The top-level keys a shipped config declares that the host's copy lacks —
+     * empty when either file cannot be evaluated (a customized config is left alone).
+     *
+     * @return list<string>
+     */
+    protected function missingConfigKeys(string $sourcePath, string $targetPath): array
+    {
+        try {
+            $shipped = require $sourcePath;
+            $current = require $targetPath;
+        } catch (Throwable) {
+            return [];
         }
+
+        if (! is_array($shipped) || ! is_array($current)) {
+            return [];
+        }
+
+        return array_map(strval(...), array_keys(array_diff_key($shipped, $current)));
     }
 
     /**
@@ -138,18 +142,7 @@ trait PublishesModuleConfig
      */
     private function reportMissingConfigKeys(string $sourcePath, string $targetPath, string $displayPath): void
     {
-        try {
-            $shipped = require $sourcePath;
-            $current = require $targetPath;
-        } catch (Throwable) {
-            return;
-        }
-
-        if (! is_array($shipped) || ! is_array($current)) {
-            return;
-        }
-
-        $missing = array_keys(array_diff_key($shipped, $current));
+        $missing = $this->missingConfigKeys($sourcePath, $targetPath);
 
         if ($missing !== []) {
             $this->line("<comment>{$displayPath} does not declare: " . implode(', ', $missing) . ' (the package defaults apply).</comment>');

@@ -7,8 +7,8 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Noerd\Commands\Concerns\PublishesAuditMigration;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\PublishesAuditMigration;
 
 uses(TestCase::class);
 

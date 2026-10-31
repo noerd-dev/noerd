@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Contracts\RunsAfterModuleUpdates;
-use Noerd\Traits\RequiresNoerdInstallation;
 use Throwable;
 
 class NoerdUpdateAllCommand extends Command

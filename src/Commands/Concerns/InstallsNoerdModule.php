@@ -2,29 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Traits;
+namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Console\Command;
-use Noerd\Commands\Concerns\PublishesConfigDirectory;
-use Noerd\Commands\Concerns\PublishesModuleConfig;
-use Noerd\Commands\Concerns\PublishesSkills;
-use Noerd\Commands\Concerns\RegistersBoostPackage;
-use Noerd\Commands\Concerns\RunsNpmBuild;
-use Noerd\Commands\Concerns\WritesHostAppConfigs;
 use Noerd\Support\ModuleInstallContext;
 use ReflectionClass;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * The install/update contract of EVERY noerd module — with or without a tenant
  * app. A SUPPORT module (no navigation, no tenant app: payment, wallet,
- * notifications, …) uses this trait directly:
+ * notifications, …) uses this trait directly; a TENANT-APP module uses
+ * HasModuleInstallation, which builds on it and adds the app-configs navigation,
+ * the tenant-app row and the tenant assignment.
  *
- *     public function handle(): int { return $this->runSupportModuleInstallation(); }
- *     // update command (subclass): return $this->runSupportModuleUpdate();
- *
- * A TENANT-APP module uses HasModuleInstallation, which builds on this trait and
- * adds the app-configs navigation, the tenant-app row and the tenant assignment.
+ * A module command declares its signature, its description and the getters —
+ * nothing else: handle() comes from the trait and runs the installation, or the
+ * update when the command is named `noerd:update-…` (the update command is a
+ * subclass of the install command with its own signature), and the shared
+ * options (--force, --migrate, …) are declared by the trait when the signature
+ * lacks them.
  *
  * What a module declares instead of coding it: getConfigFiles() (PHP config),
  * getAppConfigsDir() (YAML of screens that hang in other apps), a
@@ -42,11 +40,81 @@ trait InstallsNoerdModule
     use RunsNpmBuild;
     use WritesHostAppConfigs;
 
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->declareInstallOptions();
+    }
+
     /**
      * Get the module name for display purposes.
      * Example: "Business Hours"
      */
     abstract protected function getModuleName(): string;
+
+    /**
+     * Install, or update when this is the module's `noerd:update-…` command.
+     */
+    public function handle(): int
+    {
+        return $this->isUpdateCommand() ? $this->runUpdate() : $this->runInstallation();
+    }
+
+    /**
+     * The installation flow handle() runs — the support-module flow here, the
+     * tenant-app flow in HasModuleInstallation.
+     */
+    protected function runInstallation(): int
+    {
+        return $this->runSupportModuleInstallation();
+    }
+
+    /**
+     * The update flow handle() runs for a `noerd:update-…` command.
+     */
+    protected function runUpdate(): int
+    {
+        return $this->runSupportModuleUpdate();
+    }
+
+    /**
+     * Whether this command is the module's update command (`noerd:update-{module}`).
+     */
+    protected function isUpdateCommand(): bool
+    {
+        return str_starts_with((string) $this->getName(), 'noerd:update');
+    }
+
+    /**
+     * The options every module command understands, added to the signature
+     * when it does not declare them itself (a declared option keeps its own
+     * description). A tenant app adds --build and --scaffold.
+     *
+     * @return array<string, string> option name => description
+     */
+    protected function installOptions(): array
+    {
+        return [
+            'force' => 'Overwrite existing files without asking',
+            'migrate' => 'Run migrations without asking (required to migrate in non-interactive runs)',
+        ];
+    }
+
+    /**
+     * Declare the shared options on the command definition — before the input
+     * is bound, which is why this runs from the constructor.
+     */
+    protected function declareInstallOptions(): void
+    {
+        $definition = $this->getDefinition();
+
+        foreach ($this->installOptions() as $name => $description) {
+            if (! $definition->hasOption($name)) {
+                $definition->addOption(new InputOption($name, null, InputOption::VALUE_NONE, $description));
+            }
+        }
+    }
 
     /**
      * The module root (composer.json, config/, resources/boost, skills/). By

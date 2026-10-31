@@ -54,14 +54,16 @@ app-modules/{module}/
 
 ## 2. Mandatory install + update commands
 
-- `noerd:install-{module}` — extends `Illuminate\Console\Command`, uses `HasModuleInstallation`,
-  implements `getModuleName()`, `getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`,
-  `getAppRoute()`, `getSourceDir()`; `handle()` → `return $this->runModuleInstallation();`.
-- `noerd:update-{module}` — slim subclass whose `handle()` → `return $this->runModuleUpdate();`.
-  `noerd:update-all` discovers it by name; a missing one silently drops the module from
-  project-wide updates.
-- A support module (no tenant app) uses `InstallsNoerdModule` instead: only `getModuleName()`,
-  `runSupportModuleInstallation()` / `runSupportModuleUpdate()`.
+- `noerd:install-{module}` — extends `Illuminate\Console\Command`, uses
+  `Noerd\Commands\Concerns\HasModuleInstallation`, implements `getModuleName()`, `getModuleKey()`,
+  `getAppIcon()`, `getAppRoute()`, `getSourceDir()` (`getDefaultAppTitle()` defaults to the module
+  name). No `handle()`, no options of its own: the trait runs the installation and declares
+  `--force`, `--migrate`, `--build`, `--scaffold`.
+- `noerd:update-{module}` — subclass with only its signature and description; the trait's `handle()`
+  runs the update for a `noerd:update-` name. `noerd:update-all` discovers it by name; a missing one
+  silently drops the module from project-wide updates.
+- A support module (no tenant app) uses `Noerd\Commands\Concerns\InstallsNoerdModule` instead: only
+  `getModuleName()`; `handle()` runs `runSupportModuleInstallation()` / `runSupportModuleUpdate()`.
 - Declare, never code: `getConfigFiles()` (PHP config), `{module}/app-configs/setup/` (setup YAML),
   `getRequiredModules()` (`['MEDIA' => 'noerd:install-media']` — installed first as a silent
   dependency and assigned along), `ensureModuleSetup()` (setup navigation, quick-menu button,

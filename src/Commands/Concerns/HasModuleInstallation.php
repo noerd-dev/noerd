@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Traits;
+namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Console\Command;
@@ -28,13 +28,14 @@ use Symfony\Component\Yaml\Yaml;
  * Install/update contract of a module that IS a tenant app: on top of
  * InstallsNoerdModule it publishes the app's own app-configs folder with its
  * navigation, registers the tenant-app row and assigns the app to tenants.
- *
- *     public function handle(): int { return $this->runModuleInstallation(); }
- *     // update command (subclass): return $this->runModuleUpdate();
+ * handle() runs runModuleInstallation(), or runModuleUpdate() for the
+ * `noerd:update-…` subclass (see InstallsNoerdModule).
  */
 trait HasModuleInstallation
 {
-    use InstallsNoerdModule;
+    use InstallsNoerdModule {
+        installOptions as protected sharedInstallOptions;
+    }
 
     /** @var array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int} */
     private array $installResults = [
@@ -55,12 +56,6 @@ trait HasModuleInstallation
     abstract protected function getModuleKey(): string;
 
     /**
-     * Get the default app title.
-     * Example: "Business Hours"
-     */
-    abstract protected function getDefaultAppTitle(): string;
-
-    /**
      * Get the app icon: a heroicon reference or a Blade icon view.
      * Example: "heroicon:outline:clock" or "business-hours::icons.app"
      */
@@ -77,6 +72,16 @@ trait HasModuleInstallation
      * Example: dirname(__DIR__, 2) . '/app-configs/business-hours'
      */
     abstract protected function getSourceDir(): string;
+
+    /**
+     * The title the tenant app starts with (the installer offers it as the
+     * default) — the module name unless the module wants to differ.
+     * Example: "Business Hours"
+     */
+    protected function getDefaultAppTitle(): string
+    {
+        return $this->getModuleName();
+    }
 
     /**
      * Modules this one cannot work without, as tenant-app key => install command
@@ -107,6 +112,31 @@ trait HasModuleInstallation
     protected function getRequiredAppKeys(): array
     {
         return array_keys($this->getRequiredModules());
+    }
+
+    protected function runInstallation(): int
+    {
+        return $this->runModuleInstallation();
+    }
+
+    protected function runUpdate(): int
+    {
+        return $this->runModuleUpdate();
+    }
+
+    /**
+     * A tenant app offers the frontend build and the silent post-scaffold run
+     * on top of the shared options.
+     *
+     * @return array<string, string>
+     */
+    protected function installOptions(): array
+    {
+        return [
+            ...$this->sharedInstallOptions(),
+            'build' => 'Run npm build without asking (required to build in non-interactive runs)',
+            'scaffold' => 'Silent post-scaffold run (noerd:make-app) — only the tenant assignment is asked',
+        ];
     }
 
     /**
