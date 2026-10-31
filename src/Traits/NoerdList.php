@@ -24,12 +24,14 @@ use Noerd\Support\ComponentNaming;
 use Noerd\Support\ComputedFields;
 use Noerd\Support\CsvListExporter;
 use Noerd\Support\ListColumnIntrospection;
+use Noerd\Support\ListFilter;
 use Noerd\Support\ListPermissions;
 use Noerd\Support\PicklistBadges;
 use Noerd\Support\SchemaColumnCache;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use WeakMap;
 
 trait NoerdList
 {
@@ -170,6 +172,12 @@ trait NoerdList
     /** @var array<string, array<string, mixed>> Request memo for getListConfig() (incl. layout overrides). */
     protected array $listConfigMemo = [];
 
+    /** @var array<string, ListFilter>|null Request memo for listFilterDefinitions(). */
+    protected ?array $listFilterDefinitionCache = null;
+
+    /** @var WeakMap<Builder, bool>|null The builders the header filters were applied to. */
+    protected ?WeakMap $filteredBuilders = null;
+
     public function mount(): void
     {
         $this->mountList();
@@ -294,8 +302,15 @@ trait NoerdList
 
     public function clearAllListFilters(): void
     {
+        // A filter with a default is cleared to the EMPTY selection, stored as
+        // such — otherwise the next mount would put the default back.
         $this->listFilters = [];
-        session(['listFilters' => []]);
+        foreach ($this->listFilterDefinitions() as $column => $definition) {
+            if ($definition->defaultValue() !== null) {
+                $this->listFilters[$column] = '';
+            }
+        }
+        session(['listFilters' => $this->listFilters]);
 
         $this->listColumnFilters = [];
         session()->forget("listColumnFilters.{$this->componentName()}");
@@ -556,10 +571,24 @@ trait NoerdList
         $this->resetPage();
     }
 
+    /**
+     * The header filters this list declares: the `filters:` entries of its list
+     * YAML, then every `get{Name}ListFilter()` method of the component — each a
+     * ListFilter or its array form. Override to show filters conditionally.
+     *
+     * @return array<int, ListFilter|array<string, mixed>>
+     */
     #[Computed]
     public function tableFilters(): array
     {
         $filters = [];
+
+        foreach ($this->getListConfig()['filters'] ?? [] as $filter) {
+            if (is_array($filter) && ! empty($filter['column'])) {
+                $filters[] = ListFilter::fromArray($filter, $this->listModel ?? null, translate: true);
+            }
+        }
+
         foreach (get_class_methods($this) as $method) {
             if (preg_match('/^get.+ListFilter$/', $method)) {
                 $filter = $this->{$method}();
@@ -838,10 +867,58 @@ trait NoerdList
      * PURPOSE: NoerdPage::setPreselect() seeds it from detail pages so a
      * related list opens pre-filtered, and preselect() reads it back. Only
      * columns whitelisted per list (getAllowedListFilterColumns) ever apply.
+     * A filter whose selection was never stored starts on its declared default.
      */
     protected function loadListFilters(): void
     {
         $this->listFilters = session('listFilters', []);
+
+        foreach ($this->listFilterDefinitions() as $column => $definition) {
+            if ($definition->defaultValue() !== null && ! array_key_exists($column, $this->listFilters)) {
+                $this->listFilters[$column] = $definition->defaultValue();
+            }
+        }
+    }
+
+    /**
+     * The declared header filters keyed by column, every array form turned into
+     * a ListFilter. Memoized per request — the options may query the database.
+     *
+     * @return array<string, ListFilter>
+     */
+    protected function listFilterDefinitions(): array
+    {
+        if ($this->listFilterDefinitionCache !== null) {
+            return $this->listFilterDefinitionCache;
+        }
+
+        $definitions = [];
+        foreach ($this->tableFilters as $filter) {
+            $definition = match (true) {
+                $filter instanceof ListFilter => $filter,
+                is_array($filter) && ! empty($filter['column']) => ListFilter::fromArray($filter),
+                default => null,
+            };
+
+            if ($definition !== null) {
+                $definitions[$definition->column] = $definition->forModel($this->listModel ?? $this->resolvedModelClass);
+            }
+        }
+
+        return $this->listFilterDefinitionCache = $definitions;
+    }
+
+    /**
+     * The header filters in the array form the filter row renders.
+     *
+     * @return array<int, array{label: string, column: string, type: string, options: array<string, string>}>
+     */
+    protected function headerFilters(): array
+    {
+        return array_values(array_map(
+            static fn(ListFilter $definition): array => $definition->toArray(),
+            $this->listFilterDefinitions(),
+        ));
     }
 
     /**
@@ -866,41 +943,50 @@ trait NoerdList
 
     /**
      * Columns the header filters (listFilters) may constrain — every declared
-     * table filter column. Override to allow additional keys.
+     * filter column. Override to allow additional keys (a value seeded through
+     * setPreselect() that no dropdown declares); such a key constrains the
+     * column of that name by equality.
+     *
+     * @return array<int, string>
      */
     protected function getAllowedListFilterColumns(): array
     {
-        return collect($this->tableFilters)->pluck('column')->filter()->toArray();
+        return array_keys($this->listFilterDefinitions());
     }
 
+    /**
+     * Put the active header filters on the query — listQuery() does this for
+     * every list, exactly once per builder. A declared filter applies as its
+     * ListFilter says (equality on a real column, the date comparison of the
+     * date kinds, a virtual column through its closure); an extra whitelisted
+     * key constrains the column of that name when the table has it.
+     */
     protected function applyListFilters(Builder $query): void
     {
-        if (! $this->listFilters) {
+        $this->filteredBuilders ??= new WeakMap();
+        if (isset($this->filteredBuilders[$query])) {
+            return;
+        }
+        $this->filteredBuilders[$query] = true;
+
+        if ($this->listFilters === []) {
             return;
         }
 
-        $allowed = $this->getAllowedListFilterColumns();
-        $filterTypes = collect($this->tableFilters)->pluck('type', 'column')->toArray();
+        $definitions = $this->listFilterDefinitions();
+        $allowed = array_map('strval', $this->getAllowedListFilterColumns());
+        $table = $query->getModel()->getTable();
 
-        foreach ($this->listFilters as $key => $value) {
-            if (! in_array((string) $key, array_map('strval', $allowed), true) || ! $value) {
+        foreach ($this->listFilters as $column => $value) {
+            $column = (string) $column;
+            if ($value === null || $value === '' || $value === false || $value === []) {
                 continue;
             }
 
-            $type = $filterTypes[$key] ?? '';
-
-            if ($type === 'ShowFrom' && method_exists($this, 'resolveShowDate')) {
-                $date = $this->resolveShowDate($value);
-                if ($date) {
-                    $query->where($this->getShowFromDateColumn(), '>=', $date);
-                }
-            } elseif ($type === 'ShowUntil' && method_exists($this, 'resolveShowDate')) {
-                $date = $this->resolveShowDate($value);
-                if ($date) {
-                    $query->where($this->getShowUntilDateColumn(), '<=', $date);
-                }
-            } else {
-                $query->where($key, $value);
+            if (isset($definitions[$column])) {
+                $definitions[$column]->applyTo($query, (string) $value);
+            } elseif (in_array($column, $allowed, true) && SchemaColumnCache::hasColumn($table, $column)) {
+                $query->where($query->qualifyColumn($column), $value);
             }
         }
     }
@@ -957,9 +1043,9 @@ trait NoerdList
     }
 
     /**
-     * Build a query with search, sort and column filters applied based on YAML
-     * columns. Pass $configName when the list renders a custom YAML config
-     * (the same name handed to buildList()).
+     * Build a query with search, sort, the Excel-style column filters and the
+     * header filters applied based on the YAML. Pass $configName when the list
+     * renders a custom YAML config (the same name handed to buildList()).
      */
     protected function listQuery(string $modelClass, ?string $configName = null): Builder
     {
@@ -1000,6 +1086,7 @@ trait NoerdList
         }
 
         $this->applyColumnFilters($query, $modelClass);
+        $this->applyListFilters($query);
         $eagerLoads = ListColumnIntrospection::eagerLoads($modelClass, $this->getListConfig($configName)['columns'] ?? []);
         if ($eagerLoads !== []) {
             $query->with($eagerLoads);

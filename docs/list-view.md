@@ -336,12 +336,11 @@ new class extends Component {
 }; ?>
 ```
 
-`listQuery()` applies search, sort and the Excel-style column filters, and eager-loads the relations
-of dotted relation columns (`category.name`) itself. It does NOT apply the header
-dropdown filters (`listFilters`) — a list with such filters calls `$this->applyListFilters($query)`
-on the builder itself (see [List Filters](list-filters.md#how-filters-work)). A list that renders a
-YAML under another name passes it to both calls: `listQuery($model, 'other-list')` and
-`buildList($rows, 'other-list')`.
+`listQuery()` applies search, sort, the Excel-style column filters and the header filters
+(`filters:` in the list YAML, `get*ListFilter()` on the component — see
+[List Filters](list-filters.md#header-filters)), and eager-loads the relations of dotted relation
+columns (`category.name`) itself. A list that renders a YAML under another name passes it to both
+calls: `listQuery($model, 'other-list')` and `buildList($rows, 'other-list')`.
 
 Never leave a custom query in `with()` once `$listModel` is declared: the generic trait
 features (row click, select-all, bulk delete) resolve the list via `listData()` and would
