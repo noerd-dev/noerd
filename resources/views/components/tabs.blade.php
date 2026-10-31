@@ -22,31 +22,8 @@
             ? ' pt-6'
             : '';
 
-    /**
-     * Resolve argument values from YML configuration.
-     * Supports:
-     * - '$variableName' - references a Livewire component property
-     * - '$modelId' - references the modelId passed to this component
-     * - Static values - passed through as-is
-     */
-    $resolveArguments = function (array $arguments) use ($modelId) {
-        $resolved = [];
-        foreach ($arguments as $key => $value) {
-            if (is_string($value) && str_starts_with($value, '$')) {
-                $varName = mb_substr($value, 1);
-                if ($varName === 'modelId') {
-                    $resolved[$key] = $modelId;
-                } elseif (isset($__livewire) && property_exists($__livewire, $varName)) {
-                    $resolved[$key] = $__livewire->{$varName};
-                } else {
-                    $resolved[$key] = null;
-                }
-            } else {
-                $resolved[$key] = $value;
-            }
-        }
-        return $resolved;
-    };
+    // The `arguments:` of a tab, with the $modelId and $property tokens resolved.
+    $resolveArguments = fn (array $arguments): array => \Noerd\Support\LayoutArguments::resolve($arguments, $modelId, $__livewire ?? null);
 @endphp
 
 @if ($layout && isset($layout['tabs']) && count($layout['tabs']) > 0)
@@ -58,7 +35,7 @@
                         $showTab = \Noerd\Support\TabVisibility::renders($tab, $modelId);
                         // Reactive client-side visibility — mirrors field-level showIf
                         // (Alpine x-show against a Livewire property).
-                        $tabShowIf = \Noerd\Support\TabVisibility::showIfExpression($tab);
+                        $tabShowIf = \Noerd\Support\FieldVisibility::showExpression($tab);
                     @endphp
                     @if ($showTab)
                         @if ($tabShowIf)

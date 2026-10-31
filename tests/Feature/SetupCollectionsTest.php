@@ -313,3 +313,25 @@ describe('SetupFieldTypeConverter', function (): void {
         expect($result)->toBe($data);
     });
 });
+
+describe('SetupFieldTypeConverter structured values', function (): void {
+    it('keeps a list or a structured value when converting from a translatable field', function (): void {
+        $method = new ReflectionMethod(SetupFieldTypeConverter::class, 'convertFromTranslatableField');
+
+        expect($method->invoke(null, ['a', 'b']))->toBe(['a', 'b'])
+            ->and($method->invoke(null, [['title' => 'Row']]))->toBe([['title' => 'Row']])
+            ->and($method->invoke(null, ['de' => ['nested']]))->toBe(['de' => ['nested']])
+            ->and($method->invoke(null, 'plain'))->toBe('plain');
+    });
+
+    it('starts a structured value with empty language slots instead of a stringified array', function (): void {
+        $method = new ReflectionMethod(SetupFieldTypeConverter::class, 'convertToTranslatableField');
+
+        $result = $method->invoke(null, ['a', 'b']);
+
+        expect(array_keys($result))->toContain('en')
+            ->and(array_unique(array_values($result)))->toBe([''])
+            // a map keyed by a language the tenant no longer runs is a translation and stays
+            ->and($method->invoke(null, ['fr' => 'Texte']))->toBe(['fr' => 'Texte']);
+    });
+});

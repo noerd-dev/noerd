@@ -824,14 +824,15 @@ fields:
 | `title` | (optional) Section heading above the list (translation key), rendered via `detail.block-head` |
 | `description` | (optional) Sub-heading text (translation key) |
 | `component` | The list Livewire component to embed (e.g. `crm::opportunities-list`) |
-| `arguments` | Arguments passed to the list; the `$modelId` token resolves to the current record id |
+| `arguments` | Arguments passed to the list; the `$modelId` token resolves to the current record id, `$property` to a public property of the hosting component |
 
 **Important:**
 - `<x-noerd::detail-lists>` is generic and lives in the noerd module — never duplicate it per module
 - Nothing is rendered until the record is saved (`$modelId` is set) or when `lists` is empty
 - The embedded list is always rendered compact (no header, no pagination — only the first `perPage`
   rows). Use it for record-scoped lists
-- Only the `$modelId` token and static values are supported in `arguments`
+- `arguments` take the `$modelId` and `$property` tokens and static values — resolved once by
+  `Noerd\Support\LayoutArguments`, the same for lists, widgets, relation tiles, actions and tabs
 - Reference: `docs/detail-view.md` ("Embedded Lists")
 
 #### Blade-direct: `<x-noerd::detail-list>`
@@ -1090,6 +1091,7 @@ into an alternate **theme** via the top-level string key `theme:`. Built-in them
 | `compact` | Label to the LEFT of the input, tighter vertical spacing |
 | `numbered` | Numbered form rows in the style of official/tax forms: one field per full-width row, light gray row background, leading row number, right-aligned label, input on the right |
 | `display` | Hidden, `textOnly`: every field renders as TEXT (label left, value right, no control) — for read-only rows inside a form or a whole read-only block |
+| `settings` | Hidden: the stacked full-width rows of a settings page (`NoerdSettingsPage`), forced there and never selectable in a form YAML |
 
 **YAML configuration** (`details/{entity}-detail.yml`):
 ```yaml
@@ -1514,8 +1516,9 @@ selects translations; German UI + `en-US` formats is a valid combination. The lo
 in `Noerd\Support\Locales::SUPPORTED` — never add a locale per project or tenant.
 
 - **Backend UI** (Livewire views, custom `listData()`, dashboards, widgets, relation `titleResolver`s):
-  `CurrencyHelper::format($amount)`, `FormatHelper::date()`, `dateTime()`, `time()`, `decimal()`,
-  `number()` (quantities), `percent()` — reader's locale, resolved automatically.
+  `CurrencyHelper::format($amount)`, `FormatHelper::date()`, `dateTime()`, `time()`, `longDate()`,
+  `weekday()`, `monthName()`, `decimal()`, `number()` (quantities), `percent()`, `fileSize()` —
+  reader's locale, resolved automatically.
 - **Documents** (PDF templates, receipts, customer e-mails, ESC/POS): `CurrencyHelper::formatForDocument($amount, $model->tenant_id)`
   and `FormatHelper::documentDate($date, $model->tenant_id)` / `documentDateTime()` / `documentDecimal()`
   — tenant locale, never the acting user's.
@@ -1526,8 +1529,9 @@ in `Noerd\Support\Locales::SUPPORTED` — never add a locale per project or tena
 - NEVER `number_format($x, 2, ',', '.')`, a literal `€`/`&euro;`/`'EUR'`, `->format('d.m.Y')`,
   `Number::currency(..., in: 'EUR', locale: 'de')`, `->locale('de')` or `Carbon::setLocale()` in module
   code, templates or translation keys (`__('Buy for :price')` with a pre-formatted `:price`, never
-  `__('Buy for :price €')`). Use `->locale(FormatHelper::locale())` when Carbon's own `isoFormat()` /
-  `translatedFormat()` is needed.
+  `__('Buy for :price €')`). Weekday and month names come from `FormatHelper::weekday()` /
+  `monthName()` / `longDate()` — never `isoFormat('dddd')` or `translatedFormat('F')` in a module;
+  only a pattern the helpers do not cover uses Carbon's `isoFormat()` with `->locale(FormatHelper::locale())`.
 - List columns `type: currency|date|datetime` and the detail field `type: currency` are formatted by
   the core in the reader's locale — no per-component code. CSV exports stay plain decimals.
 - Tests normalise ICU spaces (`zzNormalizeSpaces()`) and prove mechanics with a `NoerdSettings` row

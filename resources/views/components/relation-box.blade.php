@@ -8,6 +8,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Services\RelationBoxRegistry;
+use Noerd\Support\LayoutArguments;
 
 new class extends Component {
     // Established by the hosting page at mount; a client UPDATE must never
@@ -132,20 +133,12 @@ new class extends Component {
     }
 
     /**
-     * Resolve YAML argument values. Supports the '$modelId' token and static values.
-     *
      * @param  array<string, mixed>  $arguments
      * @return array<string, mixed>
      */
     private function resolveArguments(array $arguments): array
     {
-        $resolved = [];
-
-        foreach ($arguments as $key => $value) {
-            $resolved[$key] = $value === '$modelId' ? $this->modelId : $value;
-        }
-
-        return $resolved;
+        return LayoutArguments::resolve($arguments, $this->modelId, $this);
     }
 }; ?>
 

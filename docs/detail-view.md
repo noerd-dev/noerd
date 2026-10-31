@@ -584,7 +584,7 @@ pagination, only the first `perPage` rows — use it for record-scoped lists.
 | Key / prop | Description |
 |------------|-------------|
 | `component` | The list Livewire component to embed (e.g. `inventory::stock-movements-list`) |
-| `arguments` | Mount arguments of the list. In YAML the `$modelId` token resolves to the current record id and static values pass through; the Blade prop takes real values (no token resolution) |
+| `arguments` | Mount arguments of the list. In YAML the `$modelId` token resolves to the current record id, `$property` to a public property of the hosting component, static values pass through; the Blade prop takes real values (no token resolution) |
 | `title` / `description` | (optional) Section heading and sub-heading (translation keys), rendered via `detail.block-head` |
 | `lazy` | (optional) Lazy-load the list |
 | `wireKey` | (optional, Blade only) Explicit `wire:key`; defaults to `detail-list-{component}-` + an md5 hash of the arguments. Vary it (e.g. include a timestamp) to force a re-render when the underlying data changes |

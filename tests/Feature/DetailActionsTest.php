@@ -258,7 +258,7 @@ it('compares against a value with the object condition form', function (): void 
         ],
     ], 5);
 
-    expect(html_entity_decode($html))->toContain("x-show=\"(\$wire.detailData.status === 'open')\"");
+    expect(html_entity_decode($html))->toContain("x-show=\"(String(\$wire.detailData.status ?? '') === 'open')\"");
 });
 
 it('leaves an unconditional action free of an x-show directive', function (): void {

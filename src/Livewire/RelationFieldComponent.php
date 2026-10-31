@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
-use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
+use Noerd\Support\RelationFieldDefinition;
 use RuntimeException;
 
 /**
@@ -55,21 +55,13 @@ abstract class RelationFieldComponent extends RelationFieldBase
             throw new RuntimeException("Relation field type [{$relationType}] is not registered.");
         }
 
+        $this->mountBase($fieldName, $label, $value, $required, $readonly, $modelId, $number, $theme, $helpText, $owner);
+
         $this->relationType = $relationType;
-        $this->fieldName = $fieldName;
-        $this->label = $label;
-        $this->value = $value;
-        $this->required = $required;
-        $this->readonly = $readonly;
-        $this->helpText = $helpText;
-        $this->modelId = $modelId;
-        $this->number = $number;
-        $this->theme = $theme;
         $this->listComponent = $definition->listComponent;
         $this->detailComponent = $definition->getDetailComponent();
         $this->detailRoute = $definition->detailRoute;
         $this->selectEvent = $definition->getSelectEvent();
-        $this->owner = $owner;
 
         $this->resolveDisplayTitle();
     }
@@ -77,44 +69,17 @@ abstract class RelationFieldComponent extends RelationFieldBase
     #[On('noerdRelationSelected')]
     public function relationSelected(mixed $value, ?string $context = null): void
     {
-        // Hidden affordances are no guard — a readonly field never mutates.
-        if ($this->readonly) {
-            return;
-        }
-
-        // Strict match: a picker opened without a context dispatches '' / null,
-        // which must not be adopted by every relation field on the page.
-        if (! $this->acceptsSelectionContext($context)) {
+        if (! $this->acceptsSelection($context)) {
             return;
         }
 
         $this->value = $value;
         $this->resolveDisplayTitle();
-        $this->syncParentState();
+        $this->syncField($this->fieldName, $this->value, $this->displayTitle);
 
         if ($this->selectEvent) {
             $this->dispatch($this->selectEvent, $this->value, $this->fieldName);
         }
-    }
-
-    public function clear(): void
-    {
-        if ($this->readonly) {
-            return;
-        }
-
-        $this->value = null;
-        $this->displayTitle = '';
-        $this->syncParentState();
-    }
-
-    public function openDetail(): void
-    {
-        if (! $this->value) {
-            return;
-        }
-
-        Noerd::modalFor($this->detailRoute, $this->detailComponent, ['modelId' => $this->value]);
     }
 
     /**
@@ -129,7 +94,7 @@ abstract class RelationFieldComponent extends RelationFieldBase
             return null;
         }
 
-        $definition = app(RelationFieldRegistry::class)->get($this->relationType);
+        $definition = $this->activeDefinition();
 
         if (! $definition?->modelClass || ! class_exists($definition->modelClass)) {
             return null;
@@ -138,21 +103,8 @@ abstract class RelationFieldComponent extends RelationFieldBase
         return $definition->modelClass::query()->find($this->value);
     }
 
-    private function resolveDisplayTitle(): void
+    protected function activeDefinition(): ?RelationFieldDefinition
     {
-        $definition = app(RelationFieldRegistry::class)->get($this->relationType);
-
-        $this->displayTitle = $definition?->resolveTitleForValue($this->value) ?? '';
-    }
-
-    private function syncParentState(): void
-    {
-        $this->dispatch(
-            'setFieldValue',
-            field: $this->fieldName,
-            value: $this->value,
-            relationTitle: $this->displayTitle,
-            owner: $this->owner,
-        );
+        return app(RelationFieldRegistry::class)->get($this->relationType);
     }
 }

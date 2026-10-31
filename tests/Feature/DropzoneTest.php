@@ -11,7 +11,7 @@ it('renders the dropzone with computed accept and max size', function (): void {
     Livewire::test('noerd::dropzone', ['rules' => ['mimes:pdf,jpg', 'max:2048']])
         ->assertStatus(200)
         ->assertSeeHtml('accept=".pdf,.jpg"')
-        ->assertSee('2.00 MB');
+        ->assertSee('2 MB');
 });
 
 it('renders an uploaded file with a keyed row and an accessible remove button', function (): void {
@@ -21,7 +21,7 @@ it('renders an uploaded file with a keyed row and an accessible remove button', 
         ])
         ->assertStatus(200)
         ->assertSee('invoice.pdf')
-        ->assertSee('2.00 KB')
+        ->assertSee('2 KB')
         ->assertSeeHtml('aria-label="Remove file"')
         ->assertSeeHtml('wire:key="dropzone-file-0-invoice.pdf"');
 });

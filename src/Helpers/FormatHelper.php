@@ -146,6 +146,62 @@ final class FormatHelper
     }
 
     /**
+     * A date written out with its month name (`3. September 2026`,
+     * `September 3, 2026`) — headings, calendars, confirmation texts.
+     */
+    public static function longDate(mixed $value, ?string $locale = null): string
+    {
+        $carbon = self::carbon($value);
+
+        return $carbon === null ? '' : $carbon->locale($locale ?? self::locale())->isoFormat('LL');
+    }
+
+    /**
+     * The weekday name: `long` (Mittwoch / Wednesday), `short` (Mi. / Wed) or
+     * `min` (Mi / We — calendar column heads).
+     */
+    public static function weekday(mixed $value, string $width = 'long', ?string $locale = null): string
+    {
+        $carbon = self::carbon($value);
+        if ($carbon === null) {
+            return '';
+        }
+
+        $format = match ($width) {
+            'short' => 'ddd',
+            'min' => 'dd',
+            default => 'dddd',
+        };
+
+        return $carbon->locale($locale ?? self::locale())->isoFormat($format);
+    }
+
+    /**
+     * The month name (`September`), with the year when asked (`September 2026`).
+     */
+    public static function monthName(mixed $value, bool $withYear = false, ?string $locale = null): string
+    {
+        $carbon = self::carbon($value);
+        if ($carbon === null) {
+            return '';
+        }
+
+        return $carbon->locale($locale ?? self::locale())->isoFormat($withYear ? 'MMMM YYYY' : 'MMMM');
+    }
+
+    /**
+     * A file size with its unit (`1,5 MB`, `1.5 MB`) — trailing zeros dropped up
+     * to `$maxDecimals` fraction digits, the number written in the locale.
+     */
+    public static function fileSize(int|float $bytes, ?int $maxDecimals = 2, ?string $locale = null): string
+    {
+        return (string) Number::withLocale(
+            $locale ?? self::locale(),
+            static fn(): string => (string) Number::fileSize($bytes, maxPrecision: $maxDecimals),
+        );
+    }
+
+    /**
      * A date on a document (PDF, receipt, customer e-mail): tenant locale.
      */
     public static function documentDate(mixed $value, ?int $tenantId = null): string

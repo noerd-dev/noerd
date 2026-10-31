@@ -52,7 +52,7 @@
 
                 $showTab = \Noerd\Support\TabVisibility::renders($tab, $modelId);
                 // Reactive client-side visibility for the panel — mirrors field-level showIf.
-                $tabShowIf = \Noerd\Support\TabVisibility::showIfExpression($tab);
+                $tabShowIf = \Noerd\Support\FieldVisibility::showExpression($tab);
             @endphp
 
             @if ($showTab)

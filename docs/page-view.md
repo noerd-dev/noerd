@@ -80,7 +80,7 @@ identical arguments. Nothing renders until the record is saved (`$modelId` is se
 | `component` | The list Livewire component embedded in the card (e.g. `inventory::stock-movements-list`) — also the "Show more" fallback when `route` is not registered |
 | `route` | (optional) Named list route the "Show more" link opens as a modal (URL not rewritten) |
 | `columns` | Column `field` names of the list YAML shown in the card (the list's `minimalColumns`) |
-| `arguments` | Arguments passed to the list — for the card and the "Show more" modal alike; the `$modelId` token resolves to the current record id, static values pass through unchanged |
+| `arguments` | Arguments passed to the list — for the card and the "Show more" modal alike; the `$modelId` token resolves to the current record id, `$property` to a public property of the page, static values pass through unchanged |
 
 ### Quick-Create Lifecycle
 
@@ -173,7 +173,7 @@ closes (`#[On('closeTopModal')]`).
 | `relation` | Eloquent relationship method on the model used to count records (e.g. `items`). An unknown method yields a count of `0` instead of throwing |
 | `route` | Named route of the list, opened as a modal. The browser URL is deliberately NOT rewritten — the tile opens the list NARROWED by the current record, which a plain list route cannot express |
 | `component` | List component opened as a modal on click (e.g. `inventory::items-list`) — also the fallback when `route` is not registered |
-| `arguments` | Arguments passed to the modal; the `$modelId` token resolves to the current record id, static values pass through unchanged |
+| `arguments` | Arguments passed to the modal; the `$modelId` token resolves to the current record id, `$property` to a public property of the page, static values pass through unchanged |
 
 An optional module can contribute tiles through the `RelationBoxRegistry` — e.g. an invoicing module
 appends an Invoices tile to the customer page without the customer module knowing about it.

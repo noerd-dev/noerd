@@ -134,23 +134,10 @@ new class extends Component {
             if (str_starts_with($rule, 'max:')) {
                 $kb = (int) str_replace('max:', '', $rule);
 
-                return $this->formatBytes($kb * 1024);
+                return \Noerd\Helpers\FormatHelper::fileSize($kb * 1024);
             }
         }
         return __('unlimited');
-    }
-
-    private function formatBytes(int|float $bytes): string
-    {
-        if ($bytes >= 1073741824) {
-            return number_format($bytes / 1073741824, 2) . ' GB';
-        } elseif ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 2) . ' MB';
-        } elseif ($bytes >= 1024) {
-            return number_format($bytes / 1024, 2) . ' KB';
-        } else {
-            return $bytes . ' Bytes';
-        }
     }
 
     protected function getFileDisplayName(array $file): string
@@ -277,7 +264,7 @@ new class extends Component {
                                     {{ $this->getFileDisplayName($file) }}
                                 </p>
                                 <p class="text-xs text-gray-500">
-                                    {{ $this->formatBytes($this->getFileSize($file)) }}
+                                    {{ \Noerd\Helpers\FormatHelper::fileSize($this->getFileSize($file)) }}
                                 </p>
                             </div>
                         </div>

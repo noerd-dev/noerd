@@ -8,7 +8,6 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
-use Noerd\Facades\Noerd;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\RelationFieldDefinition;
 
@@ -50,19 +49,11 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
         string $helpText = '',
         ?string $owner = null,
     ): void {
-        $this->owner = $owner;
-        $this->fieldName = $fieldName;
+        $this->mountBase($fieldName, $label, $value, $required, $readonly, $modelId, $number, $theme, $helpText, $owner);
+
         $this->typeField = $typeField;
-        $this->label = $label;
-        $this->value = $value;
         $this->currentType = $currentType;
         $this->allowedTypes = $allowedTypes;
-        $this->required = $required;
-        $this->readonly = $readonly;
-        $this->helpText = $helpText;
-        $this->modelId = $modelId;
-        $this->number = $number;
-        $this->theme = $theme;
 
         $this->selectedRelationType = $this->resolveRelationTypeFromModelType($currentType) ?? '';
         $this->resolveDisplayTitle();
@@ -71,12 +62,7 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
     #[On('noerdRelationSelected')]
     public function relationSelected(mixed $value, ?string $context = null): void
     {
-        // Hidden affordances are no guard — a readonly field never mutates.
-        if ($this->readonly) {
-            return;
-        }
-
-        if (! $this->acceptsSelectionContext($context)) {
+        if (! $this->acceptsSelection($context)) {
             return;
         }
 
@@ -89,19 +75,8 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
         $this->currentType = $definition->modelClass;
         $this->resolveDisplayTitle();
 
-        $this->dispatch(
-            'setFieldValue',
-            field: $this->typeField,
-            value: $this->currentType,
-            owner: $this->owner,
-        );
-        $this->dispatch(
-            'setFieldValue',
-            field: $this->fieldName,
-            value: $this->value,
-            relationTitle: $this->displayTitle,
-            owner: $this->owner,
-        );
+        $this->syncField($this->typeField, $this->currentType);
+        $this->syncField($this->fieldName, $this->value, $this->displayTitle);
     }
 
     public function updatedSelectedRelationType(string $value): void
@@ -126,8 +101,8 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
         $this->currentType = null;
         $this->displayTitle = '';
 
-        $this->dispatch('setFieldValue', field: $this->typeField, value: null, owner: $this->owner);
-        $this->dispatch('setFieldValue', field: $this->fieldName, value: null, owner: $this->owner);
+        $this->syncField($this->typeField, null);
+        $this->syncField($this->fieldName, null);
     }
 
     public function clear(): void
@@ -136,23 +111,11 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
             return;
         }
 
-        $this->value = null;
         $this->currentType = null;
         $this->selectedRelationType = '';
-        $this->displayTitle = '';
+        $this->syncField($this->typeField, null);
 
-        $this->dispatch('setFieldValue', field: $this->typeField, value: null, owner: $this->owner);
-        $this->dispatch('setFieldValue', field: $this->fieldName, value: null, owner: $this->owner);
-    }
-
-    public function openDetail(): void
-    {
-        $definition = $this->activeDefinition();
-        if (! $definition || ! $this->value) {
-            return;
-        }
-
-        Noerd::modalFor($definition->detailRoute, $definition->getDetailComponent(), ['modelId' => $this->value]);
+        parent::clear();
     }
 
     /**
@@ -182,7 +145,7 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
         return $this->activeDefinition()?->listComponent;
     }
 
-    private function activeDefinition(): ?RelationFieldDefinition
+    protected function activeDefinition(): ?RelationFieldDefinition
     {
         // $selectedRelationType is client-writable by design (the user picks the
         // type), so it must be re-checked against the field's declared
@@ -214,18 +177,6 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
         }
 
         return null;
-    }
-
-    private function resolveDisplayTitle(): void
-    {
-        $definition = $this->activeDefinition();
-        if (! $definition || $this->value === null || $this->value === '') {
-            $this->displayTitle = '';
-
-            return;
-        }
-
-        $this->displayTitle = $definition->resolveTitleForValue($this->value);
     }
 
     private function labelForRelationType(string $type): string
