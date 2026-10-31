@@ -146,23 +146,7 @@ final class SetupCollectionHelper
             return null;
         }
 
-        $fields = $this->repository->resolveFields($collection);
-
-        if ($fields === null) {
-            return null;
-        }
-
-        // Remove any page_id references (not used in Setup collections)
-        if (isset($fields['fields'])) {
-            foreach ($fields['fields'] as $key => $item) {
-                if (isset($item['name']) && $item['name'] === 'collection.page_id') {
-                    unset($fields['fields'][$key]);
-                }
-            }
-            $fields['fields'] = array_values($fields['fields']);
-        }
-
-        return $fields;
+        return $this->repository->resolveFields($collection);
     }
 
     /**
@@ -185,9 +169,7 @@ final class SetupCollectionHelper
             $tableColumn['field'] = str_replace('detailData.', '', $collectionField['name']);
             $tableColumn['translatable'] = str_starts_with($collectionField['type'] ?? '', 'translatable');
 
-            if ($tableColumn['field'] !== 'page_id') {
-                $table[] = $tableColumn;
-            }
+            $table[] = $tableColumn;
         }
 
         return $table;

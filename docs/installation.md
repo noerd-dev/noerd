@@ -25,7 +25,7 @@ The install command can be run in a fresh or an existing Laravel application. It
    `php artisan migrate` yourself later.
 2. **Create a default tenant** — your first organization or environment. Skipped when a tenant exists.
 3. **Create an admin user** — the first user of the installation, a super admin. When users already
-   exist the step is skipped; promote one with `php artisan noerd:promote-admin {user_id}`.
+   exist the step is skipped; promote one with `php artisan noerd:promote-admin {user}` (an ID or email).
 4. **Run `npm run build`** — compiles the frontend assets (see [Frontend](#frontend)).
 5. **Install the Demo App (recommended)** — a working Demo Customers app with model, migration, YAML
    configuration and navigation (see [Example Application](example-application.md)).

@@ -62,7 +62,7 @@ describe('TenantSessionHelper', function (): void {
         TenantHelper::clear();
 
         expect(TenantHelper::hasTenant())->toBeFalse()
-            ->and(TenantHelper::hasApp())->toBeFalse()
+            ->and(TenantHelper::getSelectedApp())->toBeNull()
             ->and(TenantHelper::getSelectedTenant())->toBeNull()
             ->and(TenantHelper::getSelectedTenantId())->toBeNull();
 
@@ -74,8 +74,7 @@ describe('TenantSessionHelper', function (): void {
             ->and(session('noerd.selected_tenant_id'))->toBe($tenant->id)
             ->and(TenantHelper::getSelectedApp())->toBe('SETUP')
             ->and(session('noerd.selected_app'))->toBe('SETUP')
-            ->and(TenantHelper::hasTenant())->toBeTrue()
-            ->and(TenantHelper::hasApp())->toBeTrue();
+            ->and(TenantHelper::hasTenant())->toBeTrue();
 
         TenantHelper::clear();
 

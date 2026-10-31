@@ -47,7 +47,7 @@ new class extends Component {
 
 <x-noerd::page>
     <x-slot:header>
-        <x-noerd::modal-title>{{ __('Select Icon') }}</x-noerd::modal-title>
+        <x-noerd::modal-title>{{ __('Select icon') }}</x-noerd::modal-title>
     </x-slot:header>
 
     <div class="py-6">

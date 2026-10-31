@@ -130,12 +130,4 @@ final class TenantHelper
     {
         return self::getSelectedTenantId() !== null;
     }
-
-    /**
-     * Check if an app is selected.
-     */
-    public static function hasApp(): bool
-    {
-        return self::getSelectedApp() !== null;
-    }
 }

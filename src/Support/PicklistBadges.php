@@ -17,16 +17,6 @@ use Noerd\Helpers\TenantHelper;
 final class PicklistBadges
 {
     /**
-     * The detail component paired with a list by convention (`{x}-list` →
-     * `{x}-detail`, namespace and dotted subfolder kept), or null when the
-     * component is not a list.
-     */
-    public static function pairedDetail(string $listComponent): ?string
-    {
-        return ComponentNaming::pairedDetail($listComponent);
-    }
-
-    /**
      * Map of `field => options` for every `type: select` field with inline
      * options in a detail YAML, plus every value-storing collection select
      * (`valueField`), whose labels come from the tenant's collection entries.

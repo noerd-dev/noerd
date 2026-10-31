@@ -116,9 +116,8 @@ $this->ensureQuickMenuButton([
 ]);
 ```
 
-`ensureQuickMenuButton(array $button, array $legacyComponents = [])` matches on `component`;
-entries still pointing at one of the `$legacyComponents` names (a renamed component) are rewritten
-to the new name first.
+`ensureQuickMenuButton(array $button)` matches on `component`: an existing entry is replaced
+(its `apps:` list unioned with the new one), a missing one is prepended.
 
 See [Creating Modules](creating-modules.md) for the install-command context.
 

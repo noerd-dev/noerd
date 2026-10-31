@@ -20,7 +20,7 @@ it('successfully makes a user admin', function (): void {
     expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     // Run the command
-    $this->artisan('noerd:promote-admin', ['user_id' => $user->id])->assertExitCode(0);
+    $this->artisan('noerd:promote-admin', ['user' => (string) $user->id])->assertExitCode(0);
 
     // Verify user is now admin
     $user->refresh();
@@ -31,6 +31,14 @@ it('successfully makes a user admin', function (): void {
         ->where('tenant_id', $tenant->id)
         ->first();
     expect($userTenant->pivot->profile_key)->toBe(Profile::Admin->value);
+});
+
+it('promotes a user addressed by email', function (): void {
+    $user = NoerdUser::factory()->withExampleTenant()->create(['email' => 'promote-me@example.com']);
+
+    $this->artisan('noerd:promote-admin', ['user' => 'promote-me@example.com'])->assertExitCode(0);
+
+    expect($user->fresh()->isAdminOfAnyTenant())->toBeTrue();
 });
 
 it('handles user with multiple tenants', function (): void {
@@ -46,13 +54,27 @@ it('handles user with multiple tenants', function (): void {
     expect($user->isAdminOfAnyTenant())->toBeFalse();
 
     // Run the command
-    $this->artisan('noerd:promote-admin', ['user_id' => $user->id])->assertExitCode(0);
+    $this->artisan('noerd:promote-admin', ['user' => (string) $user->id])->assertExitCode(0);
 
     // Verify user is now admin on both tenants
     $user->refresh();
     expect($user->isAdminOfAnyTenant())->toBeTrue()
         ->and($user->isAdmin($tenant1->id))->toBeTrue()
         ->and($user->isAdmin($tenant2->id))->toBeTrue();
+});
+
+it('selects one of the user\'s own tenants, never a tenant they do not belong to', function (): void {
+    $foreign = Tenant::factory()->create(['name' => 'Foreign']);
+    $own = Tenant::factory()->create(['name' => 'Own']);
+    $user = NoerdUser::factory()->create(['selected_tenant_id' => null]);
+    $user->tenants()->attach($own->id, ['profile_key' => Profile::User->value]);
+
+    $this->artisan('noerd:promote-admin', ['user' => (string) $user->id])->assertExitCode(0);
+
+    $user->refresh();
+    expect($user->selected_tenant_id)->toBe($own->id)
+        ->and($user->isAdmin($own->id))->toBeTrue()
+        ->and($user->isAdmin($foreign->id))->toBeFalse();
 });
 
 it('recognizes user who is already admin but ensures tenant assignment', function (): void {
@@ -62,7 +84,7 @@ it('recognizes user who is already admin but ensures tenant assignment', functio
     expect($user->isAdminOfAnyTenant())->toBeTrue();
 
     // Run the command - should warn but continue to ensure tenant assignment
-    $this->artisan('noerd:promote-admin', ['user_id' => $user->id])
+    $this->artisan('noerd:promote-admin', ['user' => (string) $user->id])
         ->expectsOutputToContain('already an admin')
         ->assertExitCode(0);
 
@@ -71,14 +93,14 @@ it('recognizes user who is already admin but ensures tenant assignment', functio
     expect($user->selected_tenant_id)->not->toBeNull();
 });
 
-it('rejects an unusable user id', function (string|int $userId, string $error): void {
+it('rejects an unknown user', function (string $identifier): void {
     // The error message is the behaviour: it tells the operator what to fix.
-    $this->artisan('noerd:promote-admin', ['user_id' => $userId])
-        ->expectsOutput($error)
+    $this->artisan('noerd:promote-admin', ['user' => $identifier])
+        ->expectsOutput("User '{$identifier}' not found.")
         ->assertExitCode(1);
 })->with([
-    'not a number' => ['invalid', 'User ID must be a number.'],
-    'no such user' => [99999, 'User with ID 99999 not found.'],
+    'unknown email' => ['nobody@example.com'],
+    'unknown id' => ['99999'],
 ]);
 
 it('handles user with partial admin access correctly', function (): void {
@@ -95,7 +117,7 @@ it('handles user with partial admin access correctly', function (): void {
     expect($user->isAdminOfAnyTenant())->toBeTrue();
 
     // Command should continue and grant admin on the second tenant too
-    $this->artisan('noerd:promote-admin', ['user_id' => $user->id])->assertExitCode(0);
+    $this->artisan('noerd:promote-admin', ['user' => (string) $user->id])->assertExitCode(0);
 
     // Verify user now has admin on both tenants
     $user->refresh();

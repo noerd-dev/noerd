@@ -37,16 +37,9 @@ The widget row is hidden entirely when the YAML is missing, empty, or no widget 
 
 `noerd::layout.dashboard-widgets` (`resources/views/components/layout/dashboard-widgets.blade.php`)
 reads the YAML in `mount()`, filters by `app`/`apps` and `policy` and renders each entry via
-`livewire:dynamic-component` inside a sized wrapper. It is embedded in `noerd-apps.blade.php`
-directly below the tile grid.
-
-**Projects with a published dashboard** (`php artisan noerd:publish-home`) render their own copy of
-`noerd-apps.blade.php` and will not see widgets until they either republish with
-`noerd:publish-home --force` or add the one-liner themselves:
-
-```blade
-<livewire:noerd::layout.dashboard-widgets />
-```
+`livewire:dynamic-component` inside a sized wrapper. It is embedded in the shipped `noerd::noerd-apps`
+component directly below the tile grid — widgets are how a project puts its own content on the
+dashboard, the component itself is never copied into the project.
 
 ## Writing a widget
 
@@ -119,9 +112,8 @@ $this->ensureDashboardWidget([
 ]);
 ```
 
-`ensureDashboardWidget(array $widget, array $legacyComponents = [])` (in
-`Noerd\Commands\Concerns\WritesHostAppConfigs`, available to every module installer) creates the YAML when missing, rewrites entries still pointing
-at one of the `$legacyComponents` names (a renamed widget component), and **appends** the widget if
+`ensureDashboardWidget(array $widget)` (in `Noerd\Commands\Concerns\WritesHostAppConfigs`,
+available to every module installer) creates the YAML when missing and **appends** the widget if
 absent. It matches on `component` only, so an installation may re-tune `width`/`height` without a
 re-run duplicating or resetting the entry. When the installer declares `app`/`apps`, an existing
 entry's access keys (`policy`, `app`, `apps`) are replaced by them.

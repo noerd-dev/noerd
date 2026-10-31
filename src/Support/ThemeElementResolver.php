@@ -13,7 +13,10 @@ use Noerd\Services\ThemeRegistry;
  * theme. Element templates live in theme folders addressed through the
  * `themes::` view namespace (project roots first, noerd built-ins last);
  * a theme that does not ship an element falls back to the default theme's
- * template, and finally to the renderer registered on the field type.
+ * template, and finally to the renderer registered on the field type. A
+ * livewire-kind field type is not themed here: its component is mounted as
+ * registered and themes its own markup (the relation fields include the
+ * theme templates `relation-field` / `polymorphic-relation-field`).
  */
 final class ThemeElementResolver
 {
@@ -27,34 +30,6 @@ final class ThemeElementResolver
         $element = Str::afterLast($definition->target, '.');
 
         return self::resolveElement($element, $theme) ?? $definition->target;
-    }
-
-    /**
-     * Component name for a livewire-kind field type: a namespace-aware
-     * `{name}-{theme}` sibling wins when it exists. Themes cannot hold
-     * livewire components, so third-party livewire field types theme
-     * through this suffix convention.
-     */
-    public static function resolveLivewire(FieldTypeDefinition $definition, string $theme): string
-    {
-        if ($theme === 'default') {
-            return $definition->target;
-        }
-
-        $namespace = 'noerd';
-        $componentName = $definition->target;
-        if (str_contains($definition->target, '::')) {
-            [$namespace, $componentName] = explode('::', $definition->target, 2);
-        }
-
-        $variantName = $componentName . '-' . $theme;
-        if (View::exists($namespace . '::components.' . $variantName)) {
-            return str_contains($definition->target, '::')
-                ? $namespace . '::' . $variantName
-                : $variantName;
-        }
-
-        return $definition->target;
     }
 
     /**

@@ -44,8 +44,7 @@
         "psr-4": {
             "Noerd\\": "src/",
             "Noerd\\Tests\\": "tests/",
-            "Noerd\\Database\\Factories\\": "database/factories/",
-            "Noerd\\Database\\Seeders\\": "database/seeders/"
+            "Noerd\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {

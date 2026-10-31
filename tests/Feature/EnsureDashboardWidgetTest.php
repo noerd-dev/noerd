@@ -55,11 +55,11 @@ function makeDashboardWidgetCommand(): Command
     return $command;
 }
 
-function invokeEnsureDashboardWidget(array $widget, array $legacyComponents = []): void
+function invokeEnsureDashboardWidget(array $widget): void
 {
     $command = makeDashboardWidgetCommand();
     $method = new ReflectionMethod($command, 'ensureDashboardWidget');
-    $method->invoke($command, $widget, $legacyComponents);
+    $method->invoke($command, $widget);
 }
 
 beforeEach(function (): void {
@@ -137,26 +137,4 @@ it('does not duplicate or overwrite an existing widget with the same component',
             'width' => 3,
             'height' => 1,
         ]);
-});
-
-it('rewrites legacy component names to the new component', function (): void {
-    $path = base_path('app-configs/dashboard-widgets.yml');
-    File::ensureDirectoryExists(dirname($path));
-    File::put($path, Yaml::dump([
-        'widgets' => [
-            ['policy' => 'canWidgetTest', 'component' => 'noerd::legacy-widget', 'width' => 2, 'height' => 2],
-        ],
-    ], 10, 2));
-
-    invokeEnsureDashboardWidget([
-        'policy' => 'canWidgetTest',
-        'component' => 'noerd-test::dashboard-widget-test',
-        'width' => 2,
-        'height' => 2,
-    ], ['noerd::legacy-widget']);
-
-    $config = Yaml::parseFile($path);
-
-    expect($config['widgets'])->toHaveCount(1)
-        ->and($config['widgets'][0]['component'])->toBe('noerd-test::dashboard-widget-test');
 });

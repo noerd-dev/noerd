@@ -125,7 +125,7 @@ class MakeAdminUserCommand extends Command
         }
 
         // Make the user admin using existing command
-        $this->call('noerd:promote-admin', ['user_id' => $user->id]);
+        $this->call('noerd:promote-admin', ['user' => (string) $user->id]);
 
         return self::SUCCESS;
     }

@@ -7,11 +7,12 @@ namespace Noerd\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Noerd\Support\ModulesPath;
 
 class MakeThemeCommand extends Command
 {
     protected $signature = 'noerd:make-theme {name : The theme name (folder name, kebab-case)}
-        {--module= : Create the theme inside app-modules/{module} instead of the project}';
+        {--module= : Create the theme inside that local module instead of the project}';
 
     protected $description = 'Scaffold a new form theme by copying the default theme folder';
 
@@ -29,10 +30,10 @@ class MakeThemeCommand extends Command
 
         $module = $this->option('module');
         $target = $module
-            ? base_path("app-modules/{$module}/resources/views/themes/{$name}")
+            ? ModulesPath::absolute("{$module}/resources/views/themes/{$name}")
             : resource_path("views/themes/{$name}");
 
-        if ($module && ! File::isDirectory(base_path("app-modules/{$module}"))) {
+        if ($module && ! File::isDirectory(ModulesPath::absolute($module))) {
             $this->error("Module [{$module}] does not exist.");
 
             return self::FAILURE;

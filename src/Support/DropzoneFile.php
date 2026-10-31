@@ -77,16 +77,4 @@ final class DropzoneFile
 
         return $resolved;
     }
-
-    /**
-     * A read stream for the upload's bytes. The caller closes it.
-     *
-     * @return resource|null
-     */
-    public static function stream(UploadedFile $upload)
-    {
-        $stream = fopen($upload->getRealPath(), 'r');
-
-        return is_resource($stream) ? $stream : null;
-    }
 }

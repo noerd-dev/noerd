@@ -24,14 +24,6 @@ final class FieldContext
         self::$current = $field;
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    public static function current(): ?array
-    {
-        return self::$current;
-    }
-
     public static function helpText(): ?string
     {
         $helpText = self::$current['helpText'] ?? null;

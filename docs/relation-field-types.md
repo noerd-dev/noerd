@@ -101,8 +101,9 @@ new class extends \Noerd\Livewire\RelationFieldComponent {}; ?>
 
 For markup that shows more than the title, the base class exposes the related Eloquent record as
 the computed property `$this->relatedModel` (resolved through the definition's `modelClass`; `null`
-while the field is empty). Non-default themes resolve a `{component}-{theme}` sibling when it exists and fall back to
-the component itself (see [Themes](themes.md)).
+while the field is empty). The component is mounted as registered under every theme — include the
+theme templates the way the shipped renderer does to follow the active theme (see
+[Themes](themes.md)).
 
 ## Polymorphic Relation Fields
 

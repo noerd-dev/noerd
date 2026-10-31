@@ -81,15 +81,15 @@ it('scaffolds usable artefacts', function (array $case): void {
             ->not->toBeEmpty();
     }
 })->with([
-    'noerd:make-list' => [[
-        'command' => 'noerd:make-list',
-        'parameters' => ['model' => Tenant::class, '--app' => 'zzapp', '--no-interaction' => true],
+    'noerd:make-resource --only=list' => [[
+        'command' => 'noerd:make-resource',
+        'parameters' => ['model' => Tenant::class, '--app' => 'zzapp', '--only' => 'list', '--no-interaction' => true],
         'blade' => ['resources/views/components/tenants-list.blade.php'],
         'yaml' => ['app-configs/zzapp/lists/tenants-list.yml'],
     ]],
-    'noerd:make-detail' => [[
-        'command' => 'noerd:make-detail',
-        'parameters' => ['model' => Tenant::class, '--app' => 'zzapp', '--no-interaction' => true],
+    'noerd:make-resource --only=detail' => [[
+        'command' => 'noerd:make-resource',
+        'parameters' => ['model' => Tenant::class, '--app' => 'zzapp', '--only' => 'detail', '--no-interaction' => true],
         'blade' => ['resources/views/components/tenant-detail.blade.php'],
         'yaml' => ['app-configs/zzapp/details/tenant-detail.yml'],
     ]],
@@ -136,6 +136,43 @@ it('scaffolds usable artefacts', function (array $case): void {
         'yaml' => ['app-configs/zzapp/collections/zz-gadgets.yml'],
     ]],
 ]);
+
+/*
+ | --only generates one half of a resource. The two halves may be generated in
+ | either order: a list generated AFTER its detail is wired to the existing detail
+ | route (row click, "New" action); a list generated alone gets the component
+ | fallback and never asks for a detail route.
+ */
+describe('--only', function (): void {
+    it('rejects anything but list or detail', function (): void {
+        $this->artisan('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzapp', '--only' => 'page', '--no-interaction' => true])
+            ->expectsOutput("The --only option accepts 'list' or 'detail', got 'page'.")
+            ->assertExitCode(1);
+
+        expect(File::glob($this->hostPath . '/resources/views/components/*'))->toBe([]);
+    });
+
+    it('generates the list alone without a detail route', function (): void {
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzapp', '--only' => 'list', '--no-interaction' => true]))->toBe(0);
+
+        expect(File::exists($this->hostPath . '/resources/views/components/tenant-detail.blade.php'))->toBeFalse()
+            ->and(File::get($this->hostPath . '/resources/views/components/tenants-list.blade.php'))->not->toContain('$detailRoute')
+            ->and(File::get($this->hostPath . '/app-configs/zzapp/lists/tenants-list.yml'))->toContain('action: listAction')
+            ->and(File::get($this->hostPath . '/routes/web.php'))->not->toContain('zzapp.tenant.detail');
+    });
+
+    it('wires a list generated after its detail to the existing detail route', function (): void {
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzapp', '--only' => 'detail', '--no-interaction' => true]))->toBe(0);
+        expect(File::exists($this->hostPath . '/resources/views/components/tenants-list.blade.php'))->toBeFalse()
+            ->and(File::get($this->hostPath . '/routes/web.php'))->toContain("->name('zzapp.tenant.detail')");
+
+        expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzapp', '--only' => 'list', '--no-interaction' => true]))->toBe(0);
+
+        expect(File::get($this->hostPath . '/resources/views/components/tenants-list.blade.php'))
+            ->toContain("public ?string \$detailRoute = 'zzapp.tenant.detail';")
+            ->and(File::get($this->hostPath . '/app-configs/zzapp/lists/tenants-list.yml'))->toContain('route: zzapp.tenant.detail');
+    });
+});
 
 /*
  | An app scaffolded as a module owns its files: the generators write the Blade

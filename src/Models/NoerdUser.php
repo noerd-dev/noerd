@@ -280,7 +280,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      * public read/write API without a second, drifting copy of the value.
      */
     /**
-     * @return Attribute<int|null, array{}>
+     * @return Attribute<int|null, int|null>
      */
     protected function selectedTenantId(): Attribute
     {

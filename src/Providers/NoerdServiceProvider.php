@@ -28,8 +28,6 @@ use Noerd\Commands\MakeAdminUserCommand;
 use Noerd\Commands\MakeAppCommand;
 use Noerd\Commands\MakeCollectionCommand;
 use Noerd\Commands\MakeDashboardCommand;
-use Noerd\Commands\MakeDetailCommand;
-use Noerd\Commands\MakeListCommand;
 use Noerd\Commands\MakeModuleCommand;
 use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
@@ -41,7 +39,6 @@ use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUpdateAllCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PromoteAdminCommand;
-use Noerd\Commands\PublishHomeCommand;
 use Noerd\Commands\SuperAdminCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
@@ -373,8 +370,6 @@ class NoerdServiceProvider extends ServiceProvider
                 AssignAppsToTenantCommand::class,
                 MakeModuleCommand::class,
                 MakeResourceCommand::class,
-                MakeListCommand::class,
-                MakeDetailCommand::class,
                 MakePageCommand::class,
                 MakeDashboardCommand::class,
                 MakeCollectionCommand::class,
@@ -382,7 +377,6 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeAdminUserCommand::class,
                 MakeTenantCommand::class,
                 NoerdDemoCommand::class,
-                PublishHomeCommand::class,
                 ImportSetupCollectionDefinitionsCommand::class,
                 ExportSetupCollectionDefinitionsCommand::class,
             ]);
@@ -392,7 +386,11 @@ class NoerdServiceProvider extends ServiceProvider
     /**
      * Register the shipped detail field types. Most are a plain Blade partial
      * receiving the field array — those come from ONE map; only the three types
-     * needing extra props keep a resolver of their own.
+     * needing extra props keep a resolver of their own. A type whose template
+     * exists in the default theme only is registered on the theme template
+     * itself (ThemeElementResolver walks the theme chain from the basename);
+     * the `noerd::components.forms.*` partials remain for the elements a view
+     * also includes directly.
      */
     private function bootFieldTypes(): void
     {
@@ -402,14 +400,14 @@ class NoerdServiceProvider extends ServiceProvider
         $viewOnlyTypes = [
             'picklist' => 'noerd::components.forms.picklist',
             'setupCollectionSelect' => 'noerd::components.forms.setup-collection-select',
-            'belongsToMany' => 'noerd::components.forms.belongs-to-many',
+            'belongsToMany' => 'themes::default.belongs-to-many',
             'checkbox' => 'noerd::components.forms.checkbox',
-            'richText' => 'noerd::components.forms.rich-text',
-            'translatableRichText' => 'noerd::components.forms.translatable-rich-text',
+            'richText' => 'themes::default.rich-text',
+            'translatableRichText' => 'themes::default.translatable-rich-text',
             'translatableText' => 'noerd::components.forms.translatable-text',
             'translatableTextarea' => 'noerd::components.forms.translatable-textarea',
-            'button' => 'noerd::components.forms.button',
-            'colorHex' => 'noerd::components.forms.color-hex',
+            'button' => 'themes::default.button',
+            'colorHex' => 'themes::default.color-hex',
             'currency' => 'noerd::components.forms.input-currency',
             'textarea' => 'noerd::components.forms.input-textarea',
             'file' => 'noerd::components.forms.file',
@@ -447,7 +445,7 @@ class NoerdServiceProvider extends ServiceProvider
         ));
 
         $fieldTypeRegistry->register('image', FieldTypeDefinition::include(
-            'noerd::components.forms.image',
+            'themes::default.image',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
                 'field' => $field,
                 'detailData' => $detailData,
@@ -455,7 +453,7 @@ class NoerdServiceProvider extends ServiceProvider
         ));
 
         $fieldTypeRegistry->register('icon', FieldTypeDefinition::include(
-            'noerd::components.forms.icon',
+            'themes::default.icon',
             resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => [
                 'field' => $field,
                 'iconValue' => data_get($component?->detailData ?? $detailData ?? [], Str::after($field['name'] ?? '', 'detailData.')),

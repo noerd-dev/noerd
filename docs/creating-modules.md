@@ -93,8 +93,8 @@ php artisan migrate
 php artisan noerd:make-resource Item --app=inventory
 ```
 
-When the selected app is a module (`app-modules/{app}/composer.json` exists), `noerd:make-resource`,
-`noerd:make-list`, `noerd:make-detail`, `noerd:make-page` and `noerd:make-dashboard` write into the
+When the selected app is a module (`app-modules/{app}/composer.json` exists), `noerd:make-resource`
+(with or without `--only=list|detail`), `noerd:make-page` and `noerd:make-dashboard` write into the
 module: Blade components into `resources/views/components/` (referenced with the `{module}::`
 Livewire namespace), routes into `routes/{module}-routes.php`, and every YAML and navigation entry
 into **both** copies — the module template under `app-modules/{module}/app-configs/{module}/` and
