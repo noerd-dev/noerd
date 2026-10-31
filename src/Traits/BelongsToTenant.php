@@ -26,11 +26,11 @@ trait BelongsToTenant
             // stamps — or skips stamping — the tenant id.
             $tenantId = TenantHelper::currentTenantId();
 
-            if ($tenantId && ! $model->tenant_id) {
-                $model->tenant_id = $tenantId;
+            if ($tenantId && ! $model->getAttribute('tenant_id')) {
+                $model->setAttribute('tenant_id', $tenantId);
             }
 
-            if (! $model->tenant_id && ! TenantContext::isSystem()) {
+            if (! $model->getAttribute('tenant_id') && ! TenantContext::isSystem()) {
                 MissingTenantContext::applyToCreate($model::class);
             }
         });
