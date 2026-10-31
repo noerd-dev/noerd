@@ -284,18 +284,23 @@ class NoerdServiceProvider extends ServiceProvider
         });
         Event::listen([JobProcessed::class, JobFailed::class, JobExceptionOccurred::class], fn() => TenantContext::leaveJob());
 
-        // Create default languages and setup collections when a new tenant is created
+        // Create default languages and setup collections when a new tenant is
+        // created — in that tenant: the creator (a console command, a sign-up,
+        // another tenant's admin) is not in it, and the defaults' own model
+        // hooks query tenant-scoped relations.
         Tenant::created(function (Tenant $tenant): void {
-            SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
-            DefaultCountries::ensureForTenant($tenant->id);
+            TenantContext::run($tenant->id, function () use ($tenant): void {
+                SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
+                DefaultCountries::ensureForTenant($tenant->id);
 
-            // In database mode a tenant without definition rows has NO usable
-            // collections (empty sidebar, no layout for the country entries the
-            // line above just created), so a fresh tenant is seeded from the
-            // same YAML source the import command migrates from.
-            if (SetupCollectionDefinitionImport::isDatabaseMode()) {
-                SetupCollectionDefinitionImport::forTenant($tenant->id);
-            }
+                // In database mode a tenant without definition rows has NO usable
+                // collections (empty sidebar, no layout for the country entries the
+                // line above just created), so a fresh tenant is seeded from the
+                // same YAML source the import command migrates from.
+                if (SetupCollectionDefinitionImport::isDatabaseMode()) {
+                    SetupCollectionDefinitionImport::forTenant($tenant->id);
+                }
+            });
         });
 
         // The config search roots memoise the active/allowed app folders — a

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Noerd\Exceptions\MissingTenantContextException;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\SetupCollectionEntry;
+use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Support\TenantContext;
 use Noerd\Tests\TestCase;
@@ -150,6 +152,16 @@ describe('missing context', function (): void {
         // An explicit tenant_id is no missing context.
         $note = ZzTenantNote::query()->create(['tenant_id' => $this->tenantA->id, 'title' => 'Explicit']);
         expect($note->exists)->toBeTrue();
+    });
+
+    it('sets up a new tenant in that tenant, also in throw mode', function (): void {
+        config(['noerd.tenancy.missing_context' => 'throw']);
+
+        $tenant = Tenant::factory()->create();
+
+        expect(SetupLanguage::query()->ofTenant($tenant->id)->count())->toBeGreaterThan(0)
+            ->and(SetupCollectionEntry::query()->ofTenant($tenant->id)->count())->toBeGreaterThan(0)
+            ->and(TenantContext::current())->toBeNull();
     });
 });
 
