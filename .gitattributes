@@ -18,6 +18,9 @@
 /phpunit.xml        export-ignore
 /.phpunit.cache     export-ignore
 /pint.json          export-ignore
+/phpstan.neon.dist  export-ignore
+/phpstan-baseline.neon export-ignore
+/tools              export-ignore
 /vite.config.js     export-ignore
 /package.json       export-ignore
 /package-lock.json  export-ignore

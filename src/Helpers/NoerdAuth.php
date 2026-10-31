@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
+use Noerd\Models\NoerdUser;
 
 /**
  * Resolves noerd's dedicated auth guard, user provider and password broker.
@@ -40,6 +41,12 @@ final class NoerdAuth
         return Auth::guard(self::guardName());
     }
 
+    /**
+     * The signed-in account of the noerd guard — always a NoerdUser, since the
+     * guard's provider is the noerd_users table.
+     *
+     * @return NoerdUser|null
+     */
     public static function user(): ?Authenticatable
     {
         return self::guard()->user();

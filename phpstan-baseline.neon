@@ -1,0 +1,337 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Offset ''component'' on array\{component\: string, app\?\: string, apps\?\: array\<string\>, policy\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Commands/Concerns/WritesHostAppConfigs.php
+
+		-
+			message: '#^Method Noerd\\Commands\\MakeCollectionCommand\:\:askForField\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Commands/MakeCollectionCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Commands/PromoteAdminCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Commands/PromoteAdminCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Relations\\Pivot\:\:\$profile_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Commands/PromoteAdminCommand.php
+
+		-
+			message: '#^Property Noerd\\Models\\NoerdUser\:\:\$selected_tenant_id \(array\{\}\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Commands/PromoteAdminCommand.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Noerd\\Models\\NoerdUser and ''currentProfile'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Helpers/AccessHelper.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Noerd\\Models\\NoerdUser and ''isAdmin'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Helpers/AccessHelper.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Helpers/FormatHelper.php
+
+		-
+			message: '#^Method Noerd\\Helpers\\NoerdAuth\:\:user\(\) should return Noerd\\Models\\NoerdUser\|null but returns Illuminate\\Foundation\\Auth\\User\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Helpers/NoerdAuth.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Helpers/SetupCollectionHelper.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>detail_theme" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Helpers/ThemeHelper.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$selected_tenant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Listeners/InitializeTenantSession.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Models\\TenantApp\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Middleware/AppAccessMiddleware.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\:\:namedAny\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Middleware/AppAccessMiddleware.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$format_locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$selected_tenant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Anonymous function should return Noerd\\Models\\UserSetting but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Property Noerd\\Models\\NoerdUser\:\:\$selected_tenant_id \(array\{\}\) does not accept int\|null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>locale" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Models/NoerdUser.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tenant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/SetupCollection.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tenant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/SetupCollectionDefinition.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$collection_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/SetupCollectionEntry.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tenant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/SetupCollectionEntry.php
+
+		-
+			message: '#^Property Noerd\\Models\\SetupCollectionEntry\:\:\$data \(string\|null\) does not accept array\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Models/SetupCollectionEntry.php
+
+		-
+			message: '#^Right side of && is always false\.$#'
+			identifier: booleanAnd.rightAlwaysFalse
+			count: 1
+			path: src/Models/SetupCollectionEntry.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tenant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/SetupLanguage.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Models/SetupLanguage.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>detailData" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Providers/NoerdServiceProvider.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Models\\SetupCollectionDefinition\:\:\$filename\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Repositories/DatabaseSetupCollectionDefinitionRepository.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Models\\SetupCollectionDefinition\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Repositories/DatabaseSetupCollectionDefinitionRepository.php
+
+		-
+			message: '#^Empty array passed to foreach\.$#'
+			identifier: foreach.emptyArray
+			count: 2
+			path: src/Repositories/DatabaseSetupCollectionDefinitionRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>detailData" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Services/RelationFieldRegistry.php
+
+		-
+			message: '#^Call to function is_string\(\) with class\-string\<Illuminate\\Database\\Eloquent\\Model\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Services/RelationTitleResolver.php
+
+		-
+			message: '#^Call to function in_array\(\) with arguments ''Austria''\|''Belgium''\|''Czech Republic''\|''France''\|''Germany''\|''Italy''\|''Luxembourg''\|''Netherlands''\|''Poland''\|''Spain''\|''Switzerland''\|''United Kingdom''\|''United States'', array\{\} and true will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Support/DefaultCountries.php
+
+		-
+			message: '#^Call to function in_array\(\) with arguments ''Belgien''\|''Deutschland''\|''Frankreich''\|''Italien''\|''Luxemburg''\|''Niederlande''\|''Polen''\|''Schweiz''\|''Spanien''\|''Tschechien''\|''Vereinigte Staaten''\|''Vereinigtes…''\|''Österreich'', array\{\} and true will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Support/DefaultCountries.php
+
+		-
+			message: '#^Offset ''code'' on string\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Support/DefaultCountries.php
+
+		-
+			message: '#^Offset ''name'' on string\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Support/DefaultCountries.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and ''AT''\|''BE''\|''CH''\|''CZ''\|''DE''\|''ES''\|''FR''\|''GB''\|''IT''\|''LU''\|''NL''\|''PL''\|''US'' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/Support/DefaultCountries.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between null and ''AT''\|''BE''\|''CH''\|''CZ''\|''DE''\|''ES''\|''FR''\|''GB''\|''IT''\|''LU''\|''NL''\|''PL''\|''US'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Support/DefaultCountries.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Support/LayoutFields.php
+
+		-
+			message: '#^Instanceof between Noerd\\Support\\Positions\\PositionColumn and Noerd\\Support\\Positions\\PositionColumn will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/Support/Positions/PositionColumnResolver.php
+
+		-
+			message: '#^Access to an undefined property Livewire\\Component\:\:\$detailData\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Support/RelationFormPersistHook.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Traits/NoerdDetail.php
+
+		-
+			message: '#^Call to function method_exists\(\) with \$this\(Noerd\\Tools\\PHPStan\\ListHost\) and ''resolveShowDate'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Traits/NoerdList.php
+
+		-
+			message: '#^Call to function method_exists\(\) with \$this\(Noerd\\Tools\\PHPStan\\ListHost\) and ''with'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Traits/NoerdList.php
+
+		-
+			message: '#^Call to function is_string\(\) with class\-string\<Noerd\\Contracts\\DefinesPositionColumns\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Traits/NoerdPage.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/View/Components/AppLayout.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: tools/phpstan/TraitHosts.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\DetailHost\:\:\$detailModel\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tools/phpstan/TraitHosts.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\EmailPreviewHost\:\:\$canSendTestEmail\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tools/phpstan/TraitHosts.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\ListHost\:\:\$availableListViews\.$#'
+			identifier: property.notFound
+			count: 5
+			path: tools/phpstan/TraitHosts.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\ListHost\:\:\$listModel\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tools/phpstan/TraitHosts.php
+
+		-
+			message: '#^Access to an undefined property Noerd\\Tools\\PHPStan\\ListHost\:\:\$tableFilters\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tools/phpstan/TraitHosts.php

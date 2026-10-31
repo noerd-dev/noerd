@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+        # Gives the traits an analysed user (they live in Blade single-file components).
+        - tools/phpstan
+    databaseMigrationsPath:
+        - database/migrations
+    tmpDir: .phpstan.cache
