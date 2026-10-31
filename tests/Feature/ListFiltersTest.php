@@ -283,3 +283,31 @@ class ZzWhitelistFilterListComponent extends ZzYamlFilterListComponent
         return [...parent::getAllowedListFilterColumns(), 'name'];
     }
 }
+
+it('reduces a stored array value to its first scalar instead of failing on the cast', function (): void {
+    ZzFilterItem::create(['name' => 'Alpha', 'status' => 'open']);
+    $done = ZzFilterItem::create(['name' => 'Beta', 'status' => 'done']);
+
+    // An older multi-select left an array in the shared session bucket.
+    session(['listFilters' => ['status' => ['done', 'open'], 'zz_other_list' => ['kept']]]);
+
+    $component = Livewire::test(ZzYamlFilterListComponent::class);
+
+    expect(zzFilterRowIds($component))->toBe([$done->id])
+        ->and($component->get('listFilters.status'))->toBe('done')
+        // another list's key is not this list's business
+        ->and($component->get('listFilters.zz_other_list'))->toBe(['kept']);
+});
+
+it('skips an array value that holds nothing, also for a filter without a closure', function (): void {
+    ZzFilterItem::create(['name' => 'Ab']);
+    ZzFilterItem::create(['name' => 'Abcdef']);
+
+    session(['listFilters' => ['virtual_thing' => ['x'], 'long_name' => [null, '']]]);
+
+    $component = Livewire::test(ZzVirtualFilterListComponent::class);
+
+    expect(zzFilterRowIds($component))->toHaveCount(2)
+        ->and($component->get('listFilters.virtual_thing'))->toBe('x')
+        ->and($component->get('listFilters.long_name'))->toBe('');
+});
