@@ -100,8 +100,7 @@ new class extends Component {
 - A host without the declaration passes `model: null` — an action that depends on the model must **hide** in that case. There is deliberately no fallback to guessing from the component name.
 - From the model class an action can derive everything else:
   - the table: `(new $model())->getTable()`
-  - the list component/YAML name: `StaticConfigHelper::modelToListComponent($model)` → `Item::class` becomes `items-list`
-  - the detail component/YAML name: `StaticConfigHelper::modelToDetailComponent($model)` → `Item::class` becomes `item-detail`
+  - the detail component/YAML name: `Noerd\Support\ComponentNaming::detailForModel($model)` → `Item::class` becomes `item-detail`
 
 ## Full Example
 

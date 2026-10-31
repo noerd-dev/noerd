@@ -12,6 +12,7 @@ use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Services\PositionTableRegistry;
+use Noerd\Support\ComponentNaming;
 use Noerd\Support\DetailHeaderActions;
 use Noerd\Support\Positions\PositionColumn;
 use Noerd\Support\Positions\PositionColumnResolver;
@@ -473,7 +474,7 @@ trait NoerdPage
      */
     protected function getListComponent(): string
     {
-        return $this->deriveListComponent();
+        return ComponentNaming::pairedList($this->componentName());
     }
 
     protected function setPreselect(string $key, mixed $value): void
@@ -585,23 +586,5 @@ trait NoerdPage
         if (! empty($this->pageLayout)) {
             $this->pageLayout['quickCreate'] = $this->quickCreate;
         }
-    }
-
-    private function deriveListComponent(): string
-    {
-        $name = $this->componentName();
-
-        // If this is already a list component, return as-is
-        if (Str::endsWith($name, '-list')) {
-            return $name;
-        }
-
-        // Extract entity: 'customer-detail' → 'customer', 'account-page' → 'account'
-        $entity = Str::endsWith($name, '-page')
-            ? Str::beforeLast($name, '-page')
-            : Str::before($name, '-detail');
-
-        // Pluralize and add -list: 'customer' → 'customers-list'
-        return Str::plural($entity) . '-list';
     }
 }
