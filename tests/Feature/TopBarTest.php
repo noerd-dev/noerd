@@ -8,7 +8,7 @@ use Livewire\Livewire;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
-use Noerd\Services\TopBarRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -26,7 +26,7 @@ describe('registry rendering', function (): void {
     beforeEach(function (): void {
         // Installed modules register themselves at boot, so start from a clean registry:
         // these tests are about the core's slot, not about whoever happens to be installed.
-        app()->instance(TopBarRegistry::class, new TopBarRegistry());
+        app()->instance(ComponentSlotsRegistry::class, new ComponentSlotsRegistry());
     });
 
     it('renders a component a module registered', function (): void {
@@ -37,7 +37,7 @@ describe('registry rendering', function (): void {
             }
         });
 
-        app(TopBarRegistry::class)->register('test-top-bar-item');
+        app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::TOP_BAR, 'test-top-bar-item');
 
         Livewire::test('noerd::layout.top-bar')
             ->assertOk()
@@ -45,7 +45,7 @@ describe('registry rendering', function (): void {
     });
 
     it('renders normally when no module registered anything', function (): void {
-        expect(app(TopBarRegistry::class)->all())->toBe([]);
+        expect(app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::TOP_BAR))->toBe([]);
 
         Livewire::test('noerd::layout.top-bar')
             ->assertOk()

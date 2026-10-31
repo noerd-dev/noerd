@@ -21,7 +21,7 @@ final class FieldTypeRegistry
         return isset($this->definitions[$type]);
     }
 
-    public function resolve(string $type): ?FieldTypeDefinition
+    public function get(string $type): ?FieldTypeDefinition
     {
         return $this->definitions[$type] ?? null;
     }

@@ -219,7 +219,7 @@ final class PositionColumnResolver
             return [];
         }
 
-        $provider = app(PicklistRegistry::class)->resolve($method);
+        $provider = app(PicklistRegistry::class)->get($method);
 
         if ($provider === null) {
             $this->warn($modelClass, "unknown optionsMethod '{$method}'", $entry);

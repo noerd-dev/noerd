@@ -18,7 +18,7 @@ use Noerd\Contracts\ComputedColumnProvider;
  *
  * The first registered provider that handles an item computes it.
  */
-class ComputedColumnRegistry
+final class ComputedColumnRegistry
 {
     /** @var array<int, class-string<ComputedColumnProvider>> */
     private array $providers = [];
@@ -39,7 +39,7 @@ class ComputedColumnRegistry
     /**
      * @param  array<string, mixed>  $item  a list column or a detail field
      */
-    public function providerFor(array $item): ?ComputedColumnProvider
+    public function get(array $item): ?ComputedColumnProvider
     {
         foreach ($this->providers as $class) {
             $provider = $this->instances[$class] ??= app($class);
@@ -56,7 +56,7 @@ class ComputedColumnRegistry
      */
     public function isComputed(array $item): bool
     {
-        return $this->providerFor($item) !== null;
+        return $this->get($item) !== null;
     }
 
     /**
@@ -69,7 +69,7 @@ class ComputedColumnRegistry
     {
         $groups = [];
         foreach ($items as $item) {
-            $provider = $this->providerFor($item);
+            $provider = $this->get($item);
             if ($provider === null) {
                 continue;
             }
@@ -135,7 +135,7 @@ class ComputedColumnRegistry
      */
     public function isSortable(?string $modelClass, array $column): bool
     {
-        $provider = $this->providerFor($column);
+        $provider = $this->get($column);
 
         return $modelClass !== null && $provider !== null && $provider->isSortable($modelClass, $column);
     }
@@ -146,7 +146,7 @@ class ComputedColumnRegistry
      */
     public function isFilterable(?string $modelClass, array $column): bool
     {
-        $provider = $this->providerFor($column);
+        $provider = $this->get($column);
 
         return $modelClass !== null && $provider !== null && $provider->isFilterable($modelClass, $column);
     }

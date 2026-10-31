@@ -17,8 +17,8 @@ use Noerd\Facades\Noerd;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Services\ColumnFilterParser;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Services\ComputedColumnRegistry;
-use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\ComponentNaming;
 use Noerd\Support\ComputedFields;
@@ -653,7 +653,7 @@ trait NoerdList
             'csv' => $this->enableCsvExport,
             'secondary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') === 'secondary'),
             'primary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') !== 'secondary'),
-            'registry' => $isPicker ? [] : app(HeaderActionsRegistry::class)->listActions(),
+            'registry' => $isPicker ? [] : app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::LIST_HEADER_ACTIONS),
         ];
     }
 
@@ -1014,7 +1014,7 @@ trait NoerdList
         // aggregate subselect); the client-writable $sortField is re-checked here.
         $sortComputedColumn = $this->computedColumn($this->sortField);
         if ($sortComputedColumn !== null && app(ComputedColumnRegistry::class)->isSortable($this->computedModelClass(), $sortComputedColumn)) {
-            app(ComputedColumnRegistry::class)->providerFor($sortComputedColumn)?->applyOrder($query, $sortComputedColumn, $this->sortAsc ? 'asc' : 'desc');
+            app(ComputedColumnRegistry::class)->get($sortComputedColumn)?->applyOrder($query, $sortComputedColumn, $this->sortAsc ? 'asc' : 'desc');
 
             return $query;
         }
@@ -1288,7 +1288,7 @@ trait NoerdList
             // filterableColumnFields() admitted it, so its provider can filter it.
             $computedColumn = $this->computedColumn($field);
             if ($computedColumn !== null) {
-                app(ComputedColumnRegistry::class)->providerFor($computedColumn)?->applyFilter($query, $computedColumn, (string) ($computedColumn['type'] ?? 'text'), $raw);
+                app(ComputedColumnRegistry::class)->get($computedColumn)?->applyFilter($query, $computedColumn, (string) ($computedColumn['type'] ?? 'text'), $raw);
 
                 continue;
             }

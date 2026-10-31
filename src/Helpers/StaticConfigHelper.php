@@ -776,7 +776,7 @@ final class StaticConfigHelper
             foreach ($appBlock['block_menus'] ?? [] as $j => $menu) {
                 $dynamicType = $menu['dynamic'] ?? null;
                 if ($dynamicType) {
-                    $provider = $registry->resolve($dynamicType);
+                    $provider = $registry->get($dynamicType);
                     if ($provider) {
                         $navigationStructure[$i]['block_menus'][$j]['navigations'] = $provider->items();
                     }

@@ -50,7 +50,14 @@ final class ProfileRegistry
         return $options;
     }
 
-    public function label(string $key): ?string
+    public function has(string $key): bool
+    {
+        $this->seedBuiltIns();
+
+        return array_key_exists($key, $this->profiles);
+    }
+
+    public function get(string $key): ?string
     {
         return $this->options()[$key] ?? null;
     }

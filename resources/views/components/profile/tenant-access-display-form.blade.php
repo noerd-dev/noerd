@@ -15,7 +15,7 @@ new class extends Component {
 
         foreach ($user->tenants as $tenant) {
             $key = $tenant->pivot->profile_key;
-            $label = $key === null ? null : app(ProfileRegistry::class)->label((string) $key);
+            $label = $key === null ? null : app(ProfileRegistry::class)->get((string) $key);
 
             $tenantAccess[] = [
                 'id' => $tenant->id,

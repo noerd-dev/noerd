@@ -165,7 +165,7 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
         $options = ['' => __('Select Type')];
 
         foreach ($this->allowedTypes as $type) {
-            $definition = $registry->resolve($type);
+            $definition = $registry->get($type);
             if (! $definition) {
                 continue;
             }
@@ -196,7 +196,7 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
             return null;
         }
 
-        return app(RelationFieldRegistry::class)->resolve($this->selectedRelationType);
+        return app(RelationFieldRegistry::class)->get($this->selectedRelationType);
     }
 
     private function resolveRelationTypeFromModelType(?string $modelType): ?string
@@ -207,7 +207,7 @@ abstract class PolymorphicRelationFieldComponent extends RelationFieldBase
 
         $registry = app(RelationFieldRegistry::class);
         foreach ($this->allowedTypes as $type) {
-            $definition = $registry->resolve($type);
+            $definition = $registry->get($type);
             if ($definition && $definition->modelClass === $modelType) {
                 return $type;
             }

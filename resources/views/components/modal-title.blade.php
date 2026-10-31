@@ -14,7 +14,7 @@
 ])
 
 @php
-    // The module-contributed DETAIL header actions (HeaderActionsRegistry) do not
+    // The module-contributed DETAIL header actions (ComponentSlotsRegistry) do not
     // render here: they sit in the head row of the host's first form block
     // (noerd::components.detail.block-head via DetailHeaderActions), so an embedded
     // detail carries its own icons instead of the hosting page.

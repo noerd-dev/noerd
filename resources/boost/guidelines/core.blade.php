@@ -1312,7 +1312,7 @@ Detail components (`*-detail.blade.php`) declare their model as `public $detailM
 and their URL alias as `public ?string $detailPrimary = '{entity}Id';` (e.g. `'customerId'`) at the
 top of the class — both are MANDATORY for every model-backed detail (`$detailModel` drives mounting,
 the default `store()`/`delete()` and the module-contributed detail header actions
-(`HeaderActionsRegistry`, mounted top-right in the head row of the FIRST form block the detail
+(`ComponentSlotsRegistry`, slot `DETAIL_HEADER_ACTIONS`, mounted top-right in the head row of the FIRST form block the detail
 renders — embedded included, never in the modal header; a `*-page` hosts them only on a field grid
 of its own). A detail's OWN buttons for that row go into the `blockActions` slot of
 `<x-noerd::tab-content>` (a direct `detail.block` include passes `'blockActions' => view(...)`);

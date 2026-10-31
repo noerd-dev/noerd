@@ -25,7 +25,7 @@ final class ListCellRendererRegistry
         return isset($this->views[$key]);
     }
 
-    public function viewFor(string $key): ?string
+    public function get(string $key): ?string
     {
         return $this->views[$key] ?? null;
     }

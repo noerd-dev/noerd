@@ -33,8 +33,8 @@ it('appends registered profiles and resolves their labels', function (): void {
 
     expect(app(ProfileRegistry::class))->toBe($registry)
         ->and(array_key_last($registry->options()))->toBe('ZZ_MODULE_PROFILE')
-        ->and($registry->label('ZZ_MODULE_PROFILE'))->toBe('Zz Module Profile')
-        ->and($registry->label('UNKNOWN'))->toBeNull();
+        ->and($registry->get('ZZ_MODULE_PROFILE'))->toBe('Zz Module Profile')
+        ->and($registry->get('UNKNOWN'))->toBeNull();
 });
 
 it('renders registered profiles in the user detail picker', function (): void {

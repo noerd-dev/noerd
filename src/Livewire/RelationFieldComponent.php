@@ -49,7 +49,7 @@ abstract class RelationFieldComponent extends RelationFieldBase
         string $helpText = '',
         ?string $owner = null,
     ): void {
-        $definition = app(RelationFieldRegistry::class)->resolve($relationType);
+        $definition = app(RelationFieldRegistry::class)->get($relationType);
 
         if (! $definition) {
             throw new RuntimeException("Relation field type [{$relationType}] is not registered.");
@@ -129,7 +129,7 @@ abstract class RelationFieldComponent extends RelationFieldBase
             return null;
         }
 
-        $definition = app(RelationFieldRegistry::class)->resolve($this->relationType);
+        $definition = app(RelationFieldRegistry::class)->get($this->relationType);
 
         if (! $definition?->modelClass || ! class_exists($definition->modelClass)) {
             return null;
@@ -140,7 +140,7 @@ abstract class RelationFieldComponent extends RelationFieldBase
 
     private function resolveDisplayTitle(): void
     {
-        $definition = app(RelationFieldRegistry::class)->resolve($this->relationType);
+        $definition = app(RelationFieldRegistry::class)->get($this->relationType);
 
         $this->displayTitle = $definition?->resolveTitleForValue($this->value) ?? '';
     }

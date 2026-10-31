@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 use Livewire\Component;
-use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Traits\NoerdPage;
 
 /**
- * Decides where the module-contributed detail header actions (HeaderActionsRegistry,
+ * Decides where the module-contributed detail header actions (ComponentSlotsRegistry DETAIL_HEADER_ACTIONS,
  * e.g. an export or history icon) are mounted: in the head row of the FIRST form block a
  * `*-detail` / `*-page` host renders — never in the modal header. An embedded detail
  * renders chrome-less, but its form block still belongs to it, so every detail carries
@@ -48,7 +48,7 @@ final class DetailHeaderActions
 
         self::$claimed[$id] = true;
 
-        return app(HeaderActionsRegistry::class)->detailActions();
+        return app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS);
     }
 
     public static function reset(?string $hostId): void

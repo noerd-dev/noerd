@@ -226,8 +226,8 @@ function zzComputedHosts(): array
 }
 
 it('computes `method:` columns with the core provider by default', function (): void {
-    expect(app(ComputedColumnRegistry::class)->providerFor(['method' => 'x']))->toBeInstanceOf(ModelMethodColumns::class)
-        ->and(app(ComputedColumnRegistry::class)->providerFor(['field' => 'name']))->toBeNull();
+    expect(app(ComputedColumnRegistry::class)->get(['method' => 'x']))->toBeInstanceOf(ModelMethodColumns::class)
+        ->and(app(ComputedColumnRegistry::class)->get(['field' => 'name']))->toBeNull();
 });
 
 describe('with a registered provider', function (): void {

@@ -88,7 +88,7 @@ it('catalogs registered actions for permission UIs', function (): void {
         ])
         ->and($registry->has('production_start_run'))->toBeTrue()
         ->and($registry->has('unknown'))->toBeFalse()
-        ->and($registry->label('crm_merge_accounts'))->toBe('Merge Accounts');
+        ->and($registry->get('crm_merge_accounts'))->toBe('Merge Accounts');
 });
 
 it('rejects action keys that are not snake_case', function (): void {

@@ -217,7 +217,7 @@ trait NoerdDetail
             return $this->{$picklistField}();
         }
 
-        $provider = app(PicklistRegistry::class)->resolve($picklistField);
+        $provider = app(PicklistRegistry::class)->get($picklistField);
 
         return $provider ? $provider() : [];
     }

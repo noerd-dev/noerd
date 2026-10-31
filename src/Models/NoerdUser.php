@@ -239,7 +239,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
             // Registered profiles (ProfileRegistry) get their translated label;
             // an unregistered key falls back to the raw key rather than hiding.
-            $label = $key === null ? '' : (app(ProfileRegistry::class)->label($key) ?? $key);
+            $label = $key === null ? '' : (app(ProfileRegistry::class)->get($key) ?? $key);
 
             // The installation-level role is visible wherever the profile is: the
             // badge names it, the tenant profile (if any) follows as plain text.

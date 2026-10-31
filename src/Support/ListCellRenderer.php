@@ -30,7 +30,7 @@ final class ListCellRenderer
             return null;
         }
 
-        $view = app(ListCellRendererRegistry::class)->viewFor($key);
+        $view = app(ListCellRendererRegistry::class)->get($key);
 
         if ($view !== null && View::exists($view)) {
             return $view;

@@ -13,7 +13,7 @@ use Noerd\Support\SortedRegistrations;
  * ordered by sort ascending (5 renders before 10, equal sorts keep
  * registration order). The host model stays agnostic of whoever plugs in —
  * a registration ceases to exist with its module (same reasoning as the
- * DetailSlotsRegistry).
+ * ComponentSlotsRegistry).
  *
  * A tile mirrors the YAML relation shape (`label`, `heroicon`, `component`
  * and/or `route`, `arguments` with the '$modelId' token) plus keys YAML
@@ -25,7 +25,7 @@ use Noerd\Support\SortedRegistrations;
  * Closures are resolved inside the relation box at render time and never
  * become Livewire state.
  */
-class RelationBoxRegistry
+final class RelationBoxRegistry
 {
     /** @var array<class-string, array<int, array{tile: array<string, mixed>, sort: int}>> */
     private array $tiles = [];
@@ -46,7 +46,7 @@ class RelationBoxRegistry
      * @param  class-string  $modelClass
      * @return array<int, array<string, mixed>>
      */
-    public function for(string $modelClass): array
+    public function get(string $modelClass): array
     {
         $entries = [];
 

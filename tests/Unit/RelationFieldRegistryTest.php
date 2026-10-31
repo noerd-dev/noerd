@@ -21,9 +21,9 @@ it('registers a relation type and exposes it via field type registry', function 
     ));
 
     expect($relationFieldRegistry->has('customerRelation'))->toBeTrue();
-    expect($relationFieldRegistry->resolve('customerRelation')?->listComponent)->toBe('customers-list');
+    expect($relationFieldRegistry->get('customerRelation')?->listComponent)->toBe('customers-list');
 
-    $fieldTypeDefinition = $fieldTypeRegistry->resolve('customerRelation');
+    $fieldTypeDefinition = $fieldTypeRegistry->get('customerRelation');
 
     expect($fieldTypeDefinition?->kind)->toBe('livewire');
     expect($fieldTypeDefinition?->target)->toBe('noerd::noerd-relation-field');
@@ -60,7 +60,7 @@ it('renders a relation type through its custom field component when one is regis
         fieldComponent: 'customer::customer-address-card-field',
     ));
 
-    $fieldTypeDefinition = $fieldTypeRegistry->resolve('customerAddressCardRelation');
+    $fieldTypeDefinition = $fieldTypeRegistry->get('customerAddressCardRelation');
 
     expect($fieldTypeDefinition?->kind)->toBe('livewire');
     expect($fieldTypeDefinition?->target)->toBe('customer::customer-address-card-field');
@@ -84,7 +84,7 @@ it('passes the row number on only when the theme numbered the field', function (
         titleResolver: 'name',
     ));
 
-    $definition = $fieldTypeRegistry->resolve('customerRelation');
+    $definition = $fieldTypeRegistry->get('customerRelation');
     $field = ['name' => 'detailData.customer_id', 'label' => 'Customer'];
 
     expect($definition?->resolveProps($field, null, null, null))->not->toHaveKey('number')
@@ -102,7 +102,7 @@ it('resolves top-level relation values from the parent component', function (): 
         titleResolver: 'name',
     ));
 
-    $definition = $fieldTypeRegistry->resolve('projectRelation');
+    $definition = $fieldTypeRegistry->get('projectRelation');
 
     $component = new class {
         public int $projectId = 44;
