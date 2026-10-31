@@ -773,16 +773,36 @@ first. Typical additions:
 
 - `setPreselect('customer_id', $id)` / `preselect('customer_id')` — the shared `listFilters`
   session bucket: a page seeds it so a related list opens pre-filtered, and a new record adopts
-  the value by calling the matching `customerSelected()` method when it exists
+  the value. A `customerSelected()` method handles the adoption when the component has one;
+  without it the value goes into `detailData.customer_id` and the relation field's title resolves
+  through the type registered for the column (`customer_id` → `customerRelation`)
 
-Initial field values are **not** such a case: they are
-configuration and belong in the YAML (`default:`, or the first option of a select) — see
-[Default Values](field-types.md#default-values). The trait applies them generically, also to a
-custom `mount()` that replaces `$detailData` wholesale.
+Reading the loaded record is **not** such a case. A component that needs a value derived from the
+record — a count, a related record's data, an extra form key — overrides `detailLoaded(Model $model)`
+instead of re-finding the record in `mount()`:
+
+```php
+protected array $detailWith = ['party', 'positions'];
+
+protected function detailLoaded(Model $invoice): void
+{
+    $this->detailData['party_name'] = $invoice->party?->name;
+    $this->positionCount = $invoice->positions->count();
+}
+```
+
+The hook runs with `$detailData` already filled, for an existing record (eager-loaded with
+`$detailWith`) and for the fresh model of a new one (`$model->exists === false`); everything the
+trait does afterwards — layout defaults, relation forms, custom attributes — still runs, unlike
+with a `mount()` that replaces `$detailData` wholesale.
+
+Initial field values are **not** such a case either: they are configuration and belong in the YAML
+(`default:`, or the first option of a select; a date default may be `today` or `+14 days`) — see
+[Default Values](field-types.md#default-values). The trait applies them generically.
 
 ## Key Concepts
 
-- **Trait:** `NoerdDetail` provides `$detailData` (array, the form binding), `$modelId`, `$pageLayout`, `$relationTitles` and `mount()` / `store()` / `delete()` — override only for custom behavior
+- **Trait:** `NoerdDetail` provides `$detailData` (array, the form binding), `$modelId`, `$pageLayout`, `$relationTitles`, `$detailWith` (relations loaded with the record), the `detailLoaded(Model $model)` hook and `mount()` / `store()` / `delete()` — override only for custom behavior
 - **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions
 - **validateFromLayout():** Validates every shown field: `required:`, the rules of its type and its `validation:` list (plus relation-form rules) — see [Field Types](field-types.md#validation)
 - **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); override it when the list does not follow the plural convention

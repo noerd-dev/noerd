@@ -129,6 +129,9 @@ Two rules apply, in this order:
 
 1. **`default:`** — any field may declare its initial value. It is used while the bound value is
    `null` (a missing key counts as null); `''`, `0` and `false` are answers and are never replaced.
+   A date default is written relative to the day the form opens: `today`, `now` (a date-time) or a
+   signed offset — `+14 days`, `-1 month`, `+2 weeks`, `+1 year` — resolved by
+   `Noerd\Support\LayoutDefaults::resolveToken()`; anything else is the literal value.
 2. **First option of a select** — a `type: select` whose `options` are written in the YAML starts on
    its first option. This is what makes the displayed value real, so it is persisted on save.
 
@@ -141,6 +144,16 @@ Two rules apply, in this order:
       label: Created
     - value: paid
       label: Paid
+
+- name: detailData.invoice_date
+  label: Date
+  type: date
+  default: today          # <- the day the form opens
+
+- name: detailData.due_date
+  label: Due
+  type: date
+  default: '+14 days'     # <- relative to today
 
 - name: detailData.priority
   label: Priority

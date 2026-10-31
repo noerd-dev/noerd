@@ -152,6 +152,15 @@ trait NoerdList
 
     public bool $enableCsvExport = false;
 
+    /*
+     | A list DECLARES its query shape instead of overriding listData():
+     |   protected array $listWith = ['category'];               relations eager-loaded for every page
+     |   protected array $listWithCount = ['items'];             relation counts (`items_count`) per row
+     |   protected array $listScopes = ['party_id' => 'partyId']; columns narrowed by a mount property
+     | listQuery() reads them by name (declaredArray()). The trait declares none of
+     | them: PHP refuses a class that redeclares a trait property with another default.
+     */
+
     /** The model class behind this list, remembered from the last listQuery() call. */
     protected ?string $resolvedModelClass = null;
 
@@ -237,9 +246,7 @@ trait NoerdList
             ));
         }
 
-        $rows = $this->listQuery($modelClass)->paginate($this->clampPerPage($this->perPage));
-
-        return $this->buildList($rows);
+        return $this->buildList($this->paginateList($this->listQuery($modelClass)));
     }
 
     /**
@@ -647,6 +654,15 @@ trait NoerdList
             prepareRow: $this->prepareExportRow(...),
             format: $this->formatCsvValue(...),
         );
+    }
+
+    /**
+     * The page of rows the list shows — `$perPage` is client-controlled, so the
+     * size is clamped here, once, for every list that paginates its own query.
+     */
+    protected function paginateList(Builder $query): LengthAwarePaginator
+    {
+        return $query->paginate($this->clampPerPage($this->perPage));
     }
 
     /**
@@ -1093,9 +1109,17 @@ trait NoerdList
 
         $this->applyColumnFilters($query, $modelClass);
         $this->applyListFilters($query);
+        $this->applyListScopes($query);
+
         $eagerLoads = ListColumnIntrospection::eagerLoads($modelClass, $this->getListConfig($configName)['columns'] ?? []);
         if ($eagerLoads !== []) {
             $query->with($eagerLoads);
+        }
+        if ($this->declaredArray('listWith') !== []) {
+            $query->with($this->declaredArray('listWith'));
+        }
+        if ($this->declaredArray('listWithCount') !== []) {
+            $query->withCount($this->declaredArray('listWithCount'));
         }
 
         $computedColumns = ComputedFields::columns($listConfig['columns'] ?? []);
@@ -1253,6 +1277,36 @@ trait NoerdList
         }
 
         return $listeners;
+    }
+
+    /**
+     * One of the query-shape arrays a list declares ($listWith, $listWithCount,
+     * $listScopes) — empty when the component declares none.
+     *
+     * @return array<int|string, mixed>
+     */
+    private function declaredArray(string $property): array
+    {
+        return property_exists($this, $property) && is_array($this->{$property}) ? $this->{$property} : [];
+    }
+
+    /**
+     * Narrow the query by the declared $listScopes: every column whose mount
+     * property holds a value (null and '' leave the list unnarrowed).
+     */
+    private function applyListScopes(Builder $query): void
+    {
+        foreach ($this->declaredArray('listScopes') as $column => $property) {
+            $value = property_exists($this, $property) ? $this->{$property} : null;
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            is_array($value)
+                ? $query->whereIn($query->qualifyColumn($column), $value)
+                : $query->where($query->qualifyColumn($column), $value);
+        }
     }
 
     /**

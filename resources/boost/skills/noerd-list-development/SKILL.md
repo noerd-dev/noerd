@@ -61,8 +61,10 @@ new class extends Component {
 - Default sort: a `defaultSort:` block in the list YAML (`field:` + optional
   `direction: asc|desc`, `desc` when omitted) — both synced copies, never component code. A
   user-picked sort persists in the session and wins; never set `$sortField`/`$sortAsc` directly.
-- Custom query: override `listData()` only —
-  `$rows = $this->listQuery($this->listModel)->where(...)->with(...)->paginate($this->perPage); return $this->buildList($rows);`
+- Eager loads, counts and the parent scope are declared: `protected array $listWith = ['category'];`,
+  `$listWithCount = ['items'];`, `$listScopes = ['party_id' => 'partyId'];` — `listQuery()` applies them.
+- Custom query (extra wheres, row transformations): override `listData()` only —
+  `$rows = $this->paginateList($this->listQuery($this->listModel)->where(...)); return $this->buildList($rows);`
   Keep extra view data (e.g. a summary) in a slim `with()` that shares the query via a private
   helper. `with()` never returns a `listConfig` — the view reads `listData()` only; a list whose
   rows are not one model overrides `listData()` and returns `buildList($rows, $config)`.
