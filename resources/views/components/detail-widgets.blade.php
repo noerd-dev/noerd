@@ -11,10 +11,7 @@
     <div class="flex flex-col gap-6">
         @foreach ($widgets as $widget)
             @php
-                // Resolve the $modelId token in the arguments (same convention as detail-lists)
-                $arguments = collect($widget['arguments'] ?? [])
-                    ->map(fn($value) => $value === '$modelId' ? $modelId : $value)
-                    ->all();
+                $arguments = \Noerd\Support\LayoutArguments::resolve($widget['arguments'] ?? [], $modelId, $__livewire ?? null);
             @endphp
 
             <x-noerd::detail-widget

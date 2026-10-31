@@ -48,32 +48,73 @@ final class SetupFieldTypeConverter
     }
 
     /**
-     * Convert data to translatable field format
+     * Convert data to translatable field format: a map of the tenant's active
+     * language codes. A scalar is copied to every language as a starting
+     * point; a structured value (a list, a repeater row) cannot be stringified
+     * and starts with empty slots instead of the literal "Array".
+     *
+     * @return array<string, mixed>
      */
     private static function convertToTranslatableField(mixed $value): array
     {
-        $codes = SetupLanguage::activeCodes() ?: ['en'];
-
-        // If already in translatable format (keyed by an active language), return as-is
-        if (is_array($value) && array_intersect($codes, array_keys($value)) !== []) {
+        if (is_array($value) && self::isLanguageMap($value)) {
             return $value;
         }
 
-        $stringValue = is_string($value) ? $value : (string) $value;
+        $codes = SetupLanguage::activeCodes() ?: ['en'];
+        $stringValue = is_scalar($value) ? (string) $value : '';
 
         return array_fill_keys($codes, $stringValue);
     }
 
     /**
-     * Convert data from translatable field format to simple field
+     * Convert data from translatable field format to a simple field. Only a
+     * language map collapses — the tenant's default language first, then the
+     * first non-empty translation; a list or a structured value stays as it
+     * is, otherwise a type switch would wipe the entry's data.
      */
     private static function convertFromTranslatableField(mixed $value): mixed
     {
-        // If it's a translatable array, extract the tenant's default language
-        if (is_array($value)) {
-            return $value[SetupLanguage::defaultCode()] ?? (reset($value) ?: '');
+        if (! is_array($value) || ! self::isLanguageMap($value)) {
+            return $value;
         }
 
-        return $value;
+        $default = $value[SetupLanguage::defaultCode()] ?? null;
+        if ($default !== null && $default !== '') {
+            return $default;
+        }
+
+        foreach ($value as $translation) {
+            if ($translation !== null && $translation !== '') {
+                return $translation;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Whether an array is a translatable value: non-empty, every key a language
+     * code (`de`, `en-GB`), every value a scalar or null.
+     *
+     * @param  array<int|string, mixed>  $value
+     */
+    private static function isLanguageMap(array $value): bool
+    {
+        if ($value === []) {
+            return false;
+        }
+
+        foreach ($value as $key => $translation) {
+            if (! is_string($key) || ! preg_match('/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/', $key)) {
+                return false;
+            }
+
+            if ($translation !== null && ! is_scalar($translation)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

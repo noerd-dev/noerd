@@ -688,9 +688,12 @@ its own `theme:` (see [Themes](themes.md)).
 ## Conditional Display
 
 `showIf` shows a field while a condition holds, `showIfNot` hides it while it holds. Both accept a
-property path (truthy check) or an object with `field` and `value` (equality check). The condition
-is an Alpine `x-show`, so it follows the form state in the browser; set `live: true` on the
-controlling field when the server has to see the change as well.
+property path (truthy check) or an object with `field` and `value` (equality check — compared as
+strings, so a select's `"1"` and an integer column's `1` agree); both keys on one field combine with
+AND. The condition is an Alpine `x-show`, so it follows the form state in the browser; set
+`live: true` on the controlling field when the server has to see the change as well. Fields, tabs
+and detail actions share the one expression (`Noerd\Support\FieldVisibility::showExpression()`), and
+the server mirrors it when it decides whether a hidden field is validated.
 
 ```yaml
 - name: detailData.is_business

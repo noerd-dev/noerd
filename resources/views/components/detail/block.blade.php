@@ -1,35 +1,12 @@
 @php
-    // showIf/showIfNot come from the field YAML. Keep the wire path to a bare
-    // property expression and escape the compared value for both the JS single-
-    // quoted string and the surrounding HTML attribute, so a stray quote can
-    // never break the x-show expression out of its context.
-    $sanitizeWirePath = fn ($path): string => preg_replace('/[^A-Za-z0-9_.]/', '', (string) $path);
-    $escapeAlpineValue = fn ($value): string => htmlspecialchars(addslashes((string) $value), ENT_QUOTES);
+    // showIf/showIfNot come from the field YAML: FieldVisibility writes the one
+    // x-show expression every conditional element (field, tab, action) carries —
+    // the wire path reduced to a bare property, the value JavaScript-encoded, so
+    // a stray quote can never break the expression out of its attribute.
+    $getShowIfDirective = function ($field): string {
+        $expression = \Noerd\Support\FieldVisibility::showExpression(is_array($field) ? $field : []);
 
-    $getShowIfDirective = function($field) use ($sanitizeWirePath, $escapeAlpineValue): string {
-        $directive = '';
-
-        // showIf - positive condition
-        if (isset($field['showIf'])) {
-            if (is_string($field['showIf'])) {
-                $directive = 'x-show="$wire.' . $sanitizeWirePath($field['showIf']) . '"';
-            } elseif (is_array($field['showIf'])) {
-                $directive = 'x-show="$wire.' . $sanitizeWirePath($field['showIf']['field'])
-                    . " === '" . $escapeAlpineValue($field['showIf']['value']) . "'\"";
-            }
-        }
-
-        // showIfNot - negated condition
-        if (isset($field['showIfNot'])) {
-            if (is_string($field['showIfNot'])) {
-                $directive = 'x-show="!$wire.' . $sanitizeWirePath($field['showIfNot']) . '"';
-            } elseif (is_array($field['showIfNot'])) {
-                $directive = 'x-show="$wire.' . $sanitizeWirePath($field['showIfNot']['field'])
-                    . " !== '" . $escapeAlpineValue($field['showIfNot']['value']) . "'\"";
-            }
-        }
-
-        return $directive;
+        return $expression === null ? '' : 'x-show="' . $expression . '"';
     };
 
     $fieldTypeRegistry = app(\Noerd\Services\FieldTypeRegistry::class);

@@ -171,7 +171,10 @@ it('mirrors the showIf condition of the browser', function (): void {
     expect(FieldVisibility::visibleOn(['showIf' => 'showsNote'], $component))->toBeTrue()
         ->and(FieldVisibility::visibleOn(['showIf' => ['field' => 'detailData.kind', 'value' => 'b']], $component))->toBeTrue()
         ->and(FieldVisibility::visibleOn(['showIfNot' => ['field' => 'detailData.kind', 'value' => 'b']], $component))->toBeFalse()
-        // x-show compares strictly with a string — a number never matches.
-        ->and(FieldVisibility::visibleOn(['showIf' => ['field' => 'detailData.count', 'value' => '5']], $component))->toBeFalse()
+        // x-show compares as strings — an integer column agrees with the YAML value.
+        ->and(FieldVisibility::visibleOn(['showIf' => ['field' => 'detailData.count', 'value' => '5']], $component))->toBeTrue()
+        ->and(FieldVisibility::visibleOn(['showIf' => ['field' => 'detailData.count', 'value' => '6']], $component))->toBeFalse()
+        // both keys on one field combine with AND
+        ->and(FieldVisibility::visibleOn(['showIf' => 'showsNote', 'showIfNot' => ['field' => 'detailData.kind', 'value' => 'b']], $component))->toBeFalse()
         ->and(FieldVisibility::visibleOn(['show' => false], $component))->toBeFalse();
 });

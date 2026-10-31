@@ -62,6 +62,10 @@ always wins over the locale — leave the keys unset to let the locale decide.
 | Method | Use it for |
 |---|---|
 | `date($value)`, `dateTime($value)`, `time($value)` | Dates and times in the **backend UI** (`03.09.2026`, `09/03/2026 2:05 PM`) |
+| `longDate($value)` | A date written out with its month name (`3. September 2026`, `September 3, 2026`) |
+| `weekday($value, $width = 'long')` | The weekday name — `long` (`Donnerstag`), `short` (`Do.`), `min` (`Do`, calendar column heads) |
+| `monthName($value, $withYear = false)` | The month name (`September`), with the year when asked (`September 2026`) |
+| `fileSize($bytes, $maxDecimals = 2)` | A file size with its unit (`1,5 MB`, `1.5 MB`) |
 | `documentDate($value, ?int $tenantId)`, `documentDateTime(...)` | Dates on **documents** — tenant locale |
 | `decimal($value, $decimals = 2)` | Plain amounts without a symbol (CSV cells) |
 | `documentDecimal($value, $decimals, ?int $tenantId)` | The same on documents |
@@ -72,8 +76,10 @@ always wins over the locale — leave the keys unset to let the locale decide.
 | `numberSymbols(string $locale)` | The ICU decimal and grouping separators of a locale (`['decimal' => ',', 'group' => '.']`) — for client-side formatters |
 | `clearCache()` | Drop the memoized locale resolution (tests, after a settings save) |
 
-The UI formatters (`date()`, `dateTime()`, `time()`, `decimal()`, `number()`, `percent()`) accept an
-explicit `?string $locale` as their last parameter; the `document*()` methods take the tenant id instead.
+The UI formatters (`date()`, `dateTime()`, `time()`, `longDate()`, `weekday()`, `monthName()`,
+`decimal()`, `number()`, `percent()`, `fileSize()`) accept an explicit `?string $locale` as their last
+parameter — a document passes `FormatHelper::tenantLocale($tenantId)`; the `document*()` methods take
+the tenant id directly.
 
 ### `Noerd\Support\Locales`
 
@@ -91,12 +97,15 @@ explicit `?string $locale` as their last parameter; the `document*()` methods ta
 | Where | Money | Dates / numbers |
 |---|---|---|
 | PDFs, receipts, customer e-mails, documents | `CurrencyHelper::formatForDocument($x, $model->tenant_id)` | `FormatHelper::documentDate($d, $model->tenant_id)` |
-| Backend Livewire views, lists, details, dashboards, relation `titleResolver`s | `CurrencyHelper::format($x)` | `FormatHelper::date()`, `dateTime()`, `decimal()`, `percent()` |
+| Backend Livewire views, lists, details, dashboards, relation `titleResolver`s | `CurrencyHelper::format($x)` | `FormatHelper::date()`, `dateTime()`, `weekday()`, `monthName()`, `longDate()`, `decimal()`, `percent()`, `fileSize()` |
 | Public frontends (shop, booking widget) — no noerd user is logged in | `CurrencyHelper::format($x, $tenantId)` with the tenant id passed explicitly | `FormatHelper::date($d, FormatHelper::tenantLocale($tenantId))` |
 | Payment payloads, DATEV, ESC/POS, JSON APIs | `'currency' => CurrencyHelper::codeForTenant($tenantId)`; amounts stay machine-formatted (`number_format($x, 2, '.', '')`) | — |
 
 - Never hard-code a currency symbol, `'EUR'`, `d.m.Y` or `Number::currency(..., in: 'EUR', locale: 'de')`
   in module code, templates or translation keys (`__('Buy for :price')`, not `__('Buy for :price €')`).
+- Weekday and month names are `FormatHelper::weekday()` / `monthName()` / `longDate()`, never a
+  Carbon `isoFormat('dddd')` or `translatedFormat('F')` of your own; a pattern the helpers do not
+  cover uses `isoFormat()` with `->locale(FormatHelper::locale())`.
 - List columns of `type: currency`, `date` and `datetime` and detail fields of `type: currency` are
   formatted by the core in the reader's locale — nothing to do in the component.
 - The `input-currency` field shows the symbol and separators of the reader's locale and accepts the

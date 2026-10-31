@@ -10,10 +10,7 @@
 @if ($modelId && ! empty($lists))
     @foreach ($lists as $list)
         @php
-            // Resolve the $modelId token in the arguments (same convention as the relation box)
-            $arguments = collect($list['arguments'] ?? [])
-                ->map(fn($value) => $value === '$modelId' ? $modelId : $value)
-                ->all();
+            $arguments = \Noerd\Support\LayoutArguments::resolve($list['arguments'] ?? [], $modelId, $__livewire ?? null);
         @endphp
 
         <x-noerd::detail-list

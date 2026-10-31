@@ -193,3 +193,39 @@ describe('numbers', function (): void {
         expect(FormatHelper::documentDecimal(1234.5, 2, $user->selected_tenant_id))->toBe('1.234,50');
     });
 });
+
+describe('names and sizes', function (): void {
+    it('writes the weekday, the month and the long date in the locale', function (): void {
+        zzFormatUser('de-DE');
+        $value = Carbon::create(2026, 9, 3, 14, 5);
+
+        expect(FormatHelper::weekday($value))->toBe('Donnerstag')
+            ->and(FormatHelper::weekday($value, 'short'))->toStartWith('Do')
+            ->and(FormatHelper::weekday($value, 'min'))->toBe('Do')
+            ->and(FormatHelper::monthName($value))->toBe('September')
+            ->and(FormatHelper::monthName($value, withYear: true))->toBe('September 2026')
+            ->and(FormatHelper::longDate($value))->toBe('3. September 2026');
+
+        FormatHelper::clearCache();
+        zzFormatUser('en-US');
+
+        expect(FormatHelper::weekday($value))->toBe('Thursday')
+            ->and(FormatHelper::longDate($value))->toBe('September 3, 2026')
+            ->and(FormatHelper::weekday(null))->toBe('')
+            ->and(FormatHelper::monthName(''))->toBe('')
+            ->and(FormatHelper::longDate(null))->toBe('');
+    });
+
+    it('writes a file size with its unit in the locale', function (): void {
+        zzFormatUser('de-DE');
+
+        expect(FormatHelper::fileSize(1572864))->toBe('1,5 MB')
+            ->and(FormatHelper::fileSize(2048))->toBe('2 KB')
+            ->and(FormatHelper::fileSize(500))->toBe('500 B');
+
+        FormatHelper::clearCache();
+        zzFormatUser('en-US');
+
+        expect(FormatHelper::fileSize(1572864))->toBe('1.5 MB');
+    });
+});

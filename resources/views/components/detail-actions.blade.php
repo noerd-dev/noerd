@@ -26,23 +26,7 @@
     // showIf/showIfNot mirror the field- and tab-level conditions: an Alpine
     // x-show on the button, so an action follows the component state (e.g. an
     // invite button that disappears once the customer account exists).
-    $resolveActionCondition = function (array $action): ?string {
-        $expressions = [];
-
-        foreach (['showIf' => '', 'showIfNot' => '!'] as $key => $negation) {
-            if (! isset($action[$key])) {
-                continue;
-            }
-
-            $condition = $action[$key];
-
-            $expressions[] = is_array($condition)
-                ? $negation . '($wire.' . $condition['field'] . ' === ' . \Illuminate\Support\Js::from($condition['value']) . ')'
-                : $negation . '$wire.' . $condition;
-        }
-
-        return $expressions === [] ? null : implode(' && ', $expressions);
-    };
+    $resolveActionCondition = fn (array $action): ?string => \Noerd\Support\FieldVisibility::showExpression($action);
 
     $actions = collect($layout['actions'] ?? [])
         ->filter(fn(array $action): bool => $modelId || ($action['requiresId'] ?? true) === false)
@@ -85,9 +69,7 @@
     >
         @foreach ($actions as $action)
             @php
-                $modalArguments = collect($action['arguments'] ?? [])
-                    ->map(fn($value) => $value === '$modelId' ? $modelId : $value)
-                    ->all();
+                $modalArguments = \Noerd\Support\LayoutArguments::resolve($action['arguments'] ?? [], $modelId, $__livewire ?? null);
 
                 // An unregistered route drops to the modalComponent branch (the
                 // filter above already removed actions that have neither).
