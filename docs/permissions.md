@@ -180,6 +180,8 @@ or `NoerdPage` (and therefore `NoerdDetail`).
 | `objectReadBlocked` | Render the content of a read-denied page |
 | `enableCsvExport` | Export a list that does not offer the CSV download |
 | `minimal`, `minimalLimit` | Page past `MAX_PER_PAGE` through the widget mode (the limit is clamped as well) |
+| `compact`, `multiSelect`, `returnsSelection`, `context`, `showLineNumbers`, `embedded`, `quickCreate`, `disableModal` | Change how the component is embedded — a picker that stops being one, an embedded detail that binds the page URL. They arrive as the opener's mount arguments |
+| `detailPrimary` | Rename the URL parameter `$modelId` is bound to |
 
 **Additionally rejected as MOUNT ARGUMENTS** — `detailModel`, `listModel`,
 `objectPermissionModel`, `settingsModels`, `pageLayout`, `objectReadBlocked`, `listView` and
@@ -191,6 +193,17 @@ them, because a component declares or resolves them itself. Properties like `lis
 A violation throws Livewire's `CannotUpdateLockedPropertyException`. The practical rule: **never
 bind any of these properties to `wire:model`** and never pass the mount-protected ones as modal
 arguments — set them as literal property defaults or in `mount()` instead.
+
+**Server-only methods.** Livewire offers every public method as an action and sends its return
+value to the browser. `Noerd\Support\ServerOnlyMethodsHook` refuses browser calls to the public
+trait methods that exist for Blade, hooks and tests — `listData()`, `builtListConfig()`,
+`headerControls()`, `visibleRowIds()`, `validateFromLayout()`, `positionColumns()`, the
+trait-suffixed lifecycle hooks (`renderingNoerdList`, `queryStringNoerdPage`, …) and the like; PHP
+code and module tests keep calling them. `resolvePicklistOptions()` is `protected` (only the field
+views call it). A row click runs only a method listed in `rowActionMethods()`, whatever
+`$listActionMethod` a mount argument carried, and a list sorts only by its own columns.
+`$modelId` stays client-writable on purpose: Livewire restores URL-bound properties on browser
+back navigation, and every record it can reach is still tenant-scoped and permission-checked.
 
 **Values rendered into Livewire directives.** An argument of `wire:click="method(...)"` is a
 JavaScript expression: render it with `{{ \Illuminate\Support\Js::from($value) }}`, never as

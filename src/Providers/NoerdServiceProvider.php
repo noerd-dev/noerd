@@ -98,6 +98,7 @@ use Noerd\Support\PicklistBadges;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\SchemaColumnCache;
+use Noerd\Support\ServerOnlyMethodsHook;
 use Noerd\Support\SetupCollectionDefinitionImport;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\WriteGuardHook;
@@ -128,6 +129,7 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(LockedPropertiesHook::class);
         ComponentHookRegistry::register(ClientWriteGuardHook::class);
         ComponentHookRegistry::register(WriteGuardHook::class);
+        ComponentHookRegistry::register(ServerOnlyMethodsHook::class);
         ComponentHookRegistry::register(EmptyNumberFieldHook::class);
         ComponentHookRegistry::register(ComponentAccessHook::class);
 

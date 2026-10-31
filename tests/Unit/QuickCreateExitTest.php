@@ -31,8 +31,8 @@ class HandRolledQuickCreateStub extends Component
 }
 
 it('leaves quick-create mode after a hand-rolled store() that never calls storeProcess()', function (): void {
-    Livewire::test(HandRolledQuickCreateStub::class)
-        ->set('quickCreate', true)
+    // quickCreate is an opener argument (the browser cannot switch it).
+    Livewire::test(HandRolledQuickCreateStub::class, ['quickCreate' => true])
         ->assertSet('quickCreate', true)
         ->call('store')
         ->assertSet('quickCreate', false)
@@ -40,8 +40,7 @@ it('leaves quick-create mode after a hand-rolled store() that never calls storeP
 });
 
 it('stays in quick-create mode while no record exists yet', function (): void {
-    Livewire::test(HandRolledQuickCreateStub::class)
-        ->set('quickCreate', true)
+    Livewire::test(HandRolledQuickCreateStub::class, ['quickCreate' => true])
         ->assertSet('quickCreate', true)
         ->assertNotDispatched('resizeTopModal');
 });

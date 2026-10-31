@@ -403,7 +403,7 @@ the YAML hides the row):
 | `listData()` | Builds the list; override it for custom queries, always ending in `return $this->buildList($rows);` (`buildList()` generates the list configuration from the YAML) |
 | `listAction(mixed $modelId = null, array $relations = [])` | Opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; override it only to add modal arguments |
 | `?string $filter` (`#[Url]`) | Free-form list filter carried as `?filter=…`. The trait never reads it — a list seeds its own `listFilters` or query from it in `mount()` |
-| `string $listActionMethod` | Public method a row click dispatches to (default `listAction`; pickers pass `selectAction`). `openListRow()` only ever calls PUBLIC methods by this name |
+| `string $listActionMethod` | Method a row click dispatches to (default `listAction`; pickers pass `selectAction`). `openListRow()` only runs a method listed in `rowActionMethods()` (`listAction`, `selectAction`) — a list with a row action of its own adds it there |
 | `selectAction($modelId)` | Picker row action: dispatches `noerdRelationSelected` and `{entity}Selected` (`items-list` → `itemSelected`) with `($modelId, $context)`, then `closeTopModal` |
 | `refreshList()` | Re-renders the list (`$refresh`). Listens to `refreshList-{name}`, where `{name}` is `listConfigComponent()` — by default the full component name incl. namespace (`inventory::items-list`) — and to the name after the last dot; a detail's `closeModalProcess()` dispatches it for its paired list |
 | `exportCsv()` | Streams the CSV download (see CSV Export) |

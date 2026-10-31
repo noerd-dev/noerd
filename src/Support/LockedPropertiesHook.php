@@ -61,6 +61,20 @@ final class LockedPropertiesHook extends ComponentHook
         'enableCsvExport',
         'minimal',
         'minimalLimit',
+        // How the component is embedded — set by the opener's mount arguments
+        // or server-side, never by the browser: a picker that stops being one,
+        // a compact list that grows its header, an embedded detail that binds
+        // the page URL or a quick-create dialog that forgets its exit.
+        'compact',
+        'multiSelect',
+        'returnsSelection',
+        'context',
+        'showLineNumbers',
+        'embedded',
+        'quickCreate',
+        'disableModal',
+        // The URL alias of $modelId (queryStringNoerdPage()).
+        'detailPrimary',
     ];
 
     /**

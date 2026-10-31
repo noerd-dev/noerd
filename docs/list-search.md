@@ -20,7 +20,7 @@ columns:
 1. The `NoerdList` trait provides a `$search` property bound to the search input via `wire:model.live.debounce.300ms="search"` (`noerd::components.table.list-search`)
 2. `listQuery()` reads `searchableColumns` from the YAML (or every `columns[].field` as fallback) and keeps only the fields that are real columns of the model's table
 3. The term is matched as an OR-combined "contains" condition over those columns (`ColumnFilterParser::applyLikeContains()`, LIKE wildcards in the input escaped) inside ONE nested where group — so the search stacks with the column filters and any extra `where` of a custom query
-4. The query is ordered by `$sortField` / `$sortAsc` (a field that is no real column falls back to `id`)
+4. The query is ordered by `$sortField` / `$sortAsc` (a field that is no real column, no column of the list YAML and not its `defaultSort` field falls back to `id`)
 
 ## Searchable Columns Configuration
 
