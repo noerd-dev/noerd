@@ -22,7 +22,7 @@
                 <button
                     type="button"
                     class="text-black @if($align === 'right') ml-auto pr-2 @endif"
-                    wire:click="sortBy('{{ $field }}')"
+                    wire:click="sortBy({{ \Illuminate\Support\Js::from((string) $field) }})"
                 >
                     {{ __($label) }}
                 </button>
@@ -32,7 +32,7 @@
                         size="sm"
                         :icon="$sortAsc ? 'chevron-up' : 'chevron-down'"
                         type="button"
-                        wire:click="sortBy('{{ $field }}')"
+                        wire:click="sortBy({{ \Illuminate\Support\Js::from((string) $field) }})"
                         class="{{ $align === 'right' ? 'ml-2' : 'ml-auto' }} -my-2! h-5! w-5!"
                     />
                 @endif

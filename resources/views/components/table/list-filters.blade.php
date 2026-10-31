@@ -25,7 +25,7 @@
         <span class="max-w-48 truncate">{{ $filterChip['value'] }}</span>
         <button
             type="button"
-            wire:click="clearColumnFilter('{{ $filterChip['field'] }}')"
+            wire:click="clearColumnFilter({{ \Illuminate\Support\Js::from((string) $filterChip['field']) }})"
             title="{{ __('Clear filter') }}"
             class="rounded-full p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
         >

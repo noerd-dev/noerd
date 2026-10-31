@@ -7,9 +7,7 @@ namespace Noerd\Support;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Livewire\ComponentHook;
-use Livewire\Features\SupportEvents\SupportEvents;
 use Noerd\Traits\NoerdDetail;
-use Throwable;
 
 /**
  * Reusable base for "run after a detail component saved its record" hooks
@@ -36,14 +34,7 @@ abstract class DetailSaveHook extends ComponentHook
 
     public function call($method, $params, $returnEarly, $metadata, $componentContext): callable
     {
-        $effective = $method;
-        if ($method === '__dispatch') {
-            try {
-                $effective = SupportEvents::getListenerMethodName($this->component, $params[0] ?? '');
-            } catch (Throwable) {
-                $effective = $method;
-            }
-        }
+        $effective = LivewireAction::effectiveMethod($this->component, (string) $method, is_array($params) ? $params : []);
 
         // Captured BEFORE the action runs: a successful create sets $modelId,
         // so only the pre-store snapshot can tell create and update apart for

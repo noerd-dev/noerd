@@ -184,7 +184,7 @@
                                                         wire:key="row-{{ $listId }}-{{ $row['id'] ?? $key }}"
                                                         :class="{'bg-gray-100!': selectedRow == {{ $key }} }"
                                                         @click="selectedRow = '{{ $key }}'"
-                                                        wire:click="openListRow('{{ $row['id'] ?? '' }}')"
+                                                        wire:click="openListRow({{ \Illuminate\Support\Js::from((string) ($row['id'] ?? '')) }})"
                                                         class="group hover:bg-brand-bg cursor-pointer border border-black/10"
                                                     >
                                                         @if ($showLineNumbers)
@@ -205,7 +205,7 @@
                                                                     <input
                                                                         type="checkbox"
                                                                         wire:key="cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
-                                                                        wire:click.stop="toggleRecordSelection('{{ $row['id'] }}')"
+                                                                        wire:click.stop="toggleRecordSelection({{ \Illuminate\Support\Js::from((string) $row['id']) }})"
                                                                         @checked($rowChecked)
                                                                         class="text-brand-primary focus:ring-brand-border block h-4 w-4 cursor-pointer rounded border-gray-300"
                                                                     />
