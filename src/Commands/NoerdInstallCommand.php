@@ -246,7 +246,7 @@ class NoerdInstallCommand extends Command
     }
 
     /**
-     * Auto-assign all active apps to the default tenant (single-tenant mode).
+     * Auto-assign all active apps to the tenant the installation just created.
      */
     private function autoAssignAllApps(): void
     {

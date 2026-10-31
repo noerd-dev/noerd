@@ -32,52 +32,58 @@ final class DefaultCountries
         ['code' => 'US', 'de' => 'Vereinigte Staaten', 'en' => 'United States'],
     ];
 
+    /**
+     * Seeds the default countries of one tenant — in that tenant's context:
+     * install commands and the tenant hook call it without a signed-in user.
+     */
     public static function ensureForTenant(int $tenantId): void
     {
-        $collection = SetupCollection::withoutGlobalScopes()->firstOrCreate(
-            [
-                'tenant_id' => $tenantId,
-                'collection_key' => 'COUNTRIES',
-            ],
-            [
-                'name' => 'Countries',
-                'sort' => 0,
-            ],
-        );
-
-        $entries = SetupCollectionEntry::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
-            ->where('setup_collection_id', $collection->id)
-            ->get();
-
-        foreach (self::COUNTRIES as $sort => $country) {
-            $existing = $entries->first(function (SetupCollectionEntry $entry) use ($country): bool {
-                if (($entry->data['code'] ?? null) === $country['code']) {
-                    return true;
-                }
-
-                $names = (array) ($entry->data['name'] ?? []);
-
-                return in_array($country['en'], $names, true) || in_array($country['de'], $names, true);
-            });
-
-            if ($existing) {
-                if (($existing->data['code'] ?? null) !== $country['code']) {
-                    $existing->update(['data' => array_merge($existing->data ?? [], ['code' => $country['code']])]);
-                }
-
-                continue;
-            }
-
-            SetupCollectionEntry::withoutGlobalScopes()->create([
-                'tenant_id' => $tenantId,
-                'setup_collection_id' => $collection->id,
-                'data' => [
-                    'name' => ['de' => $country['de'], 'en' => $country['en']],
-                    'code' => $country['code'],
+        TenantContext::run($tenantId, function () use ($tenantId): void {
+            $collection = SetupCollection::withoutGlobalScopes()->firstOrCreate(
+                [
+                    'tenant_id' => $tenantId,
+                    'collection_key' => 'COUNTRIES',
                 ],
-                'sort' => $sort,
-            ]);
-        }
+                [
+                    'name' => 'Countries',
+                    'sort' => 0,
+                ],
+            );
+
+            $entries = SetupCollectionEntry::withoutGlobalScopes()
+                ->where('tenant_id', $tenantId)
+                ->where('setup_collection_id', $collection->id)
+                ->get();
+
+            foreach (self::COUNTRIES as $sort => $country) {
+                $existing = $entries->first(function (SetupCollectionEntry $entry) use ($country): bool {
+                    if (($entry->data['code'] ?? null) === $country['code']) {
+                        return true;
+                    }
+
+                    $names = (array) ($entry->data['name'] ?? []);
+
+                    return in_array($country['en'], $names, true) || in_array($country['de'], $names, true);
+                });
+
+                if ($existing) {
+                    if (($existing->data['code'] ?? null) !== $country['code']) {
+                        $existing->update(['data' => array_merge($existing->data ?? [], ['code' => $country['code']])]);
+                    }
+
+                    continue;
+                }
+
+                SetupCollectionEntry::withoutGlobalScopes()->create([
+                    'tenant_id' => $tenantId,
+                    'setup_collection_id' => $collection->id,
+                    'data' => [
+                        'name' => ['de' => $country['de'], 'en' => $country['en']],
+                        'code' => $country['code'],
+                    ],
+                    'sort' => $sort,
+                ]);
+            }
+        });
     }
 }

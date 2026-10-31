@@ -44,7 +44,7 @@ it('serves a named setup route to an admin and forbids a non-admin', function (s
     $parameters = match ($routeName) {
         'noerd.user.detail' => ['modelId' => $this->user->id],
         'noerd.tenant.detail' => ['modelId' => $this->tenant->id],
-        'noerd.setup-language.detail' => ['modelId' => SetupLanguage::where('code', 'en')->first()->id],
+        'noerd.setup-language.detail' => ['modelId' => SetupLanguage::query()->ofTenant($this->tenant->id)->where('code', 'en')->first()->id],
         'noerd.setup-collection.detail' => ['modelId' => SetupCollection::factory()->create([
             'tenant_id' => $this->tenant->id,
             'collection_key' => 'ZZ_ROUTE_COLLECTION',

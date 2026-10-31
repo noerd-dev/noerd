@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Livewire\Mechanisms\HandleRequests\EndpointResolver;
+use Noerd\Exceptions\MissingTenantContextException;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
@@ -160,12 +161,11 @@ describe('tenant scoping via the noerd guard', function (): void {
         expect($created->tenant_id)->toBe($tenantB->id);
     });
 
-    it('applies no tenant scope when no noerd user is authenticated', function (): void {
+    it('refuses a tenant-scoped query when no noerd user is authenticated', function (): void {
         Tenant::factory()->create();
         Tenant::factory()->create();
 
-        $tenantIds = SetupLanguage::query()->get()->pluck('tenant_id')->unique();
-        expect($tenantIds->count())->toBeGreaterThan(1);
+        expect(fn() => SetupLanguage::query()->get())->toThrow(MissingTenantContextException::class);
     });
 });
 

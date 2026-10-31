@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Support\TenantContext;
 use Noerd\Traits\BelongsToTenant;
 
 class SetupCollectionEntry extends Model
@@ -29,15 +30,21 @@ class SetupCollectionEntry extends Model
      */
     protected static function booted(): void
     {
-        // Apply field type conversion before saving
+        // Apply field type conversion before saving — in the entry's own tenant:
+        // the collection and the active languages are tenant-scoped, and a
+        // seeder or migration saves entries without a signed-in user.
         static::saving(function (SetupCollectionEntry $entry): void {
-            if ($entry->collection) {
-                $collectionKey = mb_strtolower($entry->collection->collection_key);
+            $convert = function () use ($entry): void {
+                if ($entry->collection) {
+                    $collectionKey = mb_strtolower($entry->collection->collection_key);
 
-                if ($entry->data && is_array($entry->data)) {
-                    $entry->data = SetupFieldTypeConverter::convertCollectionData($entry->data, $collectionKey);
+                    if ($entry->data && is_array($entry->data)) {
+                        $entry->data = SetupFieldTypeConverter::convertCollectionData($entry->data, $collectionKey);
+                    }
                 }
-            }
+            };
+
+            $entry->tenant_id ? TenantContext::run((int) $entry->tenant_id, $convert) : $convert();
         });
 
         // The picklist options built from these entries are memoized per

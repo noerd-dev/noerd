@@ -9,8 +9,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Exceptions;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Noerd\Exceptions\MissingTenantContextException;
 use Noerd\Models\NoerdUser;
@@ -26,7 +24,7 @@ uses(TestCase::class, RefreshDatabase::class);
 /*
  | A tenant is known without a signed-in user once a TenantContext is set:
  | queries are scoped to it, queued jobs inherit it, and where no tenant is
- | known at all `noerd.tenancy.missing_context` decides. Synthetic fixtures.
+ | known at all a query or a create throws. Synthetic fixtures.
  */
 
 class ZzTenantNote extends Model
@@ -64,7 +62,7 @@ beforeEach(function (): void {
     $this->tenantA = Tenant::factory()->create();
     $this->tenantB = Tenant::factory()->create();
 
-    ZzTenantNote::query()->insert([
+    ZzTenantNote::query()->acrossTenants()->insert([
         ['tenant_id' => $this->tenantA->id, 'title' => 'A'],
         ['tenant_id' => $this->tenantB->id, 'title' => 'B'],
     ]);
@@ -117,35 +115,7 @@ it('ends with the request', function (): void {
 });
 
 describe('missing context', function (): void {
-    it('stays unscoped by default', function (): void {
-        expect(zzTenantTitles())->toBe(['A', 'B']);
-    });
-
-    it('logs the call site once per model in audit mode', function (): void {
-        config(['noerd.tenancy.missing_context' => 'audit']);
-        Log::spy();
-
-        expect(zzTenantTitles())->toBe(['A', 'B']);
-        zzTenantTitles();
-
-        Log::shouldHaveReceived('warning')->once()->withArgs(
-            fn(string $message, array $context): bool => $context['model'] === ZzTenantNote::class
-                && str_contains((string) $context['caller'], 'TenantContextTest.php'),
-        );
-    });
-
-    it('returns no rows and reports in empty mode', function (): void {
-        config(['noerd.tenancy.missing_context' => 'empty']);
-        Exceptions::fake();
-
-        expect(zzTenantTitles())->toBe([]);
-
-        Exceptions::assertReported(MissingTenantContextException::class);
-    });
-
-    it('throws in throw mode, for queries and for records without a tenant', function (): void {
-        config(['noerd.tenancy.missing_context' => 'throw']);
-
+    it('throws for queries and for records without a tenant', function (): void {
         expect(fn() => zzTenantTitles())->toThrow(MissingTenantContextException::class)
             ->and(fn() => ZzTenantNote::query()->create(['title' => 'Orphan']))->toThrow(MissingTenantContextException::class);
 
@@ -154,9 +124,12 @@ describe('missing context', function (): void {
         expect($note->exists)->toBeTrue();
     });
 
-    it('sets up a new tenant in that tenant, also in throw mode', function (): void {
-        config(['noerd.tenancy.missing_context' => 'throw']);
+    it('reads every tenant only when the code says so', function (): void {
+        expect(ZzTenantNote::query()->acrossTenants()->orderBy('title')->pluck('title')->all())->toBe(['A', 'B'])
+            ->and(TenantContext::system(fn() => zzTenantTitles()))->toBe(['A', 'B']);
+    });
 
+    it('sets up a new tenant in that tenant', function (): void {
         $tenant = Tenant::factory()->create();
 
         expect(SetupLanguage::query()->ofTenant($tenant->id)->count())->toBeGreaterThan(0)

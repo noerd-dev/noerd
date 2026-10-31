@@ -20,10 +20,6 @@ uses(TestCase::class, RefreshDatabase::class);
  | user is never left with SETUP selected.
  */
 
-beforeEach(function (): void {
-    config()->set('noerd.features.multi_tenant', true);
-});
-
 it('redirects a guest to the login screen instead of forbidding them', function (): void {
     // The route stack redirects a guest at NoerdAuthenticate, so the middleware's
     // own guest branch is exercised directly.

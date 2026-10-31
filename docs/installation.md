@@ -116,9 +116,6 @@ itself. The brand palette is CSS-first, no `tailwind.config.js` is needed (see [
 
 `noerd:install` publishes `config/noerd.php`. Notable flags:
 
-- `features.multi_tenant` (`NOERD_MULTI_TENANT`) — tenant switcher and multi-tenant UI. Enabled
-  by default; `noerd:install` does not write this flag to `.env` — set `NOERD_MULTI_TENANT=false`
-  yourself to disable it
 - `features.new_tenant` (`NOERD_NEW_TENANT_FEATURE_ENABLED`) — lets admins create further tenants
   from the tenant switcher / quick menu
 - `features.currency` (`NOERD_CURRENCY_ENABLED`) — set to `false` to hide currency-related UI on

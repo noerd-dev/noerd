@@ -51,8 +51,8 @@ it('imports a YAML definition into the database for a specific tenant', function
     $this->artisan('noerd:setup-collections:import-yaml', ['--tenant-id' => $tenant->id])
         ->assertSuccessful();
 
-    expect(SetupCollectionDefinition::where('tenant_id', $tenant->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
-    expect(SetupCollection::where('tenant_id', $tenant->id)->where('collection_key', 'EXPENSE_CATEGORIES')->exists())->toBeTrue();
+    expect(SetupCollectionDefinition::query()->ofTenant($tenant->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
+    expect(SetupCollection::query()->ofTenant($tenant->id)->where('collection_key', 'EXPENSE_CATEGORIES')->exists())->toBeTrue();
 });
 
 it('imports for every tenant with --all-tenants', function (): void {
@@ -69,8 +69,8 @@ it('imports for every tenant with --all-tenants', function (): void {
     $this->artisan('noerd:setup-collections:import-yaml', ['--all-tenants' => true])
         ->assertSuccessful();
 
-    expect(SetupCollectionDefinition::where('tenant_id', $tenantA->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
-    expect(SetupCollectionDefinition::where('tenant_id', $tenantB->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
+    expect(SetupCollectionDefinition::query()->ofTenant($tenantA->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
+    expect(SetupCollectionDefinition::query()->ofTenant($tenantB->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
 });
 
 it('supports dry-run without writing', function (): void {
@@ -89,7 +89,7 @@ it('supports dry-run without writing', function (): void {
         '--dry-run' => true,
     ])->assertSuccessful();
 
-    expect(SetupCollectionDefinition::where('tenant_id', $tenant->id)->count())->toBe(0);
+    expect(SetupCollectionDefinition::query()->ofTenant($tenant->id)->count())->toBe(0);
 });
 
 it('deletes source YAML files after import with --delete flag', function (): void {
@@ -108,7 +108,7 @@ it('deletes source YAML files after import with --delete flag', function (): voi
     ])->assertSuccessful();
 
     expect(file_exists($this->absoluteYamlPath . '/expense_categories.yml'))->toBeFalse();
-    expect(SetupCollectionDefinition::where('tenant_id', $tenant->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
+    expect(SetupCollectionDefinition::query()->ofTenant($tenant->id)->where('filename', 'expense_categories')->exists())->toBeTrue();
 });
 
 it('exports database definitions to YAML files', function (): void {

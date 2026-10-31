@@ -73,7 +73,6 @@ new class extends Component {
 
     private function authorizeAccess(): void
     {
-        abort_unless(config('noerd.features.multi_tenant'), 404);
         abort_unless(NoerdAuth::user()?->isAdmin(), 403);
     }
 }; ?>

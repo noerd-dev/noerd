@@ -55,7 +55,7 @@ it('is idempotent and preserves tenant edits', function (): void {
         ->get();
 
     expect($entries)->toHaveCount(count(DefaultCountries::COUNTRIES));
-    expect($germany->refresh()->data['name']['de'])->toBe('BRD');
+    expect($germany->fresh()->data['name']['de'])->toBe('BRD');
 });
 
 it('backfills the code onto existing name-only entries instead of duplicating them', function (): void {

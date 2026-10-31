@@ -145,7 +145,7 @@ it('lets a super admin switch to a tenant it is no member of', function (): void
 });
 
 it('shows the switcher to a super admin of a single membership when more tenants exist', function (): void {
-    config(['noerd.features.multi_tenant' => true, 'noerd.features.new_tenant' => false]);
+    config(['noerd.features.new_tenant' => false]);
     $superAdmin = NoerdUser::factory()->create(['super_admin' => true]);
     $member = Tenant::factory()->create();
     Tenant::factory()->create();

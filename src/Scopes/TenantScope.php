@@ -7,9 +7,9 @@ namespace Noerd\Scopes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
+use Noerd\Exceptions\MissingTenantContextException;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Support\MissingTenantContext;
 use Noerd\Support\TenantContext;
 
 class TenantScope implements Scope
@@ -40,8 +40,10 @@ class TenantScope implements Scope
             return;
         }
 
-        // No user and no TenantContext (console, queue, public frontends):
-        // `noerd.tenancy.missing_context` decides.
-        MissingTenantContext::applyToQuery($builder, $model::class);
+        // No user and no TenantContext (console, queue, public frontends): a
+        // query without a tenant would see every tenant's rows — refused. The
+        // code names its tenant (TenantContext::run(), ofTenant()) or says
+        // "every tenant" (TenantContext::system(), acrossTenants()).
+        throw MissingTenantContextException::forQuery($model::class);
     }
 }

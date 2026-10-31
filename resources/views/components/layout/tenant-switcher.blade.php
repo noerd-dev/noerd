@@ -64,7 +64,6 @@ new class extends Component {
     $selectedTenantId = TenantHelper::getSelectedTenantId();
     $currentTenantName = $this->tenants->firstWhere('id', $selectedTenantId)?->name ?? __('Tenant');
     $canCreateTenant = NoerdAuth::user()->isAdmin()
-        && config('noerd.features.multi_tenant')
         && config('noerd.features.new_tenant');
 @endphp
 

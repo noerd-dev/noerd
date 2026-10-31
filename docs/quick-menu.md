@@ -129,5 +129,4 @@ See [Creating Modules](creating-modules.md) for the install-command context.
 - **Styling:** `<x-noerd::button variant="pill">` follows the active theme and brand — never
   hand-roll Tailwind button classes
 - **Tenant switcher:** the quick menu row also hosts the tenant switcher — shown while
-  `noerd.features.multi_tenant` is on and the user can access more than one tenant, or is an admin
-  with `noerd.features.new_tenant` enabled
+  the user can access more than one tenant, or is an admin with `noerd.features.new_tenant` enabled

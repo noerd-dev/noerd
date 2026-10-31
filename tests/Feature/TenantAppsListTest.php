@@ -171,9 +171,7 @@ describe('tenant admin', function (): void {
     });
 });
 
-it('toggleApp attaches an unassigned app and moves it between the sections', function (bool $multiTenant): void {
-    config(['noerd.features.multi_tenant' => $multiTenant]);
-
+it('toggleApp attaches an unassigned app and moves it between the sections', function (): void {
     $this->tenant->tenantApps()->attach($this->appA->id, ['sort_order' => 0]);
 
     $this->actingAs($this->admin);
@@ -187,7 +185,4 @@ it('toggleApp attaches an unassigned app and moves it between the sections', fun
     expect($this->tenant->tenantApps()->pluck('tenant_apps.id')->toArray())->toContain($this->appB->id)
         ->and($component->get('assignedApps'))->toHaveCount($assignedBefore + 1)
         ->and($component->get('availableApps'))->toHaveCount($availableBefore - 1);
-})->with([
-    'multi tenant' => [true],
-    'single tenant' => [false],
-]);
+});

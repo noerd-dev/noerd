@@ -54,7 +54,7 @@ trait TenantSingleton
     public static function forTenant(?int $tenantId = null): static
     {
         // The tenant a job or command entered first, then the selection of the
-        // signed-in user (which a single-tenant installation answers by itself).
+        // signed-in user.
         $tenantId ??= TenantContext::current() ?? TenantHelper::getSelectedTenantId();
 
         if ($tenantId === null) {

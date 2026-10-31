@@ -2,14 +2,7 @@
 
 use Livewire\Component;
 
-new class extends Component {
-    public function mount(): void
-    {
-        if (! config('noerd.features.multi_tenant')) {
-            abort(404);
-        }
-    }
-} ?>
+new class extends Component {} ?>
 
 <x-noerd::page>
     <x-slot:header>
