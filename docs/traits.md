@@ -269,7 +269,7 @@ component (its own, the included partials and the `<x-noerd::…>` components) i
 scope. A test reaches one through Livewire's invade helper:
 `\Livewire\invade($component->instance())->visibleRowIds()`. The remaining public non-actions —
 `listData()` and the trait-suffixed lifecycle hooks (`renderingNoerdList`, `queryStringNoerdPage`, …)
-— are refused for browser calls by `Noerd\Support\ServerOnlyMethodsHook` (see
+— are refused for browser calls by `Noerd\Livewire\Hooks\ServerOnlyMethodsHook` (see
 [Permissions → Server-only methods](permissions.md)).
 
 ## AdministersNoerdUsers (internal)

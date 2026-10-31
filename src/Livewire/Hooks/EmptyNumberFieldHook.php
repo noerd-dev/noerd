@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
-use Livewire\ComponentHook;
+use Noerd\Support\LayoutFields;
+use Noerd\Support\LivewireAction;
 use Noerd\Traits\NoerdPage;
 
 /**
@@ -15,16 +16,14 @@ use Noerd\Traits\NoerdPage;
  * store() and for any custom override alike, so a component never has to
  * normalise its numeric fields by hand.
  */
-final class EmptyNumberFieldHook extends ComponentHook
+final class EmptyNumberFieldHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdPage::class];
+
     public function call($method, $params, $returnEarly, $metadata, $componentContext): void
     {
         // An embedded detail saves through the storeDetail-{name} event.
         if (LivewireAction::effectiveMethod($this->component, (string) $method, is_array($params) ? $params : []) !== 'store') {
-            return;
-        }
-
-        if (! in_array(NoerdPage::class, class_uses_recursive($this->component), true)) {
             return;
         }
 

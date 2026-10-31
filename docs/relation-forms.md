@@ -117,14 +117,14 @@ component:
   `RelationFormSync::strip()`. Components with a hand-rolled store that
   mass-assigns `$this->detailData` directly must build their payload with
   `RelationFormSync::strip($modelClass, $this->detailData)`.
-- **Persistence** — `Noerd\Support\RelationFormPersistHook`, a global Livewire
+- **Persistence** — `Noerd\Livewire\Hooks\RelationFormPersistHook`, a global Livewire
   ComponentHook (registered in NoerdServiceProvider) that runs after every
   save action, whatever the component's `store()` does. It persists each form
   only when the ACTIVE layout (including a DB-driven layout override)
   renders the form's fields — a layout without them never overwrites the
   record with stale hydrated values — and rehydrates the form afterwards so
   the fields stay filled in the same response.
-- **`Noerd\Support\DetailSaveHook`** is the reusable base for "after a detail
+- **`Noerd\Livewire\Hooks\DetailSaveHook`** is the reusable base for "after a detail
   saved" hooks: save-action detection (including event-dispatched saves, which
   arrive as `__dispatch` and are mapped to their listener method), a
   validation-error guard (nothing is written back after failed validation), a

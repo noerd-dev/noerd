@@ -692,7 +692,7 @@ the property to `true` after persisting.
 
 ### What the Client May Change
 
-`Noerd\Support\ClientWriteGuardHook` guards the Livewire update
+`Noerd\Livewire\Hooks\ClientWriteGuardHook` guards the Livewire update
 channel of every `NoerdPage`/`NoerdDetail` component (`Noerd\Support\ClientWritablePaths` derives
 the rules from `$pageLayout`, a locked property):
 

@@ -301,7 +301,7 @@ it('writes the configured ShowFrom/ShowUntil columns into the list query', funct
 it('keeps the ShowFrom/ShowUntil column properties out of the client-writable surface', function (): void {
     $properties = ['showFromDateColumn', 'showUntilDateColumn'];
 
-    $hook = new \Noerd\Support\LockedPropertiesHook();
+    $hook = new \Noerd\Livewire\Hooks\LockedPropertiesHook();
     $hook->setComponent(new class {
         use NoerdList;
     });

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
-use Noerd\Support\LockedPropertiesHook;
+use Noerd\Livewire\Hooks\LockedPropertiesHook;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\NoerdList;
@@ -33,13 +33,19 @@ it('LockedPropertiesHook rejects client updates to identity/config properties', 
     expect(fn(): mixed => $hook->update('search', 'search', 'abc'))->not->toThrow(CannotUpdateLockedPropertyException::class);
 });
 
-it('LockedPropertiesHook leaves non-noerd components untouched', function (): void {
-    $hook = new LockedPropertiesHook();
-    $hook->setComponent(new class {});
+it('LockedPropertiesHook is skipped for non-noerd components', function (): void {
+    // The guard is scoped to the noerd traits: Livewire asks skip() right after
+    // setComponent() and never attaches the hook to a plain component.
+    $plain = new LockedPropertiesHook();
+    $plain->setComponent(new class {});
 
-    // No exception even for a protected name — the guard is scoped to noerd traits.
-    expect(fn(): mixed => $hook->update('listModel', 'listModel', 'Some\\Model'))
-        ->not->toThrow(CannotUpdateLockedPropertyException::class);
+    $list = new LockedPropertiesHook();
+    $list->setComponent(new class {
+        use NoerdList;
+    });
+
+    expect($plain->skip())->toBeTrue()
+        ->and($list->skip())->toBeFalse();
 });
 
 it('keeps finishStore and storeProcess out of the client-callable surface', function (): void {

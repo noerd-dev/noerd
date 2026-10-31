@@ -161,7 +161,7 @@ Some public properties of list/detail/page components decide WHICH model the gen
 WHICH class the object gates are checked against and WHICH YAML layout drives validation. They are
 established at mount — from the component's own declaration or the opener's arguments — and are
 mutated only server-side, so a client update to them is always tampering. The global
-`Noerd\Support\LockedPropertiesHook` vetoes that update path for every component using `NoerdList`
+`Noerd\Livewire\Hooks\LockedPropertiesHook` vetoes that update path for every component using `NoerdList`
 or `NoerdPage` (and therefore `NoerdDetail`).
 
 **Rejected on the client update path:**
@@ -202,7 +202,7 @@ and a component's own methods call is `protected` — `headerControls()`, `built
 `resolvePicklistOptions()`, the position-row helpers — which Blade reaches just the same (a view
 is rendered inside the component's scope) while Livewire refuses the browser call. A test that
 needs one of them goes through `\Livewire\invade($component->instance())->visibleRowIds()`.
-`Noerd\Support\ServerOnlyMethodsHook` covers only what has to stay public: `listData()` (the
+`Noerd\Livewire\Hooks\ServerOnlyMethodsHook` covers only what has to stay public: `listData()` (the
 modules declare their overrides public) and the trait-suffixed lifecycle hooks
 (`renderingNoerdList`, `queryStringNoerdPage`, …), which Livewire calls itself and whose names
 its own lifecycle guard does not know. A row click runs only a method listed in
@@ -220,7 +220,7 @@ are only accepted for columns of the list.
 ## Client-writable form paths
 
 Livewire lets the client update every public property it was sent. Beyond the locked properties
-above, `Noerd\Support\ClientWriteGuardHook` keeps the update channel of every `NoerdPage`
+above, `Noerd\Livewire\Hooks\ClientWriteGuardHook` keeps the update channel of every `NoerdPage`
 component away from what the form does not let the user edit: `readonly: true` fields and the
 unbound keys below a nested root such as `custom_attributes`. Such updates are reverted to the
 value the server rendered; `setFieldValue` refuses them as well. Inputs a Blade binds without a
