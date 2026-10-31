@@ -27,7 +27,9 @@ components under `tests/Feature/fixtures/components` (`noerd-test::theme-test`,
 receive a layout from the test instead of a shipped YAML. The package's own test trait is
 `Noerd\Tests\Traits\CreatesSetupUser` (`createUserWithSetupAccess()` — an admin user with a
 tenant, default languages and the `SETUP` app selected); it is the only trait under
-`tests/Traits/` and part of the public test API.
+`tests/Traits/` and, like `Noerd\Tests\ModuleTestCase` (see [A module's own Testbench
+suite](#a-modules-own-testbench-suite)), part of the public test API. The fixtures only the
+package suite itself uses live under `tests/Support/` and are not shipped.
 
 ### From a host project
 
@@ -56,52 +58,74 @@ Run them the same way: `php artisan test --compact app-modules/{module}/tests/..
 ## Module test setup
 
 Module tests run under the **host project's** test case, and every test file binds its own setup —
-there is no per-module `Pest.php`:
+there is no per-module `Pest.php`. The user comes from the global fixture helper: a user on a fresh
+tenant that runs the app, with that tenant and app selected and — in the `actingAs` variant —
+authenticated on the noerd guard:
 
 ```php
-uses(Tests\TestCase::class, RefreshDatabase::class, CreatesInventoryUser::class);
+uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    $this->user = $this->withInventoryModule();
-    $tenant = $this->user->tenants()->firstOrFail();
-    $this->user->update(['selected_tenant_id' => $tenant->id]);
-    $this->actingAs($this->user);
-    $this->tenantId = $tenant->id;
+    $this->user = actingAsNoerdUserForApp('INVENTORY');
+    $this->tenantId = $this->user->selected_tenant_id;
 });
 ```
 
-`Creates{Module}User` is the module's own trait in `tests/Traits/`. The module's
-`Noerd\{Module}\Tests\` PSR-4 entry sits in the production `autoload` block — a host never loads a
-dependency's `autoload-dev`. It builds a user whose tenant has the app — note the
-**uppercase** tenant-app name, which gates compare exactly:
+The `tenant_apps` row is created in its canonical shape when missing (name = **uppercase** key,
+which the gates compare exactly; route = lowercase key) and assigned through `Tenant::assignApp()`,
+so the `TenantAppAssigned` listeners of the installed modules run as they do when an installation
+assigns the app. `createNoerdUserForApp()` is the same fixture without authentication. Both take
+the tenant attributes, the profile (`Noerd\Enums\Profile::ReadOnly`, the key of a profile a module
+registers, or `null` for none) and attributes for a NEW `tenant_apps` row
+(`route`, `title`, …) as further arguments; `ensureTenantApp('MEDIA')` creates a further app row,
+which a multi-app tenant assigns with `$tenant->assignApp(...)`.
+
+A module trait under `tests/Traits/` holds only what is specific to the module — a seeded settings
+row, a second app the tenant needs, a domain record — and builds on the helper:
 
 ```php
-trait CreatesInventoryUser
+trait CreatesInventoryFixtures
 {
-    protected function withInventoryModule(): NoerdUser
+    protected function actingAsInventoryUser(): NoerdUser
     {
-        $user = NoerdUser::factory()->create();
-        $tenant = Tenant::factory()->create();
-        $user->tenants()->attach($tenant->id);
-
-        TenantHelper::setSelectedTenantId($tenant->id);
-        TenantHelper::setSelectedApp('INVENTORY');
-
-        $app = TenantApp::firstOrCreate(
-            ['name' => 'INVENTORY'],
-            [
-                'title' => 'Inventory',
-                'icon' => 'heroicon:outline:cube',
-                'route' => 'inventory',
-                'is_active' => true,
-            ],
-        );
-        $tenant->tenantApps()->syncWithoutDetaching([$app->id]);
+        $user = actingAsNoerdUserForApp('INVENTORY');
+        InventorySettings::factory()->create(['tenant_id' => $user->selected_tenant_id]);
 
         return $user;
     }
 }
 ```
+
+The module's `Noerd\{Module}\Tests\` PSR-4 entry sits in the production `autoload` block — a host
+never loads a dependency's `autoload-dev`.
+
+## A module's own Testbench suite
+
+A module that also tests standalone (its own CI, no host project) binds
+`Noerd\Tests\ModuleTestCase` instead of the host's test case. It is `Noerd\Tests\TestCase` — the
+core providers, the noerd guard, sqlite `:memory:`, the package linked into the skeleton — plus the
+module's providers, each module linked into the skeleton's `app-modules/` so `StaticConfigHelper`
+finds its YAML the way it does after `noerd:install-{module}`:
+
+```php
+namespace Noerd\Inventory\Tests;
+
+use Noerd\Inventory\Providers\InventoryServiceProvider;
+use Noerd\Tests\ModuleTestCase;
+
+abstract class TestCase extends ModuleTestCase
+{
+    protected array $moduleProviders = [InventoryServiceProvider::class];
+}
+```
+
+A module building on other modules lists their providers too (their modules are linked as well);
+environment overrides go into `defineEnvironment()` after `parent::defineEnvironment($app)`. Every
+test file binds `Noerd\Inventory\Tests\TestCase` itself with `uses()` — a host-root run loads the
+host's `Pest.php` instead of the module's — and the suite runs with `vendor/bin/pest` in the module
+root or `php artisan test --compact app-modules/inventory/tests` from a host, sequentially: the
+Testbench suites share one skeleton. The global helpers come with the test case; nothing has to be
+required.
 
 ## Tests prove mechanics, not configuration
 
@@ -147,13 +171,15 @@ related reaches a production request. New global helpers go into `tests/helpers.
 | `validDetailPayload(Model::class, array $overrides = [])` | Complete `detailData` array sourced from the model factory (`make()`), `id`/timestamps stripped, merged with overrides |
 | `requiredLayoutFields($component)` | The `detailData.*` names marked `required: true` in the component's live `pageLayout` (recurses into `type: block`) |
 | `registerTestLivewireRoute(string $uri, string $component, string $name)` | Registers a named `Route::livewire()` route inside a test and refreshes the name lookups |
+| `createNoerdUserForApp(string $appKey, array $tenantAttributes = [], BackedEnum\|string\|null $profile = null, array $appAttributes = [])` | The standard module fixture: a user on a fresh tenant that runs the app (row created in the canonical shape, assigned through `Tenant::assignApp()`), attached under the profile, tenant and app selected |
+| `actingAsNoerdUserForApp(...)` | The same fixture, authenticated on the noerd guard — the one-line `beforeEach` of a module test |
+| `ensureTenantApp(string $appKey, array $attributes = [])` | The `tenant_apps` row of a module key in its canonical shape, created when missing — for the further apps of a multi-app tenant |
 | `assertElementHasClasses()` / `assertNoElementHasClasses()` | DOM class assertions on rendered HTML |
-| `assertModuleDependenciesDeclared(string $moduleDir, array $allowedPackages = [])` | Fails when a module references another module's namespace without a `require` entry (see below) |
+| `assertModuleBoundary(string $moduleDir)` | The one boundary test of a module, driven by `composer.json` `extra.noerd.boundary` (see below) |
+| `assertModuleDependenciesDeclared(string $moduleDir, array $allowedPackages = [])` | Fails when a module references another module's namespace without a `require` entry |
+| `assertModuleDoesNotReference(string $moduleDir, array $forbidden)` | Fails when a namespace (or package) the module must never use appears in its files or in its `require` |
 | `assertModuleUpdateCommandPublishesConfigs(string $command, string $moduleDir, string $moduleKey)` | Standard proof for a `noerd:update-{module}` command: publishes every shipped YAML into `app-configs/{key}`, exits cleanly and `--force` restores a locally modified copy; the installed configs are snapshotted and restored |
-| `createNoerdUserWithProfile(?Profile $profile)` | A user attached to a fresh tenant under the given `Noerd\Enums\Profile` (or none), with that tenant selected — the fixture for profile and permission tests |
 | `zzNormalizeSpaces(string $value)` | Collapses every kind of space (ICU uses U+00A0 / U+202F around symbols and groups) to a plain one, so a formatting assertion reads like the screen |
-| `ensureZzSettingsProfilesTable()` | Creates the `zz_settings_profiles` fixture table when it does not exist yet |
-| `ZzSettingsProfile` (class) | The tenant-scoped Eloquent fixture model on that table — settings-page tests depend on no real domain model |
 
 ## Testing YAML-driven detail forms
 
@@ -219,21 +245,45 @@ it('opens the detail by route when the route exists', function (): void {
 The list dispatches the route together with the component as fallback; a list without a
 `$detailRoute` dispatches only `modalComponent` (see `NoerdListModalDispatchTest`).
 
-## Module dependency guard
+## Module boundary
 
-Every business module ships a `ModuleBoundaryTest` calling the global helper
-`assertModuleDependenciesDeclared(dirname(__DIR__, 2))` (from `tests/helpers.php`).
-It derives the known module namespaces from the sibling `app-modules/*/composer.json`
-files and fails when a namespace of another module appears anywhere in the module
-(src, resources, routes, database, config, app-configs **and tests**) without a
-matching `require`/`require-dev` entry. Documented exceptions (e.g. a
-`class_exists()`-guarded optional integration) are passed as the second argument:
+Every module ships one `ModuleBoundaryTest` — `noerd:make-module` generates it — calling the global
+helper `assertModuleBoundary()`:
 
 ```php
-assertModuleDependenciesDeclared(dirname(__DIR__, 2), ['vendor/optional-integration']);
+it('keeps its module boundary', function (): void {
+    assertModuleBoundary(dirname(__DIR__, 2));
+});
 ```
 
-Add a short comment above every allowance explaining why it is legitimate.
+The helper reads the module's `composer.json`. The dependency guard
+(`assertModuleDependenciesDeclared()`) derives the known module namespaces from the sibling
+`app-modules/*/composer.json` files and fails when a namespace of another module appears anywhere
+in the module (src, resources, routes, database, config, app-configs **and tests**) without a
+matching `require`/`require-dev` entry. What the module may reference without declaring it, and
+what it must never reference, is declared under `extra.noerd.boundary` — with the reason next to
+every allowance, since the test file no longer carries one:
+
+```json
+"extra": {
+    "noerd": {
+        "boundary": {
+            "forbidden": ["Noerd\\Party\\"],
+            "allowed": {
+                "nywerk/production-planning": "the parts export of the optional module is class_exists-guarded"
+            }
+        }
+    }
+}
+```
+
+`forbidden` (namespaces, or package names) is the hard boundary between modules that must never
+meet — `customer` and `party`, `booking-members` and `accounting`: `assertModuleDoesNotReference()`
+fails on any reference in the module's files, in PHP and in the escaped YAML form, and on a
+`require` of the package that ships the namespace. `allowed` lists the packages the dependency
+guard tolerates — a map with the reason as value, or a plain list. Both helpers can be called
+directly as well. The boundary test itself and the agent documentation under `resources/boost/` are
+skipped by both: a guideline states the rule and has to name what it forbids.
 
 ## Install and update commands
 

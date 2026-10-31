@@ -273,7 +273,13 @@ protected $fillable = ['name', 'email', 'phone'];
 
 ### Module Independence
 - Every module in `app-modules/` must be independent from other modules
-- Test traits (e.g., `CreatesInventoryUser`) belong in the module itself: `app-modules/{module}/tests/Traits/`
+- The user fixture of a module test is the core helper `actingAsNoerdUserForApp('{APP}')` /
+  `createNoerdUserForApp()` (tenant + user + the `tenant_apps` row assigned through
+  `Tenant::assignApp()`, tenant and app selected); a module trait under
+  `app-modules/{module}/tests/Traits/` holds only module-specific fixtures on top of it
+- Every module ships ONE boundary test, `assertModuleBoundary(dirname(__DIR__, 2))`
+  (`noerd:make-module` generates it); allowed packages (with their reason) and forbidden
+  namespaces are declared in `composer.json` under `extra.noerd.boundary`, never in the test
 - Seeders for module-specific data belong in the module: `app-modules/{module}/database/seeders/`
 - Migrations for module-specific tables belong in the module: `app-modules/{module}/database/migrations/`
 - No dependencies between optional modules (an optional module must never `use` classes, views or YAML of another optional module)
@@ -1446,7 +1452,10 @@ the noerd package (`tests/helpers.php`). They are deliberately NOT composer-auto
 functions must never load in a production request): suites binding `Noerd\Tests\TestCase` get them
 from that class, every other `tests/Pest.php` loads them once with `\Noerd\Tests\HelperLoader::load();`
 — never a hard-coded path and never an entry in the project's root `composer.json`. When adding a new
-global test helper, put it there (guarded with `function_exists`).
+global test helper, put it there (guarded with `function_exists`). The module fixture
+(`actingAsNoerdUserForApp()`), the boundary guard (`assertModuleBoundary()`) and the update-command
+proof (`assertModuleUpdateCommandPublishesConfigs()`) live there too; a module with a Testbench suite
+of its own binds `Noerd\Tests\ModuleTestCase` (`$moduleProviders`) instead of the host test case.
 
 **Store-SUCCESS tests** — submit a COMPLETE payload sourced from the model factory and override only
 the fields the test asserts on. Never hand-pick a minimal subset (it breaks the moment a new field

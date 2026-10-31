@@ -3,17 +3,22 @@
 # - demo/        -> read at runtime by noerd:demo (NoerdDemoCommand)
 # - dist/        -> the prebuilt frontend bundle published to public/vendor/noerd
 # - docs/        -> the Boost guideline and skills point agents at docs/*.md
-# - tests/TestCase.php, tests/HelperLoader.php, tests/helpers.php, tests/Traits/
+# - tests/TestCase.php, tests/ModuleTestCase.php, tests/HelperLoader.php,
+#   tests/helpers.php, tests/Traits/
 #                -> public test API for module developers
 #                   (`uses(Noerd\Tests\TestCase::class)` in every module test,
-#                    `Noerd\Tests\HelperLoader::load()` for suites that don't)
+#                    `Noerd\Tests\ModuleTestCase` for a module's own Testbench
+#                    suite, `Noerd\Tests\HelperLoader::load()` for suites that
+#                    bind another test case)
 /.github            export-ignore
 /tests/Commands     export-ignore
 /tests/Components   export-ignore
 /tests/Feature      export-ignore
 /tests/Helpers      export-ignore
 /tests/Middleware   export-ignore
+/tests/Support      export-ignore
 /tests/Unit         export-ignore
+/tests/js           export-ignore
 /tests/Pest.php     export-ignore
 /phpunit.xml        export-ignore
 /.phpunit.cache     export-ignore

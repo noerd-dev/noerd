@@ -109,11 +109,10 @@ describe('assertModuleDependenciesDeclared()', function (): void {
         zzWriteModuleSkeleton();
         File::put(zzModuleDir() . '/src/ZzUsesOther.php', "<?php\n\nuse Zz\\Other\\Gadget;\n");
 
-        // The report is a JSON payload, so the package name appears slash-escaped.
         expect(fn(): mixed => assertModuleDependenciesDeclared(zzModuleDir()))
             ->toThrow(AssertionFailedError::class, 'Undeclared module dependencies')
             ->and(fn(): mixed => assertModuleDependenciesDeclared(zzModuleDir()))
-            ->toThrow(AssertionFailedError::class, 'zz\/other');
+            ->toThrow(AssertionFailedError::class, '"zz/other"');
     });
 
     it('passes once the dependency is declared in composer.json', function (): void {

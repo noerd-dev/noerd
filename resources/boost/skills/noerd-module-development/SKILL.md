@@ -47,7 +47,7 @@ app-modules/{module}/
 ├── resources/views/components/      # {module}-dashboard.blade.php, *-list.blade.php, *-detail.blade.php, *-page.blade.php, *-modal.blade.php (flat)
 ├── routes/{module}-routes.php
 ├── src/{Commands,Models,Providers}/
-├── tests/                           # Pest, incl. tests/Traits
+├── tests/                           # Pest: Feature/ModuleBoundaryTest.php generated; fixtures via actingAsNoerdUserForApp()
 ├── AGENTS.md + CLAUDE.md            # contributor notes for the module
 └── composer.json
 ```
@@ -116,9 +116,13 @@ model, and read/write `$this->detailData['custom_attributes']['my_key']` in proj
 
 ## 6. Independence
 
-No `use` of another optional module's classes/views/YAML; tests, traits (`tests/Traits/`),
-factories, seeders and migrations live inside the module; no module-specific code in the host
-project's `DatabaseSeeder`. Models use `$guarded`, never `$fillable`.
+No `use` of another optional module's classes/views/YAML — guarded by the generated
+`tests/Feature/ModuleBoundaryTest.php` (`assertModuleBoundary(dirname(__DIR__, 2))`; a tolerated
+optional integration and the namespaces the module must never touch are declared in
+`composer.json` under `extra.noerd.boundary`, with the reason). Tests, traits (`tests/Traits/`,
+built on `actingAsNoerdUserForApp()`), factories, seeders and migrations live inside the module;
+no module-specific code in the host project's `DatabaseSeeder`. Models use `$guarded`, never
+`$fillable`.
 
 Amounts, numbers and dates are never hard-coded (`number_format(..., ',', '.')`, `€`, `d.m.Y`):
 backend UI → `CurrencyHelper::format()` / `FormatHelper::date()`; documents (PDF, receipt, customer

@@ -10,10 +10,11 @@ use Noerd\Helpers\AccessHelper;
 use Noerd\Middleware\ActionPermissionMiddleware;
 use Noerd\Models\NoerdUser;
 use Noerd\Services\ActionPermissionRegistry;
+use Noerd\Tests\Support\CreatesProfileUsers;
 use Noerd\Tests\TestCase;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class, CreatesProfileUsers::class);
 
 /*
  | Named action permissions: the registry catalogs what modules declare, the
@@ -22,7 +23,7 @@ uses(TestCase::class, RefreshDatabase::class);
  */
 
 it('allows an action with no gate defined for a regular user', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::User));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::User));
 
     expect(AccessHelper::canPerformAction('production_start_run'))->toBeTrue()
         ->and(AccessHelper::canPerformAction(null))->toBeTrue()
@@ -30,13 +31,13 @@ it('allows an action with no gate defined for a regular user', function (): void
 });
 
 it('denies an action for a READ_ONLY profile with no gate defined', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::ReadOnly));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::ReadOnly));
 
     expect(AccessHelper::canPerformAction('production_start_run'))->toBeFalse();
 });
 
 it('lets a defined action gate decide alone', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::User));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::User));
 
     Gate::define(
         AccessHelper::ACTION_GATE,
@@ -48,7 +49,7 @@ it('lets a defined action gate decide alone', function (): void {
 });
 
 it('passes the middleware when the action is allowed', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::User));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::User));
 
     $response = (new ActionPermissionMiddleware())->handle(
         Request::create('/zz-action', 'POST'),
@@ -60,7 +61,7 @@ it('passes the middleware when the action is allowed', function (): void {
 });
 
 it('aborts the middleware with 403 when the action is denied', function (): void {
-    $this->actingAs(createNoerdUserWithProfile(Profile::User));
+    $this->actingAs($this->createNoerdUserWithProfile(Profile::User));
 
     Gate::define(AccessHelper::ACTION_GATE, fn(?NoerdUser $user, string $actionKey): bool => false);
 
