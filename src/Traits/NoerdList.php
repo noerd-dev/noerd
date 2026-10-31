@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Traits;
 
+use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -895,6 +896,16 @@ trait NoerdList
     {
         $this->listFilters = session('listFilters', []);
 
+        // A header filter holds ONE value. The bucket may still carry an array
+        // for a column of this list (a multi-select of an earlier version, a
+        // seeded selection) — reduced to its first scalar here, so the select
+        // binds a value it can show; other lists' keys stay as they are.
+        foreach ($this->getAllowedListFilterColumns() as $column) {
+            if (array_key_exists($column, $this->listFilters) && is_array($this->listFilters[$column])) {
+                $this->listFilters[$column] = $this->scalarListFilterValue($this->listFilters[$column]) ?? '';
+            }
+        }
+
         foreach ($this->listFilterDefinitions() as $column => $definition) {
             if ($definition->defaultValue() !== null && ! array_key_exists($column, $this->listFilters)) {
                 $this->listFilters[$column] = $definition->defaultValue();
@@ -1001,12 +1012,13 @@ trait NoerdList
 
         foreach ($this->listFilters as $column => $value) {
             $column = (string) $column;
-            if ($value === null || $value === '' || $value === false || $value === []) {
+            $value = $this->scalarListFilterValue($value);
+            if ($value === null || $value === '') {
                 continue;
             }
 
             if (isset($definitions[$column])) {
-                $definitions[$column]->applyTo($query, (string) $value);
+                $definitions[$column]->applyTo($query, $value);
             } elseif (in_array($column, $allowed, true) && SchemaColumnCache::hasColumn($table, $column)) {
                 $query->where($query->qualifyColumn($column), $value);
             }
@@ -1277,6 +1289,35 @@ trait NoerdList
         }
 
         return $listeners;
+    }
+
+    /**
+     * The one value a header filter compares with: a scalar as string, an array
+     * (an older multi-select, a seeded list) as its first non-empty scalar,
+     * nothing for null, false, an empty array or an object.
+     */
+    private function scalarListFilterValue(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $scalar = $this->scalarListFilterValue($item);
+                if ($scalar !== null && $scalar !== '') {
+                    return $scalar;
+                }
+            }
+
+            return null;
+        }
+
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
+        if ($value === null || $value === false || ! is_scalar($value)) {
+            return null;
+        }
+
+        return (string) $value;
     }
 
     /**

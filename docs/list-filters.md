@@ -160,6 +160,8 @@ have them. A filter is declared in one of two places, and the two combine:
 2. **On the component** — a method `get{Name}ListFilter()` returning a `Noerd\Support\ListFilter`
    (or its array form), for a filter whose options or query need PHP
 
+A header filter holds ONE value. Should the session bucket still carry an array for a column of the list (a multi-select of an earlier version, a seeded selection), `loadListFilters()` reduces it to its first non-empty scalar and `applyListFilters()` never casts an array — the list renders, the first value filters.
+
 ### Filters in the list YAML
 
 ```yaml
