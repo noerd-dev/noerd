@@ -82,6 +82,24 @@ it('formats CSV values by column type', function (): void {
         ->and($list->format('=EVIL()', ['type' => 'currency']))->toBe("'=EVIL()");
 });
 
+it('writes the array-shaped cell types as their display text and keeps a JSON text column as JSON', function (): void {
+    $list = new class {
+        use NoerdList;
+
+        public function format(mixed $value, array $column): string
+        {
+            return $this->formatCsvValue($value, $column);
+        }
+    };
+
+    expect($list->format(['badge' => 'Open', 'text' => 'Alice'], ['type' => 'badge_with_text']))->toBe('Open Alice')
+        ->and($list->format(['prefix' => '↳', 'text' => 'Child'], ['type' => 'colored_text']))->toBe('↳ Child')
+        ->and($list->format(['de' => 'Haus', 'en' => 'House'], ['type' => 'customAttribute']))->toBe('House')
+        ->and($list->format(1, ['type' => 'inversebool']))->toBe('Yes')
+        ->and($list->format(['sap' => 'A-1'], ['type' => 'text']))->toBe('{"sap":"A-1"}')
+        ->and($list->format(['sap' => 'A-1'], []))->toBe('{"sap":"A-1"}');
+});
+
 it('neutralizes CSV formula-triggering values in the export', function (): void {
     $list = new class {
         use NoerdList;

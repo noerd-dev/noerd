@@ -55,10 +55,9 @@
                         @foreach ($table as $column)
                             <td class="{{ $alignClasses[$column['align'] ?? 'left'] ?? 'text-left' }} border-b border-gray-100 py-1 px-2 first:pl-4 last:pr-4 text-xs whitespace-nowrap text-gray-700">
                                 @php
-                                    $cellValue = $row[$column['field']] ?? null;
-                                    $isBadge = ($column['type'] ?? 'text') === 'badge';
-                                    $badgeValue = \Noerd\Support\ListCellFormatter::scalar($cellValue);
-                                    $badgeLabel = $isBadge ? \Noerd\Support\ListCellFormatter::badgeLabel($cellValue, $column['options'] ?? []) : $badgeValue;
+                                    $cellValue = data_get($row, $column['field'] ?? null);
+                                    $isBadge = in_array($column['type'] ?? 'text', ['badge', 'relationBadge'], true);
+                                    $cellText = \Noerd\Support\ListCellFormatter::format($cellValue, $column);
                                 @endphp
                                 @if ($minimalRendererView = \Noerd\Support\ListCellRenderer::viewFor($column))
                                     @include($minimalRendererView, \Noerd\Support\ListCellRenderer::data($cellValue, $row, $column))
@@ -70,13 +69,11 @@
                                         @include('noerd::components.list.preview', ['preview' => $minimalPreview, 'previewSize' => 'cell'])
                                     @endif
                                 @elseif ($isBadge)
-                                    @if ($badgeValue !== null && $badgeValue !== '')
-                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                                            {{ __($badgeLabel) }}
-                                        </span>
+                                    @if ($cellText !== '')
+                                        <x-noerd::badge size="xs">{{ $cellText }}</x-noerd::badge>
                                     @endif
                                 @else
-                                    {{ \Noerd\Support\ListCellFormatter::format($cellValue, $column) }}
+                                    {{ $cellText }}
                                 @endif
                             </td>
                         @endforeach

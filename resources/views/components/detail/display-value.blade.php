@@ -29,34 +29,17 @@
         default => 'text',
     };
 
-    // Option labels: a list of value/label rows (select) or a value => label
-    // map (picklist), translated like the control would render them.
-    $optionLabel = static function (mixed $value) use ($options, $field): string {
-        $rows = $options ?? ($field['options'] ?? []);
-
-        foreach ($rows as $key => $row) {
-            $rowValue = is_array($row) ? ($row['value'] ?? null) : $key;
-            $rowLabel = is_array($row) ? ($row['label'] ?? $rowValue) : $row;
-
-            if ((string) $rowValue === (string) $value) {
-                return __((string) $rowLabel);
-            }
-        }
-
-        return (string) $value;
-    };
-
+    // Written by the one list-cell formatter, so a value reads the same in a
+    // text-only row, a table cell and a CSV export. A select's value/label rows
+    // and a picklist's value => label map resolve to the translated label alike.
     $displayText = match ($format) {
-        'currency' => blank($displayValue) ? '' : \Noerd\Helpers\CurrencyHelper::format((float) $displayValue),
-        'number' => blank($displayValue) ? '' : \Noerd\Helpers\FormatHelper::number((float) $displayValue),
-        'boolean' => $displayValue ? __('Yes') : __('No'),
-        'select' => blank($displayValue) ? '' : $optionLabel($displayValue),
-        'date' => \Noerd\Helpers\FormatHelper::date($displayValue),
-        'datetime' => \Noerd\Helpers\FormatHelper::dateTime($displayValue),
-        'time' => \Noerd\Helpers\FormatHelper::time($displayValue),
-        default => is_array($displayValue)
-            ? implode(', ', array_filter($displayValue, fn($item): bool => is_scalar($item) && $item !== ''))
-            : (string) $displayValue,
+        'currency', 'number' => blank($displayValue) ? '' : \Noerd\Support\ListCellFormatter::format($displayValue, ['type' => $format]),
+        'boolean' => \Noerd\Support\ListCellFormatter::format($displayValue, ['type' => 'bool']),
+        'select' => blank($displayValue)
+            ? ''
+            : \Noerd\Support\ListCellFormatter::format($displayValue, ['type' => 'badge', 'options' => $options ?? ($field['options'] ?? [])]),
+        'date', 'datetime', 'time' => \Noerd\Support\ListCellFormatter::format($displayValue, ['type' => $format]),
+        default => \Noerd\Support\ListCellFormatter::text($displayValue),
     };
 @endphp
 

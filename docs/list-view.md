@@ -97,16 +97,21 @@ columns:
 
 ## Column Types
 
-A column type looks the same in every rendering mode: the table cell, the card grid and the widget
-list format `date`, `datetime`, `number` and `currency` through the same `FormatHelper` /
-`CurrencyHelper` calls (grid and widget via `Noerd\Support\ListCellFormatter`) and resolve `badge`
-labels the same way. The [CSV export](#csv-export) writes amounts without the currency symbol.
+A column type looks the same in every rendering mode: the table cell, the card grid, the widget
+list, the [CSV export](#csv-export) and the text-only detail theme all write a value through
+`Noerd\Support\ListCellFormatter::format($value, $column)` — dates and amounts in the reader's
+locale, a `badge` as its translated option label, a `relationBadge` as the related record's title,
+the array values of `colored_text` and `badge_with_text` as one readable line. Every pill is the
+`<x-noerd::badge>` component (`variant`: `neutral` by default, `primary`, `success`, `warning`,
+`danger`; `size="xs"` in the widget list) — a module never hand-rolls a pill or a per-type format.
+The CSV export writes amounts without the currency symbol.
 
 | Type | Description |
 |------|-------------|
 | `text` | Default. Standard text display |
 | `date` | Date in the user's locale (`03.09.2026` for `de-DE`, `09/03/2026` for `en-US`) via `FormatHelper::date()` |
 | `datetime` | Date + time in the user's locale (`03.09.2026 14:05` for `de-DE`, `09/03/2026 2:05 PM` for `en-US`), see [Currency, Numbers & Dates](formatting.md) |
+| `time` | Time of day in the user's locale (`14:05` for `de-DE`, `2:05 PM` for `en-US`) via `FormatHelper::time()` |
 | `number` | Right-aligned number in the user's locale, at most 2 decimals (`FormatHelper::number()`) |
 | `currency` | Right-aligned amount in the tenant currency, written in the user's locale (`Noerd\Helpers\CurrencyHelper::format()`) |
 | `id` | Clickable ID link |
@@ -766,10 +771,13 @@ protected function prepareCsvExport(): array
 - The file streams with a UTF-8 BOM and the delimiter of `FormatHelper::csvDelimiter()`
   (`noerd.format.csv_delimiter`, `;` by default — Excel-friendly); headers are the translated column
   labels; rows are read lazily in chunks
-- `formatCsvValue($value, $column)` formats each cell by column type (`bool` → Yes/No, `badge` →
-  the translated option label, dates in the user's locale, `currency` / `number` as a locale
-  decimal without symbol via `FormatHelper::decimal()`) and neutralises spreadsheet formulas (a text
-  value starting with `=`, `+`, `-`, `@`, tab or CR gets a leading `'`) — override it for custom formats
+- `formatCsvValue($value, $column)` writes each cell like the table shows it
+  (`Noerd\Support\ListCellFormatter`: `bool` → Yes/No, `badge` → the translated option label,
+  `relationBadge` → the related record's title, `colored_text` / `badge_with_text` → their text
+  line, dates in the user's locale) — except `currency` / `number`, which stay a locale decimal
+  without symbol (`FormatHelper::decimal()`), and a plain `text` column holding a JSON array, which
+  stays JSON; it neutralises spreadsheet formulas (a text value starting with `=`, `+`, `-`, `@`, tab
+  or CR gets a leading `'`) — override it for custom formats
 - `prepareExportRow($row)` is an optional per-row hook (e.g. to eager-compute accessors)
 - A screen that exports outside a list (a dedicated export page) streams its query in the same
   notation with `Noerd\Support\CsvListExporter::stream($query, $columns, $filename)` — never a

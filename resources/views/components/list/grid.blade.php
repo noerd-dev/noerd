@@ -55,10 +55,10 @@
                             }
                             continue;
                         }
-                        $isBadge = ($column['type'] ?? 'text') === 'badge';
-                        $text = $isBadge
-                            ? \Noerd\Support\ListCellFormatter::badgeLabel($value, $column['options'] ?? [])
-                            : \Noerd\Support\ListCellFormatter::format($value, $column);
+                        // The formatter writes every type as text — a translated badge label,
+                        // a relation title, the line of a colored_text or badge_with_text array.
+                        $isBadge = in_array($column['type'] ?? 'text', ['badge', 'relationBadge'], true);
+                        $text = \Noerd\Support\ListCellFormatter::format($value, $column);
                         if ($text === '') {
                             continue;
                         }
@@ -97,9 +97,7 @@
                         @if (isset($cell['view']))
                             <span class="text-sm text-gray-500">@include($cell['view'], $cell['data'])</span>
                         @elseif ($cell['isBadge'])
-                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                                {{ __($cell['text']) }}
-                            </span>
+                            <x-noerd::badge size="xs">{{ $cell['text'] }}</x-noerd::badge>
                         @elseif ($index === 0)
                             <span class="group-hover:text-brand-primary font-medium text-gray-900">
                                 {{ $cell['text'] }}
