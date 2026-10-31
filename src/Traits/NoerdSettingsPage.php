@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Traits;
 
 use Illuminate\Support\Str;
+use Noerd\Contracts\TenantSingletonContract;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
@@ -111,7 +112,11 @@ trait NoerdSettingsPage
             $tenantId = TenantHelper::getSelectedTenantId();
 
             foreach ($this->settingsModelMap() as $property => $modelClass) {
-                $model = $modelClass::firstOrNew(['tenant_id' => $tenantId]);
+                // A tenant singleton answers the row or its defaults; any other
+                // model is read as the plain tenant-keyed row.
+                $model = is_subclass_of($modelClass, TenantSingletonContract::class)
+                    ? $modelClass::forTenant($tenantId)
+                    : $modelClass::firstOrNew(['tenant_id' => $tenantId]);
 
                 $this->{$property} = collect($model->toArray())
                     ->except(['created_at', 'updated_at'])
@@ -145,7 +150,11 @@ trait NoerdSettingsPage
                 ->except(['id', 'tenant_id', 'created_at', 'updated_at'])
                 ->only($allowed);
 
-            $modelClass::updateOrCreate(['tenant_id' => $tenantId], $data->toArray());
+            if (is_subclass_of($modelClass, TenantSingletonContract::class)) {
+                $modelClass::updateForTenant($data->toArray(), $tenantId);
+            } else {
+                $modelClass::updateOrCreate(['tenant_id' => $tenantId], $data->toArray());
+            }
         }
     }
 

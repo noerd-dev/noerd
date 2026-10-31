@@ -49,9 +49,11 @@ final class ThemeHelper
 
         $fallback = self::configFallback();
 
+        // A tenant without a settings row answers an unsaved instance: the
+        // config decides both values then.
         return $memo[$tenantId] = [
-            'theme' => self::normalizeTheme($settings?->detail_theme ?? $fallback['theme']),
-            'enforced' => $settings !== null
+            'theme' => self::normalizeTheme($settings->detail_theme ?? $fallback['theme']),
+            'enforced' => $settings->exists
                 ? (bool) $settings->detail_theme_enforced
                 : $fallback['enforced'],
         ];

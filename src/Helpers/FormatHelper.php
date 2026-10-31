@@ -53,7 +53,7 @@ final class FormatHelper
      */
     public static function tenantLocale(?int $tenantId = null): string
     {
-        $settingsLocale = NoerdSettings::forTenant($tenantId)?->locale;
+        $settingsLocale = NoerdSettings::forTenant($tenantId)->locale;
         if (Locales::isSupported($settingsLocale)) {
             return Locales::normalize($settingsLocale);
         }

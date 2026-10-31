@@ -7,47 +7,44 @@ namespace Noerd\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Noerd\Contracts\TenantSingletonContract;
 use Noerd\Database\Factories\NoerdSettingsFactory;
 use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Helpers\ThemeHelper;
-use Noerd\Support\RequestState;
+use Noerd\Traits\TenantSingleton;
 
-class NoerdSettings extends Model
+class NoerdSettings extends Model implements TenantSingletonContract
 {
     use HasFactory;
+    use TenantSingleton {
+        forTenant as forTenantOrDefaults;
+    }
 
     protected $table = 'noerd_settings';
 
     protected $guarded = ['id'];
 
-
     /**
-     * The settings row of a tenant (defaults to the selected tenant), or null
-     * when the tenant has none yet or no tenant is selected.
+     * The settings of a tenant (defaults to the selected tenant). Unlike the
+     * trait's lookup this one never throws: the formatting and theme helpers
+     * run for guests too, and a page without any tenant gets an empty instance
+     * whose null attributes fall back to the config.
      */
-    public static function forTenant(?int $tenantId = null): ?self
+    public static function forTenant(?int $tenantId = null): static
     {
         $tenantId ??= TenantHelper::getSelectedTenantId();
 
         if ($tenantId === null) {
-            return null;
+            return static::query()->newModelInstance();
         }
 
-        // Request memo: currency, locale and theme are read for every cell of a
-        // list, so the row is fetched once per tenant (a missing row as null too).
-        $memo = &RequestState::bucket('noerd.settings');
-
-        if (array_key_exists($tenantId, $memo)) {
-            return $memo[$tenantId];
-        }
-
-        return $memo[$tenantId] = static::query()->where('tenant_id', $tenantId)->first();
+        return static::forTenantOrDefaults($tenantId);
     }
 
     public static function clearCache(): void
     {
-        RequestState::forget('noerd.settings');
+        static::forgetTenantSingletons();
     }
 
     public function tenant(): BelongsTo
