@@ -52,6 +52,12 @@ class NoerdInstallCommand extends Command
         }
     }
 
+    /** The package root — the "module" these commands install. */
+    protected function getModuleRoot(): string
+    {
+        return dirname(__DIR__, 2);
+    }
+
     /**
      * Ask whether to install the demo app and run noerd:demo on confirmation.
      * Non-interactive runs never install the demo implicitly — a CI/deploy

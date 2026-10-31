@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Traits;
+namespace Noerd\Commands\Concerns;
 
 use Illuminate\Console\Command;
 use Noerd\Support\ModuleInstallContext;

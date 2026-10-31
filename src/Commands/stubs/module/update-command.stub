@@ -6,12 +6,7 @@ namespace Noerd\{{ModuleName}}\Commands;
 
 class {{ModuleName}}UpdateCommand extends {{ModuleName}}InstallCommand
 {
-    protected $signature = 'noerd:update-{{module-name}} {--force : Overwrite existing files without asking}';
+    protected $signature = 'noerd:update-{{module-name}}';
 
     protected $description = 'Update {{ModuleName}} YAML configuration files';
-
-    public function handle(): int
-    {
-        return $this->runModuleUpdate();
-    }
 }

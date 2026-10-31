@@ -189,7 +189,7 @@ public function tableFilters(): array
 
 ## PublishesAuditMigration (Artisan commands)
 
-`Noerd\Traits\PublishesAuditMigration` is for install/update commands of modules that use `owen-it/laravel-auditing`. `publishAuditingMigrationIfNeeded(): void` checks `database_path('migrations')` for an existing `*_create_audits_table.php` and the database for an existing `audits` table (a project that squashed its migrations into a schema dump has the table but no file); when neither exists it runs `vendor:publish` with `--provider=OwenIt\Auditing\AuditingServiceProvider --tag=migrations` and reports the result on the command output. Re-running is a no-op. The screen behind those records is the [Activity Log modal](audit-log.md).
+`Noerd\Commands\Concerns\PublishesAuditMigration` is for install/update commands of modules that use `owen-it/laravel-auditing`. `publishAuditingMigrationIfNeeded(): void` checks `database_path('migrations')` for an existing `*_create_audits_table.php` and the database for an existing `audits` table (a project that squashed its migrations into a schema dump has the table but no file); when neither exists it runs `vendor:publish` with `--provider=OwenIt\Auditing\AuditingServiceProvider --tag=migrations` and reports the result on the command output. Re-running is a no-op. The screen behind those records is the [Activity Log modal](audit-log.md).
 
 ```php
 class MyModuleInstallCommand extends Command
@@ -207,11 +207,14 @@ class MyModuleInstallCommand extends Command
 
 ## InstallsNoerdModule / HasModuleInstallation (install commands)
 
-The traits behind every `noerd:install-{module}` / `noerd:update-{module}` command — covered in
-full in [creating-modules.md](creating-modules.md). `InstallsNoerdModule` is the contract of every
-module (a support module uses it directly and implements only `getModuleName()`);
-`HasModuleInstallation` builds on it for a tenant app and adds the abstract getters
-`getModuleKey()`, `getDefaultAppTitle()`, `getAppIcon()`, `getAppRoute()`, `getSourceDir()`.
+The traits behind every `noerd:install-{module}` / `noerd:update-{module}` command, both in
+`Noerd\Commands\Concerns` — covered in full in [creating-modules.md](creating-modules.md).
+`InstallsNoerdModule` is the contract of every module (a support module uses it directly and
+implements only `getModuleName()`); `HasModuleInstallation` builds on it for a tenant app and adds
+the abstract getters `getModuleKey()`, `getAppIcon()`, `getAppRoute()`, `getSourceDir()`
+(`getDefaultAppTitle()` defaults to the module name). Both provide `handle()` — the installation,
+or the update for a command named `noerd:update-…` — and declare the shared options `--force` and
+`--migrate` (a tenant app also `--build` and `--scaffold`) on a signature that lacks them.
 
 | Method | Description |
 |--------|-------------|

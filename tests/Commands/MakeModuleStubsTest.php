@@ -129,11 +129,15 @@ it('registers the chosen heroicon and app title through the install command', fu
     $content = ($this->renderStub)('install-command.stub');
 
     // A module ships no icon file: the tenant app icon is a heroicon (PHP-escaped title).
+    // The command declares only its signature and the getters: handle() and the
+    // shared options (--force, --migrate, --build, --scaffold) come from the trait.
     expect($content)
         ->toContain("return 'heroicon:outline:cube';")
         ->toContain("return 'Zz Widget\\'s Shop';")
         ->toContain("return 'zz-widget';")
-        ->toContain('{--scaffold')
+        ->toContain("protected \$signature = 'noerd:install-zz-widget';")
+        ->not->toContain('function handle(')
+        ->not->toContain('{--')
         ->not->toContain('icons.app');
 });
 
@@ -155,11 +159,13 @@ it('generates only a de.json translation with English-text keys', function (): v
 it('generates an update command that runs the idempotent module update', function (): void {
     $content = ($this->renderStub)('update-command.stub');
 
+    // The subclass carries only its signature: the trait's handle() picks the
+    // update flow from the `noerd:update-` name.
     expect($content)
         ->toContain('class ZzWidgetUpdateCommand extends ZzWidgetInstallCommand')
-        ->toContain("'noerd:update-zz-widget")
-        ->toContain('return $this->runModuleUpdate();')
-        ->not->toContain('runModuleInstallation');
+        ->toContain("protected \$signature = 'noerd:update-zz-widget';")
+        ->not->toContain('function handle(')
+        ->not->toContain('runModule');
 });
 
 it('registers install and update command in the service provider', function (): void {

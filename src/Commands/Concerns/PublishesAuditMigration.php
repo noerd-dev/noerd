@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Traits;
+namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
-use Noerd\Commands\Concerns\GuardsPublishTargets;
 use Throwable;
 
 trait PublishesAuditMigration

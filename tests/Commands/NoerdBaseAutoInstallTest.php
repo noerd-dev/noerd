@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\RequiresNoerdInstallation;
 
 uses(TestCase::class);
 

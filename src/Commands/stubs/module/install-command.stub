@@ -5,24 +5,15 @@ declare(strict_types=1);
 namespace Noerd\{{ModuleName}}\Commands;
 
 use Illuminate\Console\Command;
-use Noerd\Traits\HasModuleInstallation;
+use Noerd\Commands\Concerns\HasModuleInstallation;
 
 class {{ModuleName}}InstallCommand extends Command
 {
     use HasModuleInstallation;
 
-    protected $signature = 'noerd:install-{{module-name}}
-                            {--force : Overwrite existing files without asking}
-                            {--migrate : Run migrations without asking (required to migrate in non-interactive runs)}
-                            {--build : Run npm build without asking (required to build in non-interactive runs)}
-                            {--scaffold : Silent post-scaffold run (noerd:make-app) — only the tenant assignment is asked}';
+    protected $signature = 'noerd:install-{{module-name}}';
 
     protected $description = 'Install {{ModuleName}} module content and navigation';
-
-    public function handle(): int
-    {
-        return $this->runModuleInstallation();
-    }
 
     protected function getModuleName(): string
     {

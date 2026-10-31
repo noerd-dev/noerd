@@ -5,9 +5,9 @@ declare(strict_types=1);
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\File;
+use Noerd\Commands\Concerns\InstallsNoerdModule;
 use Noerd\Support\ModuleInstallContext;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\InstallsNoerdModule;
 
 uses(TestCase::class);
 

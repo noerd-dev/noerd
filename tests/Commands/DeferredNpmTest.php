@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
+use Noerd\Commands\Concerns\HasModuleInstallation;
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Commands\Concerns\RunsNpmBuild;
 use Noerd\Support\ModuleInstallContext;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\HasModuleInstallation;
-use Noerd\Traits\RequiresNoerdInstallation;
 
 uses(TestCase::class);
 

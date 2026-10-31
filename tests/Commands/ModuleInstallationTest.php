@@ -6,10 +6,10 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Noerd\Commands\Concerns\HasModuleInstallation;
+use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
-use Noerd\Traits\HasModuleInstallation;
-use Noerd\Traits\RequiresNoerdInstallation;
 use Symfony\Component\Yaml\Yaml;
 
 uses(TestCase::class);
