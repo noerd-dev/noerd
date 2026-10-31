@@ -158,7 +158,9 @@ related reaches a production request. New global helpers go into `tests/helpers.
 ## Testing YAML-driven detail forms
 
 `NoerdDetail::validateFromLayout()` turns every `required: true` field into a Laravel `required`
-rule. Nothing else in the YAML drives validation.
+rule and adds the rules of the field type (`email`, `numeric`, `date`, the select's options, the
+varchar length — see [Field Types](field-types.md#validation)). A factory payload therefore has to
+produce values of the field types: an option of every inline select, a valid email.
 
 **Store success** — submit a complete factory payload and override only what the test asserts:
 

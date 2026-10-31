@@ -1385,7 +1385,12 @@ test. A test that asserts the current content of a real YAML config is wrong by 
 ### Testing YAML-Driven Detail Forms
 Detail components (`*-detail`) build their validation rules at runtime from the detail YAML:
 `NoerdDetail::validateFromLayout()` turns every field marked `required: true` into a Laravel
-`required` rule (recursing into `type: block`). Nothing else in the YAML drives validation.
+`required` rule (recursing into `type: block`) and adds the rules of the field TYPE (`email`,
+`numeric` for number/currency, `date`, `boolean`, a select's inline options — the stored value
+included —, `string|max:{varchar length}`), or the field's `validation:` list instead. Readonly and
+text-only (`display`) fields keep only `required`; a field the form does not show (`show: false`,
+missing `viewExists`, false `showIf`) is not validated (`Support\FieldRules`, `FieldVisibility`).
+A factory payload must therefore produce values of the field types (a select option, a valid email).
 
 **These `required:` flags are configuration and can be changed arbitrarily per installation, so a
 test must never assume a specific field is — or is not — required.** Two global helpers support this:

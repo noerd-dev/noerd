@@ -12,11 +12,15 @@ use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Support\ClientWritablePaths;
 use Noerd\Support\ComputedFields;
+use Noerd\Support\FieldRules;
+use Noerd\Support\FieldVisibility;
 use Noerd\Support\LayoutDefaults;
 use Noerd\Support\LayoutFields;
 use Noerd\Support\RelationFormSync;
+use Noerd\Support\SchemaColumnCache;
 use ReflectionMethod;
 use ReflectionNamedType;
+use Throwable;
 
 /**
  * Trait for `*-detail` components: the model form on top of the NoerdPage base.
@@ -38,6 +42,9 @@ trait NoerdDetail
      * purpose: a computed value is never input, so no store path may persist it.
      */
     public array $computedValues = [];
+
+    /** The persisted record, loaded once per validation for the select rules. */
+    private Model|false|null $validationRecord = null;
 
     public function mount(): void
     {
@@ -111,6 +118,7 @@ trait NoerdDetail
     public function validateFromLayout(): void
     {
         $rules = [];
+        $this->validationRecord = null;
         $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
 
         $messages = [];
@@ -520,13 +528,40 @@ trait NoerdDetail
     /**
      * Extract validation rules from the field layout (recursing into blocks).
      */
-    protected function extractRulesFromFields(array $fields, array &$rules): void
+    /**
+     * The rules of every shown field (recursing into blocks): `required` from the
+     * YAML, the type rules of FieldRules otherwise. A field the form does not show
+     * (`show: false`, a missing `viewExists`, a false `showIf`) is not validated.
+     *
+     * @param  array<int, mixed>  $fields
+     * @param  array<string, array<int, mixed>>  $rules
+     */
+    protected function extractRulesFromFields(array $fields, array &$rules, ?string $inheritedTheme = null): void
     {
-        LayoutFields::walk($fields, function (array $field) use (&$rules): void {
-            if (isset($field['name']) && ($field['required'] ?? false) && ! ComputedFields::isComputed($field)) {
-                $rules[$field['name']] = ['required'];
+        $inheritedTheme ??= is_string($this->pageLayout['theme'] ?? null) ? $this->pageLayout['theme'] : null;
+
+        foreach ($fields as $field) {
+            if (! is_array($field) || ! FieldVisibility::visibleOn($field, $this)) {
+                continue;
             }
-        });
+
+            if (($field['type'] ?? null) === 'block') {
+                $blockTheme = is_string($field['theme'] ?? null) ? $field['theme'] : $inheritedTheme;
+                $this->extractRulesFromFields($field['fields'] ?? [], $rules, $blockTheme);
+
+                continue;
+            }
+
+            if (! is_string($field['name'] ?? null) || ComputedFields::isComputed($field)) {
+                continue;
+            }
+
+            $fieldRules = FieldRules::for($field, $this->validationColumns(), $this->storedValue($field['name']), $inheritedTheme);
+
+            if ($fieldRules !== []) {
+                $rules[$field['name']] = $fieldRules;
+            }
+        }
     }
 
     /**
@@ -538,5 +573,44 @@ trait NoerdDetail
         return $this->pageGetListeners() + [
             'storeDetail-' . $this->componentName() => 'storeFromHost',
         ];
+    }
+
+    /**
+     * Schema columns of the detail model's table — the varchar lengths of the
+     * text rules. Empty without a model or table.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function validationColumns(): array
+    {
+        if (! isset($this->detailModel) || ! is_string($this->detailModel) || ! class_exists($this->detailModel)) {
+            return [];
+        }
+
+        try {
+            return SchemaColumnCache::columns((new $this->detailModel())->getTable());
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * The value the persisted record holds for a `detailData.{column}` field —
+     * a select keeps accepting it although it is no option (anymore).
+     */
+    private function storedValue(string $fieldName): mixed
+    {
+        if (! str_starts_with($fieldName, 'detailData.') || ! $this->modelId || ! isset($this->detailModel)) {
+            return null;
+        }
+
+        $column = Str::after($fieldName, 'detailData.');
+        if (str_contains($column, '.')) {
+            return null;
+        }
+
+        $this->validationRecord ??= $this->detailModel::find($this->modelId) ?? false;
+
+        return $this->validationRecord === false ? null : $this->validationRecord->getRawOriginal($column);
     }
 }
