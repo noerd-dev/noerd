@@ -61,6 +61,8 @@ new class extends Component {
 - Custom `mount()` starts with `$this->initDetail()`; custom `store()` ends with
   `$this->storeProcess($model)`; custom `delete()` ends with
   `$this->closeModalProcess($this->getListComponent())`.
+- Records never deleted from the screen: `protected bool $deletable = false;` — delete button,
+  shortcut and `delete()` disappear at once. Never an empty `delete()` override.
 - A value derived from the loaded record goes into `protected function detailLoaded(Model $model): void`
   (relations via `protected array $detailWith = [...]`) — never re-find the record in `mount()`.
   Date defaults are YAML (`default: today`, `default: '+14 days'`), a preselected relation needs no

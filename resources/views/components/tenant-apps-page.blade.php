@@ -14,15 +14,11 @@ new class extends Component {
     public function mount(): void
     {
         $this->authorizeAdmin();
-
         $this->loadApps();
     }
 
     public function toggleApp(int $appId): void
     {
-        // Assigning and removing apps is an installation decision: an app may read
-        // across tenants or cost money, so a tenant admin only orders and hides
-        // the apps a super admin gave their tenant.
         abort_unless($this->canAssignApps(), 403);
 
         $tenant = TenantHelper::getSelectedTenant();
@@ -44,8 +40,6 @@ new class extends Component {
         $tenant = TenantHelper::getSelectedTenant();
         $apps = $tenant->tenantApps()->get();
 
-        // One transaction: an interrupted reorder must not leave duplicate
-        // sort_order values behind.
         DB::transaction(function () use ($tenant, $apps, $appId, $newPosition): void {
             $loop = 0;
             foreach ($apps as $app) {

@@ -46,7 +46,7 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   and lists narrowed by a parent record (a route only with `rewriteUrl: false`). **A list row click
   ALWAYS opens its record by route** (`$detailRoute` + `$detailComponent`) — never override
   `listAction()` to open something without a URL; read-only data still gets its own `*-detail`
-  (`readonly: true` fields, no-op `store()`/`delete()`, related rows via `lists:`). Always keep the
+  (`readonly: true` fields, no-op `store()`, `protected bool $deletable = false;`, related rows via `lists:`). Always keep the
   component as fallback (`route:` + `modalComponent:`, `newRoute:` + `newComponent:`;
   `Noerd::modalFor($route, $component, $args)` is the canonical PHP shape). Reviewer's tests: *does the
   address bar point at the record after the click?* and *does the URL show the same thing in a fresh tab?*
@@ -228,7 +228,9 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   it, never a shared partial named `*-detail.blade.php`.
 - Deviating logic overrides the method: a custom `mount()` starts with `$this->initDetail()`, a custom
   `store()` ends with `$this->storeProcess($model)`, a custom `delete()` with
-  `$this->closeModalProcess($this->getListComponent())`.
+  `$this->closeModalProcess($this->getListComponent())`. A screen whose records are never deleted
+  declares `protected bool $deletable = false;` (button, shortcut and `delete()` disappear at once) —
+  never an empty `delete()` override, never a YAML key.
 - Values derived from the loaded record are read in `protected function detailLoaded(Model $model): void`
   (runs with `$detailData` filled, for an existing record — eager-loaded with `protected array $detailWith`
   — and the fresh model of a new one), NEVER by re-finding the record in `mount()`. A preselected

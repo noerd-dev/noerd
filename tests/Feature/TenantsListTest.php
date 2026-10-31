@@ -66,6 +66,17 @@ it('updates the tenant name through the detail', function (): void {
     expect($this->tenant->fresh()->name)->toBe('Renamed Tenant');
 });
 
+it('never deletes the tenant through the detail', function (): void {
+    $this->actingAs($this->admin);
+
+    Livewire::test('noerd::tenant-detail', ['modelId' => (string) $this->tenant->id])
+        ->assertSee('ctrl+enter', false)
+        ->assertDontSee('ctrl+backspace', false)
+        ->call('delete');
+
+    expect(Tenant::find($this->tenant->id))->not->toBeNull();
+});
+
 it('rejects a too short tenant name', function (): void {
     $this->actingAs($this->admin);
 

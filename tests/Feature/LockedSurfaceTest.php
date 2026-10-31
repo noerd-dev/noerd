@@ -33,6 +33,18 @@ it('LockedPropertiesHook rejects client updates to identity/config properties', 
     expect(fn(): mixed => $hook->update('search', 'search', 'abc'))->not->toThrow(CannotUpdateLockedPropertyException::class);
 });
 
+it('LockedPropertiesHook never lets the client switch deletion back on', function (): void {
+    $hook = new LockedPropertiesHook();
+    $hook->setComponent(new class {
+        use NoerdDetail;
+    });
+
+    expect(fn(): mixed => $hook->update('deletable', 'deletable', true))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+    expect(fn(): mixed => $hook->mount(['deletable' => true]))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+});
+
 it('LockedPropertiesHook is skipped for non-noerd components', function (): void {
     // The guard is scoped to the noerd traits: Livewire asks skip() right after
     // setComponent() and never attaches the hook to a plain component.

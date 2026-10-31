@@ -12,6 +12,11 @@ new class extends Component {
 
     public $detailModel = Tenant::class;
 
+    /**
+     * Tenants are never deleted from this screen.
+     */
+    protected bool $deletable = false;
+
     public function mount(): void
     {
         if (! $this->modelId) {
@@ -55,15 +60,6 @@ new class extends Component {
         $tenant->save();
 
         $this->storeProcess($tenant);
-    }
-
-    /**
-     * Deliberate no-op override: NoerdPage::delete() would remove the tenant
-     * record, and the page shortcut (ctrl+backspace) resolves delete() via
-     * method_exists. Tenants are never deleted from this screen.
-     */
-    public function delete(): void
-    {
     }
 } ?>
 

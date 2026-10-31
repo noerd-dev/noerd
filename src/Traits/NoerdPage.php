@@ -196,8 +196,20 @@ trait NoerdPage
         return AccessHelper::canCreateObject($this->detailModel ?? null);
     }
 
+    /**
+     * A component whose records are never deleted from its screen declares
+     * `protected bool $deletable = false;` — the delete button, the delete
+     * shortcut and delete() all ask this method, so the flag closes every path
+     * whatever the object permissions say. Like $detailModel, the property is
+     * deliberately NOT declared on the trait (PHP forbids redeclaring a trait
+     * property with a different default).
+     */
     public function canDeleteObject(): bool
     {
+        if (($this->deletable ?? true) === false) {
+            return false;
+        }
+
         return AccessHelper::canDeleteObject($this->detailModel ?? null);
     }
 

@@ -76,6 +76,9 @@ final class LockedPropertiesHook extends NoerdComponentHook
         'disableModal',
         // The URL alias of $modelId (queryStringNoerdPage()).
         'detailPrimary',
+        // Declared protected by convention (NoerdPage::canDeleteObject()) —
+        // listed so a public declaration cannot be switched back on.
+        'deletable',
     ];
 
     /**
@@ -110,6 +113,8 @@ final class LockedPropertiesHook extends NoerdComponentHook
         'listViewApp',
         // Set by EmbeddedDetailHostHook from the rendering page.
         'hostId',
+        // A component that refuses deletion declares it; no caller re-enables it.
+        'deletable',
     ];
 
     /**
