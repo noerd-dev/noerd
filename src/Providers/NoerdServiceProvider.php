@@ -24,6 +24,7 @@ use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
 use Noerd\Commands\ExportSetupCollectionDefinitionsCommand;
 use Noerd\Commands\ImportSetupCollectionDefinitionsCommand;
+use Noerd\Commands\LintCommand;
 use Noerd\Commands\MakeAdminUserCommand;
 use Noerd\Commands\MakeAppCommand;
 use Noerd\Commands\MakeCollectionCommand;
@@ -377,6 +378,7 @@ class NoerdServiceProvider extends ServiceProvider
                 PromoteAdminCommand::class,
                 SuperAdminCommand::class,
                 NoerdInfoCommand::class,
+                LintCommand::class,
                 NoerdInstallCommand::class,
                 NoerdUpdateCommand::class,
                 NoerdUpdateAllCommand::class,
