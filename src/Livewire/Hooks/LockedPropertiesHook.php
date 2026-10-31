@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
-use Livewire\ComponentHook;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\NoerdPage;
@@ -22,8 +21,10 @@ use Noerd\Traits\NoerdPage;
  * per-component defaults) and cannot carry a trait-level attribute. Mount and
  * server-side writes are untouched — only the client update path is vetoed.
  */
-final class LockedPropertiesHook extends ComponentHook
+final class LockedPropertiesHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdList::class, NoerdPage::class];
+
     /**
      * @var array<int, string>
      */
@@ -113,10 +114,6 @@ final class LockedPropertiesHook extends ComponentHook
      */
     public function mount($params, $parent = null, $attributes = null): void
     {
-        if (! $this->guardsComponent()) {
-            return;
-        }
-
         foreach (self::MOUNT_PROTECTED as $property) {
             if (array_key_exists($property, $params)) {
                 throw new CannotUpdateLockedPropertyException($property);
@@ -126,22 +123,8 @@ final class LockedPropertiesHook extends ComponentHook
 
     public function update($propertyName, $fullPath, $newValue): void
     {
-        if (! in_array($propertyName, self::PROTECTED_PROPERTIES, true)) {
-            return;
-        }
-
-        if ($this->guardsComponent()) {
+        if (in_array($propertyName, self::PROTECTED_PROPERTIES, true)) {
             throw new CannotUpdateLockedPropertyException($propertyName);
         }
-    }
-
-    /**
-     * Whether the current component is one this hook protects.
-     */
-    private function guardsComponent(): bool
-    {
-        $traits = class_uses_recursive($this->component);
-
-        return in_array(NoerdList::class, $traits, true) || in_array(NoerdPage::class, $traits, true);
     }
 }

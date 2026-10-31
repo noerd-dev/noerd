@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
-use Livewire\ComponentHook;
 use Noerd\Helpers\AccessHelper;
+use Noerd\Support\LivewireAction;
 use Noerd\Traits\NoerdPage;
 use Noerd\Traits\NoerdPositionRow;
 
@@ -24,8 +24,10 @@ use Noerd\Traits\NoerdPositionRow;
  * the same trigger as this hook, so $returnEarly() cannot stop it: a denied
  * event-triggered save or delete aborts the request instead.
  */
-final class WriteGuardHook extends ComponentHook
+final class WriteGuardHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdPage::class, NoerdPositionRow::class];
+
     public function call($method, $params, $returnEarly, $metadata, $componentContext): void
     {
         $effective = LivewireAction::effectiveMethod($this->component, (string) $method, is_array($params) ? $params : []);
@@ -34,7 +36,7 @@ final class WriteGuardHook extends ComponentHook
             return;
         }
 
-        if ($this->denies($effective) !== true) {
+        if (! $this->denies($effective)) {
             return;
         }
 
@@ -46,14 +48,11 @@ final class WriteGuardHook extends ComponentHook
     }
 
     /**
-     * Whether the current user may NOT run $method; null when this hook does not
-     * guard the component.
+     * Whether the current user may NOT run $method on this component.
      */
-    private function denies(string $method): ?bool
+    private function denies(string $method): bool
     {
-        $traits = class_uses_recursive($this->component);
-
-        if (in_array(NoerdPage::class, $traits, true)) {
+        if ($this->uses(NoerdPage::class)) {
             return $method === 'store'
                 ? ! $this->component->canSaveObject()
                 : ! $this->component->canDeleteObject();
@@ -61,12 +60,8 @@ final class WriteGuardHook extends ComponentHook
 
         // A position row writes and deletes a row of its document: both are a
         // write of the position's model.
-        if (in_array(NoerdPositionRow::class, $traits, true)) {
-            $position = $this->component->position ?? null;
+        $position = $this->component->position ?? null;
 
-            return is_object($position) && ! AccessHelper::canWriteObject($position::class);
-        }
-
-        return null;
+        return is_object($position) && ! AccessHelper::canWriteObject($position::class);
     }
 }

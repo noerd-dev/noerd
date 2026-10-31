@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
 use Closure;
 use Illuminate\Support\Arr;
 
 use function Livewire\before;
 
-use Livewire\ComponentHook;
 use Livewire\ComponentHookRegistry;
+use Noerd\Support\ClientWritablePaths;
 use Noerd\Traits\NoerdPage;
 
 /**
@@ -27,8 +27,10 @@ use Noerd\Traits\NoerdPage;
  * hooks — they never see the discarded value. Server-side writes (mount,
  * actions, select handlers) are untouched: they never pass the update channel.
  */
-final class ClientWriteGuardHook extends ComponentHook
+final class ClientWriteGuardHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdPage::class];
+
     private ?ClientWritablePaths $paths = null;
 
     /** @var array<string, array<mixed>> */
@@ -37,6 +39,7 @@ final class ClientWriteGuardHook extends ComponentHook
     public static function provide(): void
     {
         before('update', function (object $component, string $fullPath, mixed ...$rest): ?Closure {
+            // A component this hook skipped has no instance here — nothing to guard.
             $hook = ComponentHookRegistry::getHook($component, self::class);
 
             return $hook instanceof self ? $hook->guard($fullPath) : null;
@@ -45,10 +48,6 @@ final class ClientWriteGuardHook extends ComponentHook
 
     public function hydrate(mixed $memo = null): void
     {
-        if (! in_array(NoerdPage::class, class_uses_recursive($this->component), true)) {
-            return;
-        }
-
         $paths = ClientWritablePaths::forComponent($this->component);
 
         foreach ($paths->properties() as $property) {

@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
-use Livewire\ComponentHook;
 use Livewire\Exceptions\MethodNotFoundException;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\NoerdList;
@@ -20,8 +19,10 @@ use Noerd\Traits\NoerdPage;
  * Livewire only offers public methods as actions, and a view is rendered inside
  * the component's scope, so Blade reaches a protected method just the same.
  */
-final class ServerOnlyMethodsHook extends ComponentHook
+final class ServerOnlyMethodsHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdList::class, NoerdPage::class];
+
     /**
      * @var array<class-string, list<string>>
      */
@@ -47,10 +48,8 @@ final class ServerOnlyMethodsHook extends ComponentHook
             return;
         }
 
-        $traits = class_uses_recursive($this->component);
-
         foreach (self::METHODS as $trait => $methods) {
-            if (in_array($trait, $traits, true) && in_array($method, $methods, true)) {
+            if (in_array($method, $methods, true) && $this->uses($trait)) {
                 throw new MethodNotFoundException($method);
             }
         }

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
-use Livewire\ComponentHook;
+use Noerd\Support\LivewireAction;
 use Noerd\Traits\NoerdDetail;
 
 /**
@@ -26,8 +26,10 @@ use Noerd\Traits\NoerdDetail;
  * - store() early-returns for save-denied users while finish callbacks still
  *   run — the create/write ability is therefore re-checked here.
  */
-abstract class DetailSaveHook extends ComponentHook
+abstract class DetailSaveHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdDetail::class];
+
     private const SAVE_ACTIONS = ['store', 'save', 'update'];
 
     abstract protected function afterSave(Component $component, Model $record): void;
@@ -47,10 +49,6 @@ abstract class DetailSaveHook extends ComponentHook
             }
 
             $component = $this->component;
-
-            if (! in_array(NoerdDetail::class, class_uses_recursive($component), true)) {
-                return;
-            }
 
             if (! isset($component->detailModel) || ! $component->modelId) {
                 return;

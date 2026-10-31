@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
-use Livewire\ComponentHook;
 use Noerd\Traits\NoerdPage;
 
 /**
@@ -15,14 +14,16 @@ use Noerd\Traits\NoerdPage;
  * save on each other's command and adopt each other's record. The events carry
  * the host's Livewire id, and both sides ignore an event of another host.
  */
-final class EmbeddedDetailHostHook extends ComponentHook
+final class EmbeddedDetailHostHook extends NoerdComponentHook
 {
+    protected const TRAITS = [NoerdPage::class];
+
     /**
      * @param  array<string, mixed>  $params
      */
     public function mount($params, $parent = null, $attributes = null): void
     {
-        if (! is_object($parent) || ! self::usesNoerdPage($this->component) || ! self::usesNoerdPage($parent)) {
+        if (! is_object($parent) || ! in_array(NoerdPage::class, self::componentTraits($parent), true)) {
             return;
         }
 
@@ -31,10 +32,5 @@ final class EmbeddedDetailHostHook extends ComponentHook
         }
 
         $this->component->hostId = $parent->getId();
-    }
-
-    private static function usesNoerdPage(object $component): bool
-    {
-        return in_array(NoerdPage::class, class_uses_recursive($component), true);
     }
 }

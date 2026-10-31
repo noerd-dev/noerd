@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Livewire\Hooks;
 
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
+use Noerd\Support\RelationFormSync;
 
 /**
  * Persists declared relation forms (DeclaresRelationForms) after every detail
@@ -29,6 +30,7 @@ final class RelationFormPersistHook extends DetailSaveHook
             }
 
             $data = $component->detailData[$key] ?? null;
+
             if (! is_array($data)) {
                 continue;
             }

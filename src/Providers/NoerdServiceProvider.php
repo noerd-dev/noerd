@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Octane\Events\RequestReceived;
-use Livewire\ComponentHookRegistry;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
 use Noerd\Commands\ExportSetupCollectionDefinitionsCommand;
@@ -53,6 +52,7 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Listeners\RecordLogin;
+use Noerd\Livewire\Hooks\NoerdHooks;
 use Noerd\Middleware\ActionPermissionMiddleware;
 use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
@@ -87,26 +87,17 @@ use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Services\TopBarRegistry;
-use Noerd\Support\ClientWriteGuardHook;
-use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
-use Noerd\Support\EmbeddedDetailHostHook;
-use Noerd\Support\EmptyNumberFieldHook;
 use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Support\LayoutState;
 use Noerd\Support\ListColumnIntrospection;
-use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\ModelMethodColumns;
-use Noerd\Support\QuickCreateExitHook;
-use Noerd\Support\RelationFormPersistHook;
 use Noerd\Support\RequestState;
 use Noerd\Support\SchemaColumnCache;
-use Noerd\Support\ServerOnlyMethodsHook;
 use Noerd\Support\SetupCollectionDefinitionImport;
 use Noerd\Support\TenantContext;
 use Noerd\Support\ThemeContext;
-use Noerd\Support\WriteGuardHook;
 use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
@@ -128,19 +119,10 @@ class NoerdServiceProvider extends ServiceProvider
 
         $this->registerNoerdGuard();
 
-        // Register the quick-create exit hook in the register phase: Livewire wires
+        // The component hooks are registered in the register phase: Livewire wires
         // its ComponentHookRegistry during its own boot(), so a boot()-phase
-        // registration here could land too late. The register phase of all providers
-        // runs before any boot(), and the static call needs no container binding.
-        ComponentHookRegistry::register(QuickCreateExitHook::class);
-        ComponentHookRegistry::register(RelationFormPersistHook::class);
-        ComponentHookRegistry::register(LockedPropertiesHook::class);
-        ComponentHookRegistry::register(ClientWriteGuardHook::class);
-        ComponentHookRegistry::register(WriteGuardHook::class);
-        ComponentHookRegistry::register(ServerOnlyMethodsHook::class);
-        ComponentHookRegistry::register(EmbeddedDetailHostHook::class);
-        ComponentHookRegistry::register(EmptyNumberFieldHook::class);
-        ComponentHookRegistry::register(ComponentAccessHook::class);
+        // registration here could land too late.
+        NoerdHooks::register();
 
         $this->app->singleton(ActionPermissionRegistry::class);
         $this->app->singleton(ProfileRegistry::class);
