@@ -69,7 +69,11 @@ app-modules/{module}/
   dependency and assigned along), `ensureModuleSetup()` (setup navigation, quick-menu button,
   widget, seeds — idempotent, runs on install AND update). No own `publishConfig()`, copy loop,
   migration prompt or `exec('composer …')`.
-- Register both in the ServiceProvider inside `if ($this->app->runningInConsole())`.
+- Register both in the service provider's `$commands` property. The provider extends
+  `Noerd\Providers\NoerdModuleServiceProvider`: `$moduleKey` loads migrations, views, the `{key}::`
+  Livewire namespace, translations and `routes/{key}-routes.php`; `$configs` merges + publishes
+  `config/{name}.php`; `registerModule()` / `bootModule()` hold the module's own code;
+  `relationFields()` / `fieldTypes()` / `picklists()` feed the registries. No `addLocation()`.
 - The tenant app name stored in `tenant_apps` is the UPPERCASE module key (`INVENTORY`) — gates
   and test traits must match it exactly.
 

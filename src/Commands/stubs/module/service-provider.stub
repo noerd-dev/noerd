@@ -4,26 +4,23 @@ declare(strict_types=1);
 
 namespace Noerd\{{ModuleName}}\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Livewire\Livewire;
 use Noerd\{{ModuleName}}\Commands\{{ModuleName}}InstallCommand;
 use Noerd\{{ModuleName}}\Commands\{{ModuleName}}UpdateCommand;
+use Noerd\Providers\NoerdModuleServiceProvider;
 
-class {{ModuleName}}ServiceProvider extends ServiceProvider
+/**
+ * Migrations, views, the `{{module-name}}::` Livewire namespace, translations and
+ * routes/{{module-name}}-routes.php are loaded by the base class from the module
+ * key. Add bindings in registerModule(), everything else in bootModule(), and
+ * relation field types, field types and picklist providers through the
+ * declarative hooks (relationFields(), fieldTypes(), picklists()).
+ */
+class {{ModuleName}}ServiceProvider extends NoerdModuleServiceProvider
 {
-    public function boot(): void
-    {
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-        $this->loadViewsFrom(__DIR__ . '/../../resources/views', '{{module-name}}');
-        Livewire::addNamespace('{{module-name}}', viewPath: __DIR__ . '/../../resources/views/components');
-        $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/{{module-name}}-routes.php');
+    protected string $moduleKey = '{{module-name}}';
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                {{ModuleName}}InstallCommand::class,
-                {{ModuleName}}UpdateCommand::class,
-            ]);
-        }
-    }
+    protected array $commands = [
+        {{ModuleName}}InstallCommand::class,
+        {{ModuleName}}UpdateCommand::class,
+    ];
 }

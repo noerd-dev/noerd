@@ -71,11 +71,64 @@ it and stays re-runnable.
   `autoload` block, not in `autoload-dev`: Composer only dumps the dev autoload of the ROOT package,
   so a host would never find the module's test traits (`tests/Traits/`) otherwise. The command also
   adds `noerd/{module}` to the project's root `composer.json`.
+- **Service provider**: `src/Providers/{Module}ServiceProvider.php` extends
+  `Noerd\Providers\NoerdModuleServiceProvider` and declares `protected string $moduleKey` plus
+  `protected array $commands` — see [The service provider](#the-service-provider).
 - **Agent guidelines**: `resources/boost/guidelines/core.blade.php`, `AGENTS.md` and `CLAUDE.md`
   (see [AI Agents](ai-agents.md)).
 
 Run `composer update noerd/{module-name}` again after editing the module's `composer.json` — a
 plain `dump-autoload` does not refresh the package metadata Composer cached at install time.
+
+### The service provider
+
+A module's plumbing follows one layout, so the provider derives it from the module key and the
+module root (the directory holding `composer.json`, found from the provider's own location in
+`src/Providers/`) instead of repeating it:
+
+```php
+use Noerd\Providers\NoerdModuleServiceProvider;
+use Noerd\Support\RelationFieldDefinition;
+
+class InventoryServiceProvider extends NoerdModuleServiceProvider
+{
+    protected string $moduleKey = 'inventory';
+
+    protected array $commands = [InventoryInstallCommand::class, InventoryUpdateCommand::class];
+
+    protected array $configs = ['inventory'];   // merges config/inventory.php, publishes it as `inventory-config`
+
+    protected function registerModule(): void
+    {
+        $this->app->singleton(StockService::class);
+    }
+
+    protected function bootModule(): void
+    {
+        Event::listen(TenantAppAssigned::class, EnsureWarehouseOnAppAssignment::class);
+    }
+
+    protected function relationFields(): array
+    {
+        return [
+            'inventoryItemRelation' => RelationFieldDefinition::model(
+                listComponent: 'inventory::items-list',
+                detailRoute: 'inventory.item.detail',
+                modelClass: Item::class,
+            ),
+        ];
+    }
+}
+```
+
+| Declared | Loaded by the base class |
+|----------|--------------------------|
+| `$moduleKey` | `database/migrations/`, `resources/views/` as the `{key}::` view namespace, `resources/views/components/` as the `{key}::` Livewire namespace (never a bare `addLocation()` — two modules may ship a `settings-page`), `resources/lang/` (JSON and the `{key}::` PHP namespace), `routes/{key}-routes.php` — each only when it exists |
+| `$commands` | Registered on the console only |
+| `$configs` | `config/{name}.php` merged in `register()` as `config('{name}')` and published under the tag `{key}-config` |
+| `relationFields()` / `fieldTypes()` / `picklists()` | Registered on the `RelationFieldRegistry`, `FieldTypeRegistry` and `PicklistRegistry` |
+| `registerModule()` / `bootModule()` | The module's own bindings and boot logic |
+| `routeFiles()` / `moduleRoot()` | Overridable for a module with several route files or a provider that lives elsewhere |
 
 ## Adding resources
 
@@ -172,8 +225,8 @@ class InventoryInstallCommand extends Command
 Nothing migrates or builds implicitly: in a non-interactive run (CI, deploy) the migration and the
 build are skipped unless the command declares and receives `--migrate` / `--build`.
 
-Register both commands in the module's ServiceProvider inside
-`if ($this->app->runningInConsole()) { $this->commands([...]); }`.
+Register both commands in the module's service provider — the `$commands` property of
+`NoerdModuleServiceProvider` (see [The service provider](#the-service-provider)).
 See [Reusable Traits](traits.md) for the traits and [Artisan Commands](artisan-commands.md)
 for `noerd:update-all`.
 
