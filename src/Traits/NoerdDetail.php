@@ -109,49 +109,6 @@ trait NoerdDetail
         $this->syncEmbeddedDetailData();
     }
 
-    /**
-     * Validate using rules from pageLayout YAML configuration.
-     * Fields with 'required: true' will be validated as required. Declared
-     * relation forms additionally contribute their validateUsing() rules —
-     * applied exactly when the form carries data and would be persisted.
-     */
-    public function validateFromLayout(): void
-    {
-        $rules = [];
-        $this->validationRecord = null;
-        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
-
-        $messages = [];
-        if (isset($this->detailModel)) {
-            foreach (RelationFormSync::forms($this->detailModel) as $key => $definition) {
-                if ($definition->rules === []) {
-                    continue;
-                }
-
-                if (! RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
-                    continue;
-                }
-
-                $data = $this->detailData[$key] ?? null;
-                if (! is_array($data) || ! RelationFormSync::hasFormData($definition, $data)) {
-                    continue;
-                }
-
-                foreach ($definition->rules as $field => $fieldRules) {
-                    $rules['detailData.' . $key . '.' . $field] = $fieldRules;
-                }
-
-                foreach ($definition->messages as $messageKey => $message) {
-                    $messages['detailData.' . $key . '.' . $messageKey] = $message;
-                }
-            }
-        }
-
-        if (! empty($rules)) {
-            $this->validate($rules, $messages);
-        }
-    }
-
     #[On('setFieldValue')]
     public function setFieldValue(string $field, mixed $value, ?string $relationTitle = null, ?string $owner = null): void
     {
@@ -206,6 +163,49 @@ trait NoerdDetail
         $this->computeComputedFields();
     }
 
+    /**
+     * Validate using rules from pageLayout YAML configuration.
+     * Fields with 'required: true' will be validated as required. Declared
+     * relation forms additionally contribute their validateUsing() rules —
+     * applied exactly when the form carries data and would be persisted.
+     */
+    protected function validateFromLayout(): void
+    {
+        $rules = [];
+        $this->validationRecord = null;
+        $this->extractRulesFromFields($this->pageLayout['fields'] ?? [], $rules);
+
+        $messages = [];
+        if (isset($this->detailModel)) {
+            foreach (RelationFormSync::forms($this->detailModel) as $key => $definition) {
+                if ($definition->rules === []) {
+                    continue;
+                }
+
+                if (! RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
+                    continue;
+                }
+
+                $data = $this->detailData[$key] ?? null;
+                if (! is_array($data) || ! RelationFormSync::hasFormData($definition, $data)) {
+                    continue;
+                }
+
+                foreach ($definition->rules as $field => $fieldRules) {
+                    $rules['detailData.' . $key . '.' . $field] = $fieldRules;
+                }
+
+                foreach ($definition->messages as $messageKey => $message) {
+                    $messages['detailData.' . $key . '.' . $messageKey] = $message;
+                }
+            }
+        }
+
+        if (! empty($rules)) {
+            $this->validate($rules, $messages);
+        }
+    }
+
     protected function resolvePicklistOptions(string $picklistField): array
     {
         // $picklistField is a public method name from the field YAML, but this is
@@ -247,25 +247,6 @@ trait NoerdDetail
         $this->storeProcess($model);
 
         $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id, host: $this->hostId);
-    }
-
-    /**
-     * Whether a client-supplied method name is a genuine picklist options
-     * provider: public, argument-free and returning an array.
-     */
-    protected function isPicklistOptionsProvider(string $method): bool
-    {
-        if (! method_exists($this, $method)) {
-            return false;
-        }
-
-        $reflection = new ReflectionMethod($this, $method);
-        $returnType = $reflection->getReturnType();
-
-        return $reflection->isPublic()
-            && $reflection->getNumberOfRequiredParameters() === 0
-            && $returnType instanceof ReflectionNamedType
-            && $returnType->getName() === 'array';
     }
 
     /**
@@ -342,29 +323,6 @@ trait NoerdDetail
     }
 
     /**
-     * Top-level detailData keys a field layout binds (recursing into blocks).
-     *
-     * @param  array<int, array<string, mixed>>  $fields
-     * @return array<int, string>
-     */
-    protected function writableKeysFromFields(array $fields): array
-    {
-        $keys = [];
-        LayoutFields::walk($fields, function (array $field) use (&$keys): void {
-            if (ComputedFields::isComputed($field)) {
-                return;
-            }
-
-            $name = $field['name'] ?? null;
-            if (is_string($name) && str_starts_with($name, 'detailData.')) {
-                $keys[] = Str::before(Str::after($name, 'detailData.'), '.');
-            }
-        });
-
-        return array_values(array_unique($keys));
-    }
-
-    /**
      * Dispatch the embedded form-state sync to the hosting page. Kept separate so
      * components with their own updatedDetailData() hook can still trigger it.
      */
@@ -383,146 +341,6 @@ trait NoerdDetail
     protected function syncPayload(): array
     {
         return $this->detailData;
-    }
-
-    protected function mountDetailComponent(Model $model, string $modelClass): void
-    {
-        if (! $this->loadDetailModel($model, $modelClass)) {
-            return;
-        }
-
-        // Hand-built page components (`*-page`) ship no detail YAML — they define
-        // their layout in the component itself (pages use the NoerdPage trait and
-        // pages/{name}.yml). Only a getDetailComponent() override pointing at a
-        // `*-detail` opts back into YAML.
-        $detailComponent = $this->getDetailComponent();
-        if (! Str::endsWith($detailComponent, '-page')) {
-            $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
-        }
-
-        $this->applyLayoutDefaults();
-        $this->ensureCustomAttributesArray();
-        $this->ensureRelationFormsHydrated();
-    }
-
-    /**
-     * Compute the computed fields of the layout for the persisted record. Runs
-     * before every render (a saved record or a changed related record shows
-     * fresh values) and costs nothing for layouts without one. The fields are
-     * re-bound to `computedValues.{key}` and shown as text
-     * (ComputedFields::prepareLayout()) — idempotent, so custom mount()s that
-     * replace $pageLayout are covered as well. A new record shows them empty.
-     */
-    protected function computeComputedFields(): void
-    {
-        $fields = ComputedFields::fields($this->pageLayout['fields'] ?? []);
-        if ($fields === []) {
-            $this->computedValues = [];
-
-            return;
-        }
-
-        $this->pageLayout = ComputedFields::prepareLayout($this->pageLayout);
-
-        $values = array_fill_keys(
-            array_map(fn(array $field): string => ComputedFields::valueKey($field['name']), $fields),
-            null,
-        );
-
-        $record = ! $this->objectReadBlocked && $this->modelId && isset($this->detailModel)
-            ? $this->detailModel::find($this->modelId)
-            : null;
-
-        if ($record instanceof Model) {
-            foreach (app(ComputedColumnRegistry::class)->detailValues($record, $fields) as $name => $value) {
-                $values[ComputedFields::valueKey($name)] = $value;
-            }
-        }
-
-        $this->computedValues = $values;
-    }
-
-    /**
-     * Seed $detailData with the initial values the layout declares (an explicit
-     * `default:` on a field, or the first option of a YAML-listed select). Only
-     * null values are filled — '' , 0 and false are answers, not gaps — so the
-     * method is idempotent and never overwrites what the record or the user
-     * holds. It runs from mountDetailComponent() AND renderingNoerdDetail(),
-     * because components may replace $detailData wholesale in a custom mount().
-     */
-    protected function applyLayoutDefaults(): void
-    {
-        if ($this->objectReadBlocked) {
-            return;
-        }
-
-        $defaults = LayoutDefaults::resolve($this->pageLayout['fields'] ?? []);
-        if ($defaults === []) {
-            return;
-        }
-
-        $detailData = $this->detailData;
-        foreach ($defaults as $key => $value) {
-            if (data_get($detailData, $key) === null) {
-                data_set($detailData, $key, $value);
-            }
-        }
-
-        $this->detailData = $detailData;
-    }
-
-    /**
-     * Hydrate declared relation forms (DeclaresRelationForms on $detailModel) into
-     * $detailData: for each form the active layout renders and whose key is not in
-     * $detailData yet, fill it from the related record — or with nulls for a new
-     * record, so the nested wire:model bindings never drop updates. Keyed on
-     * array_key_exists, so it is idempotent and costs at most one query per
-     * request; it runs from mountDetailComponent() AND renderingNoerdDetail() so
-     * it survives custom mount()s that overwrite $detailData.
-     */
-    protected function ensureRelationFormsHydrated(): void
-    {
-        if (! isset($this->detailModel)) {
-            return;
-        }
-
-        $modelClass = $this->detailModel;
-        $forms = RelationFormSync::forms($modelClass);
-        if ($forms === []) {
-            return;
-        }
-
-        $owner = null;
-        foreach ($forms as $key => $definition) {
-            if (array_key_exists($key, $this->detailData)) {
-                continue;
-            }
-
-            if (! RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
-                continue;
-            }
-
-            if ($this->modelId && $owner === null) {
-                $owner = $modelClass::find($this->modelId);
-            }
-
-            $this->detailData[$key] = $owner
-                ? RelationFormSync::hydrate($owner, $definition)
-                : RelationFormSync::emptyForm($definition);
-        }
-    }
-
-    /**
-     * A field bound to a nested path (e.g. `detailData.custom_attributes.sap_number`) needs its
-     * parent key to exist as an array before wire:model can bind into it. A new record — or one
-     * whose JSON column is still null — would otherwise bind against null and the browser-side
-     * update would be lost silently.
-     */
-    protected function ensureCustomAttributesArray(): void
-    {
-        if (array_key_exists('custom_attributes', $this->detailData) && ! is_array($this->detailData['custom_attributes'])) {
-            $this->detailData['custom_attributes'] = [];
-        }
     }
 
     /**
@@ -573,6 +391,188 @@ trait NoerdDetail
         return $this->pageGetListeners() + [
             'storeDetail-' . $this->componentName() => 'storeFromHost',
         ];
+    }
+
+    /**
+     * Whether a client-supplied method name is a genuine picklist options
+     * provider: public, argument-free and returning an array.
+     */
+    private function isPicklistOptionsProvider(string $method): bool
+    {
+        if (! method_exists($this, $method)) {
+            return false;
+        }
+
+        $reflection = new ReflectionMethod($this, $method);
+        $returnType = $reflection->getReturnType();
+
+        return $reflection->isPublic()
+            && $reflection->getNumberOfRequiredParameters() === 0
+            && $returnType instanceof ReflectionNamedType
+            && $returnType->getName() === 'array';
+    }
+
+    /**
+     * Top-level detailData keys a field layout binds (recursing into blocks).
+     *
+     * @param  array<int, array<string, mixed>>  $fields
+     * @return array<int, string>
+     */
+    private function writableKeysFromFields(array $fields): array
+    {
+        $keys = [];
+        LayoutFields::walk($fields, function (array $field) use (&$keys): void {
+            if (ComputedFields::isComputed($field)) {
+                return;
+            }
+
+            $name = $field['name'] ?? null;
+            if (is_string($name) && str_starts_with($name, 'detailData.')) {
+                $keys[] = Str::before(Str::after($name, 'detailData.'), '.');
+            }
+        });
+
+        return array_values(array_unique($keys));
+    }
+
+    private function mountDetailComponent(Model $model, string $modelClass): void
+    {
+        if (! $this->loadDetailModel($model, $modelClass)) {
+            return;
+        }
+
+        // Hand-built page components (`*-page`) ship no detail YAML — they define
+        // their layout in the component itself (pages use the NoerdPage trait and
+        // pages/{name}.yml). Only a getDetailComponent() override pointing at a
+        // `*-detail` opts back into YAML.
+        $detailComponent = $this->getDetailComponent();
+        if (! Str::endsWith($detailComponent, '-page')) {
+            $this->pageLayout = StaticConfigHelper::getComponentFields($detailComponent, $modelClass);
+        }
+
+        $this->applyLayoutDefaults();
+        $this->ensureCustomAttributesArray();
+        $this->ensureRelationFormsHydrated();
+    }
+
+    /**
+     * Compute the computed fields of the layout for the persisted record. Runs
+     * before every render (a saved record or a changed related record shows
+     * fresh values) and costs nothing for layouts without one. The fields are
+     * re-bound to `computedValues.{key}` and shown as text
+     * (ComputedFields::prepareLayout()) — idempotent, so custom mount()s that
+     * replace $pageLayout are covered as well. A new record shows them empty.
+     */
+    private function computeComputedFields(): void
+    {
+        $fields = ComputedFields::fields($this->pageLayout['fields'] ?? []);
+        if ($fields === []) {
+            $this->computedValues = [];
+
+            return;
+        }
+
+        $this->pageLayout = ComputedFields::prepareLayout($this->pageLayout);
+
+        $values = array_fill_keys(
+            array_map(fn(array $field): string => ComputedFields::valueKey($field['name']), $fields),
+            null,
+        );
+
+        $record = ! $this->objectReadBlocked && $this->modelId && isset($this->detailModel)
+            ? $this->detailModel::find($this->modelId)
+            : null;
+
+        if ($record instanceof Model) {
+            foreach (app(ComputedColumnRegistry::class)->detailValues($record, $fields) as $name => $value) {
+                $values[ComputedFields::valueKey($name)] = $value;
+            }
+        }
+
+        $this->computedValues = $values;
+    }
+
+    /**
+     * Seed $detailData with the initial values the layout declares (an explicit
+     * `default:` on a field, or the first option of a YAML-listed select). Only
+     * null values are filled — '' , 0 and false are answers, not gaps — so the
+     * method is idempotent and never overwrites what the record or the user
+     * holds. It runs from mountDetailComponent() AND renderingNoerdDetail(),
+     * because components may replace $detailData wholesale in a custom mount().
+     */
+    private function applyLayoutDefaults(): void
+    {
+        if ($this->objectReadBlocked) {
+            return;
+        }
+
+        $defaults = LayoutDefaults::resolve($this->pageLayout['fields'] ?? []);
+        if ($defaults === []) {
+            return;
+        }
+
+        $detailData = $this->detailData;
+        foreach ($defaults as $key => $value) {
+            if (data_get($detailData, $key) === null) {
+                data_set($detailData, $key, $value);
+            }
+        }
+
+        $this->detailData = $detailData;
+    }
+
+    /**
+     * Hydrate declared relation forms (DeclaresRelationForms on $detailModel) into
+     * $detailData: for each form the active layout renders and whose key is not in
+     * $detailData yet, fill it from the related record — or with nulls for a new
+     * record, so the nested wire:model bindings never drop updates. Keyed on
+     * array_key_exists, so it is idempotent and costs at most one query per
+     * request; it runs from mountDetailComponent() AND renderingNoerdDetail() so
+     * it survives custom mount()s that overwrite $detailData.
+     */
+    private function ensureRelationFormsHydrated(): void
+    {
+        if (! isset($this->detailModel)) {
+            return;
+        }
+
+        $modelClass = $this->detailModel;
+        $forms = RelationFormSync::forms($modelClass);
+        if ($forms === []) {
+            return;
+        }
+
+        $owner = null;
+        foreach ($forms as $key => $definition) {
+            if (array_key_exists($key, $this->detailData)) {
+                continue;
+            }
+
+            if (! RelationFormSync::rendered($this->pageLayout['fields'] ?? [], $key)) {
+                continue;
+            }
+
+            if ($this->modelId && $owner === null) {
+                $owner = $modelClass::find($this->modelId);
+            }
+
+            $this->detailData[$key] = $owner
+                ? RelationFormSync::hydrate($owner, $definition)
+                : RelationFormSync::emptyForm($definition);
+        }
+    }
+
+    /**
+     * A field bound to a nested path (e.g. `detailData.custom_attributes.sap_number`) needs its
+     * parent key to exist as an array before wire:model can bind into it. A new record — or one
+     * whose JSON column is still null — would otherwise bind against null and the browser-side
+     * update would be lost silently.
+     */
+    private function ensureCustomAttributesArray(): void
+    {
+        if (array_key_exists('custom_attributes', $this->detailData) && ! is_array($this->detailData['custom_attributes'])) {
+            $this->detailData['custom_attributes'] = [];
+        }
     }
 
     /**

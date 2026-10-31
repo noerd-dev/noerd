@@ -58,7 +58,7 @@ it('never lists the users of a foreign tenant through the header filter', functi
     // rendering() reloads — emulated directly, as one crafted request does.
     session(['listFilters' => ['tenant_id' => $tenantB->id]]);
 
-    $visible = Livewire::test('noerd::noerd-users-list')->instance()->visibleRowIds();
+    $visible = \Livewire\invade(Livewire::test('noerd::noerd-users-list')->instance())->visibleRowIds();
 
     expect($visible)->not->toContain($foreign->id);
 });
@@ -120,7 +120,7 @@ it('lists every account in the installation for a super admin', function (): voi
     $super->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::Admin->value]);
     $this->actingAs($super);
 
-    $visible = Livewire::test('noerd::noerd-users-list')->instance()->visibleRowIds();
+    $visible = \Livewire\invade(Livewire::test('noerd::noerd-users-list')->instance())->visibleRowIds();
 
     expect($visible)->toContain($foreign->id)
         ->toContain($orphan->id)
@@ -138,7 +138,7 @@ it('narrows the super admin list to the tenant chosen in the header filter', fun
 
     session(['listFilters' => ['tenant_id' => $tenantB->id]]);
 
-    $visible = Livewire::test('noerd::noerd-users-list')->instance()->visibleRowIds();
+    $visible = \Livewire\invade(Livewire::test('noerd::noerd-users-list')->instance())->visibleRowIds();
 
     expect($visible)->toContain($foreign->id)
         ->not->toContain($this->admin->id);

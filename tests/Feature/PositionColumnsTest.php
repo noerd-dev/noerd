@@ -320,9 +320,9 @@ describe('NoerdPositionRow + positions.cells', function (): void {
     })->throws(CannotUpdateLockedPropertyException::class);
 
     it('returns only editable, unlocked fields of the resolved columns', function (): void {
-        $values = ($this->mountRow)()
+        $values = \Livewire\invade(($this->mountRow)()
             ->set('row.invoice_id', 99)
-            ->instance()
+            ->instance())
             ->editablePositionValues();
 
         expect(array_keys($values))->toBe(['name', 'comment', 'delivered_on']);
@@ -348,7 +348,7 @@ describe('NoerdPositionRow + positions.cells', function (): void {
             ->assertSeeHtml('tabular-nums')
             ->assertSeeHtml('bg-zinc-100');
 
-        expect($row->instance()->positionColumnCount())->toBe(count($this->columns) + 1);
+        expect(\Livewire\invade($row->instance())->positionColumnCount())->toBe(count($this->columns) + 1);
     });
 
     it('resolves the columns from the layout of a detail', function (): void {
@@ -372,7 +372,7 @@ describe('NoerdPositionRow + positions.cells', function (): void {
 
         app(\Noerd\Services\PositionTableRegistry::class)->register('zz-position-host-detail', ZzPositionColumns::class, ZzPosition::class);
 
-        $columns = Livewire::test('zz-position-host-detail')->instance()->positionColumns();
+        $columns = \Livewire\invade(Livewire::test('zz-position-host-detail')->instance())->positionColumns();
 
         expect(array_column($columns, 'field'))->toBe(['quantity', 'price', 'total', 'comment', 'name']);
     });
@@ -436,7 +436,7 @@ describe('PositionTableRegistry', function (): void {
             }
         });
 
-        $host = Livewire::test('zz-registry-host-detail')->instance();
+        $host = \Livewire\invade(Livewire::test('zz-registry-host-detail')->instance());
 
         expect(fn() => $host->positionColumns())->toThrow(RuntimeException::class);
 

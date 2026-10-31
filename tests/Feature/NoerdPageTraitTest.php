@@ -103,7 +103,7 @@ it('registers the store roundtrip listeners when the page yaml declares a detail
 });
 
 it('ignores a detail entry that is not a component name', function (): void {
-    $page = new NoerdPageFixturePage();
+    $page = \Livewire\invade(new NoerdPageFixturePage());
     $page->pageLayout = ['detail' => ''];
 
     expect($page->embeddedDetailComponent())->toBeNull()
@@ -160,7 +160,7 @@ it('leaves the tab session untouched for embedded components', function (): void
 });
 
 it('resolves the layout theme for hand-written chrome', function (): void {
-    $page = new NoerdPageFixturePage();
+    $page = \Livewire\invade(new NoerdPageFixturePage());
 
     expect($page->detailTheme())->toBe('default');
 

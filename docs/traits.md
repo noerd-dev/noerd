@@ -252,6 +252,26 @@ Console, queue and guest contexts are unaffected, and a system read lifts the sc
 `withoutGlobalScope(Model::OBJECT_READ_GUARD_SCOPE)`. It is deliberately per-model, never automatic —
 see [Permissions → Query-level read guard](permissions.md#query-level-read-guard-opt-in-trait).
 
+## Visibility of the component traits
+
+`NoerdList`, `NoerdDetail`, `NoerdPage`, `NoerdSettingsPage` and `NoerdPositionRow` use PHP
+visibility as their contract — Livewire offers only public methods as actions, so the visibility,
+not a list somewhere, decides what the browser can reach:
+
+| Visibility | What it means | Examples |
+|------------|---------------|----------|
+| `public` | An action or listener the browser may run — plus `listData()`, which every module declares public | `listAction()`, `sortBy()`, `openListRow()`, `store()`, `delete()`, `setFieldValue()`, `canSaveObject()` |
+| `protected` | The extension points a component overrides, and the helpers its own methods and views call | `listQuery()`, `buildList()`, `getListComponent()`, `additionalDetailFields()`, `rowActionMethods()`, `headerControls()`, `builtListConfig()`, `visibleRowIds()`, `validateFromLayout()`, `detailTheme()`, `positionColumns()`, `initPositionRow()` |
+| `private` | The trait's own plumbing — never called or overridden from a component | `applyColumnFilters()`, `filterableColumnFields()`, `mountDetailComponent()`, `applyLayoutDefaults()`, `ensureRelationFormsHydrated()`, `resolveQuickCreate()` |
+
+A Blade view calls a protected helper as `$this->headerControls()` — Livewire renders every view of a
+component (its own, the included partials and the `<x-noerd::…>` components) inside the component's
+scope. A test reaches one through Livewire's invade helper:
+`\Livewire\invade($component->instance())->visibleRowIds()`. The remaining public non-actions —
+`listData()` and the trait-suffixed lifecycle hooks (`renderingNoerdList`, `queryStringNoerdPage`, …)
+— are refused for browser calls by `Noerd\Support\ServerOnlyMethodsHook` (see
+[Permissions → Server-only methods](permissions.md)).
+
 ## AdministersNoerdUsers (internal)
 
 `Noerd\Traits\AdministersNoerdUsers` is shared by the setup app's user screens

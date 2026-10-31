@@ -213,7 +213,7 @@ it('neither sorts nor filters a method column', function (): void {
     ZzMethodCustomersList::$columns = [['field' => 'order_count', 'type' => 'number', 'method' => 'orderCount']];
     $component = Livewire::test(ZzMethodCustomersList::class)->call('sortBy', 'order_count');
 
-    $built = $component->instance()->builtListConfig();
+    $built = \Livewire\invade($component->instance())->builtListConfig();
 
     expect($component->get('sortField'))->not->toBe('order_count')
         ->and($built['notSortableColumns'])->toBe(['order_count'])

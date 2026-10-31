@@ -6,20 +6,19 @@ namespace Noerd\Support;
 
 use Livewire\ComponentHook;
 use Livewire\Exceptions\MethodNotFoundException;
-use Noerd\Traits\NoerdComponentShared;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\NoerdList;
 use Noerd\Traits\NoerdPage;
-use Noerd\Traits\NoerdPositionRow;
 
 /**
- * Refuses browser calls to the public trait methods that exist for Blade,
- * hooks and tests only. Livewire offers every public method as an action, and
- * an action's return value travels to the browser: `listData()` would hand out
- * the whole paginator with every visible attribute, and the trait-suffixed
- * lifecycle hooks (`renderingNoerdList`, `queryStringNoerdPage`, …) are not
- * covered by Livewire's own lifecycle guard. The PHP visibility stays public —
- * module views and tests call several of them.
+ * Refuses browser calls to the few PUBLIC trait methods that are not actions:
+ * `listData()` — public because ~every module declares its override public,
+ * and its return value would hand the browser the whole paginator — and the
+ * trait-suffixed lifecycle hooks (`renderingNoerdList`, `queryStringNoerdPage`,
+ * …), which Livewire calls itself and whose names its own lifecycle guard does
+ * not know. Every other helper the views, hooks and tests need is `protected`:
+ * Livewire only offers public methods as actions, and a view is rendered inside
+ * the component's scope, so Blade reaches a protected method just the same.
  */
 final class ServerOnlyMethodsHook extends ComponentHook
 {
@@ -29,13 +28,6 @@ final class ServerOnlyMethodsHook extends ComponentHook
     private const METHODS = [
         NoerdList::class => [
             'listData',
-            'builtListConfig',
-            'headerControls',
-            'hasCollapsibleControls',
-            'hasHeaderControls',
-            'visibleRowIds',
-            'normalizeRecordId',
-            'isSortableColumn',
             'renderingNoerdList',
         ],
         NoerdPage::class => [
@@ -43,21 +35,9 @@ final class ServerOnlyMethodsHook extends ComponentHook
             'queryStringNoerdPage',
             'renderingNoerdPage',
             'renderedNoerdPage',
-            'embeddedDetailComponent',
-            'detailTheme',
-            'positionColumns',
         ],
         NoerdDetail::class => [
             'renderingNoerdDetail',
-            'validateFromLayout',
-        ],
-        NoerdPositionRow::class => [
-            'initPositionRow',
-            'editablePositionValues',
-            'positionColumnCount',
-        ],
-        NoerdComponentShared::class => [
-            'getComponentName',
         ],
     ];
 

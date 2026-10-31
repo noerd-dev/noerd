@@ -22,7 +22,7 @@ uses(TestCase::class, RefreshDatabase::class);
 
 function queryListIds(mixed $component): array
 {
-    return $component->instance()->visibleRowIds();
+    return \Livewire\invade($component->instance())->visibleRowIds();
 }
 
 it('searches only the declared searchableColumns', function (): void {

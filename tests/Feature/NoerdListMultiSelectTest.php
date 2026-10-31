@@ -209,7 +209,7 @@ it('re-renders when the refreshList event for the list name arrives', function (
     $component = Livewire::test(ZzBulkDeleteListComponent::class);
 
     // The listener name embeds the component name (see NoerdList::getListeners()).
-    $component->dispatch('refreshList-' . $component->instance()->getComponentName())
+    $component->dispatch('refreshList-' . \Livewire\invade($component->instance())->componentName())
         ->assertDispatched('$refresh');
 });
 

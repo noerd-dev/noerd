@@ -74,7 +74,7 @@ it('sorts by id descending without a defaultSort in the YAML', function (): void
 });
 
 it('treats only undotted, non-action, allowed columns as sortable', function (): void {
-    $component = new TestableNoerdListDefaultComponent();
+    $component = \Livewire\invade(new TestableNoerdListDefaultComponent());
 
     expect($component->isSortableColumn('name'))->toBeTrue()
         ->and($component->isSortableColumn('customer.name'))->toBeFalse()

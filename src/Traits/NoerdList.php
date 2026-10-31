@@ -181,26 +181,6 @@ trait NoerdList
         return str_contains($field, '.');
     }
 
-    /**
-     * Whether the list may be ORDERED BY this column — the single rule behind the table header's
-     * sort button and the grid list's sort dropdown. A dotted field resolves out of a JSON column
-     * or a relation at render time, so the query cannot order by it (listQuery() would silently
-     * fall back to `id`); `action` is a button column; `notSortableColumns` is the YAML opt-out.
-     *
-     * Callers pass notSortableColumns explicitly: the render path has them from the BUILT config,
-     * which is also correct for array configs (buildList($rows, $config)), alternate list views and
-     * custom config names — unlike a fresh getListConfig() lookup, which would resolve to an empty
-     * config there and wrongly offer every column as sortable.
-     *
-     * @param  array<int, string>  $notSortableColumns
-     */
-    public function isSortableColumn(string $field, array $notSortableColumns = []): bool
-    {
-        return $field !== 'action'
-            && ! self::isDottedField($field)
-            && ! in_array($field, $notSortableColumns, true);
-    }
-
     public function mount(): void
     {
         $this->mountList();
@@ -428,61 +408,6 @@ trait NoerdList
     }
 
     /**
-     * The generic header controls this list actually renders, resolved ONCE so the
-     * title row, the filter row and modal-title cannot disagree about what
-     * exists. Every consumer reads this — never re-derive "does the list have a
-     * search field / secondary action" from $listSettings at the call site.
-     *
-     * The action indices are preserved on purpose: splitting the YAML actions into
-     * a primary and a secondary group must not renumber them, because the position
-     * in the YAML is what assigns the keyboard shortcut.
-     *
-     * @return array{search: bool, csv: bool, secondary: array<int, array<string, mixed>>, primary: array<int, array<string, mixed>>, registry: array<int, string>}
-     */
-    public function headerControls(): array
-    {
-        $config = $this->builtListConfig();
-        $settings = $config['listSettings'] ?? [];
-
-        // A picker is reduced to selecting rows: it offers neither the YAML actions
-        // nor the module-contributed ones. A read-denied list keeps its header but
-        // loses the data affordances (buildList() already stripped the actions).
-        $isPicker = $this->returnsSelection;
-        $actions = $isPicker ? [] : ($settings['actions'] ?? []);
-
-        return [
-            'search' => ! ($settings['disableSearch'] ?? false) && ! ($config['objectAccessDenied'] ?? false),
-            'csv' => $this->enableCsvExport,
-            'secondary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') === 'secondary'),
-            'primary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') !== 'secondary'),
-            'registry' => $isPicker ? [] : app(HeaderActionsRegistry::class)->listActions(),
-        ];
-    }
-
-    /**
-     * Whether the list has a search field, a CSV export or `style: secondary`
-     * actions — the controls a custom header slot gets injected next to the
-     * primary buttons and the registry actions.
-     */
-    public function hasCollapsibleControls(): bool
-    {
-        $controls = $this->headerControls();
-
-        return $controls['search'] || $controls['csv'] || $controls['secondary'] !== [];
-    }
-
-    /**
-     * Whether the header renders any generic control at all — the question
-     * modal-title asks before it injects them into a custom header slot.
-     */
-    public function hasHeaderControls(): bool
-    {
-        $controls = $this->headerControls();
-
-        return $this->hasCollapsibleControls() || $controls['primary'] !== [] || $controls['registry'] !== [];
-    }
-
-    /**
      * Open a row by its POSITION in the current page — the keyboard path only
      * (arrow keys track a positional index, Enter submits it). Resolving the
      * position costs a full listData() round; mouse clicks know the model id
@@ -559,16 +484,6 @@ trait NoerdList
         }
 
         $this->selectedRecordIds[] = $id;
-    }
-
-    /**
-     * Numeric row ids stay ints (the storage type of every model-backed list);
-     * non-numeric ids (composite string ids of manual-row lists) stay strings, so
-     * strict comparisons work for both.
-     */
-    public function normalizeRecordId(mixed $id): int|string
-    {
-        return is_numeric($id) ? (int) $id : (string) $id;
     }
 
     /**
@@ -652,25 +567,6 @@ trait NoerdList
         $this->resetPage();
     }
 
-    /**
-     * Ids of the rows currently rendered (current page).
-     *
-     * @return array<int, int|string>
-     */
-    public function visibleRowIds(): array
-    {
-        $collection = ListColumnIntrospection::rows($this->builtListConfig()['rows'] ?? null);
-        if ($collection === null) {
-            return [];
-        }
-
-        return $collection
-            ->map(fn($row): int|string => $this->normalizeRecordId(is_array($row) ? ($row['id'] ?? 0) : $row->id))
-            ->filter()
-            ->values()
-            ->all();
-    }
-
     #[Computed]
     public function tableFilters(): array
     {
@@ -721,6 +617,110 @@ trait NoerdList
     }
 
     /**
+     * Whether the list may be ORDERED BY this column — the single rule behind the table header's
+     * sort button and the grid list's sort dropdown. A dotted field resolves out of a JSON column
+     * or a relation at render time, so the query cannot order by it (listQuery() would silently
+     * fall back to `id`); `action` is a button column; `notSortableColumns` is the YAML opt-out.
+     *
+     * Callers pass notSortableColumns explicitly: the render path has them from the BUILT config,
+     * which is also correct for array configs (buildList($rows, $config)), alternate list views and
+     * custom config names — unlike a fresh getListConfig() lookup, which would resolve to an empty
+     * config there and wrongly offer every column as sortable.
+     *
+     * @param  array<int, string>  $notSortableColumns
+     */
+    protected function isSortableColumn(string $field, array $notSortableColumns = []): bool
+    {
+        return $field !== 'action'
+            && ! self::isDottedField($field)
+            && ! in_array($field, $notSortableColumns, true);
+    }
+
+    /**
+     * The generic header controls this list actually renders, resolved ONCE so the
+     * title row, the filter row and modal-title cannot disagree about what
+     * exists. Every consumer reads this — never re-derive "does the list have a
+     * search field / secondary action" from $listSettings at the call site.
+     *
+     * The action indices are preserved on purpose: splitting the YAML actions into
+     * a primary and a secondary group must not renumber them, because the position
+     * in the YAML is what assigns the keyboard shortcut.
+     *
+     * @return array{search: bool, csv: bool, secondary: array<int, array<string, mixed>>, primary: array<int, array<string, mixed>>, registry: array<int, string>}
+     */
+    protected function headerControls(): array
+    {
+        $config = $this->builtListConfig();
+        $settings = $config['listSettings'] ?? [];
+
+        // A picker is reduced to selecting rows: it offers neither the YAML actions
+        // nor the module-contributed ones. A read-denied list keeps its header but
+        // loses the data affordances (buildList() already stripped the actions).
+        $isPicker = $this->returnsSelection;
+        $actions = $isPicker ? [] : ($settings['actions'] ?? []);
+
+        return [
+            'search' => ! ($settings['disableSearch'] ?? false) && ! ($config['objectAccessDenied'] ?? false),
+            'csv' => $this->enableCsvExport,
+            'secondary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') === 'secondary'),
+            'primary' => array_filter($actions, static fn(array $action): bool => ($action['style'] ?? '') !== 'secondary'),
+            'registry' => $isPicker ? [] : app(HeaderActionsRegistry::class)->listActions(),
+        ];
+    }
+
+    /**
+     * Whether the list has a search field, a CSV export or `style: secondary`
+     * actions — the controls a custom header slot gets injected next to the
+     * primary buttons and the registry actions.
+     */
+    protected function hasCollapsibleControls(): bool
+    {
+        $controls = $this->headerControls();
+
+        return $controls['search'] || $controls['csv'] || $controls['secondary'] !== [];
+    }
+
+    /**
+     * Whether the header renders any generic control at all — the question
+     * modal-title asks before it injects them into a custom header slot.
+     */
+    protected function hasHeaderControls(): bool
+    {
+        $controls = $this->headerControls();
+
+        return $this->hasCollapsibleControls() || $controls['primary'] !== [] || $controls['registry'] !== [];
+    }
+
+    /**
+     * Numeric row ids stay ints (the storage type of every model-backed list);
+     * non-numeric ids (composite string ids of manual-row lists) stay strings, so
+     * strict comparisons work for both.
+     */
+    protected function normalizeRecordId(mixed $id): int|string
+    {
+        return is_numeric($id) ? (int) $id : (string) $id;
+    }
+
+    /**
+     * Ids of the rows currently rendered (current page).
+     *
+     * @return array<int, int|string>
+     */
+    protected function visibleRowIds(): array
+    {
+        $collection = ListColumnIntrospection::rows($this->builtListConfig()['rows'] ?? null);
+        if ($collection === null) {
+            return [];
+        }
+
+        return $collection
+            ->map(fn($row): int|string => $this->normalizeRecordId(is_array($row) ? ($row['id'] ?? 0) : $row->id))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
      * The buildList() result, computed at most once per request, whatever the
      * component's style: lists declaring $listModel build it via listData(),
      * lists with a custom with() return it as view data. The header chrome, the
@@ -731,7 +731,7 @@ trait NoerdList
      *
      * @return array<string, mixed>
      */
-    public function builtListConfig(): array
+    protected function builtListConfig(): array
     {
         if ($this->builtListConfigCache !== null) {
             return $this->builtListConfigCache;
@@ -742,19 +742,6 @@ trait NoerdList
         }
 
         return $this->builtListConfigCache ??= method_exists($this, 'with') ? ($this->with()['listConfig'] ?? []) : [];
-    }
-
-    /**
-     * Whether $field is a column of the active list configuration.
-     */
-    protected function isListColumnField(string $field): bool
-    {
-        if ($field === 'action') {
-            return false;
-        }
-
-        return collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
-            ->contains(fn($column): bool => is_array($column) && ($column['field'] ?? null) === $field);
     }
 
     protected function mountList(): void
@@ -869,29 +856,6 @@ trait NoerdList
     }
 
     /**
-     * Dispatch a row click to the configured listActionMethod. The method name
-     * is a mount argument (pickers pass `selectAction`), so it is resolved by
-     * name — but only PUBLIC methods are Livewire actions, and only those may
-     * be reached this way. Anything else is ignored instead of exposing the
-     * component's protected internals to a client-chosen name.
-     */
-    protected function callRowAction(int|string $modelId): void
-    {
-        $method = $this->listActionMethod;
-
-        // $listActionMethod arrives as a mount argument (the picker passes
-        // selectAction): only a declared row action may run, never an arbitrary
-        // public method or one of Livewire's own.
-        if (! in_array($method, $this->rowActionMethods(), true)
-            || ! method_exists($this, $method)
-            || ! (new ReflectionMethod($this, $method))->isPublic()) {
-            return;
-        }
-
-        $this->{$method}($modelId);
-    }
-
-    /**
      * The methods a row click may run through $listActionMethod. A component
      * with a row action of its own adds it here.
      *
@@ -909,21 +873,6 @@ trait NoerdList
     protected function clampPerPage(int $perPage): int
     {
         return max(1, min($perPage, self::MAX_PER_PAGE));
-    }
-
-    /**
-     * Whether the active list config declares a bulk action running the given
-     * method — the authorization for invoking that bulk action server-side.
-     */
-    protected function listDeclaresBulkAction(string $action): bool
-    {
-        foreach ($this->getListConfig($this->listQueryConfigName)['bulkActions'] ?? [] as $bulkAction) {
-            if (($bulkAction['action'] ?? null) === $action) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -1104,117 +1053,6 @@ trait NoerdList
     }
 
     /**
-     * Fields the user may filter on via the header funnel: every YAML column that
-     * is not 'action' and either a real column on the resolved model's table
-     * (the same rule as sorting), a path into a JSON-cast column
-     * (`custom_attributes.x`) or a path through Eloquent relations
-     * (`defaultDeliveryAddress.locality`). Empty until listQuery() has resolved
-     * the model class, so lists with fully custom queries get no funnels.
-     *
-     * @return array<int, string>
-     */
-    protected function filterableColumnFields(): array
-    {
-        if ($this->resolvedModelClass === null) {
-            return [];
-        }
-
-        if ($this->filterableColumnCache !== null) {
-            return $this->filterableColumnCache;
-        }
-
-        $table = $this->resolvedModelInstance()->getTable();
-
-        return $this->filterableColumnCache = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
-            ->pluck('field')
-            ->filter(function ($field) use ($table): bool {
-                if (! is_string($field) || $field === 'action') {
-                    return false;
-                }
-
-                $computedColumn = $this->computedColumn($field);
-                if ($computedColumn !== null) {
-                    return app(ComputedColumnRegistry::class)->isFilterable($this->computedModelClass(), $computedColumn);
-                }
-
-                return self::isDottedField($field)
-                    ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
-                    : SchemaColumnCache::hasColumn($table, $field);
-            })
-            ->values()
-            ->all();
-    }
-
-    /**
-     * Apply every active Excel-style column filter (AND-combined, stacking with
-     * search and the header listFilters). Skipped for compact/minimal embedded
-     * lists, which render no filter UI — a session-stored filter must not
-     * invisibly hide their rows.
-     */
-    protected function applyColumnFilters(Builder $query, string $modelClass): void
-    {
-        if ($this->listColumnFilters === [] || $this->compact || $this->minimal) {
-            return;
-        }
-
-        $allowed = $this->filterableColumnFields();
-        if ($allowed === []) {
-            return;
-        }
-
-        $table = $this->resolvedModelInstance()->getTable();
-        $schemaTypes = ListColumnIntrospection::schemaTypes($table);
-        $yamlTypes = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
-            ->filter(fn($column): bool => isset($column['field'], $column['type']))
-            ->pluck('type', 'field')
-            ->toArray();
-        $picklistFields = array_keys($this->picklistOptionsFromDetail());
-
-        foreach ($this->listColumnFilters as $field => $raw) {
-            if (! in_array($field, $allowed, true) || ! is_string($raw) || mb_trim($raw) === '') {
-                continue;
-            }
-
-            // filterableColumnFields() admitted it, so its provider can filter it.
-            $computedColumn = $this->computedColumn($field);
-            if ($computedColumn !== null) {
-                app(ComputedColumnRegistry::class)->providerFor($computedColumn)?->applyFilter($query, $computedColumn, (string) ($computedColumn['type'] ?? 'text'), $raw);
-
-                continue;
-            }
-
-            // A relation path (`defaultDeliveryAddress.locality`) filters on the
-            // related table; JSON paths take precedence and use the arrow operator.
-            $relationPath = self::isDottedField($field) && ! $this->isJsonColumnPath($field)
-                ? $this->relationColumnPath($field)
-                : null;
-            if ($relationPath !== null) {
-                $relationType = $yamlTypes[$field]
-                    ?? ListColumnIntrospection::schemaTypes($relationPath['table'])[$relationPath['column']]
-                    ?? 'text';
-
-                ColumnFilterParser::applyRelation($query, $relationPath['relation'], $relationPath['column'], $relationType, $raw);
-
-                continue;
-            }
-
-            // The type the header cell renders with (buildList()): an explicit YAML
-            // type, else the schema type, else a badge for a detail-picklist column.
-            $type = $yamlTypes[$field] ?? $schemaTypes[$field] ?? null;
-            if (($type === null || $type === 'text') && in_array($field, $picklistFields, true)) {
-                $type = 'badge';
-            }
-
-            // A JSON path (custom_attributes.x) filters via the arrow operator on
-            // its base column; it has no schema type, so YAML/picklist typing
-            // applies with text as the fallback.
-            $column = self::isDottedField($field) ? str_replace('.', '->', $field) : $field;
-
-            ColumnFilterParser::apply($query, $column, $type ?? 'text', $raw);
-        }
-    }
-
-    /**
      * Build complete list configuration including rows and table state.
      * Returns all data needed for the list view.
      *
@@ -1270,116 +1108,6 @@ trait NoerdList
             'filterableColumns' => $this->filterableColumnFields(),
             'objectAccessDenied' => $objectAccessDenied,
         ];
-    }
-
-    /**
-     * The model class the object permission checks key off: an explicitly
-     * declared `public ?string $objectPermissionModel` wins (for repository-
-     * backed lists without $listModel, e.g. the liefertool orders list), then
-     * the class resolved by the last listQuery() call, falling back to a
-     * declared $listModel. Null for in-memory/manual lists — those are never
-     * restricted. Deliberately not declared on the trait — a component
-     * redeclares it with its own default (same pattern as $listModel).
-     */
-    protected function objectPermissionModelClass(): ?string
-    {
-        if (property_exists($this, 'objectPermissionModel') && $this->objectPermissionModel !== null) {
-            return $this->objectPermissionModel;
-        }
-
-        return $this->resolvedModelClass
-            ?? (property_exists($this, 'listModel') ? $this->listModel : null);
-    }
-
-    /**
-     * Map of `field => options` for every select field of this list's paired
-     * detail YAML — the source of the automatic picklist badges.
-     *
-     * @return array<string, array<int, array{value: mixed, label: string}>>
-     */
-    protected function picklistOptionsFromDetail(): array
-    {
-        $detailComponent = $this->pairedDetailComponent();
-
-        return $detailComponent === null ? [] : PicklistBadges::optionsFromDetail($detailComponent);
-    }
-
-    /**
-     * The detail whose YAML options become the list's picklist badges: the
-     * declared $detailComponent when it is a detail, else the one paired by name.
-     */
-    protected function pairedDetailComponent(): ?string
-    {
-        $declared = property_exists($this, 'detailComponent') ? $this->detailComponent : null;
-
-        if (is_string($declared) && Str::endsWith($declared, '-detail')) {
-            return $declared;
-        }
-
-        return ComponentNaming::pairedDetail($this->componentName());
-    }
-
-    /**
-     * The computed column (a column a ComputedColumnRegistry provider handles,
-     * e.g. one with a `method:` key) of the active list config for a field, or
-     * null when the field is none.
-     *
-     * @return array<string, mixed>|null
-     */
-    protected function computedColumn(?string $field): ?array
-    {
-        if ($field === null || $field === '') {
-            return null;
-        }
-
-        foreach (ComputedFields::columns($this->getListConfig($this->listQueryConfigName)['columns'] ?? []) as $column) {
-            if ($column['field'] === $field) {
-                return $column;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * The model class computed columns are evaluated against — the class the
-     * last listQuery() resolved, else the declared $listModel or
-     * $objectPermissionModel (sortBy() runs in a request before any query was built).
-     */
-    protected function computedModelClass(): ?string
-    {
-        if ($this->resolvedModelClass !== null) {
-            return $this->resolvedModelClass;
-        }
-
-        foreach (['listModel', 'objectPermissionModel'] as $property) {
-            if (property_exists($this, $property) && is_string($this->{$property})) {
-                return $this->{$property};
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Compute the computed columns of the current page once for all rows, so
-     * every cell reads its value with data_get() like a stored attribute.
-     *
-     * @param  array<int, mixed>  $columns
-     */
-    protected function fillComputedColumns(array $columns, mixed $rows): void
-    {
-        $computedColumns = ComputedFields::columns($columns);
-        if ($computedColumns === []) {
-            return;
-        }
-
-        // Hand-built array rows carry no models a provider could fill.
-        $collection = is_array($rows) ? null : ListColumnIntrospection::rows($rows);
-
-        if ($collection !== null) {
-            app(ComputedColumnRegistry::class)->fillRows($collection, $computedColumns);
-        }
     }
 
     /**
@@ -1446,10 +1174,282 @@ trait NoerdList
     }
 
     /**
+     * Whether $field is a column of the active list configuration.
+     */
+    private function isListColumnField(string $field): bool
+    {
+        if ($field === 'action') {
+            return false;
+        }
+
+        return collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->contains(fn($column): bool => is_array($column) && ($column['field'] ?? null) === $field);
+    }
+
+    /**
+     * Dispatch a row click to the configured listActionMethod. The method name
+     * is a mount argument (pickers pass `selectAction`), so it is resolved by
+     * name — but only PUBLIC methods are Livewire actions, and only those may
+     * be reached this way. Anything else is ignored instead of exposing the
+     * component's protected internals to a client-chosen name.
+     */
+    private function callRowAction(int|string $modelId): void
+    {
+        $method = $this->listActionMethod;
+
+        // $listActionMethod arrives as a mount argument (the picker passes
+        // selectAction): only a declared row action may run, never an arbitrary
+        // public method or one of Livewire's own.
+        if (! in_array($method, $this->rowActionMethods(), true)
+            || ! method_exists($this, $method)
+            || ! (new ReflectionMethod($this, $method))->isPublic()) {
+            return;
+        }
+
+        $this->{$method}($modelId);
+    }
+
+    /**
+     * Whether the active list config declares a bulk action running the given
+     * method — the authorization for invoking that bulk action server-side.
+     */
+    private function listDeclaresBulkAction(string $action): bool
+    {
+        foreach ($this->getListConfig($this->listQueryConfigName)['bulkActions'] ?? [] as $bulkAction) {
+            if (($bulkAction['action'] ?? null) === $action) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Fields the user may filter on via the header funnel: every YAML column that
+     * is not 'action' and either a real column on the resolved model's table
+     * (the same rule as sorting), a path into a JSON-cast column
+     * (`custom_attributes.x`) or a path through Eloquent relations
+     * (`defaultDeliveryAddress.locality`). Empty until listQuery() has resolved
+     * the model class, so lists with fully custom queries get no funnels.
+     *
+     * @return array<int, string>
+     */
+    private function filterableColumnFields(): array
+    {
+        if ($this->resolvedModelClass === null) {
+            return [];
+        }
+
+        if ($this->filterableColumnCache !== null) {
+            return $this->filterableColumnCache;
+        }
+
+        $table = $this->resolvedModelInstance()->getTable();
+
+        return $this->filterableColumnCache = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->pluck('field')
+            ->filter(function ($field) use ($table): bool {
+                if (! is_string($field) || $field === 'action') {
+                    return false;
+                }
+
+                $computedColumn = $this->computedColumn($field);
+                if ($computedColumn !== null) {
+                    return app(ComputedColumnRegistry::class)->isFilterable($this->computedModelClass(), $computedColumn);
+                }
+
+                return self::isDottedField($field)
+                    ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
+                    : SchemaColumnCache::hasColumn($table, $field);
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Apply every active Excel-style column filter (AND-combined, stacking with
+     * search and the header listFilters). Skipped for compact/minimal embedded
+     * lists, which render no filter UI — a session-stored filter must not
+     * invisibly hide their rows.
+     */
+    private function applyColumnFilters(Builder $query, string $modelClass): void
+    {
+        if ($this->listColumnFilters === [] || $this->compact || $this->minimal) {
+            return;
+        }
+
+        $allowed = $this->filterableColumnFields();
+        if ($allowed === []) {
+            return;
+        }
+
+        $table = $this->resolvedModelInstance()->getTable();
+        $schemaTypes = ListColumnIntrospection::schemaTypes($table);
+        $yamlTypes = collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->filter(fn($column): bool => isset($column['field'], $column['type']))
+            ->pluck('type', 'field')
+            ->toArray();
+        $picklistFields = array_keys($this->picklistOptionsFromDetail());
+
+        foreach ($this->listColumnFilters as $field => $raw) {
+            if (! in_array($field, $allowed, true) || ! is_string($raw) || mb_trim($raw) === '') {
+                continue;
+            }
+
+            // filterableColumnFields() admitted it, so its provider can filter it.
+            $computedColumn = $this->computedColumn($field);
+            if ($computedColumn !== null) {
+                app(ComputedColumnRegistry::class)->providerFor($computedColumn)?->applyFilter($query, $computedColumn, (string) ($computedColumn['type'] ?? 'text'), $raw);
+
+                continue;
+            }
+
+            // A relation path (`defaultDeliveryAddress.locality`) filters on the
+            // related table; JSON paths take precedence and use the arrow operator.
+            $relationPath = self::isDottedField($field) && ! $this->isJsonColumnPath($field)
+                ? $this->relationColumnPath($field)
+                : null;
+            if ($relationPath !== null) {
+                $relationType = $yamlTypes[$field]
+                    ?? ListColumnIntrospection::schemaTypes($relationPath['table'])[$relationPath['column']]
+                    ?? 'text';
+
+                ColumnFilterParser::applyRelation($query, $relationPath['relation'], $relationPath['column'], $relationType, $raw);
+
+                continue;
+            }
+
+            // The type the header cell renders with (buildList()): an explicit YAML
+            // type, else the schema type, else a badge for a detail-picklist column.
+            $type = $yamlTypes[$field] ?? $schemaTypes[$field] ?? null;
+            if (($type === null || $type === 'text') && in_array($field, $picklistFields, true)) {
+                $type = 'badge';
+            }
+
+            // A JSON path (custom_attributes.x) filters via the arrow operator on
+            // its base column; it has no schema type, so YAML/picklist typing
+            // applies with text as the fallback.
+            $column = self::isDottedField($field) ? str_replace('.', '->', $field) : $field;
+
+            ColumnFilterParser::apply($query, $column, $type ?? 'text', $raw);
+        }
+    }
+
+    /**
+     * The model class the object permission checks key off: an explicitly
+     * declared `public ?string $objectPermissionModel` wins (for repository-
+     * backed lists without $listModel, e.g. the liefertool orders list), then
+     * the class resolved by the last listQuery() call, falling back to a
+     * declared $listModel. Null for in-memory/manual lists — those are never
+     * restricted. Deliberately not declared on the trait — a component
+     * redeclares it with its own default (same pattern as $listModel).
+     */
+    private function objectPermissionModelClass(): ?string
+    {
+        if (property_exists($this, 'objectPermissionModel') && $this->objectPermissionModel !== null) {
+            return $this->objectPermissionModel;
+        }
+
+        return $this->resolvedModelClass
+            ?? (property_exists($this, 'listModel') ? $this->listModel : null);
+    }
+
+    /**
+     * Map of `field => options` for every select field of this list's paired
+     * detail YAML — the source of the automatic picklist badges.
+     *
+     * @return array<string, array<int, array{value: mixed, label: string}>>
+     */
+    private function picklistOptionsFromDetail(): array
+    {
+        $detailComponent = $this->pairedDetailComponent();
+
+        return $detailComponent === null ? [] : PicklistBadges::optionsFromDetail($detailComponent);
+    }
+
+    /**
+     * The detail whose YAML options become the list's picklist badges: the
+     * declared $detailComponent when it is a detail, else the one paired by name.
+     */
+    private function pairedDetailComponent(): ?string
+    {
+        $declared = property_exists($this, 'detailComponent') ? $this->detailComponent : null;
+
+        if (is_string($declared) && Str::endsWith($declared, '-detail')) {
+            return $declared;
+        }
+
+        return ComponentNaming::pairedDetail($this->componentName());
+    }
+
+    /**
+     * The computed column (a column a ComputedColumnRegistry provider handles,
+     * e.g. one with a `method:` key) of the active list config for a field, or
+     * null when the field is none.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function computedColumn(?string $field): ?array
+    {
+        if ($field === null || $field === '') {
+            return null;
+        }
+
+        foreach (ComputedFields::columns($this->getListConfig($this->listQueryConfigName)['columns'] ?? []) as $column) {
+            if ($column['field'] === $field) {
+                return $column;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The model class computed columns are evaluated against — the class the
+     * last listQuery() resolved, else the declared $listModel or
+     * $objectPermissionModel (sortBy() runs in a request before any query was built).
+     */
+    private function computedModelClass(): ?string
+    {
+        if ($this->resolvedModelClass !== null) {
+            return $this->resolvedModelClass;
+        }
+
+        foreach (['listModel', 'objectPermissionModel'] as $property) {
+            if (property_exists($this, $property) && is_string($this->{$property})) {
+                return $this->{$property};
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Compute the computed columns of the current page once for all rows, so
+     * every cell reads its value with data_get() like a stored attribute.
+     *
+     * @param  array<int, mixed>  $columns
+     */
+    private function fillComputedColumns(array $columns, mixed $rows): void
+    {
+        $computedColumns = ComputedFields::columns($columns);
+        if ($computedColumns === []) {
+            return;
+        }
+
+        // Hand-built array rows carry no models a provider could fill.
+        $collection = is_array($rows) ? null : ListColumnIntrospection::rows($rows);
+
+        if ($collection !== null) {
+            app(ComputedColumnRegistry::class)->fillRows($collection, $computedColumns);
+        }
+    }
+
+    /**
      * One shared instance of the class listQuery() resolved, for table-name and
      * cast lookups; null before the first listQuery() call.
      */
-    protected function resolvedModelInstance(): ?Model
+    private function resolvedModelInstance(): ?Model
     {
         return $this->resolvedModelClass === null ? null : ListColumnIntrospection::instance($this->resolvedModelClass);
     }

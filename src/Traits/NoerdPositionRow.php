@@ -49,10 +49,17 @@ trait NoerdPositionRow
 
     public ?int $number = null;
 
+    public function delete(): void
+    {
+        $this->position?->delete();
+
+        $this->dispatch('positionDeleted');
+    }
+
     /**
      * @param  array<int, array<string, mixed>>  $columns
      */
-    public function initPositionRow(Model $position, array $columns, string $theme = 'default', ?int $number = null): void
+    protected function initPositionRow(Model $position, array $columns, string $theme = 'default', ?int $number = null): void
     {
         $this->position = $position;
         $this->theme = $theme;
@@ -86,7 +93,7 @@ trait NoerdPositionRow
      *
      * @return array<string, mixed>
      */
-    public function editablePositionValues(): array
+    protected function editablePositionValues(): array
     {
         $values = [];
 
@@ -116,22 +123,15 @@ trait NoerdPositionRow
      * Resolved columns plus the trailing action column — the `colspan` for
      * `<x-noerd::positions.row>`.
      */
-    public function positionColumnCount(): int
+    protected function positionColumnCount(): int
     {
         return count($this->columns) + 1;
-    }
-
-    public function delete(): void
-    {
-        $this->position?->delete();
-
-        $this->dispatch('positionDeleted');
     }
 
     /**
      * @return array<int, PositionColumn>
      */
-    protected function positionColumnObjects(): array
+    private function positionColumnObjects(): array
     {
         return array_map(
             fn(array $column): PositionColumn => PositionColumn::fromArray($column),

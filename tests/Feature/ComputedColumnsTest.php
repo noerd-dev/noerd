@@ -246,7 +246,7 @@ describe('with a registered provider', function (): void {
     });
 
     it('lets the provider decide which computed columns are sortable and filterable', function (): void {
-        $list = Livewire::test(ZzComputedListComponent::class)->instance();
+        $list = \Livewire\invade(Livewire::test(ZzComputedListComponent::class)->instance());
 
         expect($list->isSortableColumn('item_count', $list->builtListConfig()['notSortableColumns']))->toBeTrue()
             ->and($list->isSortableColumn('shout', $list->builtListConfig()['notSortableColumns']))->toBeFalse()

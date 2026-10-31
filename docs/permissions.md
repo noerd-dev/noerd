@@ -195,13 +195,19 @@ bind any of these properties to `wire:model`** and never pass the mount-protecte
 arguments — set them as literal property defaults or in `mount()` instead.
 
 **Server-only methods.** Livewire offers every public method as an action and sends its return
-value to the browser. `Noerd\Support\ServerOnlyMethodsHook` refuses browser calls to the public
-trait methods that exist for Blade, hooks and tests — `listData()`, `builtListConfig()`,
-`headerControls()`, `visibleRowIds()`, `validateFromLayout()`, `positionColumns()`, the
-trait-suffixed lifecycle hooks (`renderingNoerdList`, `queryStringNoerdPage`, …) and the like; PHP
-code and module tests keep calling them. `resolvePicklistOptions()` is `protected` (only the field
-views call it). A row click runs only a method listed in `rowActionMethods()`, whatever
-`$listActionMethod` a mount argument carried, and a list sorts only by its own columns.
+value to the browser, so the traits keep public ONLY what the browser may run: the actions
+(`sortBy()`, `openListRow()`, `store()`, …), the listeners and `listData()`. Every helper the views
+and a component's own methods call is `protected` — `headerControls()`, `builtListConfig()`,
+`visibleRowIds()`, `validateFromLayout()`, `detailTheme()`, `positionColumns()`,
+`resolvePicklistOptions()`, the position-row helpers — which Blade reaches just the same (a view
+is rendered inside the component's scope) while Livewire refuses the browser call. A test that
+needs one of them goes through `\Livewire\invade($component->instance())->visibleRowIds()`.
+`Noerd\Support\ServerOnlyMethodsHook` covers only what has to stay public: `listData()` (the
+modules declare their overrides public) and the trait-suffixed lifecycle hooks
+(`renderingNoerdList`, `queryStringNoerdPage`, …), which Livewire calls itself and whose names
+its own lifecycle guard does not know. A row click runs only a method listed in
+`rowActionMethods()`, whatever `$listActionMethod` a mount argument carried, and a list sorts
+only by its own columns.
 `$modelId` stays client-writable on purpose: Livewire restores URL-bound properties on browser
 back navigation, and every record it can reach is still tenant-scoped and permission-checked.
 

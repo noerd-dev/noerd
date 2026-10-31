@@ -155,7 +155,7 @@ trait NoerdSettingsPage
      *
      * @return array<string, array<int, string>>
      */
-    protected function settingsWritableKeys(): array
+    private function settingsWritableKeys(): array
     {
         $map = [];
         LayoutFields::walk(
@@ -181,7 +181,7 @@ trait NoerdSettingsPage
      *
      * @return array<string, class-string<\Illuminate\Database\Eloquent\Model>>
      */
-    protected function settingsModelMap(): array
+    private function settingsModelMap(): array
     {
         if (! isset($this->settingsModels) || $this->settingsModels === []) {
             throw new RuntimeException(sprintf(

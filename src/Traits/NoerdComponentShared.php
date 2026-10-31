@@ -14,14 +14,6 @@ trait NoerdComponentShared
 {
     public bool $disableModal = false;
 
-    /**
-     * Get the component name (public alias for componentName()).
-     */
-    public function getComponentName(): string
-    {
-        return $this->componentName();
-    }
-
     public function refreshList(): void
     {
         // Self-targeted: a bare dispatch('$refresh') is a browser-wide event
