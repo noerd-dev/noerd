@@ -7,6 +7,7 @@ namespace Noerd\Helpers;
 use Illuminate\Database\QueryException;
 use Noerd\Models\NoerdSettings;
 use Noerd\Services\ThemeRegistry;
+use Noerd\Support\RequestState;
 
 /**
  * Resolves the SYSTEM-WIDE default form theme configured by an admin under
@@ -20,9 +21,6 @@ final class ThemeHelper
 {
     public const FALLBACK_THEME = 'default';
 
-    /** @var array<int, array{theme: string, enforced: bool}> */
-    protected static array $cache = [];
-
     /**
      * @return array{theme: string, enforced: bool}
      */
@@ -34,8 +32,10 @@ final class ThemeHelper
             return self::configFallback();
         }
 
-        if (isset(self::$cache[$tenantId])) {
-            return self::$cache[$tenantId];
+        $memo = &RequestState::bucket('noerd.theme');
+
+        if (isset($memo[$tenantId])) {
+            return $memo[$tenantId];
         }
 
         try {
@@ -49,7 +49,7 @@ final class ThemeHelper
 
         $fallback = self::configFallback();
 
-        return self::$cache[$tenantId] = [
+        return $memo[$tenantId] = [
             'theme' => self::normalizeTheme($settings?->detail_theme ?? $fallback['theme']),
             'enforced' => $settings !== null
                 ? (bool) $settings->detail_theme_enforced
@@ -59,7 +59,7 @@ final class ThemeHelper
 
     public static function clearCache(): void
     {
-        self::$cache = [];
+        RequestState::forget('noerd.theme');
     }
 
     /**

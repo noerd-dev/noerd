@@ -41,12 +41,9 @@ use Noerd\Commands\SuperAdminCommand;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\CurrencyHelper;
-use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
-use Noerd\Helpers\TenantHelper;
-use Noerd\Helpers\ThemeHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Listeners\RecordLogin;
 use Noerd\Middleware\ActionPermissionMiddleware;
@@ -57,7 +54,6 @@ use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
-use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
@@ -95,9 +91,9 @@ use Noerd\Support\LayoutState;
 use Noerd\Support\ListColumnIntrospection;
 use Noerd\Support\LockedPropertiesHook;
 use Noerd\Support\ModelMethodColumns;
-use Noerd\Support\PicklistBadges;
 use Noerd\Support\QuickCreateExitHook;
 use Noerd\Support\RelationFormPersistHook;
+use Noerd\Support\RequestState;
 use Noerd\Support\SchemaColumnCache;
 use Noerd\Support\ServerOnlyMethodsHook;
 use Noerd\Support\SetupCollectionDefinitionImport;
@@ -149,7 +145,9 @@ class NoerdServiceProvider extends ServiceProvider
         // Autowired: its only dependency is the FieldTypeRegistry singleton above.
         $this->app->singleton(RelationFieldRegistry::class);
         // Singleton so the per-request FK-title lookups are memoized.
-        $this->app->singleton(RelationTitleResolver::class);
+        // Memoizes tenant-scoped titles: rebuilt for every request and job.
+        $this->app->scoped(RelationTitleResolver::class);
+        $this->app->scoped(RequestState::class);
         $this->app->singleton(PicklistRegistry::class);
         $this->app->singleton(PositionTableRegistry::class);
         $this->app->singleton(BrandService::class);
@@ -178,7 +176,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         // Register SetupCollectionHelper as singleton so static proxies resolve
         // the container-bound repository and tests can replace it.
-        $this->app->singleton(SetupCollectionHelper::class, fn($app) => new SetupCollectionHelper(
+        $this->app->scoped(SetupCollectionHelper::class, fn($app) => new SetupCollectionHelper(
             $app->make(SetupCollectionDefinitionRepositoryContract::class),
         ));
 
@@ -202,26 +200,20 @@ class NoerdServiceProvider extends ServiceProvider
             ListColumnIntrospection::clear();
         });
 
-        // Under Octane booted() fires once per WORKER, not per request — the
-        // same flush must run before every request, or one user's memoized
-        // tenant/config/theme state leaks into the next request the worker
-        // serves. Guarded by class_exists so the listener only registers when
-        // Octane is installed. The schema cache deliberately survives requests.
+        // Request state lives in SCOPED services (RequestState, the title
+        // resolver, the navigation, the setup collection helper): Octane and the
+        // queue worker drop them before every request and every job. Only the
+        // render-time contexts below are PHP statics; under Octane booted()
+        // fires once per WORKER, so they are reset before every request as well.
+        // The schema cache deliberately survives requests.
         if (class_exists(RequestReceived::class)) {
-            Event::listen(RequestReceived::class, function (): void {
-                $this->flushRequestState();
-                // Stateful singletons are rebuilt per request: the title
-                // resolver memoizes tenant-scoped DB values, the navigation
-                // service bakes the user's menu into its constructor.
-                $this->app->forgetInstance(RelationTitleResolver::class);
-                $this->app->forgetInstance(NavigationService::class);
-            });
+            Event::listen(RequestReceived::class, fn() => $this->flushRequestState());
         }
 
-        // The navigation is injected by several layout views per page — a
-        // singleton keeps it at one build per request (the structure itself is
+        // The navigation is injected by several layout views per page — scoped
+        // keeps it at one build per request (the structure itself is
         // additionally memoized in StaticConfigHelper's runtime cache).
-        $this->app->singleton(NavigationService::class);
+        $this->app->scoped(NavigationService::class);
     }
 
     public function boot(): void
@@ -460,26 +452,21 @@ class NoerdServiceProvider extends ServiceProvider
     }
 
     /**
-     * Drop every request-scoped PHP static the package maintains. Runs on app
-     * boot (fresh per test in one Pest process, per-request no-op under FPM)
-     * and — via the Octane RequestReceived listener — before every Octane
-     * request. The schema column listing is deliberately not part of this
-     * flush: it describes the database structure, not request state (see the
-     * boot hook and the MigrationsEnded listener).
+     * Drop the PHP statics the package still keeps: the parsed-YAML cache, the
+     * render-time theme/field contexts, the ICU currency formats and the theme
+     * discovery. Every request memo lives in the scoped RequestState instead,
+     * which the container drops per Octane request and queued job by itself.
+     * Runs on app boot (fresh per test in one Pest process) and before every
+     * Octane request. The schema column listing is deliberately not part of this
+     * flush: it describes the database structure (see the boot hook and the
+     * MigrationsEnded listener).
      */
     private function flushRequestState(): void
     {
         StaticConfigHelper::flushRuntimeCaches();
-        TenantHelper::clearCache();
-        ThemeHelper::clearCache();
         ThemeContext::clear();
         FieldContext::clear();
         CurrencyHelper::clearCache();
-        FormatHelper::clearCache();
-        NoerdSettings::clearCache();
-        SetupCollectionHelper::clearSelectOptionsCache();
-        PicklistBadges::clear();
-        DatabaseSetupCollectionDefinitionRepository::resetCache();
         $this->app->make(ThemeRegistry::class)->clearCache();
     }
 

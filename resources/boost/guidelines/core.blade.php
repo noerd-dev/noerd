@@ -291,10 +291,11 @@ Authorization is generic and two-staged (reference: `docs/permissions.md` and
   `boot()`. Route middleware (`setup`) does not cover the two dynamic-mount seams — the
   client-dispatchable `noerdModal` event and `/noerd/component-page/{componentName}` — so an
   unregistered admin screen is reachable there by any authenticated user of the tenant
-  (reference: `docs/extension-registries.md`, "ComponentAccessGuard"). The guard matches the BARE
-  component name (the `module::` prefix is stripped), so registering `toggl::settings-page` locks
-  EVERY module's `settings-page` — give an admin-only component a name that is unique across all
-  installed modules (`toggl-settings-page`) before registering it.
+  (reference: `docs/extension-registries.md`, "ComponentAccessGuard"). The guard matches
+  namespace-aware: registering `toggl::settings-page` does not lock `hr::settings-page`. Only a name
+  mounted WITHOUT a namespace (a module's `Livewire::addLocation`) matches by its bare name — so
+  give an admin-only component a name that is unique across all installed modules
+  (`toggl-settings-page`) anyway.
 - NEVER bind a locked component property to `wire:model` and never pass `detailModel`/`listModel`/
   `objectPermissionModel`/`settingsModels`/`pageLayout`/`listView` as modal arguments:
   `LockedPropertiesHook` rejects client updates to the identity/config properties of every

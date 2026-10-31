@@ -16,9 +16,6 @@ use Noerd\Helpers\TenantHelper;
  */
 final class PicklistBadges
 {
-    /** @var array<string, array<string, array<int, array{value: mixed, label: string}>>> */
-    private static array $optionsByDetail = [];
-
     /**
      * The detail component paired with a list by convention (`{x}-list` →
      * `{x}-detail`, namespace and dotted subfolder kept), or null when the
@@ -42,7 +39,9 @@ final class PicklistBadges
     {
         $key = TenantHelper::getSelectedTenantId() . '|' . $detailComponent;
 
-        return self::$optionsByDetail[$key] ??= self::resolveOptions($detailComponent);
+        $memo = &RequestState::bucket('noerd.picklist-badges');
+
+        return $memo[$key] ??= self::resolveOptions($detailComponent);
     }
 
     /**
@@ -82,7 +81,7 @@ final class PicklistBadges
 
     public static function clear(): void
     {
-        self::$optionsByDetail = [];
+        RequestState::forget('noerd.picklist-badges');
     }
 
     /**

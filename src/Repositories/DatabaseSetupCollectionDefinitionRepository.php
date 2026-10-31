@@ -10,21 +10,19 @@ use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\SetupCollectionDefinition;
 use Noerd\Scopes\TenantScope;
+use Noerd\Support\RequestState;
 use Noerd\Support\SetupCollectionDefinitionData;
 use RuntimeException;
 
 class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefinitionRepositoryContract
 {
     /**
-     * Per-request resolveFields cache keyed by "tenantId:filename".
-     *
-     * @var array<string, array<string, mixed>|null>
+     * Drop the per-request resolveFields memo (RequestState bucket, keyed by
+     * "tenantId:filename").
      */
-    private static array $requestCache = [];
-
     public static function resetCache(): void
     {
-        self::$requestCache = [];
+        RequestState::forget('noerd.setup-collection-fields');
     }
 
     public function all(?int $tenantId = null): Collection
@@ -67,11 +65,13 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
         $tenantId = TenantHelper::getSelectedTenantId();
         $cacheKey = ($tenantId ?? 'null') . ':' . $filename;
 
-        if (array_key_exists($cacheKey, self::$requestCache)) {
-            return self::$requestCache[$cacheKey];
+        $memo = &RequestState::bucket('noerd.setup-collection-fields');
+
+        if (array_key_exists($cacheKey, $memo)) {
+            return $memo[$cacheKey];
         }
 
-        return self::$requestCache[$cacheKey] = $this->resolveFieldsUncached($filename, $tenantId);
+        return $memo[$cacheKey] = $this->resolveFieldsUncached($filename, $tenantId);
     }
 
     public function save(SetupCollectionDefinitionData $data, ?string $originalFilename = null, ?int $tenantId = null): string

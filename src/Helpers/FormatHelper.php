@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 use Noerd\Models\NoerdSettings;
 use Noerd\Support\Locales;
+use Noerd\Support\RequestState;
 use NumberFormatter;
 
 /**
@@ -28,9 +29,6 @@ use NumberFormatter;
  */
 final class FormatHelper
 {
-    /** @var array<string, string> */
-    private static array $localeCache = [];
-
     /**
      * The locale of the current user (falls back to the tenant locale).
      */
@@ -39,7 +37,9 @@ final class FormatHelper
         $user = NoerdAuth::user();
         $cacheKey = ($user?->id ?? 0) . '|' . ($tenantId ?? TenantHelper::getSelectedTenantId() ?? 0);
 
-        return self::$localeCache[$cacheKey] ??= (function () use ($user, $tenantId): string {
+        $memo = &RequestState::bucket('noerd.format-locale');
+
+        return $memo[$cacheKey] ??= (function () use ($user, $tenantId): string {
             $userLocale = $user?->format_locale;
 
             return Locales::isSupported($userLocale)
@@ -68,7 +68,7 @@ final class FormatHelper
 
     public static function clearCache(): void
     {
-        self::$localeCache = [];
+        RequestState::forget('noerd.format-locale');
     }
 
     /**
