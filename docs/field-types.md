@@ -54,7 +54,7 @@ These options are available for most field types:
 | `type` | string | `text` | Field type |
 | `colspan` | int | `3` | Width in grid columns (1-12) |
 | `default` | mixed | - | Value the form starts with while the field is null (see [Default Values](#default-values)) |
-| `required` | bool | `false` | Show required indicator on label |
+| `required` | bool | `false` | Show required indicator on label and validate the field as `required` (see [Validation](#validation)) |
 | `readonly` | bool | `false` | Make field read-only — enforced on the server too: a client update of the field is discarded (see [Detail View](detail-view.md#what-the-client-may-change)) |
 | `live` | bool | `false` | Enable real-time updates (`wire:model.live.debounce`) |
 | `placeholder` | string | - | Placeholder text (translation key); supported by text-like inputs (`text`, `email`, `phone`, `textarea`, …), selects and picklists |
@@ -71,6 +71,35 @@ These options are available for most field types:
 
 `readonly` is also forced onto every field while the user's object permission denies saving — see
 [Read-Only Rendering](detail-view.md#read-only-rendering-on-write-denied-objects).
+
+### Validation
+
+`validateFromLayout()` builds one rule set per field the form SHOWS (`show: false`, a missing
+`viewExists` and a false `showIf`/`showIfNot` — evaluated like the browser's `x-show` — leave a
+field out): `required` for `required: true`, `nullable` otherwise, plus the rules of the field type:
+
+| Type | Rules |
+|------|-------|
+| `email` | `email` |
+| `number`, `currency` | `numeric` |
+| `date` | `date` |
+| `checkbox` | `boolean` |
+| `select` with inline `options` | one of the option values — or the value the record already holds (the select shows it as an extra option); an `optionsMethod` select is not checked |
+| `text`, `textarea` bound to a varchar/char column (`detailData.{column}`) | `string`, `max:{column length}` |
+
+Readonly fields and fields rendered as text (the `display` theme, on the field or its block) only
+keep `required`: their value is not the user's input. An empty string skips every rule but
+`required`. A field with a `validation:` list replaces the type rules with Laravel rule strings:
+
+```yaml
+- name: detailData.code
+  label: Code
+  type: text
+  required: true
+  validation:
+    - alpha_num
+    - 'max:12'
+```
 
 ### helpText
 

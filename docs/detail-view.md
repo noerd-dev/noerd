@@ -784,7 +784,7 @@ custom `mount()` that replaces `$detailData` wholesale.
 
 - **Trait:** `NoerdDetail` provides `$detailData` (array, the form binding), `$modelId`, `$pageLayout`, `$relationTitles` and `mount()` / `store()` / `delete()` — override only for custom behavior
 - **$detailModel:** `public $detailModel = Model::class;` is required on every model-backed detail — it drives mounting, the default `store()`/`delete()`, and the header actions
-- **validateFromLayout():** Validates against the `required:` flags of the YAML (plus relation-form rules)
+- **validateFromLayout():** Validates every shown field: `required:`, the rules of its type and its `validation:` list (plus relation-form rules) — see [Field Types](field-types.md#validation)
 - **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); override it when the list does not follow the plural convention
 - **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); override `getDetailComponent()` for a component that renders another component's detail YAML
 - The Eloquent model is **never** stored as a property of a detail or page component (the one exception is a position row: `NoerdPositionRow::$position`)
