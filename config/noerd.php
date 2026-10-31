@@ -21,6 +21,14 @@ return [
         'prefix' => env('NOERD_ROUTE_PREFIX', 'noerd'),
     ],
 
+    // What a tenant-scoped model does where no tenant is known — no signed-in
+    // noerd user and no TenantContext (console, queue, public frontends):
+    // 'unscoped' (no filter), 'audit' (no filter, the call site is logged),
+    // 'empty' (no rows, reported) or 'throw'.
+    'tenancy' => [
+        'missing_context' => env('NOERD_TENANCY_MISSING_CONTEXT', 'unscoped'),
+    ],
+
     'features' => [
         'multi_tenant' => env('NOERD_MULTI_TENANT', true),
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),

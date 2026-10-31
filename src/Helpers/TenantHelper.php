@@ -6,6 +6,7 @@ namespace Noerd\Helpers;
 
 use Noerd\Models\Tenant;
 use Noerd\Support\RequestState;
+use Noerd\Support\TenantContext;
 
 final class TenantHelper
 {
@@ -24,7 +25,7 @@ final class TenantHelper
      */
     public static function currentTenantId(): ?int
     {
-        return NoerdAuth::user()?->selected_tenant_id;
+        return TenantContext::current() ?? NoerdAuth::user()?->selected_tenant_id;
     }
 
     /**

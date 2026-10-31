@@ -7,9 +7,14 @@ namespace Noerd\Providers;
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Queue\Events\JobExceptionOccurred;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -44,6 +49,7 @@ use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\StaticConfigHelper;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Listeners\InitializeTenantSession;
 use Noerd\Listeners\RecordLogin;
 use Noerd\Middleware\ActionPermissionMiddleware;
@@ -97,12 +103,16 @@ use Noerd\Support\RequestState;
 use Noerd\Support\SchemaColumnCache;
 use Noerd\Support\ServerOnlyMethodsHook;
 use Noerd\Support\SetupCollectionDefinitionImport;
+use Noerd\Support\TenantContext;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\WriteGuardHook;
 use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {
+    /** Payload key that carries the dispatching tenant into a queued job. */
+    public const JOB_TENANT_KEY = 'noerd_tenant_id';
+
     public function register(): void
     {
         // Merge module defaults so noerd.* keys resolve even when the project
@@ -148,6 +158,7 @@ class NoerdServiceProvider extends ServiceProvider
         // Memoizes tenant-scoped titles: rebuilt for every request and job.
         $this->app->scoped(RelationTitleResolver::class);
         $this->app->scoped(RequestState::class);
+        $this->app->scoped(TenantContext::class);
         $this->app->singleton(PicklistRegistry::class);
         $this->app->singleton(PositionTableRegistry::class);
         $this->app->singleton(BrandService::class);
@@ -255,6 +266,18 @@ class NoerdServiceProvider extends ServiceProvider
         Event::listen(Login::class, InitializeTenantSession::class);
         Event::listen(Authenticated::class, InitializeTenantSession::class);
         Event::listen(Login::class, RecordLogin::class);
+
+        // A queued job works in the tenant of the request or job that dispatched it.
+        Queue::createPayloadUsing(function (): array {
+            $tenantId = TenantHelper::currentTenantId();
+
+            return $tenantId === null ? [] : [self::JOB_TENANT_KEY => $tenantId];
+        });
+        Event::listen(JobProcessing::class, function (JobProcessing $event): void {
+            $tenantId = $event->job->payload()[self::JOB_TENANT_KEY] ?? null;
+            TenantContext::enterJob(is_numeric($tenantId) ? (int) $tenantId : null);
+        });
+        Event::listen([JobProcessed::class, JobFailed::class, JobExceptionOccurred::class], fn() => TenantContext::leaveJob());
 
         // Create default languages and setup collections when a new tenant is created
         Tenant::created(function (Tenant $tenant): void {
