@@ -77,14 +77,14 @@ final class CsvListExporter
     public static function formatValue(mixed $value, array $column): string
     {
         return match ($column['type'] ?? 'text') {
-            'bool', 'boolean' => ListCellFormatter::truthy($value) ? __('Yes') : __('No'),
-            'date' => FormatHelper::date($value),
-            'datetime' => FormatHelper::dateTime($value),
             'currency', 'number' => is_numeric($value)
                 ? FormatHelper::decimal((float) $value)
-                : self::neutralizeFormula(self::stringify($value)),
-            'badge', 'preview' => self::neutralizeFormula(ListCellFormatter::format($value, $column)),
-            default => self::neutralizeFormula(self::stringify($value)),
+                : self::neutralizeFormula(ListCellFormatter::text($value)),
+            // A plain text column holding a JSON column (custom_attributes) stays
+            // JSON in the file — machine-readable, nothing is lost.
+            'text' => self::neutralizeFormula(self::stringify($value)),
+            // Every other type is written exactly like the table shows it.
+            default => self::neutralizeFormula(ListCellFormatter::format($value, $column)),
         };
     }
 

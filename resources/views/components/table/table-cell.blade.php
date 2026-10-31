@@ -6,6 +6,10 @@
     // Element ids must be unique across every list on the page — two lists
     // rendering the same row/column would otherwise collide.
     $cellId = ($listId ?? 'list') . '-' . $column . '-' . $row;
+
+    // The column the formatter reads: the cell's own field and type, the YAML
+    // column for everything else (options, …).
+    $formatColumn = array_merge($columnConfig ?? [], ['field' => $columnValue, 'type' => $type]);
 @endphp
 
 <td
@@ -230,7 +234,7 @@
                         id="cell-{{ $cellId }}"
                         class="cursor-pointer px-1.5 py-0.5 text-sm"
                     >
-                        {{ \Noerd\Helpers\FormatHelper::date($value) }}
+                        {{ \Noerd\Support\ListCellFormatter::format($value, $formatColumn) }}
                     </span>
                 @endif
             @elseif ($type === 'datetime')
@@ -239,7 +243,7 @@
                         wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                         class="cursor-pointer px-1.5 py-0.5 text-sm"
                     >
-                        {{ \Noerd\Helpers\FormatHelper::dateTime($value) }}
+                        {{ \Noerd\Support\ListCellFormatter::format($value, $formatColumn) }}
                     </span>
                 @endif
             @elseif ($type === 'number')
@@ -249,7 +253,7 @@
                     readonly
                     id="cell-{{ $cellId }}"
                     class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
-                    value="{{ is_numeric($value) ? \Noerd\Helpers\FormatHelper::number((float) $value, 2) : ($value ?? '') }}"
+                    value="{{ \Noerd\Support\ListCellFormatter::format($value, $formatColumn) }}"
                 />
             @elseif ($type === 'currency')
                 <input
@@ -258,43 +262,25 @@
                     readonly
                     id="cell-{{ $cellId }}"
                     class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-right text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
-                    value="{{ is_numeric($value) ? \Noerd\Helpers\CurrencyHelper::format((float)$value) : ($value ?? '') }}"
+                    value="{{ \Noerd\Support\ListCellFormatter::format($value, $formatColumn) }}"
                 />
-            @elseif ($type === 'badge')
+            @elseif ($type === 'badge' || $type === 'relationBadge')
+                {{-- The option label of a picklist value, or the title of a foreign key:
+                     resolved by the formatter, drawn by the one badge component. --}}
                 @php
-                    $badgeValue = \Noerd\Support\ListCellFormatter::scalar($value);
-                    $badgeLabel = \Noerd\Support\ListCellFormatter::badgeLabel($value, $columnConfig['options'] ?? []);
+                    $badgeText = \Noerd\Support\ListCellFormatter::format($value, $formatColumn);
                 @endphp
                 <div
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     class="flex cursor-pointer items-center px-1.5"
                 >
-                    @if ($badgeValue !== null && $badgeValue !== '')
-                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs leading-tight font-medium whitespace-nowrap text-gray-700">
-                            {{ __($badgeLabel) }}
-                        </span>
-                    @endif
-                </div>
-            @elseif ($type === 'relationBadge')
-                @php
-                    $relationTitle = app(\Noerd\Services\RelationTitleResolver::class)->title($columnValue, $value);
-                @endphp
-                <div
-                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
-                    class="flex cursor-pointer items-center px-1.5"
-                >
-                    @if ($relationTitle !== null && $relationTitle !== '')
-                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs leading-tight font-medium whitespace-nowrap text-gray-700">
-                            {{ $relationTitle }}
-                        </span>
+                    @if ($badgeText !== '')
+                        <x-noerd::badge>{{ $badgeText }}</x-noerd::badge>
                     @endif
                 </div>
             @elseif ($type === 'customAttribute')
-                @php
-                    $customAttributeValue = \Noerd\Support\RelationFieldDefinition::normalizeDisplayValue(data_get($rowData, $columnValue));
-                @endphp
                 <div wire:click.stop.prevent="{{ $action }}('{{ $id }}')" class="flex cursor-pointer items-center">
-                    <span class="w-full px-1.5 py-0.5 text-sm">{{ $customAttributeValue }}</span>
+                    <span class="w-full px-1.5 py-0.5 text-sm">{{ \Noerd\Support\ListCellFormatter::format(data_get($rowData, $columnValue), $formatColumn) }}</span>
                 </div>
             @elseif ($type === 'checkbox')
                 @php
@@ -323,29 +309,18 @@
                     </div>
                 @endif
             @elseif ($type === 'badge_with_text')
+                @php
+                    $badgeWithText = \Noerd\Support\ListCellFormatter::badgeWithText($value);
+                @endphp
                 <div
                     wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
                     class="flex cursor-pointer items-center gap-2 px-1.5 py-0.5"
                 >
-                    @if (is_array($value) && isset($value['badge']) && $value['badge'])
-                        @php
-                            $badgeVariant = $value['variant'] ?? 'primary';
-                            $badgeClasses = match ($badgeVariant) {
-                                'danger' => 'bg-red-100 text-red-800',
-                                'success' => 'bg-green-100 text-green-800',
-                                'warning' => 'bg-yellow-100 text-yellow-800',
-                                'neutral' => 'bg-gray-100 text-gray-600',
-                                default => 'bg-brand-primary/10 text-brand-primary',
-                            };
-                        @endphp
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $badgeClasses }}">
-                            {{ $value['badge'] }}
-                        </span>
+                    @if ($badgeWithText['badge'] !== '')
+                        <x-noerd::badge :variant="$badgeWithText['variant']">{{ $badgeWithText['badge'] }}</x-noerd::badge>
                     @endif
-                    @if (is_array($value) && isset($value['text']))
-                        <span class="text-sm text-gray-600">{{ $value['text'] }}</span>
-                    @elseif (!is_array($value))
-                        <span class="text-sm">{{ $value }}</span>
+                    @if ($badgeWithText['text'] !== '')
+                        <span class="text-sm text-gray-600">{{ $badgeWithText['text'] }}</span>
                     @endif
                 </div>
             @elseif ($type === 'relation_link')
@@ -388,6 +363,9 @@
                     </div>
                 @endif
             @elseif ($type === 'colored_text')
+                @php
+                    $coloredText = \Noerd\Support\ListCellFormatter::coloredText($value);
+                @endphp
                 <div
                     @if (isset($columnConfig['wireClick']))
                         wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
@@ -396,23 +374,25 @@
                     @endif
                     class="inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1.5 px-1.5 py-0.5"
                 >
-                    @if (is_array($value) && isset($value['prefix']))
-                        <span class="shrink-0 text-sm {{ $value['prefixClass'] ?? '' }}">{{ $value['prefix'] }}</span>
+                    @if ($coloredText['prefix'] !== '')
+                        <span class="shrink-0 text-sm {{ $coloredText['prefixClass'] }}">{{ $coloredText['prefix'] }}</span>
                     @endif
-                    @if (is_array($value) && isset($value['text']) && $value['text'] !== '')
+                    @if ($coloredText['text'] !== '')
                         <span
-                            title="{{ $value['text'] }}"
-                            class="truncate px-2 rounded text-sm font-medium {{ $value['class'] ?? '' }}"
+                            title="{{ $coloredText['text'] }}"
+                            @class([
+                                'truncate text-sm',
+                                'rounded px-2 font-medium' => $coloredText['styled'],
+                                $coloredText['class'] => $coloredText['class'] !== '',
+                            ])
                         >
-                            {{ $value['text'] }}
+                            {{ $coloredText['text'] }}
                         </span>
-                    @elseif (!is_array($value) && $value !== '' && $value !== null)
-                        <span class="truncate text-sm" title="{{ $value }}">{{ $value }}</span>
                     @endif
-                    @if (is_array($value) && ! empty($value['icon']))
+                    @if ($coloredText['icon'])
                         <x-icon
-                            name="{{ $value['icon'] }}"
-                            class="w-4 h-4 shrink-0 {{ $value['iconClass'] ?? 'text-gray-500' }}"
+                            name="{{ $coloredText['icon'] }}"
+                            class="h-4 w-4 shrink-0 {{ $coloredText['iconClass'] }}"
                         />
                     @endif
                 </div>

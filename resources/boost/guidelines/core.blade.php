@@ -615,9 +615,11 @@ single generic feature in `NoerdList` + the list views; never duplicate it per m
   ```
 - The label is translated with `__()` (English-text key → `de.json`), so the badge follows the active
   language. Badges use a neutral single-colour style.
-- The `badge` cell renderer lives in `noerd::components.table.table-cell` (full lists) and
-  `noerd::components.list.minimal` (embedded widgets); CSV export resolves the label too
-  (`NoerdList::formatCsvValue`).
+- Every rendering mode — table cell, card grid, widget list, CSV export, the text-only detail theme —
+  writes a cell through `Noerd\Support\ListCellFormatter::format($value, $column)` (dates, amounts,
+  `badge`, `relationBadge`, `customAttribute`, the array values of `colored_text` /
+  `badge_with_text`) and draws every pill with `<x-noerd::badge variant="…">`. Never format a cell
+  type or hand-roll a pill in a module view.
 - Reference: `docs/list-view.md` ("Column Types", `badge`).
 
 ### Multi-Select & Bulk Actions in List Components

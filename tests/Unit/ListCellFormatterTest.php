@@ -209,3 +209,99 @@ describe('format()', function (): void {
         expect(ListCellFormatter::format(ZzCellBackedStatus::Draft, ['type' => 'text']))->toBe('draft');
     });
 });
+
+describe('array-shaped and relation cell types', function (): void {
+    it('writes the line of a colored_text value and normalises its shape', function (): void {
+        zzCellFormatterUser();
+
+        $value = [
+            'prefix' => '↳ ',
+            'prefixClass' => 'text-gray-400',
+            'text' => 'Child page',
+            'class' => 'bg-green-100',
+            'icon' => 'star',
+            'iconClass' => 'text-yellow-500',
+        ];
+
+        expect(ListCellFormatter::format($value, ['type' => 'colored_text']))->toBe('↳ Child page')
+            ->and(ListCellFormatter::format(['text' => 'Alone'], ['type' => 'colored_text']))->toBe('Alone')
+            ->and(ListCellFormatter::format('Plain', ['type' => 'colored_text']))->toBe('Plain')
+            ->and(ListCellFormatter::format(null, ['type' => 'colored_text']))->toBe('')
+            ->and(ListCellFormatter::coloredText($value))->toBe([
+                'text' => 'Child page',
+                'class' => 'bg-green-100',
+                'prefix' => '↳ ',
+                'prefixClass' => 'text-gray-400',
+                'icon' => 'star',
+                'iconClass' => 'text-yellow-500',
+                'styled' => true,
+            ])
+            ->and(ListCellFormatter::coloredText('Plain'))->toMatchArray(['text' => 'Plain', 'styled' => false, 'icon' => null, 'class' => '']);
+    });
+
+    it('writes a badge_with_text value as badge and text', function (): void {
+        zzCellFormatterUser();
+
+        $value = ['badge' => 'Open', 'text' => 'Alice', 'variant' => 'danger'];
+
+        expect(ListCellFormatter::format($value, ['type' => 'badge_with_text']))->toBe('Open Alice')
+            ->and(ListCellFormatter::format(['badge' => 'Open'], ['type' => 'badge_with_text']))->toBe('Open')
+            ->and(ListCellFormatter::format('Unassigned', ['type' => 'badge_with_text']))->toBe('Unassigned')
+            ->and(ListCellFormatter::badgeWithText($value))->toBe(['badge' => 'Open', 'variant' => 'danger', 'text' => 'Alice'])
+            ->and(ListCellFormatter::badgeWithText('Unassigned'))->toBe(['badge' => '', 'variant' => 'primary', 'text' => 'Unassigned']);
+    });
+
+    it('renders inversebool as Yes or nothing', function (): void {
+        zzCellFormatterUser();
+
+        expect(ListCellFormatter::format(1, ['type' => 'inversebool']))->toBe(__('Yes'))
+            ->and(ListCellFormatter::format(0, ['type' => 'inversebool']))->toBe('')
+            ->and(ListCellFormatter::format(null, ['type' => 'inversebool']))->toBe('');
+    });
+
+    it('writes a time cell in the reader locale', function (): void {
+        zzCellFormatterUser(formatLocale: 'de-DE');
+
+        expect(ListCellFormatter::format('2026-09-03 14:05:00', ['type' => 'time']))->toBe('14:05')
+            ->and(ListCellFormatter::format(null, ['type' => 'time']))->toBe('');
+    });
+
+    it('resolves a relationBadge value to the title of the related record', function (): void {
+        zzCellFormatterUser();
+        $related = Tenant::factory()->create(['name' => 'Zz Related Tenant']);
+
+        expect(ListCellFormatter::format($related->id, ['type' => 'relationBadge', 'field' => 'tenant_id']))->toBe('Zz Related Tenant')
+            ->and(ListCellFormatter::format(null, ['type' => 'relationBadge', 'field' => 'tenant_id']))->toBe('')
+            ->and(ListCellFormatter::format($related->id, ['type' => 'relationBadge']))->toBe('');
+    });
+
+    it('shows a customAttribute value in the active language', function (): void {
+        zzCellFormatterUser();
+        app()->setLocale('de');
+
+        expect(ListCellFormatter::format(['de' => 'Haus', 'en' => 'House'], ['type' => 'customAttribute']))->toBe('Haus')
+            ->and(ListCellFormatter::format('plain', ['type' => 'customAttribute']))->toBe('plain')
+            ->and(ListCellFormatter::format(null, ['type' => 'customAttribute']))->toBe('');
+    });
+
+    it('joins the scalars of an array for a plain text cell instead of failing on it', function (): void {
+        zzCellFormatterUser();
+
+        expect(ListCellFormatter::format(['a', '', 'b', null], ['type' => 'text']))->toBe('a, b')
+            ->and(ListCellFormatter::format(['de' => 'Haus', 'en' => 'House'], []))->toBe('Haus, House')
+            ->and(ListCellFormatter::text(new class {
+                public function __toString(): string
+                {
+                    return 'stringable';
+                }
+            }))->toBe('stringable')
+            ->and(ListCellFormatter::text(false))->toBe('')
+            ->and(ListCellFormatter::text(true))->toBe('1');
+    });
+
+    it('resolves a badge label from a value => label map as well', function (): void {
+        expect(ListCellFormatter::badgeLabel('open', ['open' => 'Open label', 'closed' => 'Closed']))->toBe('Open label')
+            ->and(ListCellFormatter::badgeLabel(1, [1 => 'One']))->toBe('One')
+            ->and(ListCellFormatter::badgeLabel('other', ['open' => 'Open label']))->toBe('other');
+    });
+});
