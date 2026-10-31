@@ -756,8 +756,18 @@ the view file's translated `title`.
 
 ## CSV Export
 
-A list can offer a CSV download of its (filtered) query. Enable it with the component property
-`public bool $enableCsvExport = true;` and override `prepareCsvExport()`:
+A list can offer a CSV download of its (filtered) query. Switch it on in `mount()` — the property
+comes from the trait, so redeclaring it with another default is a PHP error — and override
+`prepareCsvExport()`. `exportCsv()` refuses (403) on a list that did not switch it on, and the client
+cannot switch it on:
+
+```php
+public function mount(): void
+{
+    $this->mountList();
+    $this->enableCsvExport = true;
+}
+```
 
 ```php
 protected function prepareCsvExport(): array

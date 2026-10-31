@@ -330,10 +330,22 @@ trait NoerdPage
      */
     public function embeddedDetailStored(int $modelId, ?string $detail = null): void
     {
+        // A listener is callable by the client: only adopt a record this user may
+        // save, and never repoint a page that already shows a record — the
+        // embedded detail of that page reports the same id.
+        if (! $this->canSaveObject()) {
+            return;
+        }
+
         if ($this->isAdditionalDetail($detail)) {
             $this->showSuccessIndicator = true;
             $this->afterAdditionalDetailStored($detail, $modelId);
 
+            return;
+        }
+
+        if ($this->modelId !== null && $this->modelId !== '' && $this->modelId !== 'new'
+            && (string) $this->modelId !== (string) $modelId) {
             return;
         }
 
