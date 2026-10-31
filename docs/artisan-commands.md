@@ -18,6 +18,7 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | `noerd:demo` | Install demo data (models, migrations, views, configs, routes) |
 | `noerd:publish-home` | Publish the noerd-apps view for customization |
 | `noerd:info` | Display the current Noerd version |
+| `noerd:lint` | Check the app-configs YAML for broken field types, routes, picklist providers and columns |
 
 ### Users, Tenants & Apps
 
@@ -168,6 +169,23 @@ Displays the currently installed Noerd version.
 ```bash
 php artisan noerd:info
 ```
+
+## noerd:lint
+
+Checks every YAML file below the host's `app-configs/` (plus each `--path`) against the registries
+and the routes, without rendering anything:
+
+```bash
+php artisan noerd:lint
+php artisan noerd:lint --path=app-modules/crm/app-configs --strict
+```
+
+| Severity | Found |
+|----------|-------|
+| error | a file that does not parse; a `*Relation` type no registry knows (rendering throws); a detail field without `name`; a list column without `field`; an action `route:` that is not registered and has no fallback (`modalComponent:`, `action:`, `url:`) |
+| warning | a field type no registry knows (it renders as a plain `<input type>`, e.g. `datetime` instead of `datetime-local`); a `picklistField:`/`optionsMethod:` that is neither a registered picklist provider nor a method of any component; a field that is `readonly` and `required`; flow-style YAML (an empty `[]`/`{}` is fine); an action `route:` that is not registered but has a fallback |
+
+The command exits with 1 on errors — with `--strict` on warnings as well — so it can guard a CI run.
 
 ## noerd:make-admin-user
 
