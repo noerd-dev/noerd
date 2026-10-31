@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Services;
 
+use Closure;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Noerd\Support\FieldTypeDefinition;
@@ -24,32 +25,14 @@ final class RelationFieldRegistry
 
         $this->fieldTypeRegistry->register($type, FieldTypeDefinition::livewire(
             $definition->fieldComponent ?? 'noerd::noerd-relation-field',
-            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($type): array {
-                $fieldName = $field['name'] ?? '';
-
-                $props = [
-                    'relationType' => $type,
-                    'fieldName' => $fieldName,
-                    'label' => $field['label'] ?? '',
-                    'value' => $this->resolveCurrentValue($fieldName, $component, $detailData),
-                    'required' => $field['required'] ?? false,
-                    'readonly' => $field['readonly'] ?? false,
-                    'helpText' => $field['helpText'] ?? '',
-                    'modelId' => $modelId,
-                    'owner' => $component instanceof Component ? $component->getId() : null,
-                    'errorMessages' => $component instanceof Component ? $component->getErrorBag()->get($fieldName) : [],
-                ];
-
-                // Only themes that number their rows put a number on the field.
-                if (isset($field['number'])) {
-                    $props['number'] = (int) $field['number'];
-                }
-
-                $props['theme'] = $field['theme'] ?? 'default';
-
-                return $props;
-            },
-            keyResolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): string => $type . '-' . ($field['name'] ?? 'relation') . '-' . ($modelId ?? 'new'),
+            resolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): array => $this->fieldProps(
+                $field,
+                $component,
+                $detailData,
+                $modelId,
+                ['relationType' => $type],
+            ),
+            keyResolver: self::fieldKey($type),
         ));
     }
 
@@ -61,34 +44,15 @@ final class RelationFieldRegistry
         $this->fieldTypeRegistry->register($type, FieldTypeDefinition::livewire(
             'noerd::noerd-polymorphic-relation-field',
             resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($allowedRelationTypes): array {
-                $fieldName = $field['name'] ?? '';
                 $typeField = $field['typeField'] ?? '';
 
-                $props = [
-                    'fieldName' => $fieldName,
+                return $this->fieldProps($field, $component, $detailData, $modelId, [
                     'typeField' => $typeField,
-                    'label' => $field['label'] ?? '',
-                    'value' => $this->resolveCurrentValue($fieldName, $component, $detailData),
                     'currentType' => $this->resolveCurrentValue($typeField, $component, $detailData),
                     'allowedTypes' => array_values(array_filter($allowedRelationTypes, fn(string $t): bool => $this->has($t))),
-                    'required' => $field['required'] ?? false,
-                    'readonly' => $field['readonly'] ?? false,
-                    'helpText' => $field['helpText'] ?? '',
-                    'modelId' => $modelId,
-                    'owner' => $component instanceof Component ? $component->getId() : null,
-                    'errorMessages' => $component instanceof Component ? $component->getErrorBag()->get($fieldName) : [],
-                ];
-
-                // Only themes that number their rows put a number on the field.
-                if (isset($field['number'])) {
-                    $props['number'] = (int) $field['number'];
-                }
-
-                $props['theme'] = $field['theme'] ?? 'default';
-
-                return $props;
+                ]);
             },
-            keyResolver: fn(array $field, mixed $component, mixed $detailData, mixed $modelId): string => $type . '-' . ($field['name'] ?? 'relation') . '-' . ($modelId ?? 'new'),
+            keyResolver: self::fieldKey($type),
         ));
     }
 
@@ -97,7 +61,7 @@ final class RelationFieldRegistry
         return isset($this->definitions[$type]);
     }
 
-    public function resolve(string $type): ?RelationFieldDefinition
+    public function get(string $type): ?RelationFieldDefinition
     {
         return $this->definitions[$type] ?? null;
     }
@@ -128,6 +92,49 @@ final class RelationFieldRegistry
     public function all(): array
     {
         return $this->definitions;
+    }
+
+    /**
+     * The Livewire key of a relation field: type, field and record.
+     */
+    private static function fieldKey(string $type): Closure
+    {
+        return fn(array $field, mixed $component, mixed $detailData, mixed $modelId): string => $type . '-' . ($field['name'] ?? 'relation') . '-' . ($modelId ?? 'new');
+    }
+
+    /**
+     * The props every relation field component is mounted with — the plain and
+     * the polymorphic one differ only in what $extra adds.
+     *
+     * @param  array<string, mixed>  $field
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed>
+     */
+    private function fieldProps(array $field, mixed $component, mixed $detailData, mixed $modelId, array $extra): array
+    {
+        $fieldName = $field['name'] ?? '';
+
+        $props = [
+            ...$extra,
+            'fieldName' => $fieldName,
+            'label' => $field['label'] ?? '',
+            'value' => $this->resolveCurrentValue($fieldName, $component, $detailData),
+            'required' => $field['required'] ?? false,
+            'readonly' => $field['readonly'] ?? false,
+            'helpText' => $field['helpText'] ?? '',
+            'modelId' => $modelId,
+            'owner' => $component instanceof Component ? $component->getId() : null,
+            'errorMessages' => $component instanceof Component ? $component->getErrorBag()->get($fieldName) : [],
+        ];
+
+        // Only themes that number their rows put a number on the field.
+        if (isset($field['number'])) {
+            $props['number'] = (int) $field['number'];
+        }
+
+        $props['theme'] = $field['theme'] ?? 'default';
+
+        return $props;
     }
 
     private function resolveCurrentValue(string $fieldName, mixed $component, mixed $detailData): mixed

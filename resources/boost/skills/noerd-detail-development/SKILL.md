@@ -127,7 +127,7 @@ Blade: header → `<x-noerd::detail-relations :layout="$pageLayout" :modelId="$m
 → `@livewire($pageLayout['detail'], ['modelId' => $modelId, 'embedded' => true], key('embedded-detail'))`.
 Save roundtrip page↔detail is generic (`storeDetail-*` / `detailStored-*` events); override
 `afterEmbeddedDetailStored($model)` for page-owned persistence. Module-contributed header actions
-(`HeaderActionsRegistry`) sit in the head row of the detail's own form block, never in the page
+(`ComponentSlotsRegistry`, slot `DETAIL_HEADER_ACTIONS`) sit in the head row of the detail's own form block, never in the page
 header; a detail's OWN
 buttons for that row go into the `blockActions` slot of `<x-noerd::tab-content>`.
 

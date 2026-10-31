@@ -7,7 +7,7 @@
 @php
     $relations = $layout['relations'] ?? [];
     $hasContributedTiles = $modelClass !== ''
-        && app(\Noerd\Services\RelationBoxRegistry::class)->for($modelClass) !== [];
+        && app(\Noerd\Services\RelationBoxRegistry::class)->get($modelClass) !== [];
 @endphp
 
 @if ($modelId && $modelClass && (! empty($relations) || $hasContributedTiles))

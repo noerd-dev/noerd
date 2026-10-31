@@ -7,39 +7,50 @@ Registries with their own documentation are not repeated here:
 - `FieldTypeRegistry` — custom form field types, see [field-types.md](field-types.md)
 - `RelationFieldRegistry` — relation field types, see [relation-field-types.md](relation-field-types.md)
 - `ThemeRegistry` — form layout themes, see [themes.md](themes.md)
-- `HeaderActionsRegistry` — list/detail header actions, see [header-actions.md](header-actions.md)
 - `ProfileRegistry` — additional user profiles, and `ActionPermissionRegistry` — named actions
   beyond CRUD, see [permissions.md](permissions.md)
 
-Documented on this page: `TopBarRegistry`, `PicklistRegistry`, `PositionTableRegistry`,
-`DynamicNavigationRegistry`, `RelationBoxRegistry`, `DetailSlotsRegistry`, `ComponentAccessGuard`, the overridable null bindings
-and the authorization gates.
+Documented on this page: `ComponentSlotsRegistry` (top bar, header actions, detail slots),
+`PicklistRegistry`, `PositionTableRegistry`, `DynamicNavigationRegistry`, `RelationBoxRegistry`,
+`ComponentAccessGuard`, the overridable null bindings and the authorization gates.
 
-## TopBarRegistry
+Every registry answers the same four questions — `register()`, `has()`, `get()` (null or an empty
+list when nothing is registered) and `all()` — plus what its subject needs (`catalogFor()`,
+`typeForColumn()`, `options()`, …).
 
-Contributes Livewire components to the right-hand slot of the top bar — rendered between the quick menu and the setup cog / profile dropdown, on every backend page.
+## ComponentSlotsRegistry
 
-**API** (`Noerd\Services\TopBarRegistry`):
+Livewire components a module mounts at a named spot of the noerd chrome. The host only marks the
+position; the module registers its component from its service provider's `boot()`, and the
+registration disappears with the module. Three slots are built in — `ComponentSlotsRegistry::TOP_BAR`
+(the right-hand slot of the top bar, between the quick menu and the setup cog / profile dropdown, on
+every backend page), `LIST_HEADER_ACTIONS` and `DETAIL_HEADER_ACTIONS` (the module-contributed
+header actions, see [header-actions.md](header-actions.md)) — and a detail marks further named
+slots with `<x-noerd::detail-slot>` (below).
+
+**API** (`Noerd\Services\ComponentSlotsRegistry`):
 
 | Method | Description |
 |--------|-------------|
-| `register(string $component)` | Add a Livewire component name to the top bar |
-| `all()` | All registered component names, in registration order |
+| `register(string $slot, string $component, int $sort = 100)` | Contribute a Livewire component to a slot; lower `sort` renders first, equal sorts keep registration order |
+| `has(string $slot)` | Whether anything is registered for the slot |
+| `get(string $slot)` | The component names registered for the slot, in render order |
+| `all()` | Every slot with its components |
 
-**Registering** from a module service provider's `boot()`:
+**Top bar** — registering from a module service provider's `boot()`:
 
 ```php
-use Noerd\Services\TopBarRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 
 public function boot(): void
 {
-    app(TopBarRegistry::class)->register('my-module::top-bar-notifications');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::TOP_BAR, 'my-module::top-bar-notifications');
 }
 ```
 
 The registered name is a Livewire component name — typically an anonymous view-file component in the module's `resources/views/components/` folder, resolved through the module's Livewire namespace (`Livewire::addNamespace('my-module', viewPath: ...)`).
 
-**Where it renders:** `resources/views/components/layout/top-bar.blade.php` reads `app(TopBarRegistry::class)->all()` in `mount()` and mounts every entry:
+**Where it renders:** `resources/views/components/layout/top-bar.blade.php` reads `app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::TOP_BAR)` in `mount()` and mounts every entry:
 
 ```blade
 @foreach($topBarComponents as $topBarComponent)
@@ -53,6 +64,50 @@ The registered name is a Livewire component name — typically an anonymous view
 - Use a single collapsing root (`<div class="contents">`) and render the icon/button inside it only when visible — never `@if` around the root element
 - Keep top bar components small: one icon, one function
 
+**Detail slots** — named extension slots inside detail forms: an optional module contributes a
+Livewire component to a slot name, the hosting detail only marks the position with
+`<x-noerd::detail-slot>`. Marking a slot in a detail blade (a slot may sit anywhere in the form —
+typically in a tab slot below the YAML fields):
+
+```blade
+<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
+    <x-slot:tab1>
+        <x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />
+    </x-slot:tab1>
+</x-noerd::tab-content>
+```
+
+Registering from a module service provider's `boot()`:
+
+```php
+app(ComponentSlotsRegistry::class)->register('item-below-form', 'inventory::item-stock-levels', sort: 10);
+```
+
+Every registered component is mounted with two parameters: the host's `modelId` and
+`hostComponent` — the host's Livewire component name. The latter lets a slot child defer its own
+persistence until the host actually saved, by listening for the host's
+`detailStored-{hostComponent}` event (see the [store roundtrip](page-view.md#generic-store-roundtrip)):
+
+```php
+public function getListeners(): array
+{
+    return ['detailStored-' . $this->hostComponent => 'hostStored'];
+}
+
+public function hostStored(int $modelId): void
+{
+    // persist the draft state now that the host record exists / was saved
+}
+```
+
+- Children are mounted with stable keys (`detail-slot-{name}-{component}`) and mount-only
+  parameters, so re-renders of the host leave the child DOM untouched
+- Quick-create dialogs stay slim and render no slots; a slot outside a Livewire host renders nothing
+- Slot children holding unsaved draft state lose it when the modal stack updates (children are
+  re-mounted) — hosts should not open nested modals around a filled slot
+- The shipped host is the setup app's user detail (`noerd::noerd-user-detail`, slot
+  `user-below-form`); mechanics: `tests/Feature/DetailSlotRenderTest.php`
+
 ## PicklistRegistry
 
 Named option providers for `type: picklist` fields. A detail YAML references options by name via `picklistField:`; the options can come from a method on the detail component itself OR from a provider another module registered — so a foreign module can supply options to a detail form purely by name, with no PHP dependency between the modules.
@@ -63,7 +118,7 @@ Named option providers for `type: picklist` fields. A detail YAML references opt
 |--------|-------------|
 | `register(string $name, callable $provider)` | Register a provider; the callable returns a `value => label` array |
 | `has(string $name)` | Whether a provider is registered under that name |
-| `resolve(string $name)` | The callable, or `null` when none is registered |
+| `get(string $name)` | The callable, or `null` when none is registered |
 
 **Resolution order** — `NoerdDetail::resolvePicklistOptions(string $picklistField)`:
 
@@ -109,7 +164,7 @@ fields:
 
 - Provider callables run per render — keep the query cheap and tenant-scoped
 - A component method with the same name (and an `: array` return type) always shadows a registered provider
-- PHP code can resolve a provider directly when it needs the options outside a form: `app(PicklistRegistry::class)->resolve('warehouseOptions')`
+- PHP code can resolve a provider directly when it needs the options outside a form: `app(PicklistRegistry::class)->get('warehouseOptions')`
 
 ## PositionTableRegistry
 
@@ -124,7 +179,7 @@ same entry — the wiring exists exactly once. See [Detail View → Configurable
 |--------|-------------|
 | `register(string $detailComponent, string $catalogClass, string $modelClass)` | Register the position table of a detail component |
 | `has(string $component)` | Whether a table is registered for the component |
-| `for(string $component)` | `['catalog' => …, 'model' => …]` or `null` |
+| `get(string $component)` | `['catalog' => …, 'model' => …]` or `null` |
 | `catalogFor(string $component)` | The catalog instance or `null` |
 
 Keys are the BARE component name: a `module::` prefix is stripped (`accounting::invoice-detail` and
@@ -169,7 +224,8 @@ interface DynamicNavigationProviderContract
 | Method | Description |
 |--------|-------------|
 | `register(DynamicNavigationProviderContract $provider)` | Register a provider under its `type()` |
-| `resolve(string $type)` | The provider for a type, or `null` |
+| `has(string $type)` | Whether a provider is registered for the type |
+| `get(string $type)` | The provider for a type, or `null` |
 | `all()` | All providers keyed by type |
 
 **YAML usage** — two forms, matching the two navigation structures:
@@ -217,7 +273,7 @@ would outlive an uninstalled module.
 | Method | Description |
 |--------|-------------|
 | `register(string $modelClass, array $tile, int $sort = 100)` | Contribute a tile for every relation box hosting `$modelClass` |
-| `for(string $modelClass)` | All contributed tiles for the class, including tiles registered for a parent class (a project-level subclass inherits its base's tiles), sorted |
+| `get(string $modelClass)` | All contributed tiles for the class, including tiles registered for a parent class (a project-level subclass inherits its base's tiles), sorted |
 
 A tile mirrors the YAML relation shape — `label` (translation key), `heroicon`, `component` and/or
 `route`, `arguments` with the `$modelId` token — plus two keys YAML cannot express:
@@ -254,67 +310,6 @@ app(RelationBoxRegistry::class)->register(Customer::class, [
 - A page whose only tiles are contributed still renders its relation box — the
   `<x-noerd::detail-relations>` guard consults the registry
 
-## DetailSlotsRegistry
-
-Named extension slots inside detail forms: an optional module contributes a Livewire component to a
-slot name, the hosting detail only marks the position with `<x-noerd::detail-slot>`. The core ships
-the slot and stays agnostic of whoever fills it — a registration ceases to exist with its module.
-
-**API** (`Noerd\Services\DetailSlotsRegistry`):
-
-| Method | Description |
-|--------|-------------|
-| `register(string $slot, string $component, int $sort = 100)` | Contribute a Livewire component to a slot; lower `sort` renders first, equal sorts keep registration order |
-| `for(string $slot)` | The component names registered for a slot, sorted |
-
-**Marking a slot** in a detail blade (a slot may sit anywhere in the form — typically in a tab slot
-below the YAML fields):
-
-```blade
-<x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId">
-    <x-slot:tab1>
-        <x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />
-    </x-slot:tab1>
-</x-noerd::tab-content>
-```
-
-**Registering** from a module service provider's `boot()`:
-
-```php
-use Noerd\Services\DetailSlotsRegistry;
-
-public function boot(): void
-{
-    app(DetailSlotsRegistry::class)->register('item-below-form', 'inventory::item-stock-levels', sort: 10);
-}
-```
-
-Every registered component is mounted with two parameters: the host's `modelId` and
-`hostComponent` — the host's Livewire component name. The latter lets a slot child defer its own
-persistence until the host actually saved, by listening for the host's
-`detailStored-{hostComponent}` event (see the [store roundtrip](page-view.md#generic-store-roundtrip)):
-
-```php
-public function getListeners(): array
-{
-    return ['detailStored-' . $this->hostComponent => 'hostStored'];
-}
-
-public function hostStored(int $modelId): void
-{
-    // persist the draft state now that the host record exists / was saved
-}
-```
-
-**Important:**
-
-- Children are mounted with stable keys (`detail-slot-{name}-{component}`) and mount-only
-  parameters, so re-renders of the host leave the child DOM untouched
-- Quick-create dialogs stay slim and render no slots; a slot outside a Livewire host renders nothing
-- Slot children holding unsaved draft state lose it when the modal stack updates (children are
-  re-mounted) — hosts should not open nested modals around a filled slot
-- The shipped host is the setup app's user detail (`noerd::noerd-user-detail`, slot
-  `user-below-form`); mechanics: `tests/Feature/DetailSlotRenderTest.php`
 
 ## ComponentAccessGuard
 

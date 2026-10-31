@@ -19,7 +19,7 @@ final class PicklistRegistry
         return isset($this->providers[$name]);
     }
 
-    public function resolve(string $name): ?callable
+    public function get(string $name): ?callable
     {
         return $this->providers[$name] ?? null;
     }

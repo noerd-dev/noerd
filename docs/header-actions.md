@@ -33,24 +33,25 @@ actions; the row shows as soon as either exists.
 
 ## Registering Actions
 
-Register from your module service provider's `boot()` via the `HeaderActionsRegistry` singleton (noerd core):
+Register from your module service provider's `boot()` into the two header slots of the
+`ComponentSlotsRegistry` (noerd core, see [extension-registries.md](extension-registries.md#componentslotsregistry)):
 
 ```php
-use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 
 public function boot(): void
 {
-    $registry = app(HeaderActionsRegistry::class);
+    $slots = app(ComponentSlotsRegistry::class);
 
     // List headers only:
-    $registry->registerListAction('my-module::list-header-action-export');
+    $slots->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'my-module::list-header-action-export');
 
     // Detail headers only:
-    $registry->registerDetailAction('my-module::detail-header-action-history');
+    $slots->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'my-module::detail-header-action-history');
 
     // A universal action must be registered for BOTH slots explicitly:
-    $registry->registerListAction('my-module::universal-header-action-play-button');
-    $registry->registerDetailAction('my-module::universal-header-action-play-button');
+    $slots->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'my-module::universal-header-action-play-button');
+    $slots->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'my-module::universal-header-action-play-button');
 }
 ```
 
@@ -140,7 +141,7 @@ new class () extends Component {
 </div>
 ```
 
-Registered with `$registry->registerListAction('my-module::list-header-action-export')` — that is all; the core renders it in every non-picker, non-compact list header.
+Registered with `$slots->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'my-module::list-header-action-export')` — that is all; the core renders it in every non-picker, non-compact list header.
 
 ## Where Actions Do NOT Render
 

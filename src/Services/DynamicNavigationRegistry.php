@@ -16,7 +16,12 @@ final class DynamicNavigationRegistry
         $this->providers[$provider->type()] = $provider;
     }
 
-    public function resolve(string $type): ?DynamicNavigationProviderContract
+    public function has(string $type): bool
+    {
+        return isset($this->providers[$type]);
+    }
+
+    public function get(string $type): ?DynamicNavigationProviderContract
     {
         return $this->providers[$type] ?? null;
     }

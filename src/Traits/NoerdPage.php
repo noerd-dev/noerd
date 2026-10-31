@@ -338,7 +338,7 @@ trait NoerdPage
      */
     protected function positionColumns(): array
     {
-        $table = app(PositionTableRegistry::class)->for($this->componentName());
+        $table = app(PositionTableRegistry::class)->get($this->componentName());
 
         if ($table === null) {
             throw new RuntimeException("No position table is registered for [{$this->componentName()}] in the PositionTableRegistry.");

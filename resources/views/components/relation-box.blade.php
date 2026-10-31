@@ -54,7 +54,7 @@ new class extends Component {
         // layout), tiles contributed via the RelationBoxRegistry append after,
         // sorted by the registry. Their closures (count/visible) are resolved
         // here to scalars and never become Livewire state.
-        $tiles = [...$this->relations, ...app(RelationBoxRegistry::class)->for($this->modelClass)];
+        $tiles = [...$this->relations, ...app(RelationBoxRegistry::class)->get($this->modelClass)];
 
         foreach ($tiles as $tile) {
             $resolved = $this->resolveTile($tile, $model);

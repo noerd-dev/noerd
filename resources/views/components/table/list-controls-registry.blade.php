@@ -1,5 +1,5 @@
 {{--
-    The registry list actions (HeaderActionsRegistry::listActions(), e.g. a
+    The registry list actions (ComponentSlotsRegistry::get(LIST_HEADER_ACTIONS), e.g. a
     module's export button). The generic list header
     renders them in the right group of its filter row; a list host with its own
     custom header gets them from list-controls, after the search and the buttons.

@@ -43,14 +43,14 @@ final class PositionTableRegistry
     /**
      * @return array{catalog: class-string<DefinesPositionColumns>, model: class-string<Model>}|null
      */
-    public function for(string $component): ?array
+    public function get(string $component): ?array
     {
         return $this->tables[self::key($component)] ?? null;
     }
 
     public function catalogFor(string $component): ?DefinesPositionColumns
     {
-        $table = $this->for($component);
+        $table = $this->get($component);
 
         return $table === null ? null : app($table['catalog']);
     }

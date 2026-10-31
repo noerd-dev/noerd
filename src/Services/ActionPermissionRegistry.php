@@ -55,7 +55,7 @@ final class ActionPermissionRegistry
         return array_key_exists($key, $this->actions);
     }
 
-    public function label(string $key): ?string
+    public function get(string $key): ?string
     {
         return $this->actions[$key] ?? null;
     }

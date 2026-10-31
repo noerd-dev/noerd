@@ -96,7 +96,7 @@ final class RelationTitleResolver
         $resolved = [];
 
         $type = $this->registry->typeForColumn($fkColumn);
-        $definition = $type !== null ? $this->registry->resolve($type) : null;
+        $definition = $type !== null ? $this->registry->get($type) : null;
         if ($definition?->modelClass !== null && class_exists($definition->modelClass)) {
             foreach ($definition->modelClass::query()->findMany(array_values($pending)) as $model) {
                 $title = $definition->resolveTitle($model);
@@ -143,7 +143,7 @@ final class RelationTitleResolver
         $base = Str::beforeLast($fkColumn, '_id');
 
         $type = $this->registry->typeForColumn($fkColumn);
-        $definition = $type !== null ? $this->registry->resolve($type) : null;
+        $definition = $type !== null ? $this->registry->get($type) : null;
         if ($definition !== null) {
             $title = $definition->resolveTitleForValue($id);
             if ($title !== '') {

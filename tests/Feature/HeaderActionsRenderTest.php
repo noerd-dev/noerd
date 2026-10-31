@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
-use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -15,12 +15,12 @@ beforeEach(function (): void {
 
     // Installed modules register themselves at boot, so start from a clean registry:
     // these tests are about the core's header slots, not about whoever is installed.
-    app()->instance(HeaderActionsRegistry::class, new HeaderActionsRegistry());
+    app()->instance(ComponentSlotsRegistry::class, new ComponentSlotsRegistry());
     Livewire::addNamespace('header-actions-test', viewPath: __DIR__ . '/fixtures/header-actions');
 });
 
 it('mounts a registered list action in the list header with the component name', function (): void {
-    app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
     // noerd-users-list declares $listModel, so the action receives the model class.
     Livewire::test('noerd::noerd-users-list')
@@ -29,7 +29,7 @@ it('mounts a registered list action in the list header with the component name',
 });
 
 it('does not mount list actions in a compact list, whose header is not rendered', function (): void {
-    app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
     Livewire::test('noerd::noerd-users-list', ['compact' => true])
         ->assertOk()
@@ -37,7 +37,7 @@ it('does not mount list actions in a compact list, whose header is not rendered'
 });
 
 it('does not mount list actions in a picker list', function (): void {
-    app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
     Livewire::test('noerd::noerd-users-list', ['multiSelect' => true, 'returnsSelection' => true])
         ->assertOk()
@@ -45,7 +45,7 @@ it('does not mount list actions in a picker list', function (): void {
 });
 
 it('mounts a registered detail action in the head row of the first form block, not in the header', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     $html = Livewire::test('noerd-test::header-actions-detail')
         ->assertOk()
@@ -57,7 +57,7 @@ it('mounts a registered detail action in the head row of the first form block, n
 });
 
 it('mounts the detail action exactly once for a tabbed layout with a nested block', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     // Tab 2 renders a second block, the nested `type: block` a third — the actions
     // belong to the first block only (Livewire keys children per parent).
@@ -67,7 +67,7 @@ it('mounts the detail action exactly once for a tabbed layout with a nested bloc
 });
 
 it('mounts the detail action once on a detail that includes the form block directly', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     // The hand-built shape: two direct block includes, no tab-content.
     $html = Livewire::test('noerd-test::header-actions-direct-detail')
@@ -79,7 +79,7 @@ it('mounts the detail action once on a detail that includes the form block direc
 });
 
 it('mounts the detail action inside an embedded detail', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     // Embedded, the detail renders chrome-less — its form block still carries the actions.
     Livewire::test('noerd-test::header-actions-detail', ['embedded' => true])
@@ -89,7 +89,7 @@ it('mounts the detail action inside an embedded detail', function (): void {
 });
 
 it('mounts no action of its own on a page without fields — the embedded detail carries them', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     $html = Livewire::test('noerd-test::header-actions-page')
         ->assertOk()
@@ -101,7 +101,7 @@ it('mounts no action of its own on a page without fields — the embedded detail
 });
 
 it('mounts the action on the field grid of a page that renders fields of its own', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     $html = Livewire::test('noerd-test::header-actions-page', ['withFields' => true])
         ->assertOk()
@@ -113,7 +113,7 @@ it('mounts the action on the field grid of a page that renders fields of its own
 });
 
 it('mounts a registered detail action on a shipped detail declaring its model', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     // noerd-user-detail declares $detailModel, so the action receives the model class.
     Livewire::test('noerd::noerd-user-detail')
@@ -122,7 +122,7 @@ it('mounts a registered detail action on a shipped detail declaring its model', 
 });
 
 it('renders the component\'s own blockActions slot once, in the first block head, next to the registry actions', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     $html = Livewire::test('noerd-test::header-actions-detail', ['withSlot' => true])
         ->assertOk()
@@ -145,7 +145,7 @@ it('renders the blockActions slot without any registered action', function (): v
 });
 
 it('does not mount a detail action in a list header', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     // The list header wraps its content in modal-title too — the detail injection
     // there must not fire for a component whose name ends in -list.
@@ -155,7 +155,7 @@ it('does not mount a detail action in a list header', function (): void {
 });
 
 it('does not mount a list action in a detail header', function (): void {
-    app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
     Livewire::test('noerd::noerd-user-detail')
         ->assertOk()
@@ -163,7 +163,7 @@ it('does not mount a list action in a detail header', function (): void {
 });
 
 it('does not mount detail actions in a quick-create detail', function (): void {
-    app(HeaderActionsRegistry::class)->registerDetailAction('header-actions-test::probe');
+    app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'header-actions-test::probe');
 
     Livewire::test('noerd::noerd-user-detail', ['quickCreate' => true])
         ->assertOk()
@@ -171,8 +171,8 @@ it('does not mount detail actions in a quick-create detail', function (): void {
 });
 
 it('renders normally when no module registered anything', function (): void {
-    expect(app(HeaderActionsRegistry::class)->listActions())->toBe([])
-        ->and(app(HeaderActionsRegistry::class)->detailActions())->toBe([]);
+    expect(app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::LIST_HEADER_ACTIONS))->toBe([])
+        ->and(app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS))->toBe([]);
 
     Livewire::test('noerd::noerd-users-list')->assertOk()->assertDontSee('HA-PROBE:');
     Livewire::test('noerd::noerd-user-detail')->assertOk()->assertDontSee('HA-PROBE:');

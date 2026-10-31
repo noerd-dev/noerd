@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
-use Noerd\Services\HeaderActionsRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 
@@ -23,7 +23,7 @@ beforeEach(function (): void {
     $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
 
     // Installed modules register themselves at boot, so start from a clean registry.
-    app()->instance(HeaderActionsRegistry::class, new HeaderActionsRegistry());
+    app()->instance(ComponentSlotsRegistry::class, new ComponentSlotsRegistry());
     Livewire::addNamespace('header-actions-test', viewPath: __DIR__ . '/../Feature/fixtures/header-actions');
 });
 
@@ -57,7 +57,7 @@ describe('control injection', function (): void {
     });
 
     it('mounts registry list actions through a custom header', function (): void {
-        app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+        app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
         Livewire::test(CustomHeaderListComponent::class)
             ->assertOk()
@@ -207,7 +207,7 @@ describe('header rendering', function (): void {
     });
 
     it('keeps the search field outside the scrolling strip and the filters inside it', function (): void {
-        app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+        app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
         $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
 
@@ -241,7 +241,7 @@ describe('header rendering', function (): void {
     });
 
     it('opens the filter row for registry actions alone', function (): void {
-        app(HeaderActionsRegistry::class)->registerListAction('header-actions-test::probe');
+        app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'header-actions-test::probe');
 
         $html = Livewire::test(BareHeaderListComponent::class)->assertOk()->html();
 

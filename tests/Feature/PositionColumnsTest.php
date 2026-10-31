@@ -410,9 +410,9 @@ describe('PositionTableRegistry', function (): void {
         $registry->register('zzmodule::zz-order-detail', ZzPositionColumns::class, ZzPosition::class);
 
         expect($registry->has('zz-order-detail'))->toBeTrue()
-            ->and($registry->for('other::zz-order-detail'))->toBe(['catalog' => ZzPositionColumns::class, 'model' => ZzPosition::class])
+            ->and($registry->get('other::zz-order-detail'))->toBe(['catalog' => ZzPositionColumns::class, 'model' => ZzPosition::class])
             ->and($registry->catalogFor('zz-order-detail'))->toBeInstanceOf(ZzPositionColumns::class)
-            ->and($registry->for('zz-unknown-detail'))->toBeNull();
+            ->and($registry->get('zz-unknown-detail'))->toBeNull();
     });
 
     it('resolves the columns of a detail through the registry when no catalog is passed', function (): void {

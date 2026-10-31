@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
-use Noerd\Services\TopBarRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Support\Impersonation;
 use Noerd\Support\LayoutState;
 
@@ -20,7 +20,7 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->topBarComponents = app(TopBarRegistry::class)->all();
+        $this->topBarComponents = app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::TOP_BAR);
     }
 
     public function logout(): void

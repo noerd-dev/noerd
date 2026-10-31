@@ -72,7 +72,7 @@
      (e.g. a tab slot); when the block is the last element the page chrome's
      bottom padding provides the gap instead. --}}
 @php
-    // The module-contributed detail header actions (HeaderActionsRegistry) mount in
+    // The module-contributed detail header actions (ComponentSlotsRegistry) mount in
     // the head row of the FIRST block the host renders — claimed once per host render,
     // so a second tab, a nested `type: block` (which passes false) or a further direct
     // include never mounts them again (Livewire keys children per parent). The
@@ -146,7 +146,7 @@
                 @endphp
                 <div class="{{ $fieldThemeDefinition->fullWidthRows ? 'col-span-full' : 'col-span-1 sm:col-span-' . ($field['colspan'] ?? '3') }}{{ $highlightClasses }}" @if ($isHighlighted) data-highlight @endif {!! $getShowIfDirective($field) !!}>
                     @php
-                        $fieldTypeDefinition = $fieldTypeRegistry->resolve($field['type'] ?? '');
+                        $fieldTypeDefinition = $fieldTypeRegistry->get($field['type'] ?? '');
                         $resolvedRendererProps = $fieldTypeDefinition?->resolveProps(
                             $field,
                             $this ?? null,

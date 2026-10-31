@@ -3,13 +3,11 @@
 declare(strict_types=1);
 
 use Noerd\Contracts\DynamicNavigationProviderContract;
-use Noerd\Services\DetailSlotsRegistry;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\FieldTypeRegistry;
-use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\RelationBoxRegistry;
-use Noerd\Services\TopBarRegistry;
 use Noerd\Support\FieldTypeDefinition;
 use Noerd\Tests\TestCase;
 
@@ -23,39 +21,57 @@ uses(TestCase::class);
 class ZzRegistryBaseModel {}
 class ZzRegistryChildModel extends ZzRegistryBaseModel {}
 
-describe('DetailSlotsRegistry', function (): void {
+describe('ComponentSlotsRegistry', function (): void {
+    it('starts empty so the core renders no module components of its own', function (): void {
+        $registry = new ComponentSlotsRegistry();
+
+        expect($registry->get(ComponentSlotsRegistry::TOP_BAR))->toBe([])
+            ->and($registry->get(ComponentSlotsRegistry::LIST_HEADER_ACTIONS))->toBe([])
+            ->and($registry->get(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS))->toBe([])
+            ->and($registry->has(ComponentSlotsRegistry::TOP_BAR))->toBeFalse()
+            ->and($registry->all())->toBe([]);
+    });
+
     it('orders slot components by sort ascending regardless of registration order', function (): void {
-        $registry = new DetailSlotsRegistry();
+        $registry = new ComponentSlotsRegistry();
 
         $registry->register('user-below-form', 'some-module::second', sort: 10);
         $registry->register('user-below-form', 'other-module::first', sort: 5);
 
-        expect($registry->for('user-below-form'))->toBe([
+        expect($registry->get('user-below-form'))->toBe([
             'other-module::first',
             'some-module::second',
         ]);
     });
 
     it('keeps registration order for equal slot sort values', function (): void {
-        $registry = new DetailSlotsRegistry();
+        $registry = new ComponentSlotsRegistry();
 
-        $registry->register('user-below-form', 'some-module::first');
-        $registry->register('user-below-form', 'other-module::second');
+        $registry->register(ComponentSlotsRegistry::TOP_BAR, 'some-module::top-bar.first');
+        $registry->register(ComponentSlotsRegistry::TOP_BAR, 'other-module::top-bar.second');
 
-        expect($registry->for('user-below-form'))->toBe([
-            'some-module::first',
-            'other-module::second',
+        expect($registry->get(ComponentSlotsRegistry::TOP_BAR))->toBe([
+            'some-module::top-bar.first',
+            'other-module::top-bar.second',
         ]);
     });
 
     it('keeps slots independent of each other', function (): void {
-        $registry = new DetailSlotsRegistry();
+        $registry = new ComponentSlotsRegistry();
 
-        $registry->register('user-below-form', 'some-module::user-extension');
+        $registry->register(ComponentSlotsRegistry::LIST_HEADER_ACTIONS, 'some-module::list-action');
+        $registry->register(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS, 'other-module::detail-action');
         $registry->register('customer-below-form', 'some-module::customer-extension');
 
-        expect($registry->for('user-below-form'))->toBe(['some-module::user-extension'])
-            ->and($registry->for('customer-below-form'))->toBe(['some-module::customer-extension']);
+        expect($registry->get(ComponentSlotsRegistry::LIST_HEADER_ACTIONS))->toBe(['some-module::list-action'])
+            ->and($registry->get(ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS))->toBe(['other-module::detail-action'])
+            ->and($registry->get('customer-below-form'))->toBe(['some-module::customer-extension'])
+            ->and($registry->has('customer-below-form'))->toBeTrue()
+            ->and(array_keys($registry->all()))->toBe([
+                ComponentSlotsRegistry::LIST_HEADER_ACTIONS,
+                ComponentSlotsRegistry::DETAIL_HEADER_ACTIONS,
+                'customer-below-form',
+            ]);
     });
 });
 
@@ -77,14 +93,14 @@ describe('DynamicNavigationRegistry', function (): void {
 
         $registry->register($provider);
 
-        expect($registry->resolve('test-type'))->toBe($provider);
-        expect($registry->resolve('test-type')->items())->toBe([['title' => 'Test', 'link' => '/test']]);
+        expect($registry->get('test-type'))->toBe($provider);
+        expect($registry->get('test-type')->items())->toBe([['title' => 'Test', 'link' => '/test']]);
     });
 
     it('returns null for unregistered type', function (): void {
         $registry = new DynamicNavigationRegistry();
 
-        expect($registry->resolve('nonexistent'))->toBeNull();
+        expect($registry->get('nonexistent'))->toBeNull();
     });
 
     it('returns all registered providers', function (): void {
@@ -136,8 +152,8 @@ describe('FieldTypeRegistry', function (): void {
         $registry->register('custom', $definition);
 
         expect($registry->has('custom'))->toBeTrue();
-        expect($registry->resolve('custom'))->toBe($definition);
-        expect($registry->resolve('custom')?->resolveProps(['name' => 'detailData.custom'], null, null, 42))
+        expect($registry->get('custom'))->toBe($definition);
+        expect($registry->get('custom')?->resolveProps(['name' => 'detailData.custom'], null, null, 42))
             ->toBe([
                 'field' => ['name' => 'detailData.custom'],
                 'modelId' => 42,
@@ -150,7 +166,7 @@ describe('FieldTypeRegistry', function (): void {
         $registry->register('custom', FieldTypeDefinition::include('test::first'));
         $registry->register('custom', FieldTypeDefinition::include('test::second'));
 
-        expect($registry->resolve('custom')?->target)->toBe('test::second');
+        expect($registry->get('custom')?->target)->toBe('test::second');
     });
 
     it('returns all registered field type definitions', function (): void {
@@ -164,43 +180,12 @@ describe('FieldTypeRegistry', function (): void {
     });
 });
 
-describe('HeaderActionsRegistry', function (): void {
-    it('starts empty so the core renders no module actions of its own', function (): void {
-        $registry = new HeaderActionsRegistry();
-
-        expect($registry->listActions())->toBe([])
-            ->and($registry->detailActions())->toBe([]);
-    });
-
-    it('keeps list and detail registrations in separate slots', function (): void {
-        $registry = new HeaderActionsRegistry();
-
-        $registry->registerListAction('some-module::list-action');
-        $registry->registerDetailAction('other-module::detail-action');
-
-        expect($registry->listActions())->toBe(['some-module::list-action'])
-            ->and($registry->detailActions())->toBe(['other-module::detail-action']);
-    });
-
-    it('returns registered actions in registration order', function (): void {
-        $registry = new HeaderActionsRegistry();
-
-        $registry->registerListAction('some-module::first');
-        $registry->registerListAction('other-module::second');
-
-        expect($registry->listActions())->toBe([
-            'some-module::first',
-            'other-module::second',
-        ]);
-    });
-});
-
 describe('PicklistRegistry', function (): void {
     it('starts empty so the core resolves no picklist of its own', function (): void {
         $registry = new PicklistRegistry();
 
         expect($registry->has('zz-status'))->toBeFalse()
-            ->and($registry->resolve('zz-status'))->toBeNull();
+            ->and($registry->get('zz-status'))->toBeNull();
     });
 
     it('registers and resolves a picklist provider', function (): void {
@@ -210,8 +195,8 @@ describe('PicklistRegistry', function (): void {
         $registry->register('zz-status', $provider);
 
         expect($registry->has('zz-status'))->toBeTrue()
-            ->and($registry->resolve('zz-status'))->toBe($provider)
-            ->and(($registry->resolve('zz-status'))())->toBe([['value' => 'open', 'label' => 'Open']]);
+            ->and($registry->get('zz-status'))->toBe($provider)
+            ->and(($registry->get('zz-status'))())->toBe([['value' => 'open', 'label' => 'Open']]);
     });
 
     it('overwrites an existing picklist provider', function (): void {
@@ -220,7 +205,7 @@ describe('PicklistRegistry', function (): void {
         $registry->register('zz-status', fn(): array => ['first']);
         $registry->register('zz-status', fn(): array => ['second']);
 
-        expect(($registry->resolve('zz-status'))())->toBe(['second']);
+        expect(($registry->get('zz-status'))())->toBe(['second']);
     });
 });
 
@@ -228,7 +213,7 @@ describe('RelationBoxRegistry', function (): void {
     it('starts empty so a model gets no contributed tiles by default', function (): void {
         $registry = new RelationBoxRegistry();
 
-        expect($registry->for(ZzRegistryBaseModel::class))->toBe([]);
+        expect($registry->get(ZzRegistryBaseModel::class))->toBe([]);
     });
 
     it('orders tiles by sort ascending regardless of registration order', function (): void {
@@ -237,7 +222,7 @@ describe('RelationBoxRegistry', function (): void {
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'Second'], sort: 10);
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'First'], sort: 5);
 
-        expect($registry->for(ZzRegistryBaseModel::class))->toBe([
+        expect($registry->get(ZzRegistryBaseModel::class))->toBe([
             ['label' => 'First'],
             ['label' => 'Second'],
         ]);
@@ -249,7 +234,7 @@ describe('RelationBoxRegistry', function (): void {
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'First']);
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'Second']);
 
-        expect($registry->for(ZzRegistryBaseModel::class))->toBe([
+        expect($registry->get(ZzRegistryBaseModel::class))->toBe([
             ['label' => 'First'],
             ['label' => 'Second'],
         ]);
@@ -261,7 +246,7 @@ describe('RelationBoxRegistry', function (): void {
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'Base Tile']);
         $registry->register(ZzRegistryChildModel::class, ['label' => 'Child Tile']);
 
-        expect($registry->for(ZzRegistryBaseModel::class))->toBe([['label' => 'Base Tile']]);
+        expect($registry->get(ZzRegistryBaseModel::class))->toBe([['label' => 'Base Tile']]);
     });
 
     it('lets a subclass inherit tiles registered for its parent class', function (): void {
@@ -269,25 +254,7 @@ describe('RelationBoxRegistry', function (): void {
 
         $registry->register(ZzRegistryBaseModel::class, ['label' => 'Base Tile']);
 
-        expect($registry->for(ZzRegistryChildModel::class))->toBe([['label' => 'Base Tile']])
-            ->and($registry->for(ZzRegistryBaseModel::class))->toBe([['label' => 'Base Tile']]);
-    });
-});
-
-describe('TopBarRegistry', function (): void {
-    it('starts empty so the core renders no module components of its own', function (): void {
-        expect((new TopBarRegistry())->all())->toBe([]);
-    });
-
-    it('returns registered components in registration order', function (): void {
-        $registry = new TopBarRegistry();
-
-        $registry->register('some-module::top-bar.first');
-        $registry->register('other-module::top-bar.second');
-
-        expect($registry->all())->toBe([
-            'some-module::top-bar.first',
-            'other-module::top-bar.second',
-        ]);
+        expect($registry->get(ZzRegistryChildModel::class))->toBe([['label' => 'Base Tile']])
+            ->and($registry->get(ZzRegistryBaseModel::class))->toBe([['label' => 'Base Tile']]);
     });
 });

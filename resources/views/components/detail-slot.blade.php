@@ -2,7 +2,7 @@
 
 @php
     // Named extension slot for detail components: optional modules register
-    // Livewire components for a slot name (DetailSlotsRegistry), the hosting
+    // Livewire components for a slot name (ComponentSlotsRegistry), the hosting
     // detail only marks the position. Children are mounted with stable keys and
     // mount-only params, so subsequent parent renders emit a memo placeholder
     // and morph leaves the child DOM untouched. Slot children holding unsaved
@@ -13,7 +13,7 @@
         ? $__livewire
         : null;
     $slotComponents = $slotHost !== null
-        ? app(\Noerd\Services\DetailSlotsRegistry::class)->for($name)
+        ? app(\Noerd\Services\ComponentSlotsRegistry::class)->get($name)
         : [];
 @endphp
 

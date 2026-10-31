@@ -25,7 +25,7 @@
     @if ($hasBlockActions || ($headerActions !== [] && $headerActionHost !== null))
         {{-- The action row of the form block: the component's own `blockActions`
              first, then the module-contributed detail header actions
-             (HeaderActionsRegistry) — top-right of the block, not in the modal header.
+             (ComponentSlotsRegistry) — top-right of the block, not in the modal header.
              Grouped so the icon buttons keep the 8px rhythm; collapses when every
              action hid itself — otherwise the empty wrapper would still take the gap.
              pt-1: the block head sits flush against the top edge of the hosting
