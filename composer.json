@@ -34,7 +34,8 @@
     "require-dev": {
         "orchestra/testbench": "^10.6 || ^11.1",
         "pestphp/pest": "^4.0",
-        "laravel/pint": "^1.18"
+        "laravel/pint": "^1.18",
+        "larastan/larastan": "^3.13"
     },
     "suggest": {
         "owen-it/laravel-auditing": "Required for the activity log modal (noerd::audit-modal) of auditable models."
@@ -67,6 +68,7 @@
     },
     "scripts": {
         "test": "pest",
-        "lint": "pint --test"
+        "lint": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=2G"
     }
 }

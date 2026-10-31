@@ -27,3 +27,6 @@ node_modules/
 vendor/
 composer.lock
 .phpunit.cache/
+
+# PHPStan / Larastan
+.phpstan.cache/
