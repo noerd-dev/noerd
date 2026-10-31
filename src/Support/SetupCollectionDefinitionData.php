@@ -45,7 +45,7 @@ final class SetupCollectionDefinitionData
             filename: $resolvedFilename,
             key: $key,
             title: (string) ($data['title'] ?? ''),
-            titleList: (string) ($data['titleList'] ?? $data['title_list'] ?? $resolvedFilename),
+            titleList: (string) ($data['titleList'] ?? $resolvedFilename),
             description: $data['description'] ?? null,
             fields: $fields,
             createdBy: isset($data['created_by']) ? (int) $data['created_by'] : null,

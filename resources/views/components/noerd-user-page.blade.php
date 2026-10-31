@@ -26,16 +26,6 @@ new class extends Component {
         $this->initPage();
     }
 
-    /**
-     * Deliberate fallback: the page YAML names the embedded form, but an installation
-     * that has not published pages/noerd-user-page.yml yet must still render and save
-     * through the core detail component.
-     */
-    public function embeddedDetailComponent(): ?string
-    {
-        return $this->pageLayout['detail'] ?? 'noerd::noerd-user-detail';
-    }
-
     public function delete(): void
     {
         $this->deleteUserAccount();

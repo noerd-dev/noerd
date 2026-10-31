@@ -482,7 +482,7 @@ singleton — nothing is hardcoded. A module registers additional field types in
   from `(array $field, $component, $detailData, $modelId)`.
 - Relation types are registered via `RelationFieldRegistry::register('{x}Relation', RelationFieldDefinition::model(...))`
   — this auto-registers the matching field type; never register both by hand. The generic renderer
-  is `noerd-relation-field` (readonly input + magnifier). To restyle ONE relation type (e.g. an
+  is `noerd::noerd-relation-field` (readonly input + magnifier). To restyle ONE relation type (e.g. an
   address card), pass a custom Livewire component as `fieldComponent:` in the definition; that
   component MUST extend `Noerd\Livewire\RelationFieldComponent` (inherits the full picker/select/
   clear/openDetail behaviour and the same props) and may read the related record via

@@ -70,8 +70,7 @@ All core routes are named with the `noerd.` prefix. The `/setup` area (middlewar
 `noerd.setup-collection.detail`, `noerd.setup-collection-definitions`,
 `noerd.setup-collection-definition.detail`, `noerd.setup-languages`, `noerd.setup-language.detail`
 and `noerd.system-settings`. The apps dashboard is `noerd.apps` (`/noerd-apps`); under the
-configurable URL prefix live `noerd.profile`, `noerd.no-tenant`, `noerd.component-page`,
-`noerd.home` (`/noerd/home`, a redirect to the apps dashboard) and the
+configurable URL prefix live `noerd.profile`, `noerd.no-tenant`, `noerd.component-page` and the
 auth routes (`noerd.login`, `noerd.password.request`, `noerd.password.reset`). See
 [Authentication](auth.md#routes--url-prefix).
 

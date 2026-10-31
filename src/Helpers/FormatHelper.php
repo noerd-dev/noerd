@@ -28,8 +28,6 @@ use NumberFormatter;
  */
 final class FormatHelper
 {
-    private static ?string $override = null;
-
     /** @var array<string, string> */
     private static array $localeCache = [];
 
@@ -38,10 +36,6 @@ final class FormatHelper
      */
     public static function locale(?int $tenantId = null): string
     {
-        if (self::$override !== null) {
-            return self::$override;
-        }
-
         $user = NoerdAuth::user();
         $cacheKey = ($user?->id ?? 0) . '|' . ($tenantId ?? TenantHelper::getSelectedTenantId() ?? 0);
 
@@ -59,10 +53,6 @@ final class FormatHelper
      */
     public static function tenantLocale(?int $tenantId = null): string
     {
-        if (self::$override !== null) {
-            return self::$override;
-        }
-
         $settingsLocale = NoerdSettings::forTenant($tenantId)?->locale;
         if (Locales::isSupported($settingsLocale)) {
             return Locales::normalize($settingsLocale);

@@ -31,7 +31,7 @@ describe('Relation field selection context', function (): void {
     ];
 
     it('adopts a selection dispatched with its own field name as context', function () use ($props): void {
-        Livewire::test('noerd-relation-field', $props + ['value' => 7])
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7])
             ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.guard_id')
             ->assertSet('value', 42);
     });
@@ -40,25 +40,25 @@ describe('Relation field selection context', function (): void {
         // A picker opened without a context dispatches NoerdList::$context's
         // default (''). That selection belongs to a custom listActionMethod
         // flow — it must never be adopted by every relation field on the page.
-        Livewire::test('noerd-relation-field', $props + ['value' => 7])
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7])
             ->dispatch('noerdRelationSelected', value: 42, context: '')
             ->assertSet('value', 7);
     });
 
     it('ignores a selection dispatched with no context at all', function () use ($props): void {
-        Livewire::test('noerd-relation-field', $props + ['value' => 7])
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7])
             ->dispatch('noerdRelationSelected', value: 42)
             ->assertSet('value', 7);
     });
 
     it('ignores a selection dispatched for another field', function () use ($props): void {
-        Livewire::test('noerd-relation-field', $props + ['value' => 7])
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7])
             ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.other_id')
             ->assertSet('value', 7);
     });
 
     it('scopes the picker context and the parent sync to the owning detail', function () use ($props): void {
-        $component = Livewire::test('noerd-relation-field', $props + ['value' => 7, 'owner' => 'owner-a']);
+        $component = Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7, 'owner' => 'owner-a']);
 
         expect($component->instance()->selectionContext())->toBe('detailData.guard_id@owner-a');
 
@@ -69,5 +69,13 @@ describe('Relation field selection context', function (): void {
         $component->dispatch('noerdRelationSelected', value: 42, context: 'detailData.guard_id@owner-a')
             ->assertSet('value', 42)
             ->assertDispatched('setFieldValue', owner: 'owner-a');
+    });
+
+    it('ignores the bare field name once the field belongs to a detail', function () use ($props): void {
+        // Every detail rendering a field of that name would adopt a bare-name
+        // selection — a field with an owner only answers to its own context.
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7, 'owner' => 'owner-a'])
+            ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.guard_id')
+            ->assertSet('value', 7);
     });
 });

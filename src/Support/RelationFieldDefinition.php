@@ -18,7 +18,7 @@ final class RelationFieldDefinition
      * @param  callable|null  $titleResolver
      * @param  ?string  $fieldComponent  Livewire component rendering the field in the
      *                                   detail form; null uses the generic
-     *                                   'noerd-relation-field'. A custom component must
+     *                                   'noerd::noerd-relation-field'. A custom component must
      *                                   extend Noerd\Livewire\RelationFieldComponent
      */
     public function __construct(

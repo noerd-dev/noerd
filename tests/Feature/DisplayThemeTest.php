@@ -180,7 +180,7 @@ describe('rendering', function (): void {
             titleResolver: 'name',
         ));
 
-        Livewire::test('noerd-relation-field', [
+        Livewire::test('noerd::noerd-relation-field', [
             'relationType' => 'zzDisplayRelation',
             'fieldName' => 'detailData.zz_display_id',
             'label' => 'Linked',

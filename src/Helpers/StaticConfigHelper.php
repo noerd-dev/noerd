@@ -420,17 +420,6 @@ final class StaticConfigHelper
         return $app === null ? $viewKey : "{$app}::{$viewKey}";
     }
 
-    /**
-     * Derive the flat list component/YAML name from a model class:
-     * Customer::class → "customers-list", ProductGroup::class → "product-groups-list".
-     * Inverse of the componentToListName() naming convention — it only holds for
-     * models whose list follows that convention, which is why callers hide their
-     * feature instead of guessing when no model is declared.
-     */
-    public static function modelToListComponent(string $modelClass): string
-    {
-        return Str::plural(Str::kebab(class_basename($modelClass))) . '-list';
-    }
 
     /**
      * Derive the detail component/YAML name from a model class:

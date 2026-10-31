@@ -68,7 +68,7 @@ abstract class RelationFieldBase extends Component
     /**
      * The `context` a picker opened by this field reports back with. It carries
      * the owner id so a selection only lands in the field that opened the
-     * picker; the plain field name is still accepted for custom renderers.
+     * picker — a custom renderer opens its picker with exactly this value.
      */
     public function selectionContext(): string
     {
@@ -93,6 +93,6 @@ abstract class RelationFieldBase extends Component
 
     protected function acceptsSelectionContext(?string $context): bool
     {
-        return $context !== null && in_array($context, [$this->fieldName, $this->selectionContext()], true);
+        return $context !== null && $context === $this->selectionContext();
     }
 }

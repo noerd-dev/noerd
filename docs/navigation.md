@@ -52,7 +52,6 @@ there. Whether an app shows up in the app bar is not a navigation key — it is 
 | `link` | Plain URL (`/…` or absolute) instead of a named route |
 | `external` | Opens the target in a new tab and shows an external-link icon |
 | `heroicon` | Icon from Heroicons (e.g., `users`, `cog-6-tooth`) |
-| `icon` | Alternative: a noerd blade icon component name (e.g. `icons.media`) |
 | `modalRoute` | Named route opened as a MODAL instead of navigating |
 | `component` | Livewire component opened as a modal — fallback for `modalRoute` |
 | `arguments` | Arguments passed to the modal opened by `modalRoute`/`component` — and, merged with the quick-create keys, to the "+" target |

@@ -32,21 +32,21 @@ describe('Relation field readonly server guards', function (): void {
     ];
 
     it('ignores a selection event on a readonly relation field', function () use ($props): void {
-        Livewire::test('noerd-relation-field', $props + ['value' => 7])
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7])
             ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.guard_id')
             ->assertSet('value', 7)
             ->assertNotDispatched('setFieldValue');
     });
 
     it('ignores clear() on a readonly relation field', function () use ($props): void {
-        Livewire::test('noerd-relation-field', $props + ['value' => 7])
+        Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7])
             ->call('clear')
             ->assertSet('value', 7)
             ->assertNotDispatched('setFieldValue');
     });
 
     it('still selects and clears when not readonly', function () use ($props): void {
-        Livewire::test('noerd-relation-field', ['readonly' => false] + $props)
+        Livewire::test('noerd::noerd-relation-field', ['readonly' => false] + $props)
             ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.guard_id')
             ->assertSet('value', 42)
             ->call('clear')
@@ -62,7 +62,7 @@ describe('Relation field readonly server guards', function (): void {
             'value' => 7,
         ];
 
-        Livewire::test('noerd-polymorphic-relation-field', $props)
+        Livewire::test('noerd::noerd-polymorphic-relation-field', $props)
             ->dispatch('noerdRelationSelected', value: 42, context: 'detailData.record_id')
             ->assertSet('value', 7)
             ->assertNotDispatched('setFieldValue')
@@ -79,9 +79,9 @@ it('rejects client writes to the mount-established field identity', function ():
         'label' => 'Guard',
     ];
 
-    expect(fn() => Livewire::test('noerd-relation-field', $props)->set('fieldName', 'detailData.other_id'))
+    expect(fn() => Livewire::test('noerd::noerd-relation-field', $props)->set('fieldName', 'detailData.other_id'))
         ->toThrow(Exception::class);
 
-    expect(fn() => Livewire::test('noerd-relation-field', $props)->set('detailRoute', 'evil.route'))
+    expect(fn() => Livewire::test('noerd::noerd-relation-field', $props)->set('detailRoute', 'evil.route'))
         ->toThrow(Exception::class);
 });

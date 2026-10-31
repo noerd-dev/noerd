@@ -504,15 +504,15 @@ describe('url param', function (): void {
             ->and(session('noerd.selected_app'))->toBe('SETUP');
     });
 
-    it('still accepts a legacy composite view URL param with a double colon', function (): void {
+    it('ignores a composite view URL param written with a double colon', function (): void {
         ($this->setUpOtherApp)();
 
+        // The URL form is app--key; the '::' spelling of the dropdown key is no URL.
         $component = Livewire::withQueryParams(['view' => 'zzotherapp::vip'])
             ->test(TestableListViewComponent::class);
 
-        expect($component->get('listView'))->toBe('vip')
-            ->and($component->get('listViewApp'))->toBe('zzotherapp')
-            ->and($component->get('listViewParam'))->toBe('zzotherapp--vip');
+        expect($component->get('listView'))->toBeNull()
+            ->and($component->get('listViewApp'))->toBeNull();
     });
 
     it('collapses a composite view URL param of the current app to its plain form', function (): void {

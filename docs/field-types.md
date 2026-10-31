@@ -17,7 +17,7 @@ YAMLs ([Settings Pages](settings-page.md)) — all three render through the same
 | `select` | Dropdown with static options or a component method (`optionsMethod`) | `input-select.blade.php` |
 | `picklist` | Dropdown with dynamic options (via Livewire method) | `picklist.blade.php` |
 | `checkbox` | Boolean checkbox | `checkbox.blade.php` |
-| `*Relation` | Registered relation field type such as `itemRelation` or `pageRelation` | Livewire component `noerd-relation-field` (`components/noerd-relation-field.blade.php`), markup from the theme's `relation-field.blade.php` |
+| `*Relation` | Registered relation field type such as `itemRelation` or `pageRelation` | Livewire component `noerd::noerd-relation-field` (`components/noerd-relation-field.blade.php`), markup from the theme's `relation-field.blade.php` |
 | `image` | Image selection from Media library | `image.blade.php` |
 | `file` | File upload | `file.blade.php` |
 | `richText` | TipTap WYSIWYG editor | `rich-text.blade.php` |
@@ -710,6 +710,6 @@ app(FieldTypeRegistry::class)->register('rating', FieldTypeDefinition::include(
   of the target (`inventory::components.forms.rating` → `rating.blade.php`), see
   [Themes → Element Resolution](themes.md#element-resolution)
 - Relation types are registered through the `RelationFieldRegistry` (which registers the matching
-  field type itself) and rendered by `noerd-relation-field` — see
+  field type itself) and rendered by `noerd::noerd-relation-field` — see
   [Relation Field Types](relation-field-types.md)
 - Further registries: [Extension Registries](extension-registries.md)

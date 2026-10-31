@@ -42,9 +42,6 @@ new class extends Component {
                     @click="$modal({{ \Illuminate\Support\Js::from($naviModalComponent) }}, {{ \Illuminate\Support\Js::from($naviArguments) }}); if(! isDesktop) showSidebar = false"
                 @endif
                 class="border-l-2 cursor-pointer  border-transparent pl-3 group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
-            @isset($navi['icon'])
-                <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
-            @endisset
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset
@@ -58,9 +55,6 @@ new class extends Component {
         <a wire:navigate href="{{ $navi['link'] }}" @isset($navi['external']) target="_blank" @endisset
         @click="if(! isDesktop) showSidebar = false"
         class="{{ request()->is(ltrim($navi['link'], '/'))  ? 'border-brand-primary!' : '' }} border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
-            @isset($navi['icon'])
-                <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
-            @endisset
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset
@@ -79,9 +73,6 @@ new class extends Component {
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
         @click="if(! isDesktop) showSidebar = false"
         class="{{ request()->routeIs($routeName)  ? 'border-brand-primary! ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
-            @isset($navi['icon'])
-                <x-dynamic-component :component="'noerd::'.$navi['icon']" class="w-4 h-4 mr-2 text-gray-800"/>
-            @endisset
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset

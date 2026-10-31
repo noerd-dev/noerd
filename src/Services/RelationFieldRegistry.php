@@ -23,7 +23,7 @@ final class RelationFieldRegistry
         $this->definitions[$type] = $definition;
 
         $this->fieldTypeRegistry->register($type, FieldTypeDefinition::livewire(
-            $definition->fieldComponent ?? 'noerd-relation-field',
+            $definition->fieldComponent ?? 'noerd::noerd-relation-field',
             resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($type): array {
                 $fieldName = $field['name'] ?? '';
 
@@ -59,7 +59,7 @@ final class RelationFieldRegistry
     public function registerPolymorphic(string $type, array $allowedRelationTypes): void
     {
         $this->fieldTypeRegistry->register($type, FieldTypeDefinition::livewire(
-            'noerd-polymorphic-relation-field',
+            'noerd::noerd-polymorphic-relation-field',
             resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId) use ($allowedRelationTypes): array {
                 $fieldName = $field['name'] ?? '';
                 $typeField = $field['typeField'] ?? '';
