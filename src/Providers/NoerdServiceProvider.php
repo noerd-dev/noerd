@@ -87,6 +87,7 @@ use Noerd\Services\TopBarRegistry;
 use Noerd\Support\ClientWriteGuardHook;
 use Noerd\Support\ComponentAccessHook;
 use Noerd\Support\DefaultCountries;
+use Noerd\Support\EmbeddedDetailHostHook;
 use Noerd\Support\EmptyNumberFieldHook;
 use Noerd\Support\FieldContext;
 use Noerd\Support\FieldTypeDefinition;
@@ -130,6 +131,7 @@ class NoerdServiceProvider extends ServiceProvider
         ComponentHookRegistry::register(ClientWriteGuardHook::class);
         ComponentHookRegistry::register(WriteGuardHook::class);
         ComponentHookRegistry::register(ServerOnlyMethodsHook::class);
+        ComponentHookRegistry::register(EmbeddedDetailHostHook::class);
         ComponentHookRegistry::register(EmptyNumberFieldHook::class);
         ComponentHookRegistry::register(ComponentAccessHook::class);
 

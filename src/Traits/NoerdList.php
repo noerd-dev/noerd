@@ -20,6 +20,7 @@ use Noerd\Services\ColumnFilterParser;
 use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\HeaderActionsRegistry;
 use Noerd\Services\RelationTitleResolver;
+use Noerd\Support\ComponentNaming;
 use Noerd\Support\ComputedFields;
 use Noerd\Support\CsvListExporter;
 use Noerd\Support\ListColumnIntrospection;
@@ -1303,9 +1304,19 @@ trait NoerdList
         return $detailComponent === null ? [] : PicklistBadges::optionsFromDetail($detailComponent);
     }
 
+    /**
+     * The detail whose YAML options become the list's picklist badges: the
+     * declared $detailComponent when it is a detail, else the one paired by name.
+     */
     protected function pairedDetailComponent(): ?string
     {
-        return PicklistBadges::pairedDetail($this->componentName());
+        $declared = property_exists($this, 'detailComponent') ? $this->detailComponent : null;
+
+        if (is_string($declared) && Str::endsWith($declared, '-detail')) {
+            return $declared;
+        }
+
+        return ComponentNaming::pairedDetail($this->componentName());
     }
 
     /**
@@ -1458,17 +1469,8 @@ trait NoerdList
 
     private function deriveListEntity(): string
     {
-        $name = $this->componentName();
-
-        if (str_contains($name, '::')) {
-            $name = Str::afterLast($name, '::');
-        }
-
-        if (str_contains($name, '.')) {
-            $name = Str::afterLast($name, '.');
-        }
-
-        return Str::singular(Str::before($name, '-list'));
+        return ComponentNaming::listEntity($this->componentName())
+            ?? Str::singular(ComponentNaming::bareName($this->componentName()));
     }
 
     /**

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 use Illuminate\Container\Container;
-use Illuminate\Support\Str;
 use Noerd\Models\SetupLanguage;
 
 final class RelationFieldDefinition
@@ -137,11 +136,7 @@ final class RelationFieldDefinition
             return $this->detailComponent;
         }
 
-        if (! Str::endsWith($this->listComponent, '-list')) {
-            return null;
-        }
-
-        return Str::singular(Str::before($this->listComponent, '-list')) . '-detail';
+        return ComponentNaming::pairedDetail($this->listComponent);
     }
 
     public function getSelectEvent(): ?string
@@ -150,13 +145,7 @@ final class RelationFieldDefinition
             return $this->selectEvent;
         }
 
-        if (! Str::endsWith($this->listComponent, '-list')) {
-            return null;
-        }
-
-        $listWithoutNamespace = Str::afterLast($this->listComponent, '::');
-        $entity = Str::singular(Str::before($listWithoutNamespace, '-list'));
-
-        return Str::camel($entity) . 'Selected';
+        // The same rule the list dispatches with — namespace AND subfolder dropped.
+        return ComponentNaming::selectEvent($this->listComponent);
     }
 }

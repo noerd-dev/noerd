@@ -78,6 +78,21 @@ trait NoerdDetail
     }
 
     /**
+     * The `storeDetail-{name}` listener: the hosting page's Save button. A detail
+     * embedded in a page only answers that page (see EmbeddedDetailHostHook); the
+     * permission check of store() runs through WriteGuardHook, which treats this
+     * listener as a save.
+     */
+    public function storeFromHost(?string $host = null): void
+    {
+        if ($host !== null && $this->hostId !== null && $host !== $this->hostId) {
+            return;
+        }
+
+        $this->store();
+    }
+
+    /**
      * Livewire updated hook: an embedded detail mirrors its form state to the
      * hosting page (`detailDataUpdated-{name}`), e.g. for a live preview.
      * Components overriding this hook keep the sync via syncEmbeddedDetailData().
@@ -223,7 +238,7 @@ trait NoerdDetail
     {
         $this->storeProcess($model);
 
-        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id);
+        $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id, host: $this->hostId);
     }
 
     /**
@@ -348,7 +363,7 @@ trait NoerdDetail
     protected function syncEmbeddedDetailData(): void
     {
         if ($this->embedded) {
-            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload());
+            $this->dispatch('detailDataUpdated-' . $this->componentName(), detailData: $this->syncPayload(), host: $this->hostId);
         }
     }
 
@@ -521,7 +536,7 @@ trait NoerdDetail
     protected function getListeners(): array
     {
         return $this->pageGetListeners() + [
-            'storeDetail-' . $this->componentName() => 'store',
+            'storeDetail-' . $this->componentName() => 'storeFromHost',
         ];
     }
 }

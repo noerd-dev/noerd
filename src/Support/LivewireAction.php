@@ -15,20 +15,25 @@ use Throwable;
  */
 final class LivewireAction
 {
+    /** NoerdDetail's `storeDetail-{name}` listener, a save for every hook. */
+    public const HOST_STORE_LISTENER = 'storeFromHost';
+
     /**
      * @param  array<int, mixed>  $params
      */
     public static function effectiveMethod(object $component, string $method, array $params): string
     {
-        if ($method !== '__dispatch') {
-            return $method;
+        if ($method === '__dispatch') {
+            try {
+                $method = SupportEvents::getListenerMethodName($component, (string) ($params[0] ?? ''));
+            } catch (Throwable) {
+                return $method;
+            }
         }
 
-        try {
-            return SupportEvents::getListenerMethodName($component, (string) ($params[0] ?? ''));
-        } catch (Throwable) {
-            return $method;
-        }
+        // The hosting page's save listener runs store() through its host check —
+        // dispatched or called directly, it is a save for every hook.
+        return $method === self::HOST_STORE_LISTENER ? 'store' : $method;
     }
 
     /**
