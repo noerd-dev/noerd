@@ -36,6 +36,19 @@ final class TenantContext
         app(self::class)->tenantId = $tenantId;
     }
 
+    /**
+     * Forget tenant, system mode and job stack — the request ended. Octane and
+     * the queue drop the scoped instance anyway; this keeps a test process
+     * (one container for many requests) as fresh as production.
+     */
+    public static function reset(): void
+    {
+        $context = app(self::class);
+        $context->tenantId = null;
+        $context->system = false;
+        $context->jobStack = [];
+    }
+
     public static function isSystem(): bool
     {
         return app(self::class)->system;

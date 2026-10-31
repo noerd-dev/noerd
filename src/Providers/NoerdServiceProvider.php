@@ -268,6 +268,10 @@ class NoerdServiceProvider extends ServiceProvider
         Event::listen(Authenticated::class, InitializeTenantSession::class);
         Event::listen(Login::class, RecordLogin::class);
 
+        // A request's tenant context ends with the request (frontend middleware
+        // sets it; a test process serves many requests from one container).
+        $this->app->terminating(fn() => TenantContext::reset());
+
         // A queued job works in the tenant of the request or job that dispatched it.
         Queue::createPayloadUsing(function (): array {
             $tenantId = TenantHelper::currentTenantId();
