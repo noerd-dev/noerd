@@ -13,6 +13,7 @@ use function Laravel\Prompts\select;
 
 use Noerd\Models\TenantApp;
 use Noerd\Support\ListColumnIntrospection;
+use Noerd\Support\ModulesPath;
 use Symfony\Component\Yaml\Yaml;
 
 trait GeneratesResourceFiles
@@ -70,7 +71,7 @@ trait GeneratesResourceFiles
     protected ?string $detailRouteName = null;
 
     /**
-     * The module directory when the selected app is a module (app-modules/{app}
+     * The module directory when the selected app is a module ({modules}/{app}
      * with a composer.json); null when the app lives in the project root.
      */
     protected ?string $moduleDir = null;
@@ -93,7 +94,7 @@ trait GeneratesResourceFiles
         }
 
         if (config('noerd.generators.search_modules', true)) {
-            $modulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
+            $modulesPath = ModulesPath::absolute();
 
             if ($this->filesystem->isDirectory($modulesPath)) {
                 foreach ($this->filesystem->directories($modulesPath) as $moduleDir) {
@@ -222,8 +223,7 @@ trait GeneratesResourceFiles
      */
     protected function resolveModuleTarget(): void
     {
-        $modulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
-        $moduleDir = "{$modulesPath}/{$this->appConfigName}";
+        $moduleDir = ModulesPath::absolute($this->appConfigName);
 
         if (! $this->filesystem->exists("{$moduleDir}/composer.json")) {
             $this->moduleDir = null;
@@ -234,7 +234,7 @@ trait GeneratesResourceFiles
 
         $this->moduleDir = $moduleDir;
         $this->componentPrefix = "{$this->appConfigName}::";
-        $this->line("<comment>Target:</comment> module app-modules/{$this->appConfigName}");
+        $this->line('<comment>Target:</comment> module ' . ModulesPath::relative() . "/{$this->appConfigName}");
     }
 
     protected function bladeBasePath(): string
@@ -255,7 +255,7 @@ trait GeneratesResourceFiles
     protected function routeFileDisplay(): string
     {
         return $this->moduleDir
-            ? "app-modules/{$this->appConfigName}/routes/{$this->appConfigName}-routes.php"
+            ? ModulesPath::relative() . "/{$this->appConfigName}/routes/{$this->appConfigName}-routes.php"
             : 'routes/web.php';
     }
 
@@ -337,8 +337,8 @@ trait GeneratesResourceFiles
 
     protected function detectModuleName(): ?string
     {
-        $modulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
-        $moduleDirs = $this->filesystem->directories($modulesPath);
+        $modulesPath = ModulesPath::absolute();
+        $moduleDirs = $this->filesystem->isDirectory($modulesPath) ? $this->filesystem->directories($modulesPath) : [];
 
         foreach ($moduleDirs as $moduleDir) {
             $composerPath = "{$moduleDir}/composer.json";
@@ -590,20 +590,33 @@ trait GeneratesResourceFiles
         $this->appendRoute($listRoute);
     }
 
+    /**
+     * Whether the detail route is declared in the route file already; remembers
+     * its name for the list YAML and the list component when it is.
+     */
+    protected function detectDetailRoute(): bool
+    {
+        $detailRouteName = "{$this->appConfigName}.{$this->entity}.detail";
+
+        if (! str_contains($this->routeFileContent(), "'{$detailRouteName}'")) {
+            return false;
+        }
+
+        $this->detailRouteName = $detailRouteName;
+
+        return true;
+    }
+
     /** Returns true when the detail route exists afterwards (added now or already present). */
     protected function addDetailRoute(): bool
     {
-        $content = $this->routeFileContent();
-
-        $detailRouteName = "{$this->appConfigName}.{$this->entity}.detail";
-
-        if (str_contains($content, "'{$detailRouteName}'")) {
-            $this->warn("Route '{$detailRouteName}' already exists in {$this->routeFileDisplay()} — skipping.");
-            $this->detailRouteName = $detailRouteName;
+        if ($this->detectDetailRoute()) {
+            $this->warn("Route '{$this->detailRouteName}' already exists in {$this->routeFileDisplay()} — skipping.");
 
             return true;
         }
 
+        $detailRouteName = "{$this->appConfigName}.{$this->entity}.detail";
         $detailRoute = "Route::livewire('{$this->appConfigName}/{$this->entity}/{modelId}', '{$this->componentPrefix}{$this->entity}-detail')->name('{$detailRouteName}');";
 
         if (! $this->confirm("Add detail route to {$this->routeFileDisplay()}?\n  <comment>{$detailRoute}</comment>\n  <info>Note: The component can also be used as a modal without a dedicated route.</info>", true)) {

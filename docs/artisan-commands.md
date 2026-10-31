@@ -16,7 +16,6 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | `noerd:update` | Refresh the published setup app configs, `config/noerd.php`, frontend scaffold and public assets — no migration, no prompts for tenant or admin |
 | `noerd:update-all` | Run `noerd:update` and every installed module's `noerd:update-{module}` command |
 | `noerd:demo` | Install demo data (models, migrations, views, configs, routes) |
-| `noerd:publish-home` | Publish the noerd-apps view for customization |
 | `noerd:info` | Display the current Noerd version |
 | `noerd:lint` | Check the app-configs YAML for broken field types, routes, picklist providers and columns |
 
@@ -36,9 +35,7 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | Command | Description |
 |---------|-------------|
 | `noerd:make-module` | Create a new module with complete directory structure |
-| `noerd:make-resource` | Generate list + detail Blade and YAML files from an existing Eloquent model |
-| `noerd:make-list` | Generate a list Blade file from an existing Eloquent model |
-| `noerd:make-detail` | Generate a detail Blade file with YAML from model columns |
+| `noerd:make-resource` | Generate list + detail Blade and YAML files from an existing Eloquent model (`--only=list\|detail` for one half) |
 | `noerd:make-page` | Generate a standalone page Blade file (no model required) |
 | `noerd:make-dashboard` | Generate a dashboard Blade file for an app |
 | `noerd:make-collection` | Create a new collection YML file interactively |
@@ -149,19 +146,6 @@ php artisan noerd:demo
 This command is also offered during `noerd:install` (which forwards its own `--migrate` as
 `--migrate --seed`). It can be run independently at any time.
 
-## noerd:publish-home
-
-Publishes the `noerd-apps` dashboard view into the project so it can be customized (e.g. to embed
-[dashboard widgets](dashboard-widgets.md)).
-
-```bash
-php artisan noerd:publish-home
-```
-
-| Option | Description |
-|--------|-------------|
-| `--force` | Overwrite existing file |
-
 ## noerd:info
 
 Displays the currently installed Noerd version.
@@ -206,15 +190,17 @@ php artisan noerd:make-admin-user
 ## noerd:promote-admin
 
 Promotes an **existing** user to administrator by giving them the admin profile on all their
-tenants. It creates nothing — `noerd:make-admin-user` is the command that creates an account.
+tenants. It creates nothing — `noerd:make-admin-user` is the command that creates an account. A
+user who belongs to no tenant yet is attached to every tenant first (that is how the first account
+of an installation becomes its administrator); the selected tenant is always one the user belongs to.
 
 ```bash
-php artisan noerd:promote-admin {user_id}
+php artisan noerd:promote-admin {user}   # {user} is an ID or an email
 ```
 
 | Argument | Description |
 |----------|-------------|
-| `user_id` | The ID of the user to promote |
+| `user` | The ID or email of the user to promote |
 
 ## noerd:super-admin
 
@@ -317,12 +303,17 @@ php artisan noerd:make-resource Invoice
 
 # Module model, app preselected
 php artisan noerd:make-resource "Modules\Inventory\Models\Item" --app=inventory
+
+# One half only — a list for a hand-written detail, or the detail first and the list later
+php artisan noerd:make-resource Invoice --app=inventory --only=detail
+php artisan noerd:make-resource Invoice --app=inventory --only=list
 ```
 
 | Argument / Option | Description |
 |-------------------|-------------|
 | `model` | The model class name (short name or FQCN) |
 | `--app=` | App name (e.g. `inventory`) — skips the interactive app selection |
+| `--only=` | `list` or `detail`: generate that half only. `--only=list` wires the list to a detail route that is declared already (row click, "New" action) and never asks for a missing one; `--only=detail` adds the detail with its route and leaves the list alone |
 
 ### What it generates
 
@@ -371,32 +362,6 @@ columns are mapped by their database type:
 | `json` | `textarea` | — |
 
 The generated list YAML contains at most 8 columns.
-
-## noerd:make-list
-
-Generates only the list Blade file (plus YAML) from an existing Eloquent model, appends the list
-route to `routes/web.php` and adds the navigation entry to `app-configs/{app}/navigation.yml`.
-
-```bash
-php artisan noerd:make-list "App\Models\Invoice"
-```
-
-| Option | Description |
-|--------|-------------|
-| `--app=` | App name (e.g. `inventory`) — skips the interactive app selection |
-
-## noerd:make-detail
-
-Generates only the detail Blade file with YAML from the model columns and appends the detail route
-to `routes/web.php`.
-
-```bash
-php artisan noerd:make-detail "App\Models\Invoice"
-```
-
-| Option | Description |
-|--------|-------------|
-| `--app=` | App name (e.g. `inventory`) — skips the interactive app selection |
 
 ## noerd:make-page
 
@@ -460,7 +425,7 @@ php artisan noerd:make-theme mytheme --module=mymodule
 | Argument / Option | Description |
 |-------------------|-------------|
 | `name` | The theme name (folder name, kebab-case) |
-| `--module=` | Create the theme inside `app-modules/{module}` instead of the project |
+| `--module=` | Create the theme inside that local module (`app-modules/{module}`, or the configured `noerd.generators.modules_path`) instead of the project |
 
 ## noerd:setup-collections:import-yaml
 

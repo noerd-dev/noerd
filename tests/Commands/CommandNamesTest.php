@@ -35,4 +35,9 @@ it('no longer registers the replaced command names', function (string $name): vo
     'noerd:module',
     'noerd:theme',
     'noerd:make-admin',
+    // Folded into noerd:make-resource --only=list|detail.
+    'noerd:make-list',
+    'noerd:make-detail',
+    // The dashboard is the shipped noerd::noerd-apps component; nothing to publish.
+    'noerd:publish-home',
 ]);

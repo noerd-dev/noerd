@@ -32,10 +32,6 @@
             <p class="mb-6 text-gray-600">
                 {{ __('The app ":app" is not assigned to this tenant.', ['app' => $appName]) }}
             </p>
-        @elseif ($type === 'config_not_found')
-            <div class="mb-4 text-xl font-semibold text-gray-900">{{ __('Configuration not found') }}</div>
-            <p class="mb-4 text-gray-600">{{ __('The required configuration file was not found:') }}</p>
-            <code class="mb-6 block rounded bg-gray-100 px-4 py-2 text-sm text-red-600"> {{ $configFile }} </code>
         @endif
 
         <a

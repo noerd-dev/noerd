@@ -22,7 +22,7 @@ new class extends Component {
         ];
     @endphp
 
-    @include('noerd::components.forms.translatable-rich-text', [
+    @include('themes::default.translatable-rich-text', [
         'field' => $pageLayout['fields'][0],
     ])
 </div>

@@ -215,8 +215,8 @@ final class ConfigLinter
             $roots = array_filter([
                 base_path('app'),
                 base_path('resources/views'),
-                ...glob(base_path('app-modules/*/src'), GLOB_ONLYDIR) ?: [],
-                ...glob(base_path('app-modules/*/resources/views'), GLOB_ONLYDIR) ?: [],
+                ...glob(ModulesPath::absolute('*/src'), GLOB_ONLYDIR) ?: [],
+                ...glob(ModulesPath::absolute('*/resources/views'), GLOB_ONLYDIR) ?: [],
                 ...glob(base_path('vendor/noerd/*/src'), GLOB_ONLYDIR) ?: [],
                 ...glob(base_path('vendor/noerd/*/resources/views'), GLOB_ONLYDIR) ?: [],
                 dirname(__DIR__, 2) . '/resources/views',

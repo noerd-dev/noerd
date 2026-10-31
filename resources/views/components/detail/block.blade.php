@@ -162,12 +162,12 @@
 
                         // Element templates live in theme folders; a theme that does not
                         // ship an element falls back to the default theme's template and
-                        // finally to the renderer registered on the field type. Livewire
-                        // renderers theme via the "-{theme}" suffix convention instead.
+                        // finally to the renderer registered on the field type. A Livewire
+                        // renderer is mounted as registered and themes its own markup.
                         $rendererTarget = null;
                         if ($fieldTypeDefinition) {
                             $rendererTarget = $fieldTypeDefinition->kind === 'livewire'
-                                ? \Noerd\Support\ThemeElementResolver::resolveLivewire($fieldTypeDefinition, $fieldTheme)
+                                ? $fieldTypeDefinition->target
                                 : \Noerd\Support\ThemeElementResolver::resolveInclude($fieldTypeDefinition, $fieldTheme);
                         }
                     @endphp

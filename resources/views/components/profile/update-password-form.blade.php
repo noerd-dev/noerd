@@ -66,7 +66,7 @@ new class extends Component
         </div>
 
         <div>
-            <x-noerd::input-label for="update_password_password_confirmation" :value="__('Confirm Password')" />
+            <x-noerd::input-label for="update_password_password_confirmation" :value="__('Confirm password')" />
             <x-noerd::text-input wire:model="password_confirmation" id="update_password_password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" autocomplete="new-password" />
             <x-noerd::input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>

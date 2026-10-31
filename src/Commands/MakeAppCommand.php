@@ -22,6 +22,7 @@ use function Laravel\Prompts\text;
 use Noerd\Commands\Concerns\AsksForHeroicon;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
+use Noerd\Support\ModulesPath;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
 class MakeAppCommand extends Command
@@ -185,10 +186,10 @@ class MakeAppCommand extends Command
         // MY_APP → module key my-app → tenant app MY-APP (HasModuleInstallation::deriveAppKey()).
         $moduleKey = Str::lower(str_replace('_', '-', $name));
         $appKey = Str::upper($moduleKey);
-        $modulePath = base_path("app-modules/{$moduleKey}");
+        $moduleDisplay = ModulesPath::relative() . "/{$moduleKey}";
 
-        if (is_dir($modulePath)) {
-            $this->error("Module directory already exists: app-modules/{$moduleKey}");
+        if (is_dir(ModulesPath::absolute($moduleKey))) {
+            $this->error("Module directory already exists: {$moduleDisplay}");
 
             return self::FAILURE;
         }
@@ -200,7 +201,7 @@ class MakeAppCommand extends Command
         }
 
         $this->newLine();
-        $this->line("<comment>Module:</comment> app-modules/{$moduleKey}");
+        $this->line("<comment>Module:</comment> {$moduleDisplay}");
         $this->line("<comment>App key:</comment> {$appKey}");
         $this->newLine();
 
@@ -270,7 +271,7 @@ class MakeAppCommand extends Command
         $makeResource = "php artisan noerd:make-resource {Model} --app={$moduleKey}";
 
         callout("{$title} is ready", [
-            "The module lives in app-modules/{$moduleKey} and is installed for the selected tenants.",
+            'The module lives in ' . ModulesPath::relative() . "/{$moduleKey} and is installed for the selected tenants.",
             new NumberedList([
                 'Open: ' . new Link($appsUrl) . ' and pick the app',
                 "Add a record type: create the model + migration in the module, then {$makeResource}",

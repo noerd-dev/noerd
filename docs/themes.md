@@ -273,14 +273,12 @@ For a field of type X with registered renderer target T under active theme θ:
 - **include-kind field types** (the normal case): `themes::{θ}.{element}` →
   `themes::default.{element}` → T. The `themes::` view namespace walks the registered roots
   (project → modules → noerd).
-- **livewire-kind field types**: themes cannot hold Livewire components, so a `{name}-{θ}`
-  sibling component wins when it exists (namespace-aware: `mod::name` resolves
-  `mod::components.name-{θ}`). This suffix convention is only needed for third-party livewire
-  field types.
-- **Relation fields** are the exception that proves the rule: the two Livewire components
-  (`noerd::noerd-relation-field`, `noerd::noerd-polymorphic-relation-field`) delegate their markup to the theme
-  templates `relation-field.blade.php` / `polymorphic-relation-field.blade.php`, so a copied theme
-  folder restyles them like any other element.
+- **livewire-kind field types**: themes cannot hold Livewire components, so the registered
+  component is mounted as it is and themes its own markup — the way the relation fields do: the
+  two Livewire components (`noerd::noerd-relation-field`, `noerd::noerd-polymorphic-relation-field`)
+  delegate their markup to the theme templates `relation-field.blade.php` /
+  `polymorphic-relation-field.blade.php` (`ThemeElementResolver::resolveRelationTemplate()`), so
+  a copied theme folder restyles them like any other element.
 - Unknown theme names silently fall back to `default` — a YAML typo never breaks a detail page.
 
 The grid wrapper emits `data-theme="{theme}"` for non-default themes. The resolution lives in

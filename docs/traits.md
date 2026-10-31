@@ -230,8 +230,8 @@ support modules alike have it) contributes the idempotent host-YAML writers, cal
 
 | Method | Description |
 |--------|-------------|
-| `ensureQuickMenuButton(array $button, array $legacyComponents = []): void` | Adds a quick-menu button when missing |
-| `ensureDashboardWidget(array $widget, array $legacyComponents = []): void` | Adds a dashboard widget when missing |
+| `ensureQuickMenuButton(array $button): void` | Adds a quick-menu button when missing |
+| `ensureDashboardWidget(array $widget): void` | Adds a dashboard widget when missing |
 | `ensureSetupNavigation(string $blockTitle, array $entry): void` | Adds an entry to the setup navigation when missing |
 
 The other building blocks in `Noerd\Commands\Concerns` (`PublishesModuleConfig`, `PublishesSkills`,

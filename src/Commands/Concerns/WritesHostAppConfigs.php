@@ -15,18 +15,15 @@ trait WritesHostAppConfigs
 {
     /**
      * Ensure a button exists in the global quick-menu config (app-configs/quick-menu.yml).
-     * Rewrites any button still pointing at one of the $legacyComponents to the new
-     * component name. An existing entry with the same component is REPLACED wholesale
-     * (stale keys like the removed per-module `policy:` gates drop off on re-install),
-     * except its `apps:` list, which is UNIONED with the new one — several modules may
-     * contribute the same button (e.g. the booking family's customer select), and the
-     * union keeps the result independent of the install order. Otherwise the button is
-     * prepended.
+     * An existing entry with the same component is REPLACED wholesale (stale keys like
+     * the removed per-module `policy:` gates drop off on re-install), except its `apps:`
+     * list, which is UNIONED with the new one — several modules may contribute the same
+     * button (e.g. the booking family's customer select), and the union keeps the result
+     * independent of the install order. Otherwise the button is prepended.
      *
      * @param  array{component: string, app?: string, apps?: string[], policy?: string}  $button
-     * @param  string[]  $legacyComponents
      */
-    protected function ensureQuickMenuButton(array $button, array $legacyComponents = []): void
+    protected function ensureQuickMenuButton(array $button): void
     {
         $configPath = base_path('app-configs/quick-menu.yml');
 
@@ -34,12 +31,6 @@ trait WritesHostAppConfigs
             ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
             : [];
         $buttons = $config['buttons'] ?? [];
-
-        foreach ($buttons as $i => $existing) {
-            if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
-                $buttons[$i]['component'] = $button['component'];
-            }
-        }
 
         $replaced = false;
         foreach ($buttons as $i => $existing) {
@@ -83,19 +74,17 @@ trait WritesHostAppConfigs
 
     /**
      * Ensure a widget exists in the global dashboard-widgets config
-     * (app-configs/dashboard-widgets.yml). Rewrites any widget still pointing at one of
-     * the $legacyComponents to the new component name, then appends the widget if it is
-     * not present yet. Matches on `component` only — an installation may re-tune
-     * width/height without the installer duplicating or overwriting the entry — and
-     * appends (unlike the quick-menu prepend) so the first-installed module keeps the
-     * first slot on the dashboard. An existing entry's access keys are migrated: a
-     * stale `policy:` (the removed per-module tenant gates would fail closed) is
-     * dropped whenever the new widget declares `app:`/`apps:`, which are copied over.
+     * (app-configs/dashboard-widgets.yml): the widget is appended if it is not present
+     * yet. Matches on `component` only — an installation may re-tune width/height
+     * without the installer duplicating or overwriting the entry — and appends (unlike
+     * the quick-menu prepend) so the first-installed module keeps the first slot on the
+     * dashboard. An existing entry's access keys are migrated: a stale `policy:` (the
+     * removed per-module tenant gates would fail closed) is dropped whenever the new
+     * widget declares `app:`/`apps:`, which are copied over.
      *
      * @param  array{component: string, app?: string, apps?: string[], policy?: string, width?: int, height?: int}  $widget
-     * @param  string[]  $legacyComponents
      */
-    protected function ensureDashboardWidget(array $widget, array $legacyComponents = []): void
+    protected function ensureDashboardWidget(array $widget): void
     {
         $configPath = base_path('app-configs/dashboard-widgets.yml');
 
@@ -103,12 +92,6 @@ trait WritesHostAppConfigs
             ? (Yaml::parse(file_get_contents($configPath) ?: '') ?? [])
             : [];
         $widgets = $config['widgets'] ?? [];
-
-        foreach ($widgets as $i => $existing) {
-            if (in_array($existing['component'] ?? null, $legacyComponents, true)) {
-                $widgets[$i]['component'] = $widget['component'];
-            }
-        }
 
         $present = false;
         foreach ($widgets as $i => $existing) {

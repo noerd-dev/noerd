@@ -789,15 +789,10 @@ custom `mount()` that replaces `$detailData` wholesale.
 - **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); override `getDetailComponent()` for a component that renders another component's detail YAML
 - The Eloquent model is **never** stored as a property of a detail or page component (the one exception is a position row: `NoerdPositionRow::$position`)
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
-- **Extension slots:** `<x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />` marks a position where other modules mount their own Livewire components — see [DetailSlotsRegistry](extension-registries.md#detailslotsregistry)
+- **Extension slots:** `<x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />` marks a position where other modules mount their own Livewire components — see [ComponentSlotsRegistry](extension-registries.md#componentslotsregistry)
 
 ## Further UI Components
 
-- **`<x-noerd::toolbar :buttons="[...]">`** — a horizontal action/status bar. Each entry is an
-  array with `label`, `action`, optional `heroicon`, `confirm`, `disabled`; `type: separator`
-  renders a divider, `type: status` a colored status chip (`variant: success|warning|neutral`).
-- **`<x-noerd::code-snippet label="..." language="blade">`** — renders the slot content as a dark
-  code panel with a copy button (embed codes on settings pages).
 - **`<x-noerd::help-tooltip text="...">`** — the question-mark tooltip used by `helpText`, for
   custom labels.
 - **`<x-noerd::dashboard-card title="..." heroicon="..." :value="$count" />`** — the square tile of
@@ -825,8 +820,8 @@ custom `mount()` that replaces `$detailData` wholesale.
   The array is a public Livewire property, so every scalar in it is client-controlled — it
   deliberately carries NO file path. Get the upload back ONLY through
   `Noerd\Support\DropzoneFile::resolve($file)` (`?UploadedFile`, `null` for an entry that is not a
-  real, still-present upload) or `DropzoneFile::resolveAll($files)`; `DropzoneFile::stream($upload)`
-  opens a read stream. They trust nothing but the signed `_original` reference.
+  real, still-present upload) or `DropzoneFile::resolveAll($files)`. They trust nothing but the
+  signed `_original` reference.
 
 #### Upload limits
 

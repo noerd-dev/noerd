@@ -143,8 +143,8 @@ return [
     */
     'generators' => [
         /*
-        | When enabled, the make commands (noerd:make-list, noerd:make-detail,
-        | noerd:make-resource) will also search for models in app-modules.
+        | When enabled, the noerd:make-* commands will also search for models in the
+        | modules directory (modules_path, relative to the project root).
         | This allows using short model names like "Customer" instead of
         | the full namespace "Noerd\Customer\Models\Customer".
         */

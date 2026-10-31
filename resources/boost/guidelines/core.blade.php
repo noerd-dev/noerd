@@ -1092,10 +1092,10 @@ is an unrelated concept).
 - Element resolution (`Noerd\Support\ThemeElementResolver`, used by
   `noerd::components.detail.block`): for `include` field types the element name is the basename of
   the registered target (`noerd::components.forms.input-currency` → `input-currency`) and resolves
-  `themes::{theme}.{element}` → `themes::default.{element}` → registered target. For `livewire`
-  field types a `-{theme}` suffix component wins when it exists (namespace-aware). Relation fields
-  are Livewire components that `@include` the theme templates `relation-field.blade.php` /
-  `polymorphic-relation-field.blade.php`, so a copied theme restyles them like any element.
+  `themes::{theme}.{element}` → `themes::default.{element}` → registered target. A `livewire`
+  field type is mounted as registered and themes its own markup: the relation fields `@include`
+  the theme templates `relation-field.blade.php` / `polymorphic-relation-field.blade.php`, so a
+  copied theme restyles them like any element.
 - **Creating a NEW theme:** `php artisan noerd:make-theme {name}` (or copy `themes/default/` to
   `resources/views/themes/{name}/`, for modules + `registerPath()`), edit `theme.yml`, adapt the
   element templates you change — missing elements fall back to the default theme. No PHP needed.

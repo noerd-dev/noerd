@@ -21,13 +21,14 @@ it('renders app not assigned as a friendly 403 error page', function (): void {
     expect($response->getStatusCode())->toBe(403);
 });
 
-it('renders config not found error page', function (): void {
+it('renders app access denied as a friendly 403 error page', function (): void {
     $exception = new NoerdException(
-        NoerdExceptionType::ConfigNotFound,
-        configFile: 'details/test.yml',
+        NoerdExceptionType::AppAccessDenied,
+        appName: 'CMS',
     );
 
     $response = $exception->render();
 
-    expect($response->getStatusCode())->toBe(500);
+    expect($response->getStatusCode())->toBe(403)
+        ->and($response->getContent())->toContain(__('No access'));
 });

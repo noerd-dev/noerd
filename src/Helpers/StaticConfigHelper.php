@@ -11,6 +11,7 @@ use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\ComponentNaming;
+use Noerd\Support\ModulesPath;
 use Noerd\Support\RequestState;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
@@ -846,7 +847,7 @@ final class StaticConfigHelper
 
         $paths = [];
         foreach ($mapping[$appKey] ?? [] as $module) {
-            $sourcePath = base_path(config('noerd.generators.modules_path', 'app-modules') . "/{$module}/app-configs/{$appKey}");
+            $sourcePath = ModulesPath::absolute("{$module}/app-configs/{$appKey}");
             if (is_dir($sourcePath)) {
                 $paths[] = $sourcePath;
             }
@@ -857,7 +858,7 @@ final class StaticConfigHelper
 
     /**
      * Dynamically discover module-to-app-config mappings.
-     * Scans app-modules/{module}/app-configs/{app-key} directories.
+     * Scans {modules}/{module}/app-configs/{app-key} directories.
      *
      * @return array<string, array<int, string>> Map of app-key => module names
      */
@@ -870,7 +871,7 @@ final class StaticConfigHelper
         }
 
         $mappings = [];
-        $appModulesPath = base_path(config('noerd.generators.modules_path', 'app-modules'));
+        $appModulesPath = ModulesPath::absolute();
 
         if (! is_dir($appModulesPath)) {
             return self::$moduleSourceMappingCache[$basePath] = $mappings;

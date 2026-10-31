@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
+use Noerd\Commands\Concerns\ResolvesNoerdUser;
 use Noerd\Models\NoerdUser;
 
 /**
@@ -16,6 +17,8 @@ use Noerd\Models\NoerdUser;
  */
 class SuperAdminCommand extends Command
 {
+    use ResolvesNoerdUser;
+
     /**
      * The name and signature of the console command.
      *
@@ -38,7 +41,7 @@ class SuperAdminCommand extends Command
      */
     public function handle(): int
     {
-        $user = $this->resolveUser((string) $this->argument('user'));
+        $user = $this->resolveNoerdUser((string) $this->argument('user'));
 
         if (! $user) {
             $this->error("User '{$this->argument('user')}' not found.");
@@ -90,18 +93,5 @@ class SuperAdminCommand extends Command
         $this->info("User '{$user->name}' ({$user->email}) is no longer a super admin.");
 
         return self::SUCCESS;
-    }
-
-    private function resolveUser(string $identifier): ?NoerdUser
-    {
-        // E-mail first: an all-digit local part ("12345@example.com" — or a
-        // numeric-only address in a test domain) would otherwise be read as an id.
-        $user = NoerdUser::query()->where('email', $identifier)->first();
-
-        if ($user) {
-            return $user;
-        }
-
-        return is_numeric($identifier) ? NoerdUser::find((int) $identifier) : null;
     }
 }

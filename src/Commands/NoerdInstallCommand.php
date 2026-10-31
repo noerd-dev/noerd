@@ -121,7 +121,7 @@ class NoerdInstallCommand extends Command
         }
 
         if (NoerdUser::count() > 0) {
-            $this->line('<comment>Users already exist, skipping. Promote one with: php artisan noerd:promote-admin {user_id}</comment>');
+            $this->line('<comment>Users already exist, skipping. Promote one with: php artisan noerd:promote-admin {user}</comment>');
 
             return;
         }

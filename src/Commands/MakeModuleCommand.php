@@ -14,6 +14,7 @@ use function Laravel\Prompts\text;
 use Noerd\Commands\Concerns\AsksForHeroicon;
 use Noerd\Commands\Concerns\PreparesModuleWorkspace;
 use Noerd\Commands\Concerns\RequiresNoerdInstallation;
+use Noerd\Support\ModulesPath;
 
 /**
  * Scaffolds a module: the Composer package, the ServiceProvider, the install/update
@@ -72,7 +73,7 @@ class MakeModuleCommand extends Command
 
         $this->moduleName = Str::kebab($name);
         $this->moduleNameStudly = Str::studly($name);
-        $this->basePath = base_path('app-modules/' . $this->moduleName);
+        $this->basePath = ModulesPath::absolute($this->moduleName);
 
         // The tenant app the install command registers: title and heroicon. A module
         // ships no icon file — the app icon is a heroicon, exactly like a root app.

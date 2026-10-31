@@ -25,10 +25,10 @@ php artisan noerd:install-{module}  # copies YAML, registers the tenant app, mig
 php artisan noerd:make-resource Item --app={module}   # per record type, after model + migration exist in the module
 ```
 
-The scaffold is dashboard + plumbing, no model. `noerd:make-resource` / `make-list` / `make-detail`
-/ `make-page` / `make-dashboard` detect a module app (`app-modules/{app}/composer.json`) and write
-into it: components under `{app}::`, routes into `routes/{app}-routes.php`, YAML + navigation into
-both copies.
+The scaffold is dashboard + plumbing, no model. `noerd:make-resource` (`--only=list|detail` for one
+half) / `make-page` / `make-dashboard` detect a module app (`app-modules/{app}/composer.json`) and
+write into it: components under `{app}::`, routes into `routes/{app}-routes.php`, YAML + navigation
+into both copies.
 
 Never write the `tenant_apps` row of a module by hand or via the root `noerd:make-app` flow —
 the generated install command registers it (name = UPPERCASE module key, icon = the heroicon from
