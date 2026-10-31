@@ -135,3 +135,91 @@ class ZzListQueryComponent extends Component
         ];
     }
 }
+
+/*
+ | The declared list properties: eager loads and counts for every page, the
+ | parent scope of an embedded list and the clamped page size — what a custom
+ | listData() used to do by hand.
+ */
+describe('declared query properties', function (): void {
+    beforeEach(function (): void {
+        ZzDeclaredListComponent::$zzEmail = null;
+    });
+
+    it('eager-loads $listWith and counts $listWithCount on every row', function (): void {
+        $user = NoerdUser::factory()->withExampleTenant()->create();
+
+        $rows = \Livewire\invade(Livewire::test(ZzDeclaredListComponent::class)->instance())->builtListConfig()['rows'];
+        $row = $rows->getCollection()->firstWhere('id', $user->id);
+
+        expect($row->relationLoaded('tenants'))->toBeTrue()
+            ->and((int) $row->tenants_count)->toBe(1);
+    });
+
+    it('narrows the query by a $listScopes property while it holds a value', function (): void {
+        $alpha = NoerdUser::factory()->create(['email' => 'alpha@example.com']);
+        NoerdUser::factory()->create(['email' => 'beta@example.com']);
+
+        expect(queryListIds(Livewire::test(ZzDeclaredListComponent::class)))->toHaveCount(NoerdUser::query()->count());
+
+        ZzDeclaredListComponent::$zzEmail = 'alpha@example.com';
+
+        expect(queryListIds(Livewire::test(ZzDeclaredListComponent::class)))->toBe([$alpha->id]);
+    });
+
+    it('clamps the client-controlled page size through paginateList()', function (): void {
+        $instance = Livewire::test(ZzDeclaredListComponent::class)->instance();
+        // A client payload may carry any $perPage; the query never pages larger
+        // than NoerdList::MAX_PER_PAGE (the bound of the per-page select).
+        $instance->perPage = 100000;
+
+        $rows = \Livewire\invade($instance)->paginateList(NoerdUser::query());
+
+        expect($rows->perPage())->toBe(200);
+    });
+});
+
+/** A slim list whose query shape comes from the declared properties only. */
+class ZzDeclaredListComponent extends Component
+{
+    use NoerdList;
+
+    public static ?string $zzEmail = null;
+
+    public $listModel = NoerdUser::class;
+
+    public ?string $scopedEmail = null;
+
+    protected array $listWith = ['tenants'];
+
+    protected array $listWithCount = ['tenants'];
+
+    protected array $listScopes = ['email' => 'scopedEmail'];
+
+    public function mount(): void
+    {
+        $this->scopedEmail = self::$zzEmail;
+        $this->mountList();
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-declared-list';
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        return [
+            'title' => 'Zz Declared',
+            'columns' => [
+                ['field' => 'name', 'label' => 'Name'],
+                ['field' => 'email', 'label' => 'Email'],
+            ],
+        ];
+    }
+}

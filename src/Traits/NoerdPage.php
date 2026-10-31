@@ -12,6 +12,7 @@ use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\ThemeHelper;
 use Noerd\Services\PositionTableRegistry;
+use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\ComponentNaming;
 use Noerd\Support\DetailHeaderActions;
 use Noerd\Support\Positions\PositionColumn;
@@ -65,6 +66,14 @@ trait NoerdPage
      * friendly denied state instead of the form, and no record data is loaded.
      */
     public bool $objectReadBlocked = false;
+
+    /*
+     | A component may declare `protected array $detailWith = ['party', 'positions'];`
+     | — the relations loaded with the record, so the form, detailLoaded() and the
+     | relation forms read them without a query each. The trait declares no such
+     | property itself: PHP refuses a class redeclaring a trait property with
+     | another default (loadDetailModel() reads it by name).
+     */
 
     /**
      * The theme that was active when this component started rendering, restored
@@ -440,7 +449,15 @@ trait NoerdPage
     protected function loadDetailModel(Model $model, string $modelClass): bool
     {
         if ($this->modelId) {
-            $model = $modelClass::find($this->modelId);
+            $query = $modelClass::query();
+
+            // Relations the form reads (a card, a title, a nested table) come
+            // along in the one query instead of being lazy-loaded one by one.
+            if (property_exists($this, 'detailWith') && is_array($this->detailWith) && $this->detailWith !== []) {
+                $query->with($this->detailWith);
+            }
+
+            $model = $query->find($this->modelId);
 
             if (! $model) {
                 $this->modelId = null;
@@ -454,7 +471,22 @@ trait NoerdPage
             ->except(['created_at', 'updated_at'])
             ->toArray();
 
+        $this->detailLoaded($model);
+
         return true;
+    }
+
+    /**
+     * Runs once the record (or the fresh model of a new record) is in
+     * $detailData — the place for everything a component used to re-find the
+     * record for in a custom mount(): derived values, extra form keys, a
+     * related record's data. Nothing the trait does afterwards (layout defaults,
+     * relation forms, custom attributes) is skipped, unlike a mount() that
+     * replaces $detailData wholesale.
+     */
+    protected function detailLoaded(Model $model): void
+    {
+        // Intentionally empty.
     }
 
     /**
@@ -496,10 +528,27 @@ trait NoerdPage
         }
 
         $filters = session('listFilters', []);
-        if (! empty($filters[$key])) {
-            $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
-            if (method_exists($this, $method)) {
-                $this->{$method}($filters[$key]);
+        if (empty($filters[$key])) {
+            return;
+        }
+
+        $method = Str::camel(Str::beforeLast($key, '_id')) . 'Selected';
+        if (method_exists($this, $method)) {
+            $this->{$method}($filters[$key]);
+
+            return;
+        }
+
+        // No handler: the value goes straight into the form, and the relation
+        // field's title resolves through the type registered for the column
+        // (`customer_id` → `customerRelation`). A detail therefore needs no
+        // `{x}Selected()` method just to adopt a preselection.
+        data_set($this->detailData, $key, $filters[$key]);
+
+        if (property_exists($this, 'relationTitles')) {
+            $title = app(RelationTitleResolver::class)->title($key, $filters[$key]);
+            if ($title !== null) {
+                $this->relationTitles[$key] = $title;
             }
         }
     }

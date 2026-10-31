@@ -61,6 +61,10 @@ new class extends Component {
 - Custom `mount()` starts with `$this->initDetail()`; custom `store()` ends with
   `$this->storeProcess($model)`; custom `delete()` ends with
   `$this->closeModalProcess($this->getListComponent())`.
+- A value derived from the loaded record goes into `protected function detailLoaded(Model $model): void`
+  (relations via `protected array $detailWith = [...]`) — never re-find the record in `mount()`.
+  Date defaults are YAML (`default: today`, `default: '+14 days'`), a preselected relation needs no
+  `{x}Selected()` handler.
 
 ## 3. Create the YAML — `details/{entity}-detail.yml` in BOTH places
 

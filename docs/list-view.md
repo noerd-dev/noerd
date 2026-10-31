@@ -308,9 +308,12 @@ as no-ops, and the module registers `Route::livewire('{app}/{entity}/{modelId}',
 
 ### Custom Query Logic
 
-When the list needs its own query (eager loads, extra wheres, row transformations),
-override `listData()` — keep `$listModel` declared and still build the query via
-`listQuery($this->listModel)`:
+Most lists need no query code at all: eager loads are `protected array $listWith = ['category'];`,
+relation counts `$listWithCount`, and the parent scope of an embedded list
+`protected array $listScopes = ['party_id' => 'partyId'];` (see the component API below) —
+`listQuery()` applies them. Only when the list needs more than that (extra wheres, row
+transformations), override `listData()` — keep `$listModel` declared, still build the query via
+`listQuery($this->listModel)` and paginate it through `paginateList()`:
 
 ```php
 new class extends Component {
@@ -320,12 +323,13 @@ new class extends Component {
     public ?string $detailRoute = 'inventory.item.detail';
     public $detailComponent = 'inventory::item-detail';
 
+    protected array $listWith = ['category'];
+
     public function listData(): array
     {
-        $rows = $this->listQuery($this->listModel)
-            ->whereNotNull('published_at')
-            ->with('category')
-            ->paginate($this->perPage);
+        $rows = $this->paginateList(
+            $this->listQuery($this->listModel)->whereNotNull('published_at'),
+        );
 
         foreach ($rows as $row) {
             $row->price_preview = CurrencyHelper::format($row->grossPrice());
@@ -405,6 +409,9 @@ the YAML hides the row):
 | `$listModel` | The Eloquent model backing the list — required for the trait defaults and the module-contributed header actions |
 | `?string $detailRoute` / `$detailComponent` | Named detail route a row click opens (URL rewritten) and the component fallback when that route is not registered |
 | `listData()` | Builds the list; override it for custom queries, always ending in `return $this->buildList($rows);` (`buildList()` generates the list configuration from the YAML) |
+| `protected array $listWith` / `$listWithCount` | Relations `listQuery()` eager-loads (`['category', 'owner:id,name']`) and counts (`['items']` → `items_count`) on every page — the loads a custom `listData()` used to add by hand |
+| `protected array $listScopes` | Columns narrowed by a mount argument, `['party_id' => 'partyId']`: `listQuery()` adds `where('party_id', $this->partyId)` while the property holds a value (an array becomes `whereIn`), so a list embedded under a parent record needs no `listData()` override |
+| `paginateList(Builder $query)` (protected) | The page of rows with the client-controlled `$perPage` clamped — what a custom `listData()` calls instead of `->paginate($this->perPage)` |
 | `listAction(mixed $modelId = null, array $relations = [])` | Opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; override it only to add modal arguments |
 | `?string $filter` (`#[Url]`) | Free-form list filter carried as `?filter=…`. The trait never reads it — a list seeds its own `listFilters` or query from it in `mount()` |
 | `string $listActionMethod` | Method a row click dispatches to (default `listAction`; pickers pass `selectAction`). `openListRow()` only runs a method listed in `rowActionMethods()` (`listAction`, `selectAction`) — a list with a row action of its own adds it there |

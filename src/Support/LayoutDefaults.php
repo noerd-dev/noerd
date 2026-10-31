@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Noerd\Support;
 
+use Carbon\Carbon;
+use Illuminate\Support\Str;
+
 /**
  * Resolves the initial values a YAML field layout declares for the form bucket.
  *
@@ -38,7 +41,7 @@ final class LayoutDefaults
             }
 
             if (array_key_exists('default', $field)) {
-                $defaults[$key] = $field['default'];
+                $defaults[$key] = self::resolveToken($field['default']);
 
                 return;
             }
@@ -50,6 +53,39 @@ final class LayoutDefaults
         });
 
         return $defaults;
+    }
+
+    /**
+     * A date default relative to the day the form opens: `today`, `now`, or a
+     * signed offset such as `+14 days`, `-1 month`, `+2 weeks`, `+1 year`
+     * (`today` as the base). `today` and the offsets resolve to a date
+     * (`Y-m-d`), `now` to a date-time (`Y-m-d H:i:s`). Any other value is
+     * returned as written.
+     */
+    public static function resolveToken(mixed $default): mixed
+    {
+        if (! is_string($default)) {
+            return $default;
+        }
+
+        $token = mb_trim($default);
+
+        if ($token === 'today') {
+            return Carbon::today()->toDateString();
+        }
+
+        if ($token === 'now') {
+            return Carbon::now()->format('Y-m-d H:i:s');
+        }
+
+        if (preg_match('/^([+-])\s*(\d+)\s*(day|days|week|weeks|month|months|year|years)$/i', $token, $matches) !== 1) {
+            return $default;
+        }
+
+        $amount = (int) $matches[2] * ($matches[1] === '-' ? -1 : 1);
+        $unit = Str::plural(mb_strtolower($matches[3]));
+
+        return Carbon::today()->add($unit, $amount)->toDateString();
     }
 
     /**

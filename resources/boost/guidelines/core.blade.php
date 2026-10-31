@@ -18,10 +18,14 @@ below points into that folder — read the referenced page before building the f
   open a record — opens it as a route modal and rewrites the URL) plus
   `public $detailComponent = 'module::x-detail';` as the fallback, at the top of the class. The trait
   methods (`mount()`, `listAction()`, `listData()`, `renderingNoerdList()`) are always used from `NoerdList` —
-  a slim component contains nothing else (reference: `src/Commands/stubs/resource/list.blade.stub`). Only when custom
-  query logic is needed, override `listData()` (reference: `docs/list-view.md`, "Custom Query Logic"): build the query
-  via `$this->listQuery($this->listModel)` (chain additional wheres/eager loads and
-  `->paginate($this->perPage)`) and end with `return $this->buildList($rows);`. `listData()` is the
+  a slim component contains nothing else (reference: `src/Commands/stubs/resource/list.blade.stub`). Eager loads,
+  relation counts and the parent scope of an embedded list are DECLARED, not coded:
+  `protected array $listWith = ['category'];`, `$listWithCount = ['items'];`,
+  `$listScopes = ['party_id' => 'partyId'];` (`listQuery()` applies them). Only when more is needed
+  (extra wheres, row transformations), override `listData()` (reference: `docs/list-view.md`, "Custom Query Logic"):
+  build the query via `$this->listQuery($this->listModel)`, paginate it through
+  `$this->paginateList($query)` (never `->paginate($this->perPage)` — the page size is client-controlled)
+  and end with `return $this->buildList($rows);`. `listData()` is the
   ONE source of a list's rows and config — a `with()` never returns a `listConfig`, the view does
   not read it; the generic trait features (row click, select-all, bulk delete) resolve the list via
   `listData()`. Extra view data (e.g. a footer `summary`) stays in a slim `with()` returning only
@@ -1172,7 +1176,9 @@ status, the component holds `null`, and `null` is what gets saved. Initial value
 declared in the YAML and applied generically by `NoerdDetail::applyLayoutDefaults()`.
 
 - **Any field** may declare `default: <value>`. It is applied while the bound value is `null` (a
-  missing key counts as null); `''`, `0` and `false` are answers and are never replaced.
+  missing key counts as null); `''`, `0` and `false` are answers and are never replaced. A DATE
+  default is relative: `today`, `now`, `+14 days`, `-1 month`, `+2 weeks`, `+1 year`
+  (`LayoutDefaults::resolveToken()`) — never `now()->toDateString()` in `mount()`.
 - **A `type: select` whose `options` are written in the YAML starts on its FIRST option** and
   persists it on save — that is what makes the displayed value real. An explicit `default:` wins.
 - **Opt out with `placeholder:`** when nothing-selected is a legitimate answer: the select renders a
@@ -1345,7 +1351,14 @@ that pattern and would register it as a component. The trait methods (`mount()`,
 `delete()`) are always used from `NoerdDetail` — a slim component contains nothing else besides
 `$detailModel` and `$detailPrimary`. Only when the logic deviates, override the method (call `$this->initDetail()`
 first in a custom `mount()`; end a custom `store()` with `$this->storeProcess($model)` and a custom
-`delete()` with `$this->closeModalProcess($this->getListComponent())`). Settings/config screens
+`delete()` with `$this->closeModalProcess($this->getListComponent())`). A value derived from the
+loaded record (a count, a related record's data, an extra form key) is read in
+`protected function detailLoaded(Model $model): void` — the hook runs with `$detailData` filled, for
+an existing record (eager-loaded with `protected array $detailWith = [...]`) and for the fresh model
+of a new one — NEVER by re-finding the record in `mount()`, which skips the trait's defaults,
+relation forms and custom-attribute handling. A preselected relation (`preselect('customer_id')`)
+needs no `customerSelected()` method: without a handler the value lands in the form and the title
+resolves through the registered relation type. Settings/config screens
 without a single backing Eloquent model are exempt and keep their bespoke methods.
 
 **Property naming:**
