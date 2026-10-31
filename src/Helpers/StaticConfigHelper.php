@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ThemeRegistry;
+use Noerd\Support\ComponentNaming;
 use Noerd\Support\RequestState;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
@@ -55,8 +56,8 @@ final class StaticConfigHelper
      */
     public static function getComponentFields(string $component, ?string $modelClass = null): array
     {
-        $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("details/{$subPath}.yml", self::componentOwnerApp($component));
+        $subPath = ComponentNaming::detailSubPath($component);
+        $yamlPath = self::findConfigPath("details/{$subPath}.yml", ComponentNaming::ownerApp($component));
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
@@ -66,7 +67,7 @@ final class StaticConfigHelper
         }
 
         return self::applyThemeSetting(
-            self::applyOverrides('detail', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
+            self::applyOverrides('detail', ComponentNaming::withoutNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
         );
     }
 
@@ -77,8 +78,8 @@ final class StaticConfigHelper
      */
     public static function tryGetComponentFields(string $component): array
     {
-        $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("details/{$subPath}.yml", self::componentOwnerApp($component));
+        $subPath = ComponentNaming::detailSubPath($component);
+        $yamlPath = self::findConfigPath("details/{$subPath}.yml", ComponentNaming::ownerApp($component));
 
         if (! $yamlPath) {
             return [];
@@ -98,15 +99,15 @@ final class StaticConfigHelper
      */
     public static function getPageFields(string $component, ?string $modelClass = null): array
     {
-        $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("pages/{$subPath}.yml", self::componentOwnerApp($component));
+        $subPath = ComponentNaming::detailSubPath($component);
+        $yamlPath = self::findConfigPath("pages/{$subPath}.yml", ComponentNaming::ownerApp($component));
 
         if (! $yamlPath) {
             return [];
         }
 
         return self::applyThemeSetting(
-            self::applyOverrides('page', self::stripComponentNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
+            self::applyOverrides('page', ComponentNaming::withoutNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
         );
     }
 
@@ -119,8 +120,8 @@ final class StaticConfigHelper
      */
     public static function getSettingsFields(string $component): array
     {
-        $subPath = self::componentToSubPath($component);
-        $yamlPath = self::findConfigPath("settings/{$subPath}.yml", self::componentOwnerApp($component));
+        $subPath = ComponentNaming::detailSubPath($component);
+        $yamlPath = self::findConfigPath("settings/{$subPath}.yml", ComponentNaming::ownerApp($component));
 
         if (! $yamlPath) {
             $currentApp = self::getCurrentApp();
@@ -141,8 +142,8 @@ final class StaticConfigHelper
      */
     public static function getListConfig(string $tableName, ?string $modelClass = null): array
     {
-        $subPath = self::componentToListName($tableName);
-        $ownerApp = self::componentOwnerApp($tableName);
+        $subPath = ComponentNaming::bareName($tableName);
+        $ownerApp = ComponentNaming::ownerApp($tableName);
         $yamlPath = self::findConfigPath("lists/{$subPath}.yml", $ownerApp);
 
         if (! $yamlPath) {
@@ -162,7 +163,7 @@ final class StaticConfigHelper
             }
         }
 
-        return self::applyOverrides('list', self::componentToListName($tableName), self::parseYamlFile($yamlPath), $modelClass);
+        return self::applyOverrides('list', ComponentNaming::bareName($tableName), self::parseYamlFile($yamlPath), $modelClass);
     }
 
     /**
@@ -190,13 +191,13 @@ final class StaticConfigHelper
         }
 
         if (! $yamlPath) {
-            $subPath = self::componentToListName($tableName);
+            $subPath = ComponentNaming::bareName($tableName);
             Log::warning("Config file not found: lists/{$subPath}.yml (app: {$app})");
 
             return [];
         }
 
-        return self::applyOverrides('list', self::componentToListName($tableName), self::parseYamlFile($yamlPath), $modelClass);
+        return self::applyOverrides('list', ComponentNaming::bareName($tableName), self::parseYamlFile($yamlPath), $modelClass);
     }
 
     /**
@@ -219,8 +220,8 @@ final class StaticConfigHelper
             default => 'lists',
         };
         $subPath = $viewType === 'list'
-            ? self::componentToListName($component)
-            : self::componentToSubPath($component);
+            ? ComponentNaming::bareName($component)
+            : ComponentNaming::detailSubPath($component);
 
         $primaryPath = base_path("app-configs/{$app}/{$dir}/{$subPath}.yml");
         if (file_exists($primaryPath)) {
@@ -310,7 +311,7 @@ final class StaticConfigHelper
         // The result itself is deliberately NOT memoised — discovery must see
         // variant YAMLs created mid-process. The expensive ingredients are:
         // getAllowedAppFolders(), appLabels() and parseYamlFile() are memoised.
-        $subPath = self::componentToListName($component);
+        $subPath = ComponentNaming::bareName($component);
         $currentApp = $primaryApp !== null ? mb_strtolower($primaryApp) : self::getCurrentApp();
 
         $apps = $currentApp ? [$currentApp] : [];
@@ -367,7 +368,7 @@ final class StaticConfigHelper
             }
 
             if ($app === $plainApp && $resolver) {
-                $resolverViews = $resolver->listViews(self::componentToListName($component));
+                $resolverViews = $resolver->listViews(ComponentNaming::bareName($component));
                 unset($resolverViews['default']);
                 $appViews += $resolverViews;
             }
@@ -388,7 +389,7 @@ final class StaticConfigHelper
 
         // Last word goes to the override hook: it may hide views (incl. 'default')
         // the current user is not allowed to see.
-        return $resolver ? $resolver->filterListViews(self::componentToListName($component), $views) : $views;
+        return $resolver ? $resolver->filterListViews(ComponentNaming::bareName($component), $views) : $views;
     }
 
     /**
@@ -419,15 +420,6 @@ final class StaticConfigHelper
         return $app === null ? $viewKey : "{$app}::{$viewKey}";
     }
 
-
-    /**
-     * Derive the detail component/YAML name from a model class:
-     * Customer::class → "customer-detail".
-     */
-    public static function modelToDetailComponent(string $modelClass): string
-    {
-        return Str::kebab(class_basename($modelClass)) . '-detail';
-    }
 
     /**
      * Parse a YAML file through the mtime-guarded cache: an edited file (dev,
@@ -517,7 +509,7 @@ final class StaticConfigHelper
      * No-op unless a layout-override hook is bound (see layoutOverrides()).
      *
      * $component must be the canonical key — the config's identity, namespace
-     * stripped, as componentToSubPath() derives the file path from. Callers may hand
+     * stripped, as ComponentNaming::detailSubPath() derives the file path from. Callers may hand
      * getListConfig()/getComponentFields() a namespaced livewire name instead
      * ('customer::customers-list'), which would key an override off the calling
      * component rather than off the config it renders.
@@ -617,56 +609,6 @@ final class StaticConfigHelper
             && app(ThemeRegistry::class)->get($theme)->textOnly;
     }
 
-    private static function stripComponentNamespace(string $component): string
-    {
-        return str_contains($component, '::') ? explode('::', $component, 2)[1] : $component;
-    }
-
-    /**
-     * The app-config folder a namespaced component belongs to ("communication::
-     * communications-list" => "communication"). Rendering such a component is an
-     * explicit reference to its module, so its own configs stay resolvable even
-     * when the tenant has not been granted that app — a module reached from
-     * another app's navigation (or embedded in another app's detail) would
-     * otherwise render without title, columns or fields.
-     *
-     * Returns null for an unnamespaced component; a namespace that ships no
-     * app-configs folder (e.g. "liefertool", "noerd") simply contributes no root.
-     */
-    private static function componentOwnerApp(string $component): ?string
-    {
-        if (! str_contains($component, '::')) {
-            return null;
-        }
-
-        return mb_strtolower(explode('::', $component, 2)[0]);
-    }
-
-    /**
-     * Convert a component name (e.g. "booking::bookings.booking-detail") to a
-     * filesystem sub-path relative to details/ (e.g. "bookings/booking-detail").
-     * Dots in the component name map to directory separators to support subfolder
-     * organization — DETAILS ONLY; list configs always resolve flat, see
-     * componentToListName().
-     */
-    private static function componentToSubPath(string $component): string
-    {
-        $name = self::stripComponentNamespace($component);
-
-        return str_replace('.', DIRECTORY_SEPARATOR, $name);
-    }
-
-    /**
-     * Convert a component name to its flat list YAML name. List configs always
-     * live directly in lists/ (never in subfolders), so the subfolder segments of
-     * a nested component name are dropped:
-     * "booking-members::stamp-cards.customer-stamp-cards-list" → "customer-stamp-cards-list".
-     */
-    private static function componentToListName(string $component): string
-    {
-        return Str::afterLast(self::stripComponentNamespace($component), '.');
-    }
-
     /**
      * Get allowed app folders for the current tenant.
      * Convention: folder name = strtolower(TenantApp.name)
@@ -714,7 +656,7 @@ final class StaticConfigHelper
      * Find config path with fallback to other allowed apps and module sources.
      *
      * $ownerApp is the app-config folder of the component being rendered (see
-     * componentOwnerApp()); it is searched LAST, so a tenant's own app-configs
+     * ComponentNaming::ownerApp()); it is searched LAST, so a tenant's own app-configs
      * always win, but a module reached from another app still finds its configs.
      */
     private static function findConfigPath(string $subPath, ?string $ownerApp = null): ?string

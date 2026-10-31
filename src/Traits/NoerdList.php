@@ -170,17 +170,6 @@ trait NoerdList
     /** @var array<string, array<string, mixed>> Request memo for getListConfig() (incl. layout overrides). */
     protected array $listConfigMemo = [];
 
-    /**
-     * Whether a column field addresses a nested path rather than a real DB column — e.g. a custom
-     * attribute (`custom_attributes.sap_number`) or a relation (`customer.name`). Such fields resolve at
-     * render time via data_get(); the database cannot sort or search on them. Column filters are the
-     * exception: a path into a JSON-cast column filters via the arrow operator (see ListColumnIntrospection::isJsonPath()).
-     */
-    public static function isDottedField(string $field): bool
-    {
-        return str_contains($field, '.');
-    }
-
     public function mount(): void
     {
         $this->mountList();
@@ -632,7 +621,7 @@ trait NoerdList
     protected function isSortableColumn(string $field, array $notSortableColumns = []): bool
     {
         return $field !== 'action'
-            && ! self::isDottedField($field)
+            && ! ListColumnIntrospection::isDottedField($field)
             && ! in_array($field, $notSortableColumns, true);
     }
 
@@ -1258,7 +1247,7 @@ trait NoerdList
                     return app(ComputedColumnRegistry::class)->isFilterable($this->computedModelClass(), $computedColumn);
                 }
 
-                return self::isDottedField($field)
+                return ListColumnIntrospection::isDottedField($field)
                     ? ($this->isJsonColumnPath($field) || $this->relationColumnPath($field) !== null)
                     : SchemaColumnCache::hasColumn($table, $field);
             })
@@ -1306,7 +1295,7 @@ trait NoerdList
 
             // A relation path (`defaultDeliveryAddress.locality`) filters on the
             // related table; JSON paths take precedence and use the arrow operator.
-            $relationPath = self::isDottedField($field) && ! $this->isJsonColumnPath($field)
+            $relationPath = ListColumnIntrospection::isDottedField($field) && ! $this->isJsonColumnPath($field)
                 ? $this->relationColumnPath($field)
                 : null;
             if ($relationPath !== null) {
@@ -1329,7 +1318,7 @@ trait NoerdList
             // A JSON path (custom_attributes.x) filters via the arrow operator on
             // its base column; it has no schema type, so YAML/picklist typing
             // applies with text as the fallback.
-            $column = self::isDottedField($field) ? str_replace('.', '->', $field) : $field;
+            $column = ListColumnIntrospection::isDottedField($field) ? str_replace('.', '->', $field) : $field;
 
             ColumnFilterParser::apply($query, $column, $type ?? 'text', $raw);
         }

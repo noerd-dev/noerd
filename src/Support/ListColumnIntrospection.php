@@ -62,6 +62,18 @@ final class ListColumnIntrospection
     }
 
     /**
+     * Whether a column field addresses a nested path rather than a real DB
+     * column — a custom attribute (`custom_attributes.sap_number`) or a relation
+     * (`customer.name`). Such fields resolve at render time via data_get(); the
+     * database cannot sort or search on them. Column filters are the exception:
+     * a path into a JSON-cast column filters via the arrow operator (isJsonPath()).
+     */
+    public static function isDottedField(string $field): bool
+    {
+        return str_contains($field, '.');
+    }
+
+    /**
      * The list column type of a DB column type (`varchar(255)` → null,
      * `tinyint(1)` → `bool`), or null when it renders as plain text.
      */
