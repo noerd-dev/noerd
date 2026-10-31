@@ -214,7 +214,16 @@ Example for user: users-list.blade.php (plural) and user-detail.blade.php (singu
   options) — installing a module is a valid first command. Every other command (update, scaffold, demo) still aborts with the
   hint to run `noerd:install`; never re-implement that guard per module.
 - The tenant app is registered ONE way: the stub `app-configs/stubs/add_{module}_tenant_app.php.stub`, published into the host's `database/migrations/` by the install command (and by the update command when the app is registered but the host has none), so a deployment that only runs `php artisan migrate` registers the app. NEVER ship a second, registering migration in the module's own `database/migrations/` — it registers the app wherever the package is merely installed and makes the install command divert to its update path.
-- Register both commands in the module's ServiceProvider inside `if ($this->app->runningInConsole()) { $this->commands([...]); }`. The `noerd:make-module` scaffolder generates them and the registration from `src/Commands/stubs/module/`.
+- Register both commands in the module's service provider through its `$commands` property. The `noerd:make-module` scaffolder generates them and the registration from `src/Commands/stubs/module/`.
+- A module's service provider extends `Noerd\Providers\NoerdModuleServiceProvider` and DECLARES its
+  plumbing: `protected string $moduleKey = 'inventory';` (the view + Livewire namespace, the route file
+  `routes/{key}-routes.php`, the config publish tag), `protected array $commands = [...]`,
+  `protected array $configs = ['inventory']` (merged as `config('inventory')`, published as
+  `inventory-config`); bindings go into `registerModule()`, boot logic into `bootModule()`, relation
+  field types / field types / picklist providers into `relationFields()` / `fieldTypes()` /
+  `picklists()`. Never repeat `loadMigrationsFrom`/`loadViewsFrom`/`Livewire::addNamespace`/
+  `loadJsonTranslationsFrom`/`loadRoutesFrom` by hand, and never call `Livewire::addLocation()` —
+  a bare component name collides across modules (`dashboard`, `settings-page`).
 - A module that cannot work without ANOTHER module (the CMS without media) declares it as
   `getRequiredModules(): ['MEDIA' => 'noerd:install-media']` on its install command. A required
   module whose app is not registered yet is installed first, AS A DEPENDENCY

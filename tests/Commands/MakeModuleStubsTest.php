@@ -168,12 +168,19 @@ it('generates an update command that runs the idempotent module update', functio
         ->not->toContain('runModule');
 });
 
-it('registers install and update command in the service provider', function (): void {
+it('declares the module key and both commands on the module service provider', function (): void {
     $content = ($this->renderStub)('service-provider.stub');
 
+    // The base class derives migrations, views, the Livewire namespace,
+    // translations and the route file from the key — the stub declares, it
+    // does not repeat the plumbing.
     expect($content)
+        ->toContain('extends NoerdModuleServiceProvider')
+        ->toContain("protected string \$moduleKey = 'zz-widget';")
         ->toContain('ZzWidgetInstallCommand::class,')
-        ->toContain('ZzWidgetUpdateCommand::class,');
+        ->toContain('ZzWidgetUpdateCommand::class,')
+        ->not->toContain('loadMigrationsFrom')
+        ->not->toContain('addNamespace');
 });
 
 it('generates a blade-renderable boost guideline for the module', function (): void {
