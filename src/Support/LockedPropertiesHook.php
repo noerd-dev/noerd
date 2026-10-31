@@ -104,6 +104,8 @@ final class LockedPropertiesHook extends ComponentHook
         // views this user may see — a mount argument would skip that check.
         'listView',
         'listViewApp',
+        // Set by EmbeddedDetailHostHook from the rendering page.
+        'hostId',
     ];
 
     /**

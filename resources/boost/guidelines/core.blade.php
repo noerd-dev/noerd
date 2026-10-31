@@ -918,7 +918,9 @@ Relation Box, the widget sidebar and optionally an embedded slim `*-detail`. The
   a detail YAML — they are page concerns. A detail opened standalone renders just the form.
 - The save roundtrip page↔detail is generic via trait events: page `store()` dispatches
   `storeDetail-{detail}` to the embedded detail; the detail's `store()` ends in
-  `finishStore($model)` which dispatches `detailStored-{detail}` (payload `modelId`); the page
+  `finishStore($model)` which dispatches `detailStored-{detail}` (payload `modelId`); both events
+  carry the page's Livewire id (`host`, set on the detail by `EmbeddedDetailHostHook`), so a
+  second instance of the detail never answers another page; the page
   adopts the id and runs the protected hook `afterEmbeddedDetailStored($model)` (override for
   page-owned persistence, e.g. product groups). Live form sync runs via
   `detailDataUpdated-{detail}` (`syncPayload()` filters the payload). The page keeps exactly ONE

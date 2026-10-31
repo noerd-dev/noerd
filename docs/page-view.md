@@ -187,19 +187,27 @@ The save flow between page and embedded detail is fully generic — no per-compo
 
 1. The page footer's Save calls `NoerdPage::store()`, which dispatches
    **`storeDetail-{detail}`** to the embedded detail (suffix = the full component name from
-   the YAML `detail:` key).
-2. The detail listens (via `getListeners()`), runs its normal `store()` — identical to a
-   standalone save — and ends in `finishStore($model)`.
-3. `finishStore()` (protected) dispatches **`detailStored-{detail}`** with the payload `modelId`.
-   The page adopts the id
+   the YAML `detail:` key, payload `host` = the page's Livewire id).
+2. The detail listens (via `getListeners()`, listener `storeFromHost()`), runs its normal
+   `store()` — identical to a standalone save, permission hooks included — and ends in
+   `finishStore($model)`.
+3. `finishStore()` (protected) dispatches **`detailStored-{detail}`** with the payload `modelId`
+   and `host`. The page adopts the id
    (`embeddedDetailStored()`), refreshes its `$detailData` snapshot (merge — page-owned keys
    survive), runs `storeProcess()` and finally the protected hook
    **`afterEmbeddedDetailStored($model)`**.
 4. Pages that persist page-owned state (e.g. variant groups, uploads) override
    `afterEmbeddedDetailStored(Model $model)`.
 
+The events are named after the detail and reach every listener of that name, so they are bound
+to the page: `EmbeddedDetailHostHook` gives a detail embedded with `'embedded' => true` the Livewire
+id of the page that renders it (`$hostId`), the detail only saves on its own page's `storeDetail`,
+and the page only adopts a record its own detail reports. A second instance of the same detail —
+stacked in a modal over the page — never saves on the page's command. Nothing to wire up in a page
+blade: the embedding `@livewire(…, ['embedded' => true])` is enough.
+
 Live form sync: an embedded detail mirrors its form state via **`detailDataUpdated-{detail}`**
-(payload `detailData`): `NoerdDetail::updatedDetailData()` calls the protected
+(payload `detailData` and `host`): `NoerdDetail::updatedDetailData()` calls the protected
 `syncEmbeddedDetailData()`, which dispatches `syncPayload()`. Override `syncPayload()` to filter the
 payload; a detail with its own `updatedDetailData()` hook calls `syncEmbeddedDetailData()` itself. The page merges the detail's state in
 `embeddedDetailDataUpdated()` (override to add side effects, e.g. a change counter for a live

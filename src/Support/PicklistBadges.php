@@ -21,20 +21,12 @@ final class PicklistBadges
 
     /**
      * The detail component paired with a list by convention (`{x}-list` →
-     * `{x}-detail`, the Livewire namespace dropped, a dotted subfolder kept), or
-     * null when the component is not a list.
+     * `{x}-detail`, namespace and dotted subfolder kept), or null when the
+     * component is not a list.
      */
     public static function pairedDetail(string $listComponent): ?string
     {
-        $name = Str::afterLast($listComponent, '::');
-        $prefix = Str::contains($name, '.') ? Str::beforeLast($name, '.') . '.' : '';
-        $last = Str::afterLast($name, '.');
-
-        if (! Str::endsWith($last, '-list')) {
-            return null;
-        }
-
-        return $prefix . Str::singular(Str::before($last, '-list')) . '-detail';
+        return ComponentNaming::pairedDetail($listComponent);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace Noerd\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
@@ -44,6 +45,14 @@ trait NoerdPage
      * footer, scroll wrapper) is skipped automatically — the hosting page owns it.
      */
     public bool $embedded = false;
+
+    /**
+     * The Livewire id of the page an embedded detail belongs to, set by
+     * EmbeddedDetailHostHook. The store roundtrip events carry it, so a detail
+     * only answers its own page and a page only adopts its own detail's record.
+     */
+    #[Locked]
+    public ?string $hostId = null;
 
     public bool $quickCreate = false;
 
@@ -138,7 +147,7 @@ trait NoerdPage
     public function store(): void
     {
         if ($detail = $this->embeddedDetailComponent()) {
-            $this->dispatch('storeDetail-' . $detail);
+            $this->dispatch('storeDetail-' . $detail, host: $this->getId());
         }
     }
 
@@ -289,8 +298,13 @@ trait NoerdPage
      * model snapshot and run the shared post-store chrome (success indicator,
      * quick-create exit). Pages hook extra persistence via afterEmbeddedDetailStored().
      */
-    public function embeddedDetailStored(int $modelId): void
+    public function embeddedDetailStored(int $modelId, ?string $host = null): void
     {
+        // Another page's detail of the same name reported (a second instance in a modal).
+        if ($host !== null && $host !== $this->getId()) {
+            return;
+        }
+
         // A listener is callable by the client: only adopt a record this user may
         // save, and never repoint a page that already shows a record — the
         // embedded detail of that page reports the same id.
@@ -328,8 +342,12 @@ trait NoerdPage
      * Live sync from the embedded detail (`detailDataUpdated-{detail}`): keeps the
      * page's $detailData mirror current, e.g. for a live preview.
      */
-    public function embeddedDetailDataUpdated(array $detailData): void
+    public function embeddedDetailDataUpdated(array $detailData, ?string $host = null): void
     {
+        if ($host !== null && $host !== $this->getId()) {
+            return;
+        }
+
         $this->detailData = array_merge($this->detailData, $detailData);
     }
 

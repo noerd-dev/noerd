@@ -115,7 +115,7 @@ it('registers the storeDetail trigger on details', function (): void {
 
     expect($detail->exposedListeners())->toBe([
         'refreshList-zz-fixture-detail' => 'refreshList',
-        'storeDetail-zz-fixture-detail' => 'store',
+        'storeDetail-zz-fixture-detail' => 'storeFromHost',
     ]);
 });
 
