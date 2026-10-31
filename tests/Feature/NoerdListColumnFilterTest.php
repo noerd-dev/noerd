@@ -19,7 +19,7 @@ uses(TestCase::class, RefreshDatabase::class);
 
 function filterListIds(mixed $component): array
 {
-    return $component->instance()->visibleRowIds();
+    return \Livewire\invade($component->instance())->visibleRowIds();
 }
 
 function createColumnFilterJsonItemsTable(): void
@@ -200,7 +200,7 @@ describe('type resolution', function (): void {
         $component = Livewire::test(TestablePicklistNumberColumnFilterListComponent::class)
             ->call('setColumnFilter', 'rating', '>5');
 
-        $rendered = collect($component->instance()->builtListConfig()['listSettings']['columns'])->keyBy('field');
+        $rendered = collect(\Livewire\invade($component->instance())->builtListConfig()['listSettings']['columns'])->keyBy('field');
 
         expect($rendered['rating']['type'])->toBe('number')
             ->and(filterListIds($component))->toBe([$high->id]);

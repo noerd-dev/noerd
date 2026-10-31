@@ -202,61 +202,6 @@ trait NoerdPage
     }
 
     /**
-     * The embedded detail component declared in the page YAML (`detail:`). Its
-     * record is the page's own ($detailModel, $modelId). Deliberately no fallback
-     * to the component's own name — a standalone detail must never grow page
-     * listeners. Like the rest of $pageLayout it is client-writable; the guards
-     * stay on the detail's own store().
-     */
-    public function embeddedDetailComponent(): ?string
-    {
-        $detail = $this->pageLayout['detail'] ?? null;
-
-        return is_string($detail) && $detail !== '' ? $detail : null;
-    }
-
-    /**
-     * The active theme (default, compact, numbered, …). Blades pass it to
-     * hand-written chrome that lives outside the YAML field grid — position
-     * tables above all — so those follow the form's theme:
-     * `<livewire:module::position :theme="$this->detailTheme()" />`.
-     */
-    public function detailTheme(): string
-    {
-        return ThemeHelper::fromLayout($this->pageLayout);
-    }
-
-    /**
-     * The resolved columns of a position (line item) table: the module's
-     * catalog merged with the `positions.columns` block of this component's
-     * layout. Returns plain arrays, ready to travel as a Livewire prop. Hand
-     * the result to `<x-noerd::positions.table :columns>` AND to every row
-     * component (`NoerdPositionRow`):
-     *
-     * `@php $columns = $this->positionColumns(); @endphp`
-     *
-     * The catalog and position model come from the PositionTableRegistry entry
-     * of this component.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function positionColumns(): array
-    {
-        $table = app(PositionTableRegistry::class)->for($this->componentName());
-
-        if ($table === null) {
-            throw new RuntimeException("No position table is registered for [{$this->componentName()}] in the PositionTableRegistry.");
-        }
-
-        $catalog = is_string($table['catalog']) ? app($table['catalog']) : $table['catalog'];
-
-        return array_map(
-            fn(PositionColumn $column): array => $column->toArray(),
-            app(PositionColumnResolver::class)->resolve($catalog, $table['model'], $this->pageLayout),
-        );
-    }
-
-    /**
      * Livewire trait rendering hook: expose the active theme to chrome
      * components outside the YAML field grid (x-noerd::button above all).
      */
@@ -352,6 +297,61 @@ trait NoerdPage
     }
 
     /**
+     * The embedded detail component declared in the page YAML (`detail:`). Its
+     * record is the page's own ($detailModel, $modelId). Deliberately no fallback
+     * to the component's own name — a standalone detail must never grow page
+     * listeners. Like the rest of $pageLayout it is client-writable; the guards
+     * stay on the detail's own store().
+     */
+    protected function embeddedDetailComponent(): ?string
+    {
+        $detail = $this->pageLayout['detail'] ?? null;
+
+        return is_string($detail) && $detail !== '' ? $detail : null;
+    }
+
+    /**
+     * The active theme (default, compact, numbered, …). Blades pass it to
+     * hand-written chrome that lives outside the YAML field grid — position
+     * tables above all — so those follow the form's theme:
+     * `<livewire:module::position :theme="$this->detailTheme()" />`.
+     */
+    protected function detailTheme(): string
+    {
+        return ThemeHelper::fromLayout($this->pageLayout);
+    }
+
+    /**
+     * The resolved columns of a position (line item) table: the module's
+     * catalog merged with the `positions.columns` block of this component's
+     * layout. Returns plain arrays, ready to travel as a Livewire prop. Hand
+     * the result to `<x-noerd::positions.table :columns>` AND to every row
+     * component (`NoerdPositionRow`):
+     *
+     * `@php $columns = $this->positionColumns(); @endphp`
+     *
+     * The catalog and position model come from the PositionTableRegistry entry
+     * of this component.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function positionColumns(): array
+    {
+        $table = app(PositionTableRegistry::class)->for($this->componentName());
+
+        if ($table === null) {
+            throw new RuntimeException("No position table is registered for [{$this->componentName()}] in the PositionTableRegistry.");
+        }
+
+        $catalog = is_string($table['catalog']) ? app($table['catalog']) : $table['catalog'];
+
+        return array_map(
+            fn(PositionColumn $column): array => $column->toArray(),
+            app(PositionColumnResolver::class)->resolve($catalog, $table['model'], $this->pageLayout),
+        );
+    }
+
+    /**
      * Form paths a hand-built input binds that no layout field declares, as full
      * field names (`detailData.notes`, `detailData.custom_attributes.sap_number`).
      * The client may only change what the layout or this list declares: the
@@ -423,45 +423,6 @@ trait NoerdPage
     }
 
     /**
-     * Every model-backed `*-detail` must declare its URL alias explicitly.
-     * `*-page` components (entity pages declare it anyway; settings pages are
-     * tenant singletons) and components without $detailModel (dashboards,
-     * always-embedded children, bespoke modals) are exempt.
-     */
-    protected function assertDetailPrimaryDeclared(): void
-    {
-        if (! isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
-            return;
-        }
-
-        if (! Str::endsWith($this->componentName(), '-detail')) {
-            return;
-        }
-
-        throw new RuntimeException(sprintf(
-            'Model-backed detail [%s] must declare its URL alias: `public ?string $detailPrimary = \'%sId\';` '
-            . '(embedded instances skip the URL binding automatically).',
-            $this->componentName(),
-            Str::camel(class_basename($this->detailModel)),
-        ));
-    }
-
-    /**
-     * Routed-modal handling shared by initPage() and initDetail(): normalizes
-     * the 'new' modelId sentinel (the URL of a create modal, e.g.
-     * /crm/account/new) to null and performs the ?modal=true redirect. Returns
-     * true when a redirect was issued and mounting should stop.
-     */
-    protected function prepareRoutedModal(): bool
-    {
-        if ($this->modelId === 'new') {
-            $this->modelId = null;
-        }
-
-        return $this->redirectToRoutedModal();
-    }
-
-    /**
      * Hook for pages that persist additional page-owned state after the embedded
      * detail stored its record (e.g. product groups/variants, file uploads).
      */
@@ -493,25 +454,6 @@ trait NoerdPage
             ->toArray();
 
         return true;
-    }
-
-    /**
-     * Resolve the quick-create runtime mode from the YAML opt-in (`quickCreate: true`,
-     * carried in pageLayout). When opted in and no record is being edited,
-     * quick-create mode is enabled — no list/nav/blade wiring needed. The raw
-     * opt-in in pageLayout is replaced with the resolved mode so `tab-content`
-     * reads the correct value.
-     */
-    protected function resolveQuickCreate(): void
-    {
-        $optIn = (bool) ($this->pageLayout['quickCreate'] ?? false);
-        if (! $this->modelId && $optIn) {
-            $this->quickCreate = true;
-        }
-
-        if (! empty($this->pageLayout)) {
-            $this->pageLayout['quickCreate'] = $this->quickCreate;
-        }
     }
 
     /**
@@ -585,6 +527,64 @@ trait NoerdPage
         }
 
         return $listeners;
+    }
+
+    /**
+     * Every model-backed `*-detail` must declare its URL alias explicitly.
+     * `*-page` components (entity pages declare it anyway; settings pages are
+     * tenant singletons) and components without $detailModel (dashboards,
+     * always-embedded children, bespoke modals) are exempt.
+     */
+    private function assertDetailPrimaryDeclared(): void
+    {
+        if (! isset($this->detailModel) || ($this->detailPrimary ?? null) !== null) {
+            return;
+        }
+
+        if (! Str::endsWith($this->componentName(), '-detail')) {
+            return;
+        }
+
+        throw new RuntimeException(sprintf(
+            'Model-backed detail [%s] must declare its URL alias: `public ?string $detailPrimary = \'%sId\';` '
+            . '(embedded instances skip the URL binding automatically).',
+            $this->componentName(),
+            Str::camel(class_basename($this->detailModel)),
+        ));
+    }
+
+    /**
+     * Routed-modal handling shared by initPage() and initDetail(): normalizes
+     * the 'new' modelId sentinel (the URL of a create modal, e.g.
+     * /crm/account/new) to null and performs the ?modal=true redirect. Returns
+     * true when a redirect was issued and mounting should stop.
+     */
+    private function prepareRoutedModal(): bool
+    {
+        if ($this->modelId === 'new') {
+            $this->modelId = null;
+        }
+
+        return $this->redirectToRoutedModal();
+    }
+
+    /**
+     * Resolve the quick-create runtime mode from the YAML opt-in (`quickCreate: true`,
+     * carried in pageLayout). When opted in and no record is being edited,
+     * quick-create mode is enabled — no list/nav/blade wiring needed. The raw
+     * opt-in in pageLayout is replaced with the resolved mode so `tab-content`
+     * reads the correct value.
+     */
+    private function resolveQuickCreate(): void
+    {
+        $optIn = (bool) ($this->pageLayout['quickCreate'] ?? false);
+        if (! $this->modelId && $optIn) {
+            $this->quickCreate = true;
+        }
+
+        if (! empty($this->pageLayout)) {
+            $this->pageLayout['quickCreate'] = $this->quickCreate;
+        }
     }
 
     private function deriveListComponent(): string

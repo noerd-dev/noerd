@@ -57,7 +57,7 @@ trait RoutedModal
      *
      * @return array<string, mixed>
      */
-    protected function routedModalArguments(): array
+    private function routedModalArguments(): array
     {
         $parameters = array_map(
             fn(mixed $value): mixed => $value === 'new' ? null : $value,

@@ -113,7 +113,7 @@ it('refuses browser calls to server-only helper methods', function (string $comp
 ]);
 
 it('keeps the server-only helpers callable from PHP', function (): void {
-    $listConfig = Livewire::test('zz-action-surface-list')->instance()->builtListConfig();
+    $listConfig = \Livewire\invade(Livewire::test('zz-action-surface-list')->instance())->builtListConfig();
 
     expect($listConfig)->toHaveKey('rows');
 });
@@ -148,15 +148,15 @@ it('sorts only by a column of the list', function (): void {
     $first = Tenant::factory()->create(['name' => 'B', 'uuid' => 'zzz']);
     $second = Tenant::factory()->create(['name' => 'A', 'uuid' => 'aaa']);
 
-    $byUuid = Livewire::test('zz-action-surface-list')
+    $byUuid = \Livewire\invade(Livewire::test('zz-action-surface-list')
         ->set('sortField', 'uuid')
         ->set('sortAsc', true)
-        ->instance()->visibleRowIds();
+        ->instance())->visibleRowIds();
 
-    $byName = Livewire::test('zz-action-surface-list')
+    $byName = \Livewire\invade(Livewire::test('zz-action-surface-list')
         ->set('sortField', 'name')
         ->set('sortAsc', true)
-        ->instance()->visibleRowIds();
+        ->instance())->visibleRowIds();
 
     expect(array_values(array_intersect($byUuid, [$first->id, $second->id])))->toBe([$first->id, $second->id])
         ->and(array_values(array_intersect($byName, [$first->id, $second->id])))->toBe([$second->id, $first->id]);

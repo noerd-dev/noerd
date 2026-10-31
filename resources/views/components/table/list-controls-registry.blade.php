@@ -21,7 +21,7 @@
         @foreach ($controls['registry'] as $listHeaderAction)
             @livewire($listHeaderAction, [
                 'model' => $host->listModel ?? null,
-                'component' => $host->getComponentName(),
+                'component' => $host->componentName(),
             ], key('list-header-action-' . $listHeaderAction))
         @endforeach
     </div>
