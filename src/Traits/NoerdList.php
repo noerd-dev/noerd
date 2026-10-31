@@ -383,8 +383,12 @@ trait NoerdList
 
         if ($value === '') {
             unset($this->listColumnFilters[$field]);
-        } else {
+        } elseif ($this->isListColumnField($field)) {
+            // Only a column the list shows can carry a filter: the field name is
+            // client input and ends up in the filter chips.
             $this->listColumnFilters[$field] = $value;
+        } else {
+            return;
         }
 
         session(["listColumnFilters.{$this->componentName()}" => $this->listColumnFilters]);
@@ -427,6 +431,12 @@ trait NoerdList
 
         $chips = [];
         foreach ($active as $field => $raw) {
+            // A ?cf[...] key arrives straight from the URL (and the session keeps
+            // it): only a column of this list becomes a chip.
+            if (! $columns->has($field)) {
+                continue;
+            }
+
             $column = $columns->get($field, []);
             $type = $column['type'] ?? $schemaTypes[$field] ?? null;
             $options = $column['options'] ?? $picklistOptions[$field] ?? [];
@@ -734,12 +744,15 @@ trait NoerdList
     public function renderingNoerdList(): void
     {
         if ($this->minimal) {
-            $this->perPage = $this->minimalLimit;
+            $this->perPage = $this->clampPerPage($this->minimalLimit);
         }
     }
 
     public function exportCsv(): StreamedResponse
     {
+        // Only a list that switched the export on offers it.
+        abort_unless($this->enableCsvExport, 403);
+
         // Populates resolvedModelClass so the read check sees the actual model.
         $this->resolvedListConfig();
         abort_unless(AccessHelper::canReadObject($this->objectPermissionModelClass()), 403);
@@ -817,6 +830,19 @@ trait NoerdList
     protected static function tableHasColumn(string $table, string $column): bool
     {
         return SchemaColumnCache::hasColumn($table, $column);
+    }
+
+    /**
+     * Whether $field is a column of the active list configuration.
+     */
+    protected function isListColumnField(string $field): bool
+    {
+        if ($field === 'action') {
+            return false;
+        }
+
+        return collect($this->getListConfig($this->listQueryConfigName)['columns'] ?? [])
+            ->contains(fn($column): bool => is_array($column) && ($column['field'] ?? null) === $field);
     }
 
     protected function mountList(): void

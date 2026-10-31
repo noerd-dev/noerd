@@ -71,7 +71,7 @@
                     wire:key="grid-{{ $listId }}-{{ $row['id'] ?? $key }}"
                     :class="{'ring-2 ring-brand-primary': selectedRow == {{ $key }} }"
                     @click="selectedRow = '{{ $key }}'"
-                    wire:click="openListRow('{{ $row['id'] ?? '' }}')"
+                    wire:click="openListRow({{ \Illuminate\Support\Js::from((string) ($row['id'] ?? '')) }})"
                     class="group hover:border-brand-primary relative flex cursor-pointer flex-col items-start gap-1 rounded-lg border bg-white p-4 text-left transition hover:shadow-sm {{ $rowChecked ? 'border-brand-primary' : 'border-gray-200' }}"
                 >
                     @if ($multiSelect)
@@ -82,7 +82,7 @@
                             <input
                                 type="checkbox"
                                 wire:key="grid-cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
-                                wire:click.stop="toggleRecordSelection('{{ $row['id'] ?? '' }}')"
+                                wire:click.stop="toggleRecordSelection({{ \Illuminate\Support\Js::from((string) ($row['id'] ?? '')) }})"
                                 @checked($rowChecked)
                                 class="text-brand-primary focus:ring-brand-border block h-4 w-4 cursor-pointer rounded border-gray-300"
                             />

@@ -27,11 +27,12 @@ class ZzMultiDetailPage extends Component
     /** @var array<int, array<string, mixed>> */
     public array $additionalUpdated = [];
 
-    /** @param  array<string, mixed>  $pageLayout */
-    public function mount(array $pageLayout = []): void
+    /** @param  array<string, mixed>  $layout */
+    public function mount(array $layout = []): void
     {
-        // $pageLayout is a locked property (LockedPropertiesHook) — seeded on mount.
-        $this->pageLayout = $pageLayout;
+        // $pageLayout is locked, also as a mount argument (LockedPropertiesHook) —
+        // the fixture takes its synthetic layout under another name.
+        $this->pageLayout = $layout;
     }
 
     public function render(): string
@@ -64,7 +65,7 @@ beforeEach(function (): void {
 function multiDetailPage(): \Livewire\Features\SupportTesting\Testable
 {
     return Livewire::test('zz-multi-detail-page', [
-        'pageLayout' => ['detail' => 'zz::primary-detail', 'details' => ['zz::second-detail']],
+        'layout' => ['detail' => 'zz::primary-detail', 'details' => ['zz::second-detail']],
     ]);
 }
 
@@ -79,7 +80,10 @@ it('adopts the id reported by the primary detail — with or without the detail 
     multiDetailPage()
         ->call('embeddedDetailStored', 7, 'zz::primary-detail')
         ->assertSet('modelId', 7)
-        ->assertSet('showSuccessIndicator', false)
+        ->assertSet('showSuccessIndicator', false);
+
+    // A fresh page each: a page that already shows a record is never repointed.
+    multiDetailPage()
         ->call('embeddedDetailStored', 8)
         ->assertSet('modelId', 8)
         ->assertSet('additionalStored', []);

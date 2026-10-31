@@ -80,7 +80,7 @@
 
                 @foreach ($gridSortColumns as $gridSortColumn)
                     <x-noerd::action-menu-item
-                        wire:click="sortBy('{{ $gridSortColumn['field'] }}')"
+                        wire:click="sortBy({{ \Illuminate\Support\Js::from((string) $gridSortColumn['field']) }})"
                         :active="$gridSortColumn['field'] === $sortField"
                         class="justify-between"
                     >

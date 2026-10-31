@@ -70,6 +70,10 @@ new class extends Component
 
     public function store(): void
     {
+        if (! $this->canSaveObject()) {
+            return;
+        }
+
         $this->validateFromLayout();
 
         // Find or create the parent Collection
@@ -90,7 +94,19 @@ new class extends Component
             'sort' => (int) ($this->detailData['sort'] ?? 0),
         ];
 
-        $entry = SetupCollectionEntry::updateOrCreate(['id' => $this->modelId], $data);
+        // $modelId is URL-bound: an id the tenant-scoped query cannot resolve
+        // (another tenant's entry, a deleted one) stores nothing.
+        if ($this->modelId) {
+            $entry = SetupCollectionEntry::find($this->modelId);
+
+            if (! $entry instanceof SetupCollectionEntry) {
+                return;
+            }
+
+            $entry->fill($data)->save();
+        } else {
+            $entry = SetupCollectionEntry::create($data);
+        }
 
         $this->storeProcess($entry);
         $this->entryExists = true;

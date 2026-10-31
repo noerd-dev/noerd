@@ -130,7 +130,19 @@ new class extends Component {
         // placeholder set above.
         $writable = $this->modelId ? ['name', 'email'] : ['name', 'email', 'password'];
         $userData = collect($this->detailData)->only($writable)->toArray();
-        $user = NoerdUser::updateOrCreate(['id' => $this->modelId], $userData);
+        // Never create an account under an id that does not resolve: a stale or
+        // invented $modelId stores nothing (a super admin skips the target check).
+        if ($this->modelId) {
+            $user = NoerdUser::find($this->modelId);
+
+            if (! $user instanceof NoerdUser) {
+                return;
+            }
+
+            $user->fill($userData)->save();
+        } else {
+            $user = NoerdUser::create($userData);
+        }
 
         $this->attachTenantAccess($user, detachFirst: true);
 

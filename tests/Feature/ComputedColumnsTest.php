@@ -118,6 +118,13 @@ class ZzComputedListComponent extends Component
 
     public $listModel = ZzComputedHost::class;
 
+    /** Lists switch the export on themselves in mount(), like the modules do. */
+    public function mount(): void
+    {
+        $this->mountList();
+        $this->enableCsvExport = true;
+    }
+
     public function with(): array
     {
         return [

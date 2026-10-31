@@ -51,7 +51,7 @@
                 @forelse ($rows as $key => $row)
                     <tr
                         wire:key="minimal-{{ $listId }}-{{ $key }}"
-                        wire:click="findListAction('{{ $key }}')"
+                        wire:click="findListAction({{ \Illuminate\Support\Js::from((string) $key) }})"
                         class="hover:bg-brand-bg cursor-pointer"
                     >
                         @foreach ($table as $column)
