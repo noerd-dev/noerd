@@ -102,6 +102,18 @@ describe('context', function (): void {
     });
 });
 
+it('ends with the request', function (): void {
+    Illuminate\Support\Facades\Route::get('/zz-tenant-context', function () {
+        TenantContext::set(7);
+
+        return 'ok';
+    });
+
+    $this->get('/zz-tenant-context')->assertOk();
+
+    expect(TenantContext::current())->toBeNull();
+});
+
 describe('missing context', function (): void {
     it('stays unscoped by default', function (): void {
         expect(zzTenantTitles())->toBe(['A', 'B']);
