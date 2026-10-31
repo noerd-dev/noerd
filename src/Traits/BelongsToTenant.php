@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Noerd\Traits;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Scopes\TenantScope;
+use Noerd\Support\MissingTenantContext;
+use Noerd\Support\TenantContext;
 
 trait BelongsToTenant
 {
@@ -26,7 +29,31 @@ trait BelongsToTenant
             if ($tenantId && ! $model->tenant_id) {
                 $model->tenant_id = $tenantId;
             }
+
+            if (! $model->tenant_id && ! TenantContext::isSystem()) {
+                MissingTenantContext::applyToCreate($model::class);
+            }
         });
+    }
+
+    /**
+     * The rows of ONE tenant, whatever the current context — replaces only the
+     * tenant filter (soft deletes and the object read guard stay applied).
+     * Prefer TenantContext::run() for a whole unit of work.
+     */
+    public function scopeOfTenant(Builder $query, int $tenantId): Builder
+    {
+        return $query->withoutGlobalScope(TenantScope::class)
+            ->where($query->qualifyColumn('tenant_id'), $tenantId);
+    }
+
+    /**
+     * The rows of every tenant — explicit, and only the tenant filter is lifted
+     * (soft deletes and the object read guard stay applied).
+     */
+    public function scopeAcrossTenants(Builder $query): Builder
+    {
+        return $query->withoutGlobalScope(TenantScope::class);
     }
 
     public function tenant(): BelongsTo

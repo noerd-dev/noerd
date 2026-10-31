@@ -9,11 +9,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Support\MissingTenantContext;
+use Noerd\Support\TenantContext;
 
 class TenantScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
+        // TenantContext::system() is the explicit "every tenant" mode.
+        if (TenantContext::isSystem()) {
+            return;
+        }
+
         // The SAME resolver the creating hook stamps from, so scoping and
         // stamping can never diverge (a record filtered by a tenant it was not
         // written with would silently disappear).
@@ -26,11 +33,15 @@ class TenantScope implements Scope
         }
 
         // Inside a tenant context but without a resolved tenant, yield NO rows
-        // rather than every tenant's — a tenant-less account. Console commands,
-        // queue workers and unauthenticated requests carry no such context and
-        // stay unscoped.
+        // rather than every tenant's — a tenant-less account.
         if (NoerdAuth::check()) {
             $builder->whereRaw('1 = 0');
+
+            return;
         }
+
+        // No user and no TenantContext (console, queue, public frontends):
+        // `noerd.tenancy.missing_context` decides.
+        MissingTenantContext::applyToQuery($builder, $model::class);
     }
 }

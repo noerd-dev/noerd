@@ -4,13 +4,42 @@ The noerd core ships a set of small traits for models, Livewire components and A
 
 ## BelongsToTenant (Eloquent models)
 
-`Noerd\Traits\BelongsToTenant` makes a model tenant-aware: every query is scoped to the logged-in user's selected tenant, and new records get their `tenant_id` filled automatically.
+`Noerd\Traits\BelongsToTenant` makes a model tenant-aware: every query is scoped to the current tenant, and new records get their `tenant_id` filled automatically.
 
 **What it does:**
 
-- `bootBelongsToTenant()` adds the `Noerd\Scopes\TenantScope` global scope — when `TenantHelper::currentTenantId()` resolves a tenant (an authenticated noerd user with a selected tenant), every query gets `where {table}.tenant_id = {currentTenantId}`
+- `bootBelongsToTenant()` adds the `Noerd\Scopes\TenantScope` global scope — when `TenantHelper::currentTenantId()` resolves a tenant (the `TenantContext`, else the signed-in noerd user's selected tenant), every query gets `where {table}.tenant_id = {currentTenantId}`
 - A `creating` hook stamps `$model->tenant_id` from the same `TenantHelper::currentTenantId()` when the model has none yet — scope and stamp share one resolver, so a record is never written with a tenant the scope would exclude
+- `ofTenant($tenantId)` — the rows of one tenant whatever the context; `acrossTenants()` — the rows of every tenant. Both lift ONLY the tenant filter: soft deletes and the object read guard stay applied, unlike `withoutGlobalScopes()`
 - `tenant(): BelongsTo` — relation to `Noerd\Models\Tenant`
+
+### Tenant context (console, queue, public frontends)
+
+Without a signed-in noerd user the tenant comes from `Noerd\Support\TenantContext` (a scoped service — no request or job inherits the previous one's):
+
+```php
+TenantContext::run($tenantId, function () {      // a command, per tenant
+    Invoice::query()->where('status', 'open')->get();
+});
+TenantContext::set($tenant->id);                 // a public frontend's middleware
+TenantContext::system(fn () => Invoice::count()); // explicitly every tenant
+```
+
+A queued job runs in the tenant of the request or job that dispatched it (the payload carries it,
+`NoerdServiceProvider::JOB_TENANT_KEY`), and the dispatcher's own context is restored when a job
+runs synchronously.
+
+Where no tenant is known at all, `noerd.tenancy.missing_context` (`NOERD_TENANCY_MISSING_CONTEXT`)
+decides what a tenant-scoped query or create does:
+
+| Mode | Query | Create without `tenant_id` |
+|------|-------|----------------------------|
+| `unscoped` (default) | no filter | allowed |
+| `audit` | no filter; the first call per model and request is logged with its file and line | allowed, logged |
+| `empty` | no rows (fails closed), reported to the error handler | `MissingTenantContextException` |
+| `throw` | `MissingTenantContextException` | `MissingTenantContextException` |
+
+Run an installation in `audit` mode to find the call sites that still rely on an unscoped query.
 
 The trait does not touch `$fillable`; use `$guarded` (the noerd standard).
 
@@ -236,9 +265,9 @@ for module use.
 
 Static helpers under `Noerd\Helpers`; each is documented on its owning page:
 
-- **`TenantHelper`** — the tenant/app session API. `currentTenantId()` is the authenticated noerd
-  user's selected tenant — the single resolver `TenantScope` and the `BelongsToTenant` stamp read
-  (`null` in console, queue and guest contexts). `getSelectedTenantId()` / `getSelectedTenant()`
+- **`TenantHelper`** — the tenant/app session API. `currentTenantId()` is the `TenantContext`, else
+  the authenticated noerd user's selected tenant — the single resolver `TenantScope` and the
+  `BelongsToTenant` stamp read (`null` where neither is known). `getSelectedTenantId()` / `getSelectedTenant()`
   read the session selection (memoized per request), `setSelectedTenantId()` writes it and persists
   it on the user, `hasTenant()` checks it; `getSelectedApp()` / `setSelectedApp()` / `hasApp()`
   hold the app selected in the sidebar. `clear()` forgets both session keys, `clearCache()` drops
