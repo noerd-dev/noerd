@@ -14,7 +14,7 @@ Supported modifiers: `ctrl`, `shift`, `alt`, `meta`. `ctrl` also matches the Cmd
 | `search_focus` | `s` | Focuses the search input | Every list header; Escape blurs the field again |
 | `new_entry` | `n` | Triggers the FIRST header action (the "New …" button) | Every list header |
 | `save` | `ctrl+enter` | Calls `store()` on the open detail/page | Every `x-noerd::page` whose component has a `store()` method and whose `canSaveObject()` allows it |
-| `delete` | `ctrl+backspace` | Asks for confirmation, then calls `delete()` | Every `x-noerd::page` whose component has a `delete()` method and whose `canDeleteObject()` allows it |
+| `delete` | `ctrl+backspace` | Asks for confirmation, then calls `delete()` | Every `x-noerd::page` whose component has a `delete()` method and whose `canDeleteObject()` allows it (never with `protected bool $deletable = false;`) |
 
 **List header actions:** an action's shortcut is its own `shortcut:` key in the list YAML, else
 `new_entry` for the first action of the YAML `actions` array; further actions have none. An

@@ -56,7 +56,7 @@ new class extends Component {
 - `$detailRoute` is mandatory for every list whose rows open a record: the row click ALWAYS
   opens the record by route (URL rewritten). Never override `listAction()` to open a component
   modal or a list narrowed by the clicked row. A record without an editable form (mirrored data)
-  gets a read-only `*-detail` (`readonly: true` fields, no save bar, `store()`/`delete()` no-ops)
+  gets a read-only `*-detail` (`readonly: true` fields, no save bar, `store()` a no-op, `protected bool $deletable = false;`)
   that embeds the narrowed list through `lists:` — and the row opens THAT route.
 - Default sort: a `defaultSort:` block in the list YAML (`field:` + optional
   `direction: asc|desc`, `desc` when omitted) — both synced copies, never component code. A

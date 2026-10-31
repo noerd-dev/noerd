@@ -683,6 +683,20 @@ relation-form keys (see [Relation Forms](relation-forms.md)) and always drops `i
 It fails CLOSED: a component without any declared field persists nothing.
 Both `store()` and `delete()` are guarded by `canSaveObject()` / `canDeleteObject()`.
 
+**Records that are never deleted.** A screen whose records must not be deleted from it — a
+tenant, a sent message, a domain, mirrored data — declares
+
+```php
+protected bool $deletable = false;
+```
+
+`canDeleteObject()` then answers `false` whatever the object permissions say, so the delete
+button, the `ctrl+backspace` shortcut and `delete()` are gone at once (a custom `delete()` override
+is blocked by the `WriteGuardHook` as well). The flag is code, never configuration: it is not a
+YAML key, it stays `protected` (Livewire never sends it to the browser) and the
+`LockedPropertiesHook` rejects it as a client update or a mount argument. Never override `delete()`
+as an empty method for this.
+
 **Success indicator.** The transient "Successfully saved" feedback the save bar shows left of its
 buttons is its own component, `<x-noerd::success-indicator :message="..." />`, bound to the boolean
 `showSuccessIndicator` property (another name via `property=`). It fades out and resets the property

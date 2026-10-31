@@ -308,8 +308,8 @@ opened from a list row are reserved for pickers (`selectAction`, see
 A record without an editable form (mirrored or read-only data such as a synced client or an import
 log line) still gets its own `*-detail`: the detail YAML marks the fields `readonly: true` and
 embeds the related rows through [`lists:`](detail-view.md#embedded-lists) (the narrowed list the
-row used to open directly), the component renders no save bar and overrides `store()` / `delete()`
-as no-ops, and the module registers `Route::livewire('{app}/{entity}/{modelId}', …)` for it.
+row used to open directly), the component renders no save bar, overrides `store()` as a no-op and declares
+`protected bool $deletable = false;` ([Detail View](detail-view.md)), and the module registers `Route::livewire('{app}/{entity}/{modelId}', …)` for it.
 
 ### Custom Query Logic
 
