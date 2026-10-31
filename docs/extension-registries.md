@@ -68,8 +68,8 @@ Named option providers for `type: picklist` fields. A detail YAML references opt
 **Resolution order** — `NoerdDetail::resolvePicklistOptions(string $picklistField)`:
 
 1. A public method with that name on the detail component wins — but only when it declares an
-   `: array` return type. The name is client-callable, so only a genuine options provider is ever
-   invoked, never a `void` action such as `store()` or `delete()`
+   `: array` return type, so only a genuine options provider is ever invoked, never a `void` action
+   such as `store()` or `delete()`. The resolver itself is `protected`: only the field views call it
 2. Otherwise the `PicklistRegistry` provider is called
 3. Neither exists → empty options (`[]`), never an error
 

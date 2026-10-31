@@ -338,8 +338,8 @@ public function getWarehouseOptions(): array
 ```
 
 The provider returns `[id => label, …]` and MUST be public, take no required arguments and declare
-the `: array` return type — `NoerdDetail::resolvePicklistOptions()` only invokes a component method
-that does (the name is client-callable, so `void` actions such as `store()` are never invoked).
+the `: array` return type — `NoerdDetail::resolvePicklistOptions()` (protected, called by the field
+views) only invokes a component method that does, so `void` actions such as `store()` are never invoked.
 Otherwise the `PicklistRegistry` provider of that name is used
 ([Extension Registries](extension-registries.md)), and `[]` when neither exists.
 

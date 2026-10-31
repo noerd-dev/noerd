@@ -164,22 +164,6 @@ trait NoerdDetail
         }
     }
 
-    public function resolvePicklistOptions(string $picklistField): array
-    {
-        // $picklistField is a public method name from the field YAML, but this is
-        // also a client-callable action — only invoke a genuine options provider:
-        // PUBLIC (like every other Livewire action, see NoerdList::callRowAction()),
-        // callable without arguments, and declaring an `array` return type so an
-        // action like store()/delete() (which are `void`) can never be reached.
-        if ($this->isPicklistOptionsProvider($picklistField)) {
-            return $this->{$picklistField}();
-        }
-
-        $provider = app(PicklistRegistry::class)->resolve($picklistField);
-
-        return $provider ? $provider() : [];
-    }
-
     /**
      * Livewire trait rendering hook. Components may overwrite $detailData in their own
      * mount() (e.g. `$this->detailData = $model->toArray()`), which would undo the
@@ -197,6 +181,22 @@ trait NoerdDetail
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
         $this->computeComputedFields();
+    }
+
+    protected function resolvePicklistOptions(string $picklistField): array
+    {
+        // $picklistField is a public method name from the field YAML, but this is
+        // also a client-callable action — only invoke a genuine options provider:
+        // PUBLIC (like every other Livewire action, see NoerdList::callRowAction()),
+        // callable without arguments, and declaring an `array` return type so an
+        // action like store()/delete() (which are `void`) can never be reached.
+        if ($this->isPicklistOptionsProvider($picklistField)) {
+            return $this->{$picklistField}();
+        }
+
+        $provider = app(PicklistRegistry::class)->resolve($picklistField);
+
+        return $provider ? $provider() : [];
     }
 
     protected function initDetail(): void

@@ -878,11 +878,27 @@ trait NoerdList
     {
         $method = $this->listActionMethod;
 
-        if (! method_exists($this, $method) || ! (new ReflectionMethod($this, $method))->isPublic()) {
+        // $listActionMethod arrives as a mount argument (the picker passes
+        // selectAction): only a declared row action may run, never an arbitrary
+        // public method or one of Livewire's own.
+        if (! in_array($method, $this->rowActionMethods(), true)
+            || ! method_exists($this, $method)
+            || ! (new ReflectionMethod($this, $method))->isPublic()) {
             return;
         }
 
         $this->{$method}($modelId);
+    }
+
+    /**
+     * The methods a row click may run through $listActionMethod. A component
+     * with a row action of its own adds it here.
+     *
+     * @return list<string>
+     */
+    protected function rowActionMethods(): array
+    {
+        return ['listAction', 'selectAction'];
     }
 
     /**
@@ -1068,9 +1084,17 @@ trait NoerdList
         // a raw property update does not). Ordering by a column the model hides
         // — password, remember_token, api_token — turns the list into an
         // oracle over that value, so hidden attributes are never sortable.
+        // Only a column the list shows (or its default sort, or the technical
+        // `id`) orders the rows — sorting by an unshown column would rank the
+        // rows by a value the reader is not meant to see.
         $hidden = $this->resolvedModelInstance()?->getHidden() ?? [];
+        $sortable = array_merge(
+            ['id', (string) ($listConfig['defaultSort']['field'] ?? '')],
+            array_column(array_filter($listConfig['columns'] ?? [], 'is_array'), 'field'),
+        );
         $sortField = SchemaColumnCache::hasColumn($table, $this->sortField)
             && ! in_array($this->sortField, $hidden, true)
+            && in_array($this->sortField, $sortable, true)
                 ? $this->sortField
                 : 'id';
         $query->orderBy($sortField, $this->sortAsc ? 'asc' : 'desc');

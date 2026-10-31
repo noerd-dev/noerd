@@ -64,8 +64,8 @@ it('resolvePicklistOptions invokes array providers only, never a void method', f
         }
     };
 
-    expect($component->resolvePicklistOptions('wipeEverything'))->toBe([]);
+    expect(\Livewire\invade($component)->resolvePicklistOptions('wipeEverything'))->toBe([]);
     expect($component->sideEffect)->toBeFalse();
 
-    expect($component->resolvePicklistOptions('statusOptions'))->toBe(['open' => 'Open']);
+    expect(\Livewire\invade($component)->resolvePicklistOptions('statusOptions'))->toBe(['open' => 'Open']);
 });

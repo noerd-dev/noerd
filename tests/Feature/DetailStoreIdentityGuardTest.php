@@ -105,12 +105,12 @@ it('only resolves picklist options from a public, argument-free array provider',
     $component = Livewire::test('zz-store-guard-detail');
 
     // A genuine provider still works.
-    expect($component->instance()->resolvePicklistOptions('zzStatusOptions'))->toBe(['ok' => 'Ok']);
+    expect(\Livewire\invade($component->instance())->resolvePicklistOptions('zzStatusOptions'))->toBe(['ok' => 'Ok']);
 
     // Protected trait internals are unreachable, even though they return arrays.
-    expect($component->instance()->resolvePicklistOptions('syncPayload'))->toBe([])
-        ->and($component->instance()->resolvePicklistOptions('writableKeysFromFields'))->toBe([]);
+    expect(\Livewire\invade($component->instance())->resolvePicklistOptions('syncPayload'))->toBe([])
+        ->and(\Livewire\invade($component->instance())->resolvePicklistOptions('writableKeysFromFields'))->toBe([]);
 
     // A provider needing an argument is skipped instead of blowing up.
-    expect($component->instance()->resolvePicklistOptions('zzOptionsNeedingAnArgument'))->toBe([]);
+    expect(\Livewire\invade($component->instance())->resolvePicklistOptions('zzOptionsNeedingAnArgument'))->toBe([]);
 });
