@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ThemeRegistry;
+use Noerd\Support\RequestState;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
@@ -28,16 +29,12 @@ final class StaticConfigHelper
      */
     private static array $moduleSourceMappingCache = [];
 
-    /**
-     * Request-scope memo for the DB-backed lookups (allowed app folders, active
-     * apps, search roots, resolved config paths, list-view discovery). Every
-     * config lookup used to re-run 3-4 tenant/tenant_apps queries; within one
-     * request the answers cannot change, so they are computed once. Keys embed
-     * the selected tenant id and current app, so a mid-request tenant/app switch
-     * misses the memo naturally. Never persisted — the results are session- and
-     * user-dependent.
-     */
-    private static array $runtimeCache = [];
+    // Request-scope memo for the DB-backed lookups (allowed app folders, active
+    // apps, search roots, resolved config paths, list-view discovery) lives in the
+    // RequestState bucket 'noerd.config': within one request the answers cannot
+    // change, and the scoped service drops them before the next request or job.
+    // Keys embed the selected tenant id and current app, so a mid-request
+    // tenant/app switch misses the memo naturally.
 
     /** @var array<string, array{0: string, 1: array}> parsed YAML per path, guarded by mtime+size */
     private static array $yamlCache = [];
@@ -48,7 +45,7 @@ final class StaticConfigHelper
      */
     public static function flushRuntimeCaches(): void
     {
-        self::$runtimeCache = [];
+        RequestState::forget('noerd.config');
         self::$yamlCache = [];
     }
 
@@ -253,6 +250,8 @@ final class StaticConfigHelper
 
     public static function getNavigationStructure(): ?array
     {
+        $runtime = &RequestState::bucket('noerd.config');
+
         $currentApp = self::getCurrentApp();
 
         if (! $currentApp) {
@@ -265,11 +264,11 @@ final class StaticConfigHelper
         // Keyed by the runtime context — app, tenant and user all shape the
         // filtered result.
         $cacheKey = 'navigation.' . self::runtimeContextKey();
-        if (array_key_exists($cacheKey, self::$runtimeCache)) {
-            return self::$runtimeCache[$cacheKey];
+        if (array_key_exists($cacheKey, $runtime)) {
+            return $runtime[$cacheKey];
         }
 
-        return self::$runtimeCache[$cacheKey] = self::buildNavigationStructure($currentApp);
+        return $runtime[$cacheKey] = self::buildNavigationStructure($currentApp);
     }
 
     public static function getCurrentApp(): ?string
@@ -498,9 +497,11 @@ final class StaticConfigHelper
      */
     private static function appLabels(): array
     {
+        $runtime = &RequestState::bucket('noerd.config');
+
         $cacheKey = 'appLabels.' . (TenantHelper::getSelectedTenantId() ?? 0);
 
-        return self::$runtimeCache[$cacheKey] ??= (function (): array {
+        return $runtime[$cacheKey] ??= (function (): array {
             $labels = ['setup' => __('Setup')];
 
             foreach (self::tenantAppRows()->pluck('title', 'name') as $name => $title) {
@@ -672,11 +673,13 @@ final class StaticConfigHelper
      */
     private static function getAllowedAppFolders(): array
     {
+        $runtime = &RequestState::bucket('noerd.config');
+
         // Keyed by user too: app permissions filter the folders, so one user's
         // set must never leak to another within one process.
         $cacheKey = 'allowedFolders.' . (TenantHelper::getSelectedTenantId() ?? 0) . '.' . (NoerdAuth::id() ?? 0);
 
-        return self::$runtimeCache[$cacheKey] ??= (function (): array {
+        return $runtime[$cacheKey] ??= (function (): array {
             // 'setup' is never filtered — its routes are admin-gated by the
             // setup middleware anyway.
             $allowedFolders = ['setup'];
@@ -699,9 +702,11 @@ final class StaticConfigHelper
      */
     private static function tenantAppRows(): \Illuminate\Support\Collection
     {
+        $runtime = &RequestState::bucket('noerd.config');
+
         $cacheKey = 'tenantAppRows.' . (TenantHelper::getSelectedTenantId() ?? 0);
 
-        return self::$runtimeCache[$cacheKey]
+        return $runtime[$cacheKey]
             ??= TenantHelper::getSelectedTenant()?->tenantApps()->get() ?? collect();
     }
 
@@ -714,10 +719,12 @@ final class StaticConfigHelper
      */
     private static function findConfigPath(string $subPath, ?string $ownerApp = null): ?string
     {
+        $runtime = &RequestState::bucket('noerd.config');
+
         // Only HITS are memoised — a config created mid-process (dev, test
         // fixtures, install commands) must be found on the next lookup.
         $cacheKey = 'configPath.' . self::runtimeContextKey() . '.' . ($ownerApp ?? '-') . '.' . $subPath;
-        $cached = self::$runtimeCache[$cacheKey] ?? null;
+        $cached = $runtime[$cacheKey] ?? null;
         if ($cached !== null && file_exists($cached)) {
             return $cached;
         }
@@ -725,7 +732,7 @@ final class StaticConfigHelper
         foreach (self::configSearchRoots($ownerApp) as $root) {
             $path = $root . DIRECTORY_SEPARATOR . $subPath;
             if (file_exists($path)) {
-                return self::$runtimeCache[$cacheKey] = $path;
+                return $runtime[$cacheKey] = $path;
             }
         }
 
@@ -745,9 +752,11 @@ final class StaticConfigHelper
      */
     private static function configSearchRoots(?string $ownerApp = null): array
     {
+        $runtime = &RequestState::bucket('noerd.config');
+
         $cacheKey = 'searchRoots.' . self::runtimeContextKey() . '.' . ($ownerApp ?? '-');
-        if (isset(self::$runtimeCache[$cacheKey])) {
-            return self::$runtimeCache[$cacheKey];
+        if (isset($runtime[$cacheKey])) {
+            return $runtime[$cacheKey];
         }
 
         $currentApp = self::getCurrentApp();
@@ -761,7 +770,7 @@ final class StaticConfigHelper
         // 2. Fallback: Search all allowed app folders
         $allowedFolders = self::getAllowedAppFolders();
 
-        $allAppFolders = self::$runtimeCache['activeAppFolders'] ??= TenantApp::where('is_active', true)
+        $allAppFolders = $runtime['activeAppFolders'] ??= TenantApp::where('is_active', true)
             ->pluck('name')
             ->map(fn($name) => mb_strtolower($name))
             ->toArray();
@@ -805,7 +814,7 @@ final class StaticConfigHelper
             }
         }
 
-        return self::$runtimeCache[$cacheKey] = array_values(array_unique($roots));
+        return $runtime[$cacheKey] = array_values(array_unique($roots));
     }
 
     /**

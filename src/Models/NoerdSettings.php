@@ -11,6 +11,7 @@ use Noerd\Database\Factories\NoerdSettingsFactory;
 use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Helpers\ThemeHelper;
+use Noerd\Support\RequestState;
 
 class NoerdSettings extends Model
 {
@@ -20,14 +21,6 @@ class NoerdSettings extends Model
 
     protected $guarded = ['id'];
 
-    /**
-     * Request-scoped memo of the tenant singleton rows: the currency and the
-     * document locale are read for every currency cell of a list, so the row
-     * is fetched once per tenant (a missing row is memoized as null too).
-     *
-     * @var array<int, self|null>
-     */
-    protected static array $cache = [];
 
     /**
      * The settings row of a tenant (defaults to the selected tenant), or null
@@ -41,16 +34,20 @@ class NoerdSettings extends Model
             return null;
         }
 
-        if (array_key_exists($tenantId, self::$cache)) {
-            return self::$cache[$tenantId];
+        // Request memo: currency, locale and theme are read for every cell of a
+        // list, so the row is fetched once per tenant (a missing row as null too).
+        $memo = &RequestState::bucket('noerd.settings');
+
+        if (array_key_exists($tenantId, $memo)) {
+            return $memo[$tenantId];
         }
 
-        return self::$cache[$tenantId] = static::query()->where('tenant_id', $tenantId)->first();
+        return $memo[$tenantId] = static::query()->where('tenant_id', $tenantId)->first();
     }
 
     public static function clearCache(): void
     {
-        self::$cache = [];
+        RequestState::forget('noerd.settings');
     }
 
     public function tenant(): BelongsTo

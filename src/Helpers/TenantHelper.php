@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Noerd\Helpers;
 
 use Noerd\Models\Tenant;
+use Noerd\Support\RequestState;
 
 final class TenantHelper
 {
-    /**
-     * Request memo for getSelectedTenant(): the selected tenant is read from a
-     * dozen call sites per render (config discovery, middleware, blades) and
-     * Tenant::find() has no identity map. Flushed by the provider's booted()
-     * hook and whenever the selection changes.
-     *
-     * @var array<int, Tenant|null>
-     */
-    private static array $tenantMemo = [];
-
-    /** Request memo of the single-tenant fallback (false = looked up, none). */
-    private static int|false|null $singleTenantId = null;
+    // Request memo (RequestState bucket 'noerd.tenant'): the selected tenant is
+    // read from a dozen call sites per render and Tenant::find() has no identity
+    // map; 'single' holds the single-tenant fallback (false = looked up, none).
 
     /**
      * The tenant the current request operates in — the SINGLE source both the
@@ -46,8 +38,9 @@ final class TenantHelper
         $id = session('noerd.selected_tenant_id');
 
         if (! $id && ! config('noerd.features.multi_tenant')) {
-            self::$singleTenantId ??= (Tenant::query()->value('id') ?? false);
-            $id = self::$singleTenantId ?: null;
+            $memo = &RequestState::bucket('noerd.tenant');
+            $memo['single'] ??= (Tenant::query()->value('id') ?? false);
+            $id = $memo['single'] ?: null;
         }
 
         return $id;
@@ -77,11 +70,13 @@ final class TenantHelper
             return null;
         }
 
-        if (! array_key_exists($tenantId, self::$tenantMemo)) {
-            self::$tenantMemo[$tenantId] = Tenant::find($tenantId);
+        $memo = &RequestState::bucket('noerd.tenant');
+
+        if (! array_key_exists($tenantId, $memo)) {
+            $memo[$tenantId] = Tenant::find($tenantId);
         }
 
-        return self::$tenantMemo[$tenantId];
+        return $memo[$tenantId];
     }
 
     /**
@@ -89,8 +84,7 @@ final class TenantHelper
      */
     public static function clearCache(): void
     {
-        self::$tenantMemo = [];
-        self::$singleTenantId = null;
+        RequestState::forget('noerd.tenant');
     }
 
     /**

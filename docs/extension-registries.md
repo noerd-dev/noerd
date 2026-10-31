@@ -145,7 +145,7 @@ app(PositionTableRegistry::class)->register('accounting::invoice-detail', Docume
 ```
 
 A detail without a registered table throws a `RuntimeException` when it calls `positionColumns()`
-without arguments; passing the catalog and model explicitly still works.
+— register the detail in the provider first.
 
 ## DynamicNavigationRegistry
 
