@@ -263,6 +263,8 @@ it('prepares the host for a local module without touching what the host already 
     // would come back as `[]`, which Composer rejects for "allow-plugins".
     File::put($tempBasePath . '/composer.json', "{\n    \"name\": \"zz/host\",\n    \"config\": {\n        \"allow-plugins\": {}\n    }\n}\n");
     File::put($tempBasePath . '/phpunit.xml', "<phpunit>\n    <testsuites>\n        <testsuite name=\"Feature\"><directory>tests/Feature</directory></testsuite>\n    </testsuites>\n</phpunit>\n");
+    File::ensureDirectoryExists($tempBasePath . '/tests');
+    File::put($tempBasePath . '/tests/Pest.php', "<?php\n\npest()->extend(Tests\\TestCase::class)->in('Feature');\n");
 
     $originalBasePath = $this->app->basePath();
     $this->app->setBasePath($tempBasePath);
@@ -284,7 +286,8 @@ it('prepares the host for a local module without touching what the host already 
     ])
         ->and($composer)->toContain('"allow-plugins": {}')
         ->and(mb_substr_count($phpunit, './app-modules/*/tests'))->toBe(1)
-        ->and(is_dir($tempBasePath . '/app-modules'))->toBeTrue();
+        ->and(is_dir($tempBasePath . '/app-modules'))->toBeTrue()
+        ->and(mb_substr_count(File::get($tempBasePath . '/tests/Pest.php'), '\\Noerd\\Tests\\HelperLoader::load();'))->toBe(1);
 
     File::deleteDirectory($tempBasePath);
 });

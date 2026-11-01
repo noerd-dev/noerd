@@ -23,7 +23,7 @@ final class TenantContext
 
     private bool $system = false;
 
-    /** @var list<array{0: ?int, 1: bool}> contexts a running job replaced */
+    /** @var list<array{0: int, 1: ?int, 2: bool}> per running job: its key and the context it replaced */
     private array $jobStack = [];
 
     public static function current(): ?int
@@ -81,10 +81,10 @@ final class TenantContext
      * A queued job starts: its dispatcher's tenant (the payload key written by
      * the queue payload hook) becomes the context until the job ends.
      */
-    public static function enterJob(?int $tenantId): void
+    public static function enterJob(int $jobKey, ?int $tenantId): void
     {
         $context = app(self::class);
-        $context->jobStack[] = [$context->tenantId, $context->system];
+        $context->jobStack[] = [$jobKey, $context->tenantId, $context->system];
 
         if ($tenantId !== null) {
             $context->tenantId = $tenantId;
@@ -96,14 +96,19 @@ final class TenantContext
      * The job ended (processed, failed or threw): restore what it replaced — a
      * job run synchronously inside a request hands the request its context back.
      */
-    public static function leaveJob(): void
+    public static function leaveJob(int $jobKey): void
     {
         $context = app(self::class);
-        $previous = array_pop($context->jobStack);
+        $frame = end($context->jobStack);
 
-        if ($previous !== null) {
-            [$context->tenantId, $context->system] = $previous;
+        // Only the job's own frame: a failing sync job reports its end twice, and
+        // the second report must not pop the frame of the job that dispatched it.
+        if ($frame === false || $frame[0] !== $jobKey) {
+            return;
         }
+
+        array_pop($context->jobStack);
+        [, $context->tenantId, $context->system] = $frame;
     }
 
     /**

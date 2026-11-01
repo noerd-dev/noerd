@@ -21,8 +21,8 @@ Every prompt has an option for scripted runs (`noerd:make-module inventory --tit
 The scaffold contains **no model**: it is the module plumbing plus a dashboard. Every record type is
 added afterwards with `noerd:make-resource` (see [Adding resources](#adding-resources)). With the
 first local module the command also prepares the host: it creates `app-modules/`, adds the
-`app-modules/*` path repository to `composer.json` and the `app-modules` test suite to `phpunit.xml`
-(both idempotent).
+`app-modules/*` path repository to `composer.json`, the `Modules` test suite to `phpunit.xml` and
+the call that loads the noerd test helpers to `tests/Pest.php` (all idempotent).
 
 ## Next Steps
 

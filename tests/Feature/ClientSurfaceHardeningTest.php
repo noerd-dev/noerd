@@ -15,6 +15,7 @@ use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\Tenant;
+use Noerd\Support\EmbeddedDetailCreations;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\NoerdList;
@@ -129,12 +130,28 @@ class ZzHardeningPage extends Component
     }
 }
 
+/** A page that embeds a detail, as a page YAML with `detail:` declares it. */
+class ZzHardeningEmbeddingPage extends ZzHardeningPage
+{
+    public function mount(): void
+    {
+        $this->initPage();
+        $this->pageLayout['detail'] = 'zz-hardening-detail';
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-hardening-embedding-page';
+    }
+}
+
 beforeEach(function (): void {
     $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
 
     Livewire::component('zz-hardening-list', ZzHardeningList::class);
     Livewire::component('zz-hardening-detail', ZzHardeningDetail::class);
     Livewire::component('zz-hardening-page', ZzHardeningPage::class);
+    Livewire::component('zz-hardening-embedding-page', ZzHardeningEmbeddingPage::class);
 });
 
 describe('column filter keys', function (): void {
@@ -246,6 +263,42 @@ describe('embedded detail listener', function (): void {
         Livewire::test('zz-hardening-page')
             ->call('embeddedDetailStored', $tenant->id)
             ->assertSet('modelId', $tenant->id);
+    });
+
+    it('does not let a create-only user hand a new page an existing record', function (): void {
+        $existing = Tenant::factory()->create();
+        Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => false);
+
+        Livewire::test('zz-hardening-page')
+            ->call('embeddedDetailStored', $existing->id)
+            ->assertSet('modelId', null);
+    });
+
+    it('lets a create-only user adopt the record the embedded detail created for the page', function (): void {
+        $created = Tenant::factory()->create();
+        Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => false);
+
+        $page = Livewire::test('zz-hardening-page');
+        EmbeddedDetailCreations::remember($page->id(), $created);
+
+        $page->call('embeddedDetailStored', $created->id)
+            ->assertSet('modelId', $created->id);
+    });
+
+    it('ignores a detail-data sync on a component that embeds no detail', function (): void {
+        $tenant = Tenant::factory()->create(['name' => 'Original']);
+
+        Livewire::test('zz-hardening-detail', ['modelId' => $tenant->id])
+            ->call('embeddedDetailDataUpdated', ['name' => 'Injected', 'custom_attributes' => ['x' => 1]])
+            ->assertSet('detailData.name', 'Original')
+            ->assertNotSet('detailData.custom_attributes', ['x' => 1]);
+    });
+
+    it('mirrors the detail data on a page that embeds a detail', function (): void {
+        $page = Livewire::test('zz-hardening-embedding-page');
+
+        $page->call('embeddedDetailDataUpdated', ['name' => 'Mirrored'], $page->id())
+            ->assertSet('detailData.name', 'Mirrored');
     });
 });
 

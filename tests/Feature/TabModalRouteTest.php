@@ -179,3 +179,17 @@ it('hides a tab whose viewExists view is not registered', function (): void {
 
     expect($registered)->toContain('noerd::noerd-users-list');
 });
+
+it('renders no panel for a link tab without a number', function (): void {
+    $html = Blade::render(
+        '<x-noerd::tab-content :layout="$layout" :modelId="1" :showBlock="false" />',
+        ['layout' => ['tabs' => [
+            ['number' => 1, 'label' => 'General'],
+            ['label' => 'Record', 'modalRoute' => 'zz.tab.record', 'routeParameters' => ['modelId' => 1]],
+            ['label' => 'Overview', 'route' => 'zz.tab.page'],
+        ]]],
+    );
+
+    expect($html)->toContain('Record')
+        ->toContain('Overview');
+});

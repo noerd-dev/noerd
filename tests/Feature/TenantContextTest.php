@@ -50,6 +50,42 @@ class ZzTenantProbeJob implements ShouldQueue
     }
 }
 
+class ZzTenantFailingJob implements ShouldQueue
+{
+    use Dispatchable;
+    use Queueable;
+
+    public function handle(): void
+    {
+        throw new RuntimeException('zz failing job');
+    }
+}
+
+/** Runs a failing job synchronously, survives its exception and records its own context. */
+class ZzTenantOuterJob implements ShouldQueue
+{
+    use Dispatchable;
+    use Queueable;
+
+    public static ?int $tenantAfterInnerFailure = null;
+
+    public static ?int $switchTo = null;
+
+    public function handle(): void
+    {
+        // The job moves to another tenant before it runs the nested job.
+        TenantContext::set(self::$switchTo);
+
+        try {
+            ZzTenantFailingJob::dispatchSync();
+        } catch (RuntimeException) {
+            // The outer job carries on.
+        }
+
+        self::$tenantAfterInnerFailure = TenantContext::current();
+    }
+}
+
 beforeEach(function (): void {
     Schema::create('zz_tenant_notes', function (Blueprint $table): void {
         $table->id();
@@ -160,6 +196,31 @@ describe('queued jobs', function (): void {
         ZzTenantProbeJob::dispatch();
 
         expect(ZzTenantProbeJob::$seenTenant)->toBe($user->selected_tenant_id);
+    });
+
+    it('run after the response in the tenant of the request', function (): void {
+        Illuminate\Support\Facades\Route::get('/zz-tenant-after-response', function () {
+            TenantContext::set(7);
+            ZzTenantProbeJob::dispatchAfterResponse();
+
+            return 'ok';
+        });
+
+        $this->get('/zz-tenant-after-response')->assertOk();
+
+        expect(ZzTenantProbeJob::$seenTenant)->toBe(7)
+            ->and(TenantContext::current())->toBeNull();
+    });
+
+    it('keep the dispatching job in its tenant when a nested sync job fails', function (): void {
+        ZzTenantOuterJob::$tenantAfterInnerFailure = null;
+        ZzTenantOuterJob::$switchTo = $this->tenantB->id;
+
+        TenantContext::run($this->tenantA->id, function (): void {
+            ZzTenantOuterJob::dispatch();
+        });
+
+        expect(ZzTenantOuterJob::$tenantAfterInnerFailure)->toBe($this->tenantB->id);
     });
 
     it('hand the dispatcher its own context back', function (): void {
