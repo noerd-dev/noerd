@@ -1,8 +1,23 @@
-{{-- The content area of a profile page: the spacing every page of the profile
-     area shares. The navigation is the sidebar (app-configs/profile/navigation.yml,
-     selected by the `profile` route middleware). The core's route views wrap it
-     in <x-noerd::app-layout>; a module's full-page Livewire component renders it
-     as its root, with one <x-noerd::profile-section> per block. --}}
-<div {{ $attributes->merge(['class' => 'space-y-6 p-8']) }}>
-    {{ $slot }}
-</div>
+@props([
+    /** The page title, shown in the page header. */
+    'title' => null,
+])
+
+{{-- The chrome of a profile page: <x-noerd::page> with the title in its header and
+     the spacing every page of the profile area shares. The navigation is the sidebar
+     (app-configs/profile/navigation.yml, selected by the `profile` route middleware).
+     Every profile page — the core's and a module's — is a full-page Livewire component
+     that renders it as its root, with one <x-noerd::profile-section> per block. --}}
+<x-noerd::page>
+    @if ($title)
+        <x-slot:header>
+            <x-noerd::modal-title>
+                {{ $title }}
+            </x-noerd::modal-title>
+        </x-slot:header>
+    @endif
+
+    <div {{ $attributes->merge(['class' => 'space-y-6']) }}>
+        {{ $slot }}
+    </div>
+</x-noerd::page>

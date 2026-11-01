@@ -62,10 +62,10 @@ Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void
 
 // The profile area: its own navigation context (app-configs/profile/navigation.yml).
 Route::group(['prefix' => $prefix, 'middleware' => ['noerd', 'profile']], function (): void {
-    Route::view('user', 'noerd::profile')->name('noerd.profile');
-    Route::view('user/language', 'noerd::profile-language')->name('noerd.profile.language');
-    Route::view('user/tenants', 'noerd::profile-tenants')->name('noerd.profile.tenants');
-    Route::view('user/delete-account', 'noerd::profile-delete')->name('noerd.profile.delete');
+    Route::livewire('user', 'noerd::profile-page')->name('noerd.profile');
+    Route::livewire('user/language', 'noerd::profile-language-page')->name('noerd.profile.language');
+    Route::livewire('user/tenants', 'noerd::profile-tenants-page')->name('noerd.profile.tenants');
+    Route::livewire('user/delete-account', 'noerd::profile-delete-page')->name('noerd.profile.delete');
 });
 
 Route::group(['prefix' => $prefix, 'middleware' => ['noerd-guest']], function (): void {
