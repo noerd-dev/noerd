@@ -22,6 +22,8 @@ use Throwable;
  * Everything else — a typo, `delete`, `save` — renders empty and is logged.
  * The relations the attribute names in `with` are eager-loaded once per page.
  * A method runs in PHP, so its column can be neither sorted nor filtered.
+ *
+ * @internal
  */
 class ModelMethodColumns implements ComputedColumnProvider
 {

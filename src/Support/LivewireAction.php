@@ -12,6 +12,8 @@ use Throwable;
  * `call` hooks as '__dispatch' with the event name in the params, and
  * SupportEvents runs the listener inside the same trigger — hooks keyed on a
  * method name (store, delete) must map the event to its listener method first.
+ *
+ * @internal
  */
 final class LivewireAction
 {

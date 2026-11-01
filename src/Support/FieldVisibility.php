@@ -16,6 +16,8 @@ use Illuminate\Support\Js;
  * property equals the value, compared as strings, so a select's "1" and an
  * integer column's 1 agree. Both keys on one entry combine with AND. `show:
  * false` and an unknown `viewExists` skip the entry on the server altogether.
+ *
+ * @internal
  */
 final class FieldVisibility
 {

@@ -14,6 +14,8 @@ use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
  * tenant. Shared by noerd:setup-collections:import-yaml and the tenant-creation
  * hook — in database mode a tenant without definition rows has no collections at
  * all, so a fresh tenant must be seeded the same way an existing one is migrated.
+ *
+ * @internal
  */
 final class SetupCollectionDefinitionImport
 {
@@ -58,7 +60,7 @@ final class SetupCollectionDefinitionImport
                 tenantId: $tenantId,
             );
 
-            SetupCollection::withoutGlobalScopes()->firstOrCreate([
+            SetupCollection::query()->ofTenant($tenantId)->firstOrCreate([
                 'tenant_id' => $tenantId,
                 'collection_key' => $definition->key,
             ], [

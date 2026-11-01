@@ -13,10 +13,10 @@ use function Laravel\Prompts\confirm;
 use Laravel\Prompts\Elements\Link;
 use Laravel\Prompts\Elements\NumberedList;
 use Noerd\Commands\Concerns\PublishesNoerdContent;
+use Noerd\Commands\Support\ModuleInstallContext;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Support\ModuleInstallContext;
 
 class NoerdInstallCommand extends Command
 {

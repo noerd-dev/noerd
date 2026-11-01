@@ -8,8 +8,10 @@ namespace Noerd\Support;
  * The per-session layout preferences (sidebar and app bar visibility, the
  * navigation width, collapsed navigation blocks) — the single owner of their
  * session keys, read by the layouts and written by the layout components.
+ *
+ * @internal
  */
-final class LayoutState
+final class ShellState
 {
     private const SIDEBAR_HIDDEN = 'hide_sidebar';
 

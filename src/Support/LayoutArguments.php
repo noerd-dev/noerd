@@ -11,6 +11,8 @@ namespace Noerd\Support;
  * component, everything else a static value that passes through unchanged.
  * The one place the convention lives; every component that reads `arguments:`
  * resolves them here.
+ *
+ * @internal
  */
 final class LayoutArguments
 {

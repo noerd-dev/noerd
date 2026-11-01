@@ -10,6 +10,8 @@ namespace Noerd\Support;
  * as `x-noerd::input-label`, so that every element template — in every theme, plus
  * the theme fallbacks — picks up optional field keys like `helpText` without having
  * to forward them one by one. Mirrors ThemeContext.
+ *
+ * @internal
  */
 final class FieldContext
 {

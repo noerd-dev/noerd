@@ -13,6 +13,7 @@ use Noerd\Services\ThemeRegistry;
 use Noerd\Support\ComponentNaming;
 use Noerd\Support\ModulesPath;
 use Noerd\Support\RequestState;
+use Noerd\Support\ThemeHelper;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
@@ -118,6 +119,8 @@ final class StaticConfigHelper
      * their YAML alone: deliberately NO applyOverrides() (a layout override must
      * never touch them) and NO applyThemeSetting() — they always render in the
      * built-in `settings` theme (fields stacked vertically, no grid).
+     *
+     * @internal
      */
     public static function getSettingsFields(string $component): array
     {
@@ -250,6 +253,9 @@ final class StaticConfigHelper
         return self::getModuleSourcePaths($app);
     }
 
+    /**
+     * @internal
+     */
     public static function getNavigationStructure(): ?array
     {
         $runtime = &RequestState::bucket('noerd.config');
@@ -413,6 +419,8 @@ final class StaticConfigHelper
 
     /**
      * Inverse of parseListViewKey(): null app => plain key, null view key => 'default'.
+     *
+     * @internal
      */
     public static function composeListViewKey(?string $app, ?string $viewKey): string
     {
@@ -427,6 +435,8 @@ final class StaticConfigHelper
      * test fixtures) is re-parsed, an unchanged one is parsed once per process.
      * Public so other YAML readers (e.g. the collection definition repository)
      * share the same cache instead of re-parsing per call.
+     *
+     * @internal
      */
     public static function parseYamlFile(string $path): array
     {

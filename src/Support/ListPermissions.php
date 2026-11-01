@@ -9,6 +9,8 @@ use Noerd\Helpers\AccessHelper;
 /**
  * Strips the list affordances the current user may not use from a list config.
  * A model class of null (in-memory lists) is never restricted.
+ *
+ * @internal
  */
 final class ListPermissions
 {

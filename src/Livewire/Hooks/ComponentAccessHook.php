@@ -13,6 +13,8 @@ use Noerd\Support\ComponentAccessGuard;
  * hook), the modal system needs no knowledge of noerd's authorization: it just
  * mounts a component and this hook rejects an unauthorized one. It attaches to
  * every component (no TRAITS): a restricted component need not be a noerd one.
+ *
+ * @internal
  */
 final class ComponentAccessHook extends NoerdComponentHook
 {

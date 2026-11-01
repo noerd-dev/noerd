@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Noerd\Helpers\KeyboardShortcutHelper;
+use Noerd\Support\KeyboardShortcutHelper;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);

@@ -19,6 +19,8 @@ use Illuminate\Support\Str;
  *   must not let the client add or replace the other keys of that array.
  *
  * Server-side writes are never affected — this only describes the client channel.
+ *
+ * @internal
  */
 final class ClientWritablePaths
 {

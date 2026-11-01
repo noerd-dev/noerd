@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
  * that phantom value is lost on save. The layout therefore owns the defaults —
  * an explicit `default:` on any field, or, for a select whose options are
  * written in the YAML, the first option.
+ *
+ * @internal
  */
 final class LayoutDefaults
 {

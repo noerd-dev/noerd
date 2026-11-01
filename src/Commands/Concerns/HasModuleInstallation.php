@@ -17,9 +17,9 @@ use Laravel\Prompts\Elements\NumberedList;
 
 use function Laravel\Prompts\multiselect;
 
+use Noerd\Commands\Support\ModuleInstallContext;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Support\ModuleInstallContext;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 

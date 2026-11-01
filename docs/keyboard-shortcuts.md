@@ -54,7 +54,7 @@ the `<kbd>` badges update everywhere — no view changes needed.
 
 ## KeyboardShortcutHelper API
 
-A view of your own never hardcodes a key string: `Noerd\Helpers\KeyboardShortcutHelper::parse(string
+A view of your own never hardcodes a key string: `Noerd\Support\KeyboardShortcutHelper::parse(string
 $configKey, string $default): array` reads `config("noerd.keyboard_shortcuts.{$configKey}")`
 (falling back to `$default`) and returns the two things a view needs — `['js' => …, 'badge' => …]`.
 
@@ -70,7 +70,7 @@ $configKey, string $default): array` reads `config("noerd.keyboard_shortcuts.{$c
 
 ```blade
 @php
-    $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', 's');
+    $searchShortcut = \Noerd\Support\KeyboardShortcutHelper::parse('search_focus', 's');
 @endphp
 
 <div @keydown.window="let e = $event; if ((window.noerdTopLayer?.($el) ?? true) && ({{ $searchShortcut['js'] }})) { e.preventDefault(); $refs.searchInput.focus(); }">

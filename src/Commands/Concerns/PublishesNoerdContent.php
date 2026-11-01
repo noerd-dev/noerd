@@ -6,7 +6,7 @@ namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Support\Facades\File;
-use Noerd\Services\FrontendScaffolder;
+use Noerd\Commands\Support\FrontendScaffolder;
 
 /**
  * The publishing half of `noerd:install` / `noerd:update`: the setup app

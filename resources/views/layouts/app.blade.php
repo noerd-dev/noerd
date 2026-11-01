@@ -21,7 +21,7 @@
     <style>
         :root {
             --sidebar-apps-width: {{ config('noerd.sidebar.apps_width', '80px') }};
-            --sidebar-nav-width: {{ \Noerd\Support\LayoutState::navigationWidth() }};
+            --sidebar-nav-width: {{ \Noerd\Support\ShellState::navigationWidth() }};
             --sidebar-total-width: calc(var(--sidebar-apps-width) + var(--sidebar-nav-width));
             --banner-height: 0px;
             --impersonation-banner-height: 0px;
@@ -56,7 +56,7 @@
         class="h-dvh"
         x-data="noerdAppShell(@js([
             'showSidebar' => (bool) $showSidebar,
-            'showAppbar' => \Noerd\Support\LayoutState::appBarVisible(),
+            'showAppbar' => \Noerd\Support\ShellState::appBarVisible(),
         ]))"
         @resize.window="handleResize()"
     >

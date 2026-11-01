@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Commands\Support;
 
 /**
  * The host project's `boost.json` — the file Laravel Boost reads to decide
@@ -14,6 +14,8 @@ namespace Noerd\Support;
  * developer's call) and writes in Boost's own format (4-space pretty print,
  * unescaped slashes, trailing newline) while keeping the existing key order.
  * Boost itself is not a dependency of noerd, so nothing here references it.
+ *
+ * @internal
  */
 final class BoostConfig
 {

@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Testing\PendingCommand;
 use Noerd\Commands\Concerns\HasModuleInstallation;
 use Noerd\Commands\Concerns\RequiresNoerdInstallation;
+use Noerd\Commands\Support\ModuleInstallContext;
 use Noerd\Events\TenantAppAssigned;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
-use Noerd\Support\ModuleInstallContext;
 use Noerd\Tests\TestCase;
 use Symfony\Component\Yaml\Yaml;
 

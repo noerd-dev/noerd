@@ -6,7 +6,7 @@ namespace Noerd\Commands\Concerns;
 
 use function Laravel\Prompts\search;
 
-use Noerd\Helpers\IconHelper;
+use Noerd\Support\IconHelper;
 
 /**
  * Tenant-app icons are heroicons stored as `heroicon:outline:{name}` and

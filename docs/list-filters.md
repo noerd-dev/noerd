@@ -140,7 +140,7 @@ with JavaScript.
 
 ### Architecture
 
-- Expression parsing + query application: `Noerd\Services\ColumnFilterParser` (fixed operator set, values only ever bound as parameters — user input never reaches SQL text)
+- Expression parsing + query application: `Noerd\Support\ColumnFilterParser` (fixed operator set, values only ever bound as parameters — user input never reaches SQL text)
 - State + whitelist: `NoerdList::$listColumnFilters`, `setColumnFilter()`, `clearColumnFilter()`, `filterableColumnFields()`, `applyColumnFilters()` (hooked inside `listQuery()`)
 - Header UI: `noerd::components.table.column-filter`, included from `table-sort.blade.php`; active-filter chips: `NoerdList::activeColumnFilterChips()`, rendered in `noerd::components.table.list-header`
 - Header rows: `noerd::components.table.list-header` (title row + filter row) including

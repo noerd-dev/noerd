@@ -15,6 +15,8 @@ use Noerd\Services\FieldTypeRegistry;
  * theme only is registered on the theme template itself (ThemeElementResolver
  * walks the theme chain from the basename); the `noerd::components.forms.*`
  * partials remain for the elements a view also includes directly.
+ *
+ * @internal
  */
 final class BuiltInFieldTypes
 {

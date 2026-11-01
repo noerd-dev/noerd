@@ -14,6 +14,8 @@ namespace Noerd\Support;
  * caps their combined size. The dropzone reads both and splits a larger
  * selection into consecutive requests, so a reader may drop forty files at
  * once on a server that accepts twenty.
+ *
+ * @internal
  */
 final class UploadLimits
 {

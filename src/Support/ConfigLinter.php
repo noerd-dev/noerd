@@ -20,6 +20,8 @@ use Symfony\Component\Yaml\Yaml;
  * is most likely unintended (an unknown field type rendering as a plain input,
  * a picklist provider no registry knows, a readonly field that is required,
  * flow-style YAML).
+ *
+ * @internal
  */
 final class ConfigLinter
 {

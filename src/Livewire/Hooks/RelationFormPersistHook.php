@@ -17,6 +17,8 @@ use Noerd\Support\RelationFormSync;
  * Afterwards the form is rehydrated from the freshly persisted relation, so
  * the fields stay filled in the same response (the persister may have
  * normalized values or swapped the related record).
+ *
+ * @internal
  */
 final class RelationFormPersistHook extends DetailSaveHook
 {

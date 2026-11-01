@@ -247,7 +247,7 @@ protected function getRequiredModules(): array
 ```
 
 `runModuleInstallation()` installs every required module whose app is not registered yet, **as a
-dependency** (`Noerd\Support\ModuleInstallContext`): the nested command publishes and registers
+dependency** (`Noerd\Commands\Support\ModuleInstallContext`): the nested command publishes and registers
 with its defaults but asks NOTHING — no app title, no tenants, no migration, no build, no closing
 callout. The user started one installation and answers each question once. `--force` is forwarded.
 

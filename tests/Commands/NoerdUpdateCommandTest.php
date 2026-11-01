@@ -51,7 +51,7 @@ class ZzNoerdUpdateFixtureCommand extends NoerdUpdateCommand
 beforeEach(function (): void {
     $this->app[Kernel::class]->registerCommand(new ZzNoerdUpdateFixtureCommand());
     ZzNoerdUpdateFixtureCommand::$boostUpdateCalls = 0;
-    \Noerd\Support\BoostConfig::markRefreshedInProcess(false);
+    \Noerd\Commands\Support\BoostConfig::markRefreshedInProcess(false);
 
     $this->originalBasePath = $this->app->basePath();
     $this->hostPath = storage_path('framework/testing/zz-noerd-update');
@@ -130,7 +130,7 @@ describe('boost registration', function (): void {
             ->expectsOutputToContain('Boost package registered: noerd/noerd')
             ->assertExitCode(0);
 
-        $config = new \Noerd\Support\BoostConfig($this->hostPath . '/boost.json');
+        $config = new \Noerd\Commands\Support\BoostConfig($this->hostPath . '/boost.json');
         $shippedSkills = array_map('basename', File::directories(dirname(__DIR__, 2) . '/resources/boost/skills'));
         sort($shippedSkills);
 

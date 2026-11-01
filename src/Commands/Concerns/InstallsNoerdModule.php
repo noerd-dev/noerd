@@ -6,7 +6,7 @@ namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Console\Command;
-use Noerd\Support\ModuleInstallContext;
+use Noerd\Commands\Support\ModuleInstallContext;
 use ReflectionClass;
 use Symfony\Component\Console\Input\InputOption;
 

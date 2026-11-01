@@ -1,1 +1,0 @@
-@include('noerd::layouts.guest')

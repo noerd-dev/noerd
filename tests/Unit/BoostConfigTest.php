@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
-use Noerd\Support\BoostConfig;
+use Noerd\Commands\Support\BoostConfig;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);

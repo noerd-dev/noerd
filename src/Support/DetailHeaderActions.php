@@ -21,6 +21,8 @@ use Noerd\Traits\NoerdPage;
  * seventh direct block include of a hand-built detail). NoerdPage's rendering hook
  * resets the claim, so every render — also the many requests one test process serves
  * for the same component id — starts unclaimed.
+ *
+ * @internal
  */
 final class DetailHeaderActions
 {

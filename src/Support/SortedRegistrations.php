@@ -7,6 +7,8 @@ namespace Noerd\Support;
 /**
  * Shared ordering rule of every sort-aware registry (detail slots, relation
  * box tiles): lower sorts first, equal sorts keep registration order.
+ *
+ * @internal
  */
 final class SortedRegistrations
 {

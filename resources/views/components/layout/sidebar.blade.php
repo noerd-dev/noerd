@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Noerd\Support\LayoutState;
+use Noerd\Support\ShellState;
 use Noerd\Helpers\TenantHelper;
 
 new class extends Component {
@@ -13,7 +13,7 @@ new class extends Component {
 
     public function openSidebar(): void
     {
-        LayoutState::setSidebarVisible(! LayoutState::sidebarVisible());
+        ShellState::setSidebarVisible(! ShellState::sidebarVisible());
     }
 
     /**
@@ -24,12 +24,12 @@ new class extends Component {
     {
         abort_unless(preg_match('/^\d{2,4}px$/', $width) === 1, 422);
 
-        LayoutState::setNavigationWidth($width);
+        ShellState::setNavigationWidth($width);
     }
 
     public function toggleAppbar(): void
     {
-        LayoutState::setAppBarVisible(! LayoutState::appBarVisible());
+        ShellState::setAppBarVisible(! ShellState::appBarVisible());
     }
 }; ?>
 

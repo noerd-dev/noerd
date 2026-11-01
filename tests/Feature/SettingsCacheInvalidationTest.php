@@ -5,9 +5,9 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Helpers\ThemeHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
+use Noerd\Support\ThemeHelper;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);

@@ -21,6 +21,8 @@ use Noerd\Traits\NoerdPage;
  * the full detail renders in the SAME response, and the dispatched resizeTopModal
  * is still collected into the response effects to widen the modal panel. It is a
  * no-op for details that already left quick-create (e.g. via storeProcess()).
+ *
+ * @internal
  */
 final class QuickCreateExitHook extends NoerdComponentHook
 {

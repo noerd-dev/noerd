@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands\Concerns;
 
 use Illuminate\Support\Facades\Process;
-use Noerd\Support\ModuleInstallContext;
+use Noerd\Commands\Support\ModuleInstallContext;
 
 /**
  * Run npm in the project root, streaming output to the terminal.

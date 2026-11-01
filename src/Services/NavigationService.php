@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Services;
 
 use Noerd\Helpers\StaticConfigHelper;
-use Noerd\Support\LayoutState;
+use Noerd\Support\ShellState;
 
 /**
  * Splits the current app's navigation structure into the pieces the layout
@@ -35,7 +35,7 @@ final class NavigationService
 
         $blockMenu = [];
         foreach ($app['block_menus'] ?? [] as $menu) {
-            $menu['show'] = LayoutState::blockMenuVisible((string) ($menu['title'] ?? ''));
+            $menu['show'] = ShellState::blockMenuVisible((string) ($menu['title'] ?? ''));
             $blockMenu[] = $menu;
         }
 

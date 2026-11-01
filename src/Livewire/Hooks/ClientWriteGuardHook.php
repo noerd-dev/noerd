@@ -26,6 +26,8 @@ use Noerd\Traits\NoerdPage;
  * Livewire's update event, so it runs ahead of the component's `updated*`
  * hooks — they never see the discarded value. Server-side writes (mount,
  * actions, select handlers) are untouched: they never pass the update channel.
+ *
+ * @internal
  */
 final class ClientWriteGuardHook extends NoerdComponentHook
 {

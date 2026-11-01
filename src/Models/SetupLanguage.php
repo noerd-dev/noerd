@@ -78,7 +78,7 @@ class SetupLanguage extends Model
      */
     public static function ensureDefaultLanguagesForTenant(int $tenantId): void
     {
-        if (static::withoutGlobalScopes()->where('tenant_id', $tenantId)->count() === 0) {
+        if (static::query()->ofTenant($tenantId)->count() === 0) {
             static::create([
                 'tenant_id' => $tenantId,
                 'code' => 'en',
@@ -108,22 +108,22 @@ class SetupLanguage extends Model
         // After saving, ensure only one default per tenant
         static::saved(function (SetupLanguage $language): void {
             if ($language->is_default) {
-                static::withoutGlobalScopes()
-                    ->where('tenant_id', $language->tenant_id)
+                static::query()
+                    ->ofTenant($language->tenant_id)
                     ->where('id', '!=', $language->id)
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
             }
 
             // If no default exists for this tenant, set one
-            $hasDefault = static::withoutGlobalScopes()
-                ->where('tenant_id', $language->tenant_id)
+            $hasDefault = static::query()
+                ->ofTenant($language->tenant_id)
                 ->where('is_default', true)
                 ->exists();
 
             if (! $hasDefault) {
-                $firstActive = static::withoutGlobalScopes()
-                    ->where('tenant_id', $language->tenant_id)
+                $firstActive = static::query()
+                    ->ofTenant($language->tenant_id)
                     ->where('is_active', true)
                     ->first();
 
@@ -134,8 +134,8 @@ class SetupLanguage extends Model
         // After deleting, ensure there's still a default language for the tenant
         static::deleted(function (SetupLanguage $language): void {
             if ($language->is_default) {
-                $newDefault = static::withoutGlobalScopes()
-                    ->where('tenant_id', $language->tenant_id)
+                $newDefault = static::query()
+                    ->ofTenant($language->tenant_id)
                     ->where('is_active', true)
                     ->first();
 

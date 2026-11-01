@@ -18,6 +18,8 @@ use Noerd\Traits\NoerdPage;
  * not know. Every other helper the views, hooks and tests need is `protected`:
  * Livewire only offers public methods as actions, and a view is rendered inside
  * the component's scope, so Blade reaches a protected method just the same.
+ *
+ * @internal
  */
 final class ServerOnlyMethodsHook extends NoerdComponentHook
 {

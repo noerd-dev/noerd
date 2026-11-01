@@ -13,6 +13,8 @@ use Noerd\Models\NoerdUser;
  * owner of the rule who may impersonate whom and of the session key that
  * remembers the original account, read by the banner, the logout and the
  * login log.
+ *
+ * @internal
  */
 final class Impersonation
 {

@@ -13,6 +13,8 @@ use Noerd\Traits\NoerdPage;
  * an embedded detail and a second instance stacked in a modal would otherwise
  * save on each other's command and adopt each other's record. The events carry
  * the host's Livewire id, and both sides ignore an event of another host.
+ *
+ * @internal
  */
 final class EmbeddedDetailHostHook extends NoerdComponentHook
 {

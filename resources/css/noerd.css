@@ -187,7 +187,7 @@
     font-style: italic;
 }
 
-/* x-noerd::table cells (table/index) */
+/* Compact data tables (class noerd-table) */
 .noerd-table {
     td {
         padding-top: 6px;

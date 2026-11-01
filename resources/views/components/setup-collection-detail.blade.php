@@ -9,14 +9,14 @@ use Noerd\Facades\Noerd;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
-use Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Support\SetupFieldTypeConverter;
 use Noerd\Traits\NoerdDetail;
-use Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Traits\SetupLanguageFilter;
 
 new class extends Component
 {
     use NoerdDetail;
-    use SetupLanguageFilterTrait;
+    use SetupLanguageFilter;
     use WithFileUploads;
 
     public ?string $detailPrimary = 'setupCollectionId';

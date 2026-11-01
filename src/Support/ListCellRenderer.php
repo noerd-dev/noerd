@@ -13,6 +13,8 @@ use Noerd\Services\ListCellRendererRegistry;
  * renderer and hands it what it needs. An unknown key or a missing view
  * falls back to the column's normal type rendering (logged once), so a YAML
  * naming a renderer of a module that is not installed never breaks a list.
+ *
+ * @internal
  */
 final class ListCellRenderer
 {

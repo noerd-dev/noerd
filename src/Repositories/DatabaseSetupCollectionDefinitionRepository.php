@@ -9,7 +9,6 @@ use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\SetupCollectionDefinition;
-use Noerd\Scopes\TenantScope;
 use Noerd\Support\RequestState;
 use Noerd\Support\SetupCollectionDefinitionData;
 use RuntimeException;
@@ -29,7 +28,8 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     {
         $tenantId = $this->scopeTenantId($tenantId);
 
-        return SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
+        return SetupCollectionDefinition::query()
+            ->acrossTenants()
             ->where('tenant_id', $tenantId)
             ->orderBy('title_list')
             ->get()
@@ -47,7 +47,8 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     {
         $tenantId = $this->scopeTenantId($tenantId);
 
-        $model = SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
+        $model = SetupCollectionDefinition::query()
+            ->acrossTenants()
             ->where('tenant_id', $tenantId)
             ->where('key', mb_strtoupper($key))
             ->first();
@@ -162,7 +163,8 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
 
     private function resolveFieldsUncached(string $filename, ?int $tenantId): ?array
     {
-        $query = SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
+        $query = SetupCollectionDefinition::query()
+            ->acrossTenants()
             ->where('tenant_id', $tenantId);
 
         $model = (clone $query)->where('filename', $filename)->first();
@@ -200,7 +202,8 @@ class DatabaseSetupCollectionDefinitionRepository implements SetupCollectionDefi
     {
         $tenantId = $this->scopeTenantId($tenantId);
 
-        return SetupCollectionDefinition::withoutGlobalScope(TenantScope::class)
+        return SetupCollectionDefinition::query()
+            ->acrossTenants()
             ->where('tenant_id', $tenantId)
             ->where('filename', $filename)
             ->first();

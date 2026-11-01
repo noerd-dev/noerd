@@ -11,7 +11,7 @@ use Noerd\Contracts\TenantSingletonContract;
 use Noerd\Database\Factories\NoerdSettingsFactory;
 use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Helpers\ThemeHelper;
+use Noerd\Support\ThemeHelper;
 use Noerd\Traits\TenantSingleton;
 
 class NoerdSettings extends Model implements TenantSingletonContract

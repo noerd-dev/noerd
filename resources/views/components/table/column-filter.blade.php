@@ -12,7 +12,7 @@
     $isBoolFilter = in_array($filterType, ['bool', 'boolean', 'inversebool'], true);
     $hasOptionFilter = ! $isBoolFilter && ! empty($filterOptions);
     // true = "Empty" (`=`), false = "Not empty" (`!=`), null = any other expression.
-    $filterEmptiness = \Noerd\Services\ColumnFilterParser::emptiness($filterValue);
+    $filterEmptiness = \Noerd\Support\ColumnFilterParser::emptiness($filterValue);
     $filterRef = 'funnelBtn_' . preg_replace('/[^A-Za-z0-9_]/', '_', $field);
     $placeholder = match (true) {
         in_array($filterType, ['number', 'currency'], true) => __('e.g. >0 or <=10'),
