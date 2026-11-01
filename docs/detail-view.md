@@ -80,7 +80,6 @@ plus the Blade slots below) or a **link** that opens something else. Tabs are re
 | `component` | Livewire component opened as a MODAL via `$modal(...)` — it is never embedded inline. Also the fallback for a `modalRoute` that is not registered |
 | `arguments` | Arguments passed to the modal (`modalRoute` and `component`): the `$modelId` token resolves to the current record id, `$property` to any public property of the component, everything else passes through unchanged |
 | `route` | Named route the tab navigates to (`wire:navigate`); rendered active while the current request matches it |
-| `routable` | With `component`: the tab additionally links to the generic `noerd.component-page` route (`/{prefix}/component-page/{componentName}`, prefix = `config('noerd.routes.prefix')`, default `noerd`) so the component is addressable as a full page |
 | `requiresId` | Only show the tab when editing an existing record |
 | `permission` | Gate ability required to see the tab; `permissionModel` (optional) is passed as the ability's model argument |
 | `viewExists` | View name — the tab is hidden when that view is not registered (safe reference to an optional module) |

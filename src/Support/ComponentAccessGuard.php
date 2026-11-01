@@ -12,9 +12,9 @@ use Noerd\Helpers\NoerdAuth;
  *
  * Admin/setup screens are protected by route middleware (SetupMiddleware →
  * isAdmin), but a component can also be mounted outside its route — via the
- * client-dispatchable `noerdModal` event or the generic component page — where
- * that middleware never runs. Those entry points call this guard to re-assert
- * admin access before instantiating the component.
+ * client-dispatchable `noerdModal` event — where that middleware never runs.
+ * ComponentAccessHook calls this guard on every mount and hydrate to re-assert
+ * admin access.
  *
  * Modules add their own admin components via registerAdminComponents().
  */

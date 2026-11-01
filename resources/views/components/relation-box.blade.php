@@ -69,8 +69,7 @@ new class extends Component {
     /**
      * Whether $method is a genuine Eloquent relation on $model — decided by its
      * DECLARED RETURN TYPE, never by calling it. $relations arrives as mount
-     * arguments, which the modal stack and the generic component page take from
-     * the client (#[Locked] guards updates, not mount), so a bare
+     * arguments, which the modal stack takes from the client (#[Locked] guards updates, not mount), so a bare
      * method_exists() check here was an arbitrary no-argument method call on an
      * arbitrary model: `relation: 'delete'` deleted the record.
      */

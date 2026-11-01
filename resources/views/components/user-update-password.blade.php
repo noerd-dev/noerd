@@ -45,8 +45,7 @@ new class extends Component {
     {
         // Re-authorized on the action, not only on mount: #[Locked] rejects a
         // client UPDATE of $userId but does NOT protect the MOUNT arguments,
-        // which the modal stack and the generic component page take from the
-        // client. Without this check any authenticated user could mount this
+        // which the modal stack takes from the client. Without this check any authenticated user could mount this
         // component for a foreign id and overwrite that account's password.
         $this->authorizeTarget();
 

@@ -14,7 +14,7 @@ uses(TestCase::class, RefreshDatabase::class);
 
 describe('core route URL prefix', function (): void {
     it('registers the core routes under the configured prefix', function (string $name, string $path): void {
-        expect(route($name, ['componentName' => 'x', 'token' => 'x'], absolute: false))
+        expect(route($name, ['token' => 'x'], absolute: false))
             ->toStartWith($path);
     })->with([
         ['noerd.login', '/noerd/login'],
@@ -22,7 +22,6 @@ describe('core route URL prefix', function (): void {
         ['noerd.password.reset', '/noerd/reset-password'],
         ['noerd.profile', '/noerd/user'],
         ['noerd.no-tenant', '/noerd/no-tenant'],
-        ['noerd.component-page', '/noerd/component-page'],
     ]);
 
     it('keeps the setup area and the apps dashboard outside the prefix', function (): void {
@@ -66,16 +65,6 @@ describe('auth redirects', function (): void {
         $this->actingAs(NoerdUser::factory()->create(), 'noerd');
 
         $this->get(route('noerd.login'))->assertRedirect(route('noerd.apps'));
-    });
-});
-
-describe('generic component page', function (): void {
-    it('aborts with 404 when the component name has no module namespace', function (): void {
-        $user = NoerdUser::factory()->withExampleTenant()->create();
-
-        $this->actingAs($user)
-            ->get(route('noerd.component-page', ['componentName' => 'some-local-component']))
-            ->assertNotFound();
     });
 });
 

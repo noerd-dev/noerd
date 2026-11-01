@@ -27,8 +27,8 @@ bare `auth` middleware alias keep resolving the host's default guard.
 
 noerd's core screens live under a configurable URL prefix (default `noerd`, set via
 `config('noerd.routes.prefix')` / `NOERD_ROUTE_PREFIX`): `/noerd/login`, `/noerd/forgot-password`,
-`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd.profile`, with `noerd.profile.language`, `noerd.profile.tenants` and `noerd.profile.delete` below it — their sidebar navigation is `app-configs/profile/navigation.yml`, see [navigation.md](navigation.md#setup-and-profile-navigation)), `/noerd/no-tenant`,
-`/noerd/component-page/{componentName}`. Only the URLs carry the prefix — the route names are
+`/noerd/reset-password/{token}`, `/noerd/user` (route name `noerd.profile`, with `noerd.profile.language`, `noerd.profile.tenants` and `noerd.profile.delete` below it — their sidebar navigation is `app-configs/profile/navigation.yml`, see [navigation.md](navigation.md#setup-and-profile-navigation)), `/noerd/no-tenant`.
+Only the URLs carry the prefix — the route names are
 stable and unaffected by a prefix change. The `/setup` area keeps its own prefix, and the apps
 dashboard stays at `/noerd-apps` (already namespaced, and the address the installer prints).
 

@@ -191,8 +191,7 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
 - Models read by hand-built queries opt into the query-level read guard with
   `use Noerd\Traits\GuardedByObjectPermission;` (deliberately opt-in).
 - Admin-only components are registered with `Noerd\Support\ComponentAccessGuard::registerAdminComponents([...])`
-  in the provider's `boot()` — route middleware does not cover the `noerdModal` event and
-  `/noerd/component-page/{componentName}`. The guard matches namespace-aware; give an admin-only
+  in the provider's `boot()` — route middleware does not cover the `noerdModal` event. The guard matches namespace-aware; give an admin-only
   component a name unique across modules anyway.
 - Never bind a locked property to `wire:model`, never pass `detailModel`/`listModel`/
   `objectPermissionModel`/`settingsModels`/`pageLayout`/`listView` as modal arguments

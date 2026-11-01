@@ -19,8 +19,7 @@ uses(TestCase::class, RefreshDatabase::class);
  | names, so it must never carry client input: an injected name closed the
  | JSON path and appended arbitrary SQL. Two independent defenses are asserted,
  | because #[Locked] rejects client UPDATES but does not protect MOUNT
- | arguments — which the modal stack and the generic component page take from
- | the client.
+ | arguments — which the modal stack takes from the client.
  */
 
 beforeEach(function (): void {

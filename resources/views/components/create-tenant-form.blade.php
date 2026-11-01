@@ -21,7 +21,7 @@ new class extends Component {
         // Guarded on the ACTION as well as on mount: this component carries the
         // whole tenant-creation logic while the admin/feature checks used to sit
         // only on its wrapper (noerd::create-tenant). Reached directly — through
-        // the modal stack or the generic component page — it let any
+        // the modal stack — it let any
         // authenticated user create a tenant AND attach themselves to its ADMIN
         // profile, and isAdmin() is not tenant-scoped, so that was a global
         // privilege escalation.
