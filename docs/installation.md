@@ -38,7 +38,7 @@ publishes `config/noerd.php`, sets `component_layout` in `config/livewire.php` t
 (publishing the Livewire config first when needed), scaffolds the frontend (see below) and publishes
 the public assets to `public/vendor/noerd` (`vendor:publish --tag=noerd-assets`). What only a project
 with LOCAL modules needs — the `app-modules/` directory, its Composer path repository and the
-`app-modules` test suite in `phpunit.xml` — is set up by `noerd:make-module` with the first module. Non-interactive
+`Modules` test suite in `phpunit.xml` — is set up by `noerd:make-module` with the first module. Non-interactive
 runs (CI) pass `--force --migrate --build --demo` explicitly — see
 [noerd:install](artisan-commands.md#noerdinstall).
 

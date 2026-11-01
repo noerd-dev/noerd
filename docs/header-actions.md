@@ -55,7 +55,7 @@ public function boot(): void
 }
 ```
 
-The registered name is a Livewire component name — typically an anonymous view-file component in your module's `resources/views/components/` folder, resolved through your module's Livewire namespace (`Livewire::addNamespace('my-module', viewPath: ...)`).
+The registered name is a Livewire component name — typically an anonymous view-file component in your module's `resources/views/components/` folder, resolved through your module's Livewire namespace (`my-module::`), which `NoerdModuleServiceProvider` registers from the provider's `$moduleKey` — never register it by hand.
 
 Registration-based on purpose: when a module is removed, its registration (and its actions) disappear with it — no config cleanup needed.
 
@@ -134,7 +134,7 @@ new class () extends Component {
         <x-noerd::button variant="icon" icon="arrow-down-tray" type="button"
                          title="{{ __('Export') }}"
                          x-data
-                         @click="$modal('my-module::export-modal', { table: '{{ $table }}' })">
+                         @click="$modal('my-module::export-modal', { table: {{ \Illuminate\Support\Js::from($table) }} })">
             <span class="sr-only">{{ __('Export') }}</span>
         </x-noerd::button>
     @endif

@@ -416,15 +416,17 @@ search).
 ```
 
 The field binds a plain component property holding an array of ids — not `detailData` — so the
-detail loads and syncs it itself:
+detail loads it from the loaded record (`detailLoaded()`, the relation eager-loaded through
+`$detailWith`) and syncs it itself:
 
 ```php
 public array $tagIds = [];
 
-public function mount(): void
+protected array $detailWith = ['tags'];
+
+protected function detailLoaded(Model $model): void
 {
-    $this->initDetail();
-    $this->tagIds = Article::find($this->modelId)?->tags()->pluck('tags.id')->all() ?? [];
+    $this->tagIds = $model->tags->pluck('id')->all();
 }
 
 public function getTagOptions(): array

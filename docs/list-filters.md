@@ -160,7 +160,7 @@ have them. A filter is declared in one of two places, and the two combine:
 2. **On the component** — a method `get{Name}ListFilter()` returning a `Noerd\Support\ListFilter`
    (or its array form), for a filter whose options or query need PHP
 
-A header filter holds ONE value. Should the session bucket still carry an array for a column of the list (a multi-select of an earlier version, a seeded selection), `loadListFilters()` reduces it to its first non-empty scalar and `applyListFilters()` never casts an array — the list renders, the first value filters.
+A header filter holds ONE value. Should the session bucket carry an array for a column of the list (e.g. a seeded selection), `loadListFilters()` reduces it to its first non-empty scalar and `applyListFilters()` never casts an array — the list renders, the first value filters.
 
 ### Filters in the list YAML
 
@@ -228,8 +228,8 @@ protected function getYearListFilter(): ListFilter
 | `->apply(fn (Builder $query, string $value) => …)` | The constraint of a virtual column (see below) |
 | `->manual()` | The component applies the filter in its own query |
 
-The array form of earlier versions (`['label' => …, 'column' => …, 'type' => 'Picklist', 'options' => […]]`,
-also `ShowFrom` / `ShowUntil`) is still accepted — `ListFilter::fromArray()` turns it into a filter.
+A `get{Name}ListFilter()` method may also return the array form (`['label' => …, 'column' => …, 'type' => 'Picklist', 'options' => […]]`,
+also `ShowFrom` / `ShowUntil`) — `ListFilter::fromArray()` turns it into a filter.
 
 Extract a shared filter into a trait (`app-modules/{module}/src/Traits/{Name}FilterTrait.php`,
 holding nothing but the `get{Name}ListFilter()` method) so several lists can use it. Override
@@ -306,9 +306,9 @@ equality, provided the table has it:
 ```php
 protected function getAllowedListFilterColumns(): array
 {
-    return [...parent::getAllowedListFilterColumns(), 'category_id'];
+    return [...array_keys($this->listFilterDefinitions()), 'category_id'];
 }
 ```
 
-`applyListFilters()` runs once per builder: a component that still calls it on the query
-`listQuery()` returned adds nothing a second time.
+`applyListFilters()` runs once per builder: calling it again on the query `listQuery()` returned
+adds nothing a second time.

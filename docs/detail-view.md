@@ -84,9 +84,11 @@ plus the Blade slots below) or a **link** that opens something else. Tabs are re
 | `permission` | Gate ability required to see the tab; `permissionModel` (optional) is passed as the ability's model argument |
 | `viewExists` | View name — the tab is hidden when that view is not registered (safe reference to an optional module) |
 | `showIf` | Reactive client-side visibility: a `$wire` property name (string) or `{field: ..., value: ...}` |
+| `showIfNot` | The negation of `showIf`, same two forms; combined with `showIf` by AND |
 
 `requiresId`, `permission` and `viewExists` are evaluated on the server
-(`Noerd\Support\TabVisibility::renders()`), `showIf` becomes an Alpine `x-show`.
+(`Noerd\Support\TabVisibility::renders()`), `showIf` / `showIfNot` become an Alpine `x-show`
+(`Noerd\Support\FieldVisibility`).
 
 ### `<x-noerd::tab-content>` Slots
 
@@ -213,7 +215,7 @@ of its own; the label marker reads the flag out of `FieldContext`, exactly like 
 makes a generic review screen possible: load it with
 `StaticConfigHelper::getComponentFields('accounting::expense-detail', Expense::class)` and bind the
 values into your own `$detailData`. The layout resolves by component name regardless of the session
-app (see `componentOwnerApp()`), and `validateFromLayout()` picks up its `required:` fields. Two
+app (see `Noerd\Support\ComponentNaming::ownerApp()`), and `validateFromLayout()` picks up its `required:` fields. Two
 things do NOT come along, because they live in the original component's PHP rather than its YAML:
 a `picklistField:` naming a method on that component renders empty (put such providers in the
 `PicklistRegistry` when a generic host has to render them), and its `#[On('...Selected')]` side

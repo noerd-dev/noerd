@@ -48,18 +48,14 @@ large tables, index the searchable columns.
 
 ## Eager Loading
 
-`listQuery()` eager-loads the relations of dotted relation columns (`category.name`) itself. For
-further relations (accessors, row transformations) override `listData()` and chain `->with()`:
+`listQuery()` eager-loads the relations of dotted relation columns (`category.name`) itself. Further
+relations (accessors, row transformations) are DECLARED on the component — `listQuery()` loads them
+for every page, no `listData()` override needed:
 
 ```php
-public function listData(): array
-{
-    $rows = $this->listQuery($this->listModel)
-        ->with(['staff', 'slots'])
-        ->paginate($this->perPage);
+protected array $listWith = ['staff', 'slots'];
 
-    return $this->buildList($rows);
-}
+protected array $listWithCount = ['bookings'];
 ```
 
 ## Manual Search (Fallback)
@@ -77,10 +73,9 @@ public function listData(): array
                 ColumnFilterParser::applyLikeContains($query, 'name', $this->search);
             });
         })
-        ->orderBy('sort')
-        ->paginate($this->perPage);
+        ->orderBy('sort');
 
-    return $this->buildList($rows);
+    return $this->buildList($this->paginateList($rows));
 }
 ```
 

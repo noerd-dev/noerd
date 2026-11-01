@@ -43,7 +43,8 @@ app(ProfileRegistry::class)->register('MY_PROFILE', fn(): string => __('My Profi
 
 `register(string $key, string|Closure $label)` accepts a translation key or a lazy label
 closure; `options()` returns `key => translated label` (built-ins first, then registered
-profiles in registration order) and `label(string $key)` a single label. A registered
+profiles in registration order), `has(string $key)` whether a key is known and
+`get(string $key)` the translated label of one profile (`null` for an unknown key). A registered
 profile's SEMANTICS come from the authorization gates the module defines; the core's own
 baseline treats unknown keys like `User`. `NoerdUser::currentProfileKey()` exposes the raw
 stored key for such modules; `currentProfile()` resolves only the built-in enum cases.
@@ -232,10 +233,13 @@ or `NoerdPage` (and therefore `NoerdDetail`).
 | `minimal`, `minimalLimit` | Page past `MAX_PER_PAGE` through the widget mode (the limit is clamped as well) |
 | `compact`, `multiSelect`, `returnsSelection`, `context`, `showLineNumbers`, `embedded`, `quickCreate`, `disableModal` | Change how the component is embedded — a picker that stops being one, an embedded detail that binds the page URL. They arrive as the opener's mount arguments |
 | `detailPrimary` | Rename the URL parameter `$modelId` is bound to |
+| `deletable` | Switch deletion back on for a screen that refuses it — declared `protected` by convention, vetoed here in case a component makes it public |
 
 **Additionally rejected as MOUNT ARGUMENTS** — `detailModel`, `listModel`,
-`objectPermissionModel`, `settingsModels`, `pageLayout`, `objectReadBlocked`, `listView` and
-`listViewApp`. Livewire assigns mount parameters to matching public properties before any update hook
+`objectPermissionModel`, `settingsModels`, `pageLayout`, `collectionLayout` (the collection
+definition a setup-collection entry form writes into, derived from the collection key),
+`objectReadBlocked`, `listView`, `listViewApp`, `hostId` (set by `EmbeddedDetailHostHook` from the
+rendering page) and `deletable`. Livewire assigns mount parameters to matching public properties before any update hook
 runs, and the modal stack takes those arguments straight from the client; no legitimate caller passes
 them, because a component declares or resolves them itself. Properties like `listActionMethod` or
 `context` are deliberately *not* mount-protected — the relation-field picker passes them.

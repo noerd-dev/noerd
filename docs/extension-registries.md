@@ -14,9 +14,11 @@ Documented on this page: `ComponentSlotsRegistry` (top bar, header actions, deta
 `PicklistRegistry`, `PositionTableRegistry`, `DynamicNavigationRegistry`, `RelationBoxRegistry`,
 `ComponentAccessGuard`, the overridable null bindings and the authorization gates.
 
-Every registry answers the same four questions — `register()`, `has()`, `get()` (null or an empty
-list when nothing is registered) and `all()` — plus what its subject needs (`catalogFor()`,
-`typeForColumn()`, `options()`, …).
+Every registry is filled with `register()` and read with `get()` (`null` or an empty list when
+nothing is registered); most also answer `has()` and `all()`, plus what their subject needs
+(`catalogFor()`, `typeForColumn()`, `options()`, …). The exceptions: `RelationBoxRegistry` has
+only `register()` / `get()`; `PicklistRegistry`, `PositionTableRegistry` and `ProfileRegistry`
+have no `all()`; `ComputedColumnRegistry::get()` takes a column or field entry instead of a key.
 
 ## ComponentSlotsRegistry
 
@@ -228,9 +230,8 @@ interface DynamicNavigationProviderContract
 | `get(string $type)` | The provider for a type, or `null` |
 | `all()` | All providers keyed by type |
 
-**YAML usage** — two forms, matching the two navigation structures:
-
-A block menu with a `dynamic:` key gets its `navigations` replaced by the provider's `items()`:
+**YAML usage** — a block menu with a `dynamic:` key gets its `navigations` replaced by the
+provider's `items()`:
 
 ```yaml
 - title: Setup
@@ -239,16 +240,9 @@ A block menu with a `dynamic:` key gets its `navigations` replaced by the provid
       dynamic: setup-collections
 ```
 
-An item in an `items:` structure with `type: dynamic` gets the provider's `items()` merged into its `children` (the type key comes from `dynamic:`, with `collection:` accepted as an alias):
-
-```yaml
-items:
-  - title: Collections
-    type: dynamic
-    dynamic: page-collections
-```
-
-An unresolvable type expands to nothing — a navigation referencing a not-installed module's provider never breaks the sidebar.
+Only `block_menus[].dynamic` is resolved. An unresolvable type leaves the block with the
+`navigations` its YAML lists itself (usually none) — a navigation referencing a not-installed
+module's provider never breaks the sidebar.
 
 **Shipped example** — `Noerd\Navigation\SetupCollectionsNavigationProvider` handles `setup-collections`: it maps every setup collection definition to a navigation entry linking to the `setup-collections` route with the definition's filename as query key. The core registers it itself:
 

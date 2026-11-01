@@ -19,7 +19,7 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - Released under the MIT license (`LICENSE`, `Copyright (c) 2026 Johannes Brock`). Keep the file in
   the Packagist archive — `.gitattributes` `export-ignore`s development-only paths, never `LICENSE`.
 - Every test lives in a subdirectory of `tests/` (`Feature`, `Components`, `Unit`, `Commands`,
-  `Helpers`, `Middleware`, `Traits`); the root of `tests/` holds only the shipped test API
+  `Helpers`, `Middleware`, `Traits`, `js`); the root of `tests/` holds only the shipped test API
   (`TestCase.php`, `ModuleTestCase.php`, `HelperLoader.php`, `helpers.php`, `Pest.php`).
   Fixtures only this suite uses (`tests/Support/`) are export-ignored and never referenced by a
   module.
