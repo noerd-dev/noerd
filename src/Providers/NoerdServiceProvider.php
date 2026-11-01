@@ -278,8 +278,9 @@ class NoerdServiceProvider extends ServiceProvider
         $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':' . NoerdAuth::guardName()]);
         // Livewire's default persistent-middleware list only knows the
         // framework's Authenticate class — the subclass must be added so
-        // component updates stay auth-protected.
-        Livewire::addPersistentMiddleware([NoerdAuthenticate::class]);
+        // component updates stay auth-protected. The profile middleware joins
+        // it: a profile component's updates are refused while impersonating.
+        Livewire::addPersistentMiddleware([NoerdAuthenticate::class, ProfileMiddleware::class]);
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('profile', ProfileMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);

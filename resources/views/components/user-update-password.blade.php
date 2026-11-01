@@ -6,6 +6,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
+use Noerd\Support\Impersonation;
 
 new class extends Component {
 
@@ -21,24 +22,23 @@ new class extends Component {
      * Whether the current user may set this account's password. Drives BOTH the
      * rendering (an unauthorized viewer simply sees no form) and the action
      * guard below — deliberately not an abort() on render, so an admin opening
-     * a user who is not in their tenants still gets the rest of the editor.
+     * a user still gets the rest of the editor.
+     *
+     * The password belongs to the account, not to a tenant: a super admin sets
+     * it, or the person on their own record — never a tenant admin, and never
+     * an administrator signed in as the person.
      */
     #[Computed]
     public function canSetPassword(): bool
     {
         $admin = NoerdAuth::user();
 
-        if (! $admin?->isAdmin()) {
+        if (! $admin?->isAdmin() || ! $this->userId) {
             return false;
         }
 
-        if (! $this->userId || $admin->isSuperAdmin() || $this->userId === (int) $admin->id) {
-            return true;
-        }
-
-        return NoerdUser::whereKey($this->userId)
-            ->whereHas('tenants', fn($query) => $query->whereIn('tenants.id', $admin->adminTenants()->pluck('tenants.id')))
-            ->exists();
+        return $admin->isSuperAdmin()
+            || ($this->userId === (int) $admin->id && ! Impersonation::active());
     }
 
     public function updatePassword(): void
@@ -61,8 +61,7 @@ new class extends Component {
     }
 
     /**
-     * Only an admin may set a password, and only for a user who belongs to a
-     * tenant that admin actually administers.
+     * Only a super admin — or the person on their own record — sets a password.
      */
     private function authorizeTarget(): void
     {

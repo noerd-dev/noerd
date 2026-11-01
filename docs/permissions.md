@@ -48,6 +48,33 @@ profile's SEMANTICS come from the authorization gates the module defines; the co
 baseline treats unknown keys like `User`. `NoerdUser::currentProfileKey()` exposes the raw
 stored key for such modules; `currentProfile()` resolves only the built-in enum cases.
 
+## Accounts and memberships
+
+An ACCOUNT (`noerd_users`) is an identity of the whole installation: one e-mail
+address, one password, any number of memberships. A MEMBERSHIP (`users_tenants`)
+gives the account access to one tenant, with one profile.
+
+- Memberships are written ONLY through the tenant: `Tenant::addMember($user, $profileKey)`,
+  `setMemberProfile()` and `removeMember()` — never `tenants()->attach()`/`detach()`.
+  The profile key must be registered in the `ProfileRegistry` (or `null`, no
+  profile). `Noerd\Events\TenantMemberAdded` / `TenantMemberRemoved` fire once per
+  change; a module drops what it granted the account inside the tenant when the
+  membership ends.
+- Setup → Users, "Add User": an unknown e-mail address creates the account and
+  sends the link to set the password; a known one adds the EXISTING account at once
+  and tells the person by mail (`AddedToTenantNotification`) — its name and password
+  stay theirs. The tenants offered are the ones the administrator administers; a
+  super admin additionally gets the selected tenant and the account's own tenants.
+- A tenant admin manages MEMBERSHIPS only: the profile per tenant, adding and
+  removing ("Remove from tenant"). Name and e-mail are shown read-only, there is no
+  password form and no account deletion — the account belongs to the person (their
+  profile) and to the super admin. A tenant admin opens only accounts that belong
+  to a tenant they administer; any other account is added by its e-mail address.
+- Removing the last membership keeps the account. It can be added again by e-mail;
+  a super admin finds it under the users list filter "Without tenant" and deletes
+  it there ("Delete Account" in the record's action menu — never one's own account,
+  never a super admin account).
+
 ## Super admin (installation admin)
 
 Profiles are assigned PER TENANT. The one thing above them is the
@@ -57,8 +84,10 @@ every tenant of the installation.
 - `isAdmin()` is true in every tenant — the profile baseline and every gate
   implementation bypass on it, `/setup` is reachable everywhere.
 - Sees and edits every tenant (Setup → Tenants) and every account
-  (Setup → Users), including accounts that belong to no tenant yet, and may
-  impersonate any of them.
+  (Setup → Users) — name, e-mail, password and the account's deletion —,
+  including accounts that belong to no tenant (list filter "Without tenant"),
+  and may impersonate any member of the tenant they have selected (see
+  [Impersonation](#impersonation-login-as-user)).
 - May ENTER every tenant: the tenant switcher lists all tenants of the
   installation and the per-request membership check accepts them.
   `NoerdUser::accessibleTenants()` / `canAccessTenant()` are the single source
@@ -80,6 +109,28 @@ every tenant of the installation.
   A tenant admin sees the apps of their tenant there and may reorder and hide
   them, nothing more; a tenant they create starts without apps, while a super
   admin's new tenant copies the apps of the selected one.
+
+## Impersonation ("Login as user")
+
+An administrator may sign in as another account from Setup → Users
+(`Noerd\Support\Impersonation`). The impersonation is BOUND to the tenant the
+administrator has selected when starting it:
+
+- Allowed only when the administrator administers the selected tenant
+  (`isAdmin($tenantId)`, true for a super admin) and the target is a member of
+  exactly that tenant — a super admin selects one of the target's tenants
+  first. A super admin account is never impersonatable, and an impersonation
+  never nests.
+- While it lasts, the impersonated account's memberships shrink to that tenant
+  (`NoerdUser::tenants()` / `adminTenants()`): the tenant switcher lists only
+  it, `accessibleTenants()` / `canAccessTenant()` reject every other tenant, and
+  the setup of another tenant the account administers stays closed. The
+  person's persisted tenant selection is not changed.
+- The profile area is closed (`ProfileMiddleware`, also for component updates):
+  name, e-mail, password, connected assistants and the account itself belong to
+  the person, never to the administrator acting as them.
+- "Return to your account" signs the administrator back in, in the tenant the
+  impersonation was bound to.
 
 ## Abilities
 

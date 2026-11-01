@@ -8,7 +8,9 @@ use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Notifications\AddedToTenantNotification;
 use Noerd\Notifications\NoerdResetPassword;
+use Noerd\Services\ProfileRegistry;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
@@ -74,92 +76,167 @@ it('successfully creates a new user', function () use ($testSettings): void {
     expect($createdUser->tenants->contains($tenant->id))->toBeTrue();
 });
 
-it('updates an existing user', function () use ($testSettings): void {
-    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $tenant = $admin->tenants->first();
-
+it('lets a super admin change name and e-mail of an account', function () use ($testSettings): void {
+    $super = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create(['super_admin' => true]);
+    $tenant = $super->tenants->first();
 
     $existingUser = NoerdUser::factory()->create([
         'name' => 'Old Name',
         'email' => 'old@example.com',
     ]);
-
     $existingUser->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
 
-    $this->actingAs($admin);
+    $this->actingAs($super);
 
-    $newName = 'Updated Name';
-    $newEmail = 'updated@example.com';
-
-    Livewire::test($testSettings['componentName'], [$existingUser])
-        ->set('modelId', $existingUser->id)
-        ->set('detailData.name', $newName)
-        ->set('detailData.email', $newEmail)
-        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
-        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
+    Livewire::test($testSettings['componentName'], ['modelId' => $existingUser->id])
+        ->assertSet('accountEditable', true)
+        ->set('detailData.name', 'Updated Name')
+        ->set('detailData.email', 'updated@example.com')
         ->call('store')
         ->assertHasNoErrors();
 
     $this->assertDatabaseHas('noerd_users', [
         'id' => $existingUser->id,
-        'name' => $newName,
-        'email' => $newEmail,
+        'name' => 'Updated Name',
+        'email' => 'updated@example.com',
     ]);
 });
 
-it('handles existing user with same email', function () use ($testSettings): void {
+it('never lets a tenant admin change name or e-mail of an account', function () use ($testSettings): void {
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
     $tenant = $admin->tenants->first();
 
-
-    // Create an existing user
     $existingUser = NoerdUser::factory()->create([
+        'name' => 'Old Name',
+        'email' => 'old@example.com',
+    ]);
+    $existingUser->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'], ['modelId' => $existingUser->id])
+        ->assertSet('accountEditable', false)
+        ->set('detailData.name', 'Updated Name')
+        ->set('detailData.email', 'attacker@example.com')
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::ReadOnly->value)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    $existingUser->refresh();
+
+    expect($existingUser->name)->toBe('Old Name')
+        ->and($existingUser->email)->toBe('old@example.com')
+        // The membership is the tenant admin's to manage.
+        ->and($existingUser->tenants->firstWhere('id', $tenant->id)->pivot->profile_key)->toBe(Profile::ReadOnly->value);
+});
+
+it('adds an existing account by its e-mail address and tells the person', function () use ($testSettings): void {
+    Notification::fake();
+
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $existingUser = NoerdUser::factory()->create([
+        'name' => 'Real Name',
         'email' => 'existing@example.com',
     ]);
 
     $this->actingAs($admin);
 
-    // Try to create a new user with same email
+    // No name needed: the account exists, its name stays the person's.
     Livewire::test($testSettings['componentName'])
-        ->set('detailData.name', 'New User')
         ->set('detailData.email', 'existing@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
         ->call('store')
         ->assertHasNoErrors();
 
-    // Check if existing user got access to the tenant
-    expect($existingUser->fresh()->tenants->contains($tenant->id))->toBeTrue();
+    expect($existingUser->fresh()->tenants->contains($tenant->id))->toBeTrue()
+        ->and($existingUser->fresh()->name)->toBe('Real Name')
+        ->and(NoerdUser::where('email', 'existing@example.com')->count())->toBe(1);
+
+    Notification::assertSentTo(
+        $existingUser,
+        AddedToTenantNotification::class,
+        fn(AddedToTenantNotification $notification): bool => $notification->tenantName === $tenant->name,
+    );
+    Notification::assertNotSentTo($existingUser, NoerdResetPassword::class);
 });
 
-it('manages tenant access correctly', function () use ($testSettings): void {
+it('assigns a profile a module registered', function () use ($testSettings): void {
+    app(ProfileRegistry::class)->register('ZZ_PROFILE', 'Zz Profile');
+
     $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
-    $tenant1 = $admin->tenants->first();
-    $tenant2 = Tenant::factory()->create();
-
-    // Add admin access to second tenant
-    $admin->tenants()->attach($tenant2->id, ['profile_key' => Profile::Admin->value]);
-
-
-
-    $user = NoerdUser::factory()->create();
+    $tenant = $admin->tenants->first();
+    $member = NoerdUser::factory()->create();
+    $member->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
 
     $this->actingAs($admin);
 
-    Livewire::test($testSettings['componentName'], [$user])
-        ->set('modelId', $user->id)
-        ->set('detailData.name', $user->name)
-        ->set('detailData.email', $user->email)
+    Livewire::test($testSettings['componentName'], ['modelId' => $member->id])
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", 'ZZ_PROFILE')
+        ->call('store')
+        ->assertHasNoErrors();
+
+    // A registered profile used to drop the membership silently.
+    expect($member->fresh()->tenants->firstWhere('id', $tenant->id)?->pivot->profile_key)->toBe('ZZ_PROFILE');
+});
+
+it('refuses a profile nobody registered', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'])
+        ->set('detailData.name', 'Test User')
+        ->set('detailData.email', 'test@example.com')
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", 'NOT_A_PROFILE')
+        ->call('store')
+        ->assertHasErrors(["possibleTenants.{$tenant->id}.selectedProfile"]);
+
+    expect(NoerdUser::where('email', 'test@example.com')->exists())->toBeFalse();
+});
+
+it('manages the memberships of the administered tenants', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant1 = $admin->tenants->first();
+    $tenant2 = Tenant::factory()->create();
+    $admin->tenants()->attach($tenant2->id, ['profile_key' => Profile::Admin->value]);
+
+    $user = NoerdUser::factory()->create();
+    $user->tenants()->attach($tenant2->id, ['profile_key' => Profile::User->value]);
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'], ['modelId' => $user->id])
         ->set("possibleTenants.{$tenant1->id}.hasAccess", true)
         ->set("possibleTenants.{$tenant1->id}.selectedProfile", Profile::User->value)
         ->set("possibleTenants.{$tenant2->id}.hasAccess", false)
         ->call('store')
         ->assertHasNoErrors();
 
-    // Check if user has access to correct tenants
     $user->refresh();
-    expect($user->tenants->contains($tenant1->id))->toBeTrue();
-    expect($user->tenants->contains($tenant2->id))->toBeFalse();
+    expect($user->tenants->contains($tenant1->id))->toBeTrue()
+        ->and($user->tenants->contains($tenant2->id))->toBeFalse();
+});
+
+it('keeps the account when its last membership is unticked', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+    $user = NoerdUser::factory()->create();
+    $user->tenants()->attach($tenant->id, ['profile_key' => Profile::User->value]);
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'], ['modelId' => $user->id])
+        ->set("possibleTenants.{$tenant->id}.hasAccess", false)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    expect(NoerdUser::find($user->id))->not->toBeNull()
+        ->and($user->fresh()->tenants)->toBeEmpty();
 });
 
 it('requires at least one tenant access', function () use ($testSettings): void {

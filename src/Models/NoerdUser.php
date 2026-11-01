@@ -19,6 +19,7 @@ use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Notifications\NoerdResetPassword;
 use Noerd\Services\ProfileRegistry;
+use Noerd\Support\Impersonation;
 use Noerd\Support\Locales;
 
 class NoerdUser extends Authenticatable implements HasLocalePreference
@@ -58,10 +59,18 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return TenantHelper::getSelectedTenant();
     }
 
+    /**
+     * The tenants the account is a member of. While the account is being
+     * impersonated, the memberships shrink to the tenant the impersonation is
+     * bound to (see Impersonation): the administrator acting as the person
+     * neither sees nor enters — nor administers — any other tenant of theirs.
+     */
     public function tenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
-            ->withPivot('profile_key');
+        return $this->pinnedToImpersonatedTenant(
+            $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
+                ->withPivot('profile_key'),
+        );
     }
 
     public function logins(): HasMany
@@ -76,9 +85,11 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     public function adminTenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
-            ->withPivot('profile_key')
-            ->wherePivot('profile_key', Profile::Admin->value);
+        return $this->pinnedToImpersonatedTenant(
+            $this->belongsToMany(Tenant::class, 'users_tenants', 'user_id')
+                ->withPivot('profile_key')
+                ->wherePivot('profile_key', Profile::Admin->value),
+        );
     }
 
     public function initials(): string
@@ -106,6 +117,10 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      * against `$user->tenants` directly for that question. Always read fresh
      * (never the memoized relation): a membership revoked mid-request must be
      * seen by the check that follows it.
+     *
+     * While the account is being impersonated, its memberships shrink to the
+     * tenant the impersonation is bound to (see tenants()), so it may enter
+     * no other tenant.
      *
      * @return Collection<int, Tenant>
      */
@@ -390,6 +405,16 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
      * user and while nobody is authenticated (console, a test preparing the
      * user it is about to act as) — never for another user's instance.
      */
+    private function pinnedToImpersonatedTenant(BelongsToMany $memberships): BelongsToMany
+    {
+        if (Impersonation::isImpersonated($this)) {
+            // Fails closed: an impersonation without a bound tenant reaches none.
+            $memberships->where('tenants.id', Impersonation::pinnedTenantId() ?? 0);
+        }
+
+        return $memberships;
+    }
+
     private function ownsTenantSession(): bool
     {
         $authenticated = NoerdAuth::user();

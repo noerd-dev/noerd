@@ -56,8 +56,8 @@ class PromoteAdminCommand extends Command
         }
 
         if ($user->tenants()->doesntExist()) {
-            foreach (Tenant::query()->orderBy('id')->pluck('id') as $tenantId) {
-                $user->tenants()->attach($tenantId, ['profile_key' => null]);
+            foreach (Tenant::query()->orderBy('id')->get() as $tenant) {
+                $tenant->addMember($user, null);
             }
         }
 
@@ -78,7 +78,7 @@ class PromoteAdminCommand extends Command
                 continue;
             }
 
-            $user->tenants()->updateExistingPivot($tenant->id, ['profile_key' => Profile::Admin->value]);
+            $tenant->setMemberProfile($user, Profile::Admin->value);
             $granted++;
             $this->info("  Granted ADMIN access for tenant: {$tenant->name}");
         }

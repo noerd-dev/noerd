@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Helpers;
 
 use Noerd\Models\Tenant;
+use Noerd\Support\Impersonation;
 use Noerd\Support\RequestState;
 use Noerd\Support\TenantContext;
 
@@ -41,14 +42,16 @@ final class TenantHelper
     }
 
     /**
-     * Set the selected tenant ID in session and persist to database.
+     * Set the selected tenant ID in session and persist to database. While an
+     * impersonation runs only the session changes: the persisted selection
+     * belongs to the person, not to the administrator acting as them.
      */
     public static function setSelectedTenantId(?int $tenantId): void
     {
         session(['noerd.selected_tenant_id' => $tenantId]);
         self::clearCache();
 
-        if (NoerdAuth::check()) {
+        if (NoerdAuth::check() && ! Impersonation::active()) {
             NoerdAuth::user()->setting->update(['selected_tenant_id' => $tenantId]);
         }
     }

@@ -20,8 +20,8 @@ it('sets the impersonating_from session key when logging in as user', function (
 
     $this->actingAs($admin);
 
-    // Set tenant session before login — impersonation must clear it, so the
-    // impersonated account resolves its own tenant.
+    // Set tenant session before login — impersonation clears the selected app
+    // and continues in the tenant it is bound to.
     session(['noerd.selected_tenant_id' => $tenant->id]);
     session(['noerd.selected_app' => 'some-app']);
 
@@ -29,7 +29,8 @@ it('sets the impersonating_from session key when logging in as user', function (
         ->call('loginAsUser', $targetUser->id)
         ->assertRedirect('/');
 
-    expect(session('impersonating_from'))->toBe($admin->id);
+    expect(session('impersonating_from'))->toBe($admin->id)
+        ->and(session('noerd.selected_tenant_id'))->toBe($tenant->id);
 
     $response->assertSessionMissing('noerd.selected_app');
 });

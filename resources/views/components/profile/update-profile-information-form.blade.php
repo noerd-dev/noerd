@@ -5,6 +5,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Noerd\Models\NoerdUser;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Support\Impersonation;
 
 new class extends Component {
     public string $name = '';
@@ -18,6 +19,10 @@ new class extends Component {
 
     public function updateProfileInformation(): void
     {
+        // The person's own account: never changed by an administrator signed
+        // in as them (see Impersonation).
+        abort_if(Impersonation::active(), 403);
+
         $user = NoerdAuth::user();
 
         $validated = $this->validate([
@@ -45,6 +50,10 @@ new class extends Component {
 
     public function sendVerification(): void
     {
+        // The person's own account: never changed by an administrator signed
+        // in as them (see Impersonation).
+        abort_if(Impersonation::active(), 403);
+
         $user = NoerdAuth::user();
 
         if ($user->hasVerifiedEmail()) {

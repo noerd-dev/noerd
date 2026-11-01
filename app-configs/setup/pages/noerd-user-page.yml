@@ -6,3 +6,4 @@ tabs:
   - number: 2
     label: Password
     requiresId: true
+    showIf: accountManageable

@@ -57,14 +57,24 @@ it('forwards the save to the embedded detail', function (): void {
         ->assertDispatched('storeDetail-noerd::noerd-user-detail');
 });
 
-it('deletes through the page like the detail does', function (): void {
+it('removes the member from the selected tenant and keeps the account', function (): void {
     $member = NoerdUser::factory()->create();
     $member->tenants()->attach($this->tenant->id, ['profile_key' => Profile::User->value]);
 
     Livewire::test('noerd::noerd-user-page', ['modelId' => $member->id])
         ->call('delete');
 
-    expect(NoerdUser::find($member->id))->toBeNull();
+    expect(NoerdUser::find($member->id))->not->toBeNull()
+        ->and($member->fresh()->tenants)->toBeEmpty();
+});
+
+it('shows a tenant admin no password form for another account', function (): void {
+    $member = NoerdUser::factory()->create();
+    $member->tenants()->attach($this->tenant->id, ['profile_key' => Profile::User->value]);
+
+    Livewire::test('noerd::noerd-user-page', ['modelId' => $member->id])
+        ->assertSet('accountManageable', false)
+        ->assertDontSeeLivewire('noerd::user-update-password');
 });
 
 it('never deletes an account of a foreign tenant through the page', function (): void {

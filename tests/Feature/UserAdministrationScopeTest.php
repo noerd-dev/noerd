@@ -95,19 +95,99 @@ it('never impersonates a super admin', function (): void {
     expect(NoerdAuth::id())->toBe($this->admin->id);
 });
 
-it('still administers a user of its own tenant', function (): void {
+it('still administers the membership of a user of its own tenant', function (): void {
     $member = NoerdUser::factory()->create();
     $member->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::User->value]);
 
     Livewire::test('noerd::noerd-user-detail', ['modelId' => $member->id])
-        ->set('detailData.name', 'Renamed')
+        ->set("possibleTenants.{$this->tenantA->id}.selectedProfile", Profile::ReadOnly->value)
         ->call('store')
         ->assertHasNoErrors();
 
-    expect($member->fresh()->name)->toBe('Renamed');
+    expect($member->fresh()->tenants->first()->pivot->profile_key)->toBe(Profile::ReadOnly->value);
 
     Livewire::test('noerd::noerd-users-list')->call('loginAsUser', $member->id);
     expect(NoerdAuth::id())->toBe($member->id);
+});
+
+it('never opens an account outside the administered tenants', function (): void {
+    // An account without any tenant is added by its e-mail address, not opened.
+    $orphan = NoerdUser::factory()->create();
+
+    Livewire::test('noerd::noerd-user-detail', ['modelId' => $orphan->id])->assertForbidden();
+    Livewire::test('noerd::noerd-user-page', ['modelId' => $orphan->id])->assertForbidden();
+});
+
+it('never lets a tenant admin set the password of an account or delete it', function (): void {
+    $member = NoerdUser::factory()->create(['password' => bcrypt('unchanged-secret')]);
+    $member->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::User->value]);
+
+    Livewire::test('noerd::user-update-password', ['userId' => $member->id])
+        ->set('password', 'Taken-0ver-Passw0rd!')
+        ->set('password_confirmation', 'Taken-0ver-Passw0rd!')
+        ->call('updatePassword')
+        ->assertForbidden();
+
+    Livewire::test('noerd::noerd-user-page', ['modelId' => $member->id])
+        ->assertSet('accountDeletable', false)
+        ->call('deleteAccount')
+        ->assertForbidden();
+
+    expect(\Illuminate\Support\Facades\Hash::check('unchanged-secret', $member->fresh()->password))->toBeTrue();
+});
+
+it('lets a super admin give an account access to the selected tenant without being a member', function (): void {
+    $tenantB = Tenant::factory()->create(['name' => 'B']);
+    $account = NoerdUser::factory()->create();
+    $account->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::User->value]);
+
+    $super = NoerdUser::factory()->create(['super_admin' => true]);
+    $this->actingAs($super);
+    TenantHelper::setSelectedTenantId($tenantB->id);
+
+    Livewire::test('noerd::noerd-user-detail', ['modelId' => $account->id])
+        ->assertSet("possibleTenants.{$tenantB->id}.hasAccess", false)
+        ->set("possibleTenants.{$tenantB->id}.hasAccess", true)
+        ->set("possibleTenants.{$tenantB->id}.selectedProfile", Profile::User->value)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    expect($account->fresh()->tenants->pluck('id')->sort()->values()->all())
+        ->toBe([$this->tenantA->id, $tenantB->id]);
+});
+
+it('lets a super admin find an account without tenant and delete it', function (): void {
+    $orphan = NoerdUser::factory()->create();
+    $member = NoerdUser::factory()->create();
+    $member->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::User->value]);
+
+    $super = NoerdUser::factory()->create(['super_admin' => true]);
+    $super->tenants()->attach($this->tenantA->id, ['profile_key' => Profile::Admin->value]);
+    $this->actingAs($super);
+
+    session(['listFilters' => ['tenant_id' => 'none']]);
+
+    $visible = \Livewire\invade(Livewire::test('noerd::noerd-users-list')->instance())->visibleRowIds();
+
+    expect($visible)->toContain($orphan->id)
+        ->not->toContain($member->id)
+        ->not->toContain($super->id);
+
+    Livewire::test('noerd::noerd-user-page', ['modelId' => $orphan->id])
+        ->assertSet('accountDeletable', true)
+        ->call('deleteAccount');
+
+    expect(NoerdUser::find($orphan->id))->toBeNull();
+});
+
+it('never offers the without-tenant filter to a tenant admin', function (): void {
+    $orphan = NoerdUser::factory()->create();
+
+    session(['listFilters' => ['tenant_id' => 'none']]);
+
+    $visible = \Livewire\invade(Livewire::test('noerd::noerd-users-list')->instance())->visibleRowIds();
+
+    expect($visible)->not->toContain($orphan->id);
 });
 
 it('lists every account in the installation for a super admin', function (): void {

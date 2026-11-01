@@ -1,12 +1,20 @@
 <?php
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Noerd\Helpers\NoerdAuth;
-use Noerd\Models\NoerdUser;
-use Noerd\Rules\AtLeastOneTrue;
 use Noerd\Enums\Profile;
+use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupLanguage;
+use Noerd\Models\Tenant;
+use Noerd\Notifications\AddedToTenantNotification;
+use Noerd\Rules\AtLeastOneTrue;
+use Noerd\Services\ProfileRegistry;
+use Noerd\Support\LayoutFields;
 use Noerd\Support\Locales;
 use Noerd\Traits\AdministersNoerdUsers;
 use Noerd\Traits\NoerdDetail;
@@ -21,6 +29,14 @@ new class extends Component {
 
     /** The edited account is the administrator's own — it cannot remove itself. */
     public bool $isOwner = false;
+
+    /**
+     * Whether name and e-mail of the edited account may be changed here: always
+     * for a new account, otherwise only by a super admin or the person
+     * themselves (see AdministersNoerdUsers::canManageAccount()).
+     */
+    #[Locked]
+    public bool $accountEditable = true;
 
     public bool $sendPasswordResetMail = true;
     public string $userLocale = 'en';
@@ -62,19 +78,25 @@ new class extends Component {
 
         $user = $this->modelId ? NoerdUser::find($this->modelId) ?? new NoerdUser() : new NoerdUser();
 
+        $this->accountEditable = ! $user->exists || $this->canManageAccount();
+
+        if (! $this->accountEditable) {
+            $this->lockAccountFields();
+        }
+
         // One query for the edited user's tenant assignments instead of one
-        // per admin tenant. Mounts re-run on every modal-stack update, so this
+        // per tenant. Mounts re-run on every modal-stack update, so this
         // loop must stay cheap.
         $profileByTenant = $user->exists
             ? $user->tenants->mapWithKeys(fn($tenant) => [$tenant->id => $tenant->pivot->profile_key])->all()
             : [];
 
-        foreach (NoerdAuth::user()->adminTenants as $tenant) {
-            $this->possibleTenants[$tenant->id] = $tenant->toArray();
-            $profileKey = $profileByTenant[$tenant->id] ?? null;
+        foreach ($this->assignableTenants($user) as $tenant) {
+            $isMember = array_key_exists($tenant->id, $profileByTenant);
 
-            $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileKey ?? Profile::User->value;
-            $this->possibleTenants[$tenant->id]['hasAccess'] = (bool) $profileKey;
+            $this->possibleTenants[$tenant->id] = $tenant->toArray();
+            $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileByTenant[$tenant->id] ?? Profile::User->value;
+            $this->possibleTenants[$tenant->id]['hasAccess'] = $isMember;
         }
     }
 
@@ -88,112 +110,191 @@ new class extends Component {
             $this->tenantAccess[$tenantId] = (bool) ($value['hasAccess'] ?? false);
         }
 
-        $this->validate([
-            'detailData.name' => ['required', 'string', 'max:255'],
-            'detailData.email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-            ],
-            'tenantAccess' => ['array', 'min:1', new AtLeastOneTrue()],
-        ]);
+        // "Add User" with an address that already has an account adds that
+        // account (like an invitation that applies at once) — its name and
+        // password stay the person's.
+        $existing = $this->modelId
+            ? null
+            : NoerdUser::where('email', (string) ($this->detailData['email'] ?? ''))->first();
+
+        $this->validate($this->storeRules($existing));
 
         if (! $this->modelId) {
-            $userExists = NoerdUser::where('email', $this->detailData['email'])->first();
-            if ($userExists) {
-                // Granting access to an EXISTING account by email must obey the
-                // same limits as editing it: a super admin is never capturable
-                // this way, and a profile must belong to the tenant it is
-                // granted for (this branch returns early, so store()'s own
-                // checks below never run).
-                abort_if($userExists->isSuperAdmin(), 403);
+            $existing === null ? $this->createAccount() : $this->addExistingAccount($existing);
 
-                $this->attachTenantAccess($userExists);
-
-                $this->finishStore($userExists);
-
-                return;
-            }
-            // No password needed - user will set it via password reset link
-            // Set a temporary password that will be overwritten when user resets
-            $this->detailData['password'] = bcrypt(Str::random(32));
+            return;
         }
 
         // $modelId is URL-bound and therefore client-writable — re-assert that the
         // edited account is one this admin may touch before writing to it.
         $this->authorizeTargetUser();
 
-        // 'password' is deliberately NOT writable here: an existing account's
-        // password is set through the dedicated user-update-password form (which
-        // authorizes the target itself). Only a NEW user carries the generated
-        // placeholder set above.
-        $writable = $this->modelId ? ['name', 'email'] : ['name', 'email', 'password'];
-        $userData = collect($this->detailData)->only($writable)->toArray();
         // Never create an account under an id that does not resolve: a stale or
         // invented $modelId stores nothing (a super admin skips the target check).
-        if ($this->modelId) {
-            $user = NoerdUser::find($this->modelId);
+        $user = NoerdUser::find($this->modelId);
 
-            if (! $user instanceof NoerdUser) {
-                return;
-            }
-
-            $user->fill($userData)->save();
-        } else {
-            $user = NoerdUser::create($userData);
+        if (! $user instanceof NoerdUser) {
+            return;
         }
 
-        $this->attachTenantAccess($user, detachFirst: true);
+        // 'password' is deliberately NOT writable here: an existing account's
+        // password is set through the dedicated user-update-password form. Name
+        // and e-mail belong to the person — only a super admin or the person
+        // changes them.
+        if ($this->accountEditable && $this->canManageAccount()) {
+            $user->fill(collect($this->detailData)->only(['name', 'email'])->toArray())->save();
+        }
+
+        $this->applyTenantAccess($user, removeUnchecked: true, notify: true);
 
         $this->finishStore($user);
-
-        if ($user->wasRecentlyCreated) {
-            $user->locale = $this->userLocale;
-            $user->format_locale = Locales::isSupported($this->userFormatLocale) ? $this->userFormatLocale : Locales::defaultFor($this->userLocale);
-
-            if ($this->sendPasswordResetMail) {
-                // Send password reset link instead of generated password
-                NoerdAuth::broker()->sendResetLink(['email' => $user->email]);
-            }
-
-            $user->save();
-        }
-    }
-
-    /**
-     * Apply the requested tenant access, restricted to the tenants this admin
-     * actually administers and to the fixed profile keys. Shared by both
-     * store() branches so neither can drift.
-     */
-    private function attachTenantAccess(NoerdUser $user, bool $detachFirst = false): void
-    {
-        $allowedTenants = array_map('intval', NoerdAuth::user()->adminTenants()->pluck('tenants.id')->all());
-
-        foreach ($this->possibleTenants as $tenantId => $value) {
-            // Both detach AND attach stay inside the allow-list: detaching
-            // unconditionally let an admin of one tenant strip a user from any
-            // other tenant (and, once the last one was gone, delete the account).
-            if (! in_array((int) $tenantId, $allowedTenants, true)) {
-                continue;
-            }
-
-            if ($detachFirst) {
-                $user->tenants()->detach($tenantId);
-            }
-
-            $profile = Profile::tryFrom((string) ($value['selectedProfile'] ?? ''));
-
-            if (($value['hasAccess'] ?? false) && $profile !== null) {
-                $user->tenants()->detach($tenantId);
-                $user->tenants()->attach($tenantId, ['profile_key' => $profile->value]);
-            }
-        }
     }
 
     public function delete(): void
     {
-        $this->deleteUserAccount();
+        $this->removeFromSelectedTenant();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function storeRules(?NoerdUser $existing): array
+    {
+        $rules = [
+            'detailData.email' => ['required', 'string', 'email', 'max:255'],
+        ];
+
+        if (! $this->modelId) {
+            $rules['tenantAccess'] = ['array', 'min:1', new AtLeastOneTrue()];
+
+            // A name is only needed for an account that does not exist yet.
+            if ($existing === null) {
+                $rules['detailData.name'] = ['required', 'string', 'max:255'];
+            }
+        } elseif ($this->accountEditable) {
+            $rules['detailData.name'] = ['required', 'string', 'max:255'];
+            $rules['detailData.email'][] = Rule::unique('noerd_users', 'email')->ignore($this->modelId);
+        }
+
+        // Every registered profile is assignable — the built-in ones and the
+        // ones a module registered (the select renders the same registry).
+        $profileKeys = array_keys(app(ProfileRegistry::class)->options());
+
+        foreach ($this->possibleTenants as $tenantId => $value) {
+            if ($value['hasAccess'] ?? false) {
+                $rules["possibleTenants.{$tenantId}.selectedProfile"] = ['required', Rule::in($profileKeys)];
+            }
+        }
+
+        return $rules;
+    }
+
+    private function createAccount(): void
+    {
+        $user = NoerdUser::create([
+            'name' => $this->detailData['name'],
+            'email' => $this->detailData['email'],
+            // No password needed - the person sets it through the reset link;
+            // this placeholder is never known to anybody.
+            'password' => bcrypt(Str::random(32)),
+        ]);
+
+        $this->applyTenantAccess($user, removeUnchecked: false, notify: false);
+
+        $this->finishStore($user);
+
+        $user->locale = $this->userLocale;
+        $user->format_locale = Locales::isSupported($this->userFormatLocale) ? $this->userFormatLocale : Locales::defaultFor($this->userLocale);
+
+        if ($this->sendPasswordResetMail) {
+            NoerdAuth::broker()->sendResetLink(['email' => $user->email]);
+        }
+
+        $user->save();
+    }
+
+    private function addExistingAccount(NoerdUser $user): void
+    {
+        // A super admin is never capturable this way.
+        abort_if($user->isSuperAdmin(), 403);
+
+        $this->applyTenantAccess($user, removeUnchecked: false, notify: true);
+
+        $this->finishStore($user);
+    }
+
+    /**
+     * Apply the requested memberships, restricted to the tenants this admin
+     * may assign. Every write goes through the tenant's membership API, so the
+     * modules hear it. A person added to a tenant of an EXISTING account is told
+     * by mail; nobody ever removes their own membership here.
+     */
+    private function applyTenantAccess(NoerdUser $user, bool $removeUnchecked, bool $notify): void
+    {
+        $admin = NoerdAuth::user();
+        $assignable = $this->assignableTenants($user)->keyBy('id');
+
+        foreach ($this->possibleTenants as $tenantId => $value) {
+            $tenant = $assignable->get((int) $tenantId);
+
+            if (! $tenant instanceof Tenant) {
+                continue;
+            }
+
+            if ($value['hasAccess'] ?? false) {
+                $profileKey = (string) ($value['selectedProfile'] ?? '');
+
+                if ($tenant->addMember($user, $profileKey)) {
+                    if ($notify && ! $user->is($admin)) {
+                        $user->notify(new AddedToTenantNotification($tenant->name, (string) ($admin->name ?: $admin->email)));
+                    }
+                } else {
+                    $tenant->setMemberProfile($user, $profileKey);
+                }
+            } elseif ($removeUnchecked && ! $user->is($admin)) {
+                $tenant->removeMember($user);
+            }
+        }
+    }
+
+    /**
+     * The tenants whose membership this administrator may set on the form: the
+     * tenants they administer as a member — a super admin additionally the
+     * selected tenant and every tenant the account already belongs to (to
+     * reach any other tenant, the super admin selects it first).
+     *
+     * @return Collection<int, Tenant>
+     */
+    private function assignableTenants(NoerdUser $user): Collection
+    {
+        $admin = NoerdAuth::user();
+        $tenants = $admin->adminTenants()->get();
+
+        if ($admin->isSuperAdmin()) {
+            $ids = array_filter([TenantHelper::getSelectedTenantId()]);
+
+            if ($user->exists) {
+                $ids = array_merge($ids, $user->tenants()->pluck('tenants.id')->all());
+            }
+
+            $tenants = $tenants->merge(Tenant::query()->whereKey($ids)->get());
+        }
+
+        return $tenants->unique('id')->sortBy('name')->values()->toBase();
+    }
+
+    /**
+     * Name and e-mail are shown, not edited, when the account is not this
+     * administrator's to manage — the YAML cannot say "read-only once saved".
+     */
+    private function lockAccountFields(): void
+    {
+        $this->pageLayout['fields'] = LayoutFields::map(
+            $this->pageLayout['fields'] ?? [],
+            fn(array $field): array => in_array($field['name'] ?? null, ['detailData.name', 'detailData.email'], true)
+                ? array_merge($field, ['readonly' => true])
+                : $field,
+        );
     }
 } ?>
 
@@ -211,6 +312,12 @@ new class extends Component {
                     {{ __('Send the user an email with a link to set their password.') }}
                 </x-noerd::checkbox>
             @endif
+
+            @unless($accountEditable)
+                <p class="text-sm text-gray-500">
+                    {{ __('Name and e-mail belong to the person — they change them in their profile.') }}
+                </p>
+            @endunless
 
             <x-noerd::detail-slot name="user-below-form" :modelId="$modelId" />
 
@@ -254,6 +361,9 @@ new class extends Component {
     </x-noerd::tab-content>
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="isset($modelId) && !$isOwner && $this->assignedToCurrentTenant"/>
+        <x-noerd::delete-save-bar
+            :showDelete="isset($modelId) && !$isOwner && $this->assignedToCurrentTenant"
+            :deleteLabel="__('Remove from tenant')"
+        />
     </x-slot:footer>
 </x-noerd::page>
