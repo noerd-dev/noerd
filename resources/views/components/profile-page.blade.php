@@ -7,7 +7,13 @@ use Livewire\Component;
  */
 new class extends Component {}; ?>
 
-<x-noerd::profile-layout :title="__('Profile and Password')">
+<x-noerd::profile-layout>
+    <x-slot:header>
+        <x-noerd::modal-title>
+            {{ __('Profile and Password') }}
+        </x-noerd::modal-title>
+    </x-slot:header>
+
     <x-noerd::profile-section>
         <livewire:noerd::profile.update-profile-information-form />
     </x-noerd::profile-section>

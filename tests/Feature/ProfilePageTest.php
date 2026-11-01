@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Livewire\Livewire;
 use Noerd\Commands\Concerns\WritesHostAppConfigs;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Middleware\ProfileMiddleware;
@@ -58,6 +59,10 @@ it('renders each profile page as a Livewire page with its forms inside the share
     foreach ($forms as $form) {
         $response->assertSeeLivewire($form);
     }
+
+    // The title belongs to the component, not to the route: opened anywhere else
+    // (the modal stack mounts it without the route) it still carries its header.
+    Livewire::test($page)->assertOk()->assertSee($title);
 
     // <x-noerd::profile-section> keeps the box chrome and the reading width in
     // one place — every form must land inside both.

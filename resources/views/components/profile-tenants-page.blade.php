@@ -7,7 +7,13 @@ use Livewire\Component;
  */
 new class extends Component {}; ?>
 
-<x-noerd::profile-layout :title="__('Tenant Access')">
+<x-noerd::profile-layout>
+    <x-slot:header>
+        <x-noerd::modal-title>
+            {{ __('Tenant Access') }}
+        </x-noerd::modal-title>
+    </x-slot:header>
+
     <x-noerd::profile-section>
         <livewire:noerd::profile.tenant-access-display-form />
     </x-noerd::profile-section>
