@@ -307,8 +307,8 @@ opened from a list row are reserved for pickers (`selectAction`, see
 
 A record without an editable form (mirrored or read-only data such as a synced client or an import
 log line) still gets its own `*-detail`: the detail YAML marks the fields `readonly: true` and
-embeds the related rows through [`lists:`](detail-view.md#embedded-lists) (the narrowed list the
-row used to open directly), the component renders no save bar, overrides `store()` as a no-op and declares
+embeds the related rows through [`lists:`](detail-view.md#embedded-lists) (the narrowed list of the
+record's rows), the component renders no save bar, overrides `store()` as a no-op and declares
 `protected bool $deletable = false;` ([Detail View](detail-view.md)), and the module registers `Route::livewire('{app}/{entity}/{modelId}', …)` for it.
 
 ### Custom Query Logic
@@ -371,7 +371,7 @@ private function filteredQuery(): Builder
 
 public function listData(): array
 {
-    return $this->buildList($this->filteredQuery()->paginate($this->perPage));
+    return $this->buildList($this->paginateList($this->filteredQuery()));
 }
 
 public function with(): array
@@ -414,7 +414,7 @@ the YAML hides the row):
 | `$listModel` | The Eloquent model backing the list — required for the trait defaults and the module-contributed header actions |
 | `?string $detailRoute` / `$detailComponent` | Named detail route a row click opens (URL rewritten) and the component fallback when that route is not registered |
 | `listData()` | Builds the list; override it for custom queries, always ending in `return $this->buildList($rows);` (`buildList()` generates the list configuration from the YAML) |
-| `protected array $listWith` / `$listWithCount` | Relations `listQuery()` eager-loads (`['category', 'owner:id,name']`) and counts (`['items']` → `items_count`) on every page — the loads a custom `listData()` used to add by hand |
+| `protected array $listWith` / `$listWithCount` | Relations `listQuery()` eager-loads (`['category', 'owner:id,name']`) and counts (`['items']` → `items_count`) on every page — no `listData()` override needed for them |
 | `protected array $listScopes` | Columns narrowed by a mount argument, `['party_id' => 'partyId']`: `listQuery()` adds `where('party_id', $this->partyId)` while the property holds a value (an array becomes `whereIn`), so a list embedded under a parent record needs no `listData()` override |
 | `paginateList(Builder $query)` (protected) | The page of rows with the client-controlled `$perPage` clamped — what a custom `listData()` calls instead of `->paginate($this->perPage)` |
 | `listAction(mixed $modelId = null, array $relations = [])` | Opens `$detailRoute` (else `$detailComponent`) as a modal with `['modelId' => $modelId, 'relations' => $relations]`; override it only to add modal arguments |

@@ -287,10 +287,10 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
   A list embedded with `disableModal` breaks out of its host by `--noerd-page-inset` — never re-pad
   it; a full page nested in a page is detected (`isNestedPage`) and embedded plainly.
   Reference: `docs/detail-view.md` ("Embedded Lists").
-- **Relation fields:** `type: {x}Relation` is a REGISTERED type (`RelationFieldRegistry::register('customerRelation', RelationFieldDefinition::model(listComponent:, detailRoute:, modelClass:, titleResolver:))`
+- **Relation fields:** `type: {x}Relation` is a REGISTERED type (`app(RelationFieldRegistry::class)->register('customerRelation', RelationFieldDefinition::model(listComponent:, detailRoute:, modelClass:, titleResolver:))`
   in the owning provider — the generic `type: relation` does not exist). The field keeps
   `detailData.{field}` and `relationTitles.{field}` in sync itself; a foreign key maps to its type by
-  convention (`customer_id` → `customerRelation`, `RelationFieldRegistry::typeForColumn()`). A detail
+  convention (`customer_id` → `customerRelation`, `app(RelationFieldRegistry::class)->typeForColumn()`). A detail
   that must REACT to a selection implements `#[On('{entity}Selected')]` (event derived from the list
   name unless `selectEvent` is set) and writes `detailData.*` + `relationTitles.*` — never a separate
   `$this->customer` property. A restyled relation type passes `fieldComponent:` (a class extending

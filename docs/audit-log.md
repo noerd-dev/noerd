@@ -105,7 +105,7 @@ The modal renders `<x-noerd::audit-table>` with the record's audits, newest firs
 | Column | Content |
 |--------|---------|
 | Date | `FormatHelper::date()` of the audit's `created_at` — the reader's locale |
-| Time | `H:i` of the audit's `created_at` |
+| Time | `FormatHelper::time()` of the audit's `created_at` — the reader's locale |
 | User | E-mail of the `NoerdUser` behind `user_id` (blank for system/console changes) |
 | Change | One line per changed field: the field name, the old value, `to`, the new value |
 

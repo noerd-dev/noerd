@@ -263,7 +263,7 @@ The helper reads the module's `composer.json`. The dependency guard
 in the module (src, resources, routes, database, config, app-configs **and tests**) without a
 matching `require`/`require-dev` entry. What the module may reference without declaring it, and
 what it must never reference, is declared under `extra.noerd.boundary` — with the reason next to
-every allowance, since the test file no longer carries one:
+every allowance (the test file itself carries none):
 
 ```json
 "extra": {
@@ -343,7 +343,7 @@ The package ships factories for its own models under `database/factories/`:
 |---------|-------|
 | `NoerdUserFactory` | States `adminUser()`, `withExampleTenant()`, `withSelectedApp($app)`, `unverified()` and `superAdmin()` (the installation-wide flag) |
 | `TenantFactory` | A plain tenant |
-| `TenantAppFactory` | A tenant app row — attach it to a tenant with `$tenant->tenantApps()->attach(...)` |
+| `TenantAppFactory` | A tenant app row — assign it to a tenant with `$tenant->assignApp($app)` (or use `ensureTenantApp()` / `createNoerdUserForApp()` from `tests/helpers.php`) |
 | `NoerdSettingsFactory` | The per-tenant settings singleton (`currency`, `locale`, detail theme) — the fixture for formatting tests |
 | `SetupCollectionFactory`, `SetupLanguageFactory`, `UserSettingFactory`, `NoerdLoginFactory` | The remaining core models |
 

@@ -113,7 +113,7 @@ The preview modal is `noerd::email-preview-modal`; the test mail is `Noerd\Mail\
 
 ## SetupLanguageFilter (list components)
 
-`Noerd\Traits\SetupLanguageFilter` provides language helpers for lists whose rows carry a `language` column, backed by the `Noerd\Models\SetupLanguage` model. Date-range and tenant header filters are no traits any more: build them with `Noerd\Support\ListFilter::dateFrom()` / `dateUntil()` / `options()` (see [List Filters](list-filters.md#header-filters)).
+`Noerd\Traits\SetupLanguageFilter` provides language helpers for lists whose rows carry a `language` column, backed by the `Noerd\Models\SetupLanguage` model. Date-range and tenant header filters are no traits: build them with `Noerd\Support\ListFilter::dateFrom()` / `dateUntil()` / `options()` (see [List Filters](list-filters.md#header-filters)).
 
 | Method | Description |
 |--------|-------------|
@@ -182,6 +182,7 @@ support modules alike have it) contributes the idempotent host-YAML writers, cal
 | `ensureQuickMenuButton(array $button): void` | Adds a quick-menu button when missing |
 | `ensureDashboardWidget(array $widget): void` | Adds a dashboard widget when missing |
 | `ensureSetupNavigation(string $blockTitle, array $entry): void` | Adds an entry to the setup navigation when missing |
+| `ensureProfileNavigation(string $blockTitle, array $entry): void` | Adds an entry to the profile navigation (`app-configs/profile/navigation.yml`) when missing |
 
 The other building blocks in `Noerd\Commands\Concerns` (`PublishesModuleConfig`, `PublishesSkills`,
 `PublishesConfigDirectory`, `RegistersBoostPackage`, `RunsNpmBuild`, `GuardsPublishTargets`, …) can
@@ -235,23 +236,24 @@ for module use.
 
 ## Helpers
 
-Static helpers under `Noerd\Helpers`; each is documented on its owning page:
+Static helpers under `Noerd\Helpers` (and, where marked, `Noerd\Support`); each is documented on
+its owning page:
 
 - **`TenantHelper`** — the tenant/app session API. `currentTenantId()` is the `TenantContext`, else
   the authenticated noerd user's selected tenant — the single resolver `TenantScope` and the
   `BelongsToTenant` stamp read (`null` where neither is known). `getSelectedTenantId()` / `getSelectedTenant()`
   read the session selection (memoized per request), `setSelectedTenantId()` writes it and persists
-  it on the user, `hasTenant()` checks it; `getSelectedApp()` / `setSelectedApp()` / `hasApp()`
+  it on the user, `hasTenant()` checks it; `getSelectedApp()` / `setSelectedApp()`
   hold the app selected in the sidebar. `clear()` forgets both session keys, `clearCache()` drops
   the request memos (call it in tests after mutating tenants or tenant apps).
 - **`NoerdAuth`** — guard-explicit access to the noerd user → [Authentication](auth.md)
 - **`AccessHelper`** — every permission check → [Permissions](permissions.md)
 - **`FormatHelper`**, **`CurrencyHelper`** — ICU formatting → [Currency, Numbers & Dates](formatting.md)
-- **`ThemeHelper`** — the tenant's form theme → [Themes](themes.md)
+- **`Noerd\Support\ThemeHelper`** — the tenant's form theme → [Themes](themes.md)
 - **`StaticConfigHelper`** — resolves every YAML config (lists, details, pages, settings,
   navigation, list views) →
   [Extension Registries](extension-registries.md#layout-overrides-noerdlayout-overrides-binding)
 - **`SetupCollectionHelper`** — lookup tables and `selectOptions()` → [Setup Collections](setup-collections.md)
-- **`KeyboardShortcutHelper::parse($configKey, $default)`** — a configured shortcut string as
+- **`Noerd\Support\KeyboardShortcutHelper::parse($configKey, $default)`** — a configured shortcut string as
   modifier/key parts → [Keyboard Shortcuts](keyboard-shortcuts.md)
-- **`IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers)
+- **`Noerd\Support\IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers)

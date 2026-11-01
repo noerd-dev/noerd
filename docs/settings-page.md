@@ -92,7 +92,7 @@ public function mount(): void
 
     // a value the YAML cannot express (the defaults of a tenant without a row
     // belong in the model's tenantDefaults(), not here)
-    $this->paymentOptions = app(PaymentMethodService::class)->methodsFor($this->tenantId());
+    $this->paymentOptions = app(PaymentMethodService::class)->methodsFor(TenantHelper::getSelectedTenantId());
 }
 
 public function store(): void

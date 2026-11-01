@@ -72,12 +72,13 @@ any tenant app can open the module's screens. The `noerd:make-module` scaffolder
 `noerd:make-*` generators emit routes wrapped in `['noerd', 'app-access:{app}']` (see
 [Creating Modules](creating-modules.md)).
 
-`NoerdServiceProvider` registers four middleware aliases in total:
+`NoerdServiceProvider` registers five middleware aliases in total:
 
 | Alias | Middleware | Purpose |
 |-------|------------|---------|
 | `app-access:{app}` | `AppAccessMiddleware` | The tenant must have the app assigned and the app gate must allow it; also selects the app in the session (a hidden app never — the current app is kept) |
 | `setup` | `SetupMiddleware` | The `/setup` area — tenant admins only (`NoerdUser::isAdmin()`) |
+| `profile` | `ProfileMiddleware` | The profile area — every signed-in person; selects the hidden `PROFILE` app so the sidebar shows `app-configs/profile/navigation.yml`, refused (403) while an administrator is signed in as the person (see [Navigation](navigation.md#setup-and-profile-navigation)) |
 | `action-permission:{key}` | `ActionPermissionMiddleware` | A registered named action must be allowed for the user (see [Permissions](permissions.md#named-action-checks)) |
 | `setup.collections.ui` | `EnsureSetupCollectionDefinitionsEnabled` | The collection-definition screens, only reachable while `noerd.collections.mode` is `database` (see [Setup Collections](setup-collections.md)) |
 

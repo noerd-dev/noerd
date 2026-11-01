@@ -71,7 +71,8 @@ new class extends Component {
 ## 3. Create the YAML — `details/{entity}-detail.yml` in BOTH places
 
 (`app-configs/{app}/details/` and `app-modules/{module}/app-configs/{app}/details/`.)
-Allowed keys: `title`, `description`, `theme`, `quickCreate`, `tabs`, `fields`, `actions`, `lists`.
+Allowed keys: `title`, `description`, `theme`, `quickCreate`, `tabs`, `fields`, `actions`, `lists`,
+`positions`.
 `widgets:` and `relations:` NEVER belong here (page YAML).
 
 ```yaml
@@ -99,7 +100,9 @@ fields:
     tab: 2
 ```
 
-- Field names always carry the `detailData.` prefix; `required: true` is the only validation source.
+- Field names always carry the `detailData.` prefix. `validateFromLayout()` derives the rules from the
+  YAML: `required: true`, the rules of the field `type` (email, numeric, date, a select's options,
+  the column length) or the field's `validation:` list.
 - Relation field → the field component syncs `detailData.x_id` and `relationTitles.x_id` itself; a
   `{entity}Selected($id)` handler on the component is only needed to REACT to the selection (derive
   further fields) and then writes `$this->detailData['x_id']` / `$this->relationTitles['x_id']`;

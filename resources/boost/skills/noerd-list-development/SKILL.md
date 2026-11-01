@@ -19,7 +19,8 @@ this skill is the step-by-step procedure. The package docs are in `vendor/noerd/
 | Situation | What to do |
 |---|---|
 | Rows are one Eloquent model | Slim component with `$listModel` (default) |
-| Same, but extra wheres / eager loads | Slim component + `listData()` override using `$this->listQuery()` |
+| Same, with eager loads, relation counts or a parent scope | Slim component declaring `protected array $listWith` / `$listWithCount` / `$listScopes` |
+| Same, with extra wheres or row transformations | Slim component + `listData()` override: `$this->listQuery()` → `$this->paginateList()` → `$this->buildList()` |
 | Rows are not one model (raw/repository query) | Manual query without `$listModel` — accepted, but no column filters |
 | List embedded inside a detail/page | Do not hand-wire: use `<x-noerd::detail-lists>` (YAML `lists:`) or `<x-noerd::detail-list>` |
 | List used to pick records for an opener | Open it with `Noerd::modal('{module}::{entities}-list', ['multiSelect' => true, 'returnsSelection' => true, 'context' => '…'])` |
