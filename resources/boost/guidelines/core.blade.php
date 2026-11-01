@@ -216,9 +216,8 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   `noerd:update`, an existing copy is kept). A module adds a page of the person's OWN data with
   `ensureProfileNavigation('My Account', ['title' => …, 'route' => …, 'heroicon' => …])` in
   `ensureModuleSetup()`; its route is a `Route::livewire()` in `['noerd', 'profile']` and the page
-  is a full-page Livewire component whose root is `<x-noerd::profile-layout>` (the
-  `<x-noerd::page>` chrome; the title in `<x-slot:header>` with `<x-noerd::modal-title>`) with
-  `<x-noerd::profile-section>` blocks — like the core's
+  is a full-page Livewire component whose root is `<x-noerd::page>` (the title in
+  `<x-slot:header>` with `<x-noerd::modal-title>`) with `<x-noerd::profile-section>` blocks — like the core's
   `noerd::profile-page`, never a plain `Route::view()`. Never a section on another
   module's page, never a core change for a module's page. Reference: `docs/navigation.md`
   ("Setup and profile navigation").

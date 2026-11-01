@@ -53,7 +53,7 @@ it('renders each profile page as a Livewire page with its forms inside the share
     $response->assertOk()
         ->assertSeeLivewire($page)
         ->assertSee($title)
-        // <x-noerd::profile-layout> renders the <x-noerd::page> chrome.
+        // Every profile page renders the <x-noerd::page> chrome.
         ->assertSee('data-noerd-page', false);
 
     foreach ($forms as $form) {

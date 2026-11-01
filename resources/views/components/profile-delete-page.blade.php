@@ -7,7 +7,7 @@ use Livewire\Component;
  */
 new class extends Component {}; ?>
 
-<x-noerd::profile-layout>
+<x-noerd::page>
     <x-slot:header>
         <x-noerd::modal-title>
             {{ __('Delete Account') }}
@@ -17,4 +17,4 @@ new class extends Component {}; ?>
     <x-noerd::profile-section>
         <livewire:noerd::profile.delete-user-form />
     </x-noerd::profile-section>
-</x-noerd::profile-layout>
+</x-noerd::page>

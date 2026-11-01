@@ -142,9 +142,9 @@ Two navigations belong to no tenant app and are selected by route middleware ins
   its route (`Route::livewire()`) carries `['noerd', 'profile']`, so the sidebar shows this
   navigation. Every profile page — the core's (`noerd::profile-page`, `profile-language-page`,
   `profile-tenants-page`, `profile-delete-page`) and a module's — is a full-page Livewire
-  component whose root is `<x-noerd::profile-layout>`: the `<x-noerd::page>` chrome. The title
-  goes into `<x-slot:header>` with `<x-noerd::modal-title>`, like on every other page, so it also
-  shows when the page is opened in a modal; each block is one `<x-noerd::profile-section>`.
+  component whose root is `<x-noerd::page>`, like every other page: the title goes into
+  `<x-slot:header>` with `<x-noerd::modal-title>`, so it also shows when the page is opened in a
+  modal, and each block is one `<x-noerd::profile-section>` (box chrome and reading width).
 
 Both files are host configuration: entries can be reordered, retitled or removed there, and an
 entry whose route does not exist is skipped.
