@@ -139,8 +139,12 @@ Two navigations belong to no tenant app and are selected by route middleware ins
   (`noerd.profile.delete`). `noerd:install` / `noerd:update` publish the file and keep an existing
   copy. A module adds a page of the person's own data with
   `ensureProfileNavigation('My Account', ['title' => 'My Connectors', 'route' => 'mymodule.connectors', 'heroicon' => 'link'])`;
-  its route carries `['noerd', 'profile']`, so the sidebar shows this navigation, and the page
-  renders `<x-noerd::profile-layout>` with one `<x-noerd::profile-section>` per block.
+  its route (`Route::livewire()`) carries `['noerd', 'profile']`, so the sidebar shows this
+  navigation. Every profile page — the core's (`noerd::profile-page`, `profile-language-page`,
+  `profile-tenants-page`, `profile-delete-page`) and a module's — is a full-page Livewire
+  component whose root is `<x-noerd::page>`, like every other page: the title goes into
+  `<x-slot:header>` with `<x-noerd::modal-title>`, so it also shows when the page is opened in a
+  modal, and each block is one `<x-noerd::profile-section>` (box chrome and reading width).
 
 Both files are host configuration: entries can be reordered, retitled or removed there, and an
 entry whose route does not exist is skipped.

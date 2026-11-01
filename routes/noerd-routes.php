@@ -6,6 +6,48 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| Core Routes
+|--------------------------------------------------------------------------
+|
+| The remaining core screens live beneath a configurable URL prefix,
+| which you may change via the "noerd.routes.prefix" option. Only
+| the apps overview and the "/login" shortcut stay at the root.
+|
+*/
+
+$prefix = config('noerd.routes.prefix', 'noerd');
+
+Route::middleware(['web'])->group(function () use ($prefix): void {
+    Route::redirect('login', '/' . mb_trim($prefix, '/') . '/login');
+});
+
+Route::group(['middleware' => ['noerd']], function (): void {
+    Route::livewire('noerd-apps', 'noerd::noerd-apps')->name('noerd.apps');
+});
+
+Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void {
+    Route::livewire('component-page/{componentName}', 'noerd::generic-component-page')->name('noerd.component-page');
+    Route::livewire('no-tenant', 'noerd::no-tenant')->name('noerd.no-tenant');
+});
+
+Route::group(['prefix' => $prefix, 'middleware' => ['noerd', 'profile']], function (): void {
+    Route::livewire('user', 'noerd::profile-page')->name('noerd.profile');
+    Route::livewire('user/language', 'noerd::profile-language-page')->name('noerd.profile.language');
+    Route::livewire('user/tenants', 'noerd::profile-tenants-page')->name('noerd.profile.tenants');
+    Route::livewire('user/delete-account', 'noerd::profile-delete-page')->name('noerd.profile.delete');
+});
+
+Route::group(['prefix' => $prefix, 'middleware' => ['noerd-guest']], function (): void {
+    Route::livewire('login', 'noerd::auth.login')->name('noerd.login');
+    Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('noerd.password.request');
+});
+
+Route::group(['prefix' => $prefix, 'middleware' => ['web']], function (): void {
+    Route::livewire('reset-password/{token}', 'noerd::auth.reset-password')->name('noerd.password.reset');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Setup Routes
 |--------------------------------------------------------------------------
 |
@@ -16,8 +58,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function (): void {
-    // The setup landing page IS the users list; noerd.setup stays a second name
-    // for the same screen because host modules and tests link to it.
     Route::livewire('/', 'noerd::noerd-users-list')->name('noerd.setup');
     Route::livewire('tenant-apps', 'noerd::tenant-apps-page')->name('noerd.tenant-apps');
     Route::livewire('users', 'noerd::noerd-users-list')->name('noerd.users');
@@ -36,47 +76,4 @@ Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function
     Route::livewire('languages', 'noerd::setup-languages-list')->name('noerd.setup-languages');
     Route::livewire('language/{modelId}', 'noerd::setup-language-detail')->name('noerd.setup-language.detail');
     Route::livewire('system-settings', 'noerd::system-settings-page')->name('noerd.system-settings');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Core Routes
-|--------------------------------------------------------------------------
-|
-| The remaining core screens live beneath a configurable URL prefix,
-| which you may change via the "noerd.routes.prefix" option. Only
-| the apps overview and the "/login" shortcut stay at the root.
-|
-*/
-
-$prefix = config('noerd.routes.prefix', 'noerd');
-
-Route::group(['middleware' => ['noerd']], function (): void {
-    Route::livewire('noerd-apps', 'noerd::noerd-apps')->name('noerd.apps');
-});
-
-Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void {
-    Route::livewire('component-page/{componentName}', 'noerd::generic-component-page')->name('noerd.component-page');
-    Route::livewire('no-tenant', 'noerd::no-tenant')->name('noerd.no-tenant');
-});
-
-// The profile area: its own navigation context (app-configs/profile/navigation.yml).
-Route::group(['prefix' => $prefix, 'middleware' => ['noerd', 'profile']], function (): void {
-    Route::view('user', 'noerd::profile')->name('noerd.profile');
-    Route::view('user/language', 'noerd::profile-language')->name('noerd.profile.language');
-    Route::view('user/tenants', 'noerd::profile-tenants')->name('noerd.profile.tenants');
-    Route::view('user/delete-account', 'noerd::profile-delete')->name('noerd.profile.delete');
-});
-
-Route::group(['prefix' => $prefix, 'middleware' => ['noerd-guest']], function (): void {
-    Route::livewire('login', 'noerd::auth.login')->name('noerd.login');
-    Route::livewire('forgot-password', 'noerd::auth.forgot-password')->name('noerd.password.request');
-});
-
-Route::group(['prefix' => $prefix, 'middleware' => ['web']], function (): void {
-    Route::livewire('reset-password/{token}', 'noerd::auth.reset-password')->name('noerd.password.reset');
-});
-
-Route::middleware(['web'])->group(function () use ($prefix): void {
-    Route::redirect('login', '/' . mb_trim($prefix, '/') . '/login');
 });

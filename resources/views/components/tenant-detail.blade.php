@@ -12,9 +12,6 @@ new class extends Component {
 
     public $detailModel = Tenant::class;
 
-    /**
-     * Tenants are never deleted from this screen.
-     */
     protected bool $deletable = false;
 
     public function mount(): void
@@ -50,7 +47,6 @@ new class extends Component {
 
         $this->validateFromLayout();
 
-        // Length constraints the YAML cannot express — kept on top of the layout rules.
         $this->validate([
             'detailData.name' => ['required', 'string', 'max:255', 'min:3'],
         ]);
