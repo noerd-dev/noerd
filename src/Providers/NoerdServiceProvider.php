@@ -245,8 +245,13 @@ class NoerdServiceProvider extends ServiceProvider
         Event::listen(Login::class, RecordLogin::class);
 
         // A request's tenant context ends with the request (frontend middleware
-        // sets it; a test process serves many requests from one container).
-        $this->app->terminating(fn() => TenantContext::reset());
+        // sets it; a test process serves many requests from one container). The
+        // reset is appended when termination starts, so it runs AFTER the
+        // callbacks the request registered — a job dispatched with
+        // dispatchAfterResponse() still runs in the request's tenant.
+        $this->app->terminating(function (): void {
+            $this->app->terminating(fn() => TenantContext::reset());
+        });
 
         // A queued job works in the tenant of the request or job that dispatched it.
         Queue::createPayloadUsing(function (): array {
@@ -256,9 +261,14 @@ class NoerdServiceProvider extends ServiceProvider
         });
         Event::listen(JobProcessing::class, function (JobProcessing $event): void {
             $tenantId = $event->job->payload()[self::JOB_TENANT_KEY] ?? null;
-            TenantContext::enterJob(is_numeric($tenantId) ? (int) $tenantId : null);
+            TenantContext::enterJob(spl_object_id($event->job), is_numeric($tenantId) ? (int) $tenantId : null);
         });
-        Event::listen([JobProcessed::class, JobFailed::class, JobExceptionOccurred::class], fn() => TenantContext::leaveJob());
+        // A failing sync job raises both JobExceptionOccurred and JobFailed — the
+        // job's own frame is left only once.
+        Event::listen(
+            [JobProcessed::class, JobFailed::class, JobExceptionOccurred::class],
+            fn(JobProcessed|JobFailed|JobExceptionOccurred $event) => TenantContext::leaveJob(spl_object_id($event->job)),
+        );
     }
 
     /**
@@ -278,9 +288,17 @@ class NoerdServiceProvider extends ServiceProvider
         $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':' . NoerdAuth::guardName()]);
         // Livewire's default persistent-middleware list only knows the
         // framework's Authenticate class — the subclass must be added so
-        // component updates stay auth-protected. The profile middleware joins
-        // it: a profile component's updates are refused while impersonating.
-        Livewire::addPersistentMiddleware([NoerdAuthenticate::class, ProfileMiddleware::class]);
+        // component updates stay auth-protected. The tenant membership and the
+        // app access are re-checked on every update too: a user removed from a
+        // tenant or an app must lose it on a page left open, not at the next
+        // full page load. The profile middleware joins them: a profile
+        // component's updates are refused while impersonating.
+        Livewire::addPersistentMiddleware([
+            NoerdAuthenticate::class,
+            EnsureTenantMembership::class,
+            AppAccessMiddleware::class,
+            ProfileMiddleware::class,
+        ]);
         $router->aliasMiddleware('setup', SetupMiddleware::class);
         $router->aliasMiddleware('profile', ProfileMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);

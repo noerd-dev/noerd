@@ -9,6 +9,7 @@ use Noerd\Livewire\Hooks\EmbeddedDetailHostHook;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Support\ComponentNaming;
+use Noerd\Support\EmbeddedDetailCreations;
 use Noerd\Support\RelationFieldDefinition;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdDetail;
@@ -99,11 +100,26 @@ class ZzHostDetail extends Component
     }
 }
 
+/** An embedded detail whose custom store() creates its record and ends in finishStore(). */
+class ZzHostCreatingDetail extends ZzHostDetail
+{
+    public function store(): void
+    {
+        $this->finishStore(Tenant::factory()->create(['name' => $this->detailData['name'] ?? 'Created']));
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-host-creating-detail';
+    }
+}
+
 beforeEach(function (): void {
     $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
 
     Livewire::component('zz-host-page', ZzHostPage::class);
     Livewire::component('zz-host-detail', ZzHostDetail::class);
+    Livewire::component('zz-host-creating-detail', ZzHostCreatingDetail::class);
 });
 
 describe('ComponentNaming', function (): void {
@@ -188,6 +204,18 @@ describe('embedded detail host', function (): void {
 
         $page->call('embeddedDetailStored', $tenant->id, $page->id())
             ->assertSet('modelId', $tenant->id);
+    });
+
+    it('remembers a record it created for its page, and only once', function (): void {
+        Livewire::test('zz-host-creating-detail', ['zzHost' => 'page-a'])
+            ->set('detailData.name', 'Created through the page')
+            ->call('store');
+
+        $created = Tenant::query()->where('name', 'Created through the page')->firstOrFail();
+
+        expect(EmbeddedDetailCreations::consume('page-b', $created))->toBeFalse()
+            ->and(EmbeddedDetailCreations::consume('page-a', $created))->toBeTrue()
+            ->and(EmbeddedDetailCreations::consume('page-a', $created))->toBeFalse();
     });
 
     it('reports the host with the stored record', function (): void {

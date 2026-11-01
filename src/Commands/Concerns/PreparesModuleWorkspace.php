@@ -10,7 +10,8 @@ use Noerd\Support\ModulesPath;
 /**
  * What a host project needs once it holds a LOCAL module under the modules
  * directory (`app-modules/` by default): the Composer path repository that makes
- * it requirable and the phpunit suite that runs its tests. Deliberately not part
+ * it requirable, the phpunit suite that runs its tests and the noerd test
+ * helpers those tests call (`assertModuleBoundary()` …). Deliberately not part
  * of `noerd:install` — a project that only consumes modules from a registry never
  * needs either. Called by whatever creates the first local module
  * (`noerd:make-module`, a boilerplate installer).
@@ -23,6 +24,7 @@ trait PreparesModuleWorkspace
 
         $this->ensureModulePathRepository();
         $this->ensureModulesTestsuite();
+        $this->ensureTestHelpersLoaded();
     }
 
     /**
@@ -110,5 +112,32 @@ trait PreparesModuleWorkspace
 
         File::put($phpunitPath, str_replace('</testsuites>', $testsuite . "\n    </testsuites>", $content));
         $this->line("<info>Updated:</info> phpunit.xml (added the {$modules} testsuite)");
+    }
+
+    /**
+     * Load the noerd test helpers in the host's `tests/Pest.php`. The module tests
+     * bind the host's TestCase, which knows nothing of the helpers — the generated
+     * ModuleBoundaryTest would fail with an undefined function otherwise.
+     */
+    protected function ensureTestHelpersLoaded(): void
+    {
+        $pestPath = base_path('tests/Pest.php');
+        $line = '\\Noerd\\Tests\\HelperLoader::load();';
+
+        if (! File::exists($pestPath)) {
+            $this->warn('tests/Pest.php not found. Load the noerd test helpers there yourself:');
+            $this->line($line);
+
+            return;
+        }
+
+        $content = File::get($pestPath);
+
+        if (str_contains($content, 'HelperLoader::load()')) {
+            return;
+        }
+
+        File::put($pestPath, mb_rtrim($content) . "\n\n" . $line . "\n");
+        $this->line('<info>Updated:</info> tests/Pest.php (loads the noerd test helpers)');
     }
 }

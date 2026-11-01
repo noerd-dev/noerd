@@ -153,7 +153,8 @@ explicitly, through `Noerd\Tests\HelperLoader`:
 
 - Suites binding `Noerd\Tests\TestCase` get the helpers from that class and need no call.
 - Every other suite (a module test bound to the host's `Tests\TestCase`, the host's own `Feature`
-  suite) loads them once from its `tests/Pest.php`:
+  suite) loads them once from its `tests/Pest.php` — `noerd:make-module` adds the line with the
+  first local module:
 
 ```php
 \Noerd\Tests\HelperLoader::load();

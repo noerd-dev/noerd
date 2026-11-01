@@ -12,6 +12,7 @@ use Noerd\Services\ComputedColumnRegistry;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Support\ClientWritablePaths;
 use Noerd\Support\ComputedFields;
+use Noerd\Support\EmbeddedDetailCreations;
 use Noerd\Support\FieldRules;
 use Noerd\Support\FieldVisibility;
 use Noerd\Support\LayoutDefaults;
@@ -245,6 +246,10 @@ trait NoerdDetail
     protected function finishStore(Model $model): void
     {
         $this->storeProcess($model);
+
+        if ($this->hostId !== null && $model->wasRecentlyCreated) {
+            EmbeddedDetailCreations::remember($this->hostId, $model);
+        }
 
         $this->dispatch('detailStored-' . $this->componentName(), modelId: $model->id, host: $this->hostId);
     }

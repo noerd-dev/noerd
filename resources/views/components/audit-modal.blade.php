@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Traits\BelongsToTenant;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -30,6 +31,11 @@ new class extends Component {
             && in_array(BelongsToTenant::class, class_uses_recursive($this->modelClass), true),
             404,
         );
+
+        // The change history shows every value the record ever had — the modal is
+        // mountable by any client through the noerdModal event, so it asks the
+        // same read permission as the record's own screen.
+        abort_unless(AccessHelper::canReadObject($this->modelClass), 403);
 
         $model = $this->modelClass::findOrFail($this->modelId);
 

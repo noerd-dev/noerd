@@ -14,6 +14,7 @@ use Noerd\Services\PositionTableRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\ComponentNaming;
 use Noerd\Support\DetailHeaderActions;
+use Noerd\Support\EmbeddedDetailCreations;
 use Noerd\Support\Positions\PositionColumn;
 use Noerd\Support\Positions\PositionColumnResolver;
 use Noerd\Support\ThemeContext;
@@ -279,30 +280,47 @@ trait NoerdPage
             return;
         }
 
-        if ($this->modelId !== null && $this->modelId !== '' && $this->modelId !== 'new'
-            && (string) $this->modelId !== (string) $modelId) {
+        $isNewPage = $this->modelId === null || $this->modelId === '' || $this->modelId === 'new';
+
+        if (! $isNewPage && (string) $this->modelId !== (string) $modelId) {
+            return;
+        }
+
+        if (! isset($this->detailModel)) {
+            $this->modelId = $modelId;
+
+            return;
+        }
+
+        $modelClass = $this->detailModel;
+        $model = $modelClass::find($modelId);
+
+        if (! $model) {
+            return;
+        }
+
+        // On a new page canSaveObject() only asked for the CREATE permission. Adopting
+        // an existing record writes the page's own data onto it, so without the write
+        // permission only the record the embedded detail just created for this page
+        // is accepted — never an id the client made up.
+        $createdForThisPage = $isNewPage && EmbeddedDetailCreations::consume($this->getId(), $model);
+
+        if ($isNewPage && ! $createdForThisPage && ! $this->canWriteObject()) {
             return;
         }
 
         $this->modelId = $modelId;
 
-        if (isset($this->detailModel)) {
-            $modelClass = $this->detailModel;
-            $model = $modelClass::find($modelId);
+        // Merge instead of replace: page-owned keys in $detailData that are not
+        // model columns (e.g. product groups edited on the page) must survive the
+        // refresh — afterEmbeddedDetailStored() persists them.
+        $this->detailData = array_merge(
+            $this->detailData,
+            collect($model->toArray())->except(['created_at', 'updated_at'])->toArray(),
+        );
 
-            if ($model) {
-                // Merge instead of replace: page-owned keys in $detailData that are
-                // not model columns (e.g. product groups edited on the page) must
-                // survive the refresh — afterEmbeddedDetailStored() persists them.
-                $this->detailData = array_merge(
-                    $this->detailData,
-                    collect($model->toArray())->except(['created_at', 'updated_at'])->toArray(),
-                );
-
-                $this->storeProcess($model);
-                $this->afterEmbeddedDetailStored($model);
-            }
-        }
+        $this->storeProcess($model);
+        $this->afterEmbeddedDetailStored($model);
     }
 
     /**
@@ -311,11 +329,29 @@ trait NoerdPage
      */
     public function embeddedDetailDataUpdated(array $detailData, ?string $host = null): void
     {
+        // A listener is callable by the client. Only a page that embeds a detail
+        // mirrors it — on any other component (every NoerdDetail composes this
+        // trait) the call would write readonly fields and undeclared keys into
+        // $detailData past the client-write guards, ready for the next store().
+        if ($this->embeddedDetailComponent() === null) {
+            return;
+        }
+
         if ($host !== null && $host !== $this->getId()) {
             return;
         }
 
         $this->detailData = array_merge($this->detailData, $detailData);
+        $this->afterEmbeddedDetailDataUpdated();
+    }
+
+    /**
+     * Runs after the page mirrored its embedded detail's form state (e.g. to
+     * refresh a live preview).
+     */
+    protected function afterEmbeddedDetailDataUpdated(): void
+    {
+        // Intentionally empty — pages override it.
     }
 
     /**

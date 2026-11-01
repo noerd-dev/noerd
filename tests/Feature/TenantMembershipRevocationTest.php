@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Middleware\AppAccessMiddleware;
 use Noerd\Middleware\EnsureTenantMembership;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
@@ -92,4 +94,12 @@ it('falls back to another tenant for a super admin when the selected one is dele
     zzRunMembershipMiddleware();
 
     expect(TenantHelper::getSelectedTenantId())->toBe($remaining->id);
+});
+
+it('re-checks membership and app access on every Livewire update of an open page', function (): void {
+    // Livewire re-runs only the route middleware on this list for a component
+    // update — without them a page left open kept working in a revoked tenant.
+    expect(Livewire::getPersistentMiddleware())
+        ->toContain(EnsureTenantMembership::class)
+        ->toContain(AppAccessMiddleware::class);
 });
