@@ -1,0 +1,14 @@
+<div {{ $attributes->whereDoesntStartWith('class') }} {{ $attributes->merge(['class' => '']) }}>
+    <table class="noerd-table min-w-full divide-y divide-gray-100" style="table-layout: fixed">
+        @isset($headers)
+            <thead class="sticky top-0 border-b border-gray-300 bg-gray-50">
+                <tr>
+                    {{ $headers }}
+                </tr>
+            </thead>
+        @endisset
+        <tbody x-data="{ activeRow: null }" class="divide-y divide-gray-200 bg-white">
+            {{ $slot }}
+        </tbody>
+    </table>
+</div>
