@@ -10,7 +10,6 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\StaticConfigHelper;
-use Noerd\Helpers\ThemeHelper;
 use Noerd\Services\PositionTableRegistry;
 use Noerd\Services\RelationTitleResolver;
 use Noerd\Support\ComponentNaming;
@@ -18,6 +17,7 @@ use Noerd\Support\DetailHeaderActions;
 use Noerd\Support\Positions\PositionColumn;
 use Noerd\Support\Positions\PositionColumnResolver;
 use Noerd\Support\ThemeContext;
+use Noerd\Support\ThemeHelper;
 use RuntimeException;
 
 /**

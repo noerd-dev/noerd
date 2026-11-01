@@ -11,7 +11,6 @@ use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
@@ -79,14 +78,13 @@ use Noerd\Services\RelationTitleResolver;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\BuiltInFieldTypes;
 use Noerd\Support\FieldContext;
-use Noerd\Support\LayoutState;
 use Noerd\Support\ListColumnIntrospection;
 use Noerd\Support\ModelMethodColumns;
 use Noerd\Support\RequestState;
 use Noerd\Support\SchemaColumnCache;
+use Noerd\Support\ShellState;
 use Noerd\Support\TenantContext;
 use Noerd\Support\ThemeContext;
-use Noerd\View\Components\AppLayout;
 
 class NoerdServiceProvider extends ServiceProvider
 {
@@ -215,7 +213,7 @@ class NoerdServiceProvider extends ServiceProvider
         BuiltInFieldTypes::register($this->app->make(FieldTypeRegistry::class));
 
         View::composer('noerd::layouts.app', function ($view): void {
-            $view->with('showSidebar', LayoutState::sidebarVisible());
+            $view->with('showSidebar', ShellState::sidebarVisible());
         });
 
         $this->bootConsole();
@@ -229,7 +227,6 @@ class NoerdServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'noerd');
-        Blade::component('noerd::app-layout', AppLayout::class);
         Livewire::addNamespace('noerd', viewPath: __DIR__ . '/../../resources/views/components');
         $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'noerd');
         $this->loadJsonTranslationsFrom(__DIR__ . '/../../resources/lang');

@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Services;
+namespace Noerd\Support;
 
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupLanguage;
 
+/**
+ * @internal
+ */
 final class SetupFieldTypeConverter
 {
     /**

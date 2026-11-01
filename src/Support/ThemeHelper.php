@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Helpers;
+namespace Noerd\Support;
 
 use Illuminate\Database\QueryException;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Services\ThemeRegistry;
-use Noerd\Support\RequestState;
 
 /**
  * Resolves the SYSTEM-WIDE default form theme configured by an admin under
@@ -16,6 +16,8 @@ use Noerd\Support\RequestState;
  *
  * Read on every detail render through StaticConfigHelper, so the per-tenant
  * lookup is memoized for the request (same shape as CurrencyHelper).
+ *
+ * @internal
  */
 final class ThemeHelper
 {

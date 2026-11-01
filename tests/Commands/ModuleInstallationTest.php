@@ -342,7 +342,7 @@ describe('scaffold mode', function (): void {
 describe('boost registration', function (): void {
     beforeEach(function (): void {
         ZzModuleInstallFixtureCommand::$boostUpdateCalls = 0;
-        \Noerd\Support\BoostConfig::markRefreshedInProcess(false);
+        \Noerd\Commands\Support\BoostConfig::markRefreshedInProcess(false);
 
         $this->boostJson = base_path('boost.json');
         $this->boostJsonBackup = File::exists($this->boostJson) ? File::get($this->boostJson) : null;
@@ -365,7 +365,7 @@ describe('boost registration', function (): void {
 
         runZzModuleInstall($this);
 
-        expect((new \Noerd\Support\BoostConfig($this->boostJson))->packages())->toBe(['noerd/noerd', 'zz/install-fixture'])
+        expect((new \Noerd\Commands\Support\BoostConfig($this->boostJson))->packages())->toBe(['noerd/noerd', 'zz/install-fixture'])
             ->and(ZzModuleInstallFixtureCommand::$boostUpdateCalls)->toBe(1);
 
         // The update path is idempotent: nothing new, no second render.
@@ -373,7 +373,7 @@ describe('boost registration', function (): void {
             ->expectsConfirmation('Would you like to assign the app to tenants now?', 'no')
             ->assertExitCode(0);
 
-        expect((new \Noerd\Support\BoostConfig($this->boostJson))->packages())->toBe(['noerd/noerd', 'zz/install-fixture'])
+        expect((new \Noerd\Commands\Support\BoostConfig($this->boostJson))->packages())->toBe(['noerd/noerd', 'zz/install-fixture'])
             ->and(ZzModuleInstallFixtureCommand::$boostUpdateCalls)->toBe(1);
     });
 

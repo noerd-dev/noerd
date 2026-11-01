@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Helpers;
+namespace Noerd\Support;
 
+/**
+ * @internal
+ */
 final class KeyboardShortcutHelper
 {
     private const KEY_SYMBOLS = [

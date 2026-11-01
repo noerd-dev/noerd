@@ -7,7 +7,7 @@
     Expects: $host (the NoerdList Livewire component).
 --}}
 @php
-    $searchShortcut = \Noerd\Helpers\KeyboardShortcutHelper::parse('search_focus', 's');
+    $searchShortcut = \Noerd\Support\KeyboardShortcutHelper::parse('search_focus', 's');
 @endphp
 
 <div

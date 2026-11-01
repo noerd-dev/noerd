@@ -8,7 +8,7 @@ use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyExceptio
 use Livewire\Livewire;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
-use Noerd\Support\LayoutState;
+use Noerd\Support\ShellState;
 use Noerd\Tests\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
@@ -89,7 +89,7 @@ it('stores a plain pixel sidebar width', function (): void {
         ->call('saveSidebarWidth', '320px')
         ->assertOk();
 
-    expect(LayoutState::navigationWidth())->toBe('320px');
+    expect(ShellState::navigationWidth())->toBe('320px');
 });
 
 it('refuses to stop an impersonation that never started', function (): void {

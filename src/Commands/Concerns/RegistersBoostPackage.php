@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Noerd\Commands\Concerns;
 
-use Noerd\Support\BoostConfig;
+use Noerd\Commands\Support\BoostConfig;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 

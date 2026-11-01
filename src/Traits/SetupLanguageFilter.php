@@ -11,7 +11,7 @@ use Noerd\Support\ListFilter;
  * Language helpers for lists whose rows carry a `language` column, backed by
  * the setup languages.
  */
-trait SetupLanguageFilterTrait
+trait SetupLanguageFilter
 {
     protected function hasMultipleLanguages(): bool
     {

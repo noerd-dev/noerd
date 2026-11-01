@@ -11,6 +11,8 @@ use Livewire\ComponentHookRegistry;
  * provider's register() phase: Livewire wires its ComponentHookRegistry during
  * its own boot(), so a boot()-phase registration could land too late. The
  * order is the order the hooks run in for one lifecycle event.
+ *
+ * @internal
  */
 final class NoerdHooks
 {

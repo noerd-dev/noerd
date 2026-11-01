@@ -2,7 +2,7 @@
 
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Noerd\Support\LayoutState;
+use Noerd\Support\ShellState;
 
 new class extends Component {
     /**
@@ -29,7 +29,7 @@ new class extends Component {
 
     public function openStatus(string $title): void
     {
-        LayoutState::setBlockMenuVisible($title, ! LayoutState::blockMenuVisible($title));
+        ShellState::setBlockMenuVisible($title, ! ShellState::blockMenuVisible($title));
     }
 } ?>
 

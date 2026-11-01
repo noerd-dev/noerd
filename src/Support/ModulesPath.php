@@ -9,6 +9,8 @@ namespace Noerd\Support;
  * `noerd.generators.modules_path` says otherwise). Every scaffolder, the YAML
  * resolution and the linter build their module paths through this class, so the
  * setting is honoured everywhere or nowhere.
+ *
+ * @internal
  */
 final class ModulesPath
 {

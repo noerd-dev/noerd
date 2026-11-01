@@ -12,7 +12,7 @@ use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
-use Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Support\SetupFieldTypeConverter;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);

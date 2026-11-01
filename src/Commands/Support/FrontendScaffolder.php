@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Services;
+namespace Noerd\Commands\Support;
 
 use JsonException;
 
@@ -16,6 +16,8 @@ use JsonException;
  * overwriting a file the host owns.
  *
  * Every step reports one result row so the install command can print an auditable summary.
+ *
+ * @internal
  */
 final class FrontendScaffolder
 {

@@ -16,6 +16,8 @@ use Noerd\Services\ThemeRegistry;
  *
  * Readonly fields and fields of a text-only theme get no type rules: the user
  * cannot change their value, so a legacy value must not block the save.
+ *
+ * @internal
  */
 final class FieldRules
 {

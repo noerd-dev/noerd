@@ -67,7 +67,7 @@ public function listData(): array
 For lists with fixed custom sorting (e.g., `orderBy('sort')`) where `listQuery()` would override the sort, apply the search yourself inside a `listData()` override. Use `ColumnFilterParser::applyLikeContains()` — the same driver-portable "contains" match `listQuery()` uses (a bare backslash-escaped `like` matches nothing on sqlite):
 
 ```php
-use Noerd\Services\ColumnFilterParser;
+use Noerd\Support\ColumnFilterParser;
 
 public function listData(): array
 {

@@ -6,7 +6,7 @@ use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Support\Impersonation;
-use Noerd\Support\LayoutState;
+use Noerd\Support\ShellState;
 
 new class extends Component {
     /**
@@ -39,12 +39,12 @@ new class extends Component {
 
     public function setSidebarVisibility(bool $showSidebar): void
     {
-        LayoutState::setSidebarVisible($showSidebar);
+        ShellState::setSidebarVisible($showSidebar);
     }
 
     public function setAppbarVisibility(bool $showAppbar): void
     {
-        LayoutState::setAppBarVisible($showAppbar);
+        ShellState::setAppBarVisible($showAppbar);
     }
 } ?>
 

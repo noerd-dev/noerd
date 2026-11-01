@@ -23,6 +23,8 @@ use Noerd\Traits\NoerdPositionRow;
  * A dispatched event (`storeDetail-{name}` → store) runs its listener inside
  * the same trigger as this hook, so $returnEarly() cannot stop it: a denied
  * event-triggered save or delete aborts the request instead.
+ *
+ * @internal
  */
 final class WriteGuardHook extends NoerdComponentHook
 {

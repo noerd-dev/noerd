@@ -3,7 +3,7 @@
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Noerd\Helpers\IconHelper;
+use Noerd\Support\IconHelper;
 
 new class extends Component {
     #[Locked]

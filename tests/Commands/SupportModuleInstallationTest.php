@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\File;
 use Noerd\Commands\Concerns\InstallsNoerdModule;
-use Noerd\Support\ModuleInstallContext;
+use Noerd\Commands\Support\ModuleInstallContext;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);

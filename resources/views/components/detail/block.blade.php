@@ -12,7 +12,7 @@
     $fieldTypeRegistry = app(\Noerd\Services\FieldTypeRegistry::class);
     $themeRegistry = app(\Noerd\Services\ThemeRegistry::class);
 
-    $theme = \Noerd\Helpers\ThemeHelper::fromLayout(['theme' => $theme ?? null]);
+    $theme = \Noerd\Support\ThemeHelper::fromLayout(['theme' => $theme ?? null]);
     $themeDefinition = $themeRegistry->get($theme);
     // Save/restore the theme context around this block (mirrors NoerdPage's
     // rendering hooks): two sibling blocks with different `theme:` keys must

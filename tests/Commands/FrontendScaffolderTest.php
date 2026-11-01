@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
-use Noerd\Services\FrontendScaffolder;
+use Noerd\Commands\Support\FrontendScaffolder;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);

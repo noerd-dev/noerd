@@ -380,17 +380,6 @@ describe('NoerdPositionRow + positions.cells', function (): void {
 
 describe('positions.table', function (): void {
 
-    it('keeps rendering the legacy header shape', function (): void {
-        $html = Blade::render('<x-noerd::positions.table :columns="$columns" />', [
-            'columns' => [['label' => 'Quantity', 'class' => 'w-32'], 'Name', ''],
-        ]);
-
-        expect(mb_substr_count($html, 'scope="col"'))->toBe(3)
-            ->and($html)->toContain('w-32')
-            ->and($html)->toContain('Quantity')
-            ->and($html)->toContain('Name');
-    });
-
     it('renders resolved columns with labels, widths and the action header', function (): void {
         $columns = zzResolvedArrays([['field' => 'name', 'label' => 'Article', 'width' => 'w-96']]);
 

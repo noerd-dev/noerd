@@ -7,7 +7,7 @@ namespace Noerd\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Noerd\Helpers\SetupCollectionHelper;
-use Noerd\Services\SetupFieldTypeConverter;
+use Noerd\Support\SetupFieldTypeConverter;
 use Noerd\Support\TenantContext;
 use Noerd\Traits\BelongsToTenant;
 

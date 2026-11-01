@@ -111,9 +111,9 @@ The rate limiting is cache-based: the cooldown key is `test-email-cooldown:{pref
 
 The preview modal is `noerd::email-preview-modal`; the test mail is `Noerd\Mail\EmailPreviewTestMail`.
 
-## SetupLanguageFilterTrait (list components)
+## SetupLanguageFilter (list components)
 
-`Noerd\Traits\SetupLanguageFilterTrait` provides language helpers for lists whose rows carry a `language` column, backed by the `Noerd\Models\SetupLanguage` model. Date-range and tenant header filters are no traits any more: build them with `Noerd\Support\ListFilter::dateFrom()` / `dateUntil()` / `options()` (see [List Filters](list-filters.md#header-filters)).
+`Noerd\Traits\SetupLanguageFilter` provides language helpers for lists whose rows carry a `language` column, backed by the `Noerd\Models\SetupLanguage` model. Date-range and tenant header filters are no traits any more: build them with `Noerd\Support\ListFilter::dateFrom()` / `dateUntil()` / `options()` (see [List Filters](list-filters.md#header-filters)).
 
 | Method | Description |
 |--------|-------------|

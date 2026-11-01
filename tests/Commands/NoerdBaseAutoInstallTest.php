@@ -48,7 +48,7 @@ class ZzFakeNoerdInstallCommand extends Command
             'force' => (bool) $this->option('force'),
             'migrate' => (bool) $this->option('migrate'),
             'demo' => (bool) $this->option('demo'),
-            'asDependency' => Noerd\Support\ModuleInstallContext::isDependencyInstall(),
+            'asDependency' => Noerd\Commands\Support\ModuleInstallContext::isDependencyInstall(),
         ];
         BaseInstallRecorder::$installed = BaseInstallRecorder::$succeeds;
 
@@ -212,7 +212,7 @@ describe('demo app during a module install', function (): void {
     });
 
     it('skips the demo question while the base is installed for a module', function (): void {
-        Noerd\Support\ModuleInstallContext::asDependency(function (): void {
+        Noerd\Commands\Support\ModuleInstallContext::asDependency(function (): void {
             $this->artisan('noerd:install-zz-demo-probe')
                 ->doesntExpectOutputToContain('Demo App')
                 ->assertExitCode(0);
@@ -222,7 +222,7 @@ describe('demo app during a module install', function (): void {
     });
 
     it('still installs the demo app for a module command that was given --demo', function (): void {
-        Noerd\Support\ModuleInstallContext::asDependency(function (): void {
+        Noerd\Commands\Support\ModuleInstallContext::asDependency(function (): void {
             $this->artisan('noerd:install-zz-demo-probe', ['--demo' => true])
                 ->assertExitCode(0);
         });
@@ -259,7 +259,7 @@ describe('Application ready callout', function (): void {
     });
 
     it('is suppressed while the base is installed for a module install', function (): void {
-        Noerd\Support\ModuleInstallContext::asDependency(function (): void {
+        Noerd\Commands\Support\ModuleInstallContext::asDependency(function (): void {
             $this->artisan('noerd:install-zz-ready-probe')
                 ->doesntExpectOutputToContain('Application ready')
                 ->assertExitCode(0);

@@ -20,6 +20,8 @@ use Noerd\Traits\NoerdPage;
  * $listModel and $objectPermissionModel are declared per component (with
  * per-component defaults) and cannot carry a trait-level attribute. Mount and
  * server-side writes are untouched — only the client update path is vetoed.
+ *
+ * @internal
  */
 final class LockedPropertiesHook extends NoerdComponentHook
 {

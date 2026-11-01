@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Helpers\ThemeHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\Tenant;
+use Noerd\Support\ThemeHelper;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);

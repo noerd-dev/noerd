@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Helpers;
+namespace Noerd\Support;
 
 use ReflectionClass;
 use WireUi\Heroicons\HeroiconsServiceProvider;
 
+/**
+ * @internal
+ */
 final class IconHelper
 {
     /**

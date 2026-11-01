@@ -26,9 +26,8 @@ new class extends Component
         <x-noerd::positions.table
             :theme="$theme"
             :columns="[
-                ['label' => 'Quantity', 'class' => 'w-32'],
-                ['label' => 'Name', 'class' => 'w-auto'],
-                '',
+                ['field' => 'quantity', 'label' => 'Quantity', 'width' => 'w-32'],
+                ['field' => 'name', 'label' => 'Name', 'width' => 'w-auto'],
             ]"
         >
             @foreach ([1, 2] as $rowNumber)

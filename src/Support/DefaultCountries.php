@@ -13,6 +13,8 @@ use Noerd\Models\SetupCollectionEntry;
  * by `setupCollectionSelect` fields with `valueField: code`, e.g. the customer
  * address country). Idempotent — existing entries are matched by code or name
  * and only backfilled with a missing code, so tenant edits survive.
+ *
+ * @internal
  */
 final class DefaultCountries
 {
@@ -39,7 +41,7 @@ final class DefaultCountries
     public static function ensureForTenant(int $tenantId): void
     {
         TenantContext::run($tenantId, function () use ($tenantId): void {
-            $collection = SetupCollection::withoutGlobalScopes()->firstOrCreate(
+            $collection = SetupCollection::query()->ofTenant($tenantId)->firstOrCreate(
                 [
                     'tenant_id' => $tenantId,
                     'collection_key' => 'COUNTRIES',
@@ -50,8 +52,8 @@ final class DefaultCountries
                 ],
             );
 
-            $entries = SetupCollectionEntry::withoutGlobalScopes()
-                ->where('tenant_id', $tenantId)
+            $entries = SetupCollectionEntry::query()
+                ->ofTenant($tenantId)
                 ->where('setup_collection_id', $collection->id)
                 ->get();
 
@@ -74,7 +76,7 @@ final class DefaultCountries
                     continue;
                 }
 
-                SetupCollectionEntry::withoutGlobalScopes()->create([
+                SetupCollectionEntry::query()->create([
                     'tenant_id' => $tenantId,
                     'setup_collection_id' => $collection->id,
                     'data' => [

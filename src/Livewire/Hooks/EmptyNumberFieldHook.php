@@ -15,6 +15,8 @@ use Noerd\Traits\NoerdPage;
  * turns every such '' into null right BEFORE store() runs, for the trait's own
  * store() and for any custom override alike, so a component never has to
  * normalise its numeric fields by hand.
+ *
+ * @internal
  */
 final class EmptyNumberFieldHook extends NoerdComponentHook
 {

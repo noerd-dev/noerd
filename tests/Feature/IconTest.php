@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use Noerd\Helpers\IconHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Support\IconHelper;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);

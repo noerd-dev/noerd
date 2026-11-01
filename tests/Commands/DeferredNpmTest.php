@@ -7,7 +7,7 @@ use Illuminate\Contracts\Console\Kernel;
 use Noerd\Commands\Concerns\HasModuleInstallation;
 use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Commands\Concerns\RunsNpmBuild;
-use Noerd\Support\ModuleInstallContext;
+use Noerd\Commands\Support\ModuleInstallContext;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);

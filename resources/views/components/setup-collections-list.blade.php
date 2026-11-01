@@ -9,12 +9,12 @@ use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdList;
-use Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Traits\SetupLanguageFilter;
 
 new class extends Component
 {
     use NoerdList;
-    use SetupLanguageFilterTrait;
+    use SetupLanguageFilter;
 
     public $listModel = SetupCollectionEntry::class;
     public ?string $detailRoute = 'noerd.setup-collection.detail';

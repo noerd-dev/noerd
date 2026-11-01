@@ -16,6 +16,8 @@ namespace Noerd\Support;
  *
  *     $memo = &RequestState::bucket('noerd.settings');
  *     return $memo[$tenantId] ??= NoerdSettings::query()->...->first();
+ *
+ * @internal
  */
 final class RequestState
 {

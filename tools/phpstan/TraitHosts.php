@@ -17,7 +17,7 @@ use Noerd\Traits\NoerdList;
 use Noerd\Traits\NoerdPage;
 use Noerd\Traits\NoerdPositionRow;
 use Noerd\Traits\NoerdSettingsPage;
-use Noerd\Traits\SetupLanguageFilterTrait;
+use Noerd\Traits\SetupLanguageFilter;
 
 /*
  | PHPStan analyses a trait only through a class that uses it, and noerd's
@@ -29,7 +29,7 @@ use Noerd\Traits\SetupLanguageFilterTrait;
 final class ListHost extends Component
 {
     use NoerdList;
-    use SetupLanguageFilterTrait;
+    use SetupLanguageFilter;
 }
 
 final class PageHost extends Component

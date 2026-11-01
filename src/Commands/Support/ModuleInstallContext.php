@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Support;
+namespace Noerd\Commands\Support;
 
 /**
  * Marks the stretch of a module installation that runs a DEPENDENCY module's

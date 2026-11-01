@@ -62,16 +62,25 @@ final class NoerdAuth
         return self::guard()->check();
     }
 
+    /**
+     * @internal Read by the core provider when it registers the noerd guard.
+     */
     public static function providerName(): string
     {
         return self::PROVIDER;
     }
 
+    /**
+     * @internal Read by the core provider when it registers the noerd guard.
+     */
     public static function brokerName(): string
     {
         return self::BROKER;
     }
 
+    /**
+     * @internal Read by the core provider when it registers the noerd guard.
+     */
     public static function broker(): PasswordBroker
     {
         return Password::broker(self::brokerName());

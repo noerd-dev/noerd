@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Services;
+namespace Noerd\Support;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;

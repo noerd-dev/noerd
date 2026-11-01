@@ -14,6 +14,8 @@ use Symfony\Component\Yaml\Yaml;
  * also styles the hand-written position tables of documents (order, quote,
  * invoice, …) through the `x-noerd::positions.*` and `x-noerd::forms.control`
  * components — a theme therefore gets position styling for free.
+ *
+ * @internal
  */
 final class ThemeDefinition
 {

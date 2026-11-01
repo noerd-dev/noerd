@@ -27,7 +27,7 @@
         // YAML assigned.
         $effectiveShortcut = $actionItem['shortcut'] ?? ($actionIndex === 0 ? config('noerd.keyboard_shortcuts.new_entry', 'n') : null);
         $shortcut = $effectiveShortcut !== null
-            ? \Noerd\Helpers\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
+            ? \Noerd\Support\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
             : null;
         // An action either opens a named Livewire route as a modal
         // (route:) or calls a method on the list component (action:). The

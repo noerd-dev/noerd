@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\File;
 use Noerd\Commands\Concerns\RegistersBoostPackage;
-use Noerd\Support\BoostConfig;
+use Noerd\Commands\Support\BoostConfig;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
