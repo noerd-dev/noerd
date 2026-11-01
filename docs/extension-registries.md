@@ -11,7 +11,7 @@ Registries with their own documentation are not repeated here:
   beyond CRUD, see [permissions.md](permissions.md)
 
 Documented on this page: `ComponentSlotsRegistry` (top bar, header actions, detail slots),
-`PicklistRegistry`, `PositionTableRegistry`, `DynamicNavigationRegistry`, `RelationBoxRegistry`,
+`ProfileNavigationRegistry`, `PicklistRegistry`, `PositionTableRegistry`, `DynamicNavigationRegistry`, `RelationBoxRegistry`,
 `ComponentAccessGuard`, the overridable null bindings and the authorization gates.
 
 Every registry answers the same four questions — `register()`, `has()`, `get()` (null or an empty
@@ -107,6 +107,42 @@ public function hostStored(int $modelId): void
   re-mounted) — hosts should not open nested modals around a filled slot
 - The shipped host is the setup app's user detail (`noerd::noerd-user-detail`, slot
   `user-below-form`); mechanics: `tests/Feature/DetailSlotRenderTest.php`
+
+## ProfileNavigationRegistry
+
+The navigation of the profile area — the pages a signed-in person reaches through "Profile" in the
+user menu. The core registers its own pages: **Profile and Password** (`noerd.profile`, `/noerd/user`),
+**Language and Locale** (`noerd.profile.language`), **Tenant Access** (`noerd.profile.tenants`) and
+**Delete Account** (`noerd.profile.delete`). A module adds a page of its own — e.g. the MCP
+connectors of `noerd/mcp` — without the core knowing it.
+
+**API** (`Noerd\Services\ProfileNavigationRegistry`):
+
+| Method | Description |
+|--------|-------------|
+| `register(string $label, string $route, ?string $heroicon = null, int $sort = 100)` | Add a page; `$label` is an English translation key, `$heroicon` an outline heroicon name. Registering the same route again replaces the entry |
+| `has(string $route)`, `get(string $route)` | One entry, only while its route exists |
+| `all()` | The entries in render order (ascending `sort`, equal sorts in registration order); an entry whose route does not exist is left out |
+
+The core pages use the sorts 10, 20, 30 and 90 (Delete Account stays last). The page itself is a
+route of the module — a full-page Livewire component whose root is the profile chrome:
+
+```php
+// Provider boot()
+app(ProfileNavigationRegistry::class)->register('My Connectors', 'mymodule.connectors', 'link', 50);
+```
+
+```blade
+{{-- resources/views/components/connectors-page.blade.php --}}
+<x-noerd::profile-layout>
+    <x-noerd::profile-section>
+        …
+    </x-noerd::profile-section>
+</x-noerd::profile-layout>
+```
+
+`<x-noerd::profile-layout>` renders the navigation left of the slot (the core's route views wrap it
+in `<x-noerd::app-layout>`), `<x-noerd::profile-section>` the box and reading width of one block.
 
 ## PicklistRegistry
 
