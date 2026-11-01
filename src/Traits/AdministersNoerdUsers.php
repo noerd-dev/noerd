@@ -58,6 +58,7 @@ trait AdministersNoerdUsers
 
         abort_if($user->isSuperAdmin(), 403);
 
+        /** @var Tenant $tenant */
         foreach ($user->tenants()->get() as $tenant) {
             $tenant->removeMember($user);
         }
