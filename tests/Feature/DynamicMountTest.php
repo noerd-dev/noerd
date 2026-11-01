@@ -21,9 +21,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 uses(TestCase::class, RefreshDatabase::class);
 
 /*
- | Components reachable through the DYNAMIC mount seams — the client-dispatchable
- | `noerdModal` event and GET /noerd/component-page/{component} — receive
- | attacker-chosen mount arguments. Livewire assigns those to matching public
+ | Components reachable through the DYNAMIC mount seam — the client-dispatchable
+ | `noerdModal` event — receive attacker-chosen mount arguments. Livewire assigns those to matching public
  | properties INCLUDING #[Locked] ones (Locked only vetoes the update path), so
  | every component that acts on such an argument must authorize the target
  | itself. Each test below is a previously working exploit.
@@ -108,11 +107,12 @@ describe('authorization', function (): void {
         expect(Hash::check('original-secret', $victim->refresh()->password))->toBeTrue();
     });
 
-    it('does not expose the password form through the generic component page', function (): void {
+    it('offers no URL that mounts an arbitrary component as a page', function (): void {
         $victim = NoerdUser::factory()->create();
 
-        $this->get('/noerd/component-page/noerd::user-update-password?userId=' . $victim->id)
-            ->assertForbidden();
+        $this->actingAs(NoerdUser::factory()->withExampleTenant()->create(), 'noerd')
+            ->get('/noerd/component-page/noerd::user-update-password?userId=' . $victim->id)
+            ->assertNotFound();
     });
 
     it('never invokes a non-relation method from a relation box tile', function (): void {

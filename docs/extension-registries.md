@@ -314,17 +314,14 @@ app(RelationBoxRegistry::class)->register(Customer::class, [
 ## ComponentAccessGuard
 
 An allow-list of components that may only be mounted by a tenant admin. Setup screens are normally
-protected by the `setup` route middleware (`SetupMiddleware` → `NoerdUser::isAdmin()`), but two
-entry points mount a component **without** ever passing through that middleware:
+protected by the `setup` route middleware (`SetupMiddleware` → `NoerdUser::isAdmin()`), but the
+client-dispatchable `noerdModal` event mounts a component **without** ever passing through that
+middleware — the modal stack takes the component name straight from the browser.
 
-- the client-dispatchable `noerdModal` event — the modal stack takes the component name straight
-  from the browser
-- the generic component page `/noerd/component-page/{componentName}`
-
-Both call `ComponentAccessGuard::authorize()` before instantiating the component, which re-asserts
-admin access for every name on the allow-list. A module that ships admin-only screens must
-therefore register them — an unregistered admin component is reachable through those two seams by
-any authenticated user of the tenant.
+`ComponentAccessHook` calls `ComponentAccessGuard::authorize()` on every mount and hydrate of any
+component, which re-asserts admin access for every name on the allow-list. A module that ships
+admin-only screens must therefore register them — an unregistered admin component is reachable
+through the modal stack by any authenticated user of the tenant.
 
 **API** (`Noerd\Support\ComponentAccessGuard`, static):
 

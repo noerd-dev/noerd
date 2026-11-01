@@ -20,7 +20,7 @@ new class extends Component {
     public function mount(): void
     {
         // Defense in depth: these tenant-wide settings can be reached outside the
-        // setup route (modal stack / generic component page). Enforce admin access
+        // setup route (the modal stack). Enforce admin access
         // here too, independent of the dynamic-mount guard.
         abort_unless(NoerdAuth::user()?->isAdmin(), 403);
 

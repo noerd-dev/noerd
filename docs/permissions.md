@@ -139,9 +139,8 @@ write.
 - **Apps:** `AppAccessMiddleware`, the app bar, the home
   tiles and the allowed-app config discovery all consult `canAccessApp()`.
 - **Admin-only components:** `/setup` routes run through `SetupMiddleware`
-  (`NoerdUser::isAdmin()`); the two entry points that bypass it — the
-  client-dispatchable `noerdModal` event and
-  `/noerd/component-page/{componentName}` — re-assert admin access through
+  (`NoerdUser::isAdmin()`); the entry point that bypasses it — the
+  client-dispatchable `noerdModal` event — re-asserts admin access through
   `Noerd\Support\ComponentAccessGuard`. A module that ships admin-only screens
   registers them with `ComponentAccessGuard::registerAdminComponents()` (see
   [Extension Registries](extension-registries.md#componentaccessguard)).

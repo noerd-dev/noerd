@@ -48,9 +48,7 @@
         // the href for cmd/ctrl-click. No extra "open in new tab" link: the
         // external-link icon is reserved for `external` targets, the modal tab
         // is marked by the stack icon alone.
-        $componentRouteUrl = $tabModalRoute
-            ? route($tabModalRoute, $routeParameters ?? [])
-            : ($route ? route($route, $routeParameters) : null);
+        $componentRouteUrl = $tabModalRoute ? route($tabModalRoute, $routeParameters ?? []) : null;
 
         $clickExpression = $tabModalRoute
             ? '$modalRoute(' . \Illuminate\Support\Js::from($tabModalRoute) . ', ' . \Illuminate\Support\Js::from($arguments ?? []) . ', null, null, null, ' . \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $component])) . ')'

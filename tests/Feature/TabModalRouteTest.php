@@ -82,9 +82,11 @@ it('opens a component tab as a modal with the record id resolved', function (): 
         ],
     ], 42);
 
+    // A component has no address of its own, so the tab carries no href.
     expect($html)->toContain('$modal(')
         ->toContain('zz::records-list')
-        ->not->toContain('$modalRoute(');
+        ->not->toContain('$modalRoute(')
+        ->not->toContain('href=');
 
     // The arguments reach Alpine as a JSON literal: '$modelId' is resolved to the
     // record id, static values (a morph class here) pass through untouched.

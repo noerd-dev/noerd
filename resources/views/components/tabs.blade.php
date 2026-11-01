@@ -59,19 +59,9 @@
                                 {{ __($tab['label']) }}
                             </x-noerd::tab>
                         @elseif (isset($tab['component']))
-                            @php
-                                $tabArguments = isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : [];
-                                $isRoutable = ! empty($tab['routable']);
-                                $tabRoute = $isRoutable ? 'noerd.component-page' : null;
-                                $tabRouteParameters = $isRoutable
-                                    ? array_merge(['componentName' => $tab['component']], $tabArguments)
-                                    : [];
-                            @endphp
                             <x-noerd::tab
                                 :component="$tab['component']"
-                                :arguments="$tabArguments"
-                                :route="$tabRoute"
-                                :routeParameters="$tabRouteParameters"
+                                :arguments="isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : []"
                             >
                                 {{ __($tab['label']) }}
                             </x-noerd::tab>
