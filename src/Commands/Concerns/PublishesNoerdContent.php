@@ -35,6 +35,8 @@ trait PublishesNoerdContent
             return false;
         }
 
+        $this->publishProfileAppConfigs();
+
         $this->publishNoerdConfig();
         $this->setupFrontendAssets();
         $this->updateLivewireConfig();
@@ -65,6 +67,20 @@ trait PublishesNoerdContent
         $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/setup'), quiet: true));
 
         return true;
+    }
+
+    /**
+     * Publish the navigation of the profile area (app-configs/profile). An
+     * existing copy is kept unless --force: modules add their entries to it
+     * (ensureProfileNavigation()), an update must not drop them.
+     */
+    protected function publishProfileAppConfigs(): void
+    {
+        $sourceDir = $this->getModuleRoot() . '/app-configs/profile';
+
+        if (File::isDirectory($sourceDir)) {
+            $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/profile'), quiet: true, keepExisting: true));
+        }
     }
 
     /**

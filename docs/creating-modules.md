@@ -197,7 +197,7 @@ trait, so everything below applies to both kinds.
 | `getAdditionalSubdirectories(): array` | Extra app-config folders beyond `lists`, `details`, `pages`, `settings` (the CMS ships `forms`) |
 | `getRequiredModules(): array` | Modules installed first and assigned along — see below |
 | `publishModuleExtras(bool $update): void` | Files beyond the declared ones — the auditing migration (`PublishesAuditMigration`), a patch to a host config file. Runs with the publishing steps, **before** the migration prompt, on install and update; idempotent, asks nothing |
-| `ensureModuleSetup(): void` | The module's own steps: `ensureSetupNavigation()`, `ensureQuickMenuButton()`, `ensureDashboardWidget()`, seeds. Runs at the end of the installation (after the migration prompt) **and on every update** — it must be idempotent, ask nothing, and guard tables the user may not have migrated yet |
+| `ensureModuleSetup(): void` | The module's own steps: `ensureSetupNavigation()`, `ensureProfileNavigation()`, `ensureQuickMenuButton()`, `ensureDashboardWidget()`, seeds. Runs at the end of the installation (after the migration prompt) **and on every update** — it must be idempotent, ask nothing, and guard tables the user may not have migrated yet |
 
 The Claude skills of a top-level `skills/` folder and the Boost registration (`boost.json`) are
 handled by both flows without any declaration.

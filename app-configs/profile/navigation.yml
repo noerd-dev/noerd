@@ -1,0 +1,19 @@
+- title: Profile
+  name: profile
+  hidden: true
+  route: noerd.profile
+  block_menus:
+    - title: My Account
+      navigations:
+        - title: Profile and Password
+          route: noerd.profile
+          heroicon: user-circle
+        - title: Language and Locale
+          route: noerd.profile.language
+          heroicon: language
+        - title: Tenant Access
+          route: noerd.profile.tenants
+          heroicon: building-office
+        - title: Delete Account
+          route: noerd.profile.delete
+          heroicon: trash
