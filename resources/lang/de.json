@@ -336,5 +336,7 @@
     "You do not have permission to view this area.": "Sie haben keine Berechtigung, diesen Bereich anzuzeigen.",
     "Your email address is unverified.": "Ihre E-Mail-Adresse ist nicht verifiziert.",
     "Zip Code": "PLZ",
-    "was: :value": "vorher: :value"
+    "was: :value": "vorher: :value",
+    "Profile and Password": "Profil und Passwort",
+    "Language and Locale": "Sprache und Gebietsschema"
 }

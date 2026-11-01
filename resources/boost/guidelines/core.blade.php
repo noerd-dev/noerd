@@ -209,6 +209,14 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   assigned AND `AccessHelper::canUseApp()` allows it. Never a per-module "tenant has app X" gate; on
   routes use `app-access:{app}`. A per-app target becomes one button per app the tenant runs.
 
+### Profile Area Pages
+- The profile area (user menu → Profile) is a set of pages with one navigation: Profile and
+  Password, Language and Locale, Tenant Access, Delete Account. A module adds a page of the person's
+  OWN data with `app(ProfileNavigationRegistry::class)->register('Label', 'route.name', 'heroicon', $sort)`
+  in `boot()`; the page is a full-page Livewire component whose root is `<x-noerd::profile-layout>`
+  with `<x-noerd::profile-section>` blocks. Never a section on another module's page, never a core
+  change for a module's page. Reference: `docs/extension-registries.md` ("ProfileNavigationRegistry").
+
 ### Custom Attributes (Project-Specific Fields)
 - Modules are NEVER modified for one project's fields — neither code nor YAML. Project fields live in the
   `custom_attributes` JSON column: the column migration in the PROJECT root, the

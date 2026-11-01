@@ -59,6 +59,9 @@ Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void
     Route::livewire('component-page/{componentName}', 'noerd::generic-component-page')->name('noerd.component-page');
     Route::livewire('no-tenant', 'noerd::no-tenant')->name('noerd.no-tenant');
     Route::view('user', 'noerd::profile')->name('noerd.profile');
+    Route::view('user/language', 'noerd::profile-language')->name('noerd.profile.language');
+    Route::view('user/tenants', 'noerd::profile-tenants')->name('noerd.profile.tenants');
+    Route::view('user/delete-account', 'noerd::profile-delete')->name('noerd.profile.delete');
 });
 
 Route::group(['prefix' => $prefix, 'middleware' => ['noerd-guest']], function (): void {
