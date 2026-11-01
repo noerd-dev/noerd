@@ -118,9 +118,12 @@ new class extends Component {
                             </button>
                         </x-slot:trigger>
 
-                        <x-noerd::action-menu-item :href="route('noerd.profile')" navigate>
-                            {{__('Profile')}}
-                        </x-noerd::action-menu-item>
+                        {{-- The profile is the person's own account — closed while impersonating. --}}
+                        @unless(Impersonation::active())
+                            <x-noerd::action-menu-item :href="route('noerd.profile')" navigate>
+                                {{__('Profile')}}
+                            </x-noerd::action-menu-item>
+                        @endunless
 
                         <x-noerd::action-menu-item wire:click="logout">
                             {{__('Sign Out')}}

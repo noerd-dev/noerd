@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Support\Impersonation;
 use Noerd\Support\ListFilter;
@@ -15,26 +16,53 @@ new class extends Component {
 
     public $detailComponent = 'noerd::noerd-user-page';
 
+    /** The filter value of the super admin's "Without tenant" option. */
+    private const string WITHOUT_TENANT = 'none';
+
     /**
      * The tenant dropdown mirrors the list scope: every tenant for a super
-     * admin, the administered tenants for a tenant admin. Guest-safe — a list
-     * rendered without an authenticated noerd user offers an empty picklist.
-     * The membership is a pivot, not a column: listData() applies the choice.
+     * admin — plus "Without tenant", the accounts that lost their last
+     * membership —, the administered tenants for a tenant admin. Guest-safe — a
+     * list rendered without an authenticated noerd user offers an empty
+     * picklist. The membership is a pivot, not a column: listData() applies
+     * the choice.
      */
     protected function getTenantsListFilter(): ListFilter
     {
         return ListFilter::options(
             __('Tenant'),
             'tenant_id',
-            fn(): array => (NoerdAuth::user()?->administeredTenants() ?? collect())->pluck('name', 'id')->all(),
+            function (): array {
+                $user = NoerdAuth::user();
+                $options = ($user?->administeredTenants() ?? collect())->pluck('name', 'id')->all();
+
+                if ($user?->isSuperAdmin()) {
+                    $options[self::WITHOUT_TENANT] = __('Without tenant');
+                }
+
+                return $options;
+            },
         )->manual();
     }
+
+    /** Shown above the list when "Login as user" needs another tenant selected. */
+    public ?string $impersonationNotice = null;
 
     public function loginAsUser(int $userId): void
     {
         $target = NoerdUser::find($userId);
 
         abort_unless($target instanceof NoerdUser, 403);
+
+        // An impersonation is bound to the selected tenant: a member of another
+        // tenant is explained, not answered with a bare 403.
+        $tenantId = TenantHelper::getSelectedTenantId();
+
+        if (! $target->isSuperAdmin() && ($tenantId === null || ! $target->tenants()->whereKey($tenantId)->exists())) {
+            $this->impersonationNotice = __('This user does not belong to the selected tenant. Select one of their tenants to sign in as them.');
+
+            return;
+        }
 
         Impersonation::start($target);
 
@@ -43,7 +71,8 @@ new class extends Component {
 
     public function listData(): array
     {
-        $requested = (int) ($this->listFilters['tenant_id'] ?? 0);
+        $filterValue = $this->listFilters['tenant_id'] ?? null;
+        $requested = (int) $filterValue;
 
         $query = $this->listQuery($this->listModel)->with(['tenants']);
 
@@ -51,7 +80,9 @@ new class extends Component {
             // A super admin administers the whole installation: every account is
             // visible, including one that belongs to no tenant at all. Only the
             // header filter narrows the list.
-            if ($requested > 0) {
+            if ($filterValue === self::WITHOUT_TENANT) {
+                $query->whereDoesntHave('tenants');
+            } elseif ($requested > 0) {
                 $query->whereHas('tenants', function ($relationQuery) use ($requested): void {
                     $relationQuery->where('tenant_id', $requested);
                 });
@@ -74,5 +105,11 @@ new class extends Component {
 }; ?>
 
 <x-noerd::page>
+    @if ($impersonationNotice)
+        <div class="mx-4 mt-3 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800" role="alert">
+            {{ $impersonationNotice }}
+        </div>
+    @endif
+
     <x-noerd::list />
 </x-noerd::page>

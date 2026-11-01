@@ -78,7 +78,7 @@ translation from [Laravel Lang](https://github.com/Laravel-Lang/lang)).
 ### Step 4 — Pick the language
 
 Every user selects their own interface language under **Profile → Language**. An
-administrator can also set it for someone else in the user detail screen. The choice is
+administrator picks it for a new account when adding it in the user detail screen. The choice is
 stored per user (`noerd_user_settings.locale`, exposed as `NoerdUser::$locale`) and applied on
 every request — including Livewire updates — by the `Noerd\Middleware\SetUserLocale`
 middleware, which noerd pushes onto the global `web` group (see [Authentication](auth.md)).

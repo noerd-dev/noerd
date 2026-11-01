@@ -36,10 +36,8 @@ new class extends Component {
         $tenant->uuid = Str::uuid();
         $tenant->save();
 
-        // Default also admin
-        $tenant->users()->attach(NoerdAuth::user()->id, [
-            'profile_key' => Profile::Admin->value,
-        ]);
+        // The creator administers the new tenant.
+        $tenant->addMember(NoerdAuth::user(), Profile::Admin->value);
 
         // Copying the apps IS assigning them, which only a super admin may do — a
         // tenant admin's new tenant starts without apps. The pivot flags are

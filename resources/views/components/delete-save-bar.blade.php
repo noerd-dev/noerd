@@ -2,6 +2,9 @@
     'showDelete' => false,
     'showSave' => true,
     'deleteMessage' => null,
+    // The delete button's caption — e.g. "Remove from tenant" where delete()
+    // ends a membership instead of deleting the record.
+    'deleteLabel' => null,
 ])
 
 @php
@@ -27,7 +30,7 @@
                 x-show="showButtons"
                 wire:confirm="{{ $deleteMessage }}"
             >
-                {{ __('Delete') }}
+                {{ $deleteLabel ?? __('Delete') }}
             </x-noerd::button>
         @else
             <x-noerd::button
@@ -36,7 +39,7 @@
                 wire:click="delete"
                 x-show="showButtons"
             >
-                {{ __('Delete') }}
+                {{ $deleteLabel ?? __('Delete') }}
             </x-noerd::button>
         @endif
 
@@ -51,7 +54,7 @@
                 x-show="! showButtons"
                 @click="showButtons = true"
             >
-                {{ __('Delete') }}
+                {{ $deleteLabel ?? __('Delete') }}
             </x-noerd::button>
         @endif
 

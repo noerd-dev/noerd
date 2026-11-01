@@ -179,7 +179,13 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   register further profiles via `app(ProfileRegistry::class)->register(key, label)`.
 - Above the profiles: `noerd_users.super_admin` (`isSuperAdmin()`), set only on the console
   (`noerd:super-admin {id|email}`, `--revoke`). Whether a user may work in a tenant is
-  `NoerdUser::canAccessTenant()` / `accessibleTenants()`, never `$user->tenants`.
+  `NoerdUser::canAccessTenant()` / `accessibleTenants()`, never `$user->tenants`. An impersonation
+  ("Login as user") is bound to the selected tenant: the account's memberships shrink to it and the
+  profile area (`profile` middleware) is closed — a module's profile page needs no guard of its own.
+- A membership is written ONLY through `Tenant::addMember($user, $profileKey)` / `setMemberProfile()` /
+  `removeMember()` (events `TenantMemberAdded` / `TenantMemberRemoved`) — never `tenants()->attach()`/`detach()`.
+  Removing the last membership keeps the account. A tenant admin manages memberships only; the account
+  (name, e-mail, password, deletion) belongs to the person and the super admin (`docs/permissions.md`).
 - Assigning an app to a tenant is a SUPER ADMIN decision (a tenant admin only reorders and hides).
   System flows assign ALWAYS through `Tenant::assignApp($app, $pivot)` — never
   `tenantApps()->attach()`/`sync()`: it fires `Noerd\Events\TenantAppAssigned` once and is a no-op for

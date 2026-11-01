@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Noerd\Enums\Profile;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Support\Impersonation;
 
 /**
  * Confirms the deletion of the authenticated user's own account with its
@@ -14,6 +15,10 @@ new class extends Component {
 
     public function deleteUser(): void
     {
+        // The person's own account: never changed by an administrator signed
+        // in as them (see Impersonation).
+        abort_if(Impersonation::active(), 403);
+
         $this->validate([
             'password' => ['required', 'string'],
         ]);
@@ -42,7 +47,11 @@ new class extends Component {
 
         NoerdAuth::guard()->logout();
 
-        $user->tenants()->detach();
+        // Every membership ends through the tenant, so the modules hear it.
+        foreach ($user->tenants()->get() as $tenant) {
+            $tenant->removeMember($user);
+        }
+
         $user->userSetting()->delete();
         $user->delete();
 

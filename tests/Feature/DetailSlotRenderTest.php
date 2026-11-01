@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Services\ComponentSlotsRegistry;
@@ -24,6 +26,7 @@ it('mounts a registered slot component in the user detail with the host name and
     app(ComponentSlotsRegistry::class)->register('user-below-form', 'detail-slots-test::probe');
 
     $user = NoerdUser::factory()->create();
+    $user->tenants()->attach(NoerdAuth::user()->tenants()->first()->id, ['profile_key' => Profile::User->value]);
 
     Livewire::test('noerd::noerd-user-detail', ['modelId' => $user->id])
         ->assertOk()

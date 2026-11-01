@@ -159,9 +159,9 @@ describe('authorization', function (): void {
             ->and(NoerdUser::find($this->attacker->id)->isAdmin())->toBeFalse();
     });
 
-    it('keeps the admin path working for an admin of the edited user', function (): void {
+    it('keeps the password path working for a super admin', function (): void {
         $tenant = Tenant::factory()->create();
-        $admin = NoerdUser::factory()->create();
+        $admin = NoerdUser::factory()->create(['super_admin' => true]);
         $admin->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
 
         $member = NoerdUser::factory()->create(['password' => Hash::make('old')]);

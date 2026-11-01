@@ -35,10 +35,13 @@ it('confines a tenant admin to the members of its tenants', function (): void {
     expect(Impersonation::allows($this->admin, $foreign))->toBeFalse();
 });
 
-it('lets a super admin impersonate an account without any tenant', function (): void {
+it('binds a super admin to the members of the selected tenant as well', function (): void {
     $super = NoerdUser::factory()->create(['super_admin' => true]);
+    $member = NoerdUser::factory()->create();
+    $member->tenants()->attach($this->tenant->id, ['profile_key' => Profile::User->value]);
 
-    expect(Impersonation::allows($super, NoerdUser::factory()->create()))->toBeTrue();
+    expect(Impersonation::allows($super, $member))->toBeTrue()
+        ->and(Impersonation::allows($super, NoerdUser::factory()->create()))->toBeFalse();
 });
 
 it('never impersonates a super admin', function (): void {

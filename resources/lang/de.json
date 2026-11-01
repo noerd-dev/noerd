@@ -339,5 +339,14 @@
     "was: :value": "vorher: :value",
     "Profile and Password": "Profil und Passwort",
     "Language and Locale": "Sprache und Gebietsschema",
-    "My Account": "Mein Konto"
+    "My Account": "Mein Konto",
+    "This user does not belong to the selected tenant. Select one of their tenants to sign in as them.": "Dieser Benutzer gehört nicht zum ausgewählten Mandanten. Wähle einen seiner Mandanten aus, um dich als dieser Benutzer anzumelden.",
+    "Add User": "Benutzer hinzufügen",
+    "Remove from tenant": "Aus Mandant entfernen",
+    "Without tenant": "Ohne Mandant",
+    "Delete this account for good? It loses the access to every tenant.": "Dieses Konto endgültig löschen? Es verliert den Zugang zu allen Mandanten.",
+    "Name and e-mail belong to the person — they change them in their profile.": "Name und E-Mail gehören der Person – sie ändert sie in ihrem Profil.",
+    "You were added to :tenant": "Du wurdest zu :tenant hinzugefügt",
+    ":name added you to :tenant.": ":name hat dich zu :tenant hinzugefügt.",
+    "Sign in with your existing account and switch to the tenant in the top bar.": "Melde dich mit deinem bestehenden Konto an und wechsle oben in der Leiste zum Mandanten."
 }

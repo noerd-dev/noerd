@@ -5,6 +5,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Support\Impersonation;
 
 new class extends Component
 {
@@ -17,6 +18,10 @@ new class extends Component
      */
     public function updatePassword(): void
     {
+        // The person's own account: never changed by an administrator signed
+        // in as them (see Impersonation).
+        abort_if(Impersonation::active(), 403);
+
         try {
             $validated = $this->validate([
                 // The rule verifies against a GUARD — unqualified it uses the

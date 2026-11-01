@@ -526,3 +526,21 @@ Modules listen for the event in their service provider to pull in whatever an ap
 alongside it (an app folder in the media library, a hidden companion app) — the core knows no module,
 and a module never patches the assignment screens. Never write `tenantApps()->attach()` or `sync()`
 in a module: the listeners of the other modules would not hear it.
+
+## Tenant Membership (`Tenant::addMember()` / `removeMember()`)
+
+A membership of an account in a tenant is written through the tenant, whoever writes it — the user
+screen, tenant creation, the console commands, a module's registration or provisioning flow:
+
+```php
+$tenant->addMember($user, Profile::User->value);   // false when already a member
+$tenant->setMemberProfile($user, 'MY_PROFILE');     // false when no member
+$tenant->removeMember($user);                       // false when no member — the account stays
+```
+
+The profile key must be registered in the `ProfileRegistry` (built-in or module profile) or be `null`;
+an unknown key throws `InvalidArgumentException`. `addMember()` fires `Noerd\Events\TenantMemberAdded`,
+`removeMember()` fires `Noerd\Events\TenantMemberRemoved` (tenant id, user id) — each once, only for an
+actual change. A module that grants an account something INSIDE a tenant (roles, individual grants)
+listens for `TenantMemberRemoved` and drops it, so a later membership starts clean. Never write
+`tenants()->attach()`/`detach()` or `users()->attach()`/`detach()`.
