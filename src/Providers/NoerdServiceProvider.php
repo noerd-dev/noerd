@@ -53,6 +53,7 @@ use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
 use Noerd\Middleware\EnsureTenantMembership;
 use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
+use Noerd\Middleware\ProfileMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\NoerdUser;
@@ -71,7 +72,6 @@ use Noerd\Services\NoerdManager;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\PositionTableRegistry;
-use Noerd\Services\ProfileNavigationRegistry;
 use Noerd\Services\ProfileRegistry;
 use Noerd\Services\RelationBoxRegistry;
 use Noerd\Services\RelationFieldRegistry;
@@ -104,7 +104,6 @@ class NoerdServiceProvider extends ServiceProvider
         ProfileRegistry::class => ProfileRegistry::class,
         DynamicNavigationRegistry::class => DynamicNavigationRegistry::class,
         ComponentSlotsRegistry::class => ComponentSlotsRegistry::class,
-        ProfileNavigationRegistry::class => ProfileNavigationRegistry::class,
         RelationBoxRegistry::class => RelationBoxRegistry::class,
         FieldTypeRegistry::class => FieldTypeRegistry::class,
         // Autowired: its only dependency is the FieldTypeRegistry singleton.
@@ -282,6 +281,7 @@ class NoerdServiceProvider extends ServiceProvider
         // component updates stay auth-protected.
         Livewire::addPersistentMiddleware([NoerdAuthenticate::class]);
         $router->aliasMiddleware('setup', SetupMiddleware::class);
+        $router->aliasMiddleware('profile', ProfileMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('action-permission', ActionPermissionMiddleware::class);
         $router->aliasMiddleware('setup.collections.ui', EnsureSetupCollectionDefinitionsEnabled::class);
@@ -302,13 +302,6 @@ class NoerdServiceProvider extends ServiceProvider
         $themeRegistry = $this->app->make(ThemeRegistry::class);
         $themeRegistry->registerPath(resource_path('views/themes'), priority: 100);
         $themeRegistry->registerPath(__DIR__ . '/../../resources/views/themes', priority: 0);
-
-        // The pages of the profile area; modules add theirs after these.
-        $profileNavigation = $this->app->make(ProfileNavigationRegistry::class);
-        $profileNavigation->register('Profile and Password', 'noerd.profile', 'user-circle', 10);
-        $profileNavigation->register('Language and Locale', 'noerd.profile.language', 'language', 20);
-        $profileNavigation->register('Tenant Access', 'noerd.profile.tenants', 'building-office', 30);
-        $profileNavigation->register('Delete Account', 'noerd.profile.delete', 'trash', 90);
     }
 
     /**

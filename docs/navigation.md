@@ -126,6 +126,25 @@ breaking the sidebar.
           config: noerd.features.currency
 ```
 
+## Setup and profile navigation
+
+Two navigations belong to no tenant app and are selected by route middleware instead:
+
+- **Setup** (`app-configs/setup/navigation.yml`, middleware `setup`, admins only) — a module adds
+  an entry with `ensureSetupNavigation('Administration', [...])` in its install command's
+  `ensureModuleSetup()`.
+- **Profile** (`app-configs/profile/navigation.yml`, middleware `profile`, every signed-in person)
+  — the pages of the person's own account: Profile and Password (`noerd.profile`), Language and
+  Locale (`noerd.profile.language`), Tenant Access (`noerd.profile.tenants`), Delete Account
+  (`noerd.profile.delete`). `noerd:install` / `noerd:update` publish the file and keep an existing
+  copy. A module adds a page of the person's own data with
+  `ensureProfileNavigation('My Account', ['title' => 'My Connectors', 'route' => 'mymodule.connectors', 'heroicon' => 'link'])`;
+  its route carries `['noerd', 'profile']`, so the sidebar shows this navigation, and the page
+  renders `<x-noerd::profile-layout>` with one `<x-noerd::profile-section>` per block.
+
+Both files are host configuration: entries can be reordered, retitled or removed there, and an
+entry whose route does not exist is skipped.
+
 ## Next Steps
 
 Continue with [Create a List View](list-view.md) to display data in tables.

@@ -2,13 +2,47 @@
 
 declare(strict_types=1);
 
+use Illuminate\Console\Command;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\File;
+use Noerd\Commands\Concerns\WritesHostAppConfigs;
+use Noerd\Helpers\TenantHelper;
+use Noerd\Middleware\ProfileMiddleware;
 use Noerd\Models\NoerdUser;
-use Noerd\Services\ProfileNavigationRegistry;
 use Noerd\Tests\TestCase;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Yaml\Yaml;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(function (): void {
+    $this->profileNavigation = base_path('app-configs/profile/navigation.yml');
+    $this->previousProfileNavigation = File::exists($this->profileNavigation) ? File::get($this->profileNavigation) : null;
+});
+
+afterEach(function (): void {
+    $this->previousProfileNavigation === null
+        ? File::delete($this->profileNavigation)
+        : File::put($this->profileNavigation, $this->previousProfileNavigation);
+});
+
+/**
+ * A runtime-written profile navigation — never the shipped one.
+ *
+ * @param  list<array{title: string, route: string}>  $entries
+ */
+function zzProfileNavigation(string $path, array $entries): void
+{
+    File::ensureDirectoryExists(dirname($path));
+    File::put($path, Yaml::dump([[
+        'title' => 'Profile',
+        'name' => 'profile',
+        'hidden' => true,
+        'route' => 'noerd.profile',
+        'block_menus' => [['title' => 'Zz Account', 'navigations' => $entries]],
+    ]], 10, 2));
+}
 
 it('renders each profile page with its forms inside the shared section chrome', function (string $route, array $forms): void {
     $user = NoerdUser::factory()->withExampleTenant()->create();
@@ -31,35 +65,39 @@ it('renders each profile page with its forms inside the shared section chrome', 
     'delete account' => ['noerd.profile.delete', ['noerd::profile.delete-user-form']],
 ]);
 
-it('links every profile page from the navigation and marks the open one', function (): void {
+it('shows the profile navigation of app-configs/profile in the sidebar of a profile page', function (): void {
+    zzProfileNavigation($this->profileNavigation, [
+        ['title' => 'Zz Profile Entry', 'route' => 'noerd.profile.language'],
+        ['title' => 'Zz Entry Of A Missing Module', 'route' => 'zz.not-registered'],
+    ]);
     $user = NoerdUser::factory()->withExampleTenant()->create();
 
-    $response = $this->actingAs($user)->get(route('noerd.profile.language'));
+    $this->actingAs($user)->get(route('noerd.profile'))
+        ->assertOk()
+        ->assertSee(['Zz Account', 'Zz Profile Entry'])
+        ->assertDontSee('Zz Entry Of A Missing Module');
 
-    foreach (['noerd.profile', 'noerd.profile.language', 'noerd.profile.tenants', 'noerd.profile.delete'] as $route) {
-        $response->assertSee('href="' . route($route) . '"', false);
-    }
-
-    expect(mb_substr_count($response->getContent(), 'aria-current="page"'))->toBe(1);
+    expect(TenantHelper::getSelectedApp())->toBe(ProfileMiddleware::APP);
 });
 
-it('adds a page a module registers, in sort order, and skips one without a route', function (): void {
-    Route::middleware('noerd')->get('/zz-profile-page', fn() => 'zz')->name('zz.profile-page');
-    app('router')->getRoutes()->refreshNameLookups();
+it('lets a module add its entry to the profile navigation, once', function (): void {
+    zzProfileNavigation($this->profileNavigation, [['title' => 'Zz Profile Entry', 'route' => 'noerd.profile']]);
 
-    $registry = app(ProfileNavigationRegistry::class);
-    $registry->register('Zz Connections', 'zz.profile-page', 'link', 50);
-    $registry->register('Zz Missing', 'zz.missing-route');
+    $command = new class extends Command {
+        use WritesHostAppConfigs;
 
-    $routes = array_column($registry->all(), 'route');
+        public function addEntry(): void
+        {
+            $this->ensureProfileNavigation('Zz Account', ['title' => 'Zz Connectors', 'route' => 'zz.connectors', 'heroicon' => 'link']);
+        }
+    };
+    $command->setLaravel(app());
+    $command->setOutput(new \Illuminate\Console\OutputStyle(new ArrayInput([]), new BufferedOutput()));
 
-    expect($routes)->toContain('zz.profile-page')
-        ->not->toContain('zz.missing-route')
-        ->and(array_search('zz.profile-page', $routes, true))
-        ->toBeGreaterThan(array_search('noerd.profile.tenants', $routes, true))
-        ->toBeLessThan(array_search('noerd.profile.delete', $routes, true));
+    $command->addEntry();
+    $command->addEntry();
 
-    $user = NoerdUser::factory()->withExampleTenant()->create();
+    $navigations = Yaml::parseFile($this->profileNavigation)[0]['block_menus'][0]['navigations'];
 
-    $this->actingAs($user)->get(route('noerd.profile'))->assertSee('Zz Connections');
+    expect(array_column($navigations, 'route'))->toBe(['noerd.profile', 'zz.connectors']);
 });

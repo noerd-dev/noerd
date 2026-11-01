@@ -155,10 +155,32 @@ trait WritesHostAppConfigs
      */
     protected function ensureSetupNavigation(string $blockTitle, array $entry): void
     {
-        $configPath = base_path('app-configs/setup/navigation.yml');
+        $this->ensureHostNavigationEntry('setup', 'Setup', $blockTitle, $entry);
+    }
+
+    /**
+     * Add (or update) an entry in a block of the profile area's navigation
+     * (app-configs/profile/navigation.yml) — a page of the signed-in person's
+     * OWN data, e.g. their connected assistants. Same matching, moving and
+     * idempotency as ensureSetupNavigation(); the route must carry the
+     * `profile` middleware so the sidebar shows this navigation on the page.
+     *
+     * @param  array{title: string, route: string, heroicon?: string}  $entry
+     */
+    protected function ensureProfileNavigation(string $blockTitle, array $entry): void
+    {
+        $this->ensureHostNavigationEntry('profile', 'Profile', $blockTitle, $entry);
+    }
+
+    /**
+     * @param  array<string, mixed>  $entry
+     */
+    private function ensureHostNavigationEntry(string $folder, string $label, string $blockTitle, array $entry): void
+    {
+        $configPath = base_path("app-configs/{$folder}/navigation.yml");
 
         if (! file_exists($configPath)) {
-            $this->warn('app-configs/setup/navigation.yml not found; navigation entry was not added.');
+            $this->warn("app-configs/{$folder}/navigation.yml not found; navigation entry was not added.");
 
             return;
         }
@@ -208,20 +230,20 @@ trait WritesHostAppConfigs
             }
 
             if ($existing === $entry && ! $movedFromOtherBlock) {
-                $this->line("<comment>Setup navigation already contains:</comment> {$entry['title']}");
+                $this->line("<comment>{$label} navigation already contains:</comment> {$entry['title']}");
 
                 return;
             }
 
             $navigation[0]['block_menus'][$blockIndex]['navigations'][$index] = $entry;
             file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
-            $this->line("<info>Setup navigation entry replaced:</info> {$blockTitle} → {$entry['title']}");
+            $this->line("<info>{$label} navigation entry replaced:</info> {$blockTitle} → {$entry['title']}");
 
             return;
         }
 
         $navigation[0]['block_menus'][$blockIndex]['navigations'][] = $entry;
         file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
-        $this->line("<info>Setup navigation updated:</info> {$blockTitle} → {$entry['title']}");
+        $this->line("<info>{$label} navigation updated:</info> {$blockTitle} → {$entry['title']}");
     }
 }

@@ -58,6 +58,10 @@ Route::group(['middleware' => ['noerd']], function (): void {
 Route::group(['prefix' => $prefix, 'middleware' => ['noerd']], function (): void {
     Route::livewire('component-page/{componentName}', 'noerd::generic-component-page')->name('noerd.component-page');
     Route::livewire('no-tenant', 'noerd::no-tenant')->name('noerd.no-tenant');
+});
+
+// The profile area: its own navigation context (app-configs/profile/navigation.yml).
+Route::group(['prefix' => $prefix, 'middleware' => ['noerd', 'profile']], function (): void {
     Route::view('user', 'noerd::profile')->name('noerd.profile');
     Route::view('user/language', 'noerd::profile-language')->name('noerd.profile.language');
     Route::view('user/tenants', 'noerd::profile-tenants')->name('noerd.profile.tenants');

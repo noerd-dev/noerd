@@ -210,12 +210,15 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   routes use `app-access:{app}`. A per-app target becomes one button per app the tenant runs.
 
 ### Profile Area Pages
-- The profile area (user menu → Profile) is a set of pages with one navigation: Profile and
-  Password, Language and Locale, Tenant Access, Delete Account. A module adds a page of the person's
-  OWN data with `app(ProfileNavigationRegistry::class)->register('Label', 'route.name', 'heroicon', $sort)`
-  in `boot()`; the page is a full-page Livewire component whose root is `<x-noerd::profile-layout>`
-  with `<x-noerd::profile-section>` blocks. Never a section on another module's page, never a core
-  change for a module's page. Reference: `docs/extension-registries.md` ("ProfileNavigationRegistry").
+- The profile area (user menu → Profile) is a navigation context like the setup: its routes carry
+  the `profile` middleware and the sidebar shows `app-configs/profile/navigation.yml` (Profile and
+  Password, Language and Locale, Tenant Access, Delete Account; published by `noerd:install` /
+  `noerd:update`, an existing copy is kept). A module adds a page of the person's OWN data with
+  `ensureProfileNavigation('My Account', ['title' => …, 'route' => …, 'heroicon' => …])` in
+  `ensureModuleSetup()`; its route is in `['noerd', 'profile']` and the page renders
+  `<x-noerd::profile-layout>` with `<x-noerd::profile-section>` blocks. Never a section on another
+  module's page, never a core change for a module's page. Reference: `docs/navigation.md`
+  ("Setup and profile navigation").
 
 ### Custom Attributes (Project-Specific Fields)
 - Modules are NEVER modified for one project's fields — neither code nor YAML. Project fields live in the
