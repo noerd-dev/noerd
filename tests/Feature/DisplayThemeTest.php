@@ -76,6 +76,25 @@ describe('registration', function (): void {
 });
 
 describe('rendering', function (): void {
+    it('dials the normalised number and keeps the written one as the link text', function (string $written, string $dialed): void {
+        zzRenderDisplayLayout([
+            ['name' => 'detailData.phone', 'label' => 'Phone', 'type' => 'phone', 'colspan' => 12],
+        ], ['phone' => $written])
+            ->assertSeeHtml('href="tel:' . $dialed . '"')
+            ->assertSee($written);
+    })->with([
+        'spaces' => ['09281 12345', '0928112345'],
+        'international with punctuation' => ['+49 171 / 123-456', '+49171123456'],
+    ]);
+
+    it('renders a phone value without digits as plain text', function (): void {
+        zzRenderDisplayLayout([
+            ['name' => 'detailData.phone', 'label' => 'Phone', 'type' => 'phone', 'colspan' => 12],
+        ], ['phone' => 'on request'])
+            ->assertSee('on request')
+            ->assertDontSeeHtml('href="tel:');
+    });
+
     it('renders the values as text instead of controls, formatted by the field type', function (): void {
         $component = zzRenderDisplayLayout([
             ['name' => 'detailData.phone', 'label' => 'Phone', 'type' => 'phone', 'colspan' => 12],
@@ -101,7 +120,7 @@ describe('rendering', function (): void {
         ])
             ->assertSuccessful()
             ->assertSeeHtml('data-theme="display"')
-            ->assertSeeHtml('href="tel:09281 12345"')
+            ->assertSeeHtml('href="tel:0928112345"')
             ->assertSeeHtml('href="mailto:erika@example.com"')
             ->assertSee('Ring twice')
             ->assertSee('Business')
