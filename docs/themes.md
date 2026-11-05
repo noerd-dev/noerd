@@ -196,7 +196,7 @@ fields:
 - The field `type` decides HOW the value is written: `currency` through `CurrencyHelper`,
   `date`/`datetime`/`datetime-local`/`time` through `FormatHelper` in the reader's locale, `number`
   as a quantity, `checkbox` as Yes/No, `select`/`picklist`/`setupCollectionSelect` as the option's
-  translated label, `phone` as a `tel:` link, `email` as a `mailto:` link, `textarea` with
+  translated label, `phone` as a `tel:` link (digits and a leading `+` only), `email` as a `mailto:` link, `textarea` with
   preserved line breaks, relation fields as their resolved title, everything else as the raw
   value. `type: datetime` exists for the display theme only — a control needs `datetime-local`.
 - **The theme ships no element for** `image`, `file`, `richText`, `translatable*`, `belongsToMany`,

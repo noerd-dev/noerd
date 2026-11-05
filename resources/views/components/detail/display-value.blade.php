@@ -41,6 +41,11 @@
         'date', 'datetime', 'time' => \Noerd\Support\ListCellFormatter::format($displayValue, ['type' => $format]),
         default => \Noerd\Support\ListCellFormatter::text($displayValue),
     };
+
+    // The number to dial, normalised like the call button of the phone control:
+    // digits and a leading `+` only. A value without digits stays plain text.
+    $phoneDigits = $format === 'phone' ? preg_replace('/\D/', '', $displayText) : '';
+    $phoneNumber = $phoneDigits === '' ? '' : (str_starts_with(trim($displayText), '+') ? '+' : '') . $phoneDigits;
 @endphp
 
 <div class="flex gap-2 text-sm">
@@ -50,8 +55,8 @@
         'whitespace-pre-line' => $format === 'multiline',
         'truncate' => $format !== 'multiline',
     ])>
-        @if ($format === 'phone' && $displayText !== '')
-            <a href="tel:{{ $displayText }}" class="hover:underline">{{ $displayText }}</a>
+        @if ($phoneNumber !== '')
+            <a href="tel:{{ $phoneNumber }}" class="hover:underline">{{ $displayText }}</a>
         @elseif ($format === 'email' && $displayText !== '')
             <a href="mailto:{{ $displayText }}" class="hover:underline">{{ $displayText }}</a>
         @else
