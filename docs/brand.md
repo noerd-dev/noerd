@@ -84,6 +84,7 @@ CSS rebuild**.
 | `noerd.branding.logo` | `NOERD_LOGO` | Logo URL/path rendered by `<x-noerd::application-logo>` on the auth screens (login, forgot password, reset password). Empty (the default) renders no logo. |
 | `noerd.branding.favicon` | `NOERD_FAVICON` | Favicon URL/path emitted as the `<link rel="icon">` tag. Empty (the default) keeps the browser default. |
 | `noerd.branding.auth_background_image` | `NOERD_AUTH_BACKGROUND_IMAGE` | Full-cover image on the illustration half of the auth screens. Empty (the default) renders no image. |
+| `noerd.branding.auth_background_video` | `NOERD_AUTH_BACKGROUND_VIDEO` | Full-cover video on the same half, played muted and looped (`autoplay muted loop playsinline`). The image above serves as its poster and stays underneath as the fallback: it shows while the video loads, when the browser cannot play the format and for visitors who prefer reduced motion (the video is hidden then). Use MP4 (H.264) or WebM and keep the file short and small. Empty (the default) renders no video. |
 
 ## Sidebar Dimensions
 

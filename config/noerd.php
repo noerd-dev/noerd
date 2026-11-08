@@ -64,6 +64,7 @@ return [
         'logo' => env('NOERD_LOGO', ''),
         'favicon' => env('NOERD_FAVICON', ''),
         'auth_background_image' => env('NOERD_AUTH_BACKGROUND_IMAGE', ''),
+        'auth_background_video' => env('NOERD_AUTH_BACKGROUND_VIDEO', ''),
     ],
 
     'sidebar' => [
