@@ -28,3 +28,31 @@ it('renders the reset-password screen with the email taken from the query string
         ->assertSee(__('Enter your new password below'))
         ->assertSee('jane@example.com');
 });
+
+it('plays the configured background video over the background image', function (): void {
+    config([
+        'noerd.branding.auth_background_image' => '/zz/auth-background.jpg',
+        'noerd.branding.auth_background_video' => '/zz/auth-background.mp4',
+    ]);
+
+    $this->get(route('noerd.login'))
+        ->assertOk()
+        ->assertSee('<img src="/zz/auth-background.jpg"', false)
+        ->assertSee('src="/zz/auth-background.mp4"', false)
+        ->assertSee('type="video/mp4"', false)
+        ->assertSee('poster="/zz/auth-background.jpg"', false)
+        ->assertSee('muted', false)
+        ->assertSee('playsinline', false);
+});
+
+it('renders no video without a configured background video', function (): void {
+    config([
+        'noerd.branding.auth_background_image' => '/zz/auth-background.jpg',
+        'noerd.branding.auth_background_video' => '',
+    ]);
+
+    $this->get(route('noerd.login'))
+        ->assertOk()
+        ->assertSee('<img src="/zz/auth-background.jpg"', false)
+        ->assertDontSee('<video', false);
+});
