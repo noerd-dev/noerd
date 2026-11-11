@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -41,6 +42,30 @@ new class extends Component {
             || ($this->userId === (int) $admin->id && ! Impersonation::active());
     }
 
+    /**
+     * The account whose password is set — shown above the form, so an
+     * administrator sees whose account they are about to change. Only
+     * resolved for a viewer who may set the password.
+     */
+    #[Computed]
+    public function targetUser(): ?NoerdUser
+    {
+        return $this->canSetPassword ? NoerdUser::find($this->userId) : null;
+    }
+
+    /**
+     * Fills both fields with a fresh, strong password on request. Never on
+     * mount: the administrator decides whether a generated password is used.
+     */
+    public function generatePassword(): void
+    {
+        $this->authorizeTarget();
+
+        $this->password = Str::password(16);
+        $this->password_confirmation = $this->password;
+        $this->resetValidation();
+    }
+
     public function updatePassword(): void
     {
         // Re-authorized on the action, not only on mount: #[Locked] rejects a
@@ -57,6 +82,7 @@ new class extends Component {
         $user->password = bcrypt($this->password);
         $user->save();
 
+        $this->reset('password', 'password_confirmation');
         $this->showSuccessIndicator = true;
     }
 
@@ -80,20 +106,67 @@ new class extends Component {
         </p>
     </header>
 
-    <form wire:submit="updatePassword" class="mt-6 space-y-6">
+    @if ($this->targetUser)
+        <dl class="mt-4 divide-y divide-gray-100 rounded-sm border border-gray-200 bg-gray-50 text-sm">
+            <div class="flex gap-4 px-3 py-2">
+                <dt class="w-24 shrink-0 text-gray-500">{{ __('Name') }}</dt>
+                <dd class="min-w-0 truncate font-medium text-gray-900">{{ $this->targetUser->name }}</dd>
+            </div>
+            <div class="flex gap-4 px-3 py-2">
+                <dt class="w-24 shrink-0 text-gray-500">{{ __('Email') }}</dt>
+                <dd class="min-w-0 truncate font-medium text-gray-900">{{ $this->targetUser->email }}</dd>
+            </div>
+        </dl>
+    @endif
+
+    <form wire:submit="updatePassword" class="mt-6 space-y-6" x-data="{ visible: false, copied: false }">
         {{-- Password --}}
         <div>
             <x-noerd::input-label for="password" :value="__('Password')" />
-            <x-noerd::text-input
-                wire:model="password"
-                id="password"
-                type="password"
-                name="password"
-                required
-                autocomplete="new-password"
-                placeholder="{{ __('Password') }}"
-                class="mt-1 block w-full"
-            />
+            <div class="flex items-center gap-2">
+                <div class="relative min-w-0 flex-1">
+                    <x-noerd::text-input
+                        wire:model="password"
+                        id="password"
+                        x-bind:type="visible ? 'text' : 'password'"
+                        type="password"
+                        name="password"
+                        required
+                        autocomplete="new-password"
+                        placeholder="{{ __('Password') }}"
+                        class="mt-1 block w-full pr-10! font-mono"
+                    />
+                    <button
+                        type="button"
+                        x-on:click="visible = ! visible"
+                        x-bind:title="visible ? @js(__('Hide password')) : @js(__('Show password'))"
+                        class="absolute inset-y-0 right-0 mt-1 flex cursor-pointer items-center px-3 text-gray-500 hover:text-gray-700"
+                    >
+                        <x-heroicons::outline.eye x-show="! visible" class="h-4 w-4" />
+                        <x-heroicons::outline.eye-slash x-show="visible" x-cloak class="h-4 w-4" />
+                    </button>
+                </div>
+                <x-noerd::button
+                    variant="secondary"
+                    icon="arrow-path"
+                    wire:click="generatePassword"
+                    wireTarget="generatePassword"
+                    x-on:click="visible = true; copied = false"
+                    class="mt-1 shrink-0"
+                >
+                    {{ __('Generate password') }}
+                </x-noerd::button>
+                <x-noerd::button
+                    variant="secondary"
+                    icon="clipboard-document"
+                    x-show="$wire.password"
+                    x-on:click="navigator.clipboard.writeText($wire.password); copied = true; setTimeout(() => copied = false, 2000)"
+                    class="mt-1 shrink-0"
+                >
+                    <span x-show="! copied">{{ __('Copy') }}</span>
+                    <span x-show="copied" x-cloak>{{ __('Copied') }}</span>
+                </x-noerd::button>
+            </div>
             <x-noerd::input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -103,12 +176,13 @@ new class extends Component {
             <x-noerd::text-input
                 wire:model="password_confirmation"
                 id="password_confirmation"
+                x-bind:type="visible ? 'text' : 'password'"
                 type="password"
                 name="password_confirmation"
                 required
                 autocomplete="new-password"
                 placeholder="{{ __('Confirm password') }}"
-                class="mt-1 block w-full"
+                class="mt-1 block w-full font-mono"
             />
             <x-noerd::input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
