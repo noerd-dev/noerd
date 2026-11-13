@@ -40,8 +40,8 @@
             type="color"
             class="h-9 w-12 cursor-pointer rounded-lg border border-zinc-200 border-b-zinc-300/80 p-0.5 disabled:cursor-not-allowed"
             x-data
-            x-bind:value="$wire.{{ $name }} || '#000000'"
-            x-on:input="$wire.set('{{ $name }}', $event.target.value)"
+            x-bind:value="$wire.get({{ \Illuminate\Support\Js::from((string) $name) }}) || '#000000'"
+            x-on:input="$wire.set({{ \Illuminate\Support\Js::from((string) $name) }}, $event.target.value)"
         />
     </div>
     <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />

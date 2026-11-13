@@ -759,7 +759,9 @@ final class StaticConfigHelper
         // 5. Last resort: the app-configs of the module the component belongs to.
         // Reaching a namespaced component is an explicit reference to its module,
         // so its own configs must resolve even without the app being granted.
-        if ($ownerApp) {
+        // The owner is derived from a component name, which the modal stack
+        // takes from the client — it must be a plain folder name.
+        if ($ownerApp && preg_match('/^[A-Za-z0-9_-]+$/', $ownerApp)) {
             $roots[] = base_path("app-configs/{$ownerApp}");
 
             foreach (self::getModuleSourcePaths($ownerApp) as $moduleSourcePath) {

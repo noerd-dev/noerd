@@ -53,7 +53,7 @@
                     @if ($mediaAvailable)
                         <button
                             type="button"
-                            wire:click="openSelectMediaModal('{{ $resolvedName }}')"
+                            wire:click="openSelectMediaModal({{ \Illuminate\Support\Js::from((string) $resolvedName) }})"
                             title="{{ __('Choose image from media') }}"
                             aria-label="{{ __('Choose image from media') }}"
                             class="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow transition-colors hover:bg-white"
@@ -63,7 +63,7 @@
                     @endif
                     <button
                         type="button"
-                        wire:click="deleteImage('{{ $resolvedName }}')"
+                        wire:click="deleteImage({{ \Illuminate\Support\Js::from((string) $resolvedName) }})"
                         wire:confirm="{{ __('Remove this image? The original file stays in the media library.') }}"
                         title="{{ __('Remove this image') }}"
                         aria-label="{{ __('Remove this image') }}"
@@ -82,7 +82,7 @@
                 <x-noerd::button
                     variant="secondary"
                     type="button"
-                    wire:click="openSelectMediaModal('{{ $resolvedName }}')"
+                    wire:click="openSelectMediaModal({{ \Illuminate\Support\Js::from((string) $resolvedName) }})"
                 >
                     {{ __('Choose image from media') }}
                 </x-noerd::button>

@@ -31,6 +31,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 
         if (! NoerdAuth::guard()->attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->ipThrottleKey());
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
@@ -48,13 +49,21 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        // Per account and address (5), and per address across every account
+        // (20) — the second one stops trying one password on many accounts.
+        $key = match (true) {
+            RateLimiter::tooManyAttempts($this->throttleKey(), 5) => $this->throttleKey(),
+            RateLimiter::tooManyAttempts($this->ipThrottleKey(), 20) => $this->ipThrottleKey(),
+            default => null,
+        };
+
+        if ($key === null) {
             return;
         }
 
         event(new Lockout(request()));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = RateLimiter::availableIn($key);
 
         throw ValidationException::withMessages([
             'email' => __('auth.throttle', [
@@ -70,6 +79,11 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     protected function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->email) . '|' . request()->ip());
+    }
+
+    protected function ipThrottleKey(): string
+    {
+        return 'noerd-login|' . request()->ip();
     }
 }; ?>
 

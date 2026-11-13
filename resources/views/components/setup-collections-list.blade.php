@@ -40,8 +40,12 @@ new class extends Component
     {
         session(['listFilters' => $this->listFilters]);
 
-        if (! empty($this->listFilters['language'])) {
-            session([SetupLanguage::SESSION_KEY => $this->listFilters['language']]);
+        $language = $this->listFilters['language'] ?? null;
+
+        // The filter value comes from the client — only an active language of
+        // the tenant may become the language every translatable field edits.
+        if (is_string($language) && in_array($language, SetupLanguage::activeCodes(), true)) {
+            session([SetupLanguage::SESSION_KEY => $language]);
         }
     }
 

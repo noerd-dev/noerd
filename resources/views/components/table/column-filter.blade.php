@@ -127,7 +127,7 @@
                     @if ($filterActive)
                         <button
                             type="button"
-                            @click="value = ''; $wire.clearColumnFilter('{{ $field }}'); open = false"
+                            @click="value = ''; $wire.clearColumnFilter(@js($field)); open = false"
                             class="rounded-md px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
                         >
                             {{ __('Clear filter') }}

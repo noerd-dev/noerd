@@ -198,7 +198,9 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   `use Noerd\Traits\GuardedByObjectPermission;` (deliberately opt-in).
 - Admin-only components are registered with `Noerd\Support\ComponentAccessGuard::registerAdminComponents([...])`
   in the provider's `boot()` — route middleware does not cover the `noerdModal` event. The guard matches namespace-aware; give an admin-only
-  component a name unique across modules anyway.
+  component a name unique across modules anyway. `app-access:…`, `action-permission:…` and `setup` of a component's routes are
+  re-checked by the same guard when the modal stack opens the component; a module's OWN access middleware is not — check its
+  condition in the component too.
 - Never bind a locked property to `wire:model`, never pass `detailModel`/`listModel`/
   `objectPermissionModel`/`settingsModels`/`pageLayout`/`listView` as modal arguments
   (`LockedPropertiesHook`); switches like `enableCsvExport` are set in `mount()`. A value rendered into

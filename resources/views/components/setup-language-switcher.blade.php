@@ -46,7 +46,7 @@ new class extends Component
                         'cursor-pointer ml-2',
                         'text-black underline' => SetupLanguage::selectedCode() === $language['code'],
                         'text-gray-500' => SetupLanguage::selectedCode() !== $language['code'],
-                    ]) wire:click="setLanguage('{{ $language['code'] }}')">
+                    ]) wire:click="setLanguage({{ \Illuminate\Support\Js::from((string) $language['code']) }})">
                         {{ mb_strtoupper($language['code']) }}
                     </a>
                 @endforeach

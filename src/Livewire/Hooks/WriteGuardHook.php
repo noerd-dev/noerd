@@ -30,9 +30,17 @@ final class WriteGuardHook extends NoerdComponentHook
 {
     protected const TRAITS = [NoerdPage::class, NoerdPositionRow::class];
 
+    private const SAVE_ACTIONS = ['store', 'save', 'update'];
+
     public function call($method, $params, $returnEarly, $metadata, $componentContext): void
     {
         $effective = LivewireAction::effectiveMethod($this->component, (string) $method, is_array($params) ? $params : []);
+
+        // `save` and `update` are saves as well: DetailSaveHook persists the
+        // relation forms after any of the three, so all three are guarded.
+        if (in_array($effective, self::SAVE_ACTIONS, true)) {
+            $effective = 'store';
+        }
 
         if ($effective !== 'store' && $effective !== 'delete') {
             return;

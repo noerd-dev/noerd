@@ -71,7 +71,9 @@ new class extends Component {
 
     private function authorizeAccess(): void
     {
-        abort_unless(NoerdAuth::user()?->isAdmin(), 403);
+        // The feature switch is enforced here, not only where the link is
+        // rendered: the route and the component stay reachable by name.
+        abort_unless(NoerdAuth::user()?->isAdmin() && config('noerd.features.new_tenant'), 403);
     }
 }; ?>
 

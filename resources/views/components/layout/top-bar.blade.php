@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Models\SetupLanguage;
 use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Support\Impersonation;
 use Noerd\Support\ShellState;
@@ -30,6 +31,9 @@ new class extends Component {
         // Drop noerd's session state but do NOT invalidate the whole
         // session: a host guard (e.g. Nova) may share the session cookie.
         Session::forget('noerd');
+        // The list state of this person (filters, sort, views) and the language
+        // they edited in must not greet the next person on this browser.
+        Session::forget(['listFilters', 'listColumnFilters', 'listSort', 'listView', 'listPerPage', SetupLanguage::SESSION_KEY, 'url.intended']);
         Impersonation::forget();
         Session::regenerate();
         Session::regenerateToken();

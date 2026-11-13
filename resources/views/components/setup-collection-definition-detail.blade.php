@@ -111,7 +111,7 @@ new class extends Component
         ];
 
         foreach ($this->fields as $index => $field) {
-            $rules["fields.{$index}.name"] = ['required', 'string', 'max:255'];
+            $rules["fields.{$index}.name"] = ['required', 'string', 'max:255', 'regex:/^[A-Za-z][A-Za-z0-9_]*$/'];
             $rules["fields.{$index}.label"] = ['required', 'string', 'max:255'];
             $rules["fields.{$index}.type"] = ['required', 'string'];
         }
