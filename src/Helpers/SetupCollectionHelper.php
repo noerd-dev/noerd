@@ -7,6 +7,7 @@ namespace Noerd\Helpers;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupLanguage;
+use Noerd\Support\RequestState;
 
 final class SetupCollectionHelper
 {
@@ -36,8 +37,8 @@ final class SetupCollectionHelper
         'number' => 'Number',
     ];
 
-    /** @var array<string, array<int, array{value: mixed, label: string}>> */
-    private static array $selectOptionsMemo = [];
+    /** The RequestState bucket of the select options read in this request or job. */
+    private const SELECT_OPTIONS_MEMO = 'noerd.setup-collection-select-options';
 
     public function __construct(
         private readonly SetupCollectionDefinitionRepositoryContract $repository,
@@ -89,7 +90,7 @@ final class SetupCollectionHelper
      */
     public static function clearSelectOptionsCache(): void
     {
-        self::$selectOptionsMemo = [];
+        RequestState::forget(self::SELECT_OPTIONS_MEMO);
     }
 
     /**
@@ -103,20 +104,24 @@ final class SetupCollectionHelper
     {
         $locale = SetupLanguage::selectedCode();
         $memoKey = implode('|', [
-            (string) TenantHelper::getSelectedTenantId(),
+            (string) (TenantHelper::currentTenantId() ?? TenantHelper::getSelectedTenantId()),
             $locale,
             $collectionKey,
             $displayField,
             (string) $valueField,
         ]);
 
-        if (array_key_exists($memoKey, self::$selectOptionsMemo)) {
-            return self::$selectOptionsMemo[$memoKey];
+        // Scoped to the request or job: a queue worker must never hand one
+        // tenant the options it read for another.
+        $memo = &RequestState::bucket(self::SELECT_OPTIONS_MEMO);
+
+        if (array_key_exists($memoKey, $memo)) {
+            return $memo[$memoKey];
         }
 
         $collection = SetupCollection::where('collection_key', $collectionKey)->first();
         if (! $collection) {
-            return self::$selectOptionsMemo[$memoKey] = [];
+            return $memo[$memoKey] = [];
         }
 
         $defaultCode = SetupLanguage::defaultCode();
@@ -134,7 +139,7 @@ final class SetupCollectionHelper
             ];
         }
 
-        return self::$selectOptionsMemo[$memoKey] = $options;
+        return $memo[$memoKey] = $options;
     }
 
     /**

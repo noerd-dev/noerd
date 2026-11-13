@@ -317,6 +317,18 @@ component, which re-asserts admin access for every name on the allow-list. A mod
 admin-only screens must therefore register them — an unregistered admin component is reachable
 through the modal stack by any authenticated user of the tenant.
 
+**Route requirements travel into the modal stack.** The same hook keeps the access middleware of a
+component's routes when the modal stack opens the component (`allowsInModal()` /
+`authorizeModal()`): a component that is ONLY reachable
+through routes carrying `app-access:…`, `action-permission:…` or `setup` may be mounted by a user who
+satisfies the middleware of at least one of those routes — the tenant runs one of the apps and the
+user may use it, the named action is permitted, the user is a tenant admin. A component without a
+route (pickers, dialogs) and a component with one route that carries none of these middleware (a
+screen shared by several apps) are not restricted, and neither is a component a page renders itself
+(an embedded list, a public widget) — the server made that decision. A module's own access
+middleware is not known to the guard — a screen behind one checks its condition in the component as
+well.
+
 **API** (`Noerd\Support\ComponentAccessGuard`, static):
 
 | Method | Description |

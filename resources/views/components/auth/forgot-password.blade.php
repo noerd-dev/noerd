@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
@@ -15,6 +17,21 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
         $this->validate([
             'email' => ['required', 'string', 'email'],
         ]);
+
+        // The broker throttles per account; this limit keeps one address from
+        // sending reset mails to many accounts.
+        $key = 'noerd-password-reset|' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages([
+                'email' => __('auth.throttle', [
+                    'seconds' => RateLimiter::availableIn($key),
+                    'minutes' => ceil(RateLimiter::availableIn($key) / 60),
+                ]),
+            ]);
+        }
+
+        RateLimiter::hit($key, 600);
 
         NoerdAuth::broker()->sendResetLink(['email' => $this->email]);
 

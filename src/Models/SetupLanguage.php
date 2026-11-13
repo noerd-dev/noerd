@@ -22,6 +22,11 @@ class SetupLanguage extends Model
      */
     public const SESSION_KEY = 'selectedLanguage';
 
+    /**
+     * What a language code may look like: `de`, `en`, `en-GB`, `zh-Hant`.
+     */
+    public const CODE_PATTERN = '/^[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,4})?$/';
+
     protected $guarded = ['id'];
 
     /**

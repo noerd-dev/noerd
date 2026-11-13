@@ -7,6 +7,7 @@ use Illuminate\Support\Js;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Services\RelationBoxRegistry;
 use Noerd\Support\LayoutArguments;
 
@@ -42,6 +43,12 @@ new class extends Component {
         $this->resolvedRelations = [];
 
         if (! $this->modelId || ! class_exists($this->modelClass) || ! is_subclass_of($this->modelClass, Model::class)) {
+            return;
+        }
+
+        // modelClass arrives as a mount argument, which the modal stack takes
+        // from the client — the box counts nothing of a model the user may not read.
+        if (! AccessHelper::canReadObject($this->modelClass)) {
             return;
         }
 

@@ -82,7 +82,7 @@
                                     @elseif (! empty($action['modalComponent']))
                                         x-on:click.prevent="$modal({{ \Illuminate\Support\Js::from($action['modalComponent']) }}, {{ \Illuminate\Support\Js::from(['modelId' => $id]) }})"
                                     @else
-                                        wire:click.prevent="{{ $action['action'] }}('{{ $id }}')"
+                                        wire:click.prevent="{{ $action['action'] }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                                         @isset($action['confirm'])
                                             wire:confirm="{{ __($action['confirm']) }}"
                                         @endisset
@@ -119,7 +119,7 @@
                 type="button"
                 icon="plus-circle"
                 class="ml-auto"
-                wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
             >
                 {{ __($label) }}
             </x-noerd::button>
@@ -130,7 +130,7 @@
                 variant="danger"
                 class="ml-auto"
                 wire:confirm="{{ __('Are you sure you want to delete this entry?') }}"
-                wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
             >
                 {{ __($label) }}
             </x-noerd::button>
@@ -140,7 +140,7 @@
             <x-noerd::button
                 variant="secondary"
                 class="ml-auto"
-                wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
             >
                 {{ __($label) }}
             </x-noerd::button>
@@ -149,7 +149,7 @@
         {{-- A registered `cell:` renderer draws the content; row click,
              alignment and padding stay the core's. --}}
         <div
-            wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+            wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
             @class([
                 'flex cursor-pointer items-center px-1.5 py-0.5',
                 'justify-end' => ($columnConfig['align'] ?? 'left') === 'right',
@@ -216,7 +216,7 @@
             @endif
         @else
             @if ($type === 'id')
-                <div class="bg-gray-100" wire:click.stop.prevent="{{ $action }}('{{ $id }}')">
+                <div class="bg-gray-100" wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})">
                     <input
                         type="text"
                         readonly
@@ -230,7 +230,7 @@
                      localise a date input by ITS locale, the list follows the user's. --}}
                 @if ($value)
                     <span
-                        wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                        wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                         id="cell-{{ $cellId }}"
                         class="cursor-pointer px-1.5 py-0.5 text-sm"
                     >
@@ -240,7 +240,7 @@
             @elseif ($type === 'datetime')
                 @if ($value)
                     <span
-                        wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                        wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                         class="cursor-pointer px-1.5 py-0.5 text-sm"
                     >
                         {{ \Noerd\Support\ListCellFormatter::format($value, $formatColumn) }}
@@ -249,7 +249,7 @@
             @elseif ($type === 'number')
                 <input
                     type="text"
-                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     readonly
                     id="cell-{{ $cellId }}"
                     class="cursor-pointer border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent w-full text-sm py-0.5 px-1.5 text-right"
@@ -258,7 +258,7 @@
             @elseif ($type === 'currency')
                 <input
                     type="text"
-                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     readonly
                     id="cell-{{ $cellId }}"
                     class="w-full cursor-pointer border-1! border-transparent! bg-transparent p-0 px-1.5 py-0.5 text-right text-sm ring-0! focus:border-1! focus:ring-0! active:border-1!"
@@ -271,7 +271,7 @@
                     $badgeText = \Noerd\Support\ListCellFormatter::format($value, $formatColumn);
                 @endphp
                 <div
-                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     class="flex cursor-pointer items-center px-1.5"
                 >
                     @if ($badgeText !== '')
@@ -279,7 +279,7 @@
                     @endif
                 </div>
             @elseif ($type === 'customAttribute')
-                <div wire:click.stop.prevent="{{ $action }}('{{ $id }}')" class="flex cursor-pointer items-center">
+                <div wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})" class="flex cursor-pointer items-center">
                     <span class="w-full px-1.5 py-0.5 text-sm">{{ \Noerd\Support\ListCellFormatter::format(data_get($rowData, $columnValue), $formatColumn) }}</span>
                 </div>
             @elseif ($type === 'checkbox')
@@ -313,7 +313,7 @@
                     $badgeWithText = \Noerd\Support\ListCellFormatter::badgeWithText($value);
                 @endphp
                 <div
-                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     class="flex cursor-pointer items-center gap-2 px-1.5 py-0.5"
                 >
                     @if ($badgeWithText['badge'] !== '')
@@ -370,7 +370,7 @@
                     @if (isset($columnConfig['wireClick']))
                         wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
                     @else
-                        wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                        wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     @endif
                     class="inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1.5 px-1.5 py-0.5"
                 >
@@ -400,7 +400,7 @@
                 <input
                     {{-- Only a real text-like input type reaches the browser; an unknown column type renders as text. --}}
                     type="{{ in_array($type, ['text', 'email', 'tel', 'url'], true) ? $type : 'text' }}"
-                    wire:click.stop.prevent="{{ $action }}('{{ $id }}')"
+                    wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     readonly
                     id="cell-{{ $cellId }}"
                     @if ($isTranslatableCell)

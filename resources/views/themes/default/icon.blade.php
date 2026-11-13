@@ -11,7 +11,7 @@
     <div class="flex items-center gap-2">
         <button
             type="button"
-            @if (! $readonly) @click="$modal('noerd::icon-picker', {context: '{{ $name }}'})" @endif
+            @if (! $readonly) @click="$modal('noerd::icon-picker', {context: {{ \Illuminate\Support\Js::from((string) $name) }}})" @endif
             class="flex items-center gap-2 border rounded-lg h-8 px-3 bg-white text-zinc-700 shadow-xs border-zinc-200 border-b-zinc-300/80 focus:outline-none focus:ring-2 focus:ring-brand-border focus:ring-offset-2 @if(! $readonly) cursor-pointer hover:bg-gray-50 @endif"
         >
             @if ($current)
@@ -25,7 +25,7 @@
         @if ($current && ! $readonly)
             <button
                 type="button"
-                @click="$wire.set('{{ $name }}', null)"
+                @click="$wire.set({{ \Illuminate\Support\Js::from((string) $name) }}, null)"
                 aria-label="{{ __('Clear selection') }}"
                 class="inline-flex h-8 items-center px-2 text-zinc-400 hover:text-zinc-600"
             >

@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 use Illuminate\Support\Str;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Middleware\ActionPermissionMiddleware;
+use Noerd\Middleware\AppAccessMiddleware;
+use Noerd\Middleware\SetupMiddleware;
 
 /**
  * Authorization guard for dynamic component mounts.
@@ -122,6 +126,155 @@ final class ComponentAccessGuard
         }
 
         return true;
+    }
+
+    /**
+     * Abort with 403 when the modal stack may not open the component for the
+     * current user (see allowsInModal()).
+     */
+    public static function authorizeModal(?string $componentName): void
+    {
+        if (! self::allowsInModal($componentName)) {
+            abort(403);
+        }
+    }
+
+    /**
+     * Whether the modal stack may open the component for the current user.
+     * The stack takes the component (or route) name from the browser and
+     * mounts it without its route middleware, so a component that is ONLY
+     * reachable through routes carrying an access middleware (`app-access:…`,
+     * `action-permission:…`, `setup`) keeps that requirement there: the user
+     * must satisfy the middleware of at least one of its routes. A component
+     * without a route (pickers, dialogs) or with one route that carries none
+     * of these middleware (screens shared by several apps) is not restricted.
+     *
+     * Deliberately NOT part of allows(): a host that renders the component in
+     * its own page (a public booking widget, an embedded list) has made that
+     * decision on the server.
+     */
+    public static function allowsInModal(?string $componentName): bool
+    {
+        if ($componentName === null || $componentName === '') {
+            return true;
+        }
+
+        $candidateNamespace = self::namespaceOf($componentName);
+        $candidateName = self::normalizeName($componentName);
+        $requirements = self::routeRequirements();
+
+        $matches = [];
+        foreach ($requirements as $key => $routes) {
+            [$namespace, $name] = explode('|', $key, 2);
+
+            if ($name !== $candidateName) {
+                continue;
+            }
+
+            if ($candidateNamespace === null || $candidateNamespace === ($namespace === '' ? null : $namespace)) {
+                $matches = array_merge($matches, $routes);
+            }
+        }
+
+        if ($matches === []) {
+            return true;
+        }
+
+        foreach ($matches as $requirement) {
+            if (self::satisfies($requirement)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array{apps: list<string>, actions: list<string>, admin: bool}  $requirement
+     */
+    private static function satisfies(array $requirement): bool
+    {
+        if ($requirement['apps'] === [] && $requirement['actions'] === [] && ! $requirement['admin']) {
+            return true;
+        }
+
+        if (NoerdAuth::user() === null) {
+            return false;
+        }
+
+        if ($requirement['admin'] && ! NoerdAuth::user()->isAdmin()) {
+            return false;
+        }
+
+        if ($requirement['apps'] !== [] && ! AccessHelper::canUseApp(...$requirement['apps'])) {
+            return false;
+        }
+
+        foreach ($requirement['actions'] as $action) {
+            if (! AccessHelper::canPerformAction($action)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The access requirements of every Livewire route, keyed by
+     * "{namespace}|{name}" of the component behind it — one entry per route.
+     * Memoized per request for the current number of routes (tests and late
+     * providers register routes at runtime).
+     *
+     * @return array<string, list<array{apps: list<string>, actions: list<string>, admin: bool}>>
+     */
+    private static function routeRequirements(): array
+    {
+        $router = app('router');
+        $routes = $router->getRoutes()->getRoutes();
+        $memo = &RequestState::bucket('noerd.component-route-requirements');
+        $count = count($routes);
+
+        if (isset($memo[$count])) {
+            return $memo[$count];
+        }
+
+        $aliases = $router->getMiddleware();
+        $requirements = [];
+
+        foreach ($routes as $route) {
+            $component = $route->getAction('livewire_component');
+
+            if (! is_string($component) || $component === '') {
+                continue;
+            }
+
+            $requirement = ['apps' => [], 'actions' => [], 'admin' => false];
+
+            foreach ($route->gatherMiddleware() as $middleware) {
+                if (! is_string($middleware)) {
+                    continue;
+                }
+
+                [$name, $parameters] = array_pad(explode(':', $middleware, 2), 2, '');
+                $class = $aliases[$name] ?? $name;
+
+                if (is_a($class, AppAccessMiddleware::class, true)) {
+                    $requirement['apps'] = array_values(array_filter(array_map(
+                        static fn(string $app): string => mb_strtoupper(mb_trim($app)),
+                        explode(',', $parameters),
+                    )));
+                } elseif (is_a($class, ActionPermissionMiddleware::class, true)) {
+                    $requirement['actions'][] = mb_trim($parameters);
+                } elseif (is_a($class, SetupMiddleware::class, true)) {
+                    $requirement['admin'] = true;
+                }
+            }
+
+            $key = (self::namespaceOf($component) ?? '') . '|' . self::normalizeName($component);
+            $requirements[$key][] = $requirement;
+        }
+
+        return $memo[$count] = $requirements;
     }
 
     /**

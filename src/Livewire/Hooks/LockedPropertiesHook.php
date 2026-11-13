@@ -117,6 +117,8 @@ final class LockedPropertiesHook extends NoerdComponentHook
         'hostId',
         // A component that refuses deletion declares it; no caller re-enables it.
         'deletable',
+        // A list turns its export on itself (often behind a condition).
+        'enableCsvExport',
     ];
 
     /**

@@ -6,7 +6,9 @@ use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdDetail;
 
 new class extends Component {
-    use NoerdDetail;
+    use NoerdDetail {
+        store as protected storeLanguage;
+    }
 
     public ?string $detailPrimary = 'setupLanguageId';
 
@@ -34,6 +36,22 @@ new class extends Component {
         }
 
         return SetupLanguage::count() > 1;
+    }
+
+    /**
+     * The code is rendered into markup and script of every translatable field
+     * and becomes the application locale — it is a language tag, nothing else.
+     */
+    public function store(): void
+    {
+        $this->validate(
+            ['detailData.code' => ['required', 'string', 'regex:' . SetupLanguage::CODE_PATTERN]],
+            ['detailData.code.regex' => __('The code must be a language code such as "de" or "en-GB".')],
+        );
+
+        $this->detailData['code'] = mb_trim((string) $this->detailData['code']);
+
+        $this->storeLanguage();
     }
 
     public function delete(): void
