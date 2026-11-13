@@ -7,11 +7,17 @@ fields:
     required: true
     helpText: Currency for the tenant
   - name: detailData.locale
-    label: Locale
+    label: Default Locale
     type: select
     optionsMethod: localeOptions
     required: true
-    helpText: Number and date format for documents (PDFs, receipts, e-mails)
+    helpText: Number and date format for documents (PDFs, receipts, e-mails) and the preset for new users
+  - name: detailData.default_language
+    label: Default Language
+    type: select
+    optionsMethod: languageOptions
+    required: true
+    helpText: Interface language preselected for new users
   - name: detailData.detail_theme
     label: Theme
     type: select

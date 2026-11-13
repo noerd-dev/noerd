@@ -11,9 +11,11 @@ use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Support\Locales;
+use Noerd\Support\TenantContext;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -82,6 +84,10 @@ fields:
     label: Zz Theme
     type: select
     optionsMethod: themeOptions
+  - name: detailData.default_language
+    label: Zz Default Language
+    type: select
+    optionsMethod: languageOptions
 YAML);
     StaticConfigHelper::flushRuntimeCaches();
 
@@ -300,5 +306,63 @@ describe('Tenant locale setting', function (): void {
             ->localeOptions();
 
         expect(array_keys($options))->toBe(Locales::SUPPORTED);
+    });
+});
+
+describe('Default language setting', function (): void {
+    it('falls back to the default setup language when no setting exists', function (): void {
+        $user = createUserWithSetupTenant();
+        SetupLanguage::query()->ofTenant($user->selected_tenant_id)->where('code', 'de')->update(['is_default' => true]);
+        SetupLanguage::query()->ofTenant($user->selected_tenant_id)->where('code', 'en')->update(['is_default' => false]);
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->assertSet('detailData.default_language', 'de');
+    });
+
+    it('loads an existing default language from the database', function (): void {
+        $user = createUserWithSetupTenant();
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'default_language' => 'de']);
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->assertSet('detailData.default_language', 'de');
+    });
+
+    it('saves the default language', function (): void {
+        withZzSettingsLayout(function (): void {
+            $user = createUserWithSetupTenant();
+
+            Livewire::actingAs($user)
+                ->test('noerd::system-settings-page')
+                ->set('detailData.default_language', 'de')
+                ->call('store')
+                ->assertHasNoErrors();
+
+            $this->assertDatabaseHas('noerd_settings', [
+                'tenant_id' => $user->selected_tenant_id,
+                'default_language' => 'de',
+            ]);
+        });
+    });
+
+    it('rejects a language that is not active for the tenant', function (): void {
+        $user = createUserWithSetupTenant();
+
+        Livewire::actingAs($user)
+            ->test('noerd::system-settings-page')
+            ->set('detailData.default_language', 'xx')
+            ->call('store')
+            ->assertHasErrors(['detailData.default_language']);
+    });
+
+    it('ignores a stored language that is no longer active', function (): void {
+        $user = createUserWithSetupTenant();
+        NoerdSettings::create(['tenant_id' => $user->selected_tenant_id, 'default_language' => 'de']);
+        SetupLanguage::query()->ofTenant($user->selected_tenant_id)->where('code', 'de')->update(['is_active' => false]);
+
+        $language = TenantContext::run($user->selected_tenant_id, fn(): string => NoerdSettings::defaultUserLanguage());
+
+        expect($language)->toBe('en');
     });
 });

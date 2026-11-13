@@ -6,10 +6,11 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Enums\Profile;
+use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
-use Noerd\Models\SetupLanguage;
+use Noerd\Models\NoerdSettings;
 use Noerd\Models\Tenant;
 use Noerd\Notifications\AddedToTenantNotification;
 use Noerd\Rules\AtLeastOneTrue;
@@ -47,7 +48,7 @@ new class extends Component {
 
     public function localeOptions(): array
     {
-        return SetupLanguage::active()->pluck('name', 'code')->toArray();
+        return NoerdSettings::userLanguageOptions();
     }
 
     /**
@@ -73,8 +74,9 @@ new class extends Component {
         $this->initDetail();
 
         $this->isOwner = $this->modelId && (int) $this->modelId === NoerdAuth::id();
-        $this->userLocale = SetupLanguage::defaultCode();
-        $this->userFormatLocale = Locales::defaultFor($this->userLocale);
+        // A new account starts on the tenant defaults of System Settings.
+        $this->userLocale = NoerdSettings::defaultUserLanguage();
+        $this->userFormatLocale = FormatHelper::tenantLocale();
 
         $user = $this->modelId ? NoerdUser::find($this->modelId) ?? new NoerdUser() : new NoerdUser();
 
@@ -167,9 +169,13 @@ new class extends Component {
         if (! $this->modelId) {
             $rules['tenantAccess'] = ['array', 'min:1', new AtLeastOneTrue()];
 
-            // A name is only needed for an account that does not exist yet.
+            // Name, language and locale are only needed for an account that does
+            // not exist yet. Language and locale come from the client — only
+            // offered values count.
             if ($existing === null) {
                 $rules['detailData.name'] = ['required', 'string', 'max:255'];
+                $rules['userLocale'] = ['required', Rule::in(array_keys($this->localeOptions()))];
+                $rules['userFormatLocale'] = ['required', Rule::in(Locales::SUPPORTED)];
             }
         } elseif ($this->accountEditable) {
             $rules['detailData.name'] = ['required', 'string', 'max:255'];
@@ -204,7 +210,7 @@ new class extends Component {
         $this->finishStore($user);
 
         $user->locale = $this->userLocale;
-        $user->format_locale = Locales::isSupported($this->userFormatLocale) ? $this->userFormatLocale : Locales::defaultFor($this->userLocale);
+        $user->format_locale = Locales::isSupported($this->userFormatLocale) ? $this->userFormatLocale : FormatHelper::tenantLocale();
 
         if ($this->sendPasswordResetMail) {
             NoerdAuth::broker()->sendResetLink(['email' => $user->email]);

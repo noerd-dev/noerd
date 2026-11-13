@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
+use Noerd\Models\NoerdSettings;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Notifications\AddedToTenantNotification;
@@ -449,4 +450,36 @@ it('prefers the user setting locale for notifications', function (): void {
     $user->locale = 'de';
 
     expect($user->fresh()->preferredLocale())->toBe('de');
+});
+
+it('presets language and locale of a new user from the system settings', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    NoerdSettings::factory()
+        ->withLocale('en-GB')
+        ->withDefaultLanguage('de')
+        ->create(['tenant_id' => $admin->selected_tenant_id]);
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'])
+        ->assertSet('userLocale', 'de')
+        ->assertSet('userFormatLocale', 'en-GB');
+});
+
+it('rejects a language or locale that is not offered for a new user', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'])
+        ->set('detailData.name', fake()->name)
+        ->set('detailData.email', fake()->email)
+        ->set('userLocale', 'xx')
+        ->set('userFormatLocale', 'xx-XX')
+        ->set("possibleTenants.{$tenant->id}.hasAccess", true)
+        ->call('store')
+        ->assertHasErrors(['userLocale', 'userFormatLocale']);
+
+    expect(NoerdUser::count())->toBe(1);
 });

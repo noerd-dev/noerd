@@ -44,4 +44,11 @@ class NoerdSettingsFactory extends Factory
             'locale' => $locale,
         ]);
     }
+
+    public function withDefaultLanguage(string $languageCode): static
+    {
+        return $this->state(fn(array $attributes): array => [
+            'default_language' => $languageCode,
+        ]);
+    }
 }

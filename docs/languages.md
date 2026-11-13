@@ -33,7 +33,7 @@ Go to **Setup → Languages → New Language** and fill in:
 | Code | `da` — the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) code, lowercase |
 | Name | `Dansk` — the name shown in the picker |
 | Active | ✅ |
-| Default | Leave unticked unless Danish should be the default for new users |
+| Default | Leave unticked unless Danish should be the fallback for translatable values |
 | Sort Order | Position in the picker |
 
 The language is per tenant. It appears immediately in the language picker of every
@@ -41,6 +41,11 @@ user profile and in the user detail screen — no deployment needed. A new tenan
 default language set (`SetupLanguage::ensureDefaultLanguagesForTenant()`), and
 `SetupLanguage::active()` / `activeCodes()` / `defaultLanguage()` / `defaultCode()` expose the tenant's
 languages to your own code.
+
+The language a NEW user starts with is not the Default flag but **Setup → System Settings →
+Default Language** (`noerd_settings.default_language`, resolved by
+`NoerdSettings::defaultUserLanguage()`). Only while that setting is empty — or names a language
+that is no longer active — does the Default language take its place.
 
 ### Step 2 — Provide the translations
 
