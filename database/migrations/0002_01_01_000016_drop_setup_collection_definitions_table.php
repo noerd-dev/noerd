@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Setup collection definitions are YAML files of the installation; the
- * database mode that stored them per tenant was removed. A table that still
- * holds rows is kept: an installation that used the database mode exports its
- * definitions to app-configs/setup/collections first and drops the table itself.
+ * The core reads the setup collection definitions from YAML files; the database
+ * mode that stores them per tenant is no longer part of it. A table that holds
+ * rows is kept — the package providing the database mode keeps reading it, and
+ * an installation without that package exports its definitions first.
  */
 return new class extends Migration {
     public function up(): void
