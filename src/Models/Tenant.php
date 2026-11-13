@@ -15,7 +15,6 @@ use Noerd\Events\TenantMemberAdded;
 use Noerd\Events\TenantMemberRemoved;
 use Noerd\Services\ProfileRegistry;
 use Noerd\Support\DefaultCountries;
-use Noerd\Support\SetupCollectionDefinitionImport;
 use Noerd\Support\TenantContext;
 
 /**
@@ -171,14 +170,6 @@ class Tenant extends Authenticatable
             TenantContext::run($tenant->id, function () use ($tenant): void {
                 SetupLanguage::ensureDefaultLanguagesForTenant($tenant->id);
                 DefaultCountries::ensureForTenant($tenant->id);
-
-                // In database mode a tenant without definition rows has NO usable
-                // collections (empty sidebar, no layout for the country entries the
-                // line above just created), so a fresh tenant is seeded from the
-                // same YAML source the import command migrates from.
-                if (SetupCollectionDefinitionImport::isDatabaseMode()) {
-                    SetupCollectionDefinitionImport::forTenant($tenant->id);
-                }
             });
         });
     }

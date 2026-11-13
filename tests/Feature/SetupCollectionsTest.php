@@ -18,10 +18,6 @@ use Noerd\Tests\TestCase;
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    // Force yaml mode so the helper reads from the temporary example.yml
-    // created below, rather than the database-backed repository.
-    config(['noerd.collections.mode' => 'yaml']);
-    config(['noerd.collections.show_definitions_ui' => false]);
     app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
     app()->forgetInstance(SetupCollectionHelper::class);
 

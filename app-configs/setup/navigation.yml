@@ -20,9 +20,5 @@
         - title: System Settings
           route: noerd.system-settings
           heroicon: cog-6-tooth
-        - title: Collection Definitions
-          route: noerd.setup-collection-definitions
-          heroicon: rectangle-stack
-          config: noerd.collections.show_definitions_ui
     - title: Data Management
       dynamic: setup-collections

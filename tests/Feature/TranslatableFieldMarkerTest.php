@@ -126,8 +126,6 @@ describe('Translatable field marker in detail forms', function (): void {
 describe('Translatable field marker in lists', function (): void {
 
     beforeEach(function (): void {
-        config(['noerd.collections.mode' => 'yaml']);
-        config(['noerd.collections.show_definitions_ui' => false]);
         app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
         app()->forgetInstance(SetupCollectionHelper::class);
 

@@ -3,37 +3,12 @@
 declare(strict_types=1);
 
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
-use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
 
-it('resolves YamlSetupCollectionDefinitionRepository when mode is yaml', function (): void {
-    config(['noerd.collections.mode' => 'yaml']);
-    app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
-
-    $repository = app(SetupCollectionDefinitionRepositoryContract::class);
-
-    expect($repository)->toBeInstanceOf(YamlSetupCollectionDefinitionRepository::class);
-    expect($repository->isWritable())->toBeFalse();
-});
-
-it('resolves DatabaseSetupCollectionDefinitionRepository when mode is database', function (): void {
-    config(['noerd.collections.mode' => 'database']);
-    app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
-
-    $repository = app(SetupCollectionDefinitionRepositoryContract::class);
-
-    expect($repository)->toBeInstanceOf(DatabaseSetupCollectionDefinitionRepository::class);
-    expect($repository->isWritable())->toBeTrue();
-});
-
-it('falls back to yaml mode when the config value is unknown', function (): void {
-    config(['noerd.collections.mode' => 'something-invalid']);
-    app()->forgetInstance(SetupCollectionDefinitionRepositoryContract::class);
-
-    $repository = app(SetupCollectionDefinitionRepositoryContract::class);
-
-    expect($repository)->toBeInstanceOf(YamlSetupCollectionDefinitionRepository::class);
+it('reads the setup collection definitions from YAML', function (): void {
+    expect(app(SetupCollectionDefinitionRepositoryContract::class))
+        ->toBeInstanceOf(YamlSetupCollectionDefinitionRepository::class);
 });

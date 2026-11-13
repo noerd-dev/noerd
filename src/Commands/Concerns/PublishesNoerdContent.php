@@ -234,10 +234,10 @@ trait PublishesNoerdContent
 
         // The package root is the same wherever the package is installed (vendor/ or
         // a path repository under app-modules/).
-        $sourcePath = $this->getModuleRoot() . '/stubs/noerd.php.stub';
+        $sourcePath = $this->getModuleRoot() . '/config/noerd.php';
 
         if (! File::exists($sourcePath)) {
-            $this->warn("Source config stub not found: {$sourcePath}");
+            $this->warn("Source config not found: {$sourcePath}");
 
             return;
         }
@@ -278,7 +278,7 @@ trait PublishesNoerdContent
 
         if (! $this->option('force')) {
             if ($missing === []) {
-                $this->line('<comment>config/noerd.php already exists and declares every stub key — left untouched.</comment>');
+                $this->line('<comment>config/noerd.php already exists and declares every key — left untouched.</comment>');
 
                 return;
             }
@@ -286,8 +286,8 @@ trait PublishesNoerdContent
             $this->warn('config/noerd.php is missing new top-level keys: ' . implode(', ', $missing));
 
             if (! $this->input->isInteractive()
-                || ! $this->confirm('Overwrite config/noerd.php with the current stub?', false)) {
-                $this->line('<comment>Skipped config/noerd.php publishing. Add the missing keys manually (see stubs/noerd.php.stub).</comment>');
+                || ! $this->confirm('Overwrite config/noerd.php with the current package config?', false)) {
+                $this->line('<comment>Skipped config/noerd.php publishing. Add the missing keys manually (see config/noerd.php of the package).</comment>');
 
                 return;
             }

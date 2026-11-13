@@ -45,8 +45,6 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 
 | Command | Description |
 |---------|-------------|
-| `noerd:setup-collections:import-yaml` | Import setup collection definitions from YAML into the database |
-| `noerd:setup-collections:export-yaml` | Export setup collection definitions from the database as YAML |
 
 ## noerd:install
 
@@ -397,9 +395,7 @@ php artisan noerd:make-dashboard --app=inventory
 ## noerd:make-collection
 
 Creates a new collection YML file interactively (block-style YAML). See
-[Setup Collections](setup-collections.md). Has no effect while `noerd.collections.mode` is `database` — the written file is not read there
-(the command warns); create the collection in Setup → Collection Definitions or import the file
-afterwards.
+[Setup Collections](setup-collections.md).
 
 ```bash
 php artisan noerd:make-collection
@@ -427,36 +423,3 @@ php artisan noerd:make-theme mytheme --module=mymodule
 | `name` | The theme name (folder name, kebab-case) |
 | `--module=` | Create the theme inside that local module (`app-modules/{module}`, or the configured `noerd.generators.modules_path`) instead of the project |
 
-## noerd:setup-collections:import-yaml
-
-Imports setup collection definitions from YAML files into the `setup_collection_definitions` table.
-Used when switching `noerd.collections.mode` to `database`, and again whenever a module update
-ships a new collection YAML — newly published YAMLs are not picked up on their own. Idempotent:
-existing definitions are updated in place. Newly created tenants are seeded automatically. See
-[Setup Collections](setup-collections.md).
-
-```bash
-php artisan noerd:setup-collections:import-yaml --all-tenants
-```
-
-| Option | Description |
-|--------|-------------|
-| `--tenant-id=` | Import definitions for a specific tenant ID |
-| `--all-tenants` | Import definitions for every tenant |
-| `--delete` | Delete source YAML files after a successful import |
-| `--dry-run` | Show what would happen without writing anything |
-
-## noerd:setup-collections:export-yaml
-
-Exports setup collection definitions from the database as YAML files. Used when switching
-`noerd.collections.mode` back to `yaml`.
-
-```bash
-php artisan noerd:setup-collections:export-yaml --tenant-id=1
-```
-
-| Option | Description |
-|--------|-------------|
-| `--tenant-id=` | Export definitions for a specific tenant ID |
-| `--delete` | Delete the database rows after a successful export |
-| `--force` | Overwrite existing YAML files |

@@ -12,7 +12,6 @@ use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
 use Noerd\Helpers\SetupCollectionHelper;
-use Noerd\Support\SetupCollectionDefinitionImport;
 use Symfony\Component\Yaml\Yaml;
 
 class MakeCollectionCommand extends Command
@@ -29,21 +28,12 @@ class MakeCollectionCommand extends Command
     {
         // A field-by-field wizard has no scripted form: it needs a terminal.
         if (! $this->input->isInteractive()) {
-            $this->error('noerd:make-collection is an interactive wizard and cannot run with --no-interaction. Create the YAML file by hand or import one with noerd:setup-collections:import-yaml.');
+            $this->error('noerd:make-collection is an interactive wizard and cannot run with --no-interaction. Create the YAML file by hand.');
 
             return self::FAILURE;
         }
 
         $this->info('Creating a new collection...');
-
-        // The written file is inert while the schemas are read from the
-        // database — say so before the user fills in a whole definition.
-        if (SetupCollectionDefinitionImport::isDatabaseMode()) {
-            $this->warn('Collections run in "database" mode (noerd.collections.mode).');
-            $this->warn('This command only writes a YAML file, which is NOT read in that mode.');
-            $this->warn('Create the collection in Setup > Collection Definitions instead, or import');
-            $this->warn('the file afterwards with: php artisan noerd:setup-collections:import-yaml');
-        }
 
         $this->newLine();
 

@@ -44,23 +44,3 @@ it('keeps one bucket per name and forgets them separately', function (): void {
     expect(RequestState::bucket('zz.first'))->toBe([])
         ->and(RequestState::bucket('zz.second'))->toBe(['b' => 2]);
 });
-
-it('ships every config key in the published stub', function (): void {
-    $keys = function (array $config, string $prefix = '') use (&$keys): array {
-        $flat = [];
-        foreach ($config as $key => $value) {
-            $path = $prefix === '' ? (string) $key : $prefix . '.' . $key;
-            $flat[] = $path;
-            if (is_array($value) && ! array_is_list($value)) {
-                $flat = [...$flat, ...$keys($value, $path)];
-            }
-        }
-
-        return $flat;
-    };
-
-    $package = $keys(require dirname(__DIR__, 2) . '/config/noerd.php');
-    $stub = $keys(require dirname(__DIR__, 2) . '/stubs/noerd.php.stub');
-
-    expect(array_values(array_diff($package, $stub)))->toBe([]);
-});

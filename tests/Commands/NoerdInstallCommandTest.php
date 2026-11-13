@@ -286,7 +286,7 @@ describe('config publishing', function (): void {
     });
 
     it('leaves an up-to-date config untouched', function (): void {
-        File::copy(dirname(__DIR__, 2) . '/stubs/noerd.php.stub', $this->configPath);
+        File::copy(dirname(__DIR__, 2) . '/config/noerd.php', $this->configPath);
         File::append($this->configPath, "\n// host marker\n");
         $before = File::get($this->configPath);
 

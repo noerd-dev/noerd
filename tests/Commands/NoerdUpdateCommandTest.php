@@ -92,7 +92,7 @@ it('publishes the noerd config when the host has none', function (): void {
 
 it('keeps an up-to-date host config untouched', function (): void {
     $configPath = $this->hostPath . '/config/noerd.php';
-    File::copy(dirname(__DIR__, 2) . '/stubs/noerd.php.stub', $configPath);
+    File::copy(dirname(__DIR__, 2) . '/config/noerd.php', $configPath);
     File::append($configPath, "\n// host marker\n");
     $before = File::get($configPath);
 

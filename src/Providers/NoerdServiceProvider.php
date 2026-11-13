@@ -18,8 +18,6 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Octane\Events\RequestReceived;
 use Livewire\Livewire;
 use Noerd\Commands\AssignAppsToTenantCommand;
-use Noerd\Commands\ExportSetupCollectionDefinitionsCommand;
-use Noerd\Commands\ImportSetupCollectionDefinitionsCommand;
 use Noerd\Commands\LintCommand;
 use Noerd\Commands\MakeAdminUserCommand;
 use Noerd\Commands\MakeAppCommand;
@@ -49,7 +47,6 @@ use Noerd\Listeners\RecordLogin;
 use Noerd\Livewire\Hooks\NoerdHooks;
 use Noerd\Middleware\ActionPermissionMiddleware;
 use Noerd\Middleware\AppAccessMiddleware;
-use Noerd\Middleware\EnsureSetupCollectionDefinitionsEnabled;
 use Noerd\Middleware\EnsureTenantMembership;
 use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
@@ -59,7 +56,6 @@ use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\NoerdUser;
 use Noerd\Navigation\SetupCollectionsNavigationProvider;
-use Noerd\Repositories\DatabaseSetupCollectionDefinitionRepository;
 use Noerd\Repositories\YamlSetupCollectionDefinitionRepository;
 use Noerd\Services\ActionPermissionRegistry;
 use Noerd\Services\BrandService;
@@ -124,12 +120,6 @@ class NoerdServiceProvider extends ServiceProvider
         // root config/noerd.php is absent (e.g., module-only test boots).
         $this->mergeConfigFrom(__DIR__ . '/../../config/noerd.php', 'noerd');
 
-        // Derived, never configured: the definitions UI belongs to the database
-        // mode. Read from a config key of its own it silently drifted apart from
-        // the mode (published config edited without the env var), leaving the
-        // routes open while the navigation entry stayed hidden.
-        config(['noerd.collections.show_definitions_ui' => config('noerd.collections.mode') === 'database']);
-
         $this->registerNoerdGuard();
 
         // The component hooks are registered in the register phase: Livewire wires
@@ -152,17 +142,10 @@ class NoerdServiceProvider extends ServiceProvider
             return $registry;
         });
 
-        // Bind the Setup collection definition repository based on the shared mode toggle.
-        $this->app->singleton(SetupCollectionDefinitionRepositoryContract::class, function ($app) {
-            $mode = config('noerd.collections.mode', 'yaml');
-
-            return match ($mode) {
-                'database' => new DatabaseSetupCollectionDefinitionRepository(),
-                default => new YamlSetupCollectionDefinitionRepository(
-                    base_path(config('noerd.collections.setup_yaml_path', 'app-configs/setup/collections')),
-                ),
-            };
-        });
+        // Setup collection definitions are YAML files of the installation.
+        $this->app->singleton(SetupCollectionDefinitionRepositoryContract::class, fn(): YamlSetupCollectionDefinitionRepository => new YamlSetupCollectionDefinitionRepository(
+            base_path(config('noerd.collections.setup_yaml_path', 'app-configs/setup/collections')),
+        ));
 
         // Register SetupCollectionHelper as singleton so static proxies resolve
         // the container-bound repository and tests can replace it.
@@ -305,7 +288,6 @@ class NoerdServiceProvider extends ServiceProvider
         $router->aliasMiddleware('profile', ProfileMiddleware::class);
         $router->aliasMiddleware('app-access', AppAccessMiddleware::class);
         $router->aliasMiddleware('action-permission', ActionPermissionMiddleware::class);
-        $router->aliasMiddleware('setup.collections.ui', EnsureSetupCollectionDefinitionsEnabled::class);
         $router->pushMiddlewareToGroup('web', SetUserLocale::class);
     }
 
@@ -345,7 +327,7 @@ class NoerdServiceProvider extends ServiceProvider
             // The host config is normally published by noerd:install; the tag
             // exists for hosts that publish everything through vendor:publish.
             $this->publishes([
-                __DIR__ . '/../../stubs/noerd.php.stub' => config_path('noerd.php'),
+                __DIR__ . '/../../config/noerd.php' => config_path('noerd.php'),
             ], 'noerd-config');
 
             $this->commands([
@@ -367,8 +349,6 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeAdminUserCommand::class,
                 MakeTenantCommand::class,
                 NoerdDemoCommand::class,
-                ImportSetupCollectionDefinitionsCommand::class,
-                ExportSetupCollectionDefinitionsCommand::class,
             ]);
         }
     }

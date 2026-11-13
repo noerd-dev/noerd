@@ -54,7 +54,6 @@ runs (CI) pass `--force --migrate --build --demo` explicitly — see
 | `tenant_apps` | Available apps which can be assigned to tenants (with `tenant_app` pivot) |
 | `setup_collections` | Dynamic data collections |
 | `setup_collection_entries` | Entries in collections |
-| `setup_collection_definitions` | Collection schemas when `noerd.collections.mode` is `database` |
 | `setup_languages` | Per-tenant admin-panel languages |
 | `noerd_logins` | Login history (IP, user agent, impersonating admin) recorded on every login |
 
@@ -67,8 +66,7 @@ not ship it.
 All core routes are named with the `noerd.` prefix. The `/setup` area (middleware `noerd` +
 `setup`, admins only) registers `noerd.setup`, `noerd.users`, `noerd.user.detail`, `noerd.tenants`,
 `noerd.tenant.detail`, `noerd.create-tenant`, `noerd.tenant-apps`, `noerd.setup-collections`,
-`noerd.setup-collection.detail`, `noerd.setup-collection-definitions`,
-`noerd.setup-collection-definition.detail`, `noerd.setup-languages`, `noerd.setup-language.detail`
+`noerd.setup-collection.detail`, `noerd.setup-languages`, `noerd.setup-language.detail`
 and `noerd.system-settings`. The apps dashboard is `noerd.apps` (`/noerd-apps`); under the
 configurable URL prefix live `noerd.profile`, `noerd.no-tenant` and the
 auth routes (`noerd.login`, `noerd.password.request`, `noerd.password.reset`). See

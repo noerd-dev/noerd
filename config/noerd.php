@@ -2,55 +2,75 @@
 
 declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Noerd module defaults
-|--------------------------------------------------------------------------
-|
-| These defaults are merged into the noerd config namespace. The project
-| root config/noerd.php overrides these values via Laravel's normal merge
-| order — this file only guarantees resolvable keys when the noerd module
-| runs standalone (e.g., module-only test boots).
-|
-*/
-
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Routes
+    |--------------------------------------------------------------------------
+    |
+    | URL prefix for the noerd core routes (login, apps, user, ...). Route
+    | NAMES are unaffected — only the URLs carry the prefix, so navigation
+    | and route() calls keep working when the prefix changes. The /setup
+    | area keeps its own prefix and is not affected.
+    |
+    */
     'routes' => [
-        // URL prefix for the noerd core routes (login, apps, user, ...).
-        // Route NAMES are unaffected — only the URLs carry the prefix.
         'prefix' => env('NOERD_ROUTE_PREFIX', 'noerd'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Feature Flags
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable specific features of the Noerd package.
+    |
+    */
     'features' => [
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),
         'currency' => env('NOERD_CURRENCY_ENABLED', true),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Collection Definitions (Setup area)
+    |--------------------------------------------------------------------------
+    |
+    | The schemas of the SETUP collections are YAML files of the installation,
+    | committed and deployed like every other app config.
+    |
+    */
     'collections' => [
-        // 'yaml' or 'database'. The definitions UI flag that the setup
-        // navigation gates on is DERIVED from this in NoerdServiceProvider —
-        // never configure it separately.
-        'mode' => env('NOERD_COLLECTIONS_MODE', 'yaml'),
         'setup_yaml_path' => 'app-configs/setup/collections',
     ],
 
     /*
-     * The installation-wide default currency (ISO 4217, one of
-     * Noerd\Helpers\CurrencyHelper::CURRENCIES). A tenant overrides it in
-     * Setup → System Settings; every amount in the system is an amount in
-     * the tenant currency.
-     */
+    |--------------------------------------------------------------------------
+    | Currency
+    |--------------------------------------------------------------------------
+    |
+    | The installation-wide default currency (ISO 4217, one of
+    | Noerd\Helpers\CurrencyHelper::CURRENCIES). A tenant overrides it in
+    | Setup → System Settings; every amount in the system is an amount in the
+    | tenant currency.
+    |
+    */
     'currency' => [
         'default' => env('NOERD_CURRENCY', 'EUR'),
     ],
 
     /*
-     * Number, date and currency FORMATTING (ICU). The locale is resolved per
-     * reader: the user's profile locale → the tenant locale (Setup → System
-     * Settings, also used for every document) → `locale` below → the default
-     * locale of the interface language (Noerd\Support\Locales). The remaining
-     * keys pin a format for the whole installation and win over the locale.
-     */
+    |--------------------------------------------------------------------------
+    | Display Formats
+    |--------------------------------------------------------------------------
+    |
+    | Number, date and currency FORMATTING (ICU). The locale is resolved per
+    | reader: the user's profile locale → the tenant locale (Setup → System
+    | Settings, also used for every document) → `locale` below → the default
+    | locale of the interface language (Noerd\Support\Locales). The remaining
+    | keys pin a format for the whole installation and win over the locale.
+    |
+    */
     'format' => [
         'locale' => env('NOERD_FORMAT_LOCALE'),
         'date' => env('NOERD_FORMAT_DATE'),
@@ -60,6 +80,14 @@ return [
         'csv_delimiter' => env('NOERD_CSV_DELIMITER', ';'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Branding
+    |--------------------------------------------------------------------------
+    |
+    | Configure your application's branding assets.
+    |
+    */
     'branding' => [
         'logo' => env('NOERD_LOGO', ''),
         'favicon' => env('NOERD_FAVICON', ''),
@@ -67,6 +95,14 @@ return [
         'auth_background_video' => env('NOERD_AUTH_BACKGROUND_VIDEO', ''),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sidebar
+    |--------------------------------------------------------------------------
+    |
+    | Configure the sidebar dimensions.
+    |
+    */
     'sidebar' => [
         'apps_width' => env('NOERD_SIDEBAR_APPS_WIDTH', '80px'),
         'navigation_width' => env('NOERD_SIDEBAR_NAVIGATION_WIDTH', '280px'),
@@ -77,16 +113,52 @@ return [
     // where the value comes from; noerd only displays it.
     'app_version' => env('NOERD_APP_VERSION'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Generators
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the noerd:make-* Artisan commands.
+    |
+    */
     'generators' => [
+        /*
+        | When enabled, the noerd:make-* commands will also search for models in the
+        | modules directory (modules_path, relative to the project root).
+        | This allows using short model names like "Customer" instead of
+        | the full namespace "Noerd\Customer\Models\Customer".
+        */
         'search_modules' => true,
         'modules_path' => 'app-modules',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Theme
+    |--------------------------------------------------------------------------
+    |
+    | Fallback for the system-wide default theme of detail forms ("default",
+    | "compact", "numbered", or any discovered theme folder). Admins override
+    | this per tenant under Setup -> System Settings. A detail YAML declaring
+    | its own "theme:" wins, unless "enforced" is on — then the system theme
+    | is applied everywhere.
+    |
+    */
     'theme' => [
         'default' => env('NOERD_THEME', 'default'),
         'enforced' => env('NOERD_THEME_ENFORCED', false),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Keyboard Shortcuts
+    |--------------------------------------------------------------------------
+    |
+    | Configure keyboard shortcuts for the application.
+    | Format: 'modifier+key' (e.g., 'ctrl+f', 'shift+k', '/').
+    | Supported modifiers: ctrl, shift, alt, meta.
+    |
+    */
     'keyboard_shortcuts' => [
         'search_focus' => 's',
         'new_entry' => 'n',
@@ -94,6 +166,18 @@ return [
         'delete' => 'ctrl+backspace',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Brand
+    |--------------------------------------------------------------------------
+    |
+    | Configure the application's brand color palette. The brand controls
+    | sidebar, appbar, and page background colors. Individual color overrides
+    | take precedence over brand presets.
+    |
+    | Supported brands: "default", "sand", "white"
+    |
+    */
     'brand' => [
         'active' => env('NOERD_BRAND', 'default'),
 

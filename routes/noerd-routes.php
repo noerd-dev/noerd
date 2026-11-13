@@ -66,12 +66,6 @@ Route::group(['prefix' => 'setup', 'middleware' => ['noerd', 'setup']], function
     Route::livewire('create-tenant', 'noerd::create-tenant')->name('noerd.create-tenant');
     Route::livewire('collections', 'noerd::setup-collections-list')->name('noerd.setup-collections');
     Route::livewire('collection/{modelId}', 'noerd::setup-collection-detail')->name('noerd.setup-collection.detail');
-    Route::livewire('collection-definitions', 'noerd::setup-collection-definitions-list')
-        ->middleware('setup.collections.ui')
-        ->name('noerd.setup-collection-definitions');
-    Route::livewire('collection-definition/{modelId}', 'noerd::setup-collection-definition-detail')
-        ->middleware('setup.collections.ui')
-        ->name('noerd.setup-collection-definition.detail');
     Route::livewire('languages', 'noerd::setup-languages-list')->name('noerd.setup-languages');
     Route::livewire('language/{modelId}', 'noerd::setup-language-detail')->name('noerd.setup-language.detail');
     Route::livewire('system-settings', 'noerd::system-settings-page')->name('noerd.system-settings');
