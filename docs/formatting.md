@@ -7,12 +7,15 @@ looks like:
 | Setting | Where | What it controls |
 |---|---|---|
 | **Tenant currency** | Setup → System Settings → Currency (`noerd_settings.currency`) | THE currency of every amount in the system. A tenant that selects USD invoices, books and reports in US dollars |
-| **Tenant locale** | Setup → System Settings → Locale (`noerd_settings.locale`) | How **documents** are written: PDFs, receipts, customer e-mails — everything that leaves the system. `en-US` prints `$1,234.56` and `09/03/2026`, no matter who generated the document |
+| **Tenant locale** | Setup → System Settings → Default Locale (`noerd_settings.locale`) | How **documents** are written: PDFs, receipts, customer e-mails — everything that leaves the system. `en-US` prints `$1,234.56` and `09/03/2026`, no matter who generated the document. It is also the locale a new user starts with |
 | **User locale** | Profile → Locale (`noerd_user_settings.format_locale`) | How the **backend UI** is written for that user: lists, details, dashboards, exports. A German reader sees `1.234,56 $` and `03.09.2026` for the same USD tenant |
 
 The **language** (Setup → Languages, chosen per user in Profile → Language) is a separate setting:
 it selects the translation strings and the translatable fields, not the number format. Language
-`de` with locale `en-US` is a perfectly valid combination — German labels, US formats.
+`de` with locale `en-US` is a perfectly valid combination — German labels, US formats. The
+language a new user starts with is Setup → System Settings → Default Language
+(`noerd_settings.default_language`, `NoerdSettings::defaultUserLanguage()`); while it is empty, the
+tenant's default setup language applies.
 
 ## Supported locales
 

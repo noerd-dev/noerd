@@ -47,6 +47,44 @@ class NoerdSettings extends Model implements TenantSingletonContract
         static::forgetTenantSingletons();
     }
 
+    /**
+     * The interface languages a user can be given: the active setup languages of
+     * the selected tenant, default first. A tenant without any falls back to the
+     * default code, so the select and its validation never run empty.
+     *
+     * @return array<string, string> code => name
+     */
+    public static function userLanguageOptions(): array
+    {
+        $options = SetupLanguage::active()->pluck('name', 'code')->toArray();
+
+        if ($options === []) {
+            $code = SetupLanguage::defaultCode();
+            $options = [$code => $code];
+        }
+
+        return $options;
+    }
+
+    /**
+     * The interface language a new user starts with: System Settings → Default
+     * Language while it is an active language, otherwise the tenant's default
+     * setup language. Both read the selected tenant.
+     */
+    public static function defaultUserLanguage(): string
+    {
+        $configured = static::forTenant()->default_language;
+        $options = static::userLanguageOptions();
+
+        if (is_string($configured) && array_key_exists($configured, $options)) {
+            return $configured;
+        }
+
+        $fallback = SetupLanguage::defaultCode();
+
+        return array_key_exists($fallback, $options) ? $fallback : (string) array_key_first($options);
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
@@ -70,9 +108,6 @@ class NoerdSettings extends Model implements TenantSingletonContract
         });
     }
 
-    /**
-     * @return array<string, string>
-     */
     /**
      * @return array<string, string>
      */

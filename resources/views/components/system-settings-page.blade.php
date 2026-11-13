@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Noerd\Helpers\CurrencyHelper;
 use Noerd\Helpers\FormatHelper;
@@ -31,6 +32,7 @@ new class extends Component {
         $this->detailData['locale'] = Locales::isSupported($this->detailData['locale'] ?? null)
             ? $this->detailData['locale']
             : FormatHelper::tenantLocale();
+        $this->detailData['default_language'] = NoerdSettings::defaultUserLanguage();
         $this->detailData['detail_theme'] = ($this->detailData['detail_theme'] ?? null) ?: config('noerd.theme.default', 'default');
         $this->detailData['detail_theme_enforced'] = (bool) ($this->detailData['detail_theme_enforced'] ?? false);
 
@@ -62,6 +64,16 @@ new class extends Component {
     }
 
     /**
+     * The interface language new users of the tenant start with.
+     *
+     * @return array<string, string> language code => name
+     */
+    public function languageOptions(): array
+    {
+        return NoerdSettings::userLanguageOptions();
+    }
+
+    /**
      * @return array<string, string> theme name => display label
      */
     public function themeOptions(): array
@@ -88,6 +100,7 @@ new class extends Component {
 
         $rules = [
             'detailData.locale' => ['required', 'in:' . implode(',', Locales::SUPPORTED)],
+            'detailData.default_language' => ['required', Rule::in(array_keys($this->languageOptions()))],
             'detailData.detail_theme' => ['required', 'in:' . implode(',', array_keys($this->themeOptions()))],
             'detailData.detail_theme_enforced' => ['boolean'],
         ];
