@@ -356,7 +356,7 @@ and the generic trait features (row click, select-all, bulk delete) all read it 
 per-request memo `builtListConfig()`. A `with()` never returns a `listConfig` — the view does not
 read it. A list whose rows are not one model (a repository, a raw query, rows assembled in PHP)
 overrides `listData()` without a `$listModel` and returns `buildList($rows, $config)` with an inline
-config array and a `LengthAwarePaginator` (reference: `noerd::setup-collection-definitions-list`);
+config array and a `LengthAwarePaginator`;
 such a list shows no column filters and declares its permission target with
 `$objectPermissionModel`. Extra view data (e.g. a footer summary) stays in a slim `with()` that
 returns only the extra keys — share the query between `listData()` and `with()` via a private

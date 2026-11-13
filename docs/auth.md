@@ -80,7 +80,6 @@ any tenant app can open the module's screens. The `noerd:make-module` scaffolder
 | `setup` | `SetupMiddleware` | The `/setup` area — tenant admins only (`NoerdUser::isAdmin()`) |
 | `profile` | `ProfileMiddleware` | The profile area — every signed-in person; selects the hidden `PROFILE` app so the sidebar shows `app-configs/profile/navigation.yml`, refused (403) while an administrator is signed in as the person (see [Navigation](navigation.md#setup-and-profile-navigation)) |
 | `action-permission:{key}` | `ActionPermissionMiddleware` | A registered named action must be allowed for the user (see [Permissions](permissions.md#named-action-checks)) |
-| `setup.collections.ui` | `EnsureSetupCollectionDefinitionsEnabled` | The collection-definition screens, only reachable while `noerd.collections.mode` is `database` (see [Setup Collections](setup-collections.md)) |
 
 `Noerd\Middleware\SetUserLocale` is pushed onto the global `web` group and applies the noerd
 user's UI language on every request, including Livewire updates (see [Languages](languages.md)).

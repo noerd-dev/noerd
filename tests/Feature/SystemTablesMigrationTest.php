@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Noerd\Tests\TestCase;
 
@@ -22,7 +23,6 @@ it('creates every noerd system table', function (string $table): void {
     'setup_languages',
     'setup_collections',
     'setup_collection_entries',
-    'setup_collection_definitions',
 ]);
 
 it('includes the consolidated columns in the create migrations', function (string $table, string $column): void {
@@ -63,3 +63,24 @@ it('declares the pivot integrity constraints in the create migrations', function
     ['tenant_app', ['tenant_app_id', 'tenant_id']],
     ['tenant_apps', ['name']],
 ]);
+
+it('no longer creates the table of the removed collection database mode', function (): void {
+    expect(Schema::hasTable('setup_collection_definitions'))->toBeFalse();
+});
+
+it('drops an empty definitions table of an older installation and keeps one that holds rows', function (): void {
+    $migration = require dirname(__DIR__, 2) . '/database/migrations/0002_01_01_000016_drop_setup_collection_definitions_table.php';
+
+    Schema::create('setup_collection_definitions', function ($table): void {
+        $table->id();
+        $table->string('key');
+    });
+    DB::table('setup_collection_definitions')->insert(['key' => 'ZZ_KEPT']);
+
+    $migration->up();
+    expect(Schema::hasTable('setup_collection_definitions'))->toBeTrue();
+
+    DB::table('setup_collection_definitions')->delete();
+    $migration->up();
+    expect(Schema::hasTable('setup_collection_definitions'))->toBeFalse();
+});

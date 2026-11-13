@@ -127,24 +127,6 @@ parameters:
 			path: src/Models/SetupLanguage.php
 
 		-
-			message: '#^Access to an undefined property Noerd\\Models\\SetupCollectionDefinition\:\:\$filename\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Repositories/DatabaseSetupCollectionDefinitionRepository.php
-
-		-
-			message: '#^Access to an undefined property Noerd\\Models\\SetupCollectionDefinition\:\:\$key\.$#'
-			identifier: property.notFound
-			count: 3
-			path: src/Repositories/DatabaseSetupCollectionDefinitionRepository.php
-
-		-
-			message: '#^Empty array passed to foreach\.$#'
-			identifier: foreach.emptyArray
-			count: 2
-			path: src/Repositories/DatabaseSetupCollectionDefinitionRepository.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>detailData" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1

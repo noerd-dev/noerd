@@ -47,8 +47,6 @@ final class ComponentAccessGuard
         'noerd::system-settings-page',
         'noerd::setup-collections-list',
         'noerd::setup-collection-detail',
-        'noerd::setup-collection-definitions-list',
-        'noerd::setup-collection-definition-detail',
         'noerd::setup-languages-list',
         'noerd::setup-language-detail',
     ];

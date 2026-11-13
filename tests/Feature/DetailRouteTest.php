@@ -18,10 +18,6 @@ uses(TestCase::class, RefreshDatabase::class);
  | closed to everyone else. WHICH component a route renders is configuration
  | (a page YAML may point its `detail:` anywhere), so only the route contract is
  | asserted here — never the component behind it.
- |
- | The collection-DEFINITION routes are left out on purpose: they carry the
- | `setup.collections.ui` middleware and 404 in the default (yaml) mode; their
- | gate is proven in SetupCollectionDatabaseModeTest.
  */
 
 beforeEach(function (): void {

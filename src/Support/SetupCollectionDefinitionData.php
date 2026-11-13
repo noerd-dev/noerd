@@ -19,7 +19,6 @@ final class SetupCollectionDefinitionData
         public string $titleList,
         public ?string $description,
         public array $fields,
-        public ?int $createdBy = null,
     ) {}
 
     /**
@@ -51,7 +50,6 @@ final class SetupCollectionDefinitionData
             titleList: (string) ($data['titleList'] ?? $resolvedFilename),
             description: $data['description'] ?? null,
             fields: $fields,
-            createdBy: isset($data['created_by']) ? (int) $data['created_by'] : null,
         );
     }
 
@@ -67,34 +65,6 @@ final class SetupCollectionDefinitionData
             'titleList' => $this->titleList,
             'description' => $this->description,
             'fields' => $this->fields,
-            'created_by' => $this->createdBy,
-        ];
-    }
-
-    /**
-     * Produce the YAML shape (fields prefixed with "detailData.") for writing to disk.
-     * Any additional field keys (modalComponent, relationField, etc.) are preserved.
-     *
-     * @return array<string, mixed>
-     */
-    public function toYamlArray(): array
-    {
-        $yamlFields = [];
-        foreach ($this->fields as $field) {
-            $yamlFields[] = array_merge($field, [
-                'name' => 'detailData.' . mb_ltrim($field['name'], '.'),
-                'label' => $field['label'],
-                'type' => $field['type'],
-                'colspan' => (int) $field['colspan'],
-            ]);
-        }
-
-        return [
-            'title' => $this->title,
-            'titleList' => $this->titleList,
-            'key' => $this->key,
-            'description' => $this->description ?? '',
-            'fields' => $yamlFields,
         ];
     }
 }

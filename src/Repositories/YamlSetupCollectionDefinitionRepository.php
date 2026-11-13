@@ -8,7 +8,6 @@ use Illuminate\Support\Collection;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Support\SetupCollectionDefinitionData;
-use RuntimeException;
 use Throwable;
 
 class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefinitionRepositoryContract
@@ -70,26 +69,6 @@ class YamlSetupCollectionDefinitionRepository implements SetupCollectionDefiniti
         $fields['fields'] = array_values($fields['fields'] ?? []);
 
         return $fields;
-    }
-
-    public function save(SetupCollectionDefinitionData $data, ?string $originalFilename = null, ?int $tenantId = null): string
-    {
-        throw new RuntimeException('Setup collection definitions are read-only in YAML mode. Deploy changes via YAML files.');
-    }
-
-    public function copy(string $filename, ?int $tenantId = null): string
-    {
-        throw new RuntimeException('Setup collection definitions are read-only in YAML mode. Deploy changes via YAML files.');
-    }
-
-    public function delete(string $filename, ?int $tenantId = null): void
-    {
-        throw new RuntimeException('Setup collection definitions are read-only in YAML mode. Deploy changes via YAML files.');
-    }
-
-    public function isWritable(): bool
-    {
-        return false;
     }
 
     private function pathFor(string $filename): string

@@ -97,8 +97,8 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - **Modals.** Action dialogs open by component (`Noerd::modal()`), addressable records open by route
   (`Noerd::modalRoute()`), always with the component as fallback (`Noerd::modalFor()`). Keep the two
   APIs explicit — no implicit detection.
-- **Config.** `config/noerd.php` (package defaults) and `stubs/noerd.php.stub` (published into the
-  host by `noerd:install`) must stay in sync; a new config key or feature flag goes into both, and
+- **Config.** `config/noerd.php` holds the package defaults AND is the file `noerd:install` publishes
+  into the host; a new config key or feature flag goes there, and
   `noerd:update` (`publishNoerdConfig()` / `setupFrontendAssets()`) must carry it into existing
   installations.
 - **YAML copies.** The package's own app configs live in `app-configs/` (setup app etc.). In a host

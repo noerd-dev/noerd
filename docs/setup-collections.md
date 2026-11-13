@@ -16,7 +16,7 @@ That's it. No migrations, no models, no controllers required.
 | `title` | Yes* | Singular title (e.g., "Customer") |
 | `titleList` | No | Plural title for the list view (e.g., "Customers"); defaults to the filename |
 | `key` | No | Unique identifier in UPPERCASE (e.g., "CUSTOMERS"); defaults to the UPPERCASED filename (`Noerd\Support\SetupCollectionDefinitionData`) |
-| `buttonList` | No | Button text for creating new entries (default `New Entry`). **`yaml` mode only** — a database-mode definition does not store it |
+| `buttonList` | No | Button text for creating new entries (default `New Entry`). |
 | `description` | No | Optional description shown in the detail view |
 | `fields` | Yes* | Array of field definitions |
 
@@ -39,61 +39,12 @@ fields:
     colspan: 6
 ```
 
-## Storage Modes: YAML vs. Database
+## Where Definitions and Entries Live
 
-Where collection **schemas** (the definitions above) live is controlled by
-`config('noerd.collections.mode')`:
-
-| Config key | Env | Default | Description |
-|------------|-----|---------|-------------|
-| `collections.mode` | `NOERD_COLLECTIONS_MODE` | `yaml` | `yaml` or `database` |
-| `collections.show_definitions_ui` | — | derived | `true` when mode is `database` |
-| `collections.setup_yaml_path` | — | `app-configs/setup/collections` | YAML source directory |
-
-- **`yaml` (default):** Schemas live as committed YAML files in `setup_yaml_path`. The definitions
-  management UI is hidden — changes are deployed via files.
-- **`database`:** Schemas live per tenant in the `setup_collection_definitions` table. The Setup
-  area shows a management UI (routes `noerd.setup-collection-definitions` /
-  `noerd.setup-collection-definition.detail`, gated by the `setup.collections.ui` middleware) where
-  admins create and edit collection definitions at runtime.
-
-`collections.show_definitions_ui` — the flag the setup navigation gates the management entry on —
-is DERIVED from the mode when the service provider registers. Never set it in a config file: the
-navigation entry and the routes must always follow the same value.
-
-The mode applies to the **Setup** collections only.
-
-The entry **data** is always stored in the database (`setup_collections` /
-`setup_collection_entries`), regardless of the mode.
-
-### Operating in Database Mode
-
-In database mode a tenant without definition rows has no usable collections at all — an empty
-"Data Management" sidebar, and no layout for the entries it may already hold. Two things follow:
-
-- **New tenants are seeded automatically.** `Tenant::created` imports every definition from the YAML
-  source for the new tenant (`Noerd\Support\SetupCollectionDefinitionImport`), so a fresh tenant
-  starts with the same collections a YAML-mode installation has. Nothing happens in `yaml` mode.
-- **Newly shipped YAML definitions are NOT imported automatically.** When a module update publishes
-  a new collection YAML, run the import again (see [Switching Modes](#switching-modes)) — it is
-  idempotent and updates existing rows in place.
-
-`php artisan noerd:make-collection` always writes a YAML file and therefore has no effect in
-database mode; it warns about that. Create the collection in Setup → Collection Definitions instead,
-or import the written file afterwards.
-
-### Switching Modes
-
-Two Artisan commands move definitions between the two storages (see
-[Artisan Commands](artisan-commands.md)):
-
-```bash
-# yaml -> database   (--tenant-id= | --all-tenants, --dry-run, --delete removes the YAML files afterwards)
-php artisan noerd:setup-collections:import-yaml --all-tenants
-
-# database -> yaml   (--tenant-id=, --force overwrites existing files, --delete removes the rows afterwards)
-php artisan noerd:setup-collections:export-yaml --tenant-id=1
-```
+Collection **schemas** (the definitions above) are YAML files of the installation in
+`config('noerd.collections.setup_yaml_path')` (default `app-configs/setup/collections`) — committed
+and deployed like every other app config. The entry **data** is stored in the database
+(`setup_collections` / `setup_collection_entries`), per tenant.
 
 ## Using Collections in Other Components
 
@@ -150,13 +101,12 @@ $options = SetupCollectionHelper::selectOptions('countries', 'name', 'code');
 | `getAllCollections()` | `array` | Returns all collections with their metadata |
 | `selectOptions(string $collectionKey, string $displayField = 'name', ?string $valueField = null)` | `array` | `[['value' => …, 'label' => …], …]` built from the current tenant's entries — the same resolution the `setupCollectionSelect` element and the list picklist badges use |
 
-The helper reads from the active storage mode transparently — the same API works in `yaml` and
-`database` mode. `selectOptions()` is memoized per request, tenant and language; call
+`selectOptions()` is memoized per request, tenant and language; call
 `SetupCollectionHelper::clearSelectOptionsCache()` after writing entries (tests).
 
 ## Available Field Types
 
-`noerd:make-collection` and the database-mode definition editor offer the curated list
+`noerd:make-collection` offers the curated list
 `SetupCollectionHelper::FIELD_TYPES`: `text`, `textarea`, `translatableText`,
 `translatableTextarea`, `translatableRichText`, `image`, `email`, `tel`, `checkbox`, `select`,
 `date`, `datetime`, `number` — deliberately without structural and relation types. A hand-written
