@@ -159,7 +159,7 @@
             @include($cellRendererView, \Noerd\Support\ListCellRenderer::data($value, $rowData ?? [], $columnConfig ?? []))
         </div>
     @else
-        @if ($type === 'bool' || $type === 'boolean')
+        @if ($type === 'bool')
             @if (\Noerd\Support\ListCellFormatter::truthy($value))
                 <div class="shrink-0 px-3 text-right">
                     <svg
@@ -195,7 +195,7 @@
                     </svg>
                 </div>
             @endif
-        @elseif ($type === 'inversebool')
+        @elseif ($type === 'inverseBool')
             @if (\Noerd\Support\ListCellFormatter::truthy($value))
                 <div class="shrink-0 px-3 text-right">
                     <svg
@@ -215,17 +215,7 @@
                 </div>
             @endif
         @else
-            @if ($type === 'id')
-                <div class="bg-gray-100" wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})">
-                    <input
-                        type="text"
-                        readonly
-                        id="cell-{{ $cellId }}"
-                        class="cursor-pointer underline w-auto border-transparent! ring-0! border-1! focus:ring-0! focus:border-1! active:border-1! p-0 bg-transparent text-sm py-0.5 px-1.5 @if(in_array($type, ['number'])) text-right @endif"
-                        value="{{ $value }}"
-                    />
-                </div>
-            @elseif ($type === 'date')
+            @if ($type === 'date')
                 {{-- Rendered as text, not as <input type="date">: the browser would
                      localise a date input by ITS locale, the list follows the user's. --}}
                 @if ($value)
@@ -308,7 +298,7 @@
                         />
                     </div>
                 @endif
-            @elseif ($type === 'badge_with_text')
+            @elseif ($type === 'badgeWithText')
                 @php
                     $badgeWithText = \Noerd\Support\ListCellFormatter::badgeWithText($value);
                 @endphp
@@ -323,7 +313,7 @@
                         <span class="text-sm text-gray-600">{{ $badgeWithText['text'] }}</span>
                     @endif
                 </div>
-            @elseif ($type === 'relation_link')
+            @elseif ($type === 'relationLink')
                 @php
                     $relationRoute = $columnConfig['route'] ?? null;
                     $relationRoute = $relationRoute && \Illuminate\Support\Facades\Route::has($relationRoute)
@@ -362,7 +352,7 @@
                         @include('noerd::components.list.preview', ['preview' => $cellPreview, 'previewSize' => 'cell'])
                     </div>
                 @endif
-            @elseif ($type === 'colored_text')
+            @elseif ($type === 'coloredText')
                 @php
                     $coloredText = \Noerd\Support\ListCellFormatter::coloredText($value);
                 @endphp

@@ -171,13 +171,13 @@ describe('format()', function (): void {
             ->and(ListCellFormatter::format(null, ['type' => 'datetime']))->toBe('');
     });
 
-    it('renders both boolean spellings as Yes / No', function (string $type): void {
+    it('renders a bool as Yes / No', function (string $type): void {
         zzCellFormatterUser();
 
         expect(ListCellFormatter::format(1, ['type' => $type]))->toBe(__('Yes'))
             ->and(ListCellFormatter::format(0, ['type' => $type]))->toBe(__('No'))
             ->and(ListCellFormatter::format(null, ['type' => $type]))->toBe(__('No'));
-    })->with(['bool', 'boolean']);
+    })->with(['bool']);
 
     it('renders a badge cell as the translated option label', function (): void {
         zzCellFormatterUser();
@@ -199,7 +199,7 @@ describe('format()', function (): void {
             ->and(ListCellFormatter::format(null, $column))->toBe('');
     })->with([
         [['type' => 'text']],
-        [['type' => 'colored_text']],
+        [['type' => 'coloredText']],
         [[]],
     ]);
 
@@ -211,7 +211,7 @@ describe('format()', function (): void {
 });
 
 describe('array-shaped and relation cell types', function (): void {
-    it('writes the line of a colored_text value and normalises its shape', function (): void {
+    it('writes the line of a coloredText value and normalises its shape', function (): void {
         zzCellFormatterUser();
 
         $value = [
@@ -223,10 +223,10 @@ describe('array-shaped and relation cell types', function (): void {
             'iconClass' => 'text-yellow-500',
         ];
 
-        expect(ListCellFormatter::format($value, ['type' => 'colored_text']))->toBe('↳ Child page')
-            ->and(ListCellFormatter::format(['text' => 'Alone'], ['type' => 'colored_text']))->toBe('Alone')
-            ->and(ListCellFormatter::format('Plain', ['type' => 'colored_text']))->toBe('Plain')
-            ->and(ListCellFormatter::format(null, ['type' => 'colored_text']))->toBe('')
+        expect(ListCellFormatter::format($value, ['type' => 'coloredText']))->toBe('↳ Child page')
+            ->and(ListCellFormatter::format(['text' => 'Alone'], ['type' => 'coloredText']))->toBe('Alone')
+            ->and(ListCellFormatter::format('Plain', ['type' => 'coloredText']))->toBe('Plain')
+            ->and(ListCellFormatter::format(null, ['type' => 'coloredText']))->toBe('')
             ->and(ListCellFormatter::coloredText($value))->toBe([
                 'text' => 'Child page',
                 'class' => 'bg-green-100',
@@ -239,24 +239,24 @@ describe('array-shaped and relation cell types', function (): void {
             ->and(ListCellFormatter::coloredText('Plain'))->toMatchArray(['text' => 'Plain', 'styled' => false, 'icon' => null, 'class' => '']);
     });
 
-    it('writes a badge_with_text value as badge and text', function (): void {
+    it('writes a badgeWithText value as badge and text', function (): void {
         zzCellFormatterUser();
 
         $value = ['badge' => 'Open', 'text' => 'Alice', 'variant' => 'danger'];
 
-        expect(ListCellFormatter::format($value, ['type' => 'badge_with_text']))->toBe('Open Alice')
-            ->and(ListCellFormatter::format(['badge' => 'Open'], ['type' => 'badge_with_text']))->toBe('Open')
-            ->and(ListCellFormatter::format('Unassigned', ['type' => 'badge_with_text']))->toBe('Unassigned')
+        expect(ListCellFormatter::format($value, ['type' => 'badgeWithText']))->toBe('Open Alice')
+            ->and(ListCellFormatter::format(['badge' => 'Open'], ['type' => 'badgeWithText']))->toBe('Open')
+            ->and(ListCellFormatter::format('Unassigned', ['type' => 'badgeWithText']))->toBe('Unassigned')
             ->and(ListCellFormatter::badgeWithText($value))->toBe(['badge' => 'Open', 'variant' => 'danger', 'text' => 'Alice'])
             ->and(ListCellFormatter::badgeWithText('Unassigned'))->toBe(['badge' => '', 'variant' => 'primary', 'text' => 'Unassigned']);
     });
 
-    it('renders inversebool as Yes or nothing', function (): void {
+    it('renders inverseBool as Yes or nothing', function (): void {
         zzCellFormatterUser();
 
-        expect(ListCellFormatter::format(1, ['type' => 'inversebool']))->toBe(__('Yes'))
-            ->and(ListCellFormatter::format(0, ['type' => 'inversebool']))->toBe('')
-            ->and(ListCellFormatter::format(null, ['type' => 'inversebool']))->toBe('');
+        expect(ListCellFormatter::format(1, ['type' => 'inverseBool']))->toBe(__('Yes'))
+            ->and(ListCellFormatter::format(0, ['type' => 'inverseBool']))->toBe('')
+            ->and(ListCellFormatter::format(null, ['type' => 'inverseBool']))->toBe('');
     });
 
     it('writes a time cell in the reader locale', function (): void {

@@ -55,7 +55,7 @@ new class extends Component {
 @inject('navigation', 'Noerd\\Services\\NavigationService')
 
 <div
-        @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
+        @if(count($navigation->blockMenus()) > 0)
             :style="isDesktop ? (showSidebar ? (showAppbar ? 'left: var(--sidebar-total-width); width: calc(100% - var(--sidebar-total-width))' : 'left: var(--sidebar-nav-width); width: calc(100% - var(--sidebar-nav-width))') : (showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : '')) : ''"
         @else
             :style="isDesktop && showAppbar ? 'left: var(--sidebar-apps-width); width: calc(100% - var(--sidebar-apps-width))' : ''"
@@ -71,7 +71,7 @@ new class extends Component {
                      at the bottom of the navigation. On mobile the toggle is transient (no session),
                      so the navigation is hidden again after every page change. --}}
                 <button
-                    @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
+                    @if(count($navigation->blockMenus()) > 0)
                         @click="showSidebar = ! showSidebar; if (isDesktop) { $wire.setSidebarVisibility(showSidebar) }"
                     @else
                         {{-- No navigation: the button is the only way to reach the app bar --}}

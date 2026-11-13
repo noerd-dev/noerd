@@ -31,7 +31,7 @@ in YAML/properties pair `route:` + `modalComponent:`, `$detailRoute` + `$detailC
 module is not installed.
 
 Where `route:` is available: list `$detailRoute`, list header action `route:`, detail action
-`route:`, relation-box tile / widget `route:`, list column `type: relation_link`, relation field
+`route:`, relation-box tile / widget `route:`, list column `type: relationLink`, relation field
 `detailRoute:`, navigation `modalRoute:` / `newRoute:`, page/detail tab `modalRoute:`, dashboard
 card `route=`.
 

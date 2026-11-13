@@ -17,7 +17,7 @@ columns:
     label: Name
   - field: profile_for_tenant
     label: Profile
-    type: badge_with_text
+    type: badgeWithText
   - field: latestLogin.created_at
     label: Last Login
     type: datetime

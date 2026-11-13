@@ -715,7 +715,7 @@ trait GeneratesResourceFiles
                 continue;
             }
 
-            $blocks = $navigation[0]['block_menus'] ?? [];
+            $blocks = $navigation[0]['blockMenus'] ?? [];
             $existingRoutes = [];
             foreach ($blocks as $block) {
                 foreach ($block['navigations'] ?? [] as $existing) {
@@ -735,7 +735,7 @@ trait GeneratesResourceFiles
 
             $lastBlock = array_key_last($blocks);
             $blocks[$lastBlock]['navigations'][] = $entry;
-            $navigation[0]['block_menus'] = $blocks;
+            $navigation[0]['blockMenus'] = $blocks;
 
             $this->filesystem->put($navPath, Yaml::dump($navigation, 10, 2, Yaml::DUMP_COMPACT_NESTED_MAPPING));
             $this->line("<info>Navigation added to:</info> {$navPath}");

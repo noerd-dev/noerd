@@ -54,7 +54,7 @@ new class extends Component {
         <livewire:noerd::layout.app-bar />
 
         <!-- Second column sidebar / Navigation -->
-        @if(count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
+        @if(count($navigation->blockMenus()) > 0)
 
             <div x-show="showSidebar"
                  x-data="noerdSidebarResize(@js(['min' => 200, 'max' => 500, 'step' => 16]))"
@@ -65,8 +65,7 @@ new class extends Component {
                  ])
                  :style="'width: var(--sidebar-nav-width); margin-left: ' + (showAppbar ? 'var(--sidebar-apps-width)' : '0')"
             >
-                <livewire:noerd::layout.sidebar-navigation :navigation="$navigation->subMenu()"
-                                                    :navigations="$navigation->blockMenus()"/>
+                <livewire:noerd::layout.sidebar-navigation :navigations="$navigation->blockMenus()"/>
 
                 <!-- Toggle Appbar Button -->
                 <div class="border-gray-200 border-t mt-auto flex items-center">

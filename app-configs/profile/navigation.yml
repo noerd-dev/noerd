@@ -2,7 +2,7 @@
   name: profile
   hidden: true
   route: noerd.profile
-  block_menus:
+  blockMenus:
     - title: My Account
       navigations:
         - title: Profile and Password

@@ -188,7 +188,7 @@ trait WritesHostAppConfigs
         $navigation = Yaml::parse(file_get_contents($configPath) ?: '') ?? [];
 
         $blockIndex = null;
-        foreach ($navigation[0]['block_menus'] ?? [] as $i => $block) {
+        foreach ($navigation[0]['blockMenus'] ?? [] as $i => $block) {
             if (($block['title'] ?? null) === $blockTitle) {
                 $blockIndex = $i;
                 break;
@@ -196,12 +196,12 @@ trait WritesHostAppConfigs
         }
 
         if ($blockIndex === null) {
-            $navigation[0]['block_menus'][] = ['title' => $blockTitle, 'navigations' => []];
-            $blockIndex = array_key_last($navigation[0]['block_menus']);
+            $navigation[0]['blockMenus'][] = ['title' => $blockTitle, 'navigations' => []];
+            $blockIndex = array_key_last($navigation[0]['blockMenus']);
         }
 
         $movedFromOtherBlock = false;
-        foreach ($navigation[0]['block_menus'] as $i => $block) {
+        foreach ($navigation[0]['blockMenus'] as $i => $block) {
             if ($i === $blockIndex) {
                 continue;
             }
@@ -220,11 +220,11 @@ trait WritesHostAppConfigs
                 continue;
             }
 
-            $navigation[0]['block_menus'][$i]['navigations'] = $remaining;
+            $navigation[0]['blockMenus'][$i]['navigations'] = $remaining;
             $movedFromOtherBlock = true;
         }
 
-        foreach ($navigation[0]['block_menus'][$blockIndex]['navigations'] ?? [] as $index => $existing) {
+        foreach ($navigation[0]['blockMenus'][$blockIndex]['navigations'] ?? [] as $index => $existing) {
             if (($existing['route'] ?? null) !== $entry['route']) {
                 continue;
             }
@@ -235,14 +235,14 @@ trait WritesHostAppConfigs
                 return;
             }
 
-            $navigation[0]['block_menus'][$blockIndex]['navigations'][$index] = $entry;
+            $navigation[0]['blockMenus'][$blockIndex]['navigations'][$index] = $entry;
             file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
             $this->line("<info>{$label} navigation entry replaced:</info> {$blockTitle} → {$entry['title']}");
 
             return;
         }
 
-        $navigation[0]['block_menus'][$blockIndex]['navigations'][] = $entry;
+        $navigation[0]['blockMenus'][$blockIndex]['navigations'][] = $entry;
         file_put_contents($configPath, Yaml::dump($navigation, 10, 2));
         $this->line("<info>{$label} navigation updated:</info> {$blockTitle} → {$entry['title']}");
     }

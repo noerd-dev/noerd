@@ -6,6 +6,8 @@ namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Support\Facades\File;
+use Noerd\Support\ModulesPath;
+use Noerd\Support\YamlVocabularyMigrator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -19,6 +21,24 @@ use RecursiveIteratorIterator;
  */
 trait PublishesConfigDirectory
 {
+    /**
+     * Rewrite the project's app-configs — and the configs of its local modules
+     * — to the current YAML vocabulary (YamlVocabularyMigrator). Runs on every
+     * install and update, BEFORE anything is written into those files, and
+     * changes nothing once the files are current.
+     */
+    protected function migrateYamlVocabulary(): void
+    {
+        $directories = [base_path('app-configs'), ...(glob(ModulesPath::absolute('*/app-configs'), GLOB_ONLYDIR) ?: [])];
+        $changed = app(YamlVocabularyMigrator::class)->migrate($directories);
+
+        if ($changed === []) {
+            return;
+        }
+
+        $this->line(sprintf('<info>Updated %d YAML file(s) to the current vocabulary.</info>', count($changed)));
+    }
+
     /**
      * @param  string|null  $displayBase  base path stripped from printed paths;
      *                                    defaults to the source directory

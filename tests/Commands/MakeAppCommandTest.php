@@ -104,7 +104,7 @@ it('scaffolds a dashboard for the new app and uses its route without asking', fu
     expect($parsed[0]['title'])->toBe('Time Booking')
         ->and($parsed[0]['name'])->toBe('tb')
         ->and($parsed[0]['route'])->toBe('tb.dashboard')
-        ->and($parsed[0]['block_menus'][0]['navigations'][0]['route'])->toBe('tb.dashboard');
+        ->and($parsed[0]['blockMenus'][0]['navigations'][0]['route'])->toBe('tb.dashboard');
 });
 
 it('creates the routes file when the project has none yet', function (): void {
@@ -128,7 +128,7 @@ it('keeps an existing navigation and only inserts the dashboard entry', function
         '- title: Existing',
         '  name: existing_nav',
         '  route: existing_nav.dashboard',
-        '  block_menus:',
+        '  blockMenus:',
         '    - title: Overview',
         '      navigations:',
         '        - title: Things',
@@ -144,7 +144,7 @@ it('keeps an existing navigation and only inserts the dashboard entry', function
     ])->assertExitCode(0);
 
     $parsed = Symfony\Component\Yaml\Yaml::parse(File::get(base_path('app-configs/existing_nav/navigation.yml')));
-    expect($parsed[0]['block_menus'][0]['navigations'][0]['route'])->toBe('existing_nav.things');
+    expect($parsed[0]['blockMenus'][0]['navigations'][0]['route'])->toBe('existing_nav.things');
 });
 
 it('points the app at an explicit route and skips the dashboard scaffold', function (): void {

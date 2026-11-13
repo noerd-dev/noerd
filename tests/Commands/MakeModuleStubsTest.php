@@ -75,7 +75,7 @@ it('generates a guarded dashboard route and a matching navigation', function ():
     expect($parsed[0]['title'])->toBe("Zz Widget's Shop")
         ->and($parsed[0]['name'])->toBe('zz-widget')
         ->and($parsed[0]['route'])->toBe('zz-widget')
-        ->and($parsed[0]['block_menus'][0]['navigations'])->toBe([[
+        ->and($parsed[0]['blockMenus'][0]['navigations'])->toBe([[
             'title' => 'Dashboard',
             'route' => 'zz-widget',
             'heroicon' => 'home',

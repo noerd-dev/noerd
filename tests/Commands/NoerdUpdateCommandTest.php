@@ -102,6 +102,18 @@ it('keeps an up-to-date host config untouched', function (): void {
     expect(File::get($configPath))->toBe($before);
 });
 
+it('rewrites the project YAML to the current vocabulary', function (): void {
+    File::ensureDirectoryExists($this->hostPath . '/app-configs/zzapp/lists');
+    File::put($this->hostPath . '/app-configs/zzapp/navigation.yml', "- title: Zz\n  block_menus: []\n");
+    File::put($this->hostPath . '/app-configs/zzapp/lists/things-list.yml', "columns:\n  - field: state\n    type: colored_text\n");
+
+    $this->artisan('test:noerd-update', ['--force' => true, '--no-interaction' => true])
+        ->assertExitCode(0);
+
+    expect(File::get($this->hostPath . '/app-configs/zzapp/navigation.yml'))->toBe("- title: Zz\n  blockMenus: []\n")
+        ->and(File::get($this->hostPath . '/app-configs/zzapp/lists/things-list.yml'))->toContain('type: coloredText');
+});
+
 it('fails when the target directory cannot be created', function (): void {
     // A FILE where the app-configs directory belongs: mkdir() cannot succeed.
     File::put($this->hostPath . '/app-configs', 'not a directory');

@@ -15,9 +15,6 @@ new class extends Component {
     public array $expanded = [];
 
     #[Locked]
-    public array $navigation = [];
-
-    #[Locked]
     public array $navigations = [];
 
     public function mount(): void
@@ -90,18 +87,5 @@ new class extends Component {
                 </ul>
             @endif
         @endforeach
-
-        {{-- if its just an submenu --}}
-        <nav class="flex flex-1 flex-col">
-            <ul role="list" class="flex flex-1 flex-col gap-y-7">
-                <li>
-                    <ul role="list" class="-mx-2 space-y-1" :class="showSidebar ? 'w-full' : ''">
-                        @foreach($navigation as $navi)
-                            @livewire('noerd::layout.sidebar-navigation-element', ['navi' => $navi], key('subnav-' . ($navi['route'] ?? $navi['link'] ?? $navi['title'] ?? $loop->index)))
-                        @endforeach
-                    </ul>
-                </li>
-            </ul>
-        </nav>
     </div>
 </div>

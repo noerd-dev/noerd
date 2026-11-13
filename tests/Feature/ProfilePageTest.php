@@ -41,7 +41,7 @@ function zzProfileNavigation(string $path, array $entries): void
         'name' => 'profile',
         'hidden' => true,
         'route' => 'noerd.profile',
-        'block_menus' => [['title' => 'Zz Account', 'navigations' => $entries]],
+        'blockMenus' => [['title' => 'Zz Account', 'navigations' => $entries]],
     ]], 10, 2));
 }
 
@@ -106,7 +106,7 @@ it('lets a module add its entry to the profile navigation, once', function (): v
     $command->addEntry();
     $command->addEntry();
 
-    $navigations = Yaml::parseFile($this->profileNavigation)[0]['block_menus'][0]['navigations'];
+    $navigations = Yaml::parseFile($this->profileNavigation)[0]['blockMenus'][0]['navigations'];
 
     expect(array_column($navigations, 'route'))->toBe(['noerd.profile', 'zz.connectors']);
 });

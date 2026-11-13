@@ -34,7 +34,7 @@ final class ComputedValuePresenter
 
         return match ($type) {
             'number', 'currency' => self::number($value),
-            'bool', 'boolean', 'checkbox', 'inversebool' => self::bool($value),
+            'bool', 'boolean', 'checkbox', 'inverseBool' => self::bool($value),
             'date' => self::date($value)?->format('Y-m-d'),
             'datetime', 'datetime-local' => self::date($value)?->format('Y-m-d H:i:s'),
             default => self::text($value),

@@ -1,7 +1,7 @@
 - title: '{{AppTitleYaml}}'
   name: {{module-name}}
   route: {{module-name}}
-  block_menus:
+  blockMenus:
     - title: Overview
       navigations:
         - title: Dashboard

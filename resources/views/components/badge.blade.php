@@ -1,5 +1,5 @@
 {{-- The one pill of the framework: a badge cell, a relation title, the badge of a
-     badge_with_text cell, a status chip in a module view. `variant` colours it
+     badgeWithText cell, a status chip in a module view. `variant` colours it
      (neutral by default, primary, success, warning, danger), `size` xs is the
      widget-list size. --}}
 @props([

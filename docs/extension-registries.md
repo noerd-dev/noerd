@@ -235,12 +235,12 @@ provider's `items()`:
 
 ```yaml
 - title: Setup
-  block_menus:
+  blockMenus:
     - title: Data Management
       dynamic: setup-collections
 ```
 
-Only `block_menus[].dynamic` is resolved. An unresolvable type leaves the block with the
+Only `blockMenus[].dynamic` is resolved. An unresolvable type leaves the block with the
 `navigations` its YAML lists itself (usually none) — a navigation referencing a not-installed
 module's provider never breaks the sidebar.
 

@@ -13,7 +13,7 @@ app-configs/{app}/navigation.yml
 For example: `app-configs/inventory/navigation.yml` (the module ships its template at
 `app-modules/inventory/app-configs/inventory/navigation.yml` — keep both copies in sync)
 
-A navigation file is a list with one app entry: app metadata on top, `block_menus` with their
+A navigation file is a list with one app entry: app metadata on top, `blockMenus` with their
 `navigations` below — see the [full example](#full-example).
 
 ## Top-Level Properties
@@ -23,8 +23,7 @@ A navigation file is a list with one app entry: app metadata on top, `block_menu
 | `title` | Display name of the app (translation key) |
 | `name` | Unique identifier for the app |
 | `route` | The app's main route |
-| `block_menus` | Groups of navigation items (see below) |
-| `sub_menu` | Optional flat secondary menu |
+| `blockMenus` | Groups of navigation items (see below) |
 
 `title`, `name` and `route` are app metadata: `noerd:install-{module}` writes them into the
 installed copy from the app title given during installation plus the app key
@@ -32,7 +31,7 @@ installed copy from the app title given during installation plus the app key
 there. Whether an app shows up in the app bar is not a navigation key — it is the tenant's
 `tenant_app.is_hidden` flag (Setup → Apps).
 
-## Block Properties (`block_menus[]`)
+## Block Properties (`blockMenus[]`)
 
 | Property | Description |
 |----------|-------------|
@@ -89,7 +88,7 @@ breaking the sidebar.
 - title: Inventory
   name: inventory
   route: inventory
-  block_menus:
+  blockMenus:
     - title: Stock
       navigations:
         - title: Items

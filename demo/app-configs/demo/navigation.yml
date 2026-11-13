@@ -2,7 +2,7 @@
   name: demo
   hidden: true
   route: demo-customers
-  block_menus:
+  blockMenus:
     - title: Demo
       navigations:
         - title: Demo Customers

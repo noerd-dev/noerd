@@ -15,8 +15,6 @@ use Noerd\Support\ShellState;
  */
 final class NavigationService
 {
-    private array $subMenu = [];
-
     private array $blockMenus = [];
 
     public function __construct()
@@ -34,19 +32,14 @@ final class NavigationService
         }
 
         $blockMenu = [];
-        foreach ($app['block_menus'] ?? [] as $menu) {
+        foreach ($app['blockMenus'] ?? [] as $menu) {
             $menu['show'] = ShellState::blockMenuVisible((string) ($menu['title'] ?? ''));
             $blockMenu[] = $menu;
         }
 
-        $this->subMenu = $app['sub_menu'] ?? [];
         $this->blockMenus = $blockMenu;
     }
 
-    public function subMenu(): array
-    {
-        return $this->subMenu;
-    }
 
     public function blockMenus(): array
     {

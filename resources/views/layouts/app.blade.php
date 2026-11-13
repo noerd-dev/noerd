@@ -64,7 +64,7 @@
 
         <main
             class="h-full"
-            @if (count($navigation->subMenu()) > 0 || count($navigation->blockMenus()) > 0)
+            @if (count($navigation->blockMenus()) > 0)
                 :style="isDesktop
                     ? showSidebar
                         ? showAppbar

@@ -15,7 +15,7 @@ uses(TestCase::class, RefreshDatabase::class);
 /*
  | Every rendering mode of a list — the table, the card grid, the minimal widget
  | — and the CSV export write a column type the same way, including the
- | array-shaped values of colored_text and badge_with_text, which used to reach
+ | array-shaped values of coloredText and badgeWithText, which used to reach
  | the grid and the widget as raw arrays. Every pill is the one badge component.
  */
 
@@ -51,8 +51,8 @@ function zzParityColumns(): array
     return [
         ['field' => 'name', 'label' => 'Name', 'type' => 'text'],
         ['field' => 'status', 'label' => 'Status', 'type' => 'badge', 'options' => [['value' => 'open', 'label' => 'Open label']]],
-        ['field' => 'owner', 'label' => 'Owner', 'type' => 'badge_with_text'],
-        ['field' => 'path', 'label' => 'Path', 'type' => 'colored_text'],
+        ['field' => 'owner', 'label' => 'Owner', 'type' => 'badgeWithText'],
+        ['field' => 'path', 'label' => 'Path', 'type' => 'coloredText'],
         ['field' => 'tenant_id', 'label' => 'Tenant', 'type' => 'relationBadge'],
         ['field' => 'meta', 'label' => 'Meta', 'type' => 'customAttribute'],
     ];
@@ -98,10 +98,10 @@ it('renders every typed cell of the table through the formatter and the badge co
     expect($html)->toContain('Open label', 'Team A', 'Bob', '↳', 'Child page', 'Zz Parity Tenant', 'House')
         ->not->toContain('Array');
 
-    // The success badge of the badge_with_text cell and the neutral pills of badge + relationBadge.
+    // The success badge of the badgeWithText cell and the neutral pills of badge + relationBadge.
     assertElementHasClasses($html, ['rounded-full', 'bg-green-100', 'text-green-800']);
     assertElementHasClasses($html, ['rounded-full', 'bg-gray-100', 'text-gray-700']);
-    // The coloured chip of the colored_text cell.
+    // The coloured chip of the coloredText cell.
     assertElementHasClasses($html, ['truncate', 'rounded', 'px-2', 'bg-green-100']);
 });
 
