@@ -143,9 +143,11 @@ Route params are filled by name from the arguments — `modelId` by convention, 
 property the target binds may be the record's identity (`/inventory/warehouse-settings/{table}`).
 A create modal has no record id — the conventional `{modelId}` param then carries the
 `new` sentinel (`/inventory/item/new?modal=true`), which `NoerdPage::prepareRoutedModal()`
-maps back to `null`. Reloading such a URL reopens the record as a modal over the page the
-user last visited (`RoutedModal::redirectToRoutedModal()`, shared by `NoerdPage` and
-`NoerdList`).
+maps back to `null`. Reloading such a URL reopens the record as a modal over the last full
+page the user visited (`RoutedModal::redirectToRoutedModal()`, shared by `NoerdPage` and
+`NoerdList`). That page is recorded by the `RememberPageUrl` middleware of the `noerd` route
+group: only a successful HTML response counts, so a PDF or download opened in another tab never
+becomes the page a reloaded modal returns to.
 
 ### Route modal or component modal?
 

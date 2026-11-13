@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Noerd\Traits;
 
+use Noerd\Middleware\RememberPageUrl;
+
 /**
  * Shared handling for components that are reachable through BOTH a full-page
  * route and a routed modal (`Noerd::modalRoute()` / `$modalRoute()`): opening
@@ -17,8 +19,10 @@ trait RoutedModal
 {
     /**
      * A full page opened with ?modal=true (the URL a routed modal writes while it
-     * is open) redirects back to the page the user last visited in this session —
-     * whatever it is — and reopens the record as a modal OVER that page via a
+     * is open) redirects back to the last full page the user visited in this
+     * session — recorded by `RememberPageUrl`, so a PDF or download opened in
+     * another tab never counts (Laravel's previous URL would) — and reopens the
+     * record as a modal OVER that page via a
      * flashed instruction the noerd-modal stack consumes on mount. Without a
      * previous page (fresh session, reload of the link itself) the plain full page
      * renders. Only applies to real page loads: inside a modal the component mounts
@@ -32,7 +36,7 @@ trait RoutedModal
             return false;
         }
 
-        $previousUrl = session()->previousUrl();
+        $previousUrl = session(RememberPageUrl::SESSION_KEY);
 
         if (! $previousUrl || $previousUrl === request()->fullUrl()) {
             return false;
