@@ -54,6 +54,7 @@ use Noerd\Middleware\EnsureTenantMembership;
 use Noerd\Middleware\NoerdAuthenticate;
 use Noerd\Middleware\NoerdRedirectIfAuthenticated;
 use Noerd\Middleware\ProfileMiddleware;
+use Noerd\Middleware\RememberPageUrl;
 use Noerd\Middleware\SetupMiddleware;
 use Noerd\Middleware\SetUserLocale;
 use Noerd\Models\NoerdUser;
@@ -284,7 +285,8 @@ class NoerdServiceProvider extends ServiceProvider
         // subclasses pin the redirect targets to noerd's own routes — the
         // host's 'auth'/'guest' aliases and any redirectUsing() callbacks
         // (e.g. from a coexisting starter kit) never apply here.
-        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), EnsureTenantMembership::class]);
+        // RememberPageUrl records the last full page a routed-modal reload returns to.
+        $router->middlewareGroup('noerd', ['web', NoerdAuthenticate::class . ':' . NoerdAuth::guardName(), EnsureTenantMembership::class, RememberPageUrl::class]);
         $router->middlewareGroup('noerd-guest', ['web', NoerdRedirectIfAuthenticated::class . ':' . NoerdAuth::guardName()]);
         // Livewire's default persistent-middleware list only knows the
         // framework's Authenticate class — the subclass must be added so

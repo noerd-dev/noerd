@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Middleware\RememberPageUrl;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Tests\TestCase;
@@ -50,7 +52,7 @@ beforeEach(function (): void {
 it('redirects a ?modal=true page load back to the previous page and flashes the reopen instruction', function (): void {
     $tenant = Tenant::factory()->create();
 
-    $response = $this->session(['_previous' => ['url' => url('/setup')]])
+    $response = $this->session([RememberPageUrl::SESSION_KEY => url('/setup')])
         ->get(route('zz.routed.page', ['modelId' => $tenant->id, 'modal' => true]));
 
     $response->assertRedirect(url('/setup'));
@@ -72,7 +74,7 @@ it('renders the plain full page without a previous url', function (): void {
 it('renders the plain full page without the modal flag', function (): void {
     $tenant = Tenant::factory()->create();
 
-    $this->session(['_previous' => ['url' => url('/setup')]])
+    $this->session([RememberPageUrl::SESSION_KEY => url('/setup')])
         ->get(route('zz.routed.page', ['modelId' => $tenant->id]))
         ->assertOk();
 });
@@ -82,7 +84,7 @@ it('drops route parameters the component does not bind from the reopen instructi
 
     $tenant = Tenant::factory()->create();
 
-    $this->session(['_previous' => ['url' => url('/setup')]])
+    $this->session([RememberPageUrl::SESSION_KEY => url('/setup')])
         ->get(route('zz.routed.extra', ['modelId' => $tenant->id, 'unboundParam' => 'x', 'modal' => true]))
         ->assertRedirect(url('/setup'));
 
@@ -92,10 +94,25 @@ it('drops route parameters the component does not bind from the reopen instructi
 });
 
 it('maps the new sentinel back to a null modelId in the reopen instruction', function (): void {
-    $response = $this->session(['_previous' => ['url' => url('/setup')]])
+    $response = $this->session([RememberPageUrl::SESSION_KEY => url('/setup')])
         ->get(route('zz.routed.page', ['modelId' => 'new', 'modal' => true]));
 
     $response->assertRedirect(url('/setup'));
 
     expect(session('noerd-modal.open')['arguments']['modelId'])->toBeNull();
+});
+
+it('returns to the last page, not to a pdf opened in another tab in between', function (): void {
+    $tenant = Tenant::factory()->create();
+
+    Route::middleware('noerd')->group(function (): void {
+        Route::get('zz-routed-list', fn() => response('<html><body>list</body></html>'));
+        Route::get('zz-routed-pdf', fn() => response('%PDF-1.4', 200, ['Content-Type' => 'application/pdf']));
+    });
+
+    $this->get('zz-routed-list')->assertOk();
+    $this->get('zz-routed-pdf')->assertOk();
+
+    $this->get(route('zz.routed.page', ['modelId' => $tenant->id, 'modal' => true]))
+        ->assertRedirect(url('zz-routed-list'));
 });
