@@ -413,7 +413,7 @@ trait NoerdList
             $wantEmpty = ColumnFilterParser::emptiness($value);
             if ($wantEmpty !== null) {
                 $value = $wantEmpty ? __('Empty') : __('Not empty');
-            } elseif (in_array($type, ['bool', 'boolean', 'inversebool'], true)) {
+            } elseif (in_array($type, ['bool', 'inverseBool'], true)) {
                 $value = $value === '1' ? __('Yes') : __('No');
             } else {
                 foreach ($options as $option) {

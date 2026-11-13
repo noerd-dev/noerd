@@ -222,7 +222,7 @@ that lies.
 | Detail action (`details/*.yml`) | `route:` instead of `modalComponent:` |
 | Relation box tile (`pages/*.yml` `relations:`) | `route:` next to `component:` (no URL rewrite) |
 | Widget "show more" (`pages/*.yml` `widgets:`) | `route:` next to `component:` (no URL rewrite) |
-| List column `type: relation_link` | `route:` instead of `modalComponent:` |
+| List column `type: relationLink` | `route:` instead of `modalComponent:` |
 | Relation field | `detailRoute:` on `RelationFieldDefinition::model()`, or `detailRoute:` on the field |
 | Sidebar entry (`navigation.yml`) | `modalRoute:` to open as a modal, `newRoute:` for the "+" button — `route:` keeps meaning "navigate" |
 | Page/detail tab | `modalRoute:` next to `component:` |

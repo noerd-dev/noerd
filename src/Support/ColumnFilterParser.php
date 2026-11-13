@@ -65,7 +65,7 @@ final class ColumnFilterParser
         }
 
         match (true) {
-            in_array($type, ['bool', 'boolean', 'inversebool'], true) => self::applyBool($query, $field, $raw),
+            in_array($type, ['bool', 'inverseBool'], true) => self::applyBool($query, $field, $raw),
             in_array($type, ['number', 'currency'], true) => self::applyNumber($query, $field, $raw),
             in_array($type, ['date', 'datetime'], true) => self::applyDate($query, $field, $raw),
             in_array($type, ['badge', 'select'], true) => $query->where($field, '=', mb_trim($raw)),
@@ -153,7 +153,7 @@ final class ColumnFilterParser
     private static function comparesEmptyString(string $field, string $type): bool
     {
         return str_contains($field, '->')
-            || ! in_array($type, ['number', 'currency', 'date', 'datetime', 'bool', 'boolean', 'inversebool'], true);
+            || ! in_array($type, ['number', 'currency', 'date', 'datetime', 'bool', 'inverseBool'], true);
     }
 
     private static function applyBool(Builder $query, string $field, string $raw): void

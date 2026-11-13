@@ -150,7 +150,7 @@ describe('unregistered routes', function (): void {
   name: setup
   hidden: true
   route: noerd.setup
-  block_menus:
+  blockMenus:
     -
       title: Administration
       navigations:

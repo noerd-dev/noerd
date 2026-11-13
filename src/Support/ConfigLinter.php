@@ -92,6 +92,10 @@ final class ConfigLinter
             $this->add($path, '', self::WARNING, 'Flow-style YAML ({…} or […]) — noerd configs use block style.');
         }
 
+        foreach (app(YamlVocabularyMigrator::class)->outdatedNames($source, YamlVocabularyMigrator::isListConfig($relative)) as $name) {
+            $this->add($path, '', self::ERROR, 'Outdated name `' . $name . '` — run `php artisan noerd:update` to rewrite the file.');
+        }
+
         if (! is_array($config)) {
             return;
         }

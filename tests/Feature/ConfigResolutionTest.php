@@ -33,7 +33,7 @@ function setupNavigationTitles(): array
 {
     StaticConfigHelper::flushRuntimeCaches();
 
-    return collect(StaticConfigHelper::getNavigationStructure()[0]['block_menus'] ?? [])
+    return collect(StaticConfigHelper::getNavigationStructure()[0]['blockMenus'] ?? [])
         ->flatMap(fn(array $block): array => collect($block['navigations'] ?? [])->pluck('title')->all())
         ->all();
 }
@@ -296,7 +296,7 @@ describe('navigation resolution', function (): void {
 -
   title: Setup
   name: setup
-  block_menus:
+  blockMenus:
     -
       title: Zz Block
       navigations:
@@ -309,7 +309,7 @@ YAML);
             StaticConfigHelper::flushRuntimeCaches();
             $navigation = StaticConfigHelper::getNavigationStructure();
 
-            expect($navigation[0]['block_menus'][0]['navigations'][0]['title'])->toBe('Zz Probe Entry');
+            expect($navigation[0]['blockMenus'][0]['navigations'][0]['title'])->toBe('Zz Probe Entry');
         } finally {
             $backup === null ? @unlink($navigationPath) : file_put_contents($navigationPath, $backup);
             StaticConfigHelper::flushRuntimeCaches();
@@ -337,7 +337,7 @@ YAML);
 -
   title: Setup
   name: setup
-  block_menus:
+  blockMenus:
     -
       title: Administration
       navigations:
@@ -377,7 +377,7 @@ YAML);
 -
   title: Setup
   name: setup
-  block_menus:
+  blockMenus:
     -
       title: Administration
       navigations:

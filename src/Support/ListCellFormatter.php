@@ -15,7 +15,7 @@ use UnitEnum;
  * The one place a list cell value is turned into display text — shared by the
  * table, the minimal (widget) list, the card grid, the CSV export and the
  * text-only detail theme, so every rendering mode formats a column type the
- * same way. The array-shaped cell values (`colored_text`, `badge_with_text`,
+ * same way. The array-shaped cell values (`coloredText`, `badgeWithText`,
  * `preview`) are normalised here as well, so no view ever reads a raw array.
  */
 final class ListCellFormatter
@@ -67,13 +67,13 @@ final class ListCellFormatter
             'datetime' => FormatHelper::dateTime($value),
             'time' => FormatHelper::time($value),
             'number' => is_numeric($value) ? FormatHelper::number((float) $value, 2) : self::text($value),
-            'bool', 'boolean' => self::truthy($value) ? __('Yes') : __('No'),
-            'inversebool' => self::truthy($value) ? __('Yes') : '',
+            'bool' => self::truthy($value) ? __('Yes') : __('No'),
+            'inverseBool' => self::truthy($value) ? __('Yes') : '',
             'badge' => __(self::badgeLabel($value, $column['options'] ?? [])),
             'relationBadge' => self::relationTitle((string) ($column['field'] ?? ''), $value),
             'customAttribute' => RelationFieldDefinition::normalizeDisplayValue($value),
-            'badge_with_text' => self::line(array_values(array_diff_key(self::badgeWithText($value), ['variant' => true]))),
-            'colored_text' => self::line([mb_trim(self::coloredText($value)['prefix']), self::coloredText($value)['text']]),
+            'badgeWithText' => self::line(array_values(array_diff_key(self::badgeWithText($value), ['variant' => true]))),
+            'coloredText' => self::line([mb_trim(self::coloredText($value)['prefix']), self::coloredText($value)['text']]),
             'preview' => (string) (self::preview($value)['url'] ?? ''),
             default => self::text($value),
         };
@@ -121,7 +121,7 @@ final class ListCellFormatter
     }
 
     /**
-     * Normalised shape of a `colored_text` value — a scalar, or an array with
+     * Normalised shape of a `coloredText` value — a scalar, or an array with
      * `text`, `class`, `prefix`, `prefixClass`, `icon`, `iconClass`. `styled`
      * tells the view whether the text carries the chip look (an array value).
      *
@@ -145,7 +145,7 @@ final class ListCellFormatter
     }
 
     /**
-     * Normalised shape of a `badge_with_text` value — a scalar (the text alone),
+     * Normalised shape of a `badgeWithText` value — a scalar (the text alone),
      * or an array with `badge`, `text` and the `variant` of the badge component
      * (`primary` by default, `danger`, `success`, `warning`, `neutral`).
      *

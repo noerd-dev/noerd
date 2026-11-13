@@ -2,7 +2,7 @@
   name: setup
   hidden: true
   route: noerd.setup
-  block_menus:
+  blockMenus:
     - title: Administration
       navigations:
         - title: Tenants

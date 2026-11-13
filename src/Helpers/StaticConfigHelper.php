@@ -786,18 +786,18 @@ final class StaticConfigHelper
                 continue;
             }
 
-            foreach ($appBlock['block_menus'] ?? [] as $j => $menu) {
+            foreach ($appBlock['blockMenus'] ?? [] as $j => $menu) {
                 $dynamicType = $menu['dynamic'] ?? null;
                 if ($dynamicType) {
                     $provider = $registry->get($dynamicType);
                     if ($provider) {
-                        $navigationStructure[$i]['block_menus'][$j]['navigations'] = $provider->items();
+                        $navigationStructure[$i]['blockMenus'][$j]['navigations'] = $provider->items();
                     }
-                    unset($navigationStructure[$i]['block_menus'][$j]['dynamic']);
+                    unset($navigationStructure[$i]['blockMenus'][$j]['dynamic']);
                 }
 
-                $navigations = $navigationStructure[$i]['block_menus'][$j]['navigations'] ?? [];
-                $navigationStructure[$i]['block_menus'][$j]['navigations'] = self::filterNavigationByConfig($navigations);
+                $navigations = $navigationStructure[$i]['blockMenus'][$j]['navigations'] ?? [];
+                $navigationStructure[$i]['blockMenus'][$j]['navigations'] = self::filterNavigationByConfig($navigations);
             }
         }
 

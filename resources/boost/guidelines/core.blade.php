@@ -51,7 +51,7 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   `Noerd::modalFor($route, $component, $args)` is the canonical PHP shape). Reviewer's tests: *does the
   address bar point at the record after the click?* and *does the URL show the same thing in a fresh tab?*
   Route mode in YAML/properties: `$detailRoute`; list action `route:`; detail action `route:`;
-  relation-box tile and widget `route:` (no rewrite); column `type: relation_link` `route:`; relation
+  relation-box tile and widget `route:` (no rewrite); column `type: relationLink` `route:`; relation
   field `detailRoute:`; navigation `modalRoute:`/`newRoute:` (plain `route:` navigates); tab
   `modalRoute:`; dashboard card `route=`.
 - **Modal chrome.** A modal body is `<x-noerd::page>` with the title in `<x-slot:header>` via
@@ -100,6 +100,11 @@ folder — read the page before building the feature. Paths such as `src/…`, `
 - After a package upgrade run `php artisan noerd:update` and `noerd:update-all` (idempotent). With
   Laravel Boost installed they register the packages in `boost.json` and run `boost:update` — never
   edit the generated `<laravel-boost-guidelines>` block by hand.
+- A renamed YAML key or column type is rewritten in place by `noerd:update` / `noerd:update-{module}`
+  (`Noerd\Support\YamlVocabularyMigrator`: the project's `app-configs` and its local modules); `noerd:lint`
+  reports an old name as an error. Column types are camelCase (`badgeWithText`, `coloredText`,
+  `relationLink`, `inverseBool`, `bool`), navigation blocks live under `blockMenus`. Inline PHP configs
+  (`buildList($rows, [...])`) are not rewritten — use the current names there.
 
 ### Install and Update Command Required for Every Module
 - Every module ships `noerd:install-{module}` AND `noerd:update-{module}`; `noerd:update-all` discovers

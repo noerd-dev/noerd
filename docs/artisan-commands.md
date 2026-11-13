@@ -80,6 +80,12 @@ app configs, `config/noerd.php`, the frontend scaffold and the public assets
 (`public/vendor/noerd`). Run it after every package upgrade (or `noerd:update-all` to include the
 modules).
 
+It also rewrites the project's `app-configs` — and the configs of the project's local modules — to
+the current YAML vocabulary: a renamed column type or key is replaced in place, comments and
+formatting stay as they are, and a file that is current is not touched. Every
+`noerd:update-{module}` does the same after it published its files. `noerd:lint` reports a file
+that still carries an old name.
+
 ```bash
 php artisan noerd:update
 ```

@@ -70,7 +70,7 @@ function renderRelationLinkCell(array $columnConfig, array $rowData = ['vehicle_
     return renderTableCell([
         'value' => 'Vehicle A',
         'columnValue' => 'vehicle',
-        'type' => 'relation_link',
+        'type' => 'relationLink',
         'columnConfig' => $columnConfig,
         'rowData' => $rowData,
     ]);
@@ -128,9 +128,9 @@ describe('value cells', function (): void {
             ->and($html)->toContain('Plain Value');
     });
 
-    it('keeps a colored_text value on one line and exposes the full text as tooltip', function (): void {
+    it('keeps a coloredText value on one line and exposes the full text as tooltip', function (): void {
         $html = renderTableCell([
-            'type' => 'colored_text',
+            'type' => 'coloredText',
             'columnValue' => 'linked_display',
             'value' => ['text' => 'A very long linked record title', 'class' => 'bg-blue-100'],
         ]);
@@ -139,7 +139,7 @@ describe('value cells', function (): void {
             ->and($html)->toContain('title="A very long linked record title"');
     });
 
-    it('keeps a relation_link value on one line and exposes the full text as tooltip', function (): void {
+    it('keeps a relationLink value on one line and exposes the full text as tooltip', function (): void {
         $html = renderRelationLinkCell(['modalComponent' => 'noerd-test::theme-test', 'idField' => 'vehicle_id']);
 
         expect($html)->toContain('<span class="truncate">Vehicle A</span>')
@@ -147,9 +147,9 @@ describe('value cells', function (): void {
     });
 });
 
-describe('relation_link route mode', function (): void {
+describe('relationLink route mode', function (): void {
 
-    it('renders a relation_link route cell as $modalRoute with the id from idField', function (): void {
+    it('renders a relationLink route cell as $modalRoute with the id from idField', function (): void {
         registerTestLivewireRoute('zz-cell-vehicle/{modelId}', 'noerd-test::theme-test', 'zz.cell.vehicle');
 
         $html = renderRelationLinkCell([
@@ -190,7 +190,7 @@ describe('relation_link route mode', function (): void {
         expect(html_entity_decode($componentHtml))->toContain('vehicleId\\u0022:42');
     });
 
-    it('falls back to the modalComponent when the relation_link route is unregistered', function (): void {
+    it('falls back to the modalComponent when the relationLink route is unregistered', function (): void {
         $html = renderRelationLinkCell([
             'route' => 'zz.cell.route.that.does.not.exist',
             'modalComponent' => 'zz::vehicle-detail',

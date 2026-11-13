@@ -63,6 +63,23 @@ YAML);
     expect(zzLintIssues($this->lintDir))->toBe([]);
 });
 
+it('reports a name of an earlier vocabulary as an error', function (): void {
+    zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', <<<'YAML'
+title: Zz
+columns:
+  - field: state
+    type: colored_text
+  - field: active
+    type: boolean
+YAML);
+
+    $messages = array_column(zzLintIssues($this->lintDir), 'message');
+
+    expect($messages)->toHaveCount(2)
+        ->and($messages[0])->toContain('`type: colored_text`')->toContain('noerd:update')
+        ->and($messages[1])->toContain('`type: boolean`');
+});
+
 it('reports render-breaking mistakes as errors', function (): void {
     zzLintWrite($this->lintDir, 'zzlint/details/zz-detail.yml', <<<'YAML'
 fields:

@@ -56,7 +56,7 @@
                             continue;
                         }
                         // The formatter writes every type as text — a translated badge label,
-                        // a relation title, the line of a colored_text or badge_with_text array.
+                        // a relation title, the line of a coloredText or badgeWithText array.
                         $isBadge = in_array($column['type'] ?? 'text', ['badge', 'relationBadge'], true);
                         $text = \Noerd\Support\ListCellFormatter::format($value, $column);
                         if ($text === '') {

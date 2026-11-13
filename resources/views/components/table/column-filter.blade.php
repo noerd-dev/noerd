@@ -9,7 +9,7 @@
     $filterType = $type ?? 'text';
     $filterOptions = $options ?? [];
     $filterActive = $filterValue !== '';
-    $isBoolFilter = in_array($filterType, ['bool', 'boolean', 'inversebool'], true);
+    $isBoolFilter = in_array($filterType, ['bool', 'inverseBool'], true);
     $hasOptionFilter = ! $isBoolFilter && ! empty($filterOptions);
     // true = "Empty" (`=`), false = "Not empty" (`!=`), null = any other expression.
     $filterEmptiness = \Noerd\Support\ColumnFilterParser::emptiness($filterValue);

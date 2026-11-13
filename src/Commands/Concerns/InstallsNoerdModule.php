@@ -244,6 +244,10 @@ trait InstallsNoerdModule
         $this->publishModuleExtras($update);
         $this->publishSkills(refreshCopies: $update);
         $this->registerBoostPackage($this->getModuleRoot());
+
+        // After publishing (a module released before a rename ships the old
+        // names) and before ensureModuleSetup() writes into the navigation.
+        $this->migrateYamlVocabulary();
     }
 
     /**

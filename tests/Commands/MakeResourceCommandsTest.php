@@ -197,7 +197,7 @@ describe('module target', function (): void {
             '- title: Zzmod',
             '  name: zzmod',
             '  route: zzmod',
-            '  block_menus:',
+            '  blockMenus:',
             '    - title: Overview',
             '      navigations:',
             '        - title: Dashboard',
@@ -229,7 +229,7 @@ describe('module target', function (): void {
                 ->and(File::exists("{$this->hostPath}/{$base}/details/tenant-detail.yml"))->toBeTrue("{$base} detail yaml");
 
             $navigation = Yaml::parse(File::get("{$this->hostPath}/{$base}/navigation.yml"));
-            $entries = $navigation[0]['block_menus'][0]['navigations'];
+            $entries = $navigation[0]['blockMenus'][0]['navigations'];
             expect(end($entries))->toMatchArray([
                 'route' => 'zzmod.tenants',
                 'newRoute' => 'zzmod.tenant.detail',
@@ -249,7 +249,7 @@ describe('module target', function (): void {
             'title' => 'Zzmod',
             'name' => 'zzmod',
             'route' => 'zzmod',
-            'block_menus' => [[
+            'blockMenus' => [[
                 'title' => 'Overview',
                 'navigations' => [['title' => 'Dashboard', 'route' => 'zzmod', 'heroicon' => 'home']],
             ]],
@@ -259,7 +259,7 @@ describe('module target', function (): void {
         expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
 
         $navigation = Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'));
-        $entries = $navigation[0]['block_menus'][0]['navigations'];
+        $entries = $navigation[0]['blockMenus'][0]['navigations'];
 
         expect($navigation[0]['hidden'])->toBeFalse()
             ->and(count($entries))->toBe(2)
@@ -273,7 +273,7 @@ describe('module target', function (): void {
             File::deleteDirectory("{$this->hostPath}/{$base}/details");
         }
         expect(Artisan::call('noerd:make-resource', ['model' => Tenant::class, '--app' => 'zzmod', '--no-interaction' => true]))->toBe(0);
-        expect(count(Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))[0]['block_menus'][0]['navigations']))->toBe(2);
+        expect(count(Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))[0]['blockMenus'][0]['navigations']))->toBe(2);
     });
 
     it('generates a page into the module with a namespaced detail reference', function (): void {

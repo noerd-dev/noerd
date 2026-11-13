@@ -92,7 +92,7 @@ flat in `lists/`. Block-style YAML only. Navigation icons are heroicons:
 - title: Module
   name: module
   route: module
-  block_menus:
+  blockMenus:
     - title: Overview
       navigations:
         - title: Things

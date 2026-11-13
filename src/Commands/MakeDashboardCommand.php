@@ -139,7 +139,7 @@ class MakeDashboardCommand extends Command
                 continue;
             }
 
-            $blockMenusPos = mb_strpos($content, 'block_menus:');
+            $blockMenusPos = mb_strpos($content, 'blockMenus:');
             if ($blockMenusPos !== false) {
                 $afterBlockMenus = mb_strpos($content, "\n", $blockMenusPos);
                 if ($afterBlockMenus !== false) {
@@ -173,7 +173,7 @@ class MakeDashboardCommand extends Command
         $navigation = "- title: '" . str_replace("'", "''", $title) . "'\n"
             . "  name: {$this->appConfigName}\n"
             . "  route: {$routeName}\n"
-            . "  block_menus:\n"
+            . "  blockMenus:\n"
             . "    - title: Overview\n"
             . "      navigations:\n"
             . "        - title: Dashboard\n"

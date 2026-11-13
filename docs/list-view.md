@@ -91,7 +91,7 @@ columns:
 | `translatable` | Marks the column as language-dependent — the cell gets a subtle blue background so an editor sees that the value belongs to the selected language (see [Languages](languages.md)) | `false` |
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
 | `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
-| `wireClick` / `wireClickField` | For `colored_text`: custom `wire:click` method plus the row field passed as its argument | / `id` |
+| `wireClick` / `wireClickField` | For `coloredText`: custom `wire:click` method plus the row field passed as its argument | / `id` |
 | `method` | Shows the result of a `#[ComputedValue]` model method instead of a stored value (see Computed Columns below) | |
 | `cell` | Key of a registered cell renderer that draws the cell instead of the type's default markup; `type` keeps deciding filter, sort, alignment, CSV and the formatted text (see Custom Cell Renderers below) | |
 
@@ -101,7 +101,7 @@ A column type looks the same in every rendering mode: the table cell, the card g
 list, the [CSV export](#csv-export) and the text-only detail theme all write a value through
 `Noerd\Support\ListCellFormatter::format($value, $column)` — dates and amounts in the reader's
 locale, a `badge` as its translated option label, a `relationBadge` as the related record's title,
-the array values of `colored_text` and `badge_with_text` as one readable line. Every pill is the
+the array values of `coloredText` and `badgeWithText` as one readable line. Every pill is the
 `<x-noerd::badge>` component (`variant`: `neutral` by default, `primary`, `success`, `warning`,
 `danger`; `size="xs"` in the widget list) — a module never hand-rolls a pill or a per-type format.
 The CSV export writes amounts without the currency symbol.
@@ -114,17 +114,16 @@ The CSV export writes amounts without the currency symbol.
 | `time` | Time of day in the user's locale (`14:05` for `de-DE`, `2:05 PM` for `en-US`) via `FormatHelper::time()` |
 | `number` | Right-aligned number in the user's locale, at most 2 decimals (`FormatHelper::number()`) |
 | `currency` | Right-aligned amount in the tenant currency, written in the user's locale (`Noerd\Helpers\CurrencyHelper::format()`) |
-| `id` | Clickable ID link |
-| `bool` (alias `boolean`) | Read-only icon: green checkmark (true), red circle (false) |
-| `inversebool` | Read-only icon: green checkmark when true, nothing when false |
+| `bool` | Read-only icon: green checkmark (true), red circle (false) |
+| `inverseBool` | Read-only icon: green checkmark when true, nothing when false |
 | `checkbox` | Editable checkbox bound to a component property via `wireModel` (see Inline Editing below) |
 | `badge` | Neutral badge; the raw value is translated to a label via the column's `options` (`value`/`label` pairs). Columns mirroring a paired detail `type: select` field get this automatically |
-| `badge_with_text` | Badge with optional text — the row value is an array with `badge`, `text` and an optional `variant` (`primary` default, `danger`, `success`, `warning`, `neutral`) |
+| `badgeWithText` | Badge with optional text — the row value is an array with `badge`, `text` and an optional `variant` (`primary` default, `danger`, `success`, `warning`, `neutral`) |
 | `relationBadge` | Badge showing the display title of a foreign-key value (resolved via the registered relation types) |
 | `customAttribute` | Value from the `custom_attributes` JSON column, normalized for display (translatable arrays are resolved to the active language) |
-| `colored_text` | Text with optional color classes; the row value may be an array with `text`, `class`, `prefix`, `prefixClass`, `icon` keys |
+| `coloredText` | Text with optional color classes; the row value may be an array with `text`, `class`, `prefix`, `prefixClass`, `icon` keys |
 | `preview` | A picture: the picture on top of the card in grid mode, a small square in the table and widget list. The row value is an image URL, or an array with `url` (image) or `icon` (heroicon name shown on a tile coloured by `class`, with a short `label` such as a file extension). The image fills its box cropped from the top edge, so a document thumbnail shows its head. The list row supplies the value — the core does not know where pictures come from. Never sortable or filterable; the CSV export writes the URL |
-| `relation_link` | Clickable chip that opens the related record as a modal: `route` (preferred) and/or `modalComponent` (fallback) name the target, `idField` the row field holding its id (default `id`), `idParam` the argument it is passed as (default `modelId`, in both modes). Without a resolvable target the value renders as plain text |
+| `relationLink` | Clickable chip that opens the related record as a modal: `route` (preferred) and/or `modalComponent` (fallback) name the target, `idField` the row field holding its id (default `id`), `idParam` the argument it is passed as (default `modelId`, in both modes). Without a resolvable target the value renders as plain text |
 
 **Automatic typing:** Columns without an explicit `type` are typed from the database schema
 (`boolean` → `bool`, numeric → `number`, `date`/`datetime` → matching type), and columns whose
@@ -150,7 +149,7 @@ columns:
   - field: is_emergency
     label: Emergency
     width: 10
-    type: inversebool
+    type: inverseBool
 ```
 
 ### Action columns
@@ -219,7 +218,7 @@ Cells are read-only. The one editable column type is **`type: checkbox`**, which
       live: true
   ```
 
-`bool` and `inversebool` cells are read-only icons — use `checkbox` for a toggleable boolean.
+`bool` and `inverseBool` cells are read-only icons — use `checkbox` for a toggleable boolean.
 
 ## Custom Cell Renderers (`cell:`)
 
@@ -773,7 +772,7 @@ protected function prepareCsvExport(): array
   labels; rows are read lazily in chunks
 - `formatCsvValue($value, $column)` writes each cell like the table shows it
   (`Noerd\Support\ListCellFormatter`: `bool` → Yes/No, `badge` → the translated option label,
-  `relationBadge` → the related record's title, `colored_text` / `badge_with_text` → their text
+  `relationBadge` → the related record's title, `coloredText` / `badgeWithText` → their text
   line, dates in the user's locale) — except `currency` / `number`, which stay a locale decimal
   without symbol (`FormatHelper::decimal()`), and a plain `text` column holding a JSON array, which
   stays JSON; it neutralises spreadsheet formulas (a text value starting with `=`, `+`, `-`, `@`, tab

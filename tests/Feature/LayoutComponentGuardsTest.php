@@ -55,7 +55,7 @@ it('locks the impersonation banner state against client updates', function (): v
 
 it('locks the navigation data of the sidebar navigation', function (): void {
     Livewire::test('noerd::layout.sidebar-navigation')
-        ->set('navigation', [['title' => 'Evil', 'route' => 'noerd.apps']]);
+        ->set('navigations', [['title' => 'Evil', 'navigations' => [['title' => 'Evil', 'route' => 'noerd.apps']]]]);
 })->throws(CannotUpdateLockedPropertyException::class);
 
 it('keeps the block-menu open flags client writable next to the locked navigation', function (): void {

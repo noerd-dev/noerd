@@ -31,6 +31,8 @@ trait PublishesNoerdContent
      */
     protected function publishNoerdContent(): bool
     {
+        $this->migrateYamlVocabulary();
+
         if (! $this->publishSetupAppConfigs()) {
             return false;
         }

@@ -55,7 +55,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
         $navigationStructure = [
             [
                 'title' => 'Cms',
-                'block_menus' => [
+                'blockMenus' => [
                     [
                         'title' => 'Collections',
                         'dynamic' => 'collections',
@@ -76,19 +76,19 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
 
         $result = $method->invoke(null, $navigationStructure);
 
-        expect($result[0]['block_menus'][0])->toHaveKey('navigations')
-            ->and($result[0]['block_menus'][0])->not->toHaveKey('dynamic')
-            ->and($result[0]['block_menus'][0]['navigations'])->toBeArray()
-            ->and($result[0]['block_menus'][0]['navigations'][0]['title'])->toBe('Test Collection')
-            ->and($result[0]['block_menus'][1])->toHaveKey('navigations')
-            ->and($result[0]['block_menus'][1])->not->toHaveKey('dynamic');
+        expect($result[0]['blockMenus'][0])->toHaveKey('navigations')
+            ->and($result[0]['blockMenus'][0])->not->toHaveKey('dynamic')
+            ->and($result[0]['blockMenus'][0]['navigations'])->toBeArray()
+            ->and($result[0]['blockMenus'][0]['navigations'][0]['title'])->toBe('Test Collection')
+            ->and($result[0]['blockMenus'][1])->toHaveKey('navigations')
+            ->and($result[0]['blockMenus'][1])->not->toHaveKey('dynamic');
     });
 
     it('returns empty navigations for unregistered dynamic type', function (): void {
         $navigationStructure = [
             [
                 'title' => 'Test App',
-                'block_menus' => [
+                'blockMenus' => [
                     [
                         'title' => 'Unknown Dynamic',
                         'dynamic' => 'nonexistent-type',
@@ -103,7 +103,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
 
         $result = $method->invoke(null, $navigationStructure);
 
-        expect($result[0]['block_menus'][0])->not->toHaveKey('dynamic');
+        expect($result[0]['blockMenus'][0])->not->toHaveKey('dynamic');
     });
 
     it('leaves non-dynamic navigation blocks unchanged', function (): void {
@@ -114,7 +114,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
         $navigationStructure = [
             [
                 'title' => 'Test App',
-                'block_menus' => [
+                'blockMenus' => [
                     [
                         'title' => 'Static Block',
                         'navigations' => [
@@ -142,7 +142,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
         $navigationStructure = [
             [
                 'title' => 'Test App',
-                'block_menus' => [
+                'blockMenus' => [
                     [
                         'title' => 'Static Block',
                         'navigations' => [
@@ -162,7 +162,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
 
         $result = $method->invoke(null, $navigationStructure);
 
-        expect(array_column($result[0]['block_menus'][0]['navigations'], 'title'))
+        expect(array_column($result[0]['blockMenus'][0]['navigations'], 'title'))
             ->toBe(['Registered', 'Link', 'Modal']);
     });
 });
