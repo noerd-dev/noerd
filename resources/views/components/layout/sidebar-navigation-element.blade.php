@@ -9,10 +9,10 @@ new class extends Component {
 @php
     // `route:` means NAVIGATE (it also drives the active-state highlight below),
     // so opening an entry as a modal uses the separate `modalRoute:` key.
-    // `component:` stays as the fallback for an unregistered route name.
+    // `modalComponent:` is its fallback, or the modal target on its own.
     $naviModalRoute = ($navi['modalRoute'] ?? null);
     $naviModalRoute = $naviModalRoute && \Illuminate\Support\Facades\Route::has($naviModalRoute) ? $naviModalRoute : null;
-    $naviModalComponent = $navi['component'] ?? null;
+    $naviModalComponent = $navi['modalComponent'] ?? null;
     $opensAsModal = $naviModalRoute || $naviModalComponent;
     $naviArguments = is_array($navi['arguments'] ?? null) ? $navi['arguments'] : [];
 
@@ -87,12 +87,11 @@ new class extends Component {
         </a>
 
         @php
-            // The "+" button creates a record: `newRoute:` opens the detail route
-            // (the URL becomes /{app}/{entity}/new?modal=true), `newComponent:`
-            // remains the fallback.
-            $newRoute = ($navi['newRoute'] ?? null);
-            $newRoute = $newRoute && \Illuminate\Support\Facades\Route::has($newRoute) ? $newRoute : null;
-            $newComponent = $navi['newComponent'] ?? null;
+            // The "+" button creates a record: `newModalRoute:` opens the detail
+            // route (the URL becomes /{app}/{entity}/new?modal=true),
+            // `newModalComponent:` remains the fallback.
+            $newRoute = \Noerd\Support\YamlModalTarget::route($navi, 'new');
+            $newComponent = \Noerd\Support\YamlModalTarget::component($navi, 'new');
             $isQuickCreate = $navi['quickCreate'] ?? false;
             $newArguments = $isQuickCreate
                 ? array_merge($naviArguments, ['modelId' => null, 'quickCreate' => true])

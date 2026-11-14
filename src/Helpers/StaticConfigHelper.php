@@ -11,6 +11,7 @@ use Noerd\Models\TenantApp;
 use Noerd\Services\DynamicNavigationRegistry;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\ComponentNaming;
+use Noerd\Support\LayoutFields;
 use Noerd\Support\ModulesPath;
 use Noerd\Support\RequestState;
 use Noerd\Support\ThemeHelper;
@@ -68,9 +69,10 @@ final class StaticConfigHelper
             return [];
         }
 
-        return self::applyThemeSetting(
+        return self::applyThemeSetting(self::withSafeFieldNames(
             self::applyOverrides('detail', ComponentNaming::withoutNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
-        );
+            $component,
+        ));
     }
 
     /**
@@ -108,9 +110,10 @@ final class StaticConfigHelper
             return [];
         }
 
-        return self::applyThemeSetting(
+        return self::applyThemeSetting(self::withSafeFieldNames(
             self::applyOverrides('page', ComponentNaming::withoutNamespace($component), self::parseYamlFile($yamlPath), $modelClass),
-        );
+            $component,
+        ));
     }
 
     /**
@@ -134,7 +137,7 @@ final class StaticConfigHelper
             return [];
         }
 
-        $config = self::parseYamlFile($yamlPath);
+        $config = self::withSafeFieldNames(self::parseYamlFile($yamlPath), $component);
         $config['theme'] = 'settings';
 
         return $config;
@@ -254,7 +257,8 @@ final class StaticConfigHelper
     }
 
     /**
-     * @internal
+     * The navigation of the selected app (or setup/profile context), with the
+     * dynamic blocks expanded — what the sidebar renders.
      */
     public static function getNavigationStructure(): ?array
     {
@@ -287,8 +291,10 @@ final class StaticConfigHelper
     }
 
     /**
-     * Clear the module source mapping cache.
-     * Call this after installing new modules.
+     * Clear the module source mapping cache — for test suites that write
+     * module folders at runtime.
+     *
+     * @internal Test API.
      */
     public static function clearModuleSourceCache(): void
     {
@@ -419,8 +425,6 @@ final class StaticConfigHelper
 
     /**
      * Inverse of parseListViewKey(): null app => plain key, null view key => 'default'.
-     *
-     * @internal
      */
     public static function composeListViewKey(?string $app, ?string $viewKey): string
     {
@@ -433,10 +437,11 @@ final class StaticConfigHelper
     /**
      * Parse a YAML file through the mtime-guarded cache: an edited file (dev,
      * test fixtures) is re-parsed, an unchanged one is parsed once per process.
-     * Public so other YAML readers (e.g. the collection definition repository)
-     * share the same cache instead of re-parsing per call.
+     * Public so other YAML readers (the collection definition repository, a
+     * module's own YAML files) share the same cache instead of re-parsing per
+     * call.
      *
-     * @internal
+     * @return array<mixed>
      */
     public static function parseYamlFile(string $path): array
     {
@@ -532,6 +537,30 @@ final class StaticConfigHelper
     private static function applyOverrides(string $viewType, string $component, array $config, ?string $modelClass = null): array
     {
         return self::layoutOverrides()?->apply($viewType, $component, $config, $modelClass) ?? $config;
+    }
+
+    /**
+     * The central check of every resolved field layout (detail, page and
+     * settings YAML, after the layout overrides): a field whose name is not a
+     * safe binding path (LayoutFields::isSafeName()) is dropped and logged.
+     * Field names reach `wire:model`, `wire:click` and Alpine expressions of
+     * the themes, and a layout override is data a tenant stored.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private static function withSafeFieldNames(array $config, string $component): array
+    {
+        if (! isset($config['fields']) || ! is_array($config['fields'])) {
+            return $config;
+        }
+
+        $config['fields'] = LayoutFields::withoutUnsafeNames(
+            $config['fields'],
+            fn(string $name) => Log::warning("Field with an unsafe name dropped from the layout of {$component}.", ['name' => $name]),
+        );
+
+        return $config;
     }
 
     /**
@@ -826,13 +855,13 @@ final class StaticConfigHelper
 
     /**
      * A navigation entry needs a resolvable target: a plain link, a modal
-     * (component fallback or registered modalRoute) or a registered `route:`.
+     * (a registered `modalRoute:` or a `modalComponent:`) or a registered `route:`.
      * A stale entry pointing at an uninstalled module's route is dropped here so
      * the sidebar's route() call cannot take the whole page down.
      */
     private static function navigationTargetExists(array $nav): bool
     {
-        if (isset($nav['link']) || isset($nav['component'])) {
+        if (isset($nav['link']) || isset($nav['modalComponent'])) {
             return true;
         }
 

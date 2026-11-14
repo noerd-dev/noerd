@@ -7,6 +7,15 @@ namespace Noerd\Contracts;
 use Illuminate\Support\Collection;
 use Noerd\Support\SetupCollectionDefinitionData;
 
+/**
+ * Where the setup collection definitions come from. The core binds the YAML
+ * repository (`app-configs/setup/collections/*.yml`, the same for every
+ * tenant); an extension package may bind its own (definitions stored per tenant).
+ *
+ * `$tenantId` names the tenant whose definitions are meant; null means the
+ * current tenant (TenantHelper::currentTenantId()). The YAML repository
+ * ignores it — its files are shared by all tenants.
+ */
 interface SetupCollectionDefinitionRepositoryContract
 {
     /**

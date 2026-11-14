@@ -96,9 +96,10 @@ class MakeResourceCommand extends Command
             $this->annotateListDetailRoute($listBlade);
         }
 
-        if ($this->createListYaml() === '' || $this->createDetailYaml() === '') {
-            return false;
-        }
+        // A YAML that exists in every copy is kept (and reported) — the Blades and
+        // routes written above are the result, never a failure.
+        $this->createListYaml();
+        $this->createDetailYaml();
 
         $this->addNavigation();
 
@@ -121,11 +122,12 @@ class MakeResourceCommand extends Command
 
         if ($this->detectDetailRoute()) {
             $this->annotateListDetailRoute($listBlade);
+        } else {
+            $this->comment("No detail route '{$this->appConfigName}.{$this->entity}.detail' yet: the rows open the detail as a component modal (\$detailComponent).");
+            $this->comment("Declare \$detailRoute on the list once the route exists — noerd:make-resource --only=detail adds it.");
         }
 
-        if ($this->createListYaml() === '') {
-            return false;
-        }
+        $this->createListYaml();
 
         $this->addNavigation();
 
@@ -142,7 +144,8 @@ class MakeResourceCommand extends Command
         }
 
         $this->addDetailRoute();
+        $this->createDetailYaml();
 
-        return $this->createDetailYaml() !== '';
+        return true;
     }
 }

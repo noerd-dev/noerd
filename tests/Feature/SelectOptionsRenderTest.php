@@ -75,3 +75,14 @@ it('applies the same option handling in every theme', function (string $theme): 
     ])
         ->assertSeeHtml('<option value=""></option>');
 })->with(['default', 'compact', 'numbered']);
+
+it('submits the untranslated value of a plain string option', function (): void {
+    app('translator')->addLines(['*.Zz Draft' => 'Zz Entwurf'], 'de');
+    app()->setLocale('de');
+
+    Livewire::test('noerd-test::theme-test', [
+        'initialModel' => [],
+        'fields' => [zzSelectField(['options' => ['Zz Draft']])],
+    ])
+        ->assertSeeHtml('<option value="Zz Draft">Zz Entwurf</option>');
+});

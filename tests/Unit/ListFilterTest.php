@@ -42,23 +42,29 @@ it('normalises both option shapes and drops the empty "all" entry', function ():
         ->and($map->toArray())->toBe([
             'label' => 'Status',
             'column' => 'status',
-            'type' => 'Picklist',
+            'type' => 'picklist',
             'options' => ['open' => 'Open', 'done' => 'Done'],
         ]);
 });
 
-it('builds a filter from the array form the get*ListFilter methods used to return', function (): void {
+it('builds a filter from the array form with the one filter vocabulary', function (): void {
     $picklist = ListFilter::fromArray(['label' => 'Color', 'column' => 'color', 'options' => ['red' => 'Red']]);
-    $from = ListFilter::fromArray(['label' => 'From', 'column' => 'show_from', 'type' => 'ShowFrom']);
-    $until = ListFilter::fromArray(['label' => 'Until', 'column' => 'show_until', 'type' => 'ShowUntil']);
+    $from = ListFilter::fromArray(['label' => 'From', 'column' => 'show_from', 'type' => 'dateFrom']);
+    $until = ListFilter::fromArray(['label' => 'Until', 'column' => 'show_until', 'type' => 'dateUntil']);
+    $years = ListFilter::years('Year', 'created_at');
 
     expect($picklist->kind)->toBe(ListFilter::KIND_PICKLIST)
-        ->and($picklist->toArray()['type'])->toBe('Picklist')
+        ->and($picklist->toArray()['type'])->toBe('picklist')
         ->and($from->kind)->toBe(ListFilter::KIND_DATE_FROM)
-        ->and($from->toArray()['type'])->toBe('ShowFrom')
+        ->and($from->toArray()['type'])->toBe('dateFrom')
         ->and(array_keys($from->toArray()['options']))->toBe(ListFilter::DATE_PRESETS)
-        ->and($until->toArray()['type'])->toBe('ShowUntil');
+        ->and($until->toArray()['type'])->toBe('dateUntil')
+        ->and($years->kind)->toBe(ListFilter::KIND_YEARS);
 });
+
+it('refuses the earlier PascalCase array form instead of turning it into a picklist', function (string $type): void {
+    ListFilter::fromArray(['label' => 'From', 'column' => 'show_from', 'type' => $type]);
+})->with(['Picklist', 'ShowFrom', 'ShowUntil', 'zz-unknown'])->throws(InvalidArgumentException::class);
 
 it('builds a filter from a list YAML entry with translated labels and a default', function (): void {
     app('translator')->addLines(['*.Zz Open' => 'Zz Offen', '*.Zz Status' => 'Zz Zustand'], 'de');

@@ -260,3 +260,49 @@ it('never bulk-deletes a record the list itself does not yield', function (): vo
     expect(NoerdUser::find($mine->id))->toBeNull()
         ->and(NoerdUser::find($foreign->id))->not->toBeNull();
 });
+
+/** A list with a module-specific bulk action next to the generic delete. */
+class ZzBulkArchiveListComponent extends ZzBulkDeleteListComponent
+{
+    public int $archived = 0;
+
+    public function archiveSelected(): void
+    {
+        $this->archived = count($this->selectedRecordIds);
+    }
+
+    public function exposedBulkActions(): array
+    {
+        return $this->builtListConfig()['listSettings']['bulkActions'] ?? [];
+    }
+
+    protected function getListConfig(?string $customName = null): array
+    {
+        $config = parent::getListConfig($customName);
+        $config['bulkActions'][] = ['label' => 'Archive', 'action' => 'archiveSelected'];
+
+        return $config;
+    }
+}
+
+it('strips and refuses every bulk action but the delete for a user without write permission', function (): void {
+    Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => false);
+
+    $users = NoerdUser::factory()->count(2)->create();
+
+    $component = Livewire::test(ZzBulkArchiveListComponent::class)
+        ->set('selectedRecordIds', $users->pluck('id')->all());
+
+    expect(array_column($component->instance()->exposedBulkActions(), 'action'))->toBe(['deleteSelected']);
+
+    $component->call('archiveSelected')->assertForbidden();
+});
+
+it('runs a module bulk action for a user with write permission', function (): void {
+    $users = NoerdUser::factory()->count(2)->create();
+
+    Livewire::test(ZzBulkArchiveListComponent::class)
+        ->set('selectedRecordIds', $users->pluck('id')->all())
+        ->call('archiveSelected')
+        ->assertSet('archived', 2);
+});

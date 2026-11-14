@@ -50,3 +50,15 @@ it('ignores attempts to re-enable raw html through the options', function (): vo
     expect(SafeMarkdown::render('<script>alert(1)</script>', ['html_input' => 'allow']))
         ->not->toContain('<script');
 });
+
+// Markdown's own image syntax is no raw HTML, so render() keeps it — for a
+// server-rendered document that is a remote fetch by the renderer.
+it('drops remote images for documents only', function (): void {
+    $markdown = 'text ![x](http://169.254.169.254/latest/meta-data/)';
+
+    expect(SafeMarkdown::render($markdown))->toContain('<img')
+        ->and(SafeMarkdown::renderForDocument($markdown))->not->toContain('<img')
+        ->and(SafeMarkdown::renderForDocument($markdown))->toContain('text')
+        ->and(SafeMarkdown::renderForDocument('<script>alert(1)</script>'))->not->toContain('<script')
+        ->and(SafeMarkdown::renderForDocument(null))->toBe('');
+});

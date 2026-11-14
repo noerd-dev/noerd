@@ -21,7 +21,7 @@ new class extends Component {
             $query->whereIn('id', NoerdAuth::user()->adminTenants()->pluck('tenants.id'));
         }
 
-        $rows = $query->paginate($this->perPage);
+        $rows = $this->paginateList($query);
 
         return $this->buildList($rows);
     }

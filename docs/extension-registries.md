@@ -16,7 +16,7 @@ Documented on this page: `ComponentSlotsRegistry` (top bar, header actions, deta
 
 Every registry is filled with `register()` and read with `get()` (`null` or an empty list when
 nothing is registered); most also answer `has()` and `all()`, plus what their subject needs
-(`catalogFor()`, `typeForColumn()`, `options()`, …). The exceptions: `RelationBoxRegistry` has
+(`typeForColumn()`, `options()`, …). The exceptions: `RelationBoxRegistry` has
 only `register()` / `get()`; `PicklistRegistry`, `PositionTableRegistry` and `ProfileRegistry`
 have no `all()`; `ComputedColumnRegistry::get()` takes a column or field entry instead of a key.
 
@@ -139,10 +139,16 @@ use Noerd\Services\PicklistRegistry;
 public function boot(): void
 {
     app(PicklistRegistry::class)->register('warehouseOptions', function (): array {
-        $tenantId = TenantHelper::getSelectedTenantId();
+        $tenantId = TenantHelper::currentTenantId();
 
-        return ['' => __('Please select...')] + Warehouse::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
+        if ($tenantId === null) {
+            return [];
+        }
+
+        // ofTenant() lifts only the tenant filter — soft deletes and the
+        // object read guard stay applied (never withoutGlobalScopes()).
+        return ['' => __('Please select...')] + Warehouse::query()
+            ->ofTenant($tenantId)
             ->where('is_active', true)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -182,7 +188,6 @@ same entry — the wiring exists exactly once. See [Detail View → Configurable
 | `register(string $detailComponent, string $catalogClass, string $modelClass)` | Register the position table of a detail component |
 | `has(string $component)` | Whether a table is registered for the component |
 | `get(string $component)` | `['catalog' => …, 'model' => …]` or `null` |
-| `catalogFor(string $component)` | The catalog instance or `null` |
 
 Keys are the BARE component name: a `module::` prefix is stripped (`accounting::invoice-detail` and
 `invoice-detail` are the same entry), so the name must be unique across modules.
@@ -269,8 +274,9 @@ would outlive an uninstalled module.
 | `register(string $modelClass, array $tile, int $sort = 100)` | Contribute a tile for every relation box hosting `$modelClass` |
 | `get(string $modelClass)` | All contributed tiles for the class, including tiles registered for a parent class (a project-level subclass inherits its base's tiles), sorted |
 
-A tile mirrors the YAML relation shape — `label` (translation key), `heroicon`, `component` and/or
-`route`, `arguments` with the `$modelId` token — plus two keys YAML cannot express:
+A tile mirrors the YAML relation shape — `label` (translation key), `heroicon`, `modalRoute` with
+`modalComponent` as the fallback (or `modalComponent` alone), `arguments` with the `$modelId` token
+— plus two keys YAML cannot express. A tile that opens nothing is not shown:
 
 | Key | Description |
 |-----|-------------|
@@ -320,14 +326,17 @@ through the modal stack by any authenticated user of the tenant.
 **Route requirements travel into the modal stack.** The same hook keeps the access middleware of a
 component's routes when the modal stack opens the component (`allowsInModal()` /
 `authorizeModal()`): a component that is ONLY reachable
-through routes carrying `app-access:…`, `action-permission:…` or `setup` may be mounted by a user who
-satisfies the middleware of at least one of those routes — the tenant runs one of the apps and the
-user may use it, the named action is permitted, the user is a tenant admin. A component without a
-route (pickers, dialogs) and a component with one route that carries none of these middleware (a
-screen shared by several apps) are not restricted, and neither is a component a page renders itself
-(an embedded list, a public widget) — the server made that decision. A module's own access
-middleware is not known to the guard — a screen behind one checks its condition in the component as
-well.
+through routes carrying `app-access:…`, `action-permission:…`, `setup`, `profile` or a module
+middleware implementing `Noerd\Contracts\GuardsModalMount` may be mounted by a user who satisfies
+every such middleware of at least one of those routes — the tenant runs one of the apps and the
+user may use it, the named action is permitted, the user is a tenant admin, the module's rule holds.
+The route middleware is resolved like the router does it: aliases and (nested) middleware groups are
+expanded. A component without a route (pickers, dialogs) and a component with one route that carries
+none of these middleware (a screen shared by several apps) are not restricted, and neither is a
+component a page renders itself (an embedded list, a public widget) — the server made that decision.
+A module whose routes sit behind an access middleware of its OWN implements the contract on that
+middleware (see [Permissions](permissions.md#modal-mounts-and-module-middleware)); without it the
+screen is mountable through the modal stack by any signed-in user.
 
 **API** (`Noerd\Support\ComponentAccessGuard`, static):
 
@@ -336,7 +345,9 @@ well.
 | `registerAdminComponents(array $componentNames): void` | Add module-owned admin components to the allow-list; idempotent |
 | `allows(?string $componentName): bool` | Whether the current user may mount the component (`true` for every name not on the list, and for `null`) |
 | `authorize(?string $componentName): void` | `abort(403)` when `allows()` is false |
-| `flushRegisteredComponents(): void` | Reset the process-global allow-list of module registrations (a test process booting several applications) |
+| `allowsInModal(?string $componentName): bool` | Whether the modal stack may open the component — the access middleware of its routes (see above) |
+| `authorizeModal(?string $componentName): void` | `abort(403)` when `allowsInModal()` is false |
+| `flushRegisteredComponents(): void` | Test API (`@internal`): reset the process-global allow-list of module registrations — `Noerd\Testing\TestCase` calls it between applications |
 
 **Registering** from a module service provider's `boot()`:
 
@@ -387,10 +398,11 @@ Resolves media IDs to URLs for `type: image` fields and handles plain file uploa
 | `getRelativeUrl(int $mediaId): ?string` | Relative URL (without domain) of the ORIGINAL file |
 | `getImageUrl(int $mediaId, string $variant = 'web'): ?string` | Relative URL for DELIVERING an image (public website, e-mail): a size-limited variant instead of the original. The variant names are configuration of the media module; a file that cannot be scaled (SVG, PDF) answers with its original URL |
 | `storeUploadedFile(mixed $uploadedFile): ?string` | Store an upload, return its relative URL |
+| `storeUploadedFileReference(mixed $uploadedFile): int\|string\|null` | Store an upload, return the reference to persist: the media id when a library exists, the relative URL otherwise (`null` when refused) |
 | `isAvailable(): bool` | Whether the full media module is available |
 | `pickerComponent(): ?string` | The list component opened as the media picker (with the `selectMode`, `selectContext`, `selectToken` arguments; it answers with the `mediaSelected` event), or `null` when no library exists |
 
-**Default:** `Noerd\Services\NullMediaResolver`, bound with `singletonIf` — every ID lookup returns `null`/`false`, `isAvailable()` is `false`, `pickerComponent()` is `null`, and `storeUploadedFile()` falls back to a plain `store('uploads', 'public')` upload. The image field checks `isAvailable()` to decide between the media picker and the plain upload UI (see [Field Types → image](field-types.md#image)).
+**Default:** `Noerd\Services\NullMediaResolver`, bound with `singletonIf` — every ID lookup returns `null`/`false`, `isAvailable()` is `false`, `pickerComponent()` is `null`, and `storeUploadedFile()` / `storeUploadedFileReference()` fall back to a plain `store('uploads', 'public')` upload (raster images only) and return its URL. The image field checks `isAvailable()` to decide between the media picker and the plain upload UI (see [Field Types → image](field-types.md#image)).
 
 **Rebinding** — the media module binds the real resolver in its `register()`; because the core uses `singletonIf`, the module's binding wins regardless of provider order:
 
@@ -439,9 +451,8 @@ its `type`:
 app(\Noerd\Services\ListCellRendererRegistry::class)->register('signedAmount', 'accounting::cells.signed-amount');
 ```
 
-The view receives `$value`, `$text` (formatted by the column type), `$row` and `$column`.
-`Noerd\Support\ListCellRenderer::viewFor($column)` resolves a column (null for no, an unknown or a
-missing renderer — the cell then renders by its type).
+The view receives `$value`, `$text` (formatted by the column type), `$row` and `$column`. A column
+naming no renderer, an unknown or a missing one renders by its type.
 
 ### Layout overrides (`noerd.layout-overrides` binding)
 
@@ -484,7 +495,7 @@ The generic chrome consults six **optional** Laravel gates, wrapped in `Noerd\He
 
 | Gate (constant on `AccessHelper`) | Argument | Consulted by |
 |-----------------------------------|----------|--------------|
-| `noerd.access-app` (`APP_GATE`) | `string $appName` (tenant_apps.name, any case) | App switcher, app tiles, `AppAccessMiddleware`, allowed-app config discovery |
+| `noerd.access-app` (`APP_GATE`) | `string $appName` (tenant_apps.name, always UPPERCASE) | App switcher, app tiles, `AppAccessMiddleware`, allowed-app config discovery |
 | `noerd.object-read` (`OBJECT_READ_GATE`) | `class-string $modelClass` | Lists (403 + row hiding) and detail mount (denied state) |
 | `noerd.object-write` (`OBJECT_WRITE_GATE`) | `class-string $modelClass` | Updating existing records: detail forms render read-only, custom list header actions hidden |
 | `noerd.object-create` (`OBJECT_CREATE_GATE`) | `class-string $modelClass` | Creating new records: store() on a new record, list "New …" actions hidden |
@@ -511,7 +522,7 @@ Gate::define(AccessHelper::APP_GATE, function (?Authenticatable $user, string $a
 - The gate user is resolved from noerd's own auth guard (`AccessHelper` checks via `Gate::forUser(NoerdAuth::user())`), never from the host application's default guard — see `docs/auth.md`
 - Once a gate is defined, host-app `Gate::before`/`after` hooks apply to it (standard Laravel semantics); undefined gates are never touched
 
-## Tenant App Assignment (`Tenant::assignApp()`)
+## Tenant App Assignment (`Tenant::assignApp()` / `removeApp()`)
 
 An app reaches a tenant through ONE method, whatever triggers it — the Setup → Apps screen, a module's
 `noerd:install-{module}` (including the apps it requires), `noerd:install`, `noerd:demo`, a copied tenant,
@@ -519,19 +530,34 @@ a provisioning service:
 
 ```php
 $tenant->assignApp($app);                                   // a TenantApp row …
-$tenant->assignApp('CRM');                                  // … or its stored name …
+$tenant->assignApp('CRM');                                  // … or its name (any case) …
 $tenant->assignApp($appId, ['is_hidden' => true, 'sort_order' => 3]); // … or its id, with pivot values
 ```
 
 `assignApp()` attaches the pivot row (the sort order defaults to the end of the tenant's app bar),
 fires `Noerd\Events\TenantAppAssigned` with the tenant id and the app name, and returns `true`. An
-app the tenant already holds — or a name/id no `tenant_apps` row carries — returns `false` and fires
-nothing, so a repeated installer run stays quiet.
+app the tenant already holds — or an id no `tenant_apps` row carries — returns `false` and fires
+nothing, so a repeated installer run stays quiet. A name is matched case-insensitively; a name no
+`tenant_apps` row carries throws an `InvalidArgumentException` (a typo, or the app's tenant-app
+migration has not run yet) — a caller that may legitimately run before the row exists checks
+`TenantApp::query()->namedAny([$name])->exists()` first.
 
 Modules listen for the event in their service provider to pull in whatever an app of theirs needs
 alongside it (an app folder in the media library, a hidden companion app) — the core knows no module,
 and a module never patches the assignment screens. Never write `tenantApps()->attach()` or `sync()`
 in a module: the listeners of the other modules would not hear it.
+
+The counterpart takes an app away, again through ONE method:
+
+```php
+$tenant->removeApp('CRM');   // a TenantApp row, its id or its name (any case)
+```
+
+`removeApp()` detaches the pivot row, fires `Noerd\Events\TenantAppRemoved` (tenant id, app name) and
+returns `true`. An app the tenant does not hold — or an unknown id — returns `false` and fires nothing;
+an unknown name throws like `assignApp()`. It never deletes module data: a module that set something up
+for the app listens for the event and decides itself what to release. Never write
+`tenantApps()->detach()`.
 
 ## Tenant Membership (`Tenant::addMember()` / `removeMember()`)
 

@@ -69,8 +69,8 @@
                 <button
                     type="button"
                     wire:key="grid-{{ $listId }}-{{ $row['id'] ?? $key }}"
-                    :class="{'ring-2 ring-brand-primary': selectedRow == {{ $key }} }"
-                    @click="selectedRow = '{{ $key }}'"
+                    :class="{'ring-2 ring-brand-primary': selectedRow === {{ (int) $key }} }"
+                    @click="selectedRow = {{ (int) $key }}"
                     wire:click="openListRow({{ \Illuminate\Support\Js::from((string) ($row['id'] ?? '')) }})"
                     class="group hover:border-brand-primary relative flex cursor-pointer flex-col items-start gap-1 rounded-lg border bg-white p-4 text-left transition hover:shadow-sm {{ $rowChecked ? 'border-brand-primary' : 'border-gray-200' }}"
                 >
@@ -83,6 +83,7 @@
                                 type="checkbox"
                                 wire:key="grid-cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
                                 wire:click.stop="toggleRecordSelection({{ \Illuminate\Support\Js::from((string) ($row['id'] ?? '')) }})"
+                                aria-label="{{ __('Select row :number', ['number' => $loop->iteration]) }}"
                                 @checked($rowChecked)
                                 class="text-brand-primary focus:ring-brand-border block h-4 w-4 cursor-pointer rounded border-gray-300"
                             />
@@ -124,21 +125,18 @@
             </p>
             @if ($primaryAction)
                 @php
-                    // Mirrors the header action: route: opens a modal,
-                    // action: calls a method on the list component.
-                    $emptyStateRoute = $primaryAction['route'] ?? null;
-                    $emptyStateRoute = $emptyStateRoute && \Illuminate\Support\Facades\Route::has($emptyStateRoute)
-                        ? $emptyStateRoute
-                        : null;
+                    // Mirrors the header action: modalRoute:/modalComponent: open a
+                    // modal, action: calls a method on the list component.
+                    $emptyStateClick = \Noerd\Support\YamlModalTarget::clickExpression($primaryAction, $primaryAction['arguments'] ?? []);
                 @endphp
                 <div class="mt-4 flex justify-center">
-                    @if ($emptyStateRoute)
+                    @if ($emptyStateClick)
                         <x-noerd::button
                             variant="primary"
                             :icon="$primaryAction['heroicon'] ?? 'plus'"
                             class="h-8"
                             x-data
-                            x-on:click.prevent="$modalRoute({{ Js::from($emptyStateRoute) }}, {{ Js::from($primaryAction['arguments'] ?? []) }})"
+                            x-on:click.prevent="{{ $emptyStateClick }}"
                         >
                             {{ __($primaryAction['label']) }}
                         </x-noerd::button>

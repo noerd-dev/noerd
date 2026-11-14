@@ -6,8 +6,10 @@ namespace Noerd\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\multiselect;
 
 use Noerd\Commands\Concerns\RequiresNoerdInstallation;
 use Noerd\Models\Tenant;
@@ -20,7 +22,8 @@ class NoerdDemoCommand extends Command
     protected $signature = 'noerd:demo
         {--force : Overwrite existing files}
         {--migrate : Run the demo migrations (required to migrate in non-interactive runs)}
-        {--seed : Seed the demo data (required to seed in non-interactive runs)}';
+        {--seed : Seed the demo data (required to seed in non-interactive runs)}
+        {--tenants= : Assign the demo app without asking: "all" or tenant ids ("1,3") — required to assign in non-interactive runs}';
 
     protected $description = 'Install demo data (models, migrations, views, configs, routes) directly into the project';
 
@@ -42,8 +45,9 @@ class NoerdDemoCommand extends Command
         $this->publishViews();
         $this->publishAppConfigs();
         $this->addRoutes();
-        $this->registerDemoApp();
+        // The tables exist first — then the app is registered and assigned.
         $this->runMigration();
+        $this->registerDemoApp();
         $this->seedDemoData();
 
         $this->newLine();
@@ -167,18 +171,26 @@ class NoerdDemoCommand extends Command
         $routeFile = base_path('routes/web.php');
         $content = File::get($routeFile);
 
-        if (! str_contains($content, 'demo-customers')) {
+        if (str_contains($content, "->name('demo-customers')")) {
+            // Routes of an earlier demo: the views and configs now name demo.* routes.
+            $this->warn('routes/web.php holds the demo routes under their earlier names (demo-customers, …).');
+            $this->warn('Replace the "// Noerd Demo" block with the one of a fresh noerd:demo run (names demo.customers, demo.customer.detail, …).');
+
+            return;
+        }
+
+        if (! str_contains($content, "->name('demo.customers')")) {
             $route = <<<'ROUTE'
 
 
 // Noerd Demo
 Route::group(['middleware' => ['noerd', 'app-access:demo']], function (): void {
-    Route::livewire('demo-customers', 'demo-customers-list')->name('demo-customers');
-    Route::livewire('demo-customer/{modelId}', 'demo-customer-detail')->name('demo-customer.detail');
-    Route::livewire('demo-categories', 'demo-categories-list')->name('demo-categories');
-    Route::livewire('demo-category/{modelId}', 'demo-category-detail')->name('demo-category.detail');
-    Route::livewire('demo-tags', 'demo-tags-list')->name('demo-tags');
-    Route::livewire('demo-tag/{modelId}', 'demo-tag-detail')->name('demo-tag.detail');
+    Route::livewire('demo-customers', 'demo-customers-list')->name('demo.customers');
+    Route::livewire('demo-customer/{modelId}', 'demo-customer-detail')->name('demo.customer.detail');
+    Route::livewire('demo-categories', 'demo-categories-list')->name('demo.categories');
+    Route::livewire('demo-category/{modelId}', 'demo-category-detail')->name('demo.category.detail');
+    Route::livewire('demo-tags', 'demo-tags-list')->name('demo.tags');
+    Route::livewire('demo-tag/{modelId}', 'demo-tag-detail')->name('demo.tag.detail');
 });
 ROUTE;
 
@@ -191,12 +203,18 @@ ROUTE;
 
     private function registerDemoApp(): void
     {
+        if (! Schema::hasTable('tenant_apps')) {
+            $this->warn('The tenant_apps table does not exist yet — run php artisan migrate, then noerd:demo again to register the app.');
+
+            return;
+        }
+
         $app = TenantApp::firstOrCreate(
             ['name' => 'DEMO'],
             [
                 'title' => 'Demo',
-                'icon' => 'noerd::icons.app',
-                'route' => 'demo-customers',
+                'icon' => 'heroicon:outline:beaker',
+                'route' => 'demo.customers',
                 'is_active' => true,
             ],
         );
@@ -207,20 +225,61 @@ ROUTE;
             $this->line('<comment>Demo app already registered in database.</comment>');
         }
 
-        $this->assignAppToAllTenants($app);
+        $this->assignDemoApp($app);
     }
 
-    private function assignAppToAllTenants(TenantApp $app): void
+    /**
+     * Assign the demo app — only to the tenants the run names: `--tenants`
+     * (`all` or ids), or the selection an interactive run asks for. A
+     * non-interactive run without the option assigns nothing.
+     */
+    private function assignDemoApp(TenantApp $app): void
     {
-        $tenants = Tenant::all();
+        $option = is_string($this->option('tenants')) ? mb_trim($this->option('tenants')) : '';
+
+        if ($option === '' && ! $this->input->isInteractive()) {
+            $this->line('<comment>Non-interactive run: the demo app was not assigned. Pass --tenants=all (or ids), or run: php artisan noerd:assign-apps-to-tenant --tenant-id={id} --apps=DEMO</comment>');
+
+            return;
+        }
+
+        $tenants = Tenant::orderBy('name')->get();
+
+        if ($tenants->isEmpty()) {
+            return;
+        }
+
+        if ($option === '') {
+            $selected = array_map('intval', multiselect(
+                label: 'Which tenants should get the Demo app?',
+                options: $tenants->pluck('name', 'id')->all(),
+                default: $tenants->pluck('id')->all(),
+                required: false,
+            ));
+        } elseif (mb_strtolower($option) === 'all') {
+            $selected = $tenants->pluck('id')->map(fn($id): int => (int) $id)->all();
+        } else {
+            $ids = array_map('trim', explode(',', $option));
+
+            if (array_filter($ids, static fn(string $id): bool => ! ctype_digit($id)) !== []) {
+                $this->error('--tenants expects "all" or tenant ids separated by commas (e.g. --tenants=1,3).');
+
+                return;
+            }
+
+            $selected = array_map('intval', $ids);
+        }
+
+        $assigned = 0;
 
         foreach ($tenants as $tenant) {
-            $tenant->assignApp($app);
+            if (in_array((int) $tenant->id, $selected, true)) {
+                $tenant->assignApp($app);
+                $assigned++;
+            }
         }
 
-        if ($tenants->isNotEmpty()) {
-            $this->info("{$app->title} app assigned to {$tenants->count()} tenant(s).");
-        }
+        $this->info("{$app->title} app assigned to {$assigned} tenant(s).");
     }
 
     private function publishSeeder(): void
@@ -266,7 +325,7 @@ ROUTE;
             return;
         }
 
-        $this->call('migrate', ['--no-interaction' => true]);
+        $this->call('migrate', $this->input->isInteractive() ? [] : ['--force' => true, '--no-interaction' => true]);
     }
 
     private function copyFile(string $source, string $target, string $displayPath): void

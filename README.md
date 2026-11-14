@@ -100,7 +100,7 @@ searchableColumns:
   - company_name
 actions:
   - label: New Demo Customer
-    route: demo-customer.detail
+    modalRoute: demo.customer.detail
 columns:
   - field: name
     label: Name

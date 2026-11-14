@@ -10,7 +10,12 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Component;
+use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Exceptions\MissingTenantContextException;
+use Noerd\Exceptions\TenantMismatchException;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupCollectionEntry;
 use Noerd\Models\SetupLanguage;
@@ -83,6 +88,30 @@ class ZzTenantOuterJob implements ShouldQueue
         }
 
         self::$tenantAfterInnerFailure = TenantContext::current();
+    }
+}
+
+/** Writes notes from client-driven actions, like a module detail's store(). */
+class ZzTenantNoteWriter extends Component
+{
+    public function create(string $title, ?int $tenantId = null): void
+    {
+        ZzTenantNote::query()->create(array_filter(['title' => $title, 'tenant_id' => $tenantId]));
+    }
+
+    public function move(int $id, int $tenantId): void
+    {
+        ZzTenantNote::query()->findOrFail($id)->update(['tenant_id' => $tenantId]);
+    }
+
+    public function createInContext(string $title, int $tenantId): void
+    {
+        TenantContext::run($tenantId, fn() => ZzTenantNote::query()->create(['title' => $title, 'tenant_id' => $tenantId]));
+    }
+
+    public function render(): string
+    {
+        return '<div></div>';
     }
 }
 
@@ -231,5 +260,66 @@ describe('queued jobs', function (): void {
         });
 
         expect(TenantContext::current())->toBeNull();
+    });
+});
+
+describe('client requests stay in the user tenant', function (): void {
+    beforeEach(function (): void {
+        $this->user = NoerdUser::factory()->adminUser()->create();
+        $this->actingAs($this->user);
+        $this->ownTenantId = (int) $this->user->selected_tenant_id;
+        Livewire::component('zz-tenant-note-writer', ZzTenantNoteWriter::class);
+    });
+
+    it('stamps and accepts the own tenant', function (): void {
+        Livewire::test('zz-tenant-note-writer')
+            ->call('create', 'Own')
+            ->call('create', 'Explicit', $this->ownTenantId);
+
+        expect(ZzTenantNote::query()->whereIn('title', ['Own', 'Explicit'])->pluck('tenant_id')->unique()->all())
+            ->toBe([$this->ownTenantId]);
+    });
+
+    it('refuses to create a record for another tenant', function (): void {
+        Livewire::test('zz-tenant-note-writer')->call('create', 'Foreign', $this->tenantB->id);
+    })->throws(TenantMismatchException::class);
+
+    it('refuses to move an existing record into another tenant', function (): void {
+        $note = ZzTenantNote::query()->create(['title' => 'Own']);
+
+        expect(fn() => Livewire::test('zz-tenant-note-writer')->call('move', $note->id, $this->tenantB->id))
+            ->toThrow(TenantMismatchException::class)
+            ->and($note->fresh()->tenant_id)->toBe($this->ownTenantId);
+    });
+
+    it('lets code that names the tenant write for it', function (): void {
+        Livewire::test('zz-tenant-note-writer')->call('createInContext', 'Context', $this->tenantB->id);
+
+        expect(ZzTenantNote::query()->ofTenant($this->tenantB->id)->where('title', 'Context')->exists())->toBeTrue();
+    });
+
+    it('leaves writes outside a client request alone, e.g. test fixtures', function (): void {
+        Livewire::test('zz-tenant-note-writer')->call('create', 'Own');
+
+        $note = ZzTenantNote::query()->create(['title' => 'Fixture', 'tenant_id' => $this->tenantB->id]);
+
+        expect($note->tenant_id)->toBe($this->tenantB->id);
+    });
+});
+
+describe('profiles in a tenant context', function (): void {
+    it('reads the profile of the context tenant when the session selects none', function (): void {
+        $user = NoerdUser::factory()->create();
+        $this->tenantA->addMember($user, Profile::ReadOnly->value);
+        $this->tenantB->addMember($user, Profile::Admin->value);
+        $this->actingAs($user);
+        session()->forget('noerd.selected_tenant_id');
+
+        TenantContext::run($this->tenantA->id, function () use ($user): void {
+            expect($user->currentProfile())->toBe(Profile::ReadOnly)
+                ->and(AccessHelper::canWriteObject(ZzTenantNote::class))->toBeFalse();
+        });
+
+        TenantContext::run($this->tenantB->id, fn() => expect($user->isAdmin())->toBeTrue());
     });
 });

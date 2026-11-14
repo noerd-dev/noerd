@@ -2,23 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Noerd\Tests;
+namespace Noerd\Testing;
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use Noerd\Helpers\StaticConfigHelper;
 use ReflectionClass;
 
 /**
  * The test case of a module with a standalone suite (Orchestra Testbench,
- * sqlite :memory:): everything Noerd\Tests\TestCase provides — the core
+ * sqlite :memory:): everything Noerd\Testing\TestCase provides — the core
  * providers, the noerd guard, the RefreshDatabaseState swap for mixed
  * host/testbench runs, the package linked into the skeleton — plus the
  * module's own providers, each module linked into the skeleton's app-modules/
  * so StaticConfigHelper finds its YAML the way it does after
  * noerd:install-{module}.
  *
- *     abstract class TestCase extends \Noerd\Tests\ModuleTestCase
+ *     abstract class TestCase extends \Noerd\Testing\ModuleTestCase
  *     {
  *         protected array $moduleProviders = [HrServiceProvider::class];
  *     }
@@ -28,6 +27,9 @@ use ReflectionClass;
  * after parent::defineEnvironment($app). Every test file still binds the
  * module's test case itself with uses() — a host-root run loads the host's
  * Pest.php instead of the module's.
+ *
+ * Needs `orchestra/testbench` in the module's require-dev — noerd only
+ * suggests it.
  */
 abstract class ModuleTestCase extends TestCase
 {
@@ -102,34 +104,5 @@ abstract class ModuleTestCase extends TestCase
         }
 
         return array_values(array_unique($roots));
-    }
-
-    /**
-     * StaticConfigHelper discovers module YAML sources via base_path('app-modules').
-     * Under testbench base_path() is the skeleton application, so the module is
-     * linked in — mirroring what noerd:install-{module} does in a real project.
-     * No-op when the directory already exists.
-     */
-    protected function linkModuleIntoSkeleton(string $moduleRoot): void
-    {
-        $target = base_path('app-modules/' . basename($moduleRoot));
-
-        // The skeleton outlives checkouts: a link left behind by a moved or
-        // deleted project dangles, or points at a foreign tree whose YAMLs and
-        // commands the suite would then silently read. Replace it instead of
-        // trusting is_link().
-        if (is_link($target) && realpath($target) !== realpath($moduleRoot)) {
-            @unlink($target);
-        }
-
-        if (file_exists($target) || is_link($target)) {
-            return;
-        }
-
-        File::ensureDirectoryExists(base_path('app-modules'));
-        @symlink($moduleRoot, $target);
-
-        StaticConfigHelper::clearModuleSourceCache();
-        StaticConfigHelper::flushRuntimeCaches();
     }
 }

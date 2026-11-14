@@ -9,7 +9,7 @@ use PHPUnit\Framework\AssertionFailedError;
 uses(TestCase::class);
 
 /*
- | The module boundary guards of tests/helpers.php, proven against a modules
+ | The module boundary guards of src/Testing/helpers.php, proven against a modules
  | root written at runtime: a module, the sibling it declares, an optional
  | sibling it may reference without declaring, and one it must never meet.
  */

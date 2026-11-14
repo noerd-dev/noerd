@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Events\TenantAppAssigned;
+use Noerd\Events\TenantAppRemoved;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
@@ -104,6 +105,23 @@ it('toggleApp announces a newly assigned app, but not a detached one', function 
     Event::assertDispatched(
         TenantAppAssigned::class,
         fn(TenantAppAssigned $event): bool => $event->tenantId === $this->tenant->id && $event->appName === 'APP_B',
+    );
+});
+
+it('toggleApp announces a removed app', function (): void {
+    Event::fake([TenantAppRemoved::class]);
+
+    $this->tenant->tenantApps()->attach($this->appA->id, ['sort_order' => 0]);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test('noerd::tenant-apps-page')
+        ->call('toggleApp', $this->appA->id);
+
+    Event::assertDispatchedTimes(TenantAppRemoved::class, 1);
+    Event::assertDispatched(
+        TenantAppRemoved::class,
+        fn(TenantAppRemoved $event): bool => $event->tenantId === $this->tenant->id && $event->appName === 'APP_A',
     );
 });
 

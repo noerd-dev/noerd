@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Enums\Profile;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdUser;
@@ -92,6 +93,20 @@ describe('SetupCollectionHelper', function (): void {
             ->and($result)->toHaveKey('title')
             ->and($result)->toHaveKey('fields')
             ->and($result['title'])->toBe('Beispiel');
+    });
+
+    it('reads the field types of a collection written with the earlier names', function (): void {
+        file_put_contents(base_path('app-configs/setup/collections/zz-legacy.yml'), "title: Zz\nkey: ZZLEGACY\nfields:\n  - name: detailData.at\n    type: datetime\n  - name: detailData.phone\n    type: tel\n  - name: detailData.note\n    type: text\n");
+
+        try {
+            $types = array_column(SetupCollectionHelper::getCollectionFields('zz-legacy')['fields'], 'type');
+        } finally {
+            unlink(base_path('app-configs/setup/collections/zz-legacy.yml'));
+        }
+
+        expect($types)->toBe(['datetime-local', 'phone', 'text'])
+            ->and(array_keys(SetupCollectionHelper::FIELD_TYPES))->toContain('datetime-local', 'phone')
+            ->not->toContain('datetime', 'tel');
     });
 
     it('returns all available collections', function (): void {
@@ -298,7 +313,10 @@ describe('SetupFieldTypeConverter', function (): void {
 
         expect($result)->toBe('English Text');
 
-        // Without a value for the default language the first entry is used.
+        // Without a value for the default language the first entry is used —
+        // here of a language the tenant keeps but no longer runs.
+        SetupLanguage::factory()->create(['tenant_id' => $this->tenant->id, 'code' => 'fr', 'is_active' => false]);
+
         expect($method->invoke(null, ['fr' => 'Texte français']))->toBe('Texte français');
     });
 
@@ -324,10 +342,48 @@ describe('SetupFieldTypeConverter structured values', function (): void {
         $method = new ReflectionMethod(SetupFieldTypeConverter::class, 'convertToTranslatableField');
 
         $result = $method->invoke(null, ['a', 'b']);
+        SetupLanguage::factory()->create(['tenant_id' => $this->tenant->id, 'code' => 'fr', 'is_active' => false]);
 
         expect(array_keys($result))->toContain('en')
             ->and(array_unique(array_values($result)))->toBe([''])
             // a map keyed by a language the tenant no longer runs is a translation and stays
             ->and($method->invoke(null, ['fr' => 'Texte']))->toBe(['fr' => 'Texte']);
     });
+
+    it('never mistakes a map whose keys only look like language codes for a translation', function (): void {
+        $from = new ReflectionMethod(SetupFieldTypeConverter::class, 'convertFromTranslatableField');
+        $to = new ReflectionMethod(SetupFieldTypeConverter::class, 'convertToTranslatableField');
+
+        expect($from->invoke(null, ['min' => 1, 'max' => 5]))->toBe(['min' => 1, 'max' => 5])
+            // `es` is a language code, but not one of this tenant's languages
+            ->and($from->invoke(null, ['es' => 'Hola']))->toBe(['es' => 'Hola'])
+            ->and(array_keys($to->invoke(null, ['min' => 1, 'max' => 5])))->not->toContain('min');
+    });
+
+    it('falls back to the supported locales when no tenant is known', function (): void {
+        $from = new ReflectionMethod(SetupFieldTypeConverter::class, 'convertFromTranslatableField');
+        NoerdAuth::guard()->logout();
+        TenantHelper::clear();
+
+        $codes = (new ReflectionMethod(SetupFieldTypeConverter::class, 'languageCodes'))->invoke(null);
+
+        expect($from->invoke(null, ['min' => 1, 'max' => 5]))->toBe(['min' => 1, 'max' => 5])
+            ->and($codes)->toContain('en', 'de', 'fr', 'de-de')
+            ->and($codes)->not->toContain('min');
+    });
 });
+
+// The core's own hand-built lists page through paginateList(), so a client
+// payload carrying any $perPage never pages larger than NoerdList::MAX_PER_PAGE.
+it('clamps the client-controlled page size of the core lists', function (string $component, array $arguments): void {
+    $this->user->forceFill(['super_admin' => true])->save();
+
+    $instance = Livewire::test($component, $arguments)->instance();
+    $instance->perPage = 100000;
+
+    expect(\Livewire\invade($instance)->listData()['rows']->perPage())->toBe(200);
+})->with([
+    'tenants-list' => ['noerd::tenants-list', []],
+    'noerd-users-list' => ['noerd::noerd-users-list', []],
+    'setup-collections-list' => ['noerd::setup-collections-list', ['collectionKey' => 'example']],
+]);

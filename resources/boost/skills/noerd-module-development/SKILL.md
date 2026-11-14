@@ -22,6 +22,7 @@ php artisan noerd:make-module            # the scaffolder itself: module name, a
                                     # scripted: noerd:make-module inventory --title=Inventory --icon=cube
 composer update noerd/{module}
 php artisan noerd:install-{module}  # copies YAML, registers the tenant app, migrates (--scaffold = the silent make-app run)
+                                    # scripted: --no-interaction --migrate --tenants=all (or --tenants=1,3) — without --tenants nothing is assigned
 php artisan noerd:make-resource Item --app={module}   # per record type, after model + migration exist in the module
 ```
 
@@ -58,7 +59,9 @@ app-modules/{module}/
   `Noerd\Commands\Concerns\HasModuleInstallation`, implements `getModuleName()`, `getModuleKey()`,
   `getAppIcon()`, `getAppRoute()`, `getSourceDir()` (`getDefaultAppTitle()` defaults to the module
   name). No `handle()`, no options of its own: the trait runs the installation and declares
-  `--force`, `--migrate`, `--build`, `--scaffold`.
+  `--force` (overwrite the YAML lists/details/pages/settings copies), `--migrate`, `--build`,
+  `--scaffold`, `--reset-navigation` (an update keeps the host's `navigation.yml` otherwise) and
+  `--tenants=all|1,3` (the only way a non-interactive run assigns the app).
 - `noerd:update-{module}` — subclass with only its signature and description; the trait's `handle()`
   runs the update for a `noerd:update-` name. `noerd:update-all` discovers it by name; a missing one
   silently drops the module from project-wide updates.
@@ -98,8 +101,8 @@ flat in `lists/`. Block-style YAML only. Navigation icons are heroicons:
         - title: Things
           route: module.things
           heroicon: cube
-          newRoute: module.thing.detail        # the "+" opens an empty record as a route modal
-          newComponent: module::thing-detail   # fallback when the route is not registered
+          newModalRoute: module.thing.detail        # the "+" opens an empty record as a route modal
+          newModalComponent: module::thing-detail   # fallback when the route is not registered
 ```
 
 ## 4. Translations

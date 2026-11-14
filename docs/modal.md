@@ -93,16 +93,25 @@ the call site (an explicit `size` wins). The dialog then shows only the required
 
 ## Closing Modals
 
-The Escape key and the X button in the top-right corner close the topmost modal. From a Livewire
+The Escape key and the X button in the top-right corner close the topmost modal — one modal
+per press, also when Escape is pressed again during the closing transition. An element inside
+the modal that handles Escape itself (a dropdown, a popover, an inline editor) calls
+`preventDefault()` while it is OPEN (`@keydown.escape="if (open) { $event.preventDefault(); … }"`);
+the stack then leaves the modal open. A closed popover must let Escape through. The stack never
+stops the event, so `@keydown.escape.window` listeners still run. From a Livewire
 component:
 
 ```php
 // Close the topmost modal
 $this->dispatch('closeTopModal');
 
-// NoerdDetail / NoerdPage: close and refresh the paired list
+// NoerdDetail / NoerdPage: close and refresh the paired list (protected, server side)
 $this->closeModalProcess($this->getListComponent());
 ```
+
+A button in the view of a `NoerdDetail` / `NoerdPage` calls the parameterless action
+`wire:click="closeModal"`, which does the same for the paired list. `closeModalProcess()` is not an
+action — the browser cannot call it.
 
 ## Event System
 
@@ -120,6 +129,7 @@ Events dispatched by the modal stack:
 | Event | Description |
 |-------|-------------|
 | `modal-closed-global` | Fired when the last open modal has closed |
+| `noerd-modal-loading-end` | Fired when a `noerdModal` event opens nothing (e.g. an unknown route without fallback); ends the loading overlay. A failed Livewire request ends it as well |
 | `refreshList-{component}` | Refreshes the source component (`NoerdList::refreshList()` / `NoerdPage`) — the component name after the last dot |
 
 ## Route Modals
@@ -161,7 +171,10 @@ becomes the page a reloaded modal returns to.
    that component;
 3. every identity-bearing argument is a parameter of that route — conventionally
    `modelId`, but any bound property works (`/inventory/warehouse-settings/{table}`).
-   Everything else is chrome (`relations`, `quickCreate`).
+   Pure chrome (`quickCreate`, `embedded`, `disableModal`, `source`, `context`) does not
+   count. A non-empty `relations` argument DOES: it prefills a create form ("New" from a
+   list narrowed by a parent record), and a reload of `/…/new` would open the form
+   without that prefill — the modal opens, the URL stays.
 
 You get a shareable URL, a working reload, "open in new tab", and callers that no
 longer hard-code a foreign module's component name.
@@ -210,23 +223,59 @@ the unfiltered list:
 ```
 
 The modal stack also guards this automatically: an argument that is neither a route
-param nor pure chrome suppresses the rewrite, so a YAML author cannot produce a URL
-that lies.
+param nor pure chrome (a non-empty `relations` included) suppresses the rewrite, so a
+YAML author cannot produce a URL that lies. The URL is derived on the server only —
+the `noerdModal` event takes no `url` argument.
 
-### Where `route:` is available
+### Modal targets in YAML
 
-| Place | Key |
-|-------|-----|
-| List row click | `public ?string $detailRoute` on the list component |
-| List header action (`lists/*.yml`) | `route:` (+ optional `arguments:`) instead of `action:` |
-| Detail action (`details/*.yml`) | `route:` instead of `modalComponent:` |
-| Relation box tile (`pages/*.yml` `relations:`) | `route:` next to `component:` (no URL rewrite) |
-| Widget "show more" (`pages/*.yml` `widgets:`) | `route:` next to `component:` (no URL rewrite) |
-| List column `type: relationLink` | `route:` instead of `modalComponent:` |
-| Relation field | `detailRoute:` on `RelationFieldDefinition::model()`, or `detailRoute:` on the field |
-| Sidebar entry (`navigation.yml`) | `modalRoute:` to open as a modal, `newRoute:` for the "+" button — `route:` keeps meaning "navigate" |
-| Page/detail tab | `modalRoute:` next to `component:` |
-| Dashboard card | `route=` instead of `component=` |
+Every app-config YAML names a modal target with the SAME keys:
+
+- `modalRoute:` — a named `Route::livewire()` route whose component opens as the modal;
+- `modalComponent:` — the component opened as a modal: the fallback while the route is not
+  registered, or the target on its own for a component modal.
+
+`route:` never opens a modal — where it is read at all (navigation entries, tabs) it
+navigates. A place with a second target prefixes both keys (`newModalRoute:` /
+`newModalComponent:`, `showMoreModalRoute:` / `showMoreModalComponent:`). A `modalRoute:`
+that is not registered and has no `modalComponent:` opens nothing, so the button, tile or
+entry is not rendered — an optional module may contribute YAML safely.
+
+| Place | Keys |
+|-------|------|
+| List row click | `public ?string $detailRoute` + `$detailComponent` on the list component (PHP) |
+| List header action (`lists/*.yml` `actions:`) | `modalRoute:` / `modalComponent:` (+ optional `arguments:`) instead of `action:` |
+| List row action (`columns[].actions:`) | `modalRoute:` / `modalComponent:` instead of `action:` (the row id is passed as `modelId`) |
+| List column `type: relationLink` | `modalRoute:` / `modalComponent:` |
+| Detail/page action (`actions:`) | `modalRoute:` / `modalComponent:`; `url:` links, `action:` calls a method |
+| Relation box tile (`pages/*.yml` `relations:`) | `modalRoute:` / `modalComponent:` (no URL rewrite) |
+| Widget "show more" (`pages/*.yml` `widgets:`) | `showMoreModalRoute:` / `showMoreModalComponent:` (default: the widget's `component:`; no URL rewrite) |
+| Page/detail tab (`tabs:`) | `modalRoute:` / `modalComponent:`; `route:` navigates, `number:` is an inline panel |
+| Sidebar entry (`navigation.yml`) | `modalRoute:` / `modalComponent:` for the entry, `newModalRoute:` / `newModalComponent:` for the "+" button — `route:` navigates |
+| Relation field | `detailRoute:` + `detailComponent:` on `RelationFieldDefinition::model()` (PHP) |
+| Dashboard card (Blade) | `route=` + `component=` on `<x-noerd::dashboard-card>` |
+
+`component:` keeps its own meaning where a component is RENDERED in place: an embedded list
+(`lists:`), a widget (`widgets:`), a quick-menu button, a dashboard widget, a banner.
+
+`noerd:update` rewrites a config written in the earlier spelling (`route:` of an action, a
+tile, a widget or a `relationLink` column, `component:` of a tile, a modal tab or a navigation
+entry, `newRoute:` / `newComponent:`); `noerd:lint` reports one that is left. In PHP and Blade
+the generic resolution is `Noerd\Support\YamlModalTarget` (`route()`, `component()`,
+`opens()`, `clickExpression()`).
+
+### Access middleware of a route
+
+The modal stack mounts whatever component the browser names — `noerdModal` is a client event
+— and never runs the middleware of the component's routes. The core therefore re-checks the
+access middleware of those routes on every mount through the stack
+(`ComponentAccessGuard::allowsInModal()`): a component that is only reachable through routes
+carrying `app-access:…`, `action-permission:…`, `setup`, `profile` or a module middleware that
+implements `Noerd\Contracts\GuardsModalMount` opens only for a user who satisfies every such
+middleware of at least one of its routes, whether it is opened by `modalRoute`, by `modalComponent`
+or through the fallback component. Aliases and middleware groups are expanded like the router
+does it. A route protected by a module's OWN middleware must implement the contract — see
+[Permissions](permissions.md#modal-mounts-and-module-middleware).
 
 ## Modal Stacking
 

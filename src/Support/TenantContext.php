@@ -23,6 +23,9 @@ final class TenantContext
 
     private bool $system = false;
 
+    /** How many client-driven Livewire requests (hydrate → dehydrate) are running. */
+    private int $clientRequests = 0;
+
     /** @var list<array{0: int, 1: ?int, 2: bool}> per running job: its key and the context it replaced */
     private array $jobStack = [];
 
@@ -47,6 +50,36 @@ final class TenantContext
         $context->tenantId = null;
         $context->system = false;
         $context->jobStack = [];
+        $context->clientRequests = 0;
+    }
+
+    /**
+     * A Livewire component starts processing a client request (an update or
+     * an action from the browser). Writes made until it ends are checked by
+     * the tenant guard of BelongsToTenant.
+     *
+     * @internal
+     */
+    public static function enterClientRequest(): void
+    {
+        app(self::class)->clientRequests++;
+    }
+
+    /**
+     * @internal
+     */
+    public static function leaveClientRequest(): void
+    {
+        $context = app(self::class);
+        $context->clientRequests = max(0, $context->clientRequests - 1);
+    }
+
+    /**
+     * Whether a client-driven Livewire request is being processed.
+     */
+    public static function inClientRequest(): bool
+    {
+        return app(self::class)->clientRequests > 0;
     }
 
     public static function isSystem(): bool

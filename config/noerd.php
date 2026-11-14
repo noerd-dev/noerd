@@ -75,6 +75,7 @@ return [
         'locale' => env('NOERD_FORMAT_LOCALE'),
         'date' => env('NOERD_FORMAT_DATE'),
         'datetime' => env('NOERD_FORMAT_DATETIME'),
+        'time' => env('NOERD_FORMAT_TIME'),
         'decimal_separator' => env('NOERD_FORMAT_DECIMAL_SEPARATOR'),
         'thousands_separator' => env('NOERD_FORMAT_THOUSANDS_SEPARATOR'),
         'csv_delimiter' => env('NOERD_CSV_DELIMITER', ';'),

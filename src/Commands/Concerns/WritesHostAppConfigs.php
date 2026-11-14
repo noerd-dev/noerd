@@ -151,7 +151,10 @@ trait WritesHostAppConfigs
      * entries are additionally tolerated at render time — the sidebar skips entries
      * whose route is not registered.
      *
-     * @param  array{title: string, route: string, heroicon?: string, superAdmin?: bool}  $entry
+     * `route` navigates (and identifies the entry); a "+" button is
+     * `newModalRoute` / `newModalComponent`, the same keys as in a navigation YAML.
+     *
+     * @param  array{title: string, route: string, heroicon?: string, superAdmin?: bool, newModalRoute?: string, newModalComponent?: string}  $entry
      */
     protected function ensureSetupNavigation(string $blockTitle, array $entry): void
     {
@@ -165,7 +168,7 @@ trait WritesHostAppConfigs
      * idempotency as ensureSetupNavigation(); the route must carry the
      * `profile` middleware so the sidebar shows this navigation on the page.
      *
-     * @param  array{title: string, route: string, heroicon?: string}  $entry
+     * @param  array{title: string, route: string, heroicon?: string, newModalRoute?: string, newModalComponent?: string}  $entry
      */
     protected function ensureProfileNavigation(string $blockTitle, array $entry): void
     {

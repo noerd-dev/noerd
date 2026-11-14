@@ -19,8 +19,10 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Guards the routes of a tenant app (`app-access:crm` or `app-access:crm,sales`
  * for routes shared by several apps): the tenant must run one of the apps and
- * the user must be allowed to access it. The matching app becomes the selected
- * app, so the navigation always shows the app the route belongs to.
+ * the user must be allowed to access it — the first app of the route that is
+ * assigned AND accessible matches, so one usable app suffices. The matching app
+ * becomes the selected app, so the navigation always shows the app the route
+ * belongs to.
  *
  * A HIDDEN app (tenant_app.is_hidden) never becomes the selected app: it backs
  * the screens of another app (liefertool pulls PRODUCT in, booking-members
@@ -56,28 +58,35 @@ class AppAccessMiddleware
         $assignedRows = $tenant->tenantApps()->namedAny($appNames)->get();
         $assignedNames = $assignedRows->pluck('name')->map(fn(string $name): string => mb_strtolower($name))->all();
 
-        // The route's apps the tenant runs, in ROUTE order — the first one wins.
+        // The route's apps the tenant runs, in ROUTE order.
         $assigned = array_values(array_filter(
             $appNames,
             fn(string $candidate): bool => in_array($candidate, $assignedNames, true),
         ));
-        $matchingApp = $assigned[0] ?? null;
 
-        if (! $matchingApp) {
+        if ($assigned === []) {
             throw new NoerdException(
                 NoerdExceptionType::AppNotAssigned,
                 appName: mb_strtoupper($appNames[0] ?? ''),
             );
         }
 
-        if (! AccessHelper::canAccessApp($matchingApp)) {
+        // Of those, the ones the user may access — the first one wins. ONE
+        // accessible app suffices (the rule of AccessHelper::canUseApp()): a
+        // shared route is denied only when the user may access none of its apps.
+        $accessible = array_values(array_filter(
+            $assigned,
+            fn(string $candidate): bool => AccessHelper::canAccessApp($candidate),
+        ));
+
+        if ($accessible === []) {
             throw new NoerdException(
                 NoerdExceptionType::AppAccessDenied,
-                appName: mb_strtoupper($matchingApp),
+                appName: mb_strtoupper($assigned[0]),
             );
         }
 
-        $this->selectApp($tenant, $matchingApp, $assigned, $assignedRows);
+        $this->selectApp($tenant, $accessible[0], $accessible, $assignedRows);
 
         return $next($request);
     }
@@ -91,7 +100,7 @@ class AppAccessMiddleware
      * candidate is selected — a hidden one only as the very last resort (no
      * selection yet, or one that is no longer valid for this tenant).
      *
-     * @param  list<string>  $assigned  lowercase names of the route's apps the tenant runs, in route order
+     * @param  list<string>  $assigned  lowercase names of the route's apps the tenant runs and the user may access, in route order
      * @param  Collection<int, TenantApp>  $assignedRows  their rows with the pivot
      */
     private function selectApp(Tenant $tenant, string $matchingApp, array $assigned, Collection $assignedRows): void
@@ -104,7 +113,7 @@ class AppAccessMiddleware
         }
 
         $hidden = $assignedRows
-            ->filter(fn(TenantApp $app): bool => (bool) $app->pivot->is_hidden)
+            ->filter(fn(TenantApp $app): bool => (bool) $app->pivot->getAttribute('is_hidden'))
             ->map(fn(TenantApp $app): string => mb_strtolower($app->name))
             ->values()
             ->all();
@@ -118,15 +127,7 @@ class AppAccessMiddleware
             return;
         }
 
-        $target = $matchingApp;
-        foreach ($visibleCandidates as $candidate) {
-            if (AccessHelper::canAccessApp($candidate)) {
-                $target = $candidate;
-                break;
-            }
-        }
-
-        TenantHelper::setSelectedApp(mb_strtoupper($target));
+        TenantHelper::setSelectedApp(mb_strtoupper($visibleCandidates[0] ?? $matchingApp));
     }
 
     private function tenantRunsApp(Tenant $tenant, string $appName): bool

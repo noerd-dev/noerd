@@ -19,6 +19,10 @@
     `anchor` takes an x-anchor reference expression (e.g. `$refs.sortButton`) for
     menus inside a scrolling or overflow-hidden container, where the default
     absolute positioning would be clipped.
+
+    Keyboard (noerdActionMenu in noerd.js): opening focuses the first entry,
+    Arrow keys / Home / End move between the entries, Escape closes the menu and
+    returns the focus to the trigger.
 --}}
 
 @php
@@ -36,9 +40,11 @@
 @endphp
 
 <div
-    x-data="{ open: false }"
+    x-data="noerdActionMenu"
+    data-noerd-action-menu
     @click.outside="open = false"
-    @keydown.escape.stop="open = false"
+    @keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false }"
+    @keydown="onKeydown($event)"
     {{ $attributes->merge(['class' => $wrapperClass]) }}
 >
     @isset($trigger)

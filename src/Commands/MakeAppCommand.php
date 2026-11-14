@@ -20,6 +20,7 @@ use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
 use Noerd\Commands\Concerns\AsksForHeroicon;
+use Noerd\Commands\Support\TenantAppMigration;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 use Noerd\Support\ModulesPath;
@@ -97,9 +98,10 @@ class MakeAppCommand extends Command
             return self::FAILURE;
         }
 
-        // Validate name format (uppercase, no spaces) after normalization
-        if (! preg_match('/^[A-Z_]+$/', $name)) {
-            $this->error('App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).');
+        // One naming scheme for both modes: uppercase words joined by hyphens
+        // (HasModuleInstallation::deriveAppKey()), digits allowed after the first letter.
+        if (! preg_match('/^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*$/', $name)) {
+            $this->error('App name must start with a letter and contain only letters, digits and hyphens (e.g., CMS, MEDIA, MY-APP, SHOP2).');
             return self::FAILURE;
         }
 
@@ -120,13 +122,7 @@ class MakeAppCommand extends Command
 
         // Create the tenant app
         try {
-            $tenantApp = TenantApp::create([
-                'title' => $title,
-                'name' => $name,
-                'icon' => $icon,
-                'route' => $route,
-                'is_active' => $active,
-            ]);
+            $tenantApp = $this->registerTenantApp($name, $title, $icon, $route, $active);
 
             if ($generateDashboard) {
                 $this->newLine();
@@ -183,9 +179,9 @@ class MakeAppCommand extends Command
             $this->comment('Note: --active is ignored in module mode; the install command registers the app as active.');
         }
 
-        // MY_APP → module key my-app → tenant app MY-APP (HasModuleInstallation::deriveAppKey()).
-        $moduleKey = Str::lower(str_replace('_', '-', $name));
-        $appKey = Str::upper($moduleKey);
+        // MY-APP → module key my-app → tenant app MY-APP (HasModuleInstallation::deriveAppKey()).
+        $moduleKey = Str::lower($name);
+        $appKey = $name;
         $moduleDisplay = ModulesPath::relative() . "/{$moduleKey}";
 
         if (is_dir(ModulesPath::absolute($moduleKey))) {
@@ -309,10 +305,48 @@ class MakeAppCommand extends Command
         return $result->successful();
     }
 
+    /**
+     * The app key of a typed name: words joined by hyphens, uppercase — the
+     * same key a module's install command derives from its module key
+     * (`My App`, `my_app`, `my-app` → `MY-APP`).
+     */
     protected function normalizeAppName(string $name): string
     {
-        // Replace spaces and hyphens with underscores and convert to uppercase
-        return mb_strtoupper((string) preg_replace('/[\s-]+/', '_', mb_trim($name)));
+        return mb_strtoupper(mb_trim((string) preg_replace('/[\s_-]+/', '-', mb_trim($name)), '-'));
+    }
+
+    /**
+     * Register a project app the way every module registers its own: through
+     * the idempotent tenant-app migration (written into database/migrations and
+     * run), so the next `php artisan migrate` — staging, production, a
+     * colleague's machine — registers it as well. The row is ensured afterwards
+     * in case the migration was recorded as run before.
+     */
+    protected function registerTenantApp(string $name, string $title, string $icon, string $route, bool $active): TenantApp
+    {
+        $moduleKey = Str::lower($name);
+        $filename = TenantAppMigration::write(TenantAppMigration::coreStubPath(), $moduleKey, $name, $title, $icon, $route);
+        $this->line("<info>✓ Migration published:</info> database/migrations/{$filename} — commit it, so a deployment registers the app");
+
+        $exitCode = $this->call('migrate', [
+            '--path' => "database/migrations/{$filename}",
+            '--force' => true,
+        ]);
+
+        if ($exitCode !== self::SUCCESS) {
+            $this->warn('The registration migration did not run — the app is registered directly.');
+        }
+
+        $tenantApp = TenantApp::firstOrCreate(
+            ['name' => $name],
+            ['title' => $title, 'icon' => $icon, 'route' => $route, 'is_active' => $active],
+        );
+
+        if ((bool) $tenantApp->is_active !== $active) {
+            $tenantApp->update(['is_active' => $active]);
+        }
+
+        return $tenantApp->fresh() ?? $tenantApp;
     }
 
     protected function askToAssignTenants(TenantApp $tenantApp): void

@@ -68,7 +68,7 @@ final class ListCellFormatter
             'time' => FormatHelper::time($value),
             'number' => is_numeric($value) ? FormatHelper::number((float) $value, 2) : self::text($value),
             'bool' => self::truthy($value) ? __('Yes') : __('No'),
-            'inverseBool' => self::truthy($value) ? __('Yes') : '',
+            'boolCheck' => self::truthy($value) ? __('Yes') : '',
             'badge' => __(self::badgeLabel($value, $column['options'] ?? [])),
             'relationBadge' => self::relationTitle((string) ($column['field'] ?? ''), $value),
             'customAttribute' => RelationFieldDefinition::normalizeDisplayValue($value),

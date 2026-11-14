@@ -41,7 +41,7 @@ final class LockedPropertiesHook extends NoerdComponentHook
         'listViewApp',
         'showMoreComponent',
         'showMoreRoute',
-        // The ShowFrom/ShowUntil filter columns. Declared protected by
+        // The columns of the earlier date filters. Declared protected by
         // convention (then never part of the client payload) — listed here so
         // a public declaration cannot repoint the columns written into the query.
         'showFromDateColumn',

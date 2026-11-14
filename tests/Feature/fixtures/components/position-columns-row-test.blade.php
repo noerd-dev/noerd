@@ -12,9 +12,11 @@ new class extends Component
 {
     use NoerdPositionRow;
 
-    public function mount(string $modelClass, int $positionId, array $columns, string $theme = 'default', ?int $number = null): void
+    public function mount(string $modelClass, int $positionId, array $columns, string $theme = 'default', ?int $number = null, bool $byKey = false): void
     {
-        $this->initPositionRow($modelClass::findOrFail($positionId), $columns, $theme, $number);
+        $byKey
+            ? $this->initPositionRow($positionId, $columns, $theme, $number, $modelClass)
+            : $this->initPositionRow($modelClass::findOrFail($positionId), $columns, $theme, $number);
     }
 
     public function store(): void

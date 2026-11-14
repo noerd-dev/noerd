@@ -6,9 +6,11 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Facades\Noerd;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\SetupCollectionHelper;
 use Noerd\Models\SetupCollection;
 use Noerd\Models\SetupCollectionEntry;
+use Noerd\Support\LayoutFields;
 use Noerd\Support\SetupFieldTypeConverter;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\SetupLanguageFilter;
@@ -31,8 +33,18 @@ new class extends Component
 
     #[Locked]
     public ?string $collectionKey = null;
+    /** Fallback limit (KB) of a plain image upload when the media module sets none. */
+    private const MAX_IMAGE_KILOBYTES = 10240;
+
     /** Plain uploads of the image fields (the image element binds `imageUploads.{field}`). */
     public array $imageUploads = [];
+
+    /**
+     * Token of the media picker this detail opened; a `mediaSelected` answer
+     * is adopted only with it. Server state, never part of the entry data.
+     */
+    #[Locked]
+    public ?string $mediaSelectToken = null;
 
     /** Whether the edited entry exists — drives the delete button. */
     public bool $entryExists = false;
@@ -88,8 +100,12 @@ new class extends Component
             'name' => ucfirst($this->collectionKey),
         ]);
 
-        // Apply field type conversion before saving
-        $convertedEntryData = SetupFieldTypeConverter::convertCollectionData($this->detailData, $this->collectionKey);
+        // Apply field type conversion before saving; only the definition's
+        // fields are entry data (sort is a column, nothing else is stored).
+        $convertedEntryData = array_intersect_key(
+            SetupFieldTypeConverter::convertCollectionData($this->detailData, $this->collectionKey),
+            array_flip($this->definitionFieldNames()),
+        );
 
         $data = [
             'setup_collection_id' => $parentCollection->id,
@@ -111,24 +127,80 @@ new class extends Component
             $entry = SetupCollectionEntry::create($data);
         }
 
-        $this->storeProcess($entry);
+        $this->finishStore($entry);
         $this->entryExists = true;
+    }
+
+    /**
+     * No $detailModel (the layout is the collection definition), so the object
+     * permissions are asked for the entry model explicitly — store(), delete()
+     * and the image upload all go through them.
+     */
+    public function canWriteObject(): bool
+    {
+        return AccessHelper::canWriteObject(SetupCollectionEntry::class);
+    }
+
+    public function canCreateObject(): bool
+    {
+        return AccessHelper::canCreateObject(SetupCollectionEntry::class);
+    }
+
+    public function canDeleteObject(): bool
+    {
+        return AccessHelper::canDeleteObject(SetupCollectionEntry::class);
     }
 
     public function delete(): void
     {
+        if (! $this->canDeleteObject()) {
+            return;
+        }
+
         $entry = SetupCollectionEntry::find($this->modelId);
         $entry?->delete();
         $this->closeModalProcess($this->getListComponent());
     }
 
+    /**
+     * An image chosen in a plain file input (no media library installed). The
+     * upload channel is client input like any other: only the image fields of
+     * the collection layout take a file, only a user who may save the entry
+     * uploads, and only a raster image within the size limit is stored.
+     */
     public function updatedImageUploads(): void
     {
+        $imageFields = $this->imageFieldNames();
+
+        if (! $this->canSaveObject()) {
+            $this->imageUploads = [];
+
+            return;
+        }
+
+        $maxKilobytes = (int) config('media.max_upload_size', self::MAX_IMAGE_KILOBYTES);
         $resolver = app(MediaResolverContract::class);
+
         foreach ($this->imageUploads as $fieldName => $uploadedFile) {
-            $url = $uploadedFile ? $resolver->storeUploadedFile($uploadedFile) : null;
-            if ($url) {
-                $this->detailData[$fieldName] = $url;
+            if (! in_array((string) $fieldName, $imageFields, true)) {
+                unset($this->imageUploads[$fieldName]);
+
+                continue;
+            }
+
+            if (! $uploadedFile) {
+                continue;
+            }
+
+            $this->validate([
+                'imageUploads.' . $fieldName => ['image', 'mimes:jpg,jpeg,png,gif,webp', 'max:' . $maxKilobytes],
+            ]);
+
+            // The media id when a library exists, the stored URL otherwise —
+            // the image element resolves both.
+            $reference = $resolver->storeUploadedFileReference($uploadedFile);
+            if ($reference !== null && $reference !== '') {
+                $this->detailData[$fieldName] = $reference;
                 $this->imageUploads[$fieldName] = null;
             }
         }
@@ -136,34 +208,93 @@ new class extends Component
 
     public function deleteImage(string $fieldName): void
     {
+        if (! in_array($fieldName, $this->imageFieldNames(), true)) {
+            return;
+        }
+
         $this->detailData[$fieldName] = null;
     }
 
     public function openSelectMediaModal(string $fieldName): void
     {
         $picker = app(MediaResolverContract::class)->pickerComponent();
-        if (! $picker) {
+        if (! $picker || ! in_array($fieldName, $this->imageFieldNames(), true)) {
             return;
         }
 
-        $token = uniqid('media_', true);
-        $this->detailData['__mediaToken'] = $token;
-        Noerd::modal($picker, ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token]);
+        $this->mediaSelectToken = uniqid('media_', true);
+        Noerd::modal($picker, ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $this->mediaSelectToken]);
     }
 
+    /**
+     * The picker's answer: the media ID is stored (it survives the file being
+     * moved), never its URL.
+     */
     #[On('mediaSelected')]
     public function mediaSelected(int $mediaId, ?string $fieldName = 'image', ?string $token = null): void
     {
-        if (($this->detailData['__mediaToken'] ?? null) !== $token) {
+        if ($this->mediaSelectToken === null || $this->mediaSelectToken !== $token || ! $this->canSaveObject()) {
             return;
         }
-        $resolver = app(MediaResolverContract::class);
-        $url = $resolver->getRelativeUrl($mediaId);
-        if (! $url) {
+        $fieldName ??= 'image';
+        if (! in_array($fieldName, $this->imageFieldNames(), true)) {
             return;
         }
-        $this->detailData[$fieldName ?? 'image'] = $url;
-        unset($this->detailData['__mediaToken']);
+        if (! app(MediaResolverContract::class)->exists($mediaId)) {
+            return;
+        }
+        $this->detailData[$fieldName] = $mediaId;
+        $this->mediaSelectToken = null;
+    }
+
+    /**
+     * The `sort` input above the form is bound by hand, not by the layout.
+     *
+     * @return list<string>
+     */
+    protected function additionalDetailFields(): array
+    {
+        return ['detailData.sort'];
+    }
+
+    /**
+     * The detailData keys of the layout's `type: image` fields — the only keys
+     * an upload or a media pick may write.
+     *
+     * @return list<string>
+     */
+    private function imageFieldNames(): array
+    {
+        $names = [];
+
+        LayoutFields::walk($this->pageLayout['fields'] ?? [], function (array $field) use (&$names): void {
+            $name = $field['name'] ?? null;
+            if (($field['type'] ?? null) === 'image' && is_string($name) && str_starts_with($name, 'detailData.')) {
+                $names[] = mb_substr($name, mb_strlen('detailData.'));
+            }
+        });
+
+        return $names;
+    }
+
+    /**
+     * The detailData keys the collection definition declares — the only keys
+     * an entry stores.
+     *
+     * @return list<string>
+     */
+    private function definitionFieldNames(): array
+    {
+        $names = [];
+
+        LayoutFields::walk($this->pageLayout['fields'] ?? [], function (array $field) use (&$names): void {
+            $name = $field['name'] ?? null;
+            if (is_string($name) && str_starts_with($name, 'detailData.')) {
+                $names[] = (string) str($name)->after('detailData.')->before('.');
+            }
+        });
+
+        return array_values(array_unique($names));
     }
 
     #[On('setupLanguageChanged')]

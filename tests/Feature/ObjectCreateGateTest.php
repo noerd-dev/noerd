@@ -71,7 +71,7 @@ class ZzCreateGateList extends Component
             ],
             'actions' => [
                 ['label' => 'New Tenant', 'action' => 'listAction'],
-                ['label' => 'New Via Route', 'route' => 'zz.tenant.detail'],
+                ['label' => 'New Via Route', 'modalRoute' => 'zz.tenant.detail'],
                 ['label' => 'Import', 'action' => 'openImportModal'],
             ],
         ];

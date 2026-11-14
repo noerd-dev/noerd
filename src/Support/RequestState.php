@@ -17,7 +17,8 @@ namespace Noerd\Support;
  *     $memo = &RequestState::bucket('noerd.settings');
  *     return $memo[$tenantId] ??= NoerdSettings::query()->...->first();
  *
- * @internal
+ * Public API: a module helper with a per-request memo uses its own bucket
+ * name (`{module}.{memo}`) and clears it with forget() after a write.
  */
 final class RequestState
 {

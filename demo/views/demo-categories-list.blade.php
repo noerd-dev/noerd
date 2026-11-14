@@ -8,7 +8,7 @@ new class extends Component {
     use NoerdList;
 
     public $listModel = DemoCategory::class;
-    public ?string $detailRoute = 'demo-category.detail';
+    public ?string $detailRoute = 'demo.category.detail';
 
     public $detailComponent = 'demo-category-detail';
 }; ?>

@@ -3,6 +3,7 @@
 use App\Models\DemoCategory;
 use App\Models\DemoCustomer;
 use App\Models\DemoTag;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Noerd\Traits\NoerdDetail;
 
@@ -16,13 +17,16 @@ new class extends Component {
     /** The tags picked in the belongsToMany field. */
     public array $tagIds = [];
 
-    public function mount(): void
-    {
-        $this->initDetail();
+    /** Loaded with the record — detailLoaded() reads the tags from it. */
+    protected array $detailWith = ['tags'];
 
-        if ($this->modelId) {
-            $this->tagIds = DemoCustomer::find($this->modelId)?->tags()->pluck('demo_tags.id')->all() ?? [];
-        }
+    /**
+     * The values derived from the loaded record are read here, never by
+     * finding the record a second time in mount().
+     */
+    protected function detailLoaded(Model $model): void
+    {
+        $this->tagIds = $model->exists ? $model->tags->pluck('id')->map(fn($id): int => (int) $id)->all() : [];
     }
 
     public function categoryOptions(): array

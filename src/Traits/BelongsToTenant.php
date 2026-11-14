@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Noerd\Exceptions\MissingTenantContextException;
+use Noerd\Exceptions\TenantMismatchException;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Scopes\TenantScope;
@@ -18,6 +20,10 @@ trait BelongsToTenant
     public static function bootBelongsToTenant(): void
     {
         static::addGlobalScope(new TenantScope());
+
+        static::saving(function (Model $model): void {
+            static::guardTenantOfUserWrite($model);
+        });
 
         static::creating(function (Model $model): void {
             // Stamp from the SAME resolver the tenant scope filters by, so a
@@ -61,5 +67,46 @@ trait BelongsToTenant
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * While a Livewire component processes a client request of a signed-in noerd
+     * user (TenantWriteGuardHook) — no explicit TenantContext and no
+     * TenantContext::system() — a record is only written into the tenant the
+     * user works in: a foreign tenant_id on create and a changed tenant_id on an
+     * existing record are refused. A crafted form payload (`detailData.tenant_id`)
+     * must never move a record into another tenant. Headless code (commands, jobs,
+     * provisioning), test fixtures and code that writes for another tenant on
+     * purpose (inside TenantContext::run()) stay free.
+     */
+    protected static function guardTenantOfUserWrite(Model $model): void
+    {
+        if (! TenantContext::inClientRequest() || TenantContext::current() !== null || TenantContext::isSystem() || NoerdAuth::user() === null) {
+            return;
+        }
+
+        $currentTenantId = TenantHelper::currentTenantId();
+        $tenantId = $model->getAttribute('tenant_id');
+
+        if (! $model->exists) {
+            if ($tenantId !== null && $tenantId !== '' && (int) $tenantId !== $currentTenantId) {
+                throw TenantMismatchException::forCreate($model::class, $tenantId, $currentTenantId);
+            }
+
+            return;
+        }
+
+        if (! $model->isDirty('tenant_id')) {
+            return;
+        }
+
+        $original = $model->getOriginal('tenant_id');
+
+        // A legacy row without a tenant may be claimed for the user's own tenant.
+        if (($original === null || $original === '') && $tenantId !== null && (int) $tenantId === $currentTenantId) {
+            return;
+        }
+
+        throw TenantMismatchException::forUpdate($model::class, $original, $tenantId);
     }
 }

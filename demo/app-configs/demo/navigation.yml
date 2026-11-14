@@ -1,22 +1,22 @@
 - title: Demo
   name: demo
   hidden: true
-  route: demo-customers
+  route: demo.customers
   blockMenus:
     - title: Demo
       navigations:
         - title: Demo Customers
-          route: demo-customers
+          route: demo.customers
           heroicon: users
-          newRoute: demo-customer.detail
-          newComponent: demo-customer-detail
+          newModalRoute: demo.customer.detail
+          newModalComponent: demo-customer-detail
         - title: Demo Categories
-          route: demo-categories
+          route: demo.categories
           heroicon: tag
-          newRoute: demo-category.detail
-          newComponent: demo-category-detail
+          newModalRoute: demo.category.detail
+          newModalComponent: demo-category-detail
         - title: Demo Tags
-          route: demo-tags
+          route: demo.tags
           heroicon: hashtag
-          newRoute: demo-tag.detail
-          newComponent: demo-tag-detail
+          newModalRoute: demo.tag.detail
+          newModalComponent: demo-tag-detail

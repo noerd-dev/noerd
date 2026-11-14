@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Blade;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Tests\TestCase;
@@ -54,6 +55,30 @@ it('falls back to the component when the showMoreRoute is not registered', funct
 
     expect($html)->toContain('$modal(')
         ->toContain('zz::tasks-list')
+        ->not->toContain('$modalRoute(');
+});
+
+/*
+ | A page widget names its "Show more" target with showMoreModalRoute: (URL kept)
+ | and showMoreModalComponent:, which defaults to the embedded component itself.
+ */
+it('hands the widget show more target to the embedded list', function (): void {
+    registerTestLivewireRoute('zz-show-more-widget', 'noerd-test::theme-test', 'zz.show.more.widget');
+    Livewire::component('zz-show-more-widget-list', ZzShowMoreListComponent::class);
+
+    $render = fn(array $widget): string => html_entity_decode(Blade::render(
+        '<x-noerd::detail-widgets :layout="$layout" :modelId="7" />',
+        ['layout' => ['widgets' => [$widget]]],
+    ));
+
+    expect($render(['component' => 'zz-show-more-widget-list', 'showMoreModalRoute' => 'zz.show.more.widget']))
+        ->toContain('$modalRoute(')
+        ->toContain('zz.show.more.widget')
+        ->toContain('zz-show-more-widget-list')
+        ->and($render(['component' => 'zz-show-more-widget-list', 'showMoreModalComponent' => 'zz::full-list']))
+        ->toContain('$modal(')
+        ->toContain('zz::full-list')
+        ->and($render(['component' => 'zz-show-more-widget-list', 'route' => 'zz.show.more.widget']))
         ->not->toContain('$modalRoute(');
 });
 

@@ -130,8 +130,8 @@ Two rules apply, in this order:
 1. **`default:`** — any field may declare its initial value. It is used while the bound value is
    `null` (a missing key counts as null); `''`, `0` and `false` are answers and are never replaced.
    A date default is written relative to the day the form opens: `today`, `now` (a date-time) or a
-   signed offset — `+14 days`, `-1 month`, `+2 weeks`, `+1 year` — resolved by
-   `Noerd\Support\LayoutDefaults::resolveToken()`; anything else is the literal value.
+   signed offset — `+14 days`, `-1 month`, `+2 weeks`, `+1 year` — resolved by the core when the
+   form opens; anything else is the literal value.
 2. **First option of a select** — a `type: select` whose `options` are written in the YAML starts on
    its first option. This is what makes the displayed value real, so it is persisted on save.
 
@@ -284,6 +284,14 @@ sees a locale string, so it needs no conversion of its own. See
   so the field watches the bound property itself. A value the component sets after mount — figures
   derived in `store()`, a proposal loaded into the form — appears in the input at once, unless the
   reader is typing in it at that moment.
+- **Either notation, never a guess:** the locale's own notation is always read. One foreign
+  separator followed by one or two digits counts as the decimal separator (`12.50` is 12.5 for a
+  German reader, never 1250); a group of three digits counts as thousands (`1.234` is 1234). A
+  Unicode minus (`−12,50`) and a trailing minus (`12,50-`) are negative. An input that cannot be
+  read without guessing (`1,234.56` for a German reader) is rejected: the bound value stays as it
+  was and the input is marked `aria-invalid` until the reader corrects it.
+- **No rounding by focusing:** the focused input shows the bound value unrounded (at least two
+  decimals), and leaving it writes only when the amount changed.
 - A percentage (VAT rate, discount) is NOT a currency: use `type: number` with `step:`.
 
 ```yaml
@@ -466,9 +474,13 @@ The picker is the component returned by `MediaResolverContract::pickerComponent(
 token ties the answer to the field that opened the picker:
 
 ```php
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Facades\Noerd;
+
+#[Locked]
+public ?string $mediaSelectToken = null;
 
 public function openSelectMediaModal(string $fieldName): void
 {
@@ -477,20 +489,19 @@ public function openSelectMediaModal(string $fieldName): void
         return;
     }
 
-    $token = uniqid('media_', true);
-    $this->detailData['__mediaToken'] = $token;
-    Noerd::modal($picker, ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $token]);
+    $this->mediaSelectToken = uniqid('media_', true);
+    Noerd::modal($picker, ['selectMode' => true, 'selectContext' => $fieldName, 'selectToken' => $this->mediaSelectToken]);
 }
 
 #[On('mediaSelected')]
 public function mediaSelected(int $mediaId, ?string $fieldName = 'image', ?string $token = null): void
 {
-    if (($this->detailData['__mediaToken'] ?? null) !== $token) {
+    if ($this->mediaSelectToken === null || $this->mediaSelectToken !== $token) {
         return;
     }
 
     $this->detailData[$fieldName ?? 'image'] = $mediaId;
-    unset($this->detailData['__mediaToken']);
+    $this->mediaSelectToken = null;
 }
 
 public function deleteImage(string $fieldName): void
@@ -499,14 +510,16 @@ public function deleteImage(string $fieldName): void
 }
 ```
 
-- `$fieldName` arrives without the `detailData.` prefix.
+- `$fieldName` arrives without the `detailData.` prefix. Keep the token in a `#[Locked]` property
+  of its own, never in `$detailData` (it would end up in the saved data).
 - Store the media ID. A file's path changes when it is moved in the library, so resolve the URL when
   rendering: `getImageUrl($mediaId)` for visitors (a public website, an e-mail — a size-limited
   variant, never the oversized original), `getPreviewUrl()` for a backend tile,
   `getRelativeUrl()` for the original.
 - Without a media library the element renders a plain `<input type="file">` bound to
   `imageUploads.{field}` — declare `public array $imageUploads = [];` with `WithFileUploads` and
-  store the upload via `MediaResolverContract::storeUploadedFile()`. Reference:
+  store the upload via `MediaResolverContract::storeUploadedFileReference()` — the media id when a
+  library exists, the stored URL otherwise (the element renders both). Reference:
   `resources/views/components/setup-collection-detail.blade.php`.
 
 ### file
@@ -650,8 +663,13 @@ and `colspan` are relevant. The blank height follows the active theme (`spacerCl
 
 ### button
 
-Button that calls the component method named by `name`; `label` is the button text. Rendered
-disabled on a read-only form.
+Button that calls the component method named by `name` — a plain method name: everything but
+letters, digits and `_` is stripped before it reaches `wire:click`; `label` is the button text.
+Rendered disabled on a read-only form.
+
+A field name in general (every type) must be a plain binding path — letters (umlauts included),
+digits, `_`, `.`, space, `/` and `-`. The resolved layout of a detail, page or settings screen
+(YAML plus a stored layout override) drops a field with any other name and logs a warning.
 
 ```yaml
 - name: generateCode
@@ -694,7 +712,7 @@ property path (truthy check) or an object with `field` and `value` (equality che
 strings, so a select's `"1"` and an integer column's `1` agree); both keys on one field combine with
 AND. The condition is an Alpine `x-show`, so it follows the form state in the browser; set
 `live: true` on the controlling field when the server has to see the change as well. Fields, tabs
-and detail actions share the one expression (`Noerd\Support\FieldVisibility::showExpression()`), and
+and detail actions share the one expression the core builds, and
 the server mirrors it when it decides whether a hidden field is validated.
 
 ```yaml

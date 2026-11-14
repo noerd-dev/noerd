@@ -29,7 +29,7 @@
 @if ($layout && isset($layout['tabs']) && count($layout['tabs']) > 0)
     <div class="w-full shrink-0 pb-6{{ $tabsTopPadding }}">
         <div class="flex w-full border-b border-gray-300">
-            <nav class="inline-block" aria-label="Tabs">
+            <nav class="inline-block" aria-label="{{ __('Tabs') }}">
                 @foreach ($layout['tabs'] as $tab)
                     @php
                         $showTab = \Noerd\Support\TabVisibility::renders($tab, $modelId);
@@ -52,15 +52,15 @@
                             @endphp
                             <x-noerd::tab
                                 :modalRoute="$tab['modalRoute']"
-                                :component="$tab['component'] ?? null"
+                                :component="$tab['modalComponent'] ?? null"
                                 :arguments="$tabArguments"
                                 :routeParameters="$tabRouteParameters"
                             >
                                 {{ __($tab['label']) }}
                             </x-noerd::tab>
-                        @elseif (isset($tab['component']))
+                        @elseif (isset($tab['modalComponent']))
                             <x-noerd::tab
-                                :component="$tab['component']"
+                                :component="$tab['modalComponent']"
                                 :arguments="isset($tab['arguments']) ? $resolveArguments($tab['arguments']) : []"
                             >
                                 {{ __($tab['label']) }}
@@ -69,7 +69,7 @@
                             <x-noerd::tab :route="$tab['route']" :active="request()->routeIs($tab['route'])">
                                 {{ __($tab['label']) }}
                             </x-noerd::tab>
-                        @else
+                        @elseif (isset($tab['number']))
                             <x-noerd::tab :tabNumber="$tab['number']"> {{ __($tab['label']) }} </x-noerd::tab>
                         @endif
                         @if ($tabShowIf) </div>@endif
@@ -85,7 +85,7 @@
 @elseif (!$slot->isEmpty())
     <div class="w-full shrink-0 pb-6{{ $tabsTopPadding }}">
         <div class="flex w-full border-b border-gray-300">
-            <nav class="inline-block" aria-label="Tabs">{{ $slot }}</nav>
+            <nav class="inline-block" aria-label="{{ __('Tabs') }}">{{ $slot }}</nav>
 
             @if ($hasTabActions)
                 <div class="ml-auto flex shrink-0 items-center gap-2 self-center pl-4">{{ $actions }}</div>

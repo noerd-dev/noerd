@@ -41,11 +41,19 @@ final class AccessHelper
     public const ACTION_GATE = 'noerd.action';
 
     /**
+     * Whether the current user may access the app. The name is accepted in any
+     * case (route middleware passes `crm`, YAML `apps:` keys `CRM`) and
+     * normalised ONCE to UPPERCASE — the canonical tenant_apps.name — before
+     * the `noerd.access-app` gate is asked, so a gate always receives `CRM`
+     * and may compare exactly.
+     *
      * @param  string|null  $appName  tenant_apps.name in any case; null/'' (no app known) is allowed
      */
     public static function canAccessApp(?string $appName): bool
     {
-        if ($appName === null || $appName === '') {
+        $appName = $appName === null ? '' : mb_strtoupper(mb_trim($appName));
+
+        if ($appName === '') {
             return true;
         }
 
@@ -182,13 +190,13 @@ final class AccessHelper
     {
         $user = NoerdAuth::user();
 
-        if ($user === null || ! method_exists($user, 'currentProfile')) {
+        if ($user === null) {
             return true;
         }
 
         // Admins bypass the baseline regardless of any (mis)assigned profile —
         // the same shortcut every gate implementation is expected to apply.
-        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+        if ($user->isAdmin()) {
             return true;
         }
 

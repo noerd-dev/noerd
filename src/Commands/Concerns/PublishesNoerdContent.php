@@ -7,6 +7,9 @@ namespace Noerd\Commands\Concerns;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Noerd\Commands\Support\FrontendScaffolder;
+use Noerd\Support\HostNavigationMerger;
+use Symfony\Component\Yaml\Yaml;
+use Throwable;
 
 /**
  * The publishing half of `noerd:install` / `noerd:update`: the setup app
@@ -18,10 +21,18 @@ use Noerd\Commands\Support\FrontendScaffolder;
 trait PublishesNoerdContent
 {
     use GuardsPublishTargets;
+    use LoadsTestHelpers;
     use PublishesConfigDirectory;
 
     use RegistersBoostPackage;
     use RunsNpmBuild;
+    /**
+     * Config arrays whose KEYS the host chooses (brand presets) — compared as a
+     * value, never key by key.
+     *
+     * @var list<string>
+     */
+    private const CONFIG_VALUE_MAPS = ['brand.presets', 'brand.overrides'];
 
     /**
      * Publish everything the package ships into the host: the setup app configs,
@@ -44,6 +55,7 @@ trait PublishesNoerdContent
         $this->updateLivewireConfig();
         $this->publishNoerdAssets();
         $this->registerNoerdBoostPackage();
+        $this->migrateTestHelperLoader();
 
         return true;
     }
@@ -55,6 +67,9 @@ trait PublishesNoerdContent
      * ~15 files on every installation, and naming each one buries the steps the
      * reader has to act on (the admin user, the migrations) in a wall of paths.
      * The summary reports what happened; a prompt for an existing file still shows.
+     *
+     * The navigation is never copied over an existing one (modules add their
+     * entries to it): publishHostNavigation() adds what the core misses.
      */
     protected function publishSetupAppConfigs(): bool
     {
@@ -66,23 +81,69 @@ trait PublishesNoerdContent
             return false;
         }
 
-        $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/setup'), quiet: true));
+        $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/setup'), quiet: true, except: ['navigation.yml']));
+        $this->publishHostNavigation('setup');
 
         return true;
     }
 
     /**
-     * Publish the navigation of the profile area (app-configs/profile). An
-     * existing copy is kept unless --force: modules add their entries to it
-     * (ensureProfileNavigation()), an update must not drop them.
+     * Publish the navigation of the profile area (app-configs/profile) — the
+     * same rule as the setup navigation: modules add their entries to it
+     * (ensureProfileNavigation()), an update never drops them.
      */
     protected function publishProfileAppConfigs(): void
     {
         $sourceDir = $this->getModuleRoot() . '/app-configs/profile';
 
         if (File::isDirectory($sourceDir)) {
-            $this->displayPublishSummary($this->publishConfigDirectory($sourceDir, base_path('app-configs/profile'), quiet: true, keepExisting: true));
+            $this->publishConfigDirectory($sourceDir, base_path('app-configs/profile'), quiet: true, keepExisting: true, except: ['navigation.yml']);
+            $this->publishHostNavigation('profile');
         }
+    }
+
+    /**
+     * A core navigation (setup, profile) belongs to the host once it exists:
+     * the package template is copied only when the host has none (or with
+     * --reset-navigation); otherwise the entries the core ships are ADDED where
+     * they are missing — host and module entries, their order and their titles
+     * stay as they are — and the entries the core retired are dropped
+     * (HostNavigationMerger).
+     */
+    protected function publishHostNavigation(string $folder): void
+    {
+        $source = $this->getModuleRoot() . "/app-configs/{$folder}/navigation.yml";
+        $target = base_path("app-configs/{$folder}/navigation.yml");
+
+        if (! File::exists($source)) {
+            return;
+        }
+
+        if (! File::exists($target) || $this->boolOption('reset-navigation')) {
+            File::ensureDirectoryExists(dirname($target));
+            File::copy($source, $target);
+            $this->line("<info>Published app-configs/{$folder}/navigation.yml.</info>");
+
+            return;
+        }
+
+        $host = Yaml::parse(File::get($target)) ?? [];
+        $template = Yaml::parse(File::get($source)) ?? [];
+
+        if (! is_array($host) || ! is_array($template)) {
+            $this->warn("app-configs/{$folder}/navigation.yml cannot be read as a navigation — left untouched.");
+
+            return;
+        }
+
+        $merged = app(HostNavigationMerger::class)->merge($host, $template);
+
+        if ($merged === $host) {
+            return;
+        }
+
+        File::put($target, Yaml::dump($merged, 10, 2));
+        $this->line("<info>Updated app-configs/{$folder}/navigation.yml:</info> added the missing core entries, kept every existing one.");
     }
 
     /**
@@ -258,50 +319,81 @@ trait PublishesNoerdContent
     }
 
     /**
-     * An existing config/noerd.php belongs to the host — never clobber it
-     * silently. The stub is diffed against it: missing top-level keys are
-     * reported (the documented contract is that noerd:update carries new keys
-     * into existing installations), and an overwrite happens only via --force
-     * or an explicit confirmation. No .bak is written — the host config is
-     * under version control.
+     * An existing config/noerd.php belongs to the host and is NEVER overwritten
+     * — not even with --force, which only refers to the YAML copies. The package
+     * config is compared with it instead: keys the package added since the copy
+     * was published are reported as missing, keys the package no longer reads as
+     * obsolete — both down to the nested settings (`features.currency`), so the
+     * host can carry them over by hand. No .bak, no prompt: the host config is
+     * under version control. To start over, delete the file and run the command
+     * again.
      */
     protected function refreshExistingNoerdConfig(string $sourcePath, string $targetPath): void
     {
-        $missing = [];
         try {
             $stub = require $sourcePath;
             $current = require $targetPath;
-            if (is_array($stub) && is_array($current)) {
-                $missing = array_keys(array_diff_key($stub, $current));
-            }
-        } catch (Exception) {
-            // A config that cannot be evaluated is treated as customized.
+        } catch (Throwable) {
+            $this->line('<comment>config/noerd.php cannot be evaluated — left untouched.</comment>');
+
+            return;
         }
 
-        if (! $this->option('force')) {
-            if ($missing === []) {
-                $this->line('<comment>config/noerd.php already exists and declares every key — left untouched.</comment>');
+        if (! is_array($stub) || ! is_array($current)) {
+            $this->line('<comment>config/noerd.php does not return an array — left untouched.</comment>');
 
-                return;
+            return;
+        }
+
+        $missing = self::configKeyDiff($stub, $current);
+        $obsolete = self::configKeyDiff($current, $stub);
+
+        if ($missing === [] && $obsolete === []) {
+            $this->line('<comment>config/noerd.php already exists and declares every key — left untouched.</comment>');
+
+            return;
+        }
+
+        if ($missing !== []) {
+            $this->warn('config/noerd.php is missing new keys: ' . implode(', ', $missing));
+        }
+
+        if ($obsolete !== []) {
+            $this->warn('config/noerd.php declares keys the package no longer reads: ' . implode(', ', $obsolete));
+        }
+
+        $this->line('<comment>config/noerd.php is never overwritten. Carry the changes over by hand (see config/noerd.php of the package).</comment>');
+    }
+
+    /**
+     * The dot paths of $from that $other lacks. Only associative arrays are
+     * walked — a list (or a map whose keys a host chooses itself, like the brand
+     * presets) is a value, not a set of settings.
+     *
+     * @param  array<mixed>  $from
+     * @param  array<mixed>  $other
+     * @return list<string>
+     */
+    private static function configKeyDiff(array $from, array $other, string $prefix = ''): array
+    {
+        $diff = [];
+
+        foreach ($from as $key => $value) {
+            $path = $prefix . $key;
+
+            if (! array_key_exists($key, $other)) {
+                $diff[] = $path;
+
+                continue;
             }
 
-            $this->warn('config/noerd.php is missing new top-level keys: ' . implode(', ', $missing));
-
-            if (! $this->input->isInteractive()
-                || ! $this->confirm('Overwrite config/noerd.php with the current package config?', false)) {
-                $this->line('<comment>Skipped config/noerd.php publishing. Add the missing keys manually (see config/noerd.php of the package).</comment>');
-
-                return;
+            if (is_array($value) && is_array($other[$key]) && ! array_is_list($value) && ! array_is_list($other[$key])
+                && ! in_array($path, self::CONFIG_VALUE_MAPS, true)) {
+                $diff = [...$diff, ...self::configKeyDiff($value, $other[$key], $path . '.')];
             }
         }
 
-        $this->line('<comment>Overwriting config/noerd.php...</comment>');
-
-        if (File::copy($sourcePath, $targetPath)) {
-            $this->line('<info>Published config/noerd.php successfully.</info>');
-        } else {
-            $this->warn('Failed to publish config/noerd.php');
-        }
+        return $diff;
     }
 
     private function formatFrontendAction(string $action): string

@@ -24,9 +24,11 @@ final class NoerdHooks
         ClientWriteGuardHook::class,
         WriteGuardHook::class,
         ServerOnlyMethodsHook::class,
+        BulkActionPermissionHook::class,
         EmbeddedDetailHostHook::class,
         EmptyNumberFieldHook::class,
         ComponentAccessHook::class,
+        TenantWriteGuardHook::class,
     ];
 
     public static function register(): void

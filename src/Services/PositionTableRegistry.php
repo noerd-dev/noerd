@@ -48,13 +48,6 @@ final class PositionTableRegistry
         return $this->tables[self::key($component)] ?? null;
     }
 
-    public function catalogFor(string $component): ?DefinesPositionColumns
-    {
-        $table = $this->get($component);
-
-        return $table === null ? null : app($table['catalog']);
-    }
-
     private static function key(string $component): string
     {
         return Str::afterLast($component, '::');

@@ -22,27 +22,56 @@ class AssignAppsToTenantCommand extends Command
      * @var string
      */
     protected $signature = 'noerd:assign-apps-to-tenant
-                            {--tenant-id= : The ID of the tenant to assign apps to}';
+                            {--tenant-id= : The ID of the tenant to assign apps to (required in non-interactive runs)}
+                            {--apps=* : Assign these apps without asking — app names, case-insensitive (--apps=crm --apps=MEDIA); nothing is removed}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Assign apps to a tenant with interactive selection';
+    protected $description = 'Assign apps to a tenant — interactively, or scripted with --tenant-id and --apps';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $tenantId = $this->option('tenant-id');
+        $tenantOption = $this->option('tenant-id');
+        $tenantId = null;
+
+        // Options arrive as strings: validate before anything is looked up.
+        if ($tenantOption !== null && $tenantOption !== '') {
+            if (! is_int($tenantOption) && ! (is_string($tenantOption) && ctype_digit($tenantOption))) {
+                $this->error('--tenant-id expects the numeric id of a tenant, got "' . (is_scalar($tenantOption) ? (string) $tenantOption : get_debug_type($tenantOption)) . '".');
+
+                return self::FAILURE;
+            }
+
+            $tenantId = (int) $tenantOption;
+        }
+
+        $appNames = array_values(array_filter(
+            array_map(static fn(mixed $name): string => mb_trim((string) $name), (array) $this->option('apps')),
+            static fn(string $name): bool => $name !== '',
+        ));
+
+        // A select prompt without a person picks its first option — never guess the tenant.
+        if ($tenantId === null && ! $this->input->isInteractive()) {
+            $this->error('Non-interactive run: pass --tenant-id (and --apps to assign without the selection).');
+
+            return self::FAILURE;
+        }
 
         try {
             // Step 1: Select Tenant
             $selectedTenant = $this->selectTenant($tenantId);
             if (! $selectedTenant) {
                 return self::FAILURE;
+            }
+
+            if ($appNames !== []) {
+                return $this->assignNamedApps($selectedTenant, $appNames) ? self::SUCCESS : self::FAILURE;
             }
 
             // Step 2: Show current apps and allow multi-selection
@@ -103,6 +132,46 @@ class AssignAppsToTenantCommand extends Command
     }
 
     /**
+     * Assign the apps named by --apps (case-insensitive) — additively, nothing
+     * the tenant holds is removed. An unknown or inactive name assigns nothing.
+     *
+     * @param  list<string>  $names
+     */
+    private function assignNamedApps(Tenant $tenant, array $names): bool
+    {
+        $wanted = array_values(array_unique(array_map(mb_strtoupper(...), $names)));
+        $apps = TenantApp::where('is_active', true)
+            ->get()
+            ->filter(fn(TenantApp $app): bool => in_array(mb_strtoupper((string) $app->name), $wanted, true));
+
+        $unknown = array_diff($wanted, $apps->map(fn(TenantApp $app): string => mb_strtoupper((string) $app->name))->all());
+
+        if ($unknown !== []) {
+            $this->error('Unknown or inactive app(s): ' . implode(', ', $unknown) . ' — nothing was assigned.');
+
+            return false;
+        }
+
+        $currentAppIds = $tenant->tenantApps()->pluck('tenant_apps.id')->map(fn($id): int => (int) $id)->all();
+        $added = [];
+
+        foreach ($apps as $app) {
+            if (in_array((int) $app->id, $currentAppIds, true)) {
+                continue;
+            }
+
+            $tenant->assignApp($app);
+            $added[] = $app->title;
+        }
+
+        $this->info($added === []
+            ? "Tenant '{$tenant->name}' already holds every named app."
+            : 'Added apps: ' . implode(', ', $added));
+
+        return true;
+    }
+
+    /**
      * Manage apps for the selected tenant using Laravel Prompts multiselect
      */
     private function manageAppsForTenant(Tenant $tenant): bool
@@ -160,9 +229,11 @@ class AssignAppsToTenantCommand extends Command
             $addedApps = array_diff($selectedAppIds, $currentAppIds);
             $removedApps = array_diff($currentAppIds, $selectedAppIds);
 
-            // Removals detach, additions go through the one assignment path
-            // (which fires TenantAppAssigned for every newly held app).
-            $tenant->tenantApps()->detach($removedApps);
+            // Removals and additions go through the one write path of each
+            // (TenantAppRemoved / TenantAppAssigned fire per changed app).
+            foreach (TenantApp::whereIn('id', $removedApps)->get() as $removedApp) {
+                $tenant->removeApp($removedApp);
+            }
             foreach (TenantApp::whereIn('id', $addedApps)->get() as $addedApp) {
                 $tenant->assignApp($addedApp);
             }

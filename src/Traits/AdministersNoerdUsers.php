@@ -139,8 +139,16 @@ trait AdministersNoerdUsers
         abort_unless($tenantId !== null && NoerdAuth::user()->isAdmin($tenantId), 403);
 
         $user = NoerdUser::findOrFail($this->modelId);
+        $tenant = Tenant::findOrFail($tenantId);
 
-        Tenant::findOrFail($tenantId)->removeMember($user);
+        // A tenant keeps at least one administrator.
+        if ($tenant->wouldLoseLastAdmin($user)) {
+            $this->addError('detailData.email', __('This is the only administrator of :tenant. Assign another administrator first.', ['tenant' => $tenant->name]));
+
+            return;
+        }
+
+        $tenant->removeMember($user);
 
         $this->closeModalProcess($this->getListComponent());
     }

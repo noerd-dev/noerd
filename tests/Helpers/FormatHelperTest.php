@@ -140,9 +140,11 @@ describe('dates and times', function (): void {
         zzFormatUser('en-US');
         config()->set('noerd.format.date', 'Y-m-d');
         config()->set('noerd.format.datetime', 'Y-m-d H:i');
+        config()->set('noerd.format.time', 'H:i');
 
         expect(FormatHelper::date('2026-09-03'))->toBe('2026-09-03')
-            ->and(FormatHelper::dateTime('2026-09-03 14:05:00'))->toBe('2026-09-03 14:05');
+            ->and(FormatHelper::dateTime('2026-09-03 14:05:00'))->toBe('2026-09-03 14:05')
+            ->and(FormatHelper::time('2026-09-03 14:05:00'))->toBe('14:05');
     });
 
     it('writes document dates in the tenant locale, not the user locale', function (): void {

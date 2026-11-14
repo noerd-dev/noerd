@@ -89,7 +89,7 @@ fields:
     label: No name
 actions:
   - label: Open
-    route: zz.not.registered
+    modalRoute: zz.not.registered
 YAML);
     zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', <<<'YAML'
 columns:
@@ -101,7 +101,7 @@ YAML);
 
     expect($errors)->toContain('`zzUnknownRelation` is not registered')
         ->toContain('has no `name`')
-        ->toContain('`zz.not.registered` is not registered and the action has no fallback')
+        ->toContain('`zz.not.registered` is not registered and the action has no modalComponent fallback')
         ->toContain('The column has no `field`')
         ->toContain('cannot be parsed');
 });
@@ -123,7 +123,7 @@ fields:
     options: [a, b]
 actions:
   - label: Open
-    route: zz.not.registered
+    modalRoute: zz.not.registered
     modalComponent: zz::fallback
 YAML);
 
@@ -133,7 +133,7 @@ YAML);
         ->toContain('picklistField: zzNobodyDefinesThis` is neither a registered picklist provider')
         ->toContain('readonly AND required')
         ->toContain('Flow-style YAML')
-        ->toContain('the fallback opens instead');
+        ->toContain('the modalComponent fallback opens instead');
 });
 
 it('fails the command on errors, and on warnings only with --strict', function (): void {
@@ -153,4 +153,100 @@ fields:
 YAML);
 
     $this->artisan('noerd:lint', ['--path' => [$this->lintDir]])->assertExitCode(1);
+});
+
+/*
+ | The parsed structure is the authority for list column and filter types and
+ | for navigation keys — a spelling the line patterns cannot see is reported all
+ | the same.
+ */
+describe('parsed structure', function (): void {
+    function zzLintErrors(string $dir): string
+    {
+        return collect(zzLintIssues($dir))->where('severity', ConfigLinter::ERROR)->pluck('message')->implode("\n");
+    }
+
+    it('reports old and unknown column types in flow style, under quoted keys and in CRLF files', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', "columns:\r\n  - {field: a, type: colored_text}\r\n  - field: b\r\n    \"type\": inverseBool\r\n  - field: c\r\n    type:\tboolean\r\n  - field: d\r\n    type: zzNoSuchType\r\n  - field: e\r\n    type: id\r\n  - field: f\r\n    type: boolCheck\r\n");
+
+        $errors = zzLintErrors($this->lintDir);
+
+        expect($errors)->toContain('`type: colored_text`')
+            ->toContain('`type: inverseBool`')
+            ->toContain('`type: boolean`')
+            ->toContain('The column type `zzNoSuchType` is unknown')
+            ->toContain('The column type `id` was removed')
+            ->not->toContain('`boolCheck`');
+
+        // Every old name once, although both the line check and the parsed check see it.
+        expect(mb_substr_count($errors, '`type: colored_text`'))->toBe(1);
+    });
+
+    it('reports an unknown filter type', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', "filters:\n  - label: Year\n    column: year\n    type: zzYearly\n  - label: From\n    column: date\n    type: dateFrom\n");
+
+        expect(zzLintErrors($this->lintDir))->toContain('The filter type `zzYearly` is unknown')
+            ->not->toContain('`dateFrom`');
+    });
+
+    it('reports renamed and removed navigation keys wherever they sit', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/navigation.yml', "- {title: Zz, block_menus: [{title: Block, navigations: [{title: Item, route: zz, sub_menu: []}]}]}\n");
+
+        expect(zzLintErrors($this->lintDir))->toContain('`block_menus:`')
+            ->toContain('The navigation key `sub_menu` was removed');
+    });
+
+    it('reports a BOM and still reads the rest of the file', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', "\xEF\xBB\xBFcolumns:\n  - field: a\n    type: colored_text\n");
+
+        expect(zzLintErrors($this->lintDir))->toContain('UTF-8 BOM')
+            ->toContain('`type: colored_text`');
+    });
+
+    it('never reports the text of a block scalar', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', "description: |\n  type: colored_text\ncolumns:\n  - field: a\n    type: text\n");
+
+        expect(zzLintIssues($this->lintDir))->toBe([]);
+    });
+
+    it('lints the app-configs of the local modules by default', function (): void {
+        File::ensureDirectoryExists($this->lintDir . '/app-modules/zzmod/app-configs/zzmod/lists');
+        File::put($this->lintDir . '/app-modules/zzmod/app-configs/zzmod/lists/zz-list.yml', "columns:\n  - field: a\n    type: colored_text\n");
+
+        $this->artisan('noerd:lint')->expectsOutputToContain('colored_text')->assertExitCode(1);
+        $this->artisan('noerd:lint', ['--project-only' => true])->assertExitCode(0);
+    });
+});
+
+/*
+ | A modal is opened by modalRoute:/modalComponent: only. A key that opened a
+ | modal in the earlier vocabulary is an error with the noerd:update hint —
+ | wherever it stands, flow style included — while the same key in a place
+ | where it navigates or renders inline is valid.
+ */
+describe('modal targets', function (): void {
+    it('reports every modal target of the earlier vocabulary', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/lists/zz-list.yml', "actions:\n  - label: New\n    route: zz.detail\ncolumns:\n  - {field: party, type: relationLink, route: zz.party, modalComponent: zz::party}\n");
+        zzLintWrite($this->lintDir, 'zzlint/details/zz-detail.yml', "actions:\n  - label: History\n    route: zz.history\ntabs:\n  - label: Invoices\n    component: zz::invoices-list\nrelations:\n  - label: Orders\n    component: zz::orders-list\nwidgets:\n  - component: zz::open-list\n    route: zz.open\n");
+        zzLintWrite($this->lintDir, 'zzlint/navigation.yml', "- title: Zz\n  route: zz\n  blockMenus:\n    - title: Block\n      navigations:\n        - title: Items\n          route: zz.items\n          newRoute: zz.item.detail\n          newComponent: zz::item-detail\n        - title: Wizard\n          component: zz::wizard-modal\n");
+
+        $errors = collect(zzLintIssues($this->lintDir))->where('severity', ConfigLinter::ERROR)->pluck('message')->implode("\n");
+
+        expect($errors)->toContain('`route:` at actions.0 (now `modalRoute:`)')
+            ->toContain('`route:` at columns.0 (now `modalRoute:`)')
+            ->toContain('`component:` at tabs.0 (now `modalComponent:`)')
+            ->toContain('`component:` at relations.0 (now `modalComponent:`)')
+            ->toContain('`route:` at widgets.0 (now `showMoreModalRoute:`)')
+            ->toContain('`newRoute:` at 0.blockMenus.0.navigations.0 (now `newModalRoute:`)')
+            ->toContain('`newComponent:` at 0.blockMenus.0.navigations.0 (now `newModalComponent:`)')
+            ->toContain('`component:` at 0.blockMenus.0.navigations.1 (now `modalComponent:`)')
+            ->toContain('noerd:update');
+    });
+
+    it('accepts route: where it navigates and component: where it renders inline', function (): void {
+        zzLintWrite($this->lintDir, 'zzlint/details/zz-detail.yml', "tabs:\n  - number: 1\n    label: Data\n  - number: 2\n    label: Inline\n    component: zz::inline\n  - label: Page\n    route: zz.page\nlists:\n  - component: zz::embedded-list\nwidgets:\n  - component: zz::open-list\n    showMoreModalRoute: zz.open\n    showMoreModalComponent: zz::open-list\n");
+        zzLintWrite($this->lintDir, 'zzlint/navigation.yml', "- title: Zz\n  route: zz\n  blockMenus:\n    - title: Block\n      navigations:\n        - title: Items\n          route: zz.items\n          newModalRoute: zz.item.detail\n          newModalComponent: zz::item-detail\n        - title: Wizard\n          modalComponent: zz::wizard-modal\n");
+
+        expect(collect(zzLintIssues($this->lintDir))->pluck('message')->implode("\n"))->not->toContain('modal target');
+    });
 });

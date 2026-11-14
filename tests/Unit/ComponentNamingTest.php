@@ -22,6 +22,14 @@ it('pairs a record component with its list, namespace and subfolder kept', funct
     'no suffix at all' => ['dashboard', 'dashboards-list'],
 ]);
 
+it('names the refresh event the modal stack sends for a source', function (string $component, string $event): void {
+    expect(ComponentNaming::refreshListEvent($component))->toBe($event);
+})->with([
+    'plain' => ['customers-list', 'refreshList-customers-list'],
+    'namespaced' => ['crm::accounts-list', 'refreshList-crm::accounts-list'],
+    'dotted' => ['booking::bookings.bookings-list', 'refreshList-bookings-list'],
+]);
+
 it('derives the detail component of a model class', function (): void {
     expect(ComponentNaming::detailForModel(NoerdUser::class))->toBe('noerd-user-detail');
 });

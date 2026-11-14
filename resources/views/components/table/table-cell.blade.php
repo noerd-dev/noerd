@@ -10,6 +10,13 @@
     // The column the formatter reads: the cell's own field and type, the YAML
     // column for everything else (options, …).
     $formatColumn = array_merge($columnConfig ?? [], ['field' => $columnValue, 'type' => $type]);
+
+    // The cell's click method comes from the YAML (`action:` of a column). It
+    // is written into a wire:click expression, so only an identifier survives —
+    // never a second statement.
+    if (isset($action) && is_string($action)) {
+        $action = preg_replace('/[^A-Za-z0-9_]/', '', $action);
+    }
 @endphp
 
 <td
@@ -18,88 +25,76 @@
     @if ($columnValue === 'action')
         <div class="mr-1 ml-auto flex">
             @if ($actions)
-                <div
-                    x-data="{ showDropdown: false }"
-                    :class="showDropdown ? 'opacity-100' : 'opacity-0'"
-                    @click.stop
-                    class="relative ml-auto inline-block text-left opacity-0 group-hover:opacity-100"
+                {{-- The row menu is the shared x-noerd::action-menu (keyboard, focus
+                     handling). The trigger shows on row hover, while the menu is open
+                     and whenever the keyboard focus is inside it. --}}
+                <x-noerd::action-menu
+                    wrapperClass="relative ml-auto inline-block text-left opacity-0 group-hover:opacity-100 focus-within:opacity-100"
+                    x-bind:class="open ? 'opacity-100' : ''"
+                    x-on:click.stop=""
                 >
-                    <button
-                        @click.outside="showDropdown = false"
-                        @click="showDropdown = ! showDropdown"
-                        type="button"
-                        class="inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
-                        id="row-menu-button-{{ $listId ?? 'list' }}-{{ $id }}"
-                        :aria-expanded="showDropdown ? 'true' : 'false'"
-                        aria-haspopup="true"
-                        aria-label="{{ __('Actions') }}"
-                    >
-                        <svg
-                            class="my-auto text-zinc-600"
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
+                    <x-slot:trigger>
+                        <button
+                            x-on:click="open = ! open"
+                            type="button"
+                            class="focus:ring-brand-border inline-flex h-full w-full justify-center rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus:ring-2 focus:outline-hidden"
+                            id="row-menu-button-{{ $listId ?? 'list' }}-{{ $id }}"
+                            :aria-expanded="open ? 'true' : 'false'"
+                            aria-haspopup="true"
+                            aria-label="{{ __('Actions') }}"
                         >
-                            <title>menu-dots</title>
-                            <g fill="currentColor">
-                                <circle cx="8" cy="8" r="2"></circle>
-                                <circle cx="2" cy="8" r="2"></circle>
-                                <circle cx="14" cy="8" r="2"></circle>
-                            </g>
-                        </svg>
-                    </button>
+                            <svg
+                                class="my-auto text-zinc-600"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                aria-hidden="true"
+                            >
+                                <g fill="currentColor">
+                                    <circle cx="8" cy="8" r="2"></circle>
+                                    <circle cx="2" cy="8" r="2"></circle>
+                                    <circle cx="14" cy="8" r="2"></circle>
+                                </g>
+                            </svg>
+                        </button>
+                    </x-slot:trigger>
 
-                    <div
-                        x-transition
-                        x-show="showDropdown"
-                        class="absolute right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
-                        role="menu"
-                        aria-orientation="vertical"
-                        aria-labelledby="row-menu-button-{{ $listId ?? 'list' }}-{{ $id }}"
-                        tabindex="-1"
-                    >
-                        <div class="py-1" role="none">
-                            @foreach ($actions as $action)
-                                @php
-                                    // Mirrors detail-actions: route: opens a route modal for the
-                                    // row record, modalComponent: is the fallback, action: calls
-                                    // a method on the list component. An unregistered route
-                                    // without a fallback hides the entry.
-                                    $rowActionRoute = $action['route'] ?? null;
-                                    $rowActionRoute = $rowActionRoute && \Illuminate\Support\Facades\Route::has($rowActionRoute)
-                                        ? $rowActionRoute
-                                        : null;
-                                @endphp
-                                @if (! empty($action['route']) && ! $rowActionRoute && empty($action['modalComponent']))
-                                    @continue
-                                @endif
-                                <button
-                                    type="button"
-                                    wire:key="row-action-{{ $id }}-{{ $loop->index }}"
-                                    @if ($rowActionRoute)
-                                        x-on:click.prevent="$modalRoute({{ \Illuminate\Support\Js::from($rowActionRoute) }}, {{ \Illuminate\Support\Js::from(['modelId' => $id]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $action['modalComponent'] ?? null])) }})"
-                                    @elseif (! empty($action['modalComponent']))
-                                        x-on:click.prevent="$modal({{ \Illuminate\Support\Js::from($action['modalComponent']) }}, {{ \Illuminate\Support\Js::from(['modelId' => $id]) }})"
-                                    @else
-                                        wire:click.prevent="{{ $action['action'] }}({{ \Illuminate\Support\Js::from((string) $id) }})"
-                                        @isset($action['confirm'])
-                                            wire:confirm="{{ __($action['confirm']) }}"
-                                        @endisset
-                                    @endif
-                                    class="group flex w-full cursor-pointer items-center px-4 py-2 text-left text-sm text-gray-700"
-                                    role="menuitem"
-                                    tabindex="-1"
-                                >
-                                    @isset($action['heroicon'])
-                                        <x-icon name="{{ $action['heroicon'] }}" class="mr-2 h-4 w-4 text-gray-800" />
-                                    @endisset
-                                    {{ __($action['label']) }}
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
+                    @foreach ($actions as $action)
+                        @php
+                            // Mirrors detail-actions: modalRoute: opens a route modal for
+                            // the row record, modalComponent: is the fallback (or the
+                            // target alone), action: calls a method on the list
+                            // component. An unregistered route without a fallback hides
+                            // the entry.
+                            $rowActionClick = \Noerd\Support\YamlModalTarget::clickExpression($action, ['modelId' => $id]);
+                        @endphp
+                        @if (\Noerd\Support\YamlModalTarget::declares($action) && ! $rowActionClick)
+                            @continue
+                        @endif
+                        <button
+                            type="button"
+                            wire:key="row-action-{{ $id }}-{{ $loop->index }}"
+                            @if ($rowActionClick)
+                                x-on:click.prevent="open = false; {{ $rowActionClick }}"
+                            @else
+                                x-on:click="open = false"
+                                wire:click.prevent="{{ preg_replace('/[^A-Za-z0-9_]/', '', (string) ($action['action'] ?? '')) }}({{ \Illuminate\Support\Js::from((string) $id) }})"
+                                @isset($action['confirm'])
+                                    wire:confirm="{{ __($action['confirm']) }}"
+                                @endisset
+                            @endif
+                            class="group flex w-full cursor-pointer items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-hidden"
+                            role="menuitem"
+                            tabindex="-1"
+                        >
+                            @isset($action['heroicon'])
+                                <x-icon name="{{ $action['heroicon'] }}" class="mr-2 h-4 w-4 text-gray-800" />
+                            @endisset
+                            {{ __($action['label']) }}
+                        </button>
+                    @endforeach
+                </x-noerd::action-menu>
             @else
                 {{-- Purely decorative row affordance: the row itself is clickable,
                      this carries no handler and must not be focusable. --}}
@@ -195,7 +190,7 @@
                     </svg>
                 </div>
             @endif
-        @elseif ($type === 'inverseBool')
+        @elseif ($type === 'boolCheck')
             @if (\Noerd\Support\ListCellFormatter::truthy($value))
                 <div class="shrink-0 px-3 text-right">
                     <svg
@@ -315,26 +310,17 @@
                 </div>
             @elseif ($type === 'relationLink')
                 @php
-                    $relationRoute = $columnConfig['route'] ?? null;
-                    $relationRoute = $relationRoute && \Illuminate\Support\Facades\Route::has($relationRoute)
-                        ? $relationRoute
-                        : null;
                     // Both modes address the record via its $modelId property — the
                     // {modelId} route param and the component mount argument alike.
                     $relationIdParam = $columnConfig['idParam'] ?? 'modelId';
                     $relationId = $rowData[$columnConfig['idField'] ?? 'id'] ?? null;
+                    // modalRoute: opens the related record, modalComponent: is the
+                    // fallback (or the target alone).
+                    $relationClick = \Noerd\Support\YamlModalTarget::clickExpression($columnConfig, [$relationIdParam => $relationId]);
                 @endphp
-                @if ($value && $relationRoute)
+                @if ($value && $relationClick)
                     <button
-                        @click.stop="$modalRoute({{ \Illuminate\Support\Js::from($relationRoute) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $columnConfig['modalComponent'] ?? null])) }})"
-                        title="{{ $value }}"
-                        class="ml-1.5 inline-flex max-w-[calc(100%-0.75rem)] min-w-0 cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
-                    >
-                        <span class="truncate">{{ $value }}</span>
-                    </button>
-                @elseif ($value && isset($columnConfig['modalComponent']))
-                    <button
-                        @click.stop="$modal({{ \Illuminate\Support\Js::from($columnConfig['modalComponent']) }}, {{ \Illuminate\Support\Js::from([$relationIdParam => $relationId]) }})"
+                        @click.stop="{{ $relationClick }}"
                         title="{{ $value }}"
                         class="ml-1.5 inline-flex max-w-[calc(100%-0.75rem)] min-w-0 cursor-pointer items-center rounded bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary transition-colors hover:bg-brand-primary/20"
                     >
@@ -358,7 +344,7 @@
                 @endphp
                 <div
                     @if (isset($columnConfig['wireClick']))
-                        wire:click.stop="{{ $columnConfig['wireClick'] }}({{ $rowData[$columnConfig['wireClickField'] ?? 'id'] ?? 'null' }})"
+                        wire:click.stop="{{ preg_replace('/[^A-Za-z0-9_]/', '', (string) $columnConfig['wireClick']) }}({{ \Illuminate\Support\Js::from($rowData[$columnConfig['wireClickField'] ?? 'id'] ?? null) }})"
                     @else
                         wire:click.stop.prevent="{{ $action }}({{ \Illuminate\Support\Js::from((string) $id) }})"
                     @endif

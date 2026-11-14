@@ -39,7 +39,10 @@ class NoerdInstallCommand extends Command
                 return self::FAILURE;
             }
 
-            $this->runMigrationsAndSetupAdmin();
+            if (! $this->runMigrationsAndSetupAdmin()) {
+                return self::FAILURE;
+            }
+
             $this->runNpmBuild();
             $this->installDemoApp();
             $this->displayApplicationReady();
@@ -97,10 +100,13 @@ class NoerdInstallCommand extends Command
             return;
         }
 
+        // `--demo` of a scripted install is the opt-in: the demo goes to every
+        // tenant of the fresh installation. An interactive run lets the demo ask.
         $this->call('noerd:demo', [
             '--force' => $this->option('force'),
             '--migrate' => $this->boolOption('migrate'),
             '--seed' => $this->boolOption('migrate'),
+            ...($this->input->isInteractive() ? [] : ['--tenants' => 'all']),
         ]);
     }
 
@@ -140,9 +146,13 @@ class NoerdInstallCommand extends Command
     /**
      * Run migrations and setup admin user
      * Migrations must be run before creating an admin user.
-     * Non-interactive runs never migrate implicitly — opt in with --migrate.
+     * Non-interactive runs never migrate implicitly — opt in with --migrate;
+     * such a run passes --force to migrate (in production the migrate command
+     * would otherwise ask, and a non-interactive question is answered "no").
+     * False when the migration failed: no tenant and no admin are created on a
+     * half-migrated database.
      */
-    protected function runMigrationsAndSetupAdmin(): void
+    protected function runMigrationsAndSetupAdmin(): bool
     {
         $this->newLine();
         $this->info('Database Migration');
@@ -154,19 +164,27 @@ class NoerdInstallCommand extends Command
 
         if (! $shouldMigrate && ! $this->input->isInteractive()) {
             $this->line('<comment>Non-interactive run: skipping migrations. Pass --migrate to run them.</comment>');
-            return;
+
+            return true;
         }
 
         if (! $shouldMigrate && ! confirm('Would you like to run "php artisan migrate" now?', default: true)) {
             $this->line('<comment>Skipping migrations. You can run them manually later with: php artisan migrate</comment>');
             $this->line('<comment>Note: You will need to run migrations before creating an admin user.</comment>');
-            return;
+
+            return true;
         }
 
         $this->line('Running migrations...');
         $this->newLine();
 
-        $this->call('migrate', ['--no-interaction' => true]);
+        $exitCode = $this->call('migrate', $this->input->isInteractive() ? [] : ['--force' => true, '--no-interaction' => true]);
+
+        if ($exitCode !== self::SUCCESS) {
+            $this->error("php artisan migrate failed (exit code {$exitCode}) — no tenant or admin user was created. Fix the error and run noerd:install again.");
+
+            return false;
+        }
 
         $this->newLine();
 
@@ -182,6 +200,8 @@ class NoerdInstallCommand extends Command
 
         // Setup admin user
         $this->setupAdminUser();
+
+        return true;
     }
 
     /**

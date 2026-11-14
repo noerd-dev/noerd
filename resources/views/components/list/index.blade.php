@@ -106,8 +106,12 @@
                 ]))"></span>
             @endif
 
+            @php
+                $listRowCount = is_countable($rows) ? count($rows) : 0;
+            @endphp
             <div
-                x-data="noerdList(@js(['listId' => $listId]))"
+                x-data="noerdList(@js(['listId' => $listId, 'rowCount' => $listRowCount]))"
+                data-row-count="{{ $listRowCount }}"
                 @mouseenter="claim()"
                 @keydown.window.arrow-down="onArrow($event, 1)"
                 @keydown.window.arrow-up="onArrow($event, -1)"
@@ -155,6 +159,7 @@
                                                                     type="checkbox"
                                                                     wire:key="cb-all-{{ $listId }}-{{ $allVisibleSelected ? 1 : 0 }}"
                                                                     wire:click="toggleSelectAllVisible"
+                                                                    aria-label="{{ __('Select all rows on this page') }}"
                                                                     @checked($allVisibleSelected)
                                                                     class="text-brand-primary focus:ring-brand-border block h-4 w-4 cursor-pointer rounded border-gray-300"
                                                                 />
@@ -181,8 +186,8 @@
                                                 @forelse ($rows as $key => $row)
                                                     <tr
                                                         wire:key="row-{{ $listId }}-{{ $row['id'] ?? $key }}"
-                                                        :class="{'bg-gray-100!': selectedRow == {{ $key }} }"
-                                                        @click="selectedRow = '{{ $key }}'"
+                                                        :class="{'bg-gray-100!': selectedRow === {{ (int) $key }} }"
+                                                        @click="selectedRow = {{ (int) $key }}"
                                                         wire:click="openListRow({{ \Illuminate\Support\Js::from((string) ($row['id'] ?? '')) }})"
                                                         class="group hover:bg-brand-bg cursor-pointer border border-black/10"
                                                     >
@@ -205,6 +210,7 @@
                                                                         type="checkbox"
                                                                         wire:key="cb-{{ $listId }}-{{ $row['id'] ?? $key }}-{{ $rowChecked ? 1 : 0 }}"
                                                                         wire:click.stop="toggleRecordSelection({{ \Illuminate\Support\Js::from((string) $row['id']) }})"
+                                                                        aria-label="{{ __('Select row :number', ['number' => $loop->iteration]) }}"
                                                                         @checked($rowChecked)
                                                                         class="text-brand-primary focus:ring-brand-border block h-4 w-4 cursor-pointer rounded border-gray-300"
                                                                     />
@@ -245,21 +251,18 @@
                                                             </p>
                                                             @if ($primaryAction)
                                                                 @php
-                                                                    // Mirrors the header action: route: opens a modal,
-                                                                    // action: calls a method on the list component.
-                                                                    $emptyStateRoute = $primaryAction['route'] ?? null;
-                                                                    $emptyStateRoute = $emptyStateRoute && \Illuminate\Support\Facades\Route::has($emptyStateRoute)
-                                                                        ? $emptyStateRoute
-                                                                        : null;
+                                                                    // Mirrors the header action: modalRoute:/modalComponent: open a
+                                                                    // modal, action: calls a method on the list component.
+                                                                    $emptyStateClick = \Noerd\Support\YamlModalTarget::clickExpression($primaryAction, $primaryAction['arguments'] ?? []);
                                                                 @endphp
                                                                 <div class="mt-4 flex justify-center">
-                                                                    @if ($emptyStateRoute)
+                                                                    @if ($emptyStateClick)
                                                                         <x-noerd::button
                                                                             variant="primary"
                                                                             :icon="$primaryAction['heroicon'] ?? 'plus'"
                                                                             class="h-8"
                                                                             x-data
-                                                                            x-on:click.prevent="$modalRoute({{ Js::from($emptyStateRoute) }}, {{ Js::from($primaryAction['arguments'] ?? []) }})"
+                                                                            x-on:click.prevent="{{ $emptyStateClick }}"
                                                                         >
                                                                             {{ __($primaryAction['label']) }}
                                                                         </x-noerd::button>
@@ -291,11 +294,16 @@
                                                         @foreach ($table as $index => $column)
                                                             <td class="border-t-2 border-b border-r border-gray-300 py-2 px-1.5 first:pl-6 text-sm @if(($column['align'] ?? 'left') === 'right' || in_array($column['type'] ?? 'text', ['currency', 'number'])) text-right @endif">
                                                                 @if (isset($summary[$column['field']]))
-                                                                    @if (($column['type'] ?? 'text') === 'currency')
-                                                                        {{ \Noerd\Helpers\CurrencyHelper::format((float) $summary[$column['field']]) }}
-                                                                    @else
-                                                                        {{ $summary[$column['field']] }}
-                                                                    @endif
+                                                                    {{-- The total is written like the cells above it; a plain
+                                                                         column summing numbers still reads in the reader's notation. --}}
+                                                                    @php
+                                                                        $summaryValue = $summary[$column['field']];
+                                                                        $summaryType = $column['type'] ?? 'text';
+                                                                        if (! in_array($summaryType, ['currency', 'number'], true) && is_numeric($summaryValue)) {
+                                                                            $summaryType = 'number';
+                                                                        }
+                                                                    @endphp
+                                                                    {{ \Noerd\Support\ListCellFormatter::format($summaryValue, array_merge($column, ['type' => $summaryType])) }}
                                                                 @endif
                                                             </td>
                                                         @endforeach

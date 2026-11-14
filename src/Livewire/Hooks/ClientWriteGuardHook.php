@@ -15,8 +15,10 @@ use Noerd\Traits\NoerdPage;
 
 /**
  * Keeps client updates away from the paths a noerd form does not let the user
- * edit (see ClientWritablePaths): `readonly: true` fields and the unbound keys
- * below a nested root such as `custom_attributes`.
+ * edit (see ClientWritablePaths): `readonly: true` fields, the unbound keys
+ * below a nested root such as `custom_attributes`, and every top-level key of
+ * a bound property (`detailData.tenant_id`, `detailData.id`) that no field and
+ * no additionalDetailFields() entry declares.
  *
  * The values are captured right after hydration — from the checksummed
  * snapshot, i.e. what the server rendered — and every protected path a client
@@ -38,6 +40,10 @@ final class ClientWriteGuardHook extends NoerdComponentHook
     /** @var array<string, array<mixed>> */
     private array $authentic = [];
 
+    private bool $guardsModelId = false;
+
+    private mixed $authenticModelId = null;
+
     public static function provide(): void
     {
         before('update', function (object $component, string $fullPath, mixed ...$rest): ?Closure {
@@ -50,6 +56,11 @@ final class ClientWriteGuardHook extends NoerdComponentHook
 
     public function hydrate(mixed $memo = null): void
     {
+        if (property_exists($this->component, 'modelId')) {
+            $this->guardsModelId = true;
+            $this->authenticModelId = $this->component->modelId;
+        }
+
         $paths = ClientWritablePaths::forComponent($this->component);
 
         foreach ($paths->properties() as $property) {
@@ -110,8 +121,35 @@ final class ClientWriteGuardHook extends NoerdComponentHook
         return $current;
     }
 
+    /**
+     * Restores one top-level key literally — a key may contain a dot, which
+     * Arr::set() would read as a path.
+     *
+     * @param  array<mixed>  $current
+     * @param  array<mixed>  $authentic
+     * @return array<mixed>
+     */
+    private static function restoreKey(array $current, array $authentic, string $key): array
+    {
+        if (array_key_exists($key, $authentic)) {
+            $current[$key] = $authentic[$key];
+        } else {
+            unset($current[$key]);
+        }
+
+        return $current;
+    }
+
     private function guard(string $fullPath): ?Closure
     {
+        if ($fullPath === 'modelId' && $this->guardsModelId) {
+            return function (): void {
+                if ((string) $this->component->modelId !== (string) $this->authenticModelId) {
+                    $this->component->modelId = $this->authenticModelId;
+                }
+            };
+        }
+
         if ($this->paths === null || $this->paths->allows($fullPath)) {
             return null;
         }
@@ -140,6 +178,14 @@ final class ClientWriteGuardHook extends NoerdComponentHook
             foreach ($this->paths->readonlyPaths($property) as $path) {
                 if (ClientWritablePaths::touches($fullPath, $property . '.' . $path)) {
                     $current = self::restorePath($current, $authentic, $path);
+                }
+            }
+
+            $declared = $this->paths->declaredKeysOf($property);
+            foreach (array_unique([...array_keys($current), ...array_keys($authentic)]) as $key) {
+                $key = (string) $key;
+                if (! in_array($key, $declared, true) && ClientWritablePaths::touches($fullPath, $property . '.' . $key)) {
+                    $current = self::restoreKey($current, $authentic, $key);
                 }
             }
 

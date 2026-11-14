@@ -4,7 +4,7 @@ defaultSort:
   direction: asc
 actions:
   - label: New Demo Category
-    route: demo-category.detail
+    modalRoute: demo.category.detail
 columns:
   - field: name
     label: Name

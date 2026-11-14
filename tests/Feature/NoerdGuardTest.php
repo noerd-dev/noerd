@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
@@ -222,5 +223,17 @@ describe('password broker', function (): void {
 
         expect($token)->toBeString()->not->toBeEmpty();
         expect(NoerdAuth::broker()->tokenExists($user, $token))->toBeTrue();
+    });
+});
+
+describe('NoerdAuth::user()', function (): void {
+    it('answers only a NoerdUser and null for any other account on the guard', function (): void {
+        $user = NoerdUser::factory()->create();
+
+        NoerdAuth::guard()->setUser($user);
+        expect(NoerdAuth::user())->toBe($user);
+
+        NoerdAuth::guard()->setUser(new GenericUser(['id' => $user->id]));
+        expect(NoerdAuth::user())->toBeNull();
     });
 });

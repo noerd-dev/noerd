@@ -18,6 +18,7 @@
     <x-noerd::detail.numbered-row :field="$field" :labelTop="true">
         <textarea
             wire:model="{{ $name . '.' . $selectedLang }}"
+            id="{{ $name }}"
             name="{{ $name }}"
             rows="{{ $rows }}"
             class="block w-full appearance-none rounded-none border border-sky-400 bg-sky-50/30 py-1.5 ps-2 pe-2 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 focus:border-dotted focus:border-sky-600 focus:ring-0 focus:outline-none sm:text-sm"

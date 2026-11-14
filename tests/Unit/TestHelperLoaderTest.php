@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Noerd\Tests\HelperLoader;
+use Noerd\Testing\HelperLoader;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);
@@ -36,14 +36,33 @@ it('resolves the helper file through the autoloader, not through a fixed path', 
         ->and(file_exists(dirname((string) $loaderFile) . '/helpers.php'))->toBeTrue();
 });
 
-it('keeps the helpers out of the production composer autoload', function (): void {
+it('keeps the helpers and the package suite out of the production composer autoload', function (): void {
     $composer = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/composer.json'), true);
 
     expect($composer['autoload']['files'] ?? [])->toBe([])
-        ->and($composer['autoload']['psr-4']['Noerd\Tests\\'] ?? null)->toBe('tests/');
+        ->and($composer['autoload']['psr-4'])->not->toHaveKey('Noerd\\Tests\\')
+        ->and($composer['autoload-dev']['psr-4']['Noerd\\Tests\\'] ?? null)->toBe('tests/');
+
+    foreach ($composer['autoload']['psr-4'] as $directory) {
+        expect(str_starts_with((string) $directory, 'tests'))->toBeFalse("tests/ must not be in the production autoload ({$directory})");
+    }
 });
 
-it('ships the loader and the helpers in dist archives', function (): void {
+it('ships the shipped test case free of the package-only fixture namespace', function (): void {
+    $testCase = (string) file_get_contents(dirname(__DIR__, 2) . '/src/Testing/TestCase.php');
+
+    expect($testCase)->not->toContain('noerd-test')
+        ->and($testCase)->not->toContain('/Feature/fixtures');
+});
+
+it('keeps the contributor guide out of dist archives', function (): void {
+    $attributes = (string) file_get_contents(dirname(__DIR__, 2) . '/.gitattributes');
+
+    expect($attributes)->toMatch('#^/AGENTS\.md\s+export-ignore$#m')
+        ->and($attributes)->toMatch('#^/CLAUDE\.md\s+export-ignore$#m');
+});
+
+it('ships the test API in dist archives and keeps the package suite out of them', function (): void {
     $lines = file(dirname(__DIR__, 2) . '/.gitattributes', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
 
     $ignored = [];
@@ -55,10 +74,29 @@ it('ships the loader and the helpers in dist archives', function (): void {
         $ignored[] = mb_ltrim((string) strtok($line, " \t"), '/');
     }
 
-    foreach (['tests/HelperLoader.php', 'tests/helpers.php', 'tests/TestCase.php'] as $path) {
+    $isIgnored = static function (string $path) use ($ignored): bool {
         foreach ($ignored as $pattern) {
-            expect($path === $pattern || str_starts_with($path, $pattern . '/'))
-                ->toBeFalse("{$path} must ship in dist archives, but is export-ignored by '{$pattern}'");
+            if ($path === $pattern || str_starts_with($path, $pattern . '/')) {
+                return true;
+            }
         }
+
+        return false;
+    };
+
+    $shipped = [
+        'src/Testing/HelperLoader.php',
+        'src/Testing/helpers.php',
+        'src/Testing/TestCase.php',
+        'src/Testing/ModuleTestCase.php',
+        'src/Testing/Concerns/CreatesSetupUser.php',
+    ];
+
+    foreach ($shipped as $path) {
+        expect(file_exists(dirname(__DIR__, 2) . '/' . $path))->toBeTrue("{$path} is missing")
+            ->and($isIgnored($path))->toBeFalse("{$path} must ship in dist archives, but is export-ignored");
     }
+
+    expect($isIgnored('tests/TestCase.php'))->toBeTrue('tests/ must be export-ignored as a whole')
+        ->and($isIgnored('tests/Feature/fixtures/components/theme-test.blade.php'))->toBeTrue();
 });

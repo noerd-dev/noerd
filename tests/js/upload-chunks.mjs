@@ -59,3 +59,61 @@ const order = noerdChunkUploads(files(25), 20, 0)
     .flat()
     .map((file) => file.name);
 assert.deepEqual(order, files(25).map((file) => file.name), 'the selection order survives');
+
+// The queue: errors and cancellations always end the upload, a second
+// selection during an upload is queued.
+const { noerdUploadQueue } = await import('../../resources/js/upload-chunks.js');
+
+{
+    const sent = [];
+    let release;
+    const states = [];
+    const queue = noerdUploadQueue({
+        maxFiles: 2,
+        maxBytes: 0,
+        send: (batch) => {
+            sent.push(batch.map((file) => file.name));
+            return sent.length === 1 ? new Promise((resolve) => { release = resolve; }) : Promise.resolve();
+        },
+        onChange: (state) => states.push(state),
+    });
+
+    const first = queue.add(files(2));
+    assert.equal(queue.state().uploading, true);
+
+    const second = queue.add([{ name: 'late.txt', size: 1 }]);
+    assert.equal(queue.state().totalCount, 3, 'a selection during an upload is counted');
+
+    release();
+    await Promise.all([first, second]);
+
+    assert.deepEqual(sent, [['file-0.txt', 'file-1.txt'], ['late.txt']], 'the late selection is uploaded, not dropped');
+    assert.equal(queue.state().uploading, false);
+}
+
+{
+    const queue = noerdUploadQueue({ maxFiles: 1, maxBytes: 0, send: () => Promise.reject('Upload failed') });
+    await queue.add(files(3));
+
+    assert.equal(queue.state().uploading, false, 'a failure unlocks the dropzone');
+    assert.equal(queue.state().error, 'Upload failed');
+}
+
+{
+    const sent = [];
+    const queue = noerdUploadQueue({
+        maxFiles: 1,
+        maxBytes: 0,
+        send: (batch) => { sent.push(batch); return Promise.reject(''); },
+    });
+    await queue.add(files(3));
+
+    assert.equal(queue.state().uploading, false, 'a cancellation unlocks the dropzone');
+    assert.equal(queue.state().error, '', 'a cancellation shows no error');
+    assert.equal(sent.length, 1, 'nothing more is sent after a cancellation');
+
+    // The dropzone takes the next selection again.
+    const retry = noerdUploadQueue({ maxFiles: 5, maxBytes: 0, send: () => Promise.resolve() });
+    await retry.add(files(2));
+    assert.equal(retry.state().error, '');
+}

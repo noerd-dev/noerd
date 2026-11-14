@@ -74,6 +74,24 @@ class ZzClientGuardHandBuiltDetail extends ZzClientGuardDetail
     }
 }
 
+/**
+ * A layout without any readonly field and without a nested root, and a
+ * hand-written store() that mass-assigns the whole form like many module
+ * details do — the update channel alone has to keep undeclared keys out.
+ */
+class ZzClientGuardPlainDetail extends ZzClientGuardDetail
+{
+    public function store(): void
+    {
+        ZzGuardRecord::query()->updateOrCreate(['id' => $this->modelId], $this->detailData);
+    }
+
+    protected function componentName(): string
+    {
+        return 'zz-client-guard-plain-detail';
+    }
+}
+
 class ZzClientGuardPage extends Component
 {
     use NoerdDetail;
@@ -114,6 +132,15 @@ beforeEach(function (): void {
     Livewire::component('zz-client-guard-detail', ZzClientGuardDetail::class);
     Livewire::component('zz-client-guard-hand-built-detail', ZzClientGuardHandBuiltDetail::class);
     Livewire::component('zz-client-guard-page', ZzClientGuardPage::class);
+    Livewire::component('zz-client-guard-plain-detail', ZzClientGuardPlainDetail::class);
+
+    File::put(base_path('app-configs/setup/details/zz-client-guard-plain-detail.yml'), implode("\n", [
+        'title: Zz Client Guard Plain',
+        'fields:',
+        '  - name: detailData.name',
+        '    label: Name',
+        '    type: text',
+    ]));
     Livewire::component('zz-client-guard-declared-page', ZzClientGuardDeclaredPage::class);
 
     File::put(base_path('app-configs/setup/details/zz-client-guard-detail.yml'), implode("\n", [
@@ -138,6 +165,7 @@ beforeEach(function (): void {
 
 afterEach(function (): void {
     File::delete(base_path('app-configs/setup/details/zz-client-guard-detail.yml'));
+    File::delete(base_path('app-configs/setup/details/zz-client-guard-plain-detail.yml'));
 });
 
 function zzGuardRecord(): ZzGuardRecord
@@ -243,6 +271,85 @@ describe('nested roots', function (): void {
     });
 });
 
+describe('undeclared keys', function (): void {
+    it('discards a client update of a key no field declares, also without readonly fields or nested roots', function (): void {
+        $record = zzGuardRecord();
+
+        Livewire::test('zz-client-guard-plain-detail', ['modelId' => $record->id])
+            ->set('detailData.notes', 'INJECTED')
+            ->set('detailData.code', 'INJECTED')
+            ->set('detailData.id', 999)
+            ->assertSet('detailData.notes', 'internal')
+            ->assertSet('detailData.id', $record->id)
+            ->set('detailData.name', 'Renamed')
+            ->call('store');
+
+        expect($record->refresh()->notes)->toBe('internal')
+            ->and($record->code)->toBe('C-1')
+            ->and($record->name)->toBe('Renamed')
+            ->and(ZzGuardRecord::query()->count())->toBe(1);
+    });
+
+    it('drops a key the client adds that the record never had', function (): void {
+        $record = zzGuardRecord();
+
+        Livewire::test('zz-client-guard-plain-detail', ['modelId' => $record->id])
+            ->set('detailData.tenant_id', 2)
+            ->assertSet('detailData.tenant_id', null);
+    });
+
+    it('keeps only the declared keys of a replaced form', function (): void {
+        $record = zzGuardRecord();
+
+        $component = Livewire::test('zz-client-guard-plain-detail', ['modelId' => $record->id]);
+
+        $component->set('detailData', [...$component->get('detailData'), 'notes' => 'INJECTED', 'added' => 'x', 'name' => 'Renamed'])
+            ->call('store');
+
+        expect($record->refresh()->notes)->toBe('internal')
+            ->and($record->name)->toBe('Renamed')
+            ->and($component->get('detailData'))->not->toHaveKey('added');
+    });
+
+    it('ignores a client-dispatched setFieldValue on an undeclared key', function (): void {
+        $record = zzGuardRecord();
+
+        Livewire::test('zz-client-guard-plain-detail', ['modelId' => $record->id])
+            ->dispatch('setFieldValue', field: 'detailData.notes', value: 'INJECTED')
+            ->assertSet('detailData.notes', 'internal')
+            ->dispatch('setFieldValue', field: 'detailData.name', value: 'Renamed')
+            ->assertSet('detailData.name', 'Renamed');
+    });
+});
+
+describe('the record of the form', function (): void {
+    it('puts back a client update repointing modelId, so store() never writes one record\'s form onto another', function (): void {
+        $first = zzGuardRecord();
+        $second = ZzGuardRecord::query()->create(['name' => 'Second', 'code' => 'C-2']);
+
+        Livewire::test('zz-client-guard-detail', ['modelId' => $first->id])
+            ->set('modelId', $second->id)
+            ->assertSet('modelId', $first->id)
+            ->set('detailData.name', 'Renamed')
+            ->call('store');
+
+        expect($second->refresh()->name)->toBe('Second')
+            ->and($second->code)->toBe('C-2')
+            ->and($first->refresh()->name)->toBe('Renamed');
+    });
+
+    it('keeps a client update that names the same record', function (): void {
+        $record = zzGuardRecord();
+
+        Livewire::test('zz-client-guard-detail', ['modelId' => $record->id])
+            ->set('modelId', (string) $record->id)
+            ->set('detailData.name', 'Renamed')
+            ->call('store');
+
+        expect($record->refresh()->name)->toBe('Renamed');
+    });
+});
+
 describe('components without a field layout', function (): void {
     it('persists nothing when a hand-built page declares no field', function (): void {
         $record = zzGuardRecord();
@@ -284,6 +391,9 @@ describe('ClientWritablePaths', function (): void {
             ->and($paths->allows('detailData.title.de'))->toBeTrue()
             ->and($paths->allows('detailData.code'))->toBeFalse()
             ->and($paths->allows('detailData'))->toBeFalse()
+            ->and($paths->allows('detailData.tenant_id'))->toBeFalse()
+            ->and($paths->allows('relationTitles.customer_id'))->toBeTrue()
+            ->and($paths->declaredKeysOf('detailData'))->toEqualCanonicalizing(['name', 'code', 'custom_attributes', 'title'])
             ->and($paths->allows('detailData.custom_attributes.sap'))->toBeTrue()
             ->and($paths->allows('detailData.custom_attributes.other'))->toBeFalse()
             ->and($paths->allows('detailData.custom_attributes'))->toBeFalse()
@@ -300,3 +410,65 @@ describe('ClientWritablePaths', function (): void {
         expect($paths->allows('detailData.code'))->toBeTrue();
     });
 });
+
+describe('text-only fields', function (): void {
+    beforeEach(function (): void {
+        File::put(base_path('app-configs/setup/details/zz-client-guard-display-detail.yml'), implode("\n", [
+            'title: Zz Client Guard Display',
+            'fields:',
+            '  - name: detailData.name',
+            '    label: Name',
+            '    type: text',
+            '  - name: detailData.notes',
+            '    label: Notes',
+            '    type: text',
+            '    theme: display',
+            '  - type: block',
+            '    theme: display',
+            '    fields:',
+            '      - name: detailData.code',
+            '        label: Code',
+            '        type: text',
+        ]));
+
+        Livewire::component('zz-client-guard-display-detail', ZzClientGuardDisplayDetail::class);
+    });
+
+    afterEach(function (): void {
+        File::delete(base_path('app-configs/setup/details/zz-client-guard-display-detail.yml'));
+    });
+
+    it('discards a client update of a field rendered as text, on the field or through its block', function (): void {
+        $record = zzGuardRecord();
+
+        Livewire::test('zz-client-guard-display-detail', ['modelId' => $record->id])
+            ->set('detailData.notes', 'INJECTED')
+            ->set('detailData.code', 'INJECTED')
+            ->assertSet('detailData.notes', 'internal')
+            ->assertSet('detailData.code', 'C-1')
+            ->set('detailData.name', 'Renamed')
+            ->call('store');
+
+        expect($record->refresh()->notes)->toBe('internal')
+            ->and($record->code)->toBe('C-1')
+            ->and($record->name)->toBe('Renamed');
+    });
+
+    it('treats every field of a text-only layout as read-only', function (): void {
+        $paths = ClientWritablePaths::fromLayout(
+            [['name' => 'detailData.name', 'type' => 'text'], ['name' => 'detailData.code', 'type' => 'text', 'theme' => 'default']],
+            layoutTheme: 'display',
+        );
+
+        expect($paths->allows('detailData.name'))->toBeFalse()
+            ->and($paths->allows('detailData.code'))->toBeTrue();
+    });
+});
+
+class ZzClientGuardDisplayDetail extends ZzClientGuardDetail
+{
+    protected function componentName(): string
+    {
+        return 'zz-client-guard-display-detail';
+    }
+}

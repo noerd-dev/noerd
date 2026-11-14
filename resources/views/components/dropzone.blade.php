@@ -158,11 +158,12 @@ new class extends Component {
 }; ?>
 
 {{-- The Alpine scope wraps the whole component: the dropzone area, the upload
-     error and the file list all read its state. --}}
+     error and the file list all read its state. Livewire reports a failed
+     upload without any detail, so there is one message for every failure; a
+     selection dropped while an upload runs is queued behind it. --}}
 <div class="w-full"
      x-data="noerdDropzone({ maxFiles: {{ $this->uploadChunk['files'] }}, maxBytes: {{ $this->uploadChunk['bytes'] }} })"
-     data-upload-refused="{{ __('The server refused the upload. Try fewer or smaller files.') }}"
-     data-upload-failed="{{ __('Upload failed. Please try again.') }}"
+     data-upload-failed="{{ __('The upload failed. Please try again, or select fewer or smaller files.') }}"
      data-upload-progress="{{ __('Uploading :done of :total...') }}">
     {{-- Dropzone Area --}}
     <div

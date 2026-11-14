@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Noerd\Models\SetupLanguage;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Support\Impersonation;
 
 new class extends Component {
     public string $locale = '';
@@ -22,6 +23,10 @@ new class extends Component {
 
     public function updateLanguage(): void
     {
+        // The person's own setting: never changed by an administrator signed
+        // in as them (see Impersonation).
+        abort_if(Impersonation::active(), 403);
+
         $activeCodes = implode(',', SetupLanguage::activeCodes());
 
         $validated = $this->validate([

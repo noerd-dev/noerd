@@ -6,12 +6,14 @@ namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 use function Laravel\Prompts\select;
 
 use Noerd\Models\TenantApp;
+use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\ListColumnIntrospection;
 use Noerd\Support\ModulesPath;
 use Symfony\Component\Yaml\Yaml;
@@ -26,25 +28,33 @@ trait GeneratesResourceFiles
         'deleted_at',
     ];
 
+    /**
+     * DB column types the list map (ListColumnIntrospection::COLUMN_TYPE_MAP)
+     * shows as text but the detail form edits differently. Every other type is
+     * derived from the list map through LIST_TO_DETAIL_TYPE, so a DB type the
+     * list knows as a number is a number field as well.
+     */
     protected const TYPE_MAP_DETAIL = [
-        'varchar' => 'text',
-        'string' => 'text',
-        'char' => 'text',
         'text' => 'textarea',
         'longtext' => 'textarea',
         'mediumtext' => 'textarea',
-        'tinyint' => 'checkbox',
-        'boolean' => 'checkbox',
-        'integer' => 'number',
-        'bigint' => 'number',
-        'smallint' => 'number',
-        'decimal' => 'number',
-        'float' => 'number',
-        'double' => 'number',
-        'date' => 'date',
-        'datetime' => 'datetime',
-        'timestamp' => 'datetime',
         'json' => 'textarea',
+    ];
+
+    /**
+     * DB column types the generated detail form leaves out (generateDetailYaml()):
+     * a JSON document is no form field (custom_attributes, settings arrays) — a
+     * hand-written field edits it.
+     */
+    protected const DETAIL_SKIPPED_TYPES = ['json', 'jsonb'];
+
+    /** List column type → detail field type. */
+    protected const LIST_TO_DETAIL_TYPE = [
+        'bool' => 'checkbox',
+        'number' => 'number',
+        'date' => 'date',
+        'datetime' => 'datetime-local',
+        'time' => 'time',
     ];
 
     protected const MAX_LIST_COLUMNS = 8;
@@ -402,7 +412,8 @@ trait GeneratesResourceFiles
         $lines[] = 'actions:';
         $lines[] = "  - label: New {$entityHeadline}";
         if ($this->detailRouteName !== null) {
-            $lines[] = "    route: {$this->detailRouteName}";
+            $lines[] = "    modalRoute: {$this->detailRouteName}";
+            $lines[] = "    modalComponent: {$this->componentPrefix}{$this->entity}-detail";
         } else {
             $lines[] = '    action: listAction';
         }
@@ -442,15 +453,23 @@ trait GeneratesResourceFiles
 
         foreach ($this->columns as $col) {
             $field = $col['name'];
-            $type = $this->getDetailType($col['type_name']);
-            $label = Str::headline($field);
+
+            if ($this->isJsonColumn($col)) {
+                continue;
+            }
+
+            // A foreign key becomes the relation field registered for it (customer_id → customerRelation).
+            $relationType = app(RelationFieldRegistry::class)->typeForColumn($field);
+            $type = $relationType ?? $this->getDetailType($col['type_name']);
+            $label = Str::headline($relationType !== null ? Str::beforeLast($field, '_id') : $field);
 
             $lines[] = "  - name: detailData.{$field}";
             $lines[] = "    label: {$label}";
             $lines[] = "    type: {$type}";
             $lines[] = '    colspan: 6';
 
-            if (! $col['nullable']) {
+            // Required only where the database has no answer of its own: NOT NULL without a default.
+            if (! $col['nullable'] && ($col['default'] ?? null) === null && ! ($col['auto_increment'] ?? false)) {
                 $lines[] = '    required: true';
             }
         }
@@ -598,7 +617,8 @@ trait GeneratesResourceFiles
     {
         $detailRouteName = "{$this->appConfigName}.{$this->entity}.detail";
 
-        if (! str_contains($this->routeFileContent(), "'{$detailRouteName}'")) {
+        // Declared in the app's route file, or registered elsewhere (a hand-written route file).
+        if (! str_contains($this->routeFileContent(), "'{$detailRouteName}'") && ! Route::has($detailRouteName)) {
             return false;
         }
 
@@ -691,12 +711,12 @@ trait GeneratesResourceFiles
         ];
 
         if (! $useSingularRoute) {
-            // newRoute wins when registered, newComponent stays as the fallback.
+            // newModalRoute wins when registered, newModalComponent stays as the fallback.
             if ($this->detailRouteName !== null) {
-                $entry['newRoute'] = $this->detailRouteName;
+                $entry['newModalRoute'] = $this->detailRouteName;
             }
 
-            $entry['newComponent'] = "{$this->componentPrefix}{$this->entity}-detail";
+            $entry['newModalComponent'] = "{$this->componentPrefix}{$this->entity}-detail";
         }
 
         $preview = Yaml::dump([$entry], 10, 2, Yaml::DUMP_COMPACT_NESTED_MAPPING);
@@ -742,11 +762,44 @@ trait GeneratesResourceFiles
         }
     }
 
+    /**
+     * Whether a column holds a JSON document: the DB type says so (MySQL,
+     * PostgreSQL), or — where the DB stores JSON as text (SQLite) — the model
+     * casts it to an array, object or collection.
+     *
+     * @param  array{name: string, type_name: string}  $column
+     */
+    protected function isJsonColumn(array $column): bool
+    {
+        if (in_array($this->normalizeDbType($column['type_name']), self::DETAIL_SKIPPED_TYPES, true)) {
+            return true;
+        }
+
+        if (! isset($this->modelClass) || ! class_exists($this->modelClass)) {
+            return false;
+        }
+
+        $cast = mb_strtolower((string) ((new $this->modelClass())->getCasts()[$column['name']] ?? ''));
+
+        return in_array($cast, ['array', 'json', 'object', 'collection', 'encrypted:array', 'encrypted:json', 'encrypted:object', 'encrypted:collection'], true)
+            || str_contains($cast, 'asarrayobject') || str_contains($cast, 'ascollection');
+    }
+
+    /** The DB type without its length/precision (`varchar(255)` → `varchar`), lowercase. */
+    protected function normalizeDbType(string $dbType): string
+    {
+        return mb_strtolower((string) preg_replace('/\(.*\)/', '', $dbType));
+    }
+
     protected function getDetailType(string $dbType): string
     {
-        $normalized = mb_strtolower(preg_replace('/\(.*\)/', '', $dbType));
+        $normalized = $this->normalizeDbType($dbType);
 
-        return self::TYPE_MAP_DETAIL[$normalized] ?? 'text';
+        if (isset(self::TYPE_MAP_DETAIL[$normalized])) {
+            return self::TYPE_MAP_DETAIL[$normalized];
+        }
+
+        return self::LIST_TO_DETAIL_TYPE[ListColumnIntrospection::columnType($normalized) ?? ''] ?? 'text';
     }
 
     protected function getListType(string $dbType): ?string
@@ -765,7 +818,7 @@ trait GeneratesResourceFiles
         return match ($yamlType) {
             'bool' => 5,
             'number' => 8,
-            'date', 'datetime' => 10,
+            'date', 'datetime', 'time' => 10,
             default => 15,
         };
     }

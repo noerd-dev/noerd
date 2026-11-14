@@ -60,7 +60,7 @@ describe('Relation field selection context', function (): void {
     it('scopes the picker context and the parent sync to the owning detail', function () use ($props): void {
         $component = Livewire::test('noerd::noerd-relation-field', $props + ['value' => 7, 'owner' => 'owner-a']);
 
-        expect($component->instance()->selectionContext())->toBe('detailData.guard_id@owner-a');
+        expect(\Livewire\invade($component->instance())->selectionContext())->toBe('detailData.guard_id@owner-a');
 
         // A selection made for the same field on ANOTHER detail is not adopted.
         $component->dispatch('noerdRelationSelected', value: 42, context: 'detailData.guard_id@owner-b')

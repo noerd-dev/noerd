@@ -345,8 +345,7 @@ it('does not send password reset link when updating existing user', function () 
     $this->actingAs($admin);
 
     // Update existing user via component
-    Livewire::test($testSettings['componentName'], [$existingUser])
-        ->set('modelId', $existingUser->id)
+    Livewire::test($testSettings['componentName'], ['modelId' => $existingUser->id])
         ->set('detailData.name', 'Updated Name')
         ->set('detailData.email', 'updated@example.com')
         ->set("possibleTenants.{$tenant->id}.hasAccess", true)
@@ -482,4 +481,54 @@ it('rejects a language or locale that is not offered for a new user', function (
         ->assertHasErrors(['userLocale', 'userFormatLocale']);
 
     expect(NoerdUser::count())->toBe(1);
+});
+
+it('keeps the last administrator of a tenant, also against demoting oneself', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+
+    $this->actingAs($admin);
+
+    Livewire::test($testSettings['componentName'], ['modelId' => $admin->id])
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
+        ->call('store')
+        ->assertHasErrors("possibleTenants.{$tenant->id}.selectedProfile");
+
+    expect($tenant->users()->whereKey($admin->id)->first()->pivot->profile_key)->toBe(Profile::Admin->value);
+
+    // With a second administrator the demotion is fine.
+    $second = NoerdUser::factory()->create();
+    $tenant->addMember($second, Profile::Admin->value);
+
+    Livewire::test($testSettings['componentName'], ['modelId' => $admin->id])
+        ->set("possibleTenants.{$tenant->id}.selectedProfile", Profile::User->value)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    expect($tenant->users()->whereKey($admin->id)->first()->pivot->profile_key)->toBe(Profile::User->value);
+});
+
+it('only counts the tenants the administrator may assign and sends only id, name and access to the browser', function () use ($testSettings): void {
+    $admin = NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create();
+    $tenant = $admin->tenants->first();
+    $foreign = Tenant::factory()->create();
+
+    $this->actingAs($admin);
+
+    $component = Livewire::test($testSettings['componentName']);
+
+    expect(array_keys($component->get("possibleTenants.{$tenant->id}")))
+        ->toEqualCanonicalizing(['id', 'name', 'selectedProfile', 'hasAccess']);
+
+    $countBefore = NoerdUser::query()->count();
+
+    $component->set('detailData.name', 'Ghost')
+        ->set('detailData.email', 'ghost@example.test')
+        ->set("possibleTenants.{$tenant->id}.hasAccess", false)
+        ->set("possibleTenants.{$foreign->id}", ['id' => $foreign->id, 'name' => 'Foreign', 'hasAccess' => true, 'selectedProfile' => Profile::Admin->value])
+        ->call('store')
+        ->assertHasErrors('tenantAccess');
+
+    expect(NoerdUser::query()->count())->toBe($countBefore)
+        ->and($foreign->users()->count())->toBe(0);
 });

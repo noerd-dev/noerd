@@ -71,8 +71,20 @@ class MakeModuleCommand extends Command
             required: true,
         );
 
-        $this->moduleName = Str::kebab($name);
-        $this->moduleNameStudly = Str::studly($name);
+        // The same naming scheme as noerd:make-app: words joined by hyphens,
+        // lowercase here (the module key), uppercase as the tenant-app key.
+        // An all-uppercase name (CRM, MY_APP) is lowercased, not kebab-split letter by letter.
+        $name = mb_trim((string) $name);
+        $kebab = preg_match('/[a-z]/', $name) === 1 ? Str::kebab($name) : mb_strtolower($name);
+        $this->moduleName = mb_trim((string) preg_replace('/[\s_-]+/', '-', $kebab), '-');
+
+        if (! preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/', $this->moduleName)) {
+            $this->error("Invalid module name '{$name}': start with a letter and use letters, digits and hyphens only (e.g. inventory, business-hours, shop2).");
+
+            return self::FAILURE;
+        }
+
+        $this->moduleNameStudly = Str::studly($this->moduleName);
         $this->basePath = ModulesPath::absolute($this->moduleName);
 
         // The tenant app the install command registers: title and heroicon. A module

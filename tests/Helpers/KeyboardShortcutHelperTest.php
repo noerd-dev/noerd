@@ -13,7 +13,7 @@ it('returns correct JS and badge for simple key shortcut', function (): void {
     $result = KeyboardShortcutHelper::parse('search_focus', 's');
 
     expect($result)->toHaveKeys(['js', 'badge'])
-        ->and($result['js'])->toContain('e.key.toLowerCase() === "s"')
+        ->and($result['js'])->toContain('.toLowerCase() === "s"')
         ->and($result['js'])->toContain('INPUT')
         ->and($result['badge'])->toBe('s');
 });
@@ -23,7 +23,7 @@ it('returns correct JS and badge for modifier key shortcut', function (): void {
 
     $result = KeyboardShortcutHelper::parse('save', 'ctrl+enter');
 
-    expect($result['js'])->toContain('e.key.toLowerCase() === "enter"')
+    expect($result['js'])->toContain('.toLowerCase() === "enter"')
         ->and($result['js'])->toContain('e.ctrlKey || e.metaKey')
         ->and($result['js'])->not->toContain('INPUT');
 });
@@ -47,7 +47,7 @@ it('generates a JS expression guarding against input elements', function (): voi
 
     $js = KeyboardShortcutHelper::parse('new_entry', 'n')['js'];
 
-    expect($js)->toContain('e.key.toLowerCase() === "n"')
+    expect($js)->toContain('.toLowerCase() === "n"')
         ->and($js)->toContain('INPUT');
 });
 

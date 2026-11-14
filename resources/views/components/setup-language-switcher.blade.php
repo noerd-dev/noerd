@@ -42,13 +42,22 @@ new class extends Component
         <div class="ml-auto mr-6 my-auto pl-4">
             <div class="ml-auto flex">
                 @foreach($languages as $language)
-                    <a @class([
-                        'cursor-pointer ml-2',
-                        'text-black underline' => SetupLanguage::selectedCode() === $language['code'],
-                        'text-gray-500' => SetupLanguage::selectedCode() !== $language['code'],
-                    ]) wire:click="setLanguage({{ \Illuminate\Support\Js::from((string) $language['code']) }})">
+                    @php
+                        $isSelectedLanguage = SetupLanguage::selectedCode() === $language['code'];
+                    @endphp
+                    <button
+                        type="button"
+                        @class([
+                            'cursor-pointer ml-2 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-border',
+                            'text-black underline' => $isSelectedLanguage,
+                            'text-gray-500' => ! $isSelectedLanguage,
+                        ])
+                        aria-pressed="{{ $isSelectedLanguage ? 'true' : 'false' }}"
+                        aria-label="{{ $language['name'] ?? mb_strtoupper($language['code']) }}"
+                        wire:click="setLanguage({{ \Illuminate\Support\Js::from((string) $language['code']) }})"
+                    >
                         {{ mb_strtoupper($language['code']) }}
-                    </a>
+                    </button>
                 @endforeach
             </div>
         </div>

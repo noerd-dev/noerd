@@ -4,6 +4,7 @@ use Livewire\Component;
 use Noerd\Helpers\FormatHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Support\Locales;
+use Noerd\Support\Impersonation;
 
 new class extends Component {
     public string $formatLocale = '';
@@ -24,6 +25,10 @@ new class extends Component {
 
     public function updateLocale(): void
     {
+        // The person's own setting: never changed by an administrator signed
+        // in as them (see Impersonation).
+        abort_if(Impersonation::active(), 403);
+
         $validated = $this->validate([
             'formatLocale' => ['required', 'string', 'in:' . implode(',', Locales::SUPPORTED)],
         ]);

@@ -63,10 +63,17 @@ it('keeps the page layout loaded when the object read gate denies', function ():
         ->assertSee('noerd::zz-read-blocked-detail');
 });
 
-it('keeps the page layout loaded when the record id no longer resolves', function (): void {
+it('keeps the page layout loaded and closes the modal when the record id no longer resolves inside the modal stack', function (): void {
     Livewire::test('zz-read-blocked-page', ['modelId' => 999999])
         ->assertSet('modelId', null)
+        ->assertDispatched('closeTopModal')
         ->assertSee('noerd::zz-read-blocked-detail');
+});
+
+it('answers 404 instead of an empty form when the page route names an id that no longer resolves', function (): void {
+    registerTestLivewireRoute('zz-read-blocked-page/{modelId}', 'zz-read-blocked-page', 'zz.read-blocked-page');
+
+    $this->get('/zz-read-blocked-page/999999')->assertNotFound();
 });
 
 it('loads the record and the page layout when reading is allowed', function (): void {

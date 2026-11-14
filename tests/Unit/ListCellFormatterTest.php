@@ -251,12 +251,12 @@ describe('array-shaped and relation cell types', function (): void {
             ->and(ListCellFormatter::badgeWithText('Unassigned'))->toBe(['badge' => '', 'variant' => 'primary', 'text' => 'Unassigned']);
     });
 
-    it('renders inverseBool as Yes or nothing', function (): void {
+    it('renders boolCheck as Yes or nothing', function (): void {
         zzCellFormatterUser();
 
-        expect(ListCellFormatter::format(1, ['type' => 'inverseBool']))->toBe(__('Yes'))
-            ->and(ListCellFormatter::format(0, ['type' => 'inverseBool']))->toBe('')
-            ->and(ListCellFormatter::format(null, ['type' => 'inverseBool']))->toBe('');
+        expect(ListCellFormatter::format(1, ['type' => 'boolCheck']))->toBe(__('Yes'))
+            ->and(ListCellFormatter::format(0, ['type' => 'boolCheck']))->toBe('')
+            ->and(ListCellFormatter::format(null, ['type' => 'boolCheck']))->toBe('');
     });
 
     it('writes a time cell in the reader locale', function (): void {
@@ -267,8 +267,10 @@ describe('array-shaped and relation cell types', function (): void {
     });
 
     it('resolves a relationBadge value to the title of the related record', function (): void {
-        zzCellFormatterUser();
+        $user = zzCellFormatterUser();
         $related = Tenant::factory()->create(['name' => 'Zz Related Tenant']);
+        // A tenant title is only shown to a member of that tenant.
+        $user->tenants()->attach($related->id);
 
         expect(ListCellFormatter::format($related->id, ['type' => 'relationBadge', 'field' => 'tenant_id']))->toBe('Zz Related Tenant')
             ->and(ListCellFormatter::format(null, ['type' => 'relationBadge', 'field' => 'tenant_id']))->toBe('')

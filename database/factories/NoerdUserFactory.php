@@ -13,6 +13,9 @@ use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 
+/**
+ * @extends Factory<NoerdUser>
+ */
 class NoerdUserFactory extends Factory
 {
     protected $model = NoerdUser::class;
@@ -52,8 +55,9 @@ class NoerdUserFactory extends Factory
     }
 
     /**
-     * Attaches a fresh tenant AND selects it in the tenant session — the state
-     * a screen test needs. Note the session mutation: it changes the request
+     * Attaches a fresh tenant AND selects it — persisted as the user's
+     * selected_tenant_id and in the tenant session — the state a screen test
+     * needs. Note the session mutation: it changes the request
      * scope for everything that follows in the test.
      */
     public function withExampleTenant(): static
@@ -62,6 +66,7 @@ class NoerdUserFactory extends Factory
             $tenant = Tenant::factory()->create();
 
             $user->tenants()->attach($tenant->id);
+            $user->selected_tenant_id = $tenant->id;
             TenantHelper::setSelectedTenantId($tenant->id);
         });
     }
@@ -78,6 +83,7 @@ class NoerdUserFactory extends Factory
             // Create admin profile for the tenant
 
             $user->tenants()->attach($tenant->id, ['profile_key' => Profile::Admin->value]);
+            $user->selected_tenant_id = $tenant->id;
             TenantHelper::setSelectedTenantId($tenant->id);
         });
     }

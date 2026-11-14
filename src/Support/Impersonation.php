@@ -87,7 +87,14 @@ final class Impersonation
 
         self::forget();
 
-        self::signIn($impersonatorId, $tenantId);
+        // The administrator's account may be gone (deleted while the
+        // impersonation ran). Then nobody may stay signed in — least of all the
+        // impersonated account — so the session ends instead.
+        if (! self::signIn($impersonatorId, $tenantId)) {
+            NoerdAuth::guard()->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+        }
     }
 
     public static function active(): bool
@@ -127,13 +134,19 @@ final class Impersonation
         session()->forget([self::SESSION_KEY, self::TENANT_KEY, self::TARGET_KEY]);
     }
 
-    private static function signIn(int $userId, ?int $tenantId): void
+    /**
+     * Sign the account in. False when no account carries the id — the guard is
+     * left untouched then.
+     */
+    private static function signIn(int $userId, ?int $tenantId): bool
     {
         // Clear the tenant session (and the selected app), so the account that
         // is signing in starts from a clean state.
         TenantHelper::clear();
 
-        NoerdAuth::guard()->loginUsingId($userId);
+        if (NoerdAuth::guard()->loginUsingId($userId) === false) {
+            return false;
+        }
 
         $user = NoerdAuth::user();
 
@@ -143,5 +156,7 @@ final class Impersonation
         if ($tenantId !== null && $user instanceof NoerdUser && $user->canAccessTenant($tenantId)) {
             TenantHelper::setSelectedTenantId($tenantId);
         }
+
+        return true;
     }
 }

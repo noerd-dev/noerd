@@ -45,7 +45,7 @@ it('falls back to the component tab when the modalRoute is not registered', func
         [
             'label' => 'Related Record',
             'modalRoute' => 'zz.tab.route.that.does.not.exist',
-            'component' => 'zz::record-detail',
+            'modalComponent' => 'zz::record-detail',
         ],
     ], 5);
 
@@ -77,7 +77,7 @@ it('opens a component tab as a modal with the record id resolved', function (): 
     $html = renderLayoutTabs([
         [
             'label' => 'Related Records',
-            'component' => 'zz::records-list',
+            'modalComponent' => 'zz::records-list',
             'arguments' => ['recordType' => 'Zz\\Models\\Record', 'modelId' => '$modelId'],
         ],
     ], 42);
@@ -103,7 +103,7 @@ it('gives every tab variant the same content height so the underlines share the 
     $html = renderLayoutTabs([
         ['label' => 'General', 'number' => 1],
         ['label' => 'Overview', 'route' => 'zz.tab.page'],
-        ['label' => 'Related Records', 'component' => 'zz::records-list'],
+        ['label' => 'Related Records', 'modalComponent' => 'zz::records-list'],
     ], 42);
 
     preg_match_all('/<span class="(group inline-flex[^"]*)"/', $html, $matches);
@@ -115,7 +115,7 @@ it('gives every tab variant the same content height so the underlines share the 
 
 it('marks tabs that open their own modal with an icon', function (): void {
     $modalTabs = renderLayoutTabs([
-        ['label' => 'Related Records', 'component' => 'zz::records-list'],
+        ['label' => 'Related Records', 'modalComponent' => 'zz::records-list'],
         ['label' => 'Related Record', 'modalRoute' => 'zz.tab.record', 'arguments' => ['modelId' => '$modelId']],
     ], 42);
 
@@ -150,7 +150,7 @@ it('marks a modal tab with the stack icon only and no external-link affordance',
 it('hides a requiresId tab until the record is saved', function (): void {
     $tab = [
         'label' => 'Related Records',
-        'component' => 'zz::records-list',
+        'modalComponent' => 'zz::records-list',
         'requiresId' => true,
     ];
 
@@ -162,7 +162,7 @@ it('hides a tab whose viewExists view is not registered', function (): void {
     $html = renderLayoutTabs([
         [
             'label' => 'Related Records',
-            'component' => 'zz::records-list',
+            'modalComponent' => 'zz::records-list',
             'viewExists' => 'zz::components.records-list',
         ],
     ], 42);
@@ -172,7 +172,7 @@ it('hides a tab whose viewExists view is not registered', function (): void {
     $registered = renderLayoutTabs([
         [
             'label' => 'Users',
-            'component' => 'noerd::noerd-users-list',
+            'modalComponent' => 'noerd::noerd-users-list',
             'viewExists' => 'noerd::components.noerd-users-list',
         ],
     ], 42);
@@ -192,4 +192,21 @@ it('renders no panel for a link tab without a number', function (): void {
 
     expect($html)->toContain('Record')
         ->toContain('Overview');
+});
+
+it('keeps a numbered tab an inline panel even when it names a component of its own', function (): void {
+    // A module may render a component into a numbered tab's panel itself; the
+    // tab bar switches to that panel instead of opening the component as a modal.
+    $html = renderLayoutTabs([
+        ['label' => 'Availability', 'number' => 2, 'component' => 'zz::availability'],
+    ], 42);
+
+    expect($html)->toContain('currentTab = 2')
+        ->not->toContain('$modal(')
+        ->not->toContain('data-modal-tab-icon');
+});
+
+it('renders nothing for a tab that names neither a target nor a number', function (): void {
+    expect(renderLayoutTabs([['label' => 'Earlier Vocabulary', 'component' => 'zz::records-list']], 42))
+        ->not->toContain('Earlier Vocabulary');
 });

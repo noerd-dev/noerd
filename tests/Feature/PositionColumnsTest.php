@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Noerd\Contracts\DefinesPositionColumns;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Support\Positions\PositionColumn;
@@ -343,6 +345,64 @@ describe('NoerdPositionRow + positions.cells', function (): void {
             ->and((float) $fresh->total)->toBe(19.0);
     });
 
+    it('keeps the record out of the public state and locks its class and key', function (): void {
+        $row = ($this->mountRow)();
+
+        expect($row->instance()->all())->not->toHaveKey('position')
+            ->and($row->get('positionId'))->toBe($this->position->id)
+            ->and($row->get('positionClass'))->toBe(ZzPosition::class);
+
+        expect(fn() => $row->set('positionId', 999))->toThrow(CannotUpdateLockedPropertyException::class)
+            ->and(fn() => $row->set('positionClass', NoerdUser::class))->toThrow(CannotUpdateLockedPropertyException::class);
+    });
+
+    it('mounts by key with the model class and still reaches the record as $this->position', function (): void {
+        Livewire::test('noerd-test::position-columns-row-test', [
+            'modelClass' => ZzPosition::class,
+            'positionId' => $this->position->id,
+            'columns' => $this->columns,
+            'byKey' => true,
+        ])
+            ->assertSet('row.comment', 'ring twice')
+            ->set('row.comment', 'by key')
+            ->call('store');
+
+        expect($this->position->fresh()->comment)->toBe('by key');
+    });
+
+    it('writes nothing once the record of the row is gone', function (): void {
+        $row = ($this->mountRow)();
+
+        ZzPosition::query()->whereKey($this->position->id)->delete();
+
+        $row->set('row.comment', 'ghost')->call('store')->assertHasNoErrors();
+        $row->call('delete')->assertNotDispatched('positionDeleted');
+
+        expect(ZzPosition::query()->count())->toBe(0);
+    });
+
+    it('refuses store and delete without the write permission of the position model', function (): void {
+        $row = ($this->mountRow)();
+
+        Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => $modelClass !== ZzPosition::class);
+
+        $row->set('row.comment', 'denied')->call('store');
+        $row->call('delete')->assertNotDispatched('positionDeleted');
+
+        expect($this->position->fresh())->not->toBeNull()
+            ->and($this->position->fresh()->comment)->toBe('ring twice');
+    });
+
+    it('lets delete() itself refuse a row without the write permission', function (): void {
+        $row = ($this->mountRow)();
+
+        Gate::define(AccessHelper::OBJECT_WRITE_GATE, fn(?NoerdUser $user, string $modelClass): bool => $modelClass !== ZzPosition::class);
+
+        \Livewire\invade($row->instance())->delete();
+
+        expect($this->position->fresh())->not->toBeNull();
+    });
+
     it('keeps the theme chrome of the numbered theme', function (): void {
         $row = ($this->mountRow)('numbered')
             ->assertSeeHtml('tabular-nums')
@@ -400,7 +460,6 @@ describe('PositionTableRegistry', function (): void {
 
         expect($registry->has('zz-order-detail'))->toBeTrue()
             ->and($registry->get('other::zz-order-detail'))->toBe(['catalog' => ZzPositionColumns::class, 'model' => ZzPosition::class])
-            ->and($registry->catalogFor('zz-order-detail'))->toBeInstanceOf(ZzPositionColumns::class)
             ->and($registry->get('zz-unknown-detail'))->toBeNull();
     });
 

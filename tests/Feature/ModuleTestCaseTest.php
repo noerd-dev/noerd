@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
 use Noerd\Providers\NoerdServiceProvider;
-use Noerd\Tests\ModuleTestCase;
+use Noerd\Testing\ModuleTestCase;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class);

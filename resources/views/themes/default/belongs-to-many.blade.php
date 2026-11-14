@@ -27,7 +27,13 @@
             <span class="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-100 px-2 py-1 text-sm text-zinc-700">
                 <span x-text="getLabel(id)"></span>
                 @unless ($readonly)
-                    <x-noerd::button variant="icon" icon="x-mark" type="button" @click="removeItem(id)" />
+                    <x-noerd::button
+                        variant="icon"
+                        icon="x-mark"
+                        type="button"
+                        @click="removeItem(id)"
+                        x-bind:aria-label="{{ \Illuminate\Support\Js::from(__('Remove') . ': ') }} + getLabel(id)"
+                    />
                 @endunless
             </span>
         </template>
@@ -38,6 +44,7 @@
         <div class="relative">
             <input
                 type="text"
+                id="{{ $name }}"
                 x-model="search"
                 @focus="
                     open = true;
@@ -46,7 +53,7 @@
                 @keydown.enter.prevent="selectHighlighted()"
                 @keydown.arrow-up.prevent="moveUp()"
                 @keydown.arrow-down.prevent="moveDown()"
-                @keydown.escape="open = false"
+                @keydown.escape="if (open && filteredOptions.length > 0) { $event.preventDefault(); $event.stopPropagation() } open = false"
                 placeholder="{{ __('Search and add…') }}"
                 class="focus:ring-brand-border block h-10 w-full rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white py-2 ps-3 pe-3 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 shadow-xs focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:border-b-zinc-200 disabled:text-zinc-500 disabled:placeholder-zinc-400/70 disabled:shadow-none sm:text-sm"
             />

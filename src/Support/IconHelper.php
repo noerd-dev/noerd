@@ -8,7 +8,8 @@ use ReflectionClass;
 use WireUi\Heroicons\HeroiconsServiceProvider;
 
 /**
- * @internal
+ * The heroicon names the core's icon pickers offer; a module icon picker reads
+ * the same list.
  */
 final class IconHelper
 {

@@ -93,17 +93,35 @@ new class extends Component {
             ? $user->tenants->mapWithKeys(fn($tenant) => [$tenant->id => $tenant->pivot->profile_key])->all()
             : [];
 
+        // Only what the form shows and edits goes to the browser — never the
+        // whole tenant row.
         foreach ($this->assignableTenants($user) as $tenant) {
-            $isMember = array_key_exists($tenant->id, $profileByTenant);
-
-            $this->possibleTenants[$tenant->id] = $tenant->toArray();
-            $this->possibleTenants[$tenant->id]['selectedProfile'] = $profileByTenant[$tenant->id] ?? Profile::User->value;
-            $this->possibleTenants[$tenant->id]['hasAccess'] = $isMember;
+            $this->possibleTenants[$tenant->id] = [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'selectedProfile' => $profileByTenant[$tenant->id] ?? Profile::User->value,
+                'hasAccess' => array_key_exists($tenant->id, $profileByTenant),
+            ];
         }
     }
 
     public function store(): void
     {
+        // "Add User" with an address that already has an account adds that
+        // account (like an invitation that applies at once) — its name and
+        // password stay the person's.
+        $existing = $this->modelId
+            ? null
+            : NoerdUser::where('email', (string) ($this->detailData['email'] ?? ''))->first();
+
+        // $possibleTenants is client state: only the tenants this administrator
+        // may assign count, so a crafted entry can neither satisfy the
+        // AtLeastOneTrue rule nor create an account without a tenant.
+        $target = $this->modelId
+            ? (NoerdUser::find($this->modelId) ?? new NoerdUser())
+            : ($existing ?? new NoerdUser());
+        $this->possibleTenants = $this->assignableTenantEntries($target, $this->possibleTenants);
+
         // Rebuilt from scratch: a leftover entry from an earlier submit would
         // otherwise keep satisfying the AtLeastOneTrue rule.
         $this->tenantAccess = [];
@@ -111,13 +129,6 @@ new class extends Component {
         foreach ($this->possibleTenants as $tenantId => $value) {
             $this->tenantAccess[$tenantId] = (bool) ($value['hasAccess'] ?? false);
         }
-
-        // "Add User" with an address that already has an account adds that
-        // account (like an invitation that applies at once) — its name and
-        // password stay the person's.
-        $existing = $this->modelId
-            ? null
-            : NoerdUser::where('email', (string) ($this->detailData['email'] ?? ''))->first();
 
         $this->validate($this->storeRules($existing));
 
@@ -136,6 +147,12 @@ new class extends Component {
         $user = NoerdUser::find($this->modelId);
 
         if (! $user instanceof NoerdUser) {
+            return;
+        }
+
+        // A tenant keeps at least one administrator — also against the
+        // administrator demoting themselves.
+        if (! $this->keepsEveryTenantAdministered($user)) {
             return;
         }
 
@@ -261,6 +278,74 @@ new class extends Component {
                 $tenant->removeMember($user);
             }
         }
+    }
+
+    /**
+     * The submitted tenant entries reduced to the tenants this administrator
+     * may assign to $user, each with only the keys the form edits; the name
+     * comes from the server, not from the client.
+     *
+     * @param  array<array-key, mixed>  $submitted
+     * @return array<int, array{id: int, name: string, selectedProfile: string, hasAccess: bool}>
+     */
+    private function assignableTenantEntries(NoerdUser $user, array $submitted): array
+    {
+        $entries = [];
+
+        foreach ($this->assignableTenants($user) as $tenant) {
+            $value = $submitted[$tenant->id] ?? null;
+
+            if (! is_array($value)) {
+                continue;
+            }
+
+            $entries[(int) $tenant->id] = [
+                'id' => (int) $tenant->id,
+                'name' => (string) $tenant->name,
+                'selectedProfile' => (string) ($value['selectedProfile'] ?? Profile::User->value),
+                'hasAccess' => (bool) ($value['hasAccess'] ?? false),
+            ];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Whether the requested memberships leave every assignable tenant with an
+     * administrator (Tenant::wouldLoseLastAdmin()). A violation is reported on
+     * the profile select of that tenant and nothing is written.
+     */
+    private function keepsEveryTenantAdministered(NoerdUser $user): bool
+    {
+        $admin = NoerdAuth::user();
+        $keeps = true;
+
+        foreach ($this->assignableTenants($user)->keyBy('id') as $tenantId => $tenant) {
+            $value = $this->possibleTenants[$tenantId] ?? null;
+
+            if (! is_array($value)) {
+                continue;
+            }
+
+            $hasAccess = (bool) ($value['hasAccess'] ?? false);
+
+            // An unchecked tenant of one's own account is never removed (see applyTenantAccess()).
+            if (! $hasAccess && $user->is($admin)) {
+                continue;
+            }
+
+            $profileKey = $hasAccess ? (string) ($value['selectedProfile'] ?? '') : null;
+
+            if ($tenant->wouldLoseLastAdmin($user, $profileKey)) {
+                $this->addError(
+                    "possibleTenants.{$tenantId}.selectedProfile",
+                    __('This is the only administrator of :tenant. Assign another administrator first.', ['tenant' => $tenant->name]),
+                );
+                $keeps = false;
+            }
+        }
+
+        return $keeps;
     }
 
     /**

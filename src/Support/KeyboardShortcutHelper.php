@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 /**
- * @internal
+ * A configured keyboard shortcut (`config('noerd.keyboard_shortcuts.*')`) as
+ * the Alpine key expression and the badge text — for every view that binds
+ * a shortcut, the core's and a module's alike.
  */
 final class KeyboardShortcutHelper
 {
@@ -32,27 +34,38 @@ final class KeyboardShortcutHelper
         ];
     }
 
+    /**
+     * The Alpine condition for a keydown event `e`. It mirrors matchesShortcut()
+     * and isEditableElement() of resources/js/keyboard.js: a held key never
+     * repeats the action, ctrl accepts Cmd, a shortcut without ctrl/meta/alt
+     * never fires while one of them is held (Ctrl+N is the browser's, AltGr
+     * types a character) and never while the reader types into a field.
+     */
     private static function buildJs(string $shortcut): string
     {
         ['modifiers' => $modifiers, 'key' => $key] = self::parseShortcutString($shortcut);
 
-        $js = 'e.key.toLowerCase() === ' . json_encode($key);
+        $js = '!e.repeat && (e.key ?? \'\').toLowerCase() === ' . json_encode($key);
 
-        if (in_array('ctrl', $modifiers, true)) {
+        $ctrl = in_array('ctrl', $modifiers, true);
+        $meta = in_array('meta', $modifiers, true);
+
+        if ($ctrl) {
             $js .= ' && (e.ctrlKey || e.metaKey)';
+        }
+        if ($meta) {
+            $js .= ' && e.metaKey';
+        }
+        if (! $ctrl && ! $meta) {
+            $js .= ' && !e.ctrlKey && !e.metaKey';
         }
         if (in_array('shift', $modifiers, true)) {
             $js .= ' && e.shiftKey';
         }
-        if (in_array('alt', $modifiers, true)) {
-            $js .= ' && e.altKey';
-        }
-        if (in_array('meta', $modifiers, true)) {
-            $js .= ' && e.metaKey';
-        }
+        $js .= in_array('alt', $modifiers, true) ? ' && e.altKey' : ' && !e.altKey';
 
         if (count($modifiers) === 0) {
-            $js .= " && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName) && !document.activeElement.isContentEditable";
+            $js .= " && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName) && !document.activeElement?.isContentEditable && !document.activeElement?.closest?.('[contenteditable]:not([contenteditable=\"false\"])')";
         }
 
         return $js;

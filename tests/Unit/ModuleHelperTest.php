@@ -11,7 +11,7 @@ use PHPUnit\Framework\AssertionFailedError;
 uses(TestCase::class);
 
 /**
- * Self-tests for the two module helpers in tests/helpers.php. They are the
+ * Self-tests for the two module helpers in src/Testing/helpers.php. They are the
  * standard proofs every module suite relies on, so both halves are pinned here:
  * the pass path AND the failure they must report. Everything runs against a
  * throwaway `zz-module` skeleton written under the testbench base path.

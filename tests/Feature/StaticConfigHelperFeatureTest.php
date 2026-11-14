@@ -149,7 +149,7 @@ describe('StaticConfigHelper Dynamic Navigation', function (): void {
                             ['title' => 'Registered', 'route' => 'zz-registered'],
                             ['title' => 'Stale', 'route' => 'zz-not-registered'],
                             ['title' => 'Link', 'link' => '/somewhere'],
-                            ['title' => 'Modal', 'component' => 'some-modal'],
+                            ['title' => 'Modal', 'modalComponent' => 'some-modal'],
                         ],
                     ],
                 ],

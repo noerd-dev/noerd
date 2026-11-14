@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Component;
 use Livewire\Livewire;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Support\CsvListExporter;
 use Noerd\Tests\TestCase;
@@ -90,6 +91,11 @@ function zzParityHtml(array $config, array $params = []): string
 
 beforeEach(function (): void {
     $this->tenant = Tenant::factory()->create(['name' => 'Zz Parity Tenant']);
+
+    // A tenant title is only shown to a member of that tenant.
+    $user = NoerdUser::factory()->create();
+    $user->tenants()->attach($this->tenant->id);
+    $this->actingAs($user);
 });
 
 it('renders every typed cell of the table through the formatter and the badge component', function (): void {

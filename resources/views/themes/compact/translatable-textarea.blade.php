@@ -32,6 +32,7 @@
     <div class="min-w-0 flex-1">
         <textarea
             wire:model="{{ $name . '.' . $selectedLang }}"
+            id="{{ $name }}"
             name="{{ $name }}"
             rows="{{ $rows }}"
             class="focus:ring-sky-300 block w-full appearance-none rounded-sm border border-sky-300 bg-sky-50/30 py-1 ps-2 pe-2 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 focus:ring-1 focus:outline-none sm:text-sm"

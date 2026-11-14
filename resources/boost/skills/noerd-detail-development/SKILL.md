@@ -21,7 +21,7 @@ guideline; this skill is the procedure. Docs: `vendor/noerd/noerd/docs/detail-vi
 | Plain record form | `*-detail` (slim, no methods) |
 | Form + relation box / widgets / page tabs / quick-create | `*-page` with `detail:` in the page YAML embedding the slim `*-detail` |
 | Fields that edit a related model (e.g. default address) | Keep the detail slim; declare `relationForms()` on the MODEL (`DeclaresRelationForms`) |
-| Persist through a service | Override `store()`: `validateFromLayout()` → service → `storeProcess($model)` |
+| Persist through a service | Override `store()`: `validateFromLayout()` → service → `finishStore($model)` |
 | Tenant-singleton settings screen | `*-page` with the `NoerdSettingsPage` trait + `settings/{name}.yml` — stacked full-width fields, may edit several models via `$settingsModels`; the models use `Noerd\Traits\TenantSingleton` (`forTenant()`, `tenantDefaults()`, `updateForTenant()`); see `docs/settings-page.md` |
 
 ## 2. Create the detail — `resources/views/components/{entity}-detail.blade.php`
@@ -59,8 +59,10 @@ new class extends Component {
 - Never redeclare `$modelId`, never add `#[Url]` to it, never store the Eloquent model as a
   property (`$detailData` array is the form state; the model is a local variable only).
 - Custom `mount()` starts with `$this->initDetail()`; custom `store()` ends with
-  `$this->storeProcess($model)`; custom `delete()` ends with
-  `$this->closeModalProcess($this->getListComponent())`.
+  `$this->finishStore($model)` (it runs `storeProcess()` and reports the record to a hosting page —
+  `storeProcess()` alone is the tail of a `NoerdPage` without detail); custom `delete()` ends with
+  `$this->closeModalProcess($this->getListComponent())` (protected — a Blade button calls
+  `wire:click="closeModal"`).
 - Records never deleted from the screen: `protected bool $deletable = false;` — delete button,
   shortcut and `delete()` disappear at once. Never an empty `delete()` override.
 - A value derived from the loaded record goes into `protected function detailLoaded(Model $model): void`
@@ -113,7 +115,7 @@ fields:
   drops blank rows. Never hand-written Blade rows, never `readonly: true` inputs for that.
 - Tabs: `<x-noerd::tab-content>` renders them for you; hand-rolled panels must use
   `<x-noerd::tab-panels>` / `<x-noerd::tab-panel>`.
-- `actions:` renders a button row automatically (`action:` method, `route:`/`modalComponent:` modal,
+- `actions:` renders a button row automatically (`action:` method, `modalRoute:`/`modalComponent:` modal,
   `url:` link, `confirm`, `requiresId`, `showIf`, `viewExists`).
 - `lists:` embeds compact lists below the form via `<x-noerd::detail-lists :layout="$pageLayout" :modelId="$modelId" />`.
 
@@ -126,8 +128,8 @@ relations:
   - label: Contacts
     heroicon: users
     relation: contacts
-    route: module.contacts            # list narrowed by the record, no URL rewrite
-    component: contacts-list          # fallback
+    modalRoute: module.contacts       # list narrowed by the record, no URL rewrite
+    modalComponent: module::contacts-list   # fallback
     arguments:
       thingId: $modelId
 ```
@@ -143,7 +145,7 @@ buttons for that row go into the `blockActions` slot of `<x-noerd::tab-content>`
 ## 5. Routes, navigation, translations
 
 - `Route::livewire('{app}/{entity}/{modelId}', 'module::{entity}-detail')->name('module.{entity}.detail')`
-  — this named route is what lists (`$detailRoute`), actions (`route:`) and `Noerd::modalRoute()` use.
+  — this named route is what lists (`$detailRoute`), actions (`modalRoute:`) and `Noerd::modalRoute()` use.
 - English labels in YAML, German in the module's `resources/lang/de.json`.
 
 ## 6. Test (Pest, inside the module)

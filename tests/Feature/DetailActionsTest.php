@@ -82,13 +82,13 @@ it('hides actions until the record is saved unless requiresId is false', functio
         ->toContain('Always Visible');
 });
 
-it('renders a route action as an Alpine $modalRoute call with the $modelId token resolved', function (): void {
+it('renders a modalRoute action as an Alpine $modalRoute call with the $modelId token resolved', function (): void {
     registerTestLivewireRoute('zz-detail-action/{modelId}', 'noerd-test::theme-test', 'zz.detail.action');
 
     $html = renderDetailActions([
         [
             'label' => 'Open Record',
-            'route' => 'zz.detail.action',
+            'modalRoute' => 'zz.detail.action',
             'arguments' => ['modelId' => '$modelId'],
         ],
     ], 42);
@@ -100,13 +100,13 @@ it('renders a route action as an Alpine $modalRoute call with the $modelId token
         ->not->toContain('wire:click');
 });
 
-it('prefers route over modalComponent on the same action and keeps the component as fallback', function (): void {
+it('prefers modalRoute over modalComponent on the same action and keeps the component as fallback', function (): void {
     registerTestLivewireRoute('zz-detail-action-both/{modelId}', 'noerd-test::theme-test', 'zz.detail.both');
 
     $html = renderDetailActions([
         [
             'label' => 'Open Record',
-            'route' => 'zz.detail.both',
+            'modalRoute' => 'zz.detail.both',
             'modalComponent' => 'zz::fallback-detail',
             'arguments' => ['modelId' => '$modelId'],
         ],
@@ -117,19 +117,19 @@ it('prefers route over modalComponent on the same action and keeps the component
         ->toContain('zz::fallback-detail');
 });
 
-it('hides a route action whose route is not registered and has no modalComponent', function (): void {
+it('hides a modalRoute action whose route is not registered and has no modalComponent', function (): void {
     $html = renderDetailActions([
-        ['label' => 'Ghost Action', 'route' => 'zz.route.that.does.not.exist'],
+        ['label' => 'Ghost Action', 'modalRoute' => 'zz.route.that.does.not.exist'],
     ], 5);
 
     expect($html)->not->toContain('Ghost Action');
 });
 
-it('falls back to the component branch for a route action with a modalComponent', function (): void {
+it('falls back to the component branch for a modalRoute action with a modalComponent', function (): void {
     $html = renderDetailActions([
         [
             'label' => 'Fallback Action',
-            'route' => 'zz.route.that.does.not.exist',
+            'modalRoute' => 'zz.route.that.does.not.exist',
             'modalComponent' => 'zz::fallback-detail',
         ],
     ], 5);
@@ -140,15 +140,15 @@ it('falls back to the component branch for a route action with a modalComponent'
         ->not->toContain('$modalRoute(');
 });
 
-it('applies requiresId and viewExists to route actions as well', function (): void {
+it('applies requiresId and viewExists to modalRoute actions as well', function (): void {
     registerTestLivewireRoute('zz-detail-action-guard/{modelId}', 'noerd-test::theme-test', 'zz.detail.guard');
 
     $needsId = renderDetailActions([
-        ['label' => 'Needs Id Route', 'route' => 'zz.detail.guard'],
+        ['label' => 'Needs Id Route', 'modalRoute' => 'zz.detail.guard'],
     ], null);
 
     $missingView = renderDetailActions([
-        ['label' => 'Missing View Route', 'route' => 'zz.detail.guard', 'viewExists' => 'missing::components.modal'],
+        ['label' => 'Missing View Route', 'modalRoute' => 'zz.detail.guard', 'viewExists' => 'missing::components.modal'],
     ], 5);
 
     expect($needsId)->not->toContain('Needs Id Route');
@@ -301,4 +301,16 @@ it('keeps a conditional modal action clickable with a single Alpine scope', func
     expect($html)->toContain('$modal(')
         ->toContain('x-show="$wire.hasAccount"')
         ->and(mb_substr_count($html, 'x-data'))->toBe(1);
+});
+
+it('drops an action that names no target, such as the earlier route: spelling', function (): void {
+    registerTestLivewireRoute('zz-detail-earlier/{modelId}', 'noerd-test::theme-test', 'zz.detail.earlier');
+
+    $html = renderDetailActions([
+        ['label' => 'Earlier Spelling', 'route' => 'zz.detail.earlier'],
+        ['label' => 'Current', 'modalRoute' => 'zz.detail.earlier'],
+    ], 5);
+
+    expect($html)->not->toContain('Earlier Spelling')
+        ->toContain('Current');
 });

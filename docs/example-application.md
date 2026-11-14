@@ -24,19 +24,20 @@ they are yours to edit and serve as a reference for your own apps:
 | `app-configs/demo/lists/*.yml`, `details/*.yml`, `navigation.yml` | The YAML configuration of the three lists and details plus the app navigation |
 | `routes/web.php` | A `Route::group(['middleware' => ['noerd', 'app-access:demo']])` block with the list and detail routes |
 
-The app is registered as the tenant app `DEMO` (main route `demo-customers`) and assigned to every
-tenant, so it appears on `/noerd-apps` right away.
+After the migrations the app is registered as the tenant app `DEMO` (main route `demo.customers`,
+icon `heroicon:outline:beaker`) and assigned to the tenants you pick (`--tenants=all` or ids in a
+non-interactive run), so it appears on `/noerd-apps` right away.
 
 ## What it demonstrates
 
 **Slim components.** `demo-categories-list` / `demo-category-detail` are the minimal shape: the
-list declares `$listModel`, `$detailRoute = 'demo-category.detail'` and `$detailComponent`, the
+list declares `$listModel`, `$detailRoute = 'demo.category.detail'` and `$detailComponent`, the
 detail declares `$detailModel` and `$detailPrimary` — everything else comes from the traits and the
 YAML (see [List View](list-view.md), [Detail View](detail-view.md)).
 
-**Route modals.** Rows open the record through the named route (`demo-customer.detail`,
-`demo-category.detail`, `demo-tag.detail`), which rewrites the browser URL; the component key stays
-the fallback. The list's "New …" action and the navigation's `newRoute:` / `newComponent:` pair use
+**Route modals.** Rows open the record through the named route (`demo.customer.detail`,
+`demo.category.detail`, `demo.tag.detail`), which rewrites the browser URL; the component key stays
+the fallback. The list's "New …" action and the navigation's `newModalRoute:` / `newModalComponent:` pair use
 the same routes (see [Modal System](modal.md), [Navigation](navigation.md)).
 
 **Field types.** `demo-customer-detail.yml` is a showcase of the detail YAML: two `tabs`, a
@@ -47,7 +48,9 @@ list) and with `optionsMethod`, `email`, `phone`, `currency`, `date`, `time`, `c
 
 **Custom `store()`.** The customer detail overrides `store()` for the one thing YAML cannot
 express — syncing the many-to-many tags — and still runs through the generic pieces:
-`canSaveObject()`, `validateFromLayout()`, `writableDetailData()` and `finishStore()`.
+`canSaveObject()`, `validateFromLayout()`, `writableDetailData()` and `finishStore()`. The tags of
+an existing customer are read in `detailLoaded()` from the record the trait loaded
+(`$detailWith = ['tags']`) — never by finding the record a second time in `mount()`.
 
 **List configuration.** `demo-customers-list.yml` shows `defaultSort`, a route-based header action
 and typed columns (`currency`, `date`, `bool`).

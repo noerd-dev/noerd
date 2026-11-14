@@ -10,7 +10,7 @@ assistant gets the same conventions the noerd core team uses, without copying an
 |----------|---------|
 | `resources/boost/guidelines/core.blade.php` | The **Noerd Framework** guideline: the hard rules for lists, details/pages, modals, themes, modules, install/update commands, translations and tests. Rendered into the project's agent files by [Laravel Boost](https://github.com/laravel/boost) |
 | `resources/boost/skills/*/SKILL.md` | Task-oriented **skills** — step-by-step procedures with checklists: `noerd-list-development`, `noerd-detail-development`, `noerd-modal-development`, `noerd-module-development`, `noerd-testing` |
-| `AGENTS.md` (+ `CLAUDE.md`) | Contributor guide for working *inside* the noerd repository (workflow, tests, code style, architecture guardrails) |
+| `AGENTS.md` (+ `CLAUDE.md`) | Contributor guide for working *inside* the noerd repository (workflow, tests, code style, architecture guardrails) — in the git repository only, not in the Packagist dist |
 | `docs/` | This documentation — included in the Packagist dist, so the guideline and the skills can point into it (`vendor/noerd/noerd/docs/*.md`) |
 
 Laravel Boost discovers the guideline and the skills automatically in every Composer package that

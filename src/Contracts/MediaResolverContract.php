@@ -35,6 +35,15 @@ interface MediaResolverContract
     public function storeUploadedFile(mixed $uploadedFile): ?string;
 
     /**
+     * Store an uploaded file and return the reference to persist: the media
+     * id when a library exists (it survives the file being moved or renamed),
+     * otherwise the stored file's relative URL. Null when the file was refused.
+     * A reader resolves an integer through getPreviewUrl()/getImageUrl() and
+     * uses a string as it is.
+     */
+    public function storeUploadedFileReference(mixed $uploadedFile): int|string|null;
+
+    /**
      * Whether the full media module is available.
      */
     public function isAvailable(): bool;

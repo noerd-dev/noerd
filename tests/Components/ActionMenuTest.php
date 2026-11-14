@@ -15,7 +15,8 @@ it('renders a kebab trigger and a role=menu panel by default', function (): void
     BLADE);
 
     expect($html)
-        ->toContain('x-data="{ open: false }"')
+        ->toContain('x-data="noerdActionMenu"')
+        ->toContain('@keydown="onKeydown($event)"')
         ->toContain('role="menu"')
         ->toContain('role="menuitem"')
         ->toContain('Do It')
@@ -83,4 +84,23 @@ it('marks the active item', function (): void {
 
     assertElementHasClasses($active, ['font-semibold', 'text-gray-900']);
     assertElementHasClasses($inactive, ['font-normal', 'text-gray-700']);
+});
+
+it('lets the keyboard reach every entry', function (): void {
+    $html = Blade::render('<x-noerd::action-menu-item>Entry</x-noerd::action-menu-item>');
+
+    // Entries are focused programmatically (tabindex -1) and show where the
+    // focus is — the hover colour alone is invisible to a keyboard user.
+    expect($html)->toContain('tabindex="-1"');
+    assertElementHasClasses($html, ['focus:bg-gray-50']);
+});
+
+it('stops Escape only while the menu is open, so a closed menu leaves it to the modal', function (): void {
+    $html = Blade::render('<x-noerd::action-menu>x</x-noerd::action-menu>');
+
+    // noerd/modal closes the top modal on an Escape nobody prevented — a closed
+    // menu must neither prevent nor stop it.
+    expect($html)
+        ->toContain('@keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false }"')
+        ->not->toContain('@keydown.escape.stop');
 });

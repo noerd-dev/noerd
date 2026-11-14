@@ -4,14 +4,17 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "postbuild": "test -f ../../artisan && php ../../artisan vendor:publish --tag=noerd-assets --force --ansi || true"
+        "postbuild": "test -f ../../artisan && php ../../artisan vendor:publish --tag=noerd-assets --force --ansi || true",
+        "test": "node tests/js/upload-chunks.mjs && node tests/js/currency.mjs && node tests/js/keyboard.mjs && node tests/js/form-values.mjs && node tests/js/app-store.mjs"
     },
     "dependencies": {
         "@alpinejs/focus": "^3.17.1",
         "@alpinejs/sort": "^3.17.1",
         "@tiptap/core": "^3.31.0",
         "@tiptap/pm": "^3.31.0",
-        "@tiptap/starter-kit": "^3.31.0",
+        "@tiptap/starter-kit": "^3.31.0"
+    },
+    "devDependencies": {
         "laravel-vite-plugin": "^3.2.0",
         "vite": "^8.2.2"
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Support\RelationFieldDefinition;
 use RuntimeException;
@@ -97,6 +98,10 @@ abstract class RelationFieldComponent extends RelationFieldBase
         $definition = $this->activeDefinition();
 
         if (! $definition?->modelClass || ! class_exists($definition->modelClass)) {
+            return null;
+        }
+
+        if (! AccessHelper::canReadObject($definition->modelClass)) {
             return null;
         }
 

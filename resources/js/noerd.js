@@ -2,28 +2,11 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import sort from '@alpinejs/sort';
 import focus from '@alpinejs/focus';
-import { noerdChunkUploads } from './upload-chunks.js';
-
-function parseShortcut(shortcut) {
-    const parts = shortcut.toLowerCase().split('+').map(p => p.trim());
-    const key = parts.pop();
-    return {
-        key,
-        ctrl: parts.includes('ctrl'),
-        shift: parts.includes('shift'),
-        alt: parts.includes('alt'),
-        meta: parts.includes('meta'),
-    };
-}
-
-function matchesShortcut(event, parsed) {
-    if (event.key.toLowerCase() !== parsed.key) return false;
-    if (parsed.ctrl && !(event.ctrlKey || event.metaKey)) return false;
-    if (parsed.shift && !event.shiftKey) return false;
-    if (parsed.alt && !event.altKey) return false;
-    if (parsed.meta && !event.metaKey) return false;
-    return true;
-}
+import { noerdUploadQueue } from './upload-chunks.js';
+import { clampRow, isEditableElement, matchesShortcut, parseShortcut } from './keyboard.js';
+import { editableCurrency, formatCurrency, parseCurrency } from './currency.js';
+import { hasId, noerdLinkHref, normalizeId, withoutId } from './form-values.js';
+import { extendAppStore } from './app-store.js';
 
 /**
  * Is `el` on the layer the user is actually looking at?
@@ -62,12 +45,28 @@ document.addEventListener('alpine:init', () => {
     Alpine.plugin(sort);
     Alpine.plugin(focus);
 
+    // The core's part of the shared store `app`: the list that owns the
+    // keyboard navigation (noerdList). noerd/modal adds its modal flags to the
+    // same store — see app-store.js for why neither side replaces it.
+    extendAppStore(Alpine, {
+        currentId: null,
+        setId(id) {
+            this.currentId = id;
+        },
+    });
+
     // Currency input: the bound value stays a plain number — or null. The
     // field shows it formatted with the tenant's separators and accepts either
     // notation. An empty input means "no amount", never 0, so an optional
     // amount column stays NULL and a form never shows a value it does not hold.
+    //
+    // The parsing rules live in currency.js. An input that cannot be read
+    // without guessing ("1,234.56" in a comma locale) is rejected: the bound
+    // value stays as it was and the input is marked aria-invalid until the
+    // reader corrects it.
     Alpine.data('noerdCurrency', ({ name, decSep, thousSep }) => ({
         rawValue: null,
+        invalid: false,
         init() {
             this.rawValue = this.normalize(this.$wire.get(name));
             this.$nextTick(() => this.showFormatted());
@@ -91,33 +90,43 @@ document.addEventListener('alpine:init', () => {
             return isNaN(num) ? null : num;
         },
         formatDisplay(val) {
-            if (val === null) return '';
-            const parts = val.toFixed(2).split('.');
-            const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousSep);
-            return intPart + decSep + parts[1];
-        },
-        parseInput(val) {
-            if (typeof val === 'number') return val;
-            // ICU grouping may be ".", ",", "’" or a (narrow) no-break space:
-            // keep digits, the sign and the locale's decimal separator only.
-            const escapedDecSep = decSep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const cleaned = String(val)
-                .replace(new RegExp('[^0-9\\-' + escapedDecSep + ']', 'g'), '')
-                .replace(decSep, '.');
-            const num = parseFloat(cleaned);
-            return isNaN(num) ? null : num;
+            return formatCurrency(val, decSep, thousSep);
         },
         showFormatted() {
             this.$refs.input.value = this.formatDisplay(this.rawValue);
         },
+        markInvalid(invalid) {
+            this.invalid = invalid;
+            if (invalid) {
+                this.$refs.input.setAttribute('aria-invalid', 'true');
+            } else {
+                this.$refs.input.removeAttribute('aria-invalid');
+            }
+        },
         onFocus(e) {
-            e.target.value = this.rawValue === null ? '' : this.rawValue.toFixed(2).replace('.', decSep);
+            // A rejected input stays as the reader typed it, so it can be fixed.
+            if (! this.invalid) {
+                e.target.value = editableCurrency(this.rawValue, decSep);
+            }
             this.$nextTick(() => e.target.select());
         },
         onBlur(e) {
-            const parsed = this.parseInput(e.target.value);
-            this.rawValue = parsed;
-            this.$wire.set(name, parsed);
+            const parsed = parseCurrency(e.target.value, decSep);
+
+            if (! parsed.valid) {
+                this.markInvalid(true);
+                return;
+            }
+
+            this.markInvalid(false);
+
+            // Only a changed amount is written: focusing and leaving the field
+            // must neither round the value nor mark the form dirty.
+            if (parsed.value !== this.rawValue) {
+                this.rawValue = parsed.value;
+                this.$wire.set(name, parsed.value);
+            }
+
             this.showFormatted();
         },
     }));
@@ -203,7 +212,10 @@ document.addEventListener('alpine:init', () => {
 
     // Keyboard navigation of a list: arrow keys move the highlighted row,
     // Enter opens it. Scoped per list so nested lists never fight over it.
-    Alpine.data('noerdList', ({ listId }) => ({
+    // The row count is read from `data-row-count` on every key press: a search
+    // or a page change morphs the attribute, the x-data arguments stay as they
+    // were on the first render.
+    Alpine.data('noerdList', ({ listId, rowCount = 0 }) => ({
         selectedRow: 0,
 
         init() {
@@ -213,10 +225,12 @@ document.addEventListener('alpine:init', () => {
             this.$store.app.setId(listId);
         },
         isInBlockingField() {
-            const el = document.activeElement;
-            return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el?.tagName)
-                || el?.isContentEditable
-                || !! el?.closest?.('[contenteditable]');
+            return isEditableElement(document.activeElement);
+        },
+        rowCount() {
+            const live = parseInt(this.$root.dataset.rowCount ?? '', 10);
+
+            return Number.isNaN(live) ? rowCount : live;
         },
         canHandleListKey() {
             // Same rule as the page shortcuts: a list behind an open modal (or
@@ -228,10 +242,10 @@ document.addEventListener('alpine:init', () => {
         onArrow(event, direction) {
             if (! this.canHandleListKey()) return;
             event.preventDefault();
-            this.selectedRow += direction;
+            this.selectedRow = clampRow(this.selectedRow, direction, this.rowCount());
         },
         onEnter(event) {
-            if (! this.canHandleListKey()) return;
+            if (! this.canHandleListKey() || this.rowCount() === 0) return;
             event.preventDefault();
             this.$wire.findListAction(this.selectedRow);
         },
@@ -243,7 +257,7 @@ document.addEventListener('alpine:init', () => {
     // list inside a modal — that must not rewrite the page URL.
     Alpine.data('noerdListUrlSync', ({ view, filters }) => ({
         init() {
-            if (this.$el.closest('#modal') || this.$el.closest('[modal]')) return;
+            if (this.$el.closest('[modal]')) return;
 
             const url = new URL(window.location.href);
 
@@ -290,7 +304,15 @@ document.addEventListener('alpine:init', () => {
     // by answering with a warning instead of a response, so the whole upload
     // fails with nothing to see. Splitting the selection server-side is not
     // possible; the request never arrives. See noerdChunkUploads().
-    Alpine.data('noerdDropzone', ({ property = 'temporaryFiles', maxFiles = 20, maxBytes = 0 } = {}) => ({
+    //
+    // A selection dropped while an upload runs is queued (noerdUploadQueue),
+    // and a failed or cancelled batch always ends the run, so the dropzone
+    // never stays locked. The queue lives in this closure and not on the
+    // reactive object: a File behind an Alpine proxy is no Blob for FormData.
+    Alpine.data('noerdDropzone', ({ property = 'temporaryFiles', maxFiles = 20, maxBytes = 0 } = {}) => {
+        let queue = null;
+
+        return {
         isDragging: false,
         uploading: false,
         uploadedCount: 0,
@@ -298,6 +320,20 @@ document.addEventListener('alpine:init', () => {
         uploadError: '',
         // What one request takes — the view shows a counter above it.
         chunkSize: maxFiles,
+
+        init() {
+            queue = noerdUploadQueue({
+                maxFiles,
+                maxBytes,
+                send: (batch) => this.uploadChunk(batch),
+                onChange: (state) => {
+                    this.uploading = state.uploading;
+                    this.uploadedCount = state.uploadedCount;
+                    this.totalCount = state.totalCount;
+                    this.uploadError = state.error;
+                },
+            });
+        },
 
         handleDrop(event) {
             this.isDragging = false;
@@ -310,55 +346,27 @@ document.addEventListener('alpine:init', () => {
             event.target.value = '';
         },
 
-        async upload(fileList) {
-            const files = Array.from(fileList || []);
-
-            if (files.length === 0 || this.uploading) {
-                return;
-            }
-
-            const chunks = noerdChunkUploads(files, maxFiles, maxBytes);
-
-            this.uploading = true;
-            this.uploadError = '';
-            this.uploadedCount = 0;
-            this.totalCount = files.length;
-
-            try {
-                for (const chunk of chunks) {
-                    await this.uploadChunk(chunk);
-                    this.uploadedCount += chunk.length;
-                }
-            } catch (message) {
-                this.uploadError = message;
-            } finally {
-                this.uploading = false;
-                this.totalCount = 0;
-                this.uploadedCount = 0;
-            }
+        upload(fileList) {
+            return queue.add(Array.from(fileList || []));
         },
 
         uploadChunk(chunk) {
+            // Livewire calls the error callback without any detail (no status,
+            // no response), so there is ONE message for every failure. A
+            // cancelled upload rejects as well, without a message.
             return new Promise((resolve, reject) => {
                 this.$wire.uploadMultiple(
                     property,
                     chunk,
                     () => resolve(),
-                    (event) => reject(this.errorMessage(event)),
+                    () => reject(this.$root.dataset.uploadFailed ?? ''),
+                    () => {},
+                    () => reject(''),
                 );
             });
         },
-
-        errorMessage(event) {
-            const status = event?.target?.status;
-
-            // 413 and a PHP-level refusal (no status, or an HTML body where
-            // JSON was expected) both mean the server turned the batch away.
-            return status === 413 || !status
-                ? this.$el.dataset.uploadRefused
-                : this.$el.dataset.uploadFailed;
-        },
-    }));
+        };
+    });
 
     // A value entangled with the component, used by the mail/phone fields to
     // keep their action link in sync while typing.
@@ -377,19 +385,19 @@ document.addEventListener('alpine:init', () => {
 
         get filteredOptions() {
             return Object.entries(this.options).filter(([id, label]) =>
-                ! this.selectedIds.includes(parseInt(id))
-                && label.toLowerCase().includes(this.search.toLowerCase())
+                ! hasId(this.selectedIds, id)
+                && String(label).toLowerCase().includes(this.search.toLowerCase())
             );
         },
         addItem(id) {
-            if (id && ! this.selectedIds.includes(parseInt(id))) {
-                this.selectedIds.push(parseInt(id));
+            if (id !== null && id !== undefined && id !== '' && ! hasId(this.selectedIds, id)) {
+                this.selectedIds = [...(this.selectedIds || []), normalizeId(id)];
                 this.search = '';
                 this.highlightedIndex = 0;
             }
         },
         removeItem(id) {
-            this.selectedIds = this.selectedIds.filter((i) => i !== parseInt(id));
+            this.selectedIds = withoutId(this.selectedIds, id);
         },
         getLabel(id) {
             return this.options[id] || '';
@@ -432,6 +440,7 @@ document.addEventListener('alpine:init', () => {
                         },
                         link: {
                             openOnClick: false,
+                            defaultProtocol: 'https',
                         },
                     }),
                 ],
@@ -478,14 +487,94 @@ document.addEventListener('alpine:init', () => {
             return Boolean(this.updatedAt && Alpine.raw(this.editor)?.isActive(type, attrs));
         },
         setLink() {
-            if (this.linkUrl) {
-                this.command().setLink({ href: this.linkUrl }).run();
+            const href = noerdLinkHref(this.linkUrl);
+            if (href) {
+                this.command().setLink({ href }).run();
             }
             this.linkUrl = '';
             this.showLinkInput = false;
         },
         removeLink() {
             this.command().unsetLink().run();
+        },
+    }));
+
+    // The dropdown menu of x-noerd::action-menu (WAI-ARIA menu button): opening
+    // focuses the first entry, Arrow keys / Home / End move between entries,
+    // Escape and every close hand the focus back to the element that opened
+    // the menu. `open` stays a plain property, so custom triggers keep
+    // toggling it with `open = ! open`.
+    Alpine.data('noerdActionMenu', () => ({
+        open: false,
+        _returnFocus: null,
+
+        init() {
+            this.$watch('open', (open) => {
+                if (open) {
+                    const active = document.activeElement;
+                    this._returnFocus = active && this.$root.contains(active) ? active : null;
+                    this.$nextTick(() => this.focusItem(0));
+
+                    return;
+                }
+
+                const target = this._returnFocus;
+                this._returnFocus = null;
+
+                // Only take the focus back when it is still inside the menu —
+                // a click elsewhere keeps what the reader clicked.
+                if (target && (this.$root.contains(document.activeElement) || document.activeElement === document.body)) {
+                    target.focus?.();
+                }
+            });
+        },
+        items() {
+            return Array.from(this.$root.querySelectorAll('[role="menuitem"]'))
+                .filter((item) => item.closest('[data-noerd-action-menu]') === this.$root
+                    && ! item.disabled
+                    && item.offsetParent !== null);
+        },
+        focusItem(index) {
+            const items = this.items();
+
+            if (items.length === 0) return;
+
+            items[(index + items.length) % items.length].focus();
+        },
+        onKeydown(event) {
+            if (! this.open) {
+                if (['ArrowDown', 'ArrowUp'].includes(event.key) && event.target.closest('[role="menu"]') === null) {
+                    event.preventDefault();
+                    this.open = true;
+                }
+
+                return;
+            }
+
+            const items = this.items();
+            const current = items.indexOf(document.activeElement);
+
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    this.focusItem(current + 1);
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    this.focusItem(current === -1 ? items.length - 1 : current - 1);
+                    break;
+                case 'Home':
+                    event.preventDefault();
+                    this.focusItem(0);
+                    break;
+                case 'End':
+                    event.preventDefault();
+                    this.focusItem(items.length - 1);
+                    break;
+                case 'Tab':
+                    this.open = false;
+                    break;
+            }
         },
     }));
 
@@ -519,10 +608,15 @@ document.addEventListener('alpine:init', () => {
 
                 if ('save' in this._parsedShortcuts && matchesShortcut(e, this._parsedShortcuts.save)) {
                     e.preventDefault();
+                    this.commitFocusedField();
                     this.$wire.store();
                     return;
                 }
-                if ('delete' in this._parsedShortcuts && matchesShortcut(e, this._parsedShortcuts.delete)) {
+                // Ctrl+Backspace deletes a word in a text field — it must never
+                // delete the record the reader is typing into.
+                if ('delete' in this._parsedShortcuts
+                    && ! isEditableElement(document.activeElement)
+                    && matchesShortcut(e, this._parsedShortcuts.delete)) {
                     e.preventDefault();
                     if (window.confirm(deleteMessage)) {
                         this.$wire.delete();
@@ -531,6 +625,18 @@ document.addEventListener('alpine:init', () => {
             };
 
             window.addEventListener('keydown', this._keydownHandler);
+        },
+
+        // Fields that write on blur (the currency field, wire:model.blur) still
+        // hold the typed value only in the DOM when the save shortcut fires.
+        // Blurring first queues their update ahead of store(), in the same
+        // request queue, so the record is saved with what is on screen.
+        commitFocusedField() {
+            const active = document.activeElement;
+
+            if (active && active !== document.body && this.$el.contains(active) && typeof active.blur === 'function') {
+                active.blur();
+            }
         },
 
         destroy() {

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Noerd\Support;
 
+use Illuminate\Support\Str;
 use Noerd\Helpers\SetupCollectionHelper;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\SetupLanguage;
 
 /**
@@ -28,6 +30,7 @@ final class SetupFieldTypeConverter
         }
 
         $convertedData = $currentData;
+        $languageCodes = self::languageCodes();
 
         foreach ($collectionFields['fields'] as $field) {
             $fieldName = str_replace('detailData.', '', $field['name']);
@@ -41,9 +44,9 @@ final class SetupFieldTypeConverter
 
             // Convert based on target field type
             if (in_array($fieldType, ['translatableText', 'translatableRichText', 'translatableTextarea'], true)) {
-                $convertedData[$fieldName] = self::convertToTranslatableField($currentValue);
+                $convertedData[$fieldName] = self::convertToTranslatableField($currentValue, $languageCodes);
             } else {
-                $convertedData[$fieldName] = self::convertFromTranslatableField($currentValue);
+                $convertedData[$fieldName] = self::convertFromTranslatableField($currentValue, $languageCodes);
             }
         }
 
@@ -56,11 +59,12 @@ final class SetupFieldTypeConverter
      * point; a structured value (a list, a repeater row) cannot be stringified
      * and starts with empty slots instead of the literal "Array".
      *
+     * @param  list<string>|null  $languageCodes  see languageCodes(); resolved when null
      * @return array<string, mixed>
      */
-    private static function convertToTranslatableField(mixed $value): array
+    private static function convertToTranslatableField(mixed $value, ?array $languageCodes = null): array
     {
-        if (is_array($value) && self::isLanguageMap($value)) {
+        if (is_array($value) && self::isLanguageMap($value, $languageCodes ?? self::languageCodes())) {
             return $value;
         }
 
@@ -75,10 +79,12 @@ final class SetupFieldTypeConverter
      * language map collapses — the tenant's default language first, then the
      * first non-empty translation; a list or a structured value stays as it
      * is, otherwise a type switch would wipe the entry's data.
+     *
+     * @param  list<string>|null  $languageCodes  see languageCodes(); resolved when null
      */
-    private static function convertFromTranslatableField(mixed $value): mixed
+    private static function convertFromTranslatableField(mixed $value, ?array $languageCodes = null): mixed
     {
-        if (! is_array($value) || ! self::isLanguageMap($value)) {
+        if (! is_array($value) || ! self::isLanguageMap($value, $languageCodes ?? self::languageCodes())) {
             return $value;
         }
 
@@ -97,19 +103,24 @@ final class SetupFieldTypeConverter
     }
 
     /**
-     * Whether an array is a translatable value: non-empty, every key a language
-     * code (`de`, `en-GB`), every value a scalar or null.
+     * Whether an array is a translatable value: non-empty, every key one of the
+     * given language codes (compared case-insensitively), every value a scalar
+     * or null. A plain map such as `['min' => 1, 'max' => 5]` is no translation
+     * although its keys LOOK like language codes.
      *
      * @param  array<int|string, mixed>  $value
+     * @param  list<string>  $languageCodes
      */
-    private static function isLanguageMap(array $value): bool
+    private static function isLanguageMap(array $value, array $languageCodes): bool
     {
         if ($value === []) {
             return false;
         }
 
+        $known = array_flip($languageCodes);
+
         foreach ($value as $key => $translation) {
-            if (! is_string($key) || ! preg_match('/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/', $key)) {
+            if (! is_string($key) || ! isset($known[mb_strtolower($key)])) {
                 return false;
             }
 
@@ -119,5 +130,35 @@ final class SetupFieldTypeConverter
         }
 
         return true;
+    }
+
+    /**
+     * The language codes a translatable value may be keyed by, lowercased: the
+     * codes of the tenant's setup languages (active or not — a deactivated
+     * language keeps its translations). Without a known tenant, or for a tenant
+     * without any setup language, the codes of the supported locales
+     * (`de`, `de-de`, …) and the default `en`.
+     *
+     * @return list<string>
+     */
+    private static function languageCodes(): array
+    {
+        $codes = TenantHelper::currentTenantId() !== null
+            ? SetupLanguage::query()->pluck('code')->all()
+            : [];
+
+        if ($codes === []) {
+            $codes = ['en'];
+
+            foreach (Locales::SUPPORTED as $locale) {
+                $codes[] = $locale;
+                $codes[] = Str::before($locale, '-');
+            }
+        }
+
+        return array_values(array_unique(array_map(
+            fn(mixed $code): string => mb_strtolower((string) $code),
+            $codes,
+        )));
     }
 }

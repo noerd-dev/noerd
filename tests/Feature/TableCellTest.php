@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Models\NoerdUser;
 use Noerd\Tests\TestCase;
 
@@ -27,6 +28,7 @@ beforeEach(function (): void {
 
     Schema::create('gadgets', function (Blueprint $blueprint): void {
         $blueprint->id();
+        $blueprint->unsignedBigInteger('tenant_id')->nullable();
         $blueprint->string('name')->nullable();
         $blueprint->json('custom_attributes')->nullable();
         $blueprint->timestamps();
@@ -79,7 +81,7 @@ function renderRelationLinkCell(array $columnConfig, array $rowData = ['vehicle_
 describe('value cells', function (): void {
 
     it('renders a relation badge with the related record title', function (): void {
-        $gadget = ZzTableCellGadget::create(['name' => 'Erika Musterfrau']);
+        $gadget = ZzTableCellGadget::create(['tenant_id' => NoerdAuth::user()->selected_tenant_id, 'name' => 'Erika Musterfrau']);
 
         $html = renderTableCell([
             'type' => 'relationBadge',
@@ -139,6 +141,20 @@ describe('value cells', function (): void {
             ->and($html)->toContain('title="A very long linked record title"');
     });
 
+    it('reduces the wireClick method of a coloredText cell to a name and encodes its argument', function (): void {
+        $html = renderTableCell([
+            'type' => 'coloredText',
+            'columnValue' => 'linked_display',
+            'value' => ['text' => 'Linked', 'class' => 'bg-blue-100'],
+            'columnConfig' => ['wireClick' => 'openLinked);alert(1', 'wireClickField' => 'linked_id'],
+            'rowData' => ['linked_id' => '1);alert(2'],
+        ]);
+
+        expect($html)->toContain('wire:click.stop="openLinkedalert1(')
+            ->and($html)->not->toContain('(1);alert(2)')
+            ->and($html)->not->toContain('openLinked);');
+    });
+
     it('keeps a relationLink value on one line and exposes the full text as tooltip', function (): void {
         $html = renderRelationLinkCell(['modalComponent' => 'noerd-test::theme-test', 'idField' => 'vehicle_id']);
 
@@ -153,7 +169,7 @@ describe('relationLink route mode', function (): void {
         registerTestLivewireRoute('zz-cell-vehicle/{modelId}', 'noerd-test::theme-test', 'zz.cell.vehicle');
 
         $html = renderRelationLinkCell([
-            'route' => 'zz.cell.vehicle',
+            'modalRoute' => 'zz.cell.vehicle',
             'idField' => 'vehicle_id',
         ]);
 
@@ -167,7 +183,7 @@ describe('relationLink route mode', function (): void {
         registerTestLivewireRoute('zz-cell-default/{modelId}', 'noerd-test::theme-test', 'zz.cell.default');
 
         $routeHtml = renderRelationLinkCell([
-            'route' => 'zz.cell.default',
+            'modalRoute' => 'zz.cell.default',
             'idField' => 'vehicle_id',
         ]);
 
@@ -192,7 +208,7 @@ describe('relationLink route mode', function (): void {
 
     it('falls back to the modalComponent when the relationLink route is unregistered', function (): void {
         $html = renderRelationLinkCell([
-            'route' => 'zz.cell.route.that.does.not.exist',
+            'modalRoute' => 'zz.cell.route.that.does.not.exist',
             'modalComponent' => 'zz::vehicle-detail',
             'idField' => 'vehicle_id',
         ]);
@@ -207,5 +223,51 @@ describe('relationLink route mode', function (): void {
 
         expect($html)->toContain('Vehicle A')
             ->not->toContain('$modal');
+    });
+});
+
+describe('click methods from the YAML', function (): void {
+
+    it('writes only an identifier of a row action into wire:click', function (): void {
+        $html = renderTableCell([
+            'columnValue' => 'action',
+            'actions' => [['label' => 'Archive', 'action' => 'archive); $wire.delete(1']],
+        ]);
+
+        expect($html)->toContain('wire:click.prevent="archivewiredelete1(')
+            ->and($html)->not->toContain('$wire.delete');
+    });
+
+    it('writes only an identifier of the column click method into wire:click', function (): void {
+        $html = renderTableCell([
+            'readOnly' => false,
+            'action' => 'openListRow(); $wire.delete',
+        ]);
+
+        expect($html)->not->toContain('$wire.delete')
+            ->and($html)->toContain('openListRowwiredelete(');
+    });
+});
+
+describe('row action modal targets', function (): void {
+    it('opens a row action through modalRoute with the row id and the component as fallback', function (): void {
+        registerTestLivewireRoute('zz-row-action/{modelId}', 'noerd-test::theme-test', 'zz.row.action');
+
+        $html = html_entity_decode(renderTableCell([
+            'columnValue' => 'action',
+            'id' => 7,
+            'actions' => [
+                ['label' => 'Edit', 'modalRoute' => 'zz.row.action', 'modalComponent' => 'zz::row-detail'],
+                ['label' => 'Preview', 'modalComponent' => 'zz::row-preview'],
+                ['label' => 'Ghost', 'modalRoute' => 'zz.route.that.does.not.exist'],
+            ],
+        ]));
+
+        expect($html)->toContain('$modalRoute(')
+            ->toContain('zz.row.action')
+            ->toContain('zz::row-detail')
+            ->toContain('$modal(')
+            ->toContain('zz::row-preview')
+            ->not->toContain('Ghost');
     });
 });

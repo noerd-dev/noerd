@@ -16,7 +16,9 @@ class NoerdUpdateAllCommand extends Command
     private const CORE = 'noerd:update';
 
     protected $signature = 'noerd:update-all
-        {--force : Overwrite existing files without asking}
+        {--force : Overwrite the published YAML copies (lists, details, pages, settings) without asking}
+        {--reset-navigation : Replace every navigation with its template (forwarded to every command that knows the option)}
+        {--dry-run : Only list the YAML files the vocabulary rewrite would change (project and every local module), write nothing}
         {--build : Run npm build after the core noerd:update}
         {--except=* : Skip a command; module key or full name (--except=cms, --except=noerd:update)}';
 
@@ -37,6 +39,12 @@ class NoerdUpdateAllCommand extends Command
             $this->error('noerd:update-all must be run through Artisan.');
 
             return self::FAILURE;
+        }
+
+        // The core update rewrites the project AND every local module, so its dry
+        // run is the dry run of the whole queue — no module command is started.
+        if ($this->option('dry-run')) {
+            return $this->call(self::CORE, ['--dry-run' => true]);
         }
 
         [$queue, $skipped] = $this->partition($this->discover());
@@ -106,8 +114,11 @@ class NoerdUpdateAllCommand extends Command
 
         $core = in_array(self::CORE, $names, true) ? [self::CORE] : [];
         sort($last);
-        // Module updates only write into their own app-configs/{key}/, so they are
-        // order-independent — sorted purely for a reproducible run.
+        // Module updates write their own app-configs and add their entries to the
+        // shared files idempotently (setup and profile navigation, quick-menu,
+        // dashboard widgets) — none undoes another's entries, so they are
+        // order-independent and sorted purely for a reproducible run. A command
+        // that rewrites what others publish implements RunsAfterModuleUpdates.
         $middle = array_values(array_diff($names, $core, $last));
         sort($middle);
 
@@ -137,8 +148,9 @@ class NoerdUpdateAllCommand extends Command
      */
     private function confirmWithoutForce(int $queueSize): bool
     {
-        $this->warn('Without --force every command asks per existing file (default: skip),');
+        $this->warn('Without --force every command asks per existing YAML file (default: skip),');
         $this->warn('and under --no-interaction all existing files are skipped — only missing files are copied.');
+        $this->warn('Navigations and config files are never overwritten (see --reset-navigation).');
 
         if (! $this->input->isInteractive()) {
             return true;
@@ -161,6 +173,10 @@ class NoerdUpdateAllCommand extends Command
         // Only noerd:update defines --build; passing it to a module command throws.
         if ($name === self::CORE && $this->option('build')) {
             $parameters['--build'] = true;
+        }
+
+        if ($this->option('reset-navigation') && $this->getApplication()?->find($name)->getDefinition()->hasOption('reset-navigation')) {
+            $parameters['--reset-navigation'] = true;
         }
 
         try {

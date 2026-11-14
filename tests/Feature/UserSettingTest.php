@@ -122,14 +122,49 @@ describe('User Model with TenantSessionHelper', function (): void {
         expect(TenantHelper::getSelectedTenantId())->toBe($adminTenant->id);
     });
 
-    it('treats the tenant session as its own while nobody is authenticated', function (): void {
+    it('never writes the session while nobody is authenticated', function (): void {
         $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
+        TenantHelper::clear();
 
         $user->selected_tenant_id = $tenant->id;
 
-        expect(TenantHelper::getSelectedTenantId())->toBe($tenant->id)
+        expect(TenantHelper::getSelectedTenantId())->toBeNull()
             ->and($user->fresh()->userSetting->selected_tenant_id)->toBe($tenant->id);
+    });
+
+    it('reads the persisted setting headless, without a signed-in user and with an empty session', function (): void {
+        $user = NoerdUser::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $user->setting->update(['selected_tenant_id' => $tenant->id]);
+        TenantHelper::clear();
+
+        expect(NoerdAuth::check())->toBeFalse()
+            ->and(NoerdUser::query()->findOrFail($user->id)->selected_tenant_id)->toBe($tenant->id);
+    });
+
+    it('answers selectedTenant() of another user from that user\'s setting, never the session', function (): void {
+        $admin = NoerdUser::factory()->create();
+        $adminTenant = Tenant::factory()->create();
+        $this->actingAs($admin);
+        TenantHelper::setSelectedTenantId($adminTenant->id);
+
+        $user = NoerdUser::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $user->setting->update(['selected_tenant_id' => $tenant->id]);
+
+        expect($user->fresh()->selectedTenant()?->id)->toBe($tenant->id)
+            ->and($admin->selectedTenant()?->id)->toBe($adminTenant->id);
+    });
+
+    it('reads the persisted setting headless even when the session names another tenant', function (): void {
+        $user = NoerdUser::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $other = Tenant::factory()->create();
+        $user->setting->update(['selected_tenant_id' => $tenant->id]);
+        TenantHelper::setSelectedTenantId($other->id);
+
+        expect(NoerdUser::query()->findOrFail($user->id)->selected_tenant_id)->toBe($tenant->id);
     });
 
     it('syncs the session when the authenticated user selects a tenant via the attribute', function (): void {
@@ -152,9 +187,10 @@ describe('User Model with TenantSessionHelper', function (): void {
         expect($user->fresh()->userSetting->selected_tenant_id)->toBe($tenant->id);
     });
 
-    it('returns selectedTenant from session via User model', function (): void {
+    it('returns selectedTenant from the session for the signed-in user', function (): void {
         $user = NoerdUser::factory()->create();
         $tenant = Tenant::factory()->create();
+        $this->actingAs($user);
         TenantHelper::setSelectedTenantId($tenant->id);
 
         $selectedTenant = $user->selectedTenant();

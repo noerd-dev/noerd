@@ -28,3 +28,11 @@ it('omits the actions wrapper when no actions slot is passed', function (): void
         ->toContain('Just A Title')
         ->not->toContain("isModal ? modalControlsClass : ''");
 });
+
+it('binds the title text to the id the modal panel labels its dialog with', function (): void {
+    $html = Blade::render('<x-noerd::modal-title>Dialog Title</x-noerd::modal-title>');
+
+    // noerd/modal's panel offers `modalTitleId` and points aria-labelledby at it;
+    // the binding names the title text only, never the action buttons.
+    expect($html)->toMatch('/<span\s+class="contents"\s+:id="\(typeof isModal !== \'undefined\' && isModal && typeof modalTitleId !== \'undefined\'\) \? modalTitleId : null"\s*>\s*Dialog Title\s*<\/span>/');
+});

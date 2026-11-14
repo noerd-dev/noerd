@@ -42,3 +42,86 @@ export function noerdChunkUploads(files, maxFiles, maxBytes) {
 
     return chunks;
 }
+
+/**
+ * The upload queue of one dropzone: every selection is split into batches
+ * (noerdChunkUploads) and sent one batch after the other through `send`.
+ *
+ * - A selection added while an upload runs is QUEUED and uploaded right after,
+ *   never dropped.
+ * - A batch that fails or is cancelled ends the run: `uploading` resets, the
+ *   rest of the queue is discarded and `error` carries the reason (empty for a
+ *   cancellation, which needs no message).
+ *
+ * `send(batch)` returns a promise that resolves when the batch arrived and
+ * rejects with the message to show (or an empty string) otherwise. `onChange`
+ * receives a copy of the state after every step.
+ *
+ * @param {{maxFiles: number, maxBytes: number, send: (batch: File[]) => Promise<void>, onChange?: (state: {uploading: boolean, uploadedCount: number, totalCount: number, error: string}) => void}} options
+ */
+export function noerdUploadQueue({ maxFiles, maxBytes, send, onChange = () => {} }) {
+    const pending = [];
+    const state = { uploading: false, uploadedCount: 0, totalCount: 0, error: '' };
+    let running = Promise.resolve();
+
+    const emit = () => onChange({ ...state });
+
+    async function run() {
+        state.uploading = true;
+        emit();
+
+        try {
+            while (pending.length > 0) {
+                const selection = pending.splice(0, pending.length);
+
+                for (const batch of noerdChunkUploads(selection, maxFiles, maxBytes)) {
+                    await send(batch);
+                    state.uploadedCount += batch.length;
+                    emit();
+                }
+            }
+        } catch (reason) {
+            pending.length = 0;
+            state.error = typeof reason === 'string' ? reason : '';
+        } finally {
+            state.uploading = false;
+            state.uploadedCount = 0;
+            state.totalCount = 0;
+            emit();
+        }
+    }
+
+    return {
+        /**
+         * @param {File[]} files
+         * @returns {Promise<void>} settles once everything queued so far is done
+         */
+        add(files) {
+            const selection = Array.from(files || []);
+
+            if (selection.length === 0) {
+                return running;
+            }
+
+            if (! state.uploading) {
+                state.error = '';
+                state.uploadedCount = 0;
+                state.totalCount = 0;
+            }
+
+            pending.push(...selection);
+            state.totalCount += selection.length;
+
+            if (state.uploading) {
+                emit();
+
+                return running;
+            }
+
+            running = run();
+
+            return running;
+        },
+        state: () => ({ ...state }),
+    };
+}

@@ -67,7 +67,7 @@ describe('routes', function (): void {
 
         expect($appended)
             ->toContain("Route::group(['middleware' => ['noerd', 'app-access:demo']]")
-            ->toContain("Route::livewire('demo-customers', 'demo-customers-list')")
+            ->toContain("Route::livewire('demo-customers', 'demo-customers-list')->name('demo.customers')")
             // A bare 'auth' middleware checks the default 'web' guard while noerd logs
             // in via its own 'noerd' guard, producing an endless login redirect loop.
             ->not->toContain("'auth'")
@@ -143,6 +143,15 @@ describe('showcase', function (): void {
             ->and($customer->tags->pluck('id')->all())->toBe([$tag->id]);
     });
 
+    it('loads the tags of an existing customer through detailLoaded()', function (): void {
+        $tag = App\Models\DemoTag::create(['name' => 'VIP']);
+        $customer = App\Models\DemoCustomer::create(['name' => 'Acme']);
+        $customer->tags()->sync([$tag->id]);
+
+        Livewire::test('demo-customer-detail', ['modelId' => $customer->id])
+            ->assertSet('tagIds', [$tag->id]);
+    });
+
     it('renders the demo customers list with the picklist badge of the paired detail', function (): void {
         App\Models\DemoCustomer::create(['name' => 'Acme', 'status' => 'in_progress']);
 
@@ -153,7 +162,7 @@ describe('showcase', function (): void {
     });
 
     it('opens a record through the demo detail route when it is registered', function (): void {
-        registerTestLivewireRoute('demo-customer/{modelId}', 'demo-customer-detail', 'demo-customer.detail');
+        registerTestLivewireRoute('demo-customer/{modelId}', 'demo-customer-detail', 'demo.customer.detail');
         $customer = App\Models\DemoCustomer::create(['name' => 'Acme']);
 
         Livewire::test('demo-customers-list')
@@ -161,6 +170,47 @@ describe('showcase', function (): void {
             ->assertDispatched('noerdModal');
     });
 });
+
+describe('app registration', function (): void {
+    it('assigns the demo app only to the tenants an opt-in names', function (): void {
+        $tenantA = Noerd\Models\Tenant::factory()->create();
+        $tenantB = Noerd\Models\Tenant::factory()->create();
+
+        $assigned = fn(): array => Noerd\Models\TenantApp::where('name', 'DEMO')->first()->tenants()->pluck('tenants.id')->map('intval')->sort()->values()->all();
+
+        runDemoRegistration(['--no-interaction' => true]);
+        expect($assigned())->toBe([]);
+
+        runDemoRegistration(['--tenants' => (string) $tenantB->id]);
+        expect($assigned())->toBe([$tenantB->id]);
+
+        runDemoRegistration(['--tenants' => 'all']);
+        expect($assigned())->toBe([$tenantA->id, $tenantB->id])
+            ->and(Noerd\Models\TenantApp::where('name', 'DEMO')->value('icon'))->toBe('heroicon:outline:beaker')
+            ->and(Noerd\Models\TenantApp::where('name', 'DEMO')->value('route'))->toBe('demo.customers');
+    });
+});
+
+/**
+ * Run the private registerDemoApp() step with the given options.
+ *
+ * @param  array<string, mixed>  $options
+ */
+function runDemoRegistration(array $options): void
+{
+    $command = new NoerdDemoCommand();
+    $command->setLaravel(app());
+
+    // Always non-interactive: the assignment must follow the option alone.
+    unset($options['--no-interaction']);
+    $input = new ArrayInput($options, $command->getDefinition());
+    $input->setInteractive(false);
+
+    (new ReflectionProperty(Illuminate\Console\Command::class, 'input'))->setValue($command, $input);
+    $command->setOutput(new OutputStyle($input, new BufferedOutput()));
+
+    (new ReflectionMethod($command, 'registerDemoApp'))->invoke($command);
+}
 
 /**
  * Fixture that pretends noerd:install has not been run yet.

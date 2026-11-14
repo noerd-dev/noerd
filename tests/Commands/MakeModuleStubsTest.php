@@ -287,7 +287,30 @@ it('prepares the host for a local module without touching what the host already 
         ->and($composer)->toContain('"allow-plugins": {}')
         ->and(mb_substr_count($phpunit, './app-modules/*/tests'))->toBe(1)
         ->and(is_dir($tempBasePath . '/app-modules'))->toBeTrue()
-        ->and(mb_substr_count(File::get($tempBasePath . '/tests/Pest.php'), '\\Noerd\\Tests\\HelperLoader::load();'))->toBe(1);
+        ->and(mb_substr_count(File::get($tempBasePath . '/tests/Pest.php'), '\\Noerd\\Testing\\HelperLoader::load();'))->toBe(1);
+
+    File::deleteDirectory($tempBasePath);
+});
+
+it('rewrites a 0.17 test-helper loader instead of adding a second call', function (): void {
+    $tempBasePath = storage_path('framework/testing/zz-module-workspace-loader');
+    File::deleteDirectory($tempBasePath);
+    File::ensureDirectoryExists($tempBasePath . '/tests');
+    File::put($tempBasePath . '/tests/Pest.php', "<?php\n\n\\Noerd\\Tests\\HelperLoader::load();\n");
+
+    $originalBasePath = $this->app->basePath();
+    $this->app->setBasePath($tempBasePath);
+
+    try {
+        (new ReflectionMethod($this->command, 'ensureTestHelpersLoaded'))->invoke($this->command);
+    } finally {
+        $this->app->setBasePath($originalBasePath);
+    }
+
+    $pest = File::get($tempBasePath . '/tests/Pest.php');
+
+    expect(mb_substr_count($pest, 'HelperLoader::load();'))->toBe(1)
+        ->and($pest)->toContain('\\Noerd\\Testing\\HelperLoader::load();');
 
     File::deleteDirectory($tempBasePath);
 });
@@ -315,3 +338,11 @@ it('generates a de.json translation file that parses', function (): void {
         ->toBeArray()
         ->not->toBeEmpty();
 });
+
+it('refuses a module name that is no valid key before writing anything', function (string $name): void {
+    $this->artisan('noerd:make-module', ['name' => $name, '--title' => 'Zz', '--icon' => 'cube', '--no-interaction' => true])
+        ->expectsOutputToContain('Invalid module name')
+        ->assertExitCode(1);
+
+    expect(File::isDirectory(base_path('app-modules/' . $name)))->toBeFalse();
+})->with(['2shop', 'zz/evil', 'zz.dot']);

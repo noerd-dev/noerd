@@ -69,11 +69,6 @@ final class PicklistBadges
         return $listSettings;
     }
 
-    public static function clear(): void
-    {
-        RequestState::forget('noerd.picklist-badges');
-    }
-
     /**
      * @return array<string, array<int, array{value: mixed, label: string}>>
      */

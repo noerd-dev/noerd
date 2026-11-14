@@ -25,15 +25,19 @@ Ask: *paste the resulting URL into a fresh tab — does it show the same thing?*
 | A LIST ROW always opens its record this way — a record without an editable form gets a read-only `*-detail` that embeds the narrowed list (`lists:`) | never what a list row click opens |
 | Requirements: target uses `NoerdDetail`/`NoerdPage` (or `NoerdList` for record-lists), a named `Route::livewire('{app}/{entity}/{modelId}', …)` exists, every identity argument is a route parameter | |
 
-**Always keep the component as fallback** — `Noerd::modalFor($route, $component, $args)` in PHP;
-in YAML/properties pair `route:` + `modalComponent:`, `$detailRoute` + `$detailComponent`,
-`newRoute:` + `newComponent:`. The route wins when registered; the component opens when the owning
-module is not installed.
+**Always keep the component as fallback** — `Noerd::modalFor($route, $component, $args)` in PHP,
+`$detailRoute` + `$detailComponent` on a list. The route wins when registered; the component opens
+when the owning module is not installed.
 
-Where `route:` is available: list `$detailRoute`, list header action `route:`, detail action
-`route:`, relation-box tile / widget `route:`, list column `type: relationLink`, relation field
-`detailRoute:`, navigation `modalRoute:` / `newRoute:`, page/detail tab `modalRoute:`, dashboard
-card `route=`.
+**ONE YAML vocabulary for modal targets:** every YAML place that opens a modal — list header
+action, row action, `type: relationLink` column, detail/page action, relation-box tile, tab,
+navigation entry — uses `modalRoute:` + `modalComponent:` (fallback), or `modalComponent:` alone.
+Prefixed for a second target: navigation "+" `newModalRoute:` / `newModalComponent:`, widget
+"Show more" `showMoreModalRoute:` / `showMoreModalComponent:`. `route:` only NAVIGATES (navigation,
+tabs); `component:` only names a component rendered in place (`lists:`, `widgets:`, quick menu).
+`noerd:update` rewrites the earlier `route:`/`component:`/`newRoute:`/`newComponent:` forms,
+`noerd:lint` reports what is left. PHP names stay: relation field `detailRoute:` on
+`RelationFieldDefinition`, dashboard card `route=` / `component=`.
 
 ## 2. Build the modal as its OWN Livewire component
 
@@ -87,18 +91,23 @@ new class extends Component {
 ## 3. Open, close, return
 
 - Open from PHP: `Noerd::modal(...)` / `Noerd::modalRoute(...)`; from Blade/Alpine: `$modal(...)` /
-  `$modalRoute(...)`. From YAML: `route:` / `modalComponent:` (+ `arguments:` with the `$modelId` token).
+  `$modalRoute(...)`. From YAML: `modalRoute:` / `modalComponent:` (+ `arguments:` with the `$modelId` token).
 - Close: `wire:click="$dispatch('closeTopModal')"` or `$this->dispatch('closeTopModal')`.
+- Escape closes the top modal unless an element already handled it: a dropdown/popover inside the
+  modal calls `$event.preventDefault()` (and `stopPropagation()`) ONLY while it is open —
+  `@keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false }"`,
+  never `@keydown.escape.stop` on a closed popover (the modal would not close).
 - Result: dispatch a custom event; the opener listens with `#[On('thingMarked')]`. Pickers dispatch
   `recordsSelected` (`ids`, `context`) — filter by `context` in the opener.
-- Detail components finish with `storeProcess()` / `closeModalProcess()` which close the modal and
-  refresh the opening list automatically.
+- Detail components finish with `finishStore($model)` / `closeModalProcess()` (both protected; a
+  Blade button calls `wire:click="closeModal"`), which close the modal and refresh the opening list
+  automatically.
 
 ## 4. Test
 
 - Component modals: `Livewire::test('module::x-modal', ['modelId' => $id])->call('save')->assertDispatched('thingMarked')`.
 - Route vs. component is configuration — prove the mechanics with `registerTestLivewireRoute()`
-  from `tests/helpers.php` (route wins when registered, component otherwise); never assert which
+  from `src/Testing/helpers.php` of noerd (route wins when registered, component otherwise); never assert which
   one a shipped YAML currently uses.
 
 ## Done when

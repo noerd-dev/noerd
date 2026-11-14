@@ -4,7 +4,7 @@ defaultSort:
   direction: asc
 actions:
   - label: New Demo Tag
-    route: demo-tag.detail
+    modalRoute: demo.tag.detail
 columns:
   - field: name
     label: Name

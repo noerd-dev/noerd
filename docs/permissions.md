@@ -151,6 +151,10 @@ Every check goes through `Noerd\Helpers\AccessHelper`:
 The gate names are constants on `AccessHelper` (`APP_GATE`, `OBJECT_READ_GATE`,
 `OBJECT_WRITE_GATE`, `OBJECT_CREATE_GATE`, `OBJECT_DELETE_GATE`, `ACTION_GATE`).
 
+`canAccessApp()` takes the app name in any case (`app-access:crm`, YAML `apps: [CRM]`) and
+normalises it to UPPERCASE — the canonical `tenant_apps.name` — before it asks the
+`noerd.access-app` gate, so a gate always receives `CRM` and may compare exactly.
+
 With NO gate defined the profile baseline applies: `User`/`Admin` (and no
 profile) → everything, `ReadOnly` → only `canReadObject`/`canAccessApp`.
 Guests are never restricted (config discovery, unauthenticated rendering). Null arguments
@@ -174,28 +178,46 @@ write.
 
 - **Lists (`NoerdList`):** read denial yields zero rows (`whereRaw('1 = 0')`)
   plus the denied panel, blocks CSV export, and strips header actions; "New …"
-  actions (`action: listAction` or a `route:` action) are stripped without
+  actions (`action: listAction` or a `modalRoute:` action) are stripped without
   create, every other header action without write; the `deleteSelected` bulk
-  action is stripped/blocked without delete.
+  action is stripped/blocked without delete, every other bulk action without
+  write — a stripped bulk action is also refused when the browser calls its
+  method (`BulkActionPermissionHook`), so a module's bulk method needs no
+  guard of its own.
 - **Details/pages (`NoerdPage`/`NoerdDetail`):** read denial blocks the mount
   before any record data is loaded; `store()`/`delete()` are no-ops without the
   matching ability — enforced even for custom overrides by the global
-  `WriteGuardHook`; fields render readonly, save/delete buttons and keyboard
+  `WriteGuardHook`, which treats an action named `store`, `save` or `update` as a
+  save (create or write, see `canSaveObject()`) and `delete` as a delete; fields render readonly, save/delete buttons and keyboard
   shortcuts are hidden. The hook also covers a save or delete triggered by an
   event (`storeDetail-{name}` → `store()`): such a listener runs inside the same
   Livewire trigger, so a denied one aborts the request with 403 instead of being
   skipped. `embeddedDetailStored()` adopts a record only for a user who may save
   and never repoints a page that already shows one.
-- **Position rows (`NoerdPositionRow`):** `store()`/`delete()` of a row require
-  the write permission of the position model, through the same `WriteGuardHook`.
+- **Position rows (`NoerdPositionRow`):** `store()`/`save()`/`update()`/`delete()`
+  of a row require the write permission of the position model, through the same
+  `WriteGuardHook`; a row whose record cannot be loaded (gone, another tenant)
+  is refused as well. The trait's `delete()` checks the permission itself too.
+  An action of a row that saves by calling `store()` internally (a price
+  recalculation) is not an action-boundary save — it must check
+  `AccessHelper::canWriteObject()` itself.
 - **Apps:** `AppAccessMiddleware`, the app bar, the home
   tiles and the allowed-app config discovery all consult `canAccessApp()`.
+  A route shared by several apps (`app-access:crm,sales`) matches the first
+  of its apps that the tenant runs AND the user may access — like
+  `canUseApp()`, one usable app suffices; it is denied only when the user may
+  access none of them.
 - **Admin-only components:** `/setup` routes run through `SetupMiddleware`
   (`NoerdUser::isAdmin()`); the entry point that bypasses it — the
   client-dispatchable `noerdModal` event — re-asserts admin access through
   `Noerd\Support\ComponentAccessGuard`. A module that ships admin-only screens
   registers them with `ComponentAccessGuard::registerAdminComponents()` (see
   [Extension Registries](extension-registries.md#componentaccessguard)).
+- **Route middleware in the modal stack:** the modal stack mounts a component
+  without its route middleware, so the core re-checks the access middleware of
+  the component's routes for such a mount — `app-access`, `action-permission`,
+  `setup`, `profile` and every middleware implementing `GuardsModalMount` (see
+  [below](#modal-mounts-and-module-middleware)).
 - **Dashboard widgets and quick-menu buttons** declare `app:` (string) or
   `apps:` (list) in their YAML — an entry renders only when one of its apps is
   assigned to the tenant AND allowed (`AccessHelper::canUseApp()`, see
@@ -205,6 +227,43 @@ write.
   `TenantHelper::getSelectedApp()`. NEVER hand-roll a per-module "tenant has app X"
   gate for this — such gates ignore the user's profile. On routes use the
   `app-access:{app}` middleware (see [Authentication](auth.md)).
+
+## Modal mounts and module middleware
+
+A module that protects its routes with an access middleware of its OWN (a super-admin console, an
+app-selection middleware, a portal guard) implements `Noerd\Contracts\GuardsModalMount` on it.
+Otherwise the modal stack — which takes the component name from the browser and never runs route
+middleware — mounts the module's screens for any signed-in user.
+
+```php
+use Noerd\Contracts\GuardsModalMount;
+
+final class EnsureOperator implements GuardsModalMount
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        abort_unless(self::allowsModalMount(), 403);
+
+        return $next($request);
+    }
+
+    public static function allowsModalMount(string ...$parameters): bool
+    {
+        return NoerdAuth::user()?->isSuperAdmin() === true;
+    }
+}
+```
+
+- `allowsModalMount()` receives the middleware's route parameters (`name:a,b` → `'a', 'b'`) and
+  answers the middleware's rule for the current user — no redirect, no session write, no response.
+  Keep `handle()` and `allowsModalMount()` on ONE rule.
+- `ComponentAccessGuard::allowsInModal()` collects, per route of the component, the core access
+  middleware and every middleware implementing the contract — by class, alias or inside a
+  (nested) middleware group. A route passes when ALL of them allow; the component opens when at
+  least one of its routes passes. A route without any access middleware keeps the component free.
+- The check runs on the mount through the stack only. A Livewire action is callable on every
+  component the user once mounted, so a screen with powerful actions (signing in as another
+  person, sending money) checks its condition in `mount()` and in those actions as well.
 
 ## Locked component surface
 
@@ -223,7 +282,7 @@ or `NoerdPage` (and therefore `NoerdDetail`).
 | `objectPermissionModel` | Have the object gates checked against a different class |
 | `detailComponent`, `detailRoute` | Swap the modal target of a row click |
 | `showMoreComponent`, `showMoreRoute` | Swap the "show more" target |
-| `showFromDateColumn`, `showUntilDateColumn` | Repoint the columns the ShowFrom/ShowUntil filters write into the query — declared `protected` by convention, vetoed here in case a component makes one public |
+| `showFromDateColumn`, `showUntilDateColumn` | Repoint the columns the earlier date filters wrote into the query — declared `protected` by convention, vetoed here in case a component makes one public |
 | `listActionMethod` | Redirect the picker callback |
 | `listView`, `listViewApp` | Render another app's list view |
 | `settingsModels` | Repoint which model `persistSettings()` writes and which property it reads |
@@ -239,7 +298,7 @@ or `NoerdPage` (and therefore `NoerdDetail`).
 `objectPermissionModel`, `settingsModels`, `pageLayout`, `collectionLayout` (the collection
 definition a setup-collection entry form writes into, derived from the collection key),
 `objectReadBlocked`, `listView`, `listViewApp`, `hostId` (set by `EmbeddedDetailHostHook` from the
-rendering page) and `deletable`. Livewire assigns mount parameters to matching public properties before any update hook
+rendering page), `deletable` and `enableCsvExport` (a list switches its export on itself). Livewire assigns mount parameters to matching public properties before any update hook
 runs, and the modal stack takes those arguments straight from the client; no legitimate caller passes
 them, because a component declares or resolves them itself. Properties like `listActionMethod` or
 `context` are deliberately *not* mount-protected — the relation-field picker passes them.
@@ -275,11 +334,19 @@ are only accepted for columns of the list.
 
 Livewire lets the client update every public property it was sent. Beyond the locked properties
 above, `Noerd\Livewire\Hooks\ClientWriteGuardHook` keeps the update channel of every `NoerdPage`
-component away from what the form does not let the user edit: `readonly: true` fields and the
-unbound keys below a nested root such as `custom_attributes`. Such updates are reverted to the
-value the server rendered; `setFieldValue` refuses them as well. Inputs a Blade binds without a
+component away from what the form does not let the user edit: `readonly: true` fields, fields
+rendered as text (a text-only theme such as `display`), the
+unbound keys below a nested root such as `custom_attributes`, every top-level key of a bound
+property that no field declares (`detailData.tenant_id`), and `$modelId`. Such updates are reverted
+to the value the server rendered; `setFieldValue` refuses them as well. Inputs a Blade binds without a
 layout field are declared in `additionalDetailFields()`. Details:
 [Detail View](detail-view.md#what-the-client-may-change).
+
+On top, `BelongsToTenant` refuses — while a Livewire component processes a client request of a
+signed-in noerd user — to create a record for another tenant than the user's or to change the
+`tenant_id` of an existing record (`Noerd\Exceptions\TenantMismatchException`). Code that writes
+for another tenant on purpose runs inside `TenantContext::run()`; `TenantSingleton::updateForTenant()`
+does so itself. See [Traits](traits.md#tenant-context-console-queue-public-frontends).
 
 ## Query-level read guard (opt-in trait)
 
@@ -316,7 +383,7 @@ must run inside a denied user's request lifts the guard explicitly with
 
 - Custom PUBLIC methods on components (`approve()`, `duplicate()`, custom bulk
   actions, a position row's `moveUp()`) are NOT guarded generically — only
-  `store`/`delete` run through the `WriteGuardHook`. Guard such methods yourself (an object ability check or a
+  `store`/`save`/`update`/`delete` run through the `WriteGuardHook`. Guard such methods yourself (an object ability check or a
   named action check).
 - A list with a hand-built query in `listData()` bypasses `listQuery()`'s
   read-denial row filter — give the model the `GuardedByObjectPermission`

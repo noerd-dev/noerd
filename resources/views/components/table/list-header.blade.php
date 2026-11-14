@@ -65,9 +65,9 @@
                                 aria-haspopup="true"
                                 title="{{ __('Switch list view') }}"
                             >
-                                <span class="truncate">{{ $title }}</span>
+                                <span class="truncate" :id="(typeof isModal !== 'undefined' && isModal && typeof modalTitleId !== 'undefined') ? modalTitleId : null">{{ $title }}</span>
                                 @if ($paginator !== null)
-                                    <span class="shrink-0 font-light">({{ $paginator->total() }})</span>
+                                    <span class="shrink-0 font-light">({{ \Noerd\Helpers\FormatHelper::number((float) $paginator->total(), 0) }})</span>
                                 @endif
                                 <x-noerd::icons.chevron-down class="my-auto shrink-0 text-gray-500" />
                             </button>
@@ -84,10 +84,11 @@
                         @endforeach
                     </x-noerd::action-menu>
                 @else
-                    <div class="truncate">
+                    {{-- The title names the dialog of a list opened in a modal (see modal-title). --}}
+                    <div class="truncate" :id="(typeof isModal !== 'undefined' && isModal && typeof modalTitleId !== 'undefined') ? modalTitleId : null">
                         {{ $title }}
                         @if ($paginator !== null)
-                            <span class="font-light"> ({{ $paginator->total() }}) </span>
+                            <span class="font-light"> ({{ \Noerd\Helpers\FormatHelper::number((float) $paginator->total(), 0) }}) </span>
                         @endif
                     </div>
                 @endif

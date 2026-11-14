@@ -109,7 +109,7 @@ trait NoerdSettingsPage
     protected function initSettings(): void
     {
         $this->initNoerdComponent(function (): void {
-            $tenantId = TenantHelper::getSelectedTenantId();
+            $tenantId = TenantHelper::currentTenantId();
 
             foreach ($this->settingsModelMap() as $property => $modelClass) {
                 // A tenant singleton answers the row or its defaults; any other
@@ -133,7 +133,7 @@ trait NoerdSettingsPage
      */
     protected function persistSettings(): void
     {
-        $tenantId = TenantHelper::getSelectedTenantId();
+        $tenantId = TenantHelper::currentTenantId();
         $allowedByProperty = $this->settingsWritableKeys();
 
         foreach ($this->settingsModelMap() as $property => $modelClass) {

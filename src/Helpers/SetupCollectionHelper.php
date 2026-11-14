@@ -13,8 +13,8 @@ final class SetupCollectionHelper
 {
     /**
      * Field types a collection definition may use, value => display label.
-     * The single source for the noerd:make-collection prompt AND the
-     * definition editor UI — the two used to carry diverging hardcoded lists.
+     * The single source for the noerd:make-collection prompt AND every
+     * definition editor (an extension's database editor reads it too).
      * Deliberately curated rather than derived from FieldTypeRegistry, which
      * also contains structural and relation types that make no sense on a
      * collection entry.
@@ -29,12 +29,24 @@ final class SetupCollectionHelper
         'translatableRichText' => 'Translatable RichText',
         'image' => 'Image',
         'email' => 'E-Mail',
-        'tel' => 'Tel',
+        'phone' => 'Phone',
         'checkbox' => 'Checkbox',
         'select' => 'Select',
         'date' => 'Date',
-        'datetime' => 'DateTime',
+        'datetime-local' => 'DateTime',
         'number' => 'Number',
+    ];
+
+    /**
+     * Field types earlier definitions were written with → the type they are
+     * rendered as now. A stored collection keeps working unchanged: its fields
+     * are read through normalizeFieldType().
+     *
+     * @var array<string, string>
+     */
+    public const LEGACY_FIELD_TYPES = [
+        'datetime' => 'datetime-local',
+        'tel' => 'phone',
     ];
 
     /** The RequestState bucket of the select options read in this request or job. */
@@ -91,6 +103,14 @@ final class SetupCollectionHelper
     public static function clearSelectOptionsCache(): void
     {
         RequestState::forget(self::SELECT_OPTIONS_MEMO);
+    }
+
+    /**
+     * The current name of a collection field type (`datetime` → `datetime-local`).
+     */
+    public static function normalizeFieldType(string $type): string
+    {
+        return self::LEGACY_FIELD_TYPES[$type] ?? $type;
     }
 
     /**
@@ -151,7 +171,17 @@ final class SetupCollectionHelper
             return null;
         }
 
-        return $this->repository->resolveFields($collection);
+        $definition = $this->repository->resolveFields($collection);
+
+        if ($definition !== null && is_array($definition['fields'] ?? null)) {
+            foreach ($definition['fields'] as $index => $field) {
+                if (is_string($field['type'] ?? null)) {
+                    $definition['fields'][$index]['type'] = self::normalizeFieldType($field['type']);
+                }
+            }
+        }
+
+        return $definition;
     }
 
     /**

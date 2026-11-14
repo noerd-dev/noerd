@@ -71,21 +71,26 @@ if (! function_exists('validDetailPayload')) {
      *
      * Keys are un-prefixed field names (tenant_id, name, zipcode, …), exactly as
      * expected by ->set('detailData', …). make($overrides) avoids spinning up
-     * relation factories for overridden foreign keys, and id/timestamps are
-     * stripped so no existing record is implied.
+     * relation factories for overridden foreign keys, and the model's key
+     * (whatever its key name) and timestamps are stripped so no existing
+     * record is implied.
      *
-     * @param  class-string  $modelClass
+     * @param  class-string  $modelClass  a model using HasFactory
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
      */
     function validDetailPayload(string $modelClass, array $overrides = []): array
     {
-        $attributes = $modelClass::factory()->make($overrides)->toArray();
+        $model = $modelClass::factory()->make($overrides);
 
-        return array_merge(
-            Arr::except($attributes, ['id', 'created_at', 'updated_at', 'deleted_at']),
-            $overrides,
-        );
+        $except = array_values(array_unique(array_filter([
+            $model->getKeyName(),
+            $model->getCreatedAtColumn(),
+            $model->getUpdatedAtColumn(),
+            method_exists($model, 'getDeletedAtColumn') ? $model->getDeletedAtColumn() : 'deleted_at',
+        ])));
+
+        return array_merge(Arr::except($model->toArray(), $except), $overrides);
     }
 }
 
@@ -136,9 +141,10 @@ if (! function_exists('createNoerdUserForApp')) {
      * assigned through Tenant::assignApp(), so the TenantAppAssigned listeners
      * of the installed modules run exactly as they do when an installation
      * assigns the app. The user carries the tenant as selected_tenant_id and
-     * is attached under the given profile — a core Profile case, the key of a
-     * profile a module registers, or none. Nothing is authenticated;
-     * actingAsNoerdUserForApp() adds that.
+     * becomes a member through Tenant::addMember() under the given profile — a
+     * core Profile case, the key of a profile a module registered on the
+     * ProfileRegistry, or none — so the TenantMemberAdded listeners run too.
+     * Nothing is authenticated; actingAsNoerdUserForApp() adds that.
      *
      * @param  array<string, mixed>  $tenantAttributes  overrides for the Tenant factory
      * @param  array<string, mixed>  $appAttributes  overrides for a NEW tenant_apps row
@@ -154,9 +160,7 @@ if (! function_exists('createNoerdUserForApp')) {
         $tenant->assignApp($app);
 
         $user = \Noerd\Models\NoerdUser::factory()->create(['selected_tenant_id' => $tenant->id]);
-        $user->tenants()->attach($tenant->id, [
-            'profile_key' => $profile instanceof BackedEnum ? $profile->value : $profile,
-        ]);
+        $tenant->addMember($user, $profile instanceof BackedEnum ? (string) $profile->value : $profile);
 
         \Noerd\Helpers\TenantHelper::setSelectedTenantId($tenant->id);
         \Noerd\Helpers\TenantHelper::setSelectedApp((string) $app->name);
@@ -207,19 +211,9 @@ if (! function_exists('assertElementHasClasses')) {
      */
     function assertElementHasClasses(string $html, array $classes, string $message = ''): void
     {
-        preg_match_all('/class="([^"]*)"/', $html, $matches);
-
-        foreach ($matches[1] as $classAttribute) {
-            $present = preg_split('/\s+/', mb_trim($classAttribute)) ?: [];
-
-            if (array_diff($classes, $present) === []) {
-                Assert::assertTrue(true);
-
-                return;
-            }
-        }
-
-        Assert::fail(
+        Assert::assertNotSame(
+            [],
+            noerdElementsCarryingClasses($html, $classes),
             $message !== ''
                 ? $message
                 : 'No element carries all of these classes: ' . implode(' ', $classes),
@@ -235,21 +229,42 @@ if (! function_exists('assertNoElementHasClasses')) {
      */
     function assertNoElementHasClasses(string $html, array $classes, string $message = ''): void
     {
+        Assert::assertSame(
+            [],
+            noerdElementsCarryingClasses($html, $classes),
+            $message !== ''
+                ? $message
+                : 'An element unexpectedly carries all of these classes: ' . implode(' ', $classes),
+        );
+    }
+}
+
+if (! function_exists('noerdElementsCarryingClasses')) {
+    /**
+     * The class attributes in the markup that carry every given class as a
+     * whole token.
+     *
+     * @internal shared by assertElementHasClasses() and assertNoElementHasClasses()
+     *
+     * @param  array<int, string>  $classes
+     * @return list<string>
+     */
+    function noerdElementsCarryingClasses(string $html, array $classes): array
+    {
+        Assert::assertNotSame([], $classes, 'Name at least one class to look for.');
+
         preg_match_all('/class="([^"]*)"/', $html, $matches);
 
+        $carrying = [];
         foreach ($matches[1] as $classAttribute) {
             $present = preg_split('/\s+/', mb_trim($classAttribute)) ?: [];
 
             if (array_diff($classes, $present) === []) {
-                Assert::fail(
-                    $message !== ''
-                        ? $message
-                        : 'An element unexpectedly carries all of these classes: ' . implode(' ', $classes),
-                );
+                $carrying[] = $classAttribute;
             }
         }
 
-        Assert::assertTrue(true);
+        return $carrying;
     }
 }
 

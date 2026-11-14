@@ -7,6 +7,18 @@ there (there are no environment variables for shortcuts).
 Format: `'modifier+key'` — e.g. `'s'`, `'/'`, `'ctrl+enter'`, `'shift+k'`, written in lowercase.
 Supported modifiers: `ctrl`, `shift`, `alt`, `meta`. `ctrl` also matches the Cmd key on macOS.
 
+Matching rules (the same in `noerd.js` and in `KeyboardShortcutHelper`):
+
+- A held key (auto-repeat) triggers a shortcut once, never again per repeat.
+- A shortcut without `ctrl`/`meta`/`alt` never fires while one of them is held — `n` does not
+  react to Ctrl+N (the browser's) or to an AltGr character. `shift` is only checked when the
+  shortcut names it, so `/` or `?` keep working on layouts that need Shift to type them.
+- A shortcut without modifier never fires while the focus is in an input, textarea, select or
+  rich-text editor, and the `delete` shortcut never fires there either: `ctrl+backspace` deletes a
+  word in a text field, never the record.
+- `save` first takes the focus out of the focused field, so a field that writes on blur (the
+  currency field, `wire:model.blur`) is part of the save.
+
 ## The Shipped Shortcuts
 
 | Config key | Default | What it does | Where it applies |
@@ -25,7 +37,7 @@ on the button always shows the effective shortcut.
 ```yaml
 actions:
   - label: New Item
-    route: inventory.item.detail      # first action: new_entry ("n")
+    modalRoute: inventory.item.detail      # first action: new_entry ("n")
   - label: Import
     action: openImportModal
     shortcut: i
@@ -94,4 +106,5 @@ with no modal open — or without the modal package installed — the page itsel
   than its views falls back to the unguarded behaviour instead of throwing on every keystroke.
 - Row navigation (`noerdList`: arrow keys and Enter) additionally claims the hovered list through
   the shared Alpine store, so only one list on a layer answers the arrow keys, and it is suppressed
-  while the user types in a form field.
+  while the user types in a form field. The highlighted row stays between the first and the last
+  row of the current page; a click on a row moves the highlight there.

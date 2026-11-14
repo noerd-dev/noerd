@@ -19,10 +19,14 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
 - Released under the MIT license (`LICENSE`, `Copyright (c) 2026 Johannes Brock`). Keep the file in
   the Packagist archive — `.gitattributes` `export-ignore`s development-only paths, never `LICENSE`.
 - Every test lives in a subdirectory of `tests/` (`Feature`, `Components`, `Unit`, `Commands`,
-  `Helpers`, `Middleware`, `Traits`, `js`); the root of `tests/` holds only the shipped test API
-  (`TestCase.php`, `ModuleTestCase.php`, `HelperLoader.php`, `helpers.php`, `Pest.php`).
-  Fixtures only this suite uses (`tests/Support/`) are export-ignored and never referenced by a
-  module.
+  `Helpers`, `Middleware`, `js`). The shipped test API is `src/Testing/` (namespace
+  `Noerd\Testing\`): `TestCase`, `ModuleTestCase`, `HelperLoader`, `helpers.php` and
+  `Concerns\CreatesSetupUser`. Nothing in it may depend on a file under `tests/`, which is
+  export-ignored as a whole (`.gitattributes`) and autoloaded only through `autoload-dev`
+  (`Noerd\Tests\`): the suite's base `Noerd\Tests\TestCase` (the shipped `TestCase` plus the
+  `noerd-test::` fixture namespace), `tests/Pest.php`, the test directories and the fixtures only
+  this suite uses (`tests/Support/`, `tests/Feature/fixtures/`) — a module never references them.
+  This file and `CLAUDE.md` are export-ignored as well.
 
 ## Workflow
 
@@ -53,18 +57,19 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
   `tests/Components`, …). Every change needs a test; run the smallest relevant subset.
 - **Standalone run (package root):** `composer install` then `vendor/bin/pest` (or
   `vendor/bin/pest tests/Feature/SomeTest.php`). The suite runs on Orchestra Testbench with the
-  built-in sqlite `:memory:` connection (`NOERD_TESTBENCH_DB`, see `phpunit.xml`); `Noerd\Tests\TestCase`
-  links the package into the testbench skeleton and publishes its `app-configs` once, mirroring
-  `noerd:install`.
+  built-in sqlite `:memory:` connection (`NOERD_TESTBENCH_DB`, see `phpunit.xml`); `Noerd\Testing\TestCase`
+  (extended by the suite's `Noerd\Tests\TestCase`) links the package into the testbench skeleton
+  and publishes its `app-configs`, mirroring `noerd:install`.
 - **Host run:** inside a host project `php artisan test --compact app-modules/noerd/tests/...`.
   The host's `tests/Pest.php` is loaded instead of ours, therefore **every test file binds the test
   case itself** with `uses(Noerd\Tests\TestCase::class);` — never move that into `tests/Pest.php`.
-- `tests/helpers.php` holds the global test helpers (`validDetailPayload()`,
+  The host maps `Noerd\Tests\` → `app-modules/noerd/tests/` in its own `autoload-dev`.
+- `src/Testing/helpers.php` holds the global test helpers (`validDetailPayload()`,
   `requiredLayoutFields()`, `registerTestLivewireRoute()`, …). It is deliberately NOT in the
   production composer autoload (test functions must never load in a consumer app's requests):
-  `Noerd\Tests\TestCase` requires it, so every suite extending it gets the helpers, and a host
-  project additionally requires it from its own `tests/Pest.php`. New global helpers go there,
-  guarded with `function_exists`.
+  `Noerd\Testing\TestCase` loads it through `HelperLoader`, so every suite extending it gets the
+  helpers, and a host project calls `\Noerd\Testing\HelperLoader::load();` from its own
+  `tests/Pest.php`. New global helpers go there, guarded with `function_exists`.
 - **Tests prove mechanics, not configuration.** The YAML files under `app-configs/` are
   per-installation configuration: never assert their current content (titles, themes, field lists,
   route vs. component targets). Use synthetic layouts, fixture YAMLs written at runtime or the
@@ -96,7 +101,11 @@ and are NOT repeated here. Read that guideline first; it applies to code in this
   in the page YAML and `NoerdPage`. `NoerdDetail` composes `NoerdPage` — never duplicate between them.
 - **Modals.** Action dialogs open by component (`Noerd::modal()`), addressable records open by route
   (`Noerd::modalRoute()`), always with the component as fallback (`Noerd::modalFor()`). Keep the two
-  APIs explicit — no implicit detection.
+  APIs explicit — no implicit detection. In YAML a modal target is ALWAYS `modalRoute:` +
+  `modalComponent:` (prefixed `newModal…` / `showMoreModal…` for a second target of the same place),
+  `route:` only navigates, `component:` only renders in place. A new YAML place that opens a modal
+  reads its keys through `Noerd\Support\YamlModalTarget`; a place whose earlier spelling must be
+  rewritten is added to `YamlVocabularyMigrator::MODAL_TARGET_PLACES`.
 - **Config.** `config/noerd.php` holds the package defaults AND is the file `noerd:install` publishes
   into the host; a new config key or feature flag goes there, and
   `noerd:update` (`publishNoerdConfig()` / `setupFrontendAssets()`) must carry it into existing

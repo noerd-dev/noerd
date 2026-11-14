@@ -24,6 +24,7 @@ use Noerd\Support\Locales;
 
 class NoerdUser extends Authenticatable implements HasLocalePreference
 {
+    /** @use HasFactory<NoerdUserFactory> */
     use HasFactory;
     use Notifiable;
 
@@ -54,9 +55,20 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         $this->notify(new NoerdResetPassword($token));
     }
 
+    /**
+     * The tenant behind selected_tenant_id: the live (session) selection for
+     * the signed-in user, the persisted setting for every other instance — the
+     * same rule the attribute follows, never another user's session.
+     */
     public function selectedTenant(): ?Tenant
     {
-        return TenantHelper::getSelectedTenant();
+        if ($this->isSignedInUser()) {
+            return TenantHelper::getSelectedTenant();
+        }
+
+        $tenantId = $this->selected_tenant_id;
+
+        return $tenantId === null ? null : Tenant::query()->find($tenantId);
     }
 
     /**
@@ -153,14 +165,17 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     /**
      * The RAW profile key of the user in the given tenant (default: the
-     * selected tenant of the current request), read from the users_tenants
+     * tenant of the current request — TenantHelper::currentTenantId(), so a
+     * job or command running in a TenantContext reads the profile of THAT
+     * tenant, not an empty session; the session selection only where neither
+     * a context nor a signed-in user names one), read from the users_tenants
      * pivot. Null without a tenant or assignment. Modules interpreting
      * registered profiles read this key; the core's own baseline goes through
      * currentProfile().
      */
     public function currentProfileKey(?int $tenantId = null): ?string
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::currentTenantId() ?? TenantHelper::getSelectedTenantId();
 
         if (! $tenantId) {
             return null;
@@ -301,9 +316,11 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     {
         return Attribute::make(
             get: function (): ?int {
-                // The live (session) selection belongs to the authenticated user; any
-                // other user instance reads its persisted setting.
-                if ($this->ownsTenantSession()) {
+                // The live (session) selection belongs to the signed-in user; any
+                // other instance — another user, or any user while nobody is
+                // signed in (a command, a job, a token API) — reads its persisted
+                // setting, never a session that is empty or belongs to someone else.
+                if ($this->isSignedInUser()) {
                     return TenantHelper::getSelectedTenantId();
                 }
 
@@ -326,7 +343,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
                 $this->setting->update(['selected_tenant_id' => $value]);
 
-                if ($this->ownsTenantSession()) {
+                if ($this->isSignedInUser()) {
                     TenantHelper::setSelectedTenantId($value);
                 }
 
@@ -400,11 +417,6 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         ];
     }
 
-    /**
-     * Whether the tenant session is this user's: true for the authenticated
-     * user and while nobody is authenticated (console, a test preparing the
-     * user it is about to act as) — never for another user's instance.
-     */
     private function pinnedToImpersonatedTenant(BelongsToMany $memberships): BelongsToMany
     {
         if (Impersonation::isImpersonated($this)) {
@@ -415,10 +427,16 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
         return $memberships;
     }
 
-    private function ownsTenantSession(): bool
+    /**
+     * Whether the tenant session is this user's: true ONLY for the user signed
+     * in on the noerd guard. Without a signed-in user (console, queue, a token
+     * API, a test preparing the user it is about to act as) the session is
+     * nobody's — the selection is the persisted setting.
+     */
+    private function isSignedInUser(): bool
     {
         $authenticated = NoerdAuth::user();
 
-        return $authenticated === null || $this->is($authenticated);
+        return $authenticated !== null && $this->is($authenticated);
     }
 }

@@ -100,7 +100,7 @@ new class extends Component {
             });
         }
 
-        return $this->buildList($query->paginate($this->perPage));
+        return $this->buildList($this->paginateList($query));
     }
 }; ?>
 

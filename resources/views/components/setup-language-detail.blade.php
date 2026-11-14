@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\SetupLanguage;
 use Noerd\Traits\NoerdDetail;
 
@@ -41,15 +43,29 @@ new class extends Component {
     /**
      * The code is rendered into markup and script of every translatable field
      * and becomes the application locale — it is a language tag, nothing else.
+     * It is unique per tenant: a second language with the same code is a
+     * validation error, not a failing insert.
      */
     public function store(): void
     {
-        $this->validate(
-            ['detailData.code' => ['required', 'string', 'regex:' . SetupLanguage::CODE_PATTERN]],
-            ['detailData.code.regex' => __('The code must be a language code such as "de" or "en-GB".')],
-        );
+        if (is_string($this->detailData['code'] ?? null)) {
+            $this->detailData['code'] = mb_trim($this->detailData['code']);
+        }
 
-        $this->detailData['code'] = mb_trim((string) $this->detailData['code']);
+        $this->validate(
+            ['detailData.code' => [
+                'required',
+                'string',
+                'regex:' . SetupLanguage::CODE_PATTERN,
+                Rule::unique('setup_languages', 'code')
+                    ->where('tenant_id', TenantHelper::currentTenantId())
+                    ->ignore($this->modelId),
+            ]],
+            [
+                'detailData.code.regex' => __('The code must be a language code such as "de" or "en-GB".'),
+                'detailData.code.unique' => __('A language with this code already exists.'),
+            ],
+        );
 
         $this->storeLanguage();
     }

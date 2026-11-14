@@ -1,35 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
-use Noerd\Models\TenantApp;
+use Noerd\Traits\OpensTenantApps;
 
 new class extends Component {
-    /**
-     * The target is resolved from the tenant's own app record — never from the
-     * request. A client-supplied route would otherwise redirect anywhere.
-     */
-    public function openApp(string $appName): void
-    {
-        $tenantApp = TenantHelper::getSelectedTenant()?->tenantApps
-            ->first(fn(TenantApp $app): bool => mb_strtolower($app->name) === mb_strtolower($appName));
-
-        abort_unless($tenantApp instanceof TenantApp, 403);
-        abort_if((bool) $tenantApp->pivot->is_hidden, 403);
-        abort_unless((bool) $tenantApp->is_active, 403);
-        abort_unless(AccessHelper::canAccessApp($tenantApp->name), 403);
-        abort_unless(Route::has((string) $tenantApp->route), 404);
-
-        TenantHelper::setSelectedApp($tenantApp->name);
-        $this->redirect(route((string) $tenantApp->route), navigate: true);
-    }
+    use OpensTenantApps;
 
     public function openHome(): void
     {
-        TenantHelper::setSelectedApp('noerd-apps');
+        TenantHelper::setSelectedApp(TenantHelper::HOME_APP);
         $this->redirect(route('noerd.apps'), navigate: true);
     }
 }; ?>
@@ -51,11 +33,11 @@ new class extends Component {
                 {{-- Home --}}
                 <button type="button" wire:click="openHome" class="cursor-pointer w-full">
                     <div @class([
-                        'bg-brand-primary/5! border-brand-primary!' => $selectedApp === 'noerd-apps',
+                        'bg-brand-primary/5! border-brand-primary!' => $selectedApp === \Noerd\Helpers\TenantHelper::HOME_APP,
                         'hover:bg-brand-navi-hover flex mt-2 h-[40px] w-[40px] rounded-full mx-auto',
                     ])>
                         <div class="my-auto flex-1">
-                            <x-icon name="home" class="mx-auto w-5 h-5 {{ $selectedApp === 'noerd-apps' ? 'text-gray-900' : 'text-gray-600' }}" />
+                            <x-icon name="home" class="mx-auto w-5 h-5 {{ $selectedApp === \Noerd\Helpers\TenantHelper::HOME_APP ? 'text-gray-900' : 'text-gray-600' }}" />
                         </div>
                     </div>
                 </button>

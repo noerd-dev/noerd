@@ -16,20 +16,29 @@ vendor/bin/pest tests/Feature/ListViewsTest.php
 ```
 
 The suite runs on [Orchestra Testbench](https://packages.tools/testbench) with the built-in sqlite
-`:memory:` connection (`NOERD_TESTBENCH_DB`, see `phpunit.xml`). `Noerd\Tests\TestCase` links the
-package into the testbench skeleton and publishes its `app-configs` and `config/noerd.php` —
-mirroring `noerd:install` — so `StaticConfigHelper` finds the YAML files.
+`:memory:` connection (`NOERD_TESTBENCH_DB`, see `phpunit.xml`).
+
+The public test API ships in `src/Testing/` under the `Noerd\Testing\` namespace:
+
+| Class / file | Purpose |
+|--------------|---------|
+| `Noerd\Testing\TestCase` | The standalone Testbench base: the core providers, the noerd guard as default guard, an environment independent of the host's `.env`, the package linked into the skeleton with its `app-configs` and `config/noerd.php` published — mirroring `noerd:install` — so `StaticConfigHelper` finds the YAML files. `linkModuleIntoSkeleton($moduleRoot, ?$name)` links a further module. |
+| `Noerd\Testing\ModuleTestCase` | `TestCase` plus a module's providers (see [A module's own Testbench suite](#a-modules-own-testbench-suite)) |
+| `Noerd\Testing\HelperLoader` | Loads the global helpers (`src/Testing/helpers.php`, see [Global helpers](#global-helpers)) |
+| `Noerd\Testing\Concerns\CreatesSetupUser` | `createUserWithSetupAccess()` — an admin member of a fresh tenant with default languages and the `SETUP` app selected. It brings no database concern: bind `RefreshDatabase` next to it |
+
+Both test cases need `orchestra/testbench`, which noerd only suggests — a module that builds a
+suite on them requires it in its own `require-dev`.
+
 The published `app-configs` copy is compared file by file against the package on every run and
 refreshed whenever any package YAML changed, so the suite never runs against stale configs.
-`Noerd\Tests\TestCase` also registers the `noerd-test::` Livewire namespace for the fixture
-components under `tests/Feature/fixtures/components` (`noerd-test::theme-test`,
-`noerd-test::theme-setting-test`, `noerd-test::write-denied-test`, …) — synthetic components that
-receive a layout from the test instead of a shipped YAML. The package's own test trait is
-`Noerd\Tests\Traits\CreatesSetupUser` (`createUserWithSetupAccess()` — an admin user with a
-tenant, default languages and the `SETUP` app selected); it is the only trait under
-`tests/Traits/` and, like `Noerd\Tests\ModuleTestCase` (see [A module's own Testbench
-suite](#a-modules-own-testbench-suite)), part of the public test API. The fixtures only the
-package suite itself uses live under `tests/Support/` and are not shipped.
+`tests/` is the package's own suite and is not shipped (`Noerd\Tests\` is an `autoload-dev`
+namespace). Its base `Noerd\Tests\TestCase` extends `Noerd\Testing\TestCase` and registers the
+`noerd-test::` Livewire namespace for the fixture components under
+`tests/Feature/fixtures/components` (`noerd-test::theme-test`, `noerd-test::theme-setting-test`,
+`noerd-test::write-denied-test`, …) — synthetic components that receive a layout from the test
+instead of a shipped YAML. The fixtures only the package suite itself uses live under
+`tests/Support/`.
 
 ### From a host project
 
@@ -41,7 +50,9 @@ php artisan test --compact --filter=ListViews
 
 In this mode the host's `tests/Pest.php` is loaded and the package's `tests/Pest.php` is skipped.
 Every test file therefore binds its test case itself with `uses(Noerd\Tests\TestCase::class);` —
-keep that line in every new test file.
+keep that line in every new test file. Because `Noerd\Tests\` is only in the package's
+`autoload-dev`, a host that runs the package suite maps it in its own `composer.json`
+(`"autoload-dev": {"psr-4": {"Noerd\\Tests\\": "app-modules/noerd/tests/"}}`).
 
 The testbench skeleton (`vendor/orchestra/testbench-core/laravel`) is shared by every Testbench
 suite of the workspace and persists between runs. Never assume it contains only noerd's files and
@@ -76,7 +87,8 @@ which the gates compare exactly; route = lowercase key) and assigned through `Te
 so the `TenantAppAssigned` listeners of the installed modules run as they do when an installation
 assigns the app. `createNoerdUserForApp()` is the same fixture without authentication. Both take
 the tenant attributes, the profile (`Noerd\Enums\Profile::ReadOnly`, the key of a profile a module
-registers, or `null` for none) and attributes for a NEW `tenant_apps` row
+registered on the `ProfileRegistry`, or `null` for none — the user becomes a member through
+`Tenant::addMember()`, so the `TenantMemberAdded` listeners run as well) and attributes for a NEW `tenant_apps` row
 (`route`, `title`, …) as further arguments; `ensureTenantApp('MEDIA')` creates a further app row,
 which a multi-app tenant assigns with `$tenant->assignApp(...)`.
 
@@ -102,7 +114,8 @@ never loads a dependency's `autoload-dev`.
 ## A module's own Testbench suite
 
 A module that also tests standalone (its own CI, no host project) binds
-`Noerd\Tests\ModuleTestCase` instead of the host's test case. It is `Noerd\Tests\TestCase` — the
+`Noerd\Testing\ModuleTestCase` instead of the host's test case (and requires
+`orchestra/testbench` in its `require-dev`). It is `Noerd\Testing\TestCase` — the
 core providers, the noerd guard, sqlite `:memory:`, the package linked into the skeleton — plus the
 module's providers, each module linked into the skeleton's `app-modules/` so `StaticConfigHelper`
 finds its YAML the way it does after `noerd:install-{module}`:
@@ -111,7 +124,7 @@ finds its YAML the way it does after `noerd:install-{module}`:
 namespace Noerd\Inventory\Tests;
 
 use Noerd\Inventory\Providers\InventoryServiceProvider;
-use Noerd\Tests\ModuleTestCase;
+use Noerd\Testing\ModuleTestCase;
 
 abstract class TestCase extends ModuleTestCase
 {
@@ -130,7 +143,7 @@ required.
 ## Tests prove mechanics, not configuration
 
 The YAML files under `app-configs/` are per-installation configuration: the theme, titles, labels,
-tabs, the field and column lists, `required:` flags and the modal target (`route:` vs.
+tabs, the field and column lists, `required:` flags and the modal target (`modalRoute:` vs.
 `modalComponent:`, `$detailRoute` vs. `$detailComponent`) may all be changed by an installation.
 A test that asserts their current content is wrong by definition.
 
@@ -146,36 +159,38 @@ A test that asserts their current content is wrong by definition.
 
 ## Global helpers
 
-`tests/helpers.php` is **not** part of the production composer autoload — a consumer app must never
-load test functions on every request — and `autoload-dev` does not help either: composer only dumps
-the dev autoload of the ROOT package, never that of a dependency. The file is therefore loaded
-explicitly, through `Noerd\Tests\HelperLoader`:
+`src/Testing/helpers.php` is **not** part of the production composer autoload — a consumer app must
+never load test functions on every request — and `autoload-dev` does not help either: composer only
+dumps the dev autoload of the ROOT package, never that of a dependency. The file is therefore loaded
+explicitly, through `Noerd\Testing\HelperLoader`:
 
-- Suites binding `Noerd\Tests\TestCase` get the helpers from that class and need no call.
+- Suites binding `Noerd\Testing\TestCase` (or `ModuleTestCase`) get the helpers from that class and
+  need no call.
 - Every other suite (a module test bound to the host's `Tests\TestCase`, the host's own `Feature`
   suite) loads them once from its `tests/Pest.php` — `noerd:make-module` adds the line with the
   first local module:
 
 ```php
-\Noerd\Tests\HelperLoader::load();
+\Noerd\Testing\HelperLoader::load();
 ```
 
+`noerd:update` rewrites a line that still names the former `\Noerd\Tests\HelperLoader` (noerd 0.17).
 `HelperLoader` lives in the package's psr-4 map, so it resolves through the autoloader whether noerd
 is installed as a composer package (`vendor/noerd/noerd/`) or as a git submodule
-(`app-modules/noerd/`) — never hard-code either path, and never add `tests/helpers.php` to a
+(`app-modules/noerd/`) — never hard-code either path, and never add `src/Testing/helpers.php` to a
 project's root `composer.json`. Its own file is only read once something calls it, so nothing test
-related reaches a production request. New global helpers go into `tests/helpers.php`, guarded with
-`function_exists`.
+related reaches a production request. New global helpers go into `src/Testing/helpers.php`, guarded
+with `function_exists`.
 
 | Helper | Purpose |
 |--------|---------|
-| `validDetailPayload(Model::class, array $overrides = [])` | Complete `detailData` array sourced from the model factory (`make()`), `id`/timestamps stripped, merged with overrides |
+| `validDetailPayload(Model::class, array $overrides = [])` | Complete `detailData` array sourced from the model factory (`make()`), the model key (`getKeyName()`) and timestamps stripped, merged with overrides |
 | `requiredLayoutFields($component)` | The `detailData.*` names marked `required: true` in the component's live `pageLayout` (recurses into `type: block`) |
 | `registerTestLivewireRoute(string $uri, string $component, string $name)` | Registers a named `Route::livewire()` route inside a test and refreshes the name lookups |
-| `createNoerdUserForApp(string $appKey, array $tenantAttributes = [], BackedEnum\|string\|null $profile = null, array $appAttributes = [])` | The standard module fixture: a user on a fresh tenant that runs the app (row created in the canonical shape, assigned through `Tenant::assignApp()`), attached under the profile, tenant and app selected |
+| `createNoerdUserForApp(string $appKey, array $tenantAttributes = [], BackedEnum\|string\|null $profile = null, array $appAttributes = [])` | The standard module fixture: a user on a fresh tenant that runs the app (row created in the canonical shape, assigned through `Tenant::assignApp()`), a member through `Tenant::addMember()` under the profile (an unregistered profile key throws), tenant and app selected |
 | `actingAsNoerdUserForApp(...)` | The same fixture, authenticated on the noerd guard — the one-line `beforeEach` of a module test |
 | `ensureTenantApp(string $appKey, array $attributes = [])` | The `tenant_apps` row of a module key in its canonical shape, created when missing — for the further apps of a multi-app tenant |
-| `assertElementHasClasses()` / `assertNoElementHasClasses()` | DOM class assertions on rendered HTML |
+| `assertElementHasClasses()` / `assertNoElementHasClasses()` | DOM class assertions on rendered HTML: one element carries (or no element carries) every given class as a whole token; an empty class list fails |
 | `assertModuleBoundary(string $moduleDir)` | The one boundary test of a module, driven by `composer.json` `extra.noerd.boundary` (see below) |
 | `assertModuleDependenciesDeclared(string $moduleDir, array $allowedPackages = [])` | Fails when a module references another module's namespace without a `require` entry |
 | `assertModuleDoesNotReference(string $moduleDir, array $forbidden)` | Fails when a namespace (or package) the module must never use appears in its files or in its `require` |
@@ -315,7 +330,7 @@ it('publishes the config', function (): void {
   `$this->app->setBasePath($this->hostPath)` so the command publishes into a throwaway directory,
   but `vendor:publish` resolves its targets from the paths the providers registered when they
   booted — it writes into the REAL installation, silently under `--force`. The core's publishes are
-  guarded (`PublishesNoerdContent::publishTargetsCurrentInstallation()` skips with a warning when
+  guarded (`GuardsPublishTargets::publishTargetsCurrentInstallation()` skips with a warning when
   the target lies outside `base_path()`); a module command that publishes through `vendor:publish`
   guards it the same way, or its test asserts the published file instead.
 - **Never move a directory the whole run shares** (`storage/fonts`, `public/`) aside — a parallel
@@ -343,7 +358,7 @@ The package ships factories for its own models under `database/factories/`:
 |---------|-------|
 | `NoerdUserFactory` | States `adminUser()`, `withExampleTenant()`, `withSelectedApp($app)`, `unverified()` and `superAdmin()` (the installation-wide flag) |
 | `TenantFactory` | A plain tenant |
-| `TenantAppFactory` | A tenant app row — assign it to a tenant with `$tenant->assignApp($app)` (or use `ensureTenantApp()` / `createNoerdUserForApp()` from `tests/helpers.php`) |
+| `TenantAppFactory` | A tenant app row — assign it to a tenant with `$tenant->assignApp($app)` (or use `ensureTenantApp()` / `createNoerdUserForApp()` from `src/Testing/helpers.php`) |
 | `NoerdSettingsFactory` | The per-tenant settings singleton (`currency`, `locale`, detail theme) — the fixture for formatting tests |
 | `SetupCollectionFactory`, `SetupLanguageFactory`, `UserSettingFactory`, `NoerdLoginFactory` | The remaining core models |
 
@@ -356,7 +371,7 @@ The package ships factories for its own models under `database/factories/`:
   host running module suites has): Pest's Laravel parallel handler disables itself as soon as
   Testbench is present, so all workers run `migrate:fresh` against the SAME database. Use
   `php artisan test --parallel` for the host suites — Laravel derives one database per worker.
-- Testbench-bound suites (every suite built on `Noerd\Tests\TestCase`) share ONE skeleton for
+- Testbench-bound suites (every suite built on `Noerd\Testing\TestCase`) share ONE skeleton for
   their runtime-written fixtures and are therefore never run in parallel with each other; run them
   sequentially (`--testsuite=Testbench` or per path).
 

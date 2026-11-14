@@ -80,8 +80,7 @@ new class extends Component {
                     type="button"
                     aria-label="{{ __('Toggle navigation') }}"
                     class="my-auto mr-6 shrink-0 text-gray-600 hover:text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><title>
-                            layout-left</title>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                         <g fill="currentColor" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10">
                             <rect x="2" y="4" width="20" height="16" rx="2" ry="2" fill="none" stroke="currentColor"
                                   stroke-width="2"></rect>
@@ -101,15 +100,20 @@ new class extends Component {
                     @endforeach
 
                     @if(NoerdAuth::user()->isAdmin())
-                        <a class="shrink-0" wire:navigate href="{{route('noerd.setup')}}">
-                            <x-noerd::button variant="icon" icon="cog-6-tooth" type="button">
-                                <span class="sr-only">{{ __('View setup') }}</span>
-                            </x-noerd::button>
+                        {{-- A link, not a button inside a link: one focus stop, one role. --}}
+                        <a
+                            wire:navigate
+                            href="{{ route('noerd.setup') }}"
+                            aria-label="{{ __('View setup') }}"
+                            title="{{ __('View setup') }}"
+                            class="focus:ring-brand-primary/80 my-auto inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-sm text-gray-700 transition hover:bg-gray-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+                        >
+                            <x-dynamic-component component="heroicons::outline.cog-6-tooth" class="h-5 w-5" aria-hidden="true" />
                         </a>
                     @endif
 
                     <!-- Profile dropdown -->
-                    <x-noerd::action-menu width="w-48" wrapperClass="relative shrink-0" label="Open user menu">
+                    <x-noerd::action-menu width="w-48" wrapperClass="relative shrink-0" :label="__('Open user menu')">
                         <x-slot:trigger>
                             <button x-on:click="open = ! open" type="button"
                                     class="relative flex rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-border focus:ring-offset-2"

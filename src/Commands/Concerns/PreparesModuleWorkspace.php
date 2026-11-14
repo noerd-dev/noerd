@@ -18,6 +18,8 @@ use Noerd\Support\ModulesPath;
  */
 trait PreparesModuleWorkspace
 {
+    use LoadsTestHelpers;
+
     protected function prepareModuleWorkspace(): void
     {
         File::ensureDirectoryExists(ModulesPath::absolute());
@@ -122,7 +124,7 @@ trait PreparesModuleWorkspace
     protected function ensureTestHelpersLoaded(): void
     {
         $pestPath = base_path('tests/Pest.php');
-        $line = '\\Noerd\\Tests\\HelperLoader::load();';
+        $line = $this->testHelperLoaderLine();
 
         if (! File::exists($pestPath)) {
             $this->warn('tests/Pest.php not found. Load the noerd test helpers there yourself:');
@@ -130,6 +132,10 @@ trait PreparesModuleWorkspace
 
             return;
         }
+
+        // A tests/Pest.php written for noerd 0.17 loads the helpers through the
+        // former name — rewrite it instead of adding a second call.
+        $this->migrateTestHelperLoader();
 
         $content = File::get($pestPath);
 

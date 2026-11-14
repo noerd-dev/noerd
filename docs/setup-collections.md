@@ -46,6 +46,13 @@ Collection **schemas** (the definitions above) are YAML files of the installatio
 and deployed like every other app config. The entry **data** is stored in the database
 (`setup_collections` / `setup_collection_entries`), per tenant.
 
+The definitions are read through `Noerd\Contracts\SetupCollectionDefinitionRepositoryContract`. The
+core binds the YAML repository; an extension package may bind its own (keeping the definitions per
+tenant in the database). Every method takes an optional `?int $tenantId` (null = the current
+tenant), which the YAML repository ignores — its files are shared by every tenant.
+`SetupCollectionHelper::getCollectionFields()`, `getCollectionTable()` and `getAllCollections()`
+read the bound repository, so they work with either.
+
 ## Using Collections in Other Components
 
 ### setupCollectionSelect Field Type
@@ -108,9 +115,11 @@ $options = SetupCollectionHelper::selectOptions('countries', 'name', 'code');
 
 `noerd:make-collection` offers the curated list
 `SetupCollectionHelper::FIELD_TYPES`: `text`, `textarea`, `translatableText`,
-`translatableTextarea`, `translatableRichText`, `image`, `email`, `tel`, `checkbox`, `select`,
-`date`, `datetime`, `number` — deliberately without structural and relation types. A hand-written
-YAML (`yaml` mode) may use any registered type of the [Field Types Reference](field-types.md).
+`translatableTextarea`, `translatableRichText`, `image`, `email`, `phone`, `checkbox`, `select`,
+`date`, `datetime-local`, `number` — deliberately without structural and relation types. A hand-written
+YAML definition may use any registered type of the [Field Types Reference](field-types.md). A
+collection written with the earlier names `datetime` and `tel` keeps working: its fields are read as
+`datetime-local` and `phone` (`SetupCollectionHelper::LEGACY_FIELD_TYPES`).
 
 ## Best Practices
 

@@ -193,3 +193,41 @@ describe('hidden apps', function (): void {
         expect(TenantHelper::getSelectedApp())->toBe('ZZSHOP');
     });
 });
+
+describe('shared routes', function (): void {
+    beforeEach(function (): void {
+        $this->user = NoerdUser::factory()->withExampleTenant()->create();
+        $this->actingAs($this->user);
+    });
+
+    it('lets the user in through the first route app they may access, not only the first assigned one', function (): void {
+        zzAttachApp('ZZBASE', hidden: false);
+        zzAttachApp('ZZPLUS', hidden: false);
+        TenantHelper::setSelectedApp(null);
+        Gate::define(AccessHelper::APP_GATE, fn($user, string $app): bool => $app === 'ZZPLUS');
+
+        $response = zzHandle($this->middleware, $this->user, 'zzbase', 'zzplus');
+
+        expect($response->getContent())->toBe('OK')
+            ->and(TenantHelper::getSelectedApp())->toBe('ZZPLUS');
+    });
+
+    it('does not keep a selected route app the user may not access', function (): void {
+        zzAttachApp('ZZBASE', hidden: false);
+        zzAttachApp('ZZPLUS', hidden: false);
+        TenantHelper::setSelectedApp('ZZBASE');
+        Gate::define(AccessHelper::APP_GATE, fn($user, string $app): bool => $app === 'ZZPLUS');
+
+        zzHandle($this->middleware, $this->user, 'zzbase', 'zzplus');
+
+        expect(TenantHelper::getSelectedApp())->toBe('ZZPLUS');
+    });
+
+    it('denies the route only when the user may access none of its assigned apps', function (): void {
+        zzAttachApp('ZZBASE', hidden: false);
+        zzAttachApp('ZZPLUS', hidden: false);
+        Gate::define(AccessHelper::APP_GATE, fn($user, string $app): bool => false);
+
+        zzHandle($this->middleware, $this->user, 'zzbase', 'zzplus');
+    })->throws(NoerdException::class, 'ZZBASE');
+});

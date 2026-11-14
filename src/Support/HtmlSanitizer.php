@@ -210,7 +210,11 @@ final class HtmlSanitizer
 
     private static function isSafeUrl(?string $url): bool
     {
-        $url = mb_trim((string) $url);
+        // Browsers drop ASCII tab and newlines anywhere in a URL and control
+        // characters and spaces around it (`java&#9;script:` and
+        // `&#1;javascript:` both run as javascript:), so the scheme is judged
+        // on the URL without any of them.
+        $url = (string) preg_replace('/[\x00-\x20\x7F]+/', '', (string) $url);
 
         if ($url === '') {
             return false;

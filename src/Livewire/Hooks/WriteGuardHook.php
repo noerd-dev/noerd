@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Noerd\Livewire\Hooks;
 
+use Illuminate\Database\Eloquent\Model;
+
+use function Livewire\invade;
+
 use Noerd\Helpers\AccessHelper;
 use Noerd\Support\LivewireAction;
 use Noerd\Traits\NoerdPage;
@@ -69,9 +73,10 @@ final class WriteGuardHook extends NoerdComponentHook
         }
 
         // A position row writes and deletes a row of its document: both are a
-        // write of the position's model.
-        $position = $this->component->position ?? null;
+        // write of the position's model. A row whose record cannot be loaded
+        // (gone, another tenant, never set) writes nothing — fail closed.
+        $position = invade($this->component)->loadPosition();
 
-        return is_object($position) && ! AccessHelper::canWriteObject($position::class);
+        return ! $position instanceof Model || ! AccessHelper::canWriteObject($position::class);
     }
 }

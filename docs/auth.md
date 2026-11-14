@@ -151,7 +151,7 @@ with your own `table` in `config/auth.php` to separate them.
 
 ## Testing
 
-The package test case (`Noerd\Tests\TestCase`) points `auth.defaults.guard` at the noerd guard —
+The package test case (`Noerd\Testing\TestCase`) points `auth.defaults.guard` at the noerd guard —
 do the same in a host's `tests/TestCase.php` — so guard-less `actingAs($user)` calls authenticate
 on the same guard the `noerd` route group checks. Mechanics are covered by
 `tests/Feature/NoerdGuardTest.php` — including the coexistence scenario (a second guard's user must
