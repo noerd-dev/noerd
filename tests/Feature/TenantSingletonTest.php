@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Noerd\Contracts\TenantSingletonContract;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Support\TenantContext;
 use Noerd\Tests\TestCase;
@@ -50,6 +51,7 @@ beforeEach(function (): void {
 
     $this->tenant = Tenant::factory()->create();
     $this->other = Tenant::factory()->create();
+    $this->actingAs(NoerdUser::factory()->create(), 'noerd');
     TenantHelper::setSelectedTenantId($this->tenant->id);
     ZzSingletonSetting::forgetTenantSingletons();
 });
@@ -104,6 +106,25 @@ it('follows the tenant context a job or command entered', function (): void {
     $color = TenantContext::run($this->other->id, fn(): ?string => ZzSingletonSetting::forTenant()->color);
 
     expect($color)->toBe('red');
+});
+
+it('reads no session selection without a signed-in user', function (): void {
+    auth('noerd')->logout();
+    TenantHelper::setSelectedTenantId($this->tenant->id);
+
+    expect(fn() => ZzSingletonSetting::forTenant())->toThrow(RuntimeException::class, 'needs a tenant');
+});
+
+it('keeps the other global scopes of the model applied', function (): void {
+    ZzSingletonSetting::updateForTenant(['color' => 'red']);
+    ZzSingletonSetting::forgetTenantSingletons();
+    ZzSingletonSetting::addGlobalScope('zz-hide-red', fn($query) => $query->where('color', '!=', 'red'));
+
+    try {
+        expect(ZzSingletonSetting::forTenant()->exists)->toBeFalse();
+    } finally {
+        ZzSingletonSetting::clearBootedModels();
+    }
 });
 
 it('refuses to guess the tenant when none is selected and none is named', function (): void {

@@ -18,16 +18,16 @@
 <div class="flex shrink-0 items-center gap-2">
     <span class="hidden whitespace-nowrap text-sm font-normal text-gray-700 tabular-nums sm:inline">
         {{ __(':from-:to of :total', [
-            'from' => $paginator->firstItem() ?? 0,
-            'to' => $paginator->lastItem() ?? 0,
-            'total' => $paginator->total(),
+            'from' => \Noerd\Helpers\FormatHelper::number((float) ($paginator->firstItem() ?? 0), 0),
+            'to' => \Noerd\Helpers\FormatHelper::number((float) ($paginator->lastItem() ?? 0), 0),
+            'total' => \Noerd\Helpers\FormatHelper::number((float) $paginator->total(), 0),
         ]) }}
     </span>
     <x-noerd::button
         variant="control"
         type="button"
         icon="heroicons::mini.solid.chevron-left"
-        wire:click="previousPage('{{ $pageName }}')"
+        wire:click="previousPage({{ \Illuminate\Support\Js::from((string) $pageName) }})"
         wire:loading.attr="disabled"
         :disabled="$paginator->onFirstPage()"
         :title="__('Previous')"
@@ -37,7 +37,7 @@
         variant="control"
         type="button"
         icon="heroicons::mini.solid.chevron-right"
-        wire:click="nextPage('{{ $pageName }}')"
+        wire:click="nextPage({{ \Illuminate\Support\Js::from((string) $pageName) }})"
         wire:loading.attr="disabled"
         :disabled="! $paginator->hasMorePages()"
         :title="__('Next')"

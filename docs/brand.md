@@ -7,7 +7,7 @@ image). It controls the sidebar, appbar, page background and button colors throu
 Brand and theme are two orthogonal concepts:
 
 - **Brand** (`noerd.brand`, `NOERD_BRAND`): the COLOR PALETTE, documented here.
-- **Theme** (`noerd.theme`, `NOERD_THEME`): the FORM LAYOUT system — see [Themes](themes.md).
+- **Theme** (`noerd.theme.default`, `NOERD_THEME`): the FORM LAYOUT system — see [Themes](themes.md).
 
 ## Selecting a Brand
 

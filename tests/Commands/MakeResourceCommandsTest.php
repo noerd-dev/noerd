@@ -170,7 +170,7 @@ describe('--only', function (): void {
 
         expect(File::get($this->hostPath . '/resources/views/components/tenants-list.blade.php'))
             ->toContain("public ?string \$detailRoute = 'zzapp.tenant.detail';")
-            ->and(File::get($this->hostPath . '/app-configs/zzapp/lists/tenants-list.yml'))->toContain('route: zzapp.tenant.detail');
+            ->and(File::get($this->hostPath . '/app-configs/zzapp/lists/tenants-list.yml'))->toContain("modalRoute: zzapp.tenant.detail\n    modalComponent: tenant-detail");
     });
 });
 
@@ -232,8 +232,8 @@ describe('module target', function (): void {
             $entries = $navigation[0]['blockMenus'][0]['navigations'];
             expect(end($entries))->toMatchArray([
                 'route' => 'zzmod.tenants',
-                'newRoute' => 'zzmod.tenant.detail',
-                'newComponent' => 'zzmod::tenant-detail',
+                'newModalRoute' => 'zzmod.tenant.detail',
+                'newModalComponent' => 'zzmod::tenant-detail',
             ]);
         }
 
@@ -264,7 +264,7 @@ describe('module target', function (): void {
         expect($navigation[0]['hidden'])->toBeFalse()
             ->and(count($entries))->toBe(2)
             ->and($entries[1]['route'])->toBe('zzmod.tenants')
-            ->and($entries[1]['newComponent'])->toBe('zzmod::tenant-detail');
+            ->and($entries[1]['newModalComponent'])->toBe('zzmod::tenant-detail');
 
         // A second run (generated files removed, navigation kept) does not duplicate the entry.
         File::deleteDirectory($this->moduleDir . '/resources');
@@ -296,10 +296,63 @@ describe('module target', function (): void {
         expect(File::exists($this->moduleDir . '/resources/views/components/zzmod-dashboard.blade.php'))->toBeTrue()
             ->and(File::exists($this->hostPath . '/resources/views/components/zzmod-dashboard.blade.php'))->toBeFalse()
             ->and(File::get($this->moduleDir . '/routes/zzmod-routes.php'))
-            ->toContain("Route::livewire('zzmod', 'zzmod::zzmod-dashboard')->name('zzmod.dashboard');");
+            ->toContain("Route::livewire('zzmod', 'zzmod::zzmod-dashboard')->name('zzmod');");
 
         // The missing module copy is created, the existing project copy gets the entry inserted.
-        expect(Yaml::parse(File::get($this->moduleDir . '/app-configs/zzmod/navigation.yml'))[0]['route'])->toBe('zzmod.dashboard');
-        expect(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))->toContain('route: zzmod.dashboard');
+        expect(Yaml::parse(File::get($this->moduleDir . '/app-configs/zzmod/navigation.yml'))[0]['route'])->toBe('zzmod');
+        expect(array_column(Yaml::parse(File::get($this->hostPath . '/app-configs/zzmod/navigation.yml'))[0]['blockMenus'][0]['navigations'], 'route'))->toContain('zzmod');
+    });
+});
+
+/** A model on a runtime table — the generator reads its columns from the schema. */
+class ZzGeneratedThing extends Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'zz_generated_things';
+
+    /** SQLite stores JSON as text — the cast tells the generator. */
+    protected $casts = ['settings' => 'array'];
+}
+
+describe('generated detail fields', function (): void {
+    beforeEach(function (): void {
+        Illuminate\Support\Facades\Schema::create('zz_generated_things', function (Illuminate\Database\Schema\Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('status')->default('open');
+            $table->json('settings')->nullable();
+            $table->dateTime('starts_at')->nullable();
+            $table->unsignedBigInteger('zz_owner_id')->nullable();
+            $table->unsignedBigInteger('zz_unknown_id')->nullable();
+        });
+
+        app(Noerd\Services\RelationFieldRegistry::class)->register('zzOwnerRelation', Noerd\Support\RelationFieldDefinition::model(
+            listComponent: 'zz-owners-list',
+        ));
+    });
+
+    it('writes datetime-local, a registered relation type, no JSON field and required only without a default', function (): void {
+        expect(Artisan::call('noerd:make-resource', ['model' => '\\ZzGeneratedThing', '--app' => 'zzapp', '--only' => 'detail', '--no-interaction' => true]))->toBe(0);
+
+        $fields = collect(Yaml::parse(File::get($this->hostPath . '/app-configs/zzapp/details/zz-generated-thing-detail.yml'))['fields'])
+            ->keyBy('name');
+
+        expect($fields->keys()->all())->not->toContain('detailData.settings')
+            ->and($fields['detailData.starts_at']['type'])->toBe('datetime-local')
+            ->and($fields['detailData.zz_owner_id']['type'])->toBe('zzOwnerRelation')
+            ->and($fields['detailData.zz_unknown_id']['type'])->toBe('number')
+            ->and($fields['detailData.name']['required'] ?? false)->toBeTrue()
+            ->and($fields['detailData.status'])->not->toHaveKey('required');
+    });
+
+    it('keeps an existing YAML and still succeeds after writing the Blades', function (): void {
+        foreach (['details/zz-generated-thing-detail.yml', 'lists/zz-generated-things-list.yml'] as $relative) {
+            File::ensureDirectoryExists(dirname($this->hostPath . '/app-configs/zzapp/' . $relative));
+            File::put($this->hostPath . '/app-configs/zzapp/' . $relative, "title: Host\n");
+        }
+
+        expect(Artisan::call('noerd:make-resource', ['model' => '\\ZzGeneratedThing', '--app' => 'zzapp', '--no-interaction' => true]))->toBe(0);
+
+        expect(File::exists($this->hostPath . '/resources/views/components/zz-generated-things-list.blade.php'))->toBeTrue()
+            ->and(File::get($this->hostPath . '/app-configs/zzapp/details/zz-generated-thing-detail.yml'))->toBe("title: Host\n");
     });
 });

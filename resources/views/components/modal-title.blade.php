@@ -39,7 +39,15 @@
 @endphp
 <div @class(['border-b border-gray-300 px-6 py-6', 'lg:flex' => ! $row])>
     <x-noerd::title :row="$row">
-        {{ $slot }}
+        {{-- Inside a modal the title text names the dialog: the noerd/modal panel
+             offers `modalTitleId`, which its role="dialog" element references
+             through aria-labelledby. A nested page (isModal false) and a page
+             outside a modal bind no id; typeof keeps a published panel without
+             the key from throwing. `contents` leaves the flex layout untouched. --}}
+        <span
+            class="contents"
+            :id="(typeof isModal !== 'undefined' && isModal && typeof modalTitleId !== 'undefined') ? modalTitleId : null"
+        >{{ $slot }}</span>
         @if (isset($actions) || $hasListControls)
             <div class="ml-auto flex shrink-0 items-center gap-4" :class="isModal ? modalControlsClass : ''">
                 @if ($hasListControls)

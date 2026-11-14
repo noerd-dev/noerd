@@ -24,8 +24,9 @@ use NumberFormatter;
  *
  * Resolution: user locale → tenant locale → `config('noerd.format.locale')` →
  * the default locale of the interface language (`Locales::defaultFor()`).
- * A host may still pin `config('noerd.format.date|datetime|decimal_separator|
- * thousands_separator')`; a pinned format always wins over the locale.
+ * A host may still pin `config('noerd.format.date|datetime|time|
+ * decimal_separator|thousands_separator')`; a pinned format always wins over
+ * the locale.
  */
 final class FormatHelper
 {
@@ -141,8 +142,16 @@ final class FormatHelper
     public static function time(mixed $value, ?string $locale = null): string
     {
         $carbon = self::carbon($value);
+        if ($carbon === null) {
+            return '';
+        }
 
-        return $carbon === null ? '' : $carbon->locale($locale ?? self::locale())->isoFormat('LT');
+        $pinned = config('noerd.format.time');
+        if (is_string($pinned) && $pinned !== '') {
+            return $carbon->format($pinned);
+        }
+
+        return $carbon->locale($locale ?? self::locale())->isoFormat('LT');
     }
 
     /**

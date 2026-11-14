@@ -207,13 +207,18 @@ trait NoerdDetail
         }
     }
 
+    /**
+     * The options of a `picklistField:` select, called from the picklist theme
+     * elements. $picklistField is a method name from the field YAML: only a
+     * genuine options provider is invoked — PUBLIC, callable without arguments
+     * and declaring an `array` return type, so an action like store()/delete()
+     * (which are `void`) can never be reached through a YAML value. Anything
+     * else is looked up in the PicklistRegistry.
+     *
+     * @return array<int|string, mixed>
+     */
     protected function resolvePicklistOptions(string $picklistField): array
     {
-        // $picklistField is a public method name from the field YAML, but this is
-        // also a client-callable action — only invoke a genuine options provider:
-        // PUBLIC (like every other Livewire action, see NoerdList::callRowAction()),
-        // callable without arguments, and declaring an `array` return type so an
-        // action like store()/delete() (which are `void`) can never be reached.
         if ($this->isPicklistOptionsProvider($picklistField)) {
             return $this->{$picklistField}();
         }
@@ -230,7 +235,9 @@ trait NoerdDetail
             // first so the YAML quick-create opt-in below can be read from it.
             if (isset($this->detailModel)) {
                 $modelClass = $this->detailModel;
-                $this->mountDetailComponent(new $modelClass(), $modelClass);
+                if (! $this->mountDetailComponent(new $modelClass(), $modelClass)) {
+                    return;
+                }
             }
 
             $this->resolveQuickCreate();
@@ -440,10 +447,14 @@ trait NoerdDetail
         return array_values(array_unique($keys));
     }
 
-    private function mountDetailComponent(Model $model, string $modelClass): void
+    /**
+     * Load the record and the detail YAML. False when the id does not resolve
+     * (the modal was closed) — initDetail() then stops mounting.
+     */
+    private function mountDetailComponent(Model $model, string $modelClass): bool
     {
         if (! $this->loadDetailModel($model, $modelClass)) {
-            return;
+            return false;
         }
 
         // Hand-built page components (`*-page`) ship no detail YAML — they define
@@ -458,6 +469,8 @@ trait NoerdDetail
         $this->applyLayoutDefaults();
         $this->ensureCustomAttributesArray();
         $this->ensureRelationFormsHydrated();
+
+        return true;
     }
 
     /**

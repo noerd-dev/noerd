@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ProfileMiddleware
 {
-    public const string APP = 'PROFILE';
+    public const string APP = TenantHelper::PROFILE_APP;
 
     public function handle(Request $request, Closure $next): Response
     {

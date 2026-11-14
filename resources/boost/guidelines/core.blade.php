@@ -40,20 +40,29 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   rewritten to the record and restored on close, so the link is shareable. Conditions: the target uses
   `NoerdDetail`/`NoerdPage` (or `NoerdList` for a record that IS a list), a named
   `Route::livewire('{app}/{entity}/{modelId}', …)` exists for exactly that component, and every
-  identity-bearing argument is a parameter of that route (`relations`/`quickCreate` are chrome).
+  identity-bearing argument is a parameter of that route (`quickCreate` is chrome; a non-empty
+  `relations` prefill keeps the URL, because a reload would lose it).
   Everything else stays `Noerd::modal()`: action dialogs (`*-modal`, `*-confirmation`, `*-review`,
   `*-import`), pickers (`listActionMethod`, `selectMode`, `multiSelect`, `returnsSelection`, `context`)
   and lists narrowed by a parent record (a route only with `rewriteUrl: false`). **A list row click
   ALWAYS opens its record by route** (`$detailRoute` + `$detailComponent`) — never override
   `listAction()` to open something without a URL; read-only data still gets its own `*-detail`
   (`readonly: true` fields, no-op `store()`, `protected bool $deletable = false;`, related rows via `lists:`). Always keep the
-  component as fallback (`route:` + `modalComponent:`, `newRoute:` + `newComponent:`;
-  `Noerd::modalFor($route, $component, $args)` is the canonical PHP shape). Reviewer's tests: *does the
-  address bar point at the record after the click?* and *does the URL show the same thing in a fresh tab?*
-  Route mode in YAML/properties: `$detailRoute`; list action `route:`; detail action `route:`;
-  relation-box tile and widget `route:` (no rewrite); column `type: relationLink` `route:`; relation
-  field `detailRoute:`; navigation `modalRoute:`/`newRoute:` (plain `route:` navigates); tab
-  `modalRoute:`; dashboard card `route=`.
+  component as fallback (`Noerd::modalFor($route, $component, $args)` is the canonical PHP shape).
+  Reviewer's tests: *does the address bar point at the record after the click?* and *does the URL show
+  the same thing in a fresh tab?*
+- **ONE YAML vocabulary for modal targets.** Every YAML place that opens a modal — list header action,
+  row action (`columns[].actions`), `type: relationLink` column, detail/page action, relation-box tile,
+  tab, navigation entry — names it with `modalRoute:` (the route, URL rewritten where the place allows)
+  plus `modalComponent:` (its fallback), or `modalComponent:` alone for a component modal. A second
+  target of the same place is prefixed: navigation "+" `newModalRoute:` / `newModalComponent:`, widget
+  "Show more" `showMoreModalRoute:` / `showMoreModalComponent:`. `route:` ALWAYS navigates (navigation
+  entries, tabs) and never opens a modal; `component:` only names a component RENDERED in place
+  (embedded `lists:`, `widgets:`, quick-menu buttons, dashboard widgets). Never `route:`, `component:`,
+  `newRoute:` or `newComponent:` for a modal — `noerd:update` rewrites them, `noerd:lint` reports them.
+  PHP keeps its own names (`$detailRoute` + `$detailComponent` of a list, `detailRoute:` of a
+  `RelationFieldDefinition`, `<x-noerd::dashboard-card route= component=>`); code resolving a YAML target
+  uses `Noerd\Support\YamlModalTarget`. Reference: `docs/modal.md` ("Modal targets in YAML").
 - **Modal chrome.** A modal body is `<x-noerd::page>` with the title in `<x-slot:header>` via
   `<x-noerd::modal-title>`, the buttons in `<x-slot:footer>`, and the body wrapped in
   `<x-noerd::tab-content>` — for a custom body `<x-noerd::tab-content :layout="[]" :modelId="$modelId" :showBlock="false">`
@@ -65,7 +74,7 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   Reference: `docs/action-menu.md`.
 - **File uploads** are the shipped `<livewire:noerd::dropzone wire:model="files" :rules="[...]" multiple />`,
   never a hand-rolled `WithFileUploads` drop target. The dropzone uploads in batches that fit PHP's
-  `max_file_uploads`/`post_max_size` (`Noerd\Support\UploadLimits`) — never work around an upload limit
+  `max_file_uploads`/`post_max_size` (the dropzone reads them itself) — never work around an upload limit
   in a module. Reference: `docs/detail-view.md` ("Upload limits").
 - **Change history** is the shipped `noerd::audit-modal` (`Noerd::modal('noerd::audit-modal', ['modelClass' => …, 'modelId' => …])`
   or a detail action with `modalComponent: noerd::audit-modal`); requires `owen-it/laravel-auditing`
@@ -79,7 +88,9 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   `heroicon:outline:{name}` (`getAppIcon()` of the install command). A module ships no icon file;
   only when no heroicon fits, a Blade icon `{module}::icons.app`.
 - Every app ships its own dashboard (`noerd:make-app` / `noerd:make-module` scaffold it; the app tile
-  opens it, never a list). Record types are added with `noerd:make-resource {Model} --app={app}`
+  opens it, never a list). Project and module app share one naming scheme: app key `MY-APP` (letters,
+  digits, hyphens), folder `app-configs/my-app`, dashboard route `my-app`; a project app is registered
+  through the same idempotent tenant-app migration as a module. Record types are added with `noerd:make-resource {Model} --app={app}`
   (`--only=list|detail`) once model and migration exist; for a module app the generators write into
   the module (`{app}::` components, `routes/{app}-routes.php`, both YAML copies).
 - Code comments, Artisan prompts and documentation are English. Tests are Pest. YAML is block style
@@ -95,16 +106,26 @@ folder — read the page before building the feature. Paths such as `src/…`, `
 
 ### Config, noerd:install and noerd:update
 - Config keys come from the package (`config/noerd.php`); the host copy is published by `noerd:install`
-  and refreshed by `noerd:update` (which also re-publishes the frontend assets — the provider never
-  publishes on boot). Never read `env()` outside config files — `config('noerd.…')`.
-- After a package upgrade run `php artisan noerd:update` and `noerd:update-all` (idempotent). With
-  Laravel Boost installed they register the packages in `boost.json` and run `boost:update` — never
-  edit the generated `<laravel-boost-guidelines>` block by hand.
-- A renamed YAML key or column type is rewritten in place by `noerd:update` / `noerd:update-{module}`
-  (`Noerd\Support\YamlVocabularyMigrator`: the project's `app-configs` and its local modules); `noerd:lint`
-  reports an old name as an error. Column types are camelCase (`badgeWithText`, `coloredText`,
-  `relationLink`, `inverseBool`, `bool`), navigation blocks live under `blockMenus`. Inline PHP configs
-  (`buildList($rows, [...])`) are not rewritten — use the current names there.
+  when it has none and is the HOST's from then on: `noerd:update` never overwrites it — not even with
+  `--force` — and reports missing and obsolete keys (nested ones as `features.currency`) to carry over
+  by hand. The provider never publishes on boot. Never read `env()` outside config files — `config('noerd.…')`.
+- After a package upgrade run `php artisan noerd:update` and `noerd:update-all` (idempotent; `--dry-run`
+  lists the YAML files the vocabulary rewrite would change and writes nothing). With Laravel Boost
+  installed they register the packages in `boost.json` and run `boost:update` — never edit the
+  generated `<laravel-boost-guidelines>` block by hand.
+- `--force` only overwrites the published YAML copies (lists, details, pages, settings). A navigation is
+  never replaced by its template on update: the setup and profile navigation get the missing core
+  entries added (host and module entries, their order and titles stay), an app's `navigation.yml` is
+  copied only when missing. `--reset-navigation` replaces them with the template.
+- A renamed YAML key or column type is rewritten in place by `noerd:update` (the project's `app-configs`
+  and every local module) and `noerd:update-{module}` (only the files that module publishes and its own
+  source) through `Noerd\Support\YamlVocabularyMigrator`; every run lists the files it changed and
+  `noerd:lint` (project AND local modules) reports an old name, an unknown column or filter type and a
+  removed navigation key as an error. Column types are camelCase (`badgeWithText`, `coloredText`,
+  `relationLink`, `boolCheck`, `bool`), navigation blocks live under `blockMenus`, modal targets are
+  `modalRoute:`/`modalComponent:` (renamed by their place in the file — see the modal target rule).
+  Inline PHP configs (`buildList($rows, [...])`, `RelationBoxRegistry` tiles, navigation entries an
+  install command writes) are not rewritten — use the current names there.
 
 ### Install and Update Command Required for Every Module
 - Every module ships `noerd:install-{module}` AND `noerd:update-{module}`; `noerd:update-all` discovers
@@ -114,7 +135,10 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   `getAppIcon()`, `getAppRoute()`, `getSourceDir()` (`getDefaultAppTitle()` defaults to the module
   name). NO own `handle()`, NO own options — the trait runs the installation (or the update for the
   `noerd:update-{module}` subclass, which carries only signature and description) and adds `--force`,
-  `--migrate`, `--build`, `--scaffold`. A support module (no tenant app) uses
+  `--migrate`, `--build`, `--scaffold`, `--reset-navigation` and `--tenants=all|1,3`. The tenant
+  assignment is asked interactively; a non-interactive run assigns the app ONLY to the tenants
+  `--tenants` names (additively) and otherwise prints the `noerd:assign-apps-to-tenant --tenant-id= --apps=`
+  hint — a deploy never hands an app to every tenant by a prompt default. A support module (no tenant app) uses
   `Noerd\Commands\Concerns\InstallsNoerdModule` with `getModuleName()` only.
 - Publishing is DECLARED, never coded: `getConfigFiles()` (an update never overwrites an existing
   config), `{module}/app-configs/setup/`, `getAppConfigsDir()`, `getAdditionalSubdirectories()`;
@@ -138,7 +162,7 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   `Artisan::call()` a sibling installer. npm runs ONCE at the end of the installation the user started
   (`askForNpmBuild()` / `finishDeferredNpm()`); one installation ends with one "ready" callout.
 - `vendor:publish` ignores a moved base path — guard every publish with
-  `PublishesNoerdContent::publishTargetsCurrentInstallation($tag)`; an install-command test never moves a
+  `Noerd\Commands\Concerns\GuardsPublishTargets::publishTargetsCurrentInstallation($tag)`; an install-command test never moves a
   run-wide directory (`storage/fonts`, `public/`) aside.
 - Reference: `docs/creating-modules.md`, the stubs in `src/Commands/stubs/module/`.
 
@@ -194,7 +218,9 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
 - Assigning an app to a tenant is a SUPER ADMIN decision (a tenant admin only reorders and hides).
   System flows assign ALWAYS through `Tenant::assignApp($app, $pivot)` — never
   `tenantApps()->attach()`/`sync()`: it fires `Noerd\Events\TenantAppAssigned` once and is a no-op for
-  a held app.
+  a held app. A name matches in any case; an unknown name throws `InvalidArgumentException`. Taking an
+  app away is `Tenant::removeApp($app)` (event `Noerd\Events\TenantAppRemoved`, no-op for an app the
+  tenant does not hold) — never `tenantApps()->detach()`.
 - Every check goes through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
   `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`); create and
   write are separate (`canSaveObject()` on details/pages drives the save chrome and the
@@ -203,9 +229,11 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   `use Noerd\Traits\GuardedByObjectPermission;` (deliberately opt-in).
 - Admin-only components are registered with `Noerd\Support\ComponentAccessGuard::registerAdminComponents([...])`
   in the provider's `boot()` — route middleware does not cover the `noerdModal` event. The guard matches namespace-aware; give an admin-only
-  component a name unique across modules anyway. `app-access:…`, `action-permission:…` and `setup` of a component's routes are
-  re-checked by the same guard when the modal stack opens the component; a module's OWN access middleware is not — check its
-  condition in the component too.
+  component a name unique across modules anyway. `app-access:…`, `action-permission:…`, `setup` and `profile` of a component's
+  routes are re-checked by the same guard when the modal stack opens the component (aliases and middleware groups expanded). A
+  module's OWN access middleware must implement `Noerd\Contracts\GuardsModalMount` (`allowsModalMount(string ...$parameters)`,
+  the middleware's own rule) — otherwise its screens are mountable through the modal stack by any signed-in user. A screen with
+  powerful actions checks its condition in `mount()` and in those actions as well.
 - Never bind a locked property to `wire:model`, never pass `detailModel`/`listModel`/
   `objectPermissionModel`/`settingsModels`/`pageLayout`/`listView` as modal arguments
   (`LockedPropertiesHook`); switches like `enableCsvExport` are set in `mount()`. A value rendered into
@@ -225,7 +253,7 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
 - The profile area (user menu → Profile) is a navigation context like the setup: its routes carry
   the `profile` middleware and the sidebar shows `app-configs/profile/navigation.yml` (Profile and
   Password, Language and Locale, Tenant Access, Delete Account; published by `noerd:install` /
-  `noerd:update`, an existing copy is kept). A module adds a page of the person's OWN data with
+  `noerd:update`, an existing copy is kept and only gets missing core entries added). A module adds a page of the person's OWN data with
   `ensureProfileNavigation('My Account', ['title' => …, 'route' => …, 'heroicon' => …])` in
   `ensureModuleSetup()`; its route is a `Route::livewire()` in `['noerd', 'profile']` and the page
   is a full-page Livewire component whose root is `<x-noerd::page>` (the title in
@@ -240,10 +268,16 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   `'custom_attributes' => 'array'` cast in the module model, rename migrations in the module.
 - Read as `$model->custom_attributes['my_key']` / `$this->detailData['custom_attributes']['my_key']` in
   project-level views that override the module's.
-- An input the Blade binds without a layout field (`wire:model="detailData.custom_attributes.my_key"`)
-  MUST be declared in `additionalDetailFields()`: the client may only change what the layout or that
-  list declares, a `readonly: true` field keeps the server's value (`ClientWriteGuardHook`), and a
-  component without any declared field persists nothing through the default `store()`.
+- An input the Blade binds without a layout field (`wire:model="detailData.custom_attributes.my_key"`,
+  `wire:model="detailData.sort"`) MUST be declared in `additionalDetailFields()`: the client may only
+  change what the layout or that list declares — fail-closed, every other top-level key of
+  `detailData` (`tenant_id`, `id`, …) and a repointed `$modelId` are put back to the server's value
+  (`ClientWriteGuardHook`), a `readonly: true` field and a field rendered as text (`display` theme)
+  keep the server's value, and a component without
+  any declared field persists nothing through the default `store()`.
+- A client request never writes a record into another tenant: `BelongsToTenant` throws
+  `TenantMismatchException` for a foreign or changed `tenant_id` while a Livewire component processes
+  a signed-in user's request. Cross-tenant writes on purpose run inside `TenantContext::run()`.
 
 ### Detail Component Structure (Slim `$detailModel` Syntax)
 - A model-backed detail declares `public $detailModel = Model::class;` and
@@ -252,8 +286,9 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   from `NoerdDetail`. Never a `DETAIL_CLASS` constant, never a redeclared `$modelId` or a `#[Url]` on
   it, never a shared partial named `*-detail.blade.php`.
 - Deviating logic overrides the method: a custom `mount()` starts with `$this->initDetail()`, a custom
-  `store()` ends with `$this->storeProcess($model)`, a custom `delete()` with
-  `$this->closeModalProcess($this->getListComponent())`. A screen whose records are never deleted
+  `store()` ends with `$this->finishStore($model)` (`storeProcess($model)` is the tail of a `NoerdPage`
+  without detail), a custom `delete()` with `$this->closeModalProcess($this->getListComponent())` —
+  both protected; a Blade button closes the dialog with `wire:click="closeModal"`. A screen whose records are never deleted
   declares `protected bool $deletable = false;` (button, shortcut and `delete()` disappear at once) —
   never an empty `delete()` override, never a YAML key.
 - Values derived from the loaded record are read in `protected function detailLoaded(Model $model): void`
@@ -277,16 +312,16 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
   Reference: `docs/detail-view.md` ("Tab Properties", "Hand-Rolled Tab Panels").
 - **Actions:** `actions:` renders a button row automatically through `<x-noerd::page>` (no Blade line;
   opt out with `:detailActions="false"` and render `<x-noerd::detail-actions>` yourself). Keys: `label`,
-  `action` | `route` (+ `modalComponent` fallback) | `url` (literal or a key of `detailActionUrls()`),
+  `action` | `modalRoute` (+ `modalComponent` fallback) | `modalComponent` | `url` (literal or a key of `detailActionUrls()`),
   `arguments`, `viewExists`, `heroicon`, `confirm`, `requiresId` (default true), `showIf`/`showIfNot`
   (Alpine `x-show`, both combine with AND). A foreign module contributes a button purely via YAML.
   Reference: `docs/detail-view.md` ("Detail Actions").
 - **Conditions:** `showIf`/`showIfNot` take a property path (truthy) or `field`/`value` (compared as
-  strings); fields, tabs and actions share the one expression (`Noerd\Support\FieldVisibility`), and a
+  strings); fields, tabs and actions share the one expression of the core, and a
   hidden field is not validated. Reference: `docs/field-types.md` ("Conditional Display").
 - **Arguments:** every `arguments:` map (lists, widgets, relation tiles, actions, tabs) resolves
   `$modelId`, `$property` (a public property of the hosting component) and static values — once, in
-  `Noerd\Support\LayoutArguments`.
+  the core (never resolve them per component).
 - **Embedded lists:** `lists:` (`title`, `description`, `component`, `arguments`) rendered by
   `<x-noerd::detail-lists :layout="$pageLayout" :modelId="$modelId" />` after `<x-noerd::tab-content>`;
   dynamic cases use `<x-noerd::detail-list component= :arguments= lazy :wireKey=>` directly. Both
@@ -339,7 +374,9 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
 - The provider registers `app(PositionTableRegistry::class)->register('{module}::{entity}-detail', Catalog::class, Position::class)`;
   the detail resolves `$columns = $this->positionColumns()` once and passes it to
   `<x-noerd::positions.table :columns>` and every row; rows `use Noerd\Traits\NoerdPositionRow` and
-  render `<x-noerd::positions.cells :theme :columns />`. Never hard-code header arrays or cells.
+  render `<x-noerd::positions.cells :theme :columns />`. Never hard-code header arrays or cells. A row
+  keeps only the `#[Locked]` `$positionClass` / `$positionId` and reads its record as `$this->position`
+  (computed, loaded once per request) — never declare a public model property on a row.
 - Tests prove the mechanics with a synthetic catalog and layout, never a shipped YAML.
   Reference: `docs/detail-view.md` ("Configurable Columns").
 
@@ -357,8 +394,8 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
   `afterEmbeddedDetailStored($model)`; live sync via `detailDataUpdated-{detail}` / `syncPayload()`.
   One `<x-noerd::delete-save-bar>` per page. Never a `component:`, `ref`, `el`, `self` or `to` key in an
   event payload (Livewire reserves them).
-- **Relation box:** `relations:` tiles (`label`, `heroicon`, `relation` = the count method, `route` (no
-  URL rewrite) + `component` fallback, `arguments`) rendered by
+- **Relation box:** `relations:` tiles (`label`, `heroicon`, `relation` = the count method, `modalRoute`
+  (no URL rewrite) + `modalComponent` fallback, `arguments`) rendered by
   `<x-noerd::detail-relations :layout :modelId :modelClass>`; an unknown relation counts 0.
   Reference: `docs/page-view.md`.
 - **Settings pages** edit a TENANT SINGLETON and use `Noerd\Traits\NoerdSettingsPage` with
@@ -374,7 +411,8 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
 
 ### List YAML Features
 Every feature below is generic in `NoerdList` and the list views — never duplicate it per module.
-- **Actions:** `actions:` (`label`, `route:` for the "New …" button or `action:` naming a method
+- **Actions:** `actions:` (`label`, `modalRoute:` + `modalComponent:` for the "New …" button,
+  `modalComponent:` for a dialog, or `action:` naming a method
   `(mixed $modelId = null, array $relations = [])`, `heroicon`, `style: secondary`); no key, no button.
   The list header is TWO rows (title row with the buttons, filter row with search, scrolling filter
   strip and pagination summary) and never anything else; the footer repeats the pagination through
@@ -390,6 +428,7 @@ Every feature below is generic in `NoerdList` and the list views — never dupli
   `table-cell.blade.php`. Reference: `docs/list-view.md` ("Column Types", "Custom Cell Renderers").
 - **Multi-select:** `multiSelect: true` + `bulkActions:` (`label`, `action` — `deleteSelected` is
   generic —, `heroicon`, `style`, `confirm`); list-specific bulk methods read `$this->selectedRecordIds`.
+  Without WRITE every bulk action but `deleteSelected` (DELETE) is stripped AND refused server-side.
   A picker opens the list with `['multiSelect' => true, 'returnsSelection' => true, 'context' => …]`
   and receives `recordsSelected` (`ids`, `context`). Reference: `docs/list-view.md` ("Multi-Select & Bulk Actions").
 - **Grid mode:** `displayMode: grid` + `gridColumns` (1–6) swaps only the rows block; the first
@@ -409,7 +448,7 @@ Every feature below is generic in `NoerdList` and the list views — never dupli
   `display` (hidden, `textOnly`: values as text — per field, per read-only block or whole layout;
   `hideIfEmpty: true` drops blank rows), `settings` (hidden, forced on settings pages).
 - Setup → System Settings sets a per-tenant default (`noerd_settings.detail_theme`, `detail_theme_enforced`,
-  fallback `config('noerd.theme')`); the YAML wins unless the admin enforces, which also drops the
+  fallback `config('noerd.theme.default')`); the YAML wins unless the admin enforces, which also drops the
   overrides — except the text-only theme, which is a rendering mode. Never apply it to list configs.
 - A theme is a FOLDER with element templates and a `theme.yml` (`label`, `hidden`, `textOnly`,
   `gridClasses`, `fullWidthRows`, `numbersRows`, `spacerClass`, `controlClasses`, `controlSize`,
@@ -448,7 +487,7 @@ Every feature below is generic in `NoerdList` and the list views — never dupli
 
 ### Tests Must Test Functionality, Not Current Configuration
 - The YAML under `app-configs/` is per-installation CONFIGURATION: theme, titles, labels, tabs, field and
-  column lists, `required:` flags, the modal target (`route:` vs. `modalComponent:`, `$detailRoute` vs.
+  column lists, `required:` flags, the modal target (`modalRoute:` vs. `modalComponent:`, `$detailRoute` vs.
   `$detailComponent`). A test asserting their current content is wrong by definition — never
   `assertSeeHtml('data-theme="compact"')` against a shipped detail, never an exact field list.
 - Prove the EFFECT with synthetic layouts (`noerd-test::` fixture components), runtime-written fixture
@@ -473,12 +512,15 @@ Every feature below is generic in `NoerdList` and the list views — never dupli
   Components with a hard-coded `$this->validate([...])` keep explicit assertions.
 - Factories produce a fully valid record by default (no `optional()` on a column that can be required);
   sparse records are created explicitly in the test.
-- The helpers live in the package's `tests/helpers.php`, NOT composer-autoloaded: suites binding
-  `Noerd\Tests\TestCase` get them, every other `tests/Pest.php` loads them with
-  `\Noerd\Tests\HelperLoader::load();` — never a hard-coded path or a root `composer.json` entry. The
-  module fixture (`actingAsNoerdUserForApp()`), the boundary guard (`assertModuleBoundary()`) and the
-  update-command proof (`assertModuleUpdateCommandPublishesConfigs()`) live there too; a module with a
-  Testbench suite of its own binds `Noerd\Tests\ModuleTestCase` (`$moduleProviders`).
+- The test API is `Noerd\Testing\` (`src/Testing/` of the package). The helpers
+  (`src/Testing/helpers.php`) are NOT composer-autoloaded: suites binding `Noerd\Testing\TestCase`
+  get them, every other `tests/Pest.php` loads them with `\Noerd\Testing\HelperLoader::load();` —
+  never a hard-coded path or a root `composer.json` entry. The module fixture
+  (`actingAsNoerdUserForApp()`, a member through `Tenant::addMember()`), the boundary guard
+  (`assertModuleBoundary()`) and the update-command proof (`assertModuleUpdateCommandPublishesConfigs()`)
+  live there too; a module with a Testbench suite of its own binds `Noerd\Testing\ModuleTestCase`
+  (`$moduleProviders`) and requires `orchestra/testbench` itself. `Noerd\Tests\` is the package's own,
+  unshipped suite — never reference it from a module.
 
 ### Translations
 - English text IS the key (`__('Invoice')`, YAML `label: Invoice`, Blade `{{ __('Dashboard') }}`); only

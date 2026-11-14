@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Noerd\Models\SetupLanguage;
+use Noerd\Models\Tenant;
+use Noerd\Testing\Concerns\CreatesSetupUser;
 use Noerd\Tests\TestCase;
-use Noerd\Tests\Traits\CreatesSetupUser;
 
-uses(TestCase::class);
-uses(CreatesSetupUser::class);
+uses(TestCase::class, RefreshDatabase::class, CreatesSetupUser::class);
 
 beforeEach(function (): void {
     ['user' => $this->user, 'tenant' => $this->tenant] = $this->createUserWithSetupAccess();
@@ -101,6 +102,34 @@ describe('Setup Language Detail Component', function (): void {
             ->assertSet('showSuccessIndicator', true);
 
         expect(SetupLanguage::where('code', 'fr')->exists())->toBeTrue();
+    });
+
+    it('refuses a code the tenant already uses with a validation error', function (): void {
+        Livewire::test('noerd::setup-language-detail')
+            ->set('detailData.code', ' de ')
+            ->set('detailData.name', 'Deutsch (zweite)')
+            ->call('store')
+            ->assertHasErrors(['detailData.code' => 'unique']);
+
+        expect(SetupLanguage::where('code', 'de')->count())->toBe(1);
+    });
+
+    it('lets an existing language keep its own code and allows a code another tenant uses', function (): void {
+        $english = SetupLanguage::where('code', 'en')->first();
+        SetupLanguage::factory()->create(['tenant_id' => Tenant::factory()->create()->id, 'code' => 'it']);
+
+        Livewire::withUrlParams(['setupLanguageId' => $english->id])->test('noerd::setup-language-detail')
+            ->set('detailData.name', 'English (UK)')
+            ->call('store')
+            ->assertHasNoErrors();
+
+        Livewire::test('noerd::setup-language-detail')
+            ->set('detailData.code', 'it')
+            ->set('detailData.name', 'Italiano')
+            ->call('store')
+            ->assertHasNoErrors();
+
+        expect(SetupLanguage::where('code', 'it')->exists())->toBeTrue();
     });
 });
 

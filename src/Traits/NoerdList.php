@@ -29,6 +29,7 @@ use Noerd\Support\ListFilter;
 use Noerd\Support\ListPermissions;
 use Noerd\Support\PicklistBadges;
 use Noerd\Support\SchemaColumnCache;
+use Noerd\Support\YamlModalTarget;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -413,7 +414,7 @@ trait NoerdList
             $wantEmpty = ColumnFilterParser::emptiness($value);
             if ($wantEmpty !== null) {
                 $value = $wantEmpty ? __('Empty') : __('Not empty');
-            } elseif (in_array($type, ['bool', 'inverseBool'], true)) {
+            } elseif (in_array($type, ['bool', 'boolCheck'], true)) {
                 $value = $value === '1' ? __('Yes') : __('No');
             } else {
                 foreach ($options as $option) {
@@ -707,7 +708,16 @@ trait NoerdList
         // nor the module-contributed ones. A read-denied list keeps its header but
         // loses the data affordances (buildList() already stripped the actions).
         $isPicker = $this->returnsSelection;
-        $actions = $isPicker ? [] : ($settings['actions'] ?? []);
+        // An action opens a modal (modalRoute:/modalComponent:) or calls a method
+        // (action:). One that does neither — a modalRoute that is not registered
+        // and has no modalComponent fallback, or a key of an earlier vocabulary —
+        // is not offered, so an optional module may contribute YAML safely. The
+        // keys stay: the shortcut of an action follows its position in the YAML.
+        $actions = $isPicker ? [] : array_filter(
+            $settings['actions'] ?? [],
+            static fn(array $action): bool => YamlModalTarget::opens($action)
+                || (! YamlModalTarget::declares($action) && ! empty($action['action'])),
+        );
 
         return [
             'search' => ! ($settings['disableSearch'] ?? false) && ! ($config['objectAccessDenied'] ?? false),
@@ -1273,22 +1283,51 @@ trait NoerdList
     }
 
     /**
-     * The refreshList listener under the config name (and the name after the
-     * last dot). Same override contract as NoerdPage::getListeners(): merge,
-     * never replace.
+     * The refreshList listener under the component's own name AND its config
+     * name, each also shortened to the part after the last dot. The modal stack
+     * addresses the opener by its Livewire name (`refreshList-{source}`), a
+     * detail by the paired list's name — a list that renders another list's
+     * YAML (listConfigComponent()) must hear both. Same override contract as
+     * NoerdPage::getListeners(): merge, never replace.
      */
     protected function getListeners(): array
     {
-        $name = $this->listConfigComponent();
-        $stripped = Str::afterLast($name, '.');
+        $listeners = [];
 
-        $listeners = ['refreshList-' . $name => 'refreshList'];
-
-        if ($name !== $stripped) {
-            $listeners['refreshList-' . $stripped] = 'refreshList';
+        foreach (array_unique([$this->getName(), $this->listConfigComponent()]) as $name) {
+            $listeners[ComponentNaming::refreshListEvent($name)] = 'refreshList';
+            $listeners['refreshList-' . $name] = 'refreshList';
         }
 
         return $listeners;
+    }
+
+    /**
+     * Whether the user may not run $method because it is a bulk action of this
+     * list that the object permissions strip for them (ListPermissions). Asked
+     * by BulkActionPermissionHook before every browser call, so a hidden bulk
+     * button is no callable action either. Read from the list's own config
+     * name (the component name); a list built from another config name keeps
+     * its own guard.
+     */
+    protected function refusesBulkAction(string $method): bool
+    {
+        if (! $this->listDeclaresBulkAction($method)) {
+            return false;
+        }
+
+        // A list without $listModel learns its model from its query — build it
+        // once (and drop the memo, the action may change the rows).
+        if ($this->objectPermissionModelClass() === null) {
+            $this->builtListConfig();
+            $this->builtListConfigCache = null;
+        }
+
+        return ListPermissions::refusesAction(
+            $this->getListConfig($this->listQueryConfigName),
+            $this->objectPermissionModelClass(),
+            $method,
+        );
     }
 
     /**

@@ -3,9 +3,14 @@
 `x-noerd::action-menu` is the dropdown menu primitive for component markup — a record's action menu
 in a tab bar, the profile menu, the tenant switcher, the list-view switcher and the grid sort menu
 build on it. Never hand-roll another `x-data="{ open: false }"` dropdown: the panel chrome, the
-click-outside and the escape key live in the component once. (The per-row action dropdown of a
-list column with `actions:` is rendered by the table cell itself from the YAML — see
+click-outside, the escape key and the keyboard handling live in the component once. (The per-row
+action dropdown of a list column with `actions:` is built on the same component from the YAML — see
 [List View](list-view.md#column-properties).)
+
+Keyboard: opening the menu focuses its first entry; Arrow Down/Up, Home and End move between the
+entries (`role="menuitem"`), Arrow Down on the closed trigger opens it, Escape and Tab close it,
+and closing hands the focus back to the trigger. The behaviour is the Alpine component
+`noerdActionMenu` of `noerd.js` — a custom trigger keeps toggling `open = ! open`.
 
 ## Basic usage
 

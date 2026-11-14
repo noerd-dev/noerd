@@ -28,7 +28,8 @@ A navigation file is a list with one app entry: app metadata on top, `blockMenus
 `title`, `name` and `route` are app metadata: `noerd:install-{module}` writes them into the
 installed copy from the app title given during installation plus the app key
 (`HasModuleInstallation::installAsNewApp()`), so a module template only needs sensible defaults
-there. Whether an app shows up in the app bar is not a navigation key — it is the tenant's
+there. From then on the installed copy is the host's: `noerd:update-{module}` copies the template
+only when the file is missing (`--force` does not touch it); `--reset-navigation` replaces it. Whether an app shows up in the app bar is not a navigation key — it is the tenant's
 `tenant_app.is_hidden` flag (Setup → Apps).
 
 ## Block Properties (`blockMenus[]`)
@@ -52,31 +53,33 @@ there. Whether an app shows up in the app bar is not a navigation key — it is 
 | `external` | Opens the target in a new tab and shows an external-link icon |
 | `heroicon` | Icon from Heroicons (e.g., `users`, `cog-6-tooth`) |
 | `modalRoute` | Named route opened as a MODAL instead of navigating |
-| `component` | Livewire component opened as a modal — fallback for `modalRoute` |
-| `arguments` | Arguments passed to the modal opened by `modalRoute`/`component` — and, merged with the quick-create keys, to the "+" target |
-| `newRoute` | Named detail route opened as a modal by the "+" button (preferred). The "+" renders only on a plain `route:` entry — not on `link:`, `modalRoute:` or `component:` entries |
-| `newComponent` | Livewire component opened by the "+" button — fallback for `newRoute` |
-| `quickCreate` | With `newRoute`/`newComponent`: open the "+" target as a narrow quick-create modal (`modelId: null`, `quickCreate: true`) |
+| `modalComponent` | Livewire component opened as a modal — fallback for `modalRoute`, or the target on its own |
+| `arguments` | Arguments passed to the modal opened by `modalRoute`/`modalComponent` — and, merged with the quick-create keys, to the "+" target |
+| `newModalRoute` | Named detail route opened as a modal by the "+" button (preferred). The "+" renders only on a plain `route:` entry — not on `link:`, `modalRoute:` or `modalComponent:` entries |
+| `newModalComponent` | Livewire component opened by the "+" button — fallback for `newModalRoute` |
+| `quickCreate` | With `newModalRoute`/`newModalComponent`: open the "+" target as a narrow quick-create modal (`modelId: null`, `quickCreate: true`) |
 | `config` | The entry is hidden unless `config(...)` with this key is truthy (e.g. `noerd.features.currency`) |
 | `superAdmin` | The entry is only visible to super admins — the installation admins, see [Permissions](permissions.md#super-admin-installation-admin) |
 
 ### Route vs. component
 
-`route:` always means *navigate to that page*; opening something as a modal uses the separate keys
-(`modalRoute:`/`component:` for the entry itself, `newRoute:`/`newComponent:` for its "+" button).
+`route:` always means *navigate to that page*; opening something as a modal uses the modal keys
+every YAML shares (`modalRoute:`/`modalComponent:` for the entry itself,
+`newModalRoute:`/`newModalComponent:` for its "+" button — see
+[Modal System](modal.md#modal-targets-in-yaml)).
 
 Route names follow the module convention (see [Creating Modules](creating-modules.md)):
 `{module}.{entities}` for the list page, `{module}.{entity}.detail` for the record, and
 `{module}::{entity}-detail` for the component fallback.
 
-`newRoute:`/`modalRoute:` win when the named route is registered; the `*Component`
+`newModalRoute:`/`modalRoute:` win when the named route is registered; the `*ModalComponent`
 key is used otherwise, so an entry may reference a route owned by an optional module.
 See [Modal System](modal.md#route-modals) for when a route is the right target.
 
 ### Entries are filtered by target existence
 
 An entry whose target cannot be resolved is silently dropped: a `route:`/`modalRoute:` must be a
-registered route (`link:` and `component:` always pass). This keeps navigation YAMLs valid when an
+registered route (`link:` and `modalComponent:` always pass). This keeps navigation YAMLs valid when an
 optional module that owns the route is not installed — stale entries simply disappear instead of
 breaking the sidebar.
 
@@ -94,13 +97,13 @@ breaking the sidebar.
         - title: Items
           route: inventory.items
           heroicon: archive-box
-          newRoute: inventory.item.detail
-          newComponent: inventory::item-detail
+          newModalRoute: inventory.item.detail
+          newModalComponent: inventory::item-detail
         - title: Stock Movements
           route: inventory.stock-movements
           heroicon: arrows-right-left
         - title: Import
-          component: inventory::stock-import-modal
+          modalComponent: inventory::stock-import-modal
           arguments:
             source: sidebar
           heroicon: arrow-up-tray
@@ -135,8 +138,7 @@ Two navigations belong to no tenant app and are selected by route middleware ins
 - **Profile** (`app-configs/profile/navigation.yml`, middleware `profile`, every signed-in person)
   — the pages of the person's own account: Profile and Password (`noerd.profile`), Language and
   Locale (`noerd.profile.language`), Tenant Access (`noerd.profile.tenants`), Delete Account
-  (`noerd.profile.delete`). `noerd:install` / `noerd:update` publish the file and keep an existing
-  copy. A module adds a page of the person's own data with
+  (`noerd.profile.delete`). A module adds a page of the person's own data with
   `ensureProfileNavigation('My Account', ['title' => 'My Connectors', 'route' => 'mymodule.connectors', 'heroicon' => 'link'])`;
   its route (`Route::livewire()`) carries `['noerd', 'profile']`, so the sidebar shows this
   navigation. Every profile page — the core's (`noerd::profile-page`, `profile-language-page`,
@@ -145,8 +147,13 @@ Two navigations belong to no tenant app and are selected by route middleware ins
   `<x-slot:header>` with `<x-noerd::modal-title>`, so it also shows when the page is opened in a
   modal, and each block is one `<x-noerd::profile-section>` (box chrome and reading width).
 
-Both files are host configuration: entries can be reordered, retitled or removed there, and an
-entry whose route does not exist is skipped.
+Both files are host configuration: `noerd:install` publishes them when they are missing, and
+`noerd:update` never replaces them — not even with `--force`. It only ADDS the core entries the
+file lacks (a missing block, an entry whose `route` appears nowhere in the file) and drops entries
+the core retired; host and module entries, their order and their titles stay. Entries can be
+reordered and retitled there — a core entry that was deleted comes back with the next update.
+`noerd:update --reset-navigation` replaces both files with the package template. An entry whose
+route does not exist is skipped at render time.
 
 ## Next Steps
 

@@ -5,7 +5,7 @@
     `shrink-0`, so the strip grows and scrolls instead of squeezing or wrapping.
 --}}
 @foreach ($tableFilters as $tableFilter)
-    @if (in_array($tableFilter['type'] ?? 'Picklist', ['ShowFrom', 'ShowUntil']))
+    @if (in_array($tableFilter['type'] ?? \Noerd\Support\ListFilter::KIND_PICKLIST, \Noerd\Support\ListFilter::DATE_KINDS, true))
         <x-noerd::filters.date-dropdown
             :filter="$tableFilter"
             :value="$listFilters[$tableFilter['column']] ?? ''" />

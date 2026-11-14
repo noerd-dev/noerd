@@ -19,7 +19,7 @@ new class extends Component {
         return $this->renderEmailPreview();
     }
 
-    public function getSampleEmailData(): array
+    protected function getSampleEmailData(): array
     {
         return ['{{field:name}}' => 'Jane'];
     }

@@ -150,7 +150,7 @@ new class extends Component
             });
         }
 
-        $rows = $query->paginate($this->perPage);
+        $rows = $this->paginateList($query);
 
         $selectedLanguage = $this->listFilters['language'] ?? SetupLanguage::selectedCode();
 

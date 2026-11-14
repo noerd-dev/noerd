@@ -58,14 +58,14 @@ describe('route tiles', function (): void {
                 'label' => 'Tenant Apps',
                 'heroicon' => 'users',
                 'relation' => 'tenantApps',
-                'route' => 'zz.relation.tiles',
+                'modalRoute' => 'zz.relation.tiles',
                 'arguments' => ['tenantId' => '$modelId'],
             ],
         ]);
 
         expect($html)->toContain('$modalRoute(')
             ->toContain('zz.relation.tiles')
-            ->toContain('rewriteUrl: false')
+            ->toContain('rewriteUrl\u0022:false')
             ->not->toContain('$modal(');
     });
 
@@ -75,14 +75,35 @@ describe('route tiles', function (): void {
                 'label' => 'Tenant Apps',
                 'heroicon' => 'users',
                 'relation' => 'tenantApps',
-                'route' => 'zz.relation.route.that.does.not.exist',
-                'component' => 'zz::tenant-apps-list',
+                'modalRoute' => 'zz.relation.route.that.does.not.exist',
+                'modalComponent' => 'zz::tenant-apps-list',
             ],
         ]);
 
         expect($html)->toContain('$modal(')
             ->toContain('zz::tenant-apps-list')
             ->not->toContain('$modalRoute(');
+    });
+
+    it('drops a tile that opens nothing, also one in the earlier route/component spelling', function (): void {
+        registerTestLivewireRoute('zz-relation-tiles', 'noerd-test::theme-test', 'zz.relation.tiles');
+
+        [$component] = mountRelationBox([
+            ['label' => 'Ghost Route', 'relation' => 'tenantApps', 'modalRoute' => 'zz.relation.route.that.does.not.exist'],
+            ['label' => 'Earlier Spelling', 'relation' => 'tenantApps', 'route' => 'zz.relation.tiles', 'component' => 'zz::tenant-apps-list'],
+            ['label' => 'Current', 'relation' => 'tenantApps', 'modalComponent' => 'zz::tenant-apps-list'],
+        ]);
+
+        expect(array_column($component->get('resolvedRelations'), 'label'))->toBe(['Current']);
+    });
+
+    it('never takes the click expression of a tile from the client', function (): void {
+        [$component] = mountRelationBox([
+            ['label' => 'Current', 'relation' => 'tenantApps', 'modalComponent' => 'zz::tenant-apps-list'],
+        ]);
+
+        expect(fn() => $component->set('resolvedRelations', [['label' => 'X', 'heroicon' => 'users', 'click' => 'alert(1)', 'count' => 0]]))
+            ->toThrow(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
     });
 });
 
@@ -92,7 +113,7 @@ describe('registry contributions', function (): void {
         app(RelationBoxRegistry::class)->register(Tenant::class, [
             'label' => 'Contributed Tile',
             'heroicon' => 'document-text',
-            'component' => 'zz::contributed-list',
+            'modalComponent' => 'zz::contributed-list',
             'arguments' => ['tenantId' => '$modelId'],
             'count' => fn(Tenant $tenant): int => 7,
         ]);
@@ -102,7 +123,7 @@ describe('registry contributions', function (): void {
                 'label' => 'Yaml Tile',
                 'heroicon' => 'users',
                 'relation' => 'tenantApps',
-                'component' => 'zz::tenant-apps-list',
+                'modalComponent' => 'zz::tenant-apps-list',
             ],
         ]);
 
@@ -112,18 +133,18 @@ describe('registry contributions', function (): void {
             ->toContain('(7)')
             ->toContain('zz::contributed-list')
             ->and(mb_strpos($html, 'Yaml Tile'))->toBeLessThan(mb_strpos($html, 'Contributed Tile'))
-            ->and($component->get('resolvedRelations')[1]['arguments'])->toBe(['tenantId' => $tenant->id]);
+            ->and($component->get('resolvedRelations')[1]['click'])->toContain('tenantId')->toContain((string) $tenant->id);
     });
 
     it('hides a contributed tile whose visible closure returns false', function (): void {
         app(RelationBoxRegistry::class)->register(Tenant::class, [
             'label' => 'Hidden Tile',
-            'component' => 'zz::hidden-list',
+            'modalComponent' => 'zz::hidden-list',
             'visible' => fn(): bool => false,
         ]);
         app(RelationBoxRegistry::class)->register(Tenant::class, [
             'label' => 'Shown Tile',
-            'component' => 'zz::shown-list',
+            'modalComponent' => 'zz::shown-list',
             'visible' => fn(): bool => true,
         ]);
 
@@ -139,7 +160,7 @@ describe('registry contributions', function (): void {
 
         app(RelationBoxRegistry::class)->register(Tenant::class, [
             'label' => 'Counting Tile',
-            'component' => 'zz::counting-list',
+            'modalComponent' => 'zz::counting-list',
             'count' => fn(): int => $counter->value,
         ]);
 
@@ -159,7 +180,7 @@ describe('registry contributions', function (): void {
                 'label' => 'Yaml Tile',
                 'heroicon' => 'users',
                 'relation' => 'tenantApps',
-                'component' => 'zz::tenant-apps-list',
+                'modalComponent' => 'zz::tenant-apps-list',
                 'arguments' => ['tenantId' => '$modelId'],
             ],
         ]);
@@ -179,7 +200,7 @@ describe('count fallback', function (): void {
                 'label' => 'Unknown',
                 'heroicon' => 'users',
                 'relation' => 'doesNotExist',
-                'component' => 'zz::tenant-apps-list',
+                'modalComponent' => 'zz::tenant-apps-list',
                 'arguments' => ['tenantId' => '$modelId'],
             ],
         ]);

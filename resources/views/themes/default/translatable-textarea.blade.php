@@ -25,6 +25,7 @@
 
     <textarea
         wire:model="{{ $name . '.' . $selectedLang }}"
+        id="{{ $name }}"
         name="{{ $name }}"
         rows="{{ $rows }}"
         class="focus:ring-sky-300 block w-full appearance-none rounded-lg border border-sky-300 border-b-sky-400/70 bg-sky-50/30 py-2 ps-3 pe-3 text-base leading-[1.375rem] text-zinc-700 placeholder-zinc-400 shadow-xs read-only:border-b-sky-300/60 read-only:text-zinc-500 read-only:placeholder-zinc-400/70 read-only:shadow-none focus:ring-2 focus:ring-offset-2 focus:outline-none sm:text-sm"

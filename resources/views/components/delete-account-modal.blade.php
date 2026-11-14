@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
-use Noerd\Enums\Profile;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Support\Impersonation;
 
@@ -33,12 +32,7 @@ new class extends Component {
 
         // A tenant must not lose its last administrator.
         foreach ($user->adminTenants as $tenant) {
-            $otherAdmins = $tenant->users()
-                ->wherePivot('profile_key', Profile::Admin->value)
-                ->whereKeyNot($user->id)
-                ->exists();
-
-            if (! $otherAdmins) {
+            if ($tenant->isLastAdmin($user)) {
                 $this->addError('password', __('You are the only administrator of :tenant. Assign another administrator first.', ['tenant' => $tenant->name]));
 
                 return;

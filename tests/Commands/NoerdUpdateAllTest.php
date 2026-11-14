@@ -37,10 +37,12 @@ class RecordingUpdateCommand extends Command
         private int $exit = 0,
         private bool $throws = false,
         bool $withBuild = false,
+        string $extraOptions = '',
     ) {
         $this->signature = $name
             . ' {--force : Overwrite existing files without asking}'
-            . ($withBuild ? ' {--build : Run npm build}' : '');
+            . ($withBuild ? ' {--build : Run npm build}' : '')
+            . $extraOptions;
 
         parent::__construct();
     }
@@ -51,6 +53,8 @@ class RecordingUpdateCommand extends Command
         UpdateAllRecorder::$options[(string) $this->getName()] = [
             'force' => (bool) $this->option('force'),
             'build' => $this->getDefinition()->hasOption('build') && (bool) $this->option('build'),
+            'dryRun' => $this->getDefinition()->hasOption('dry-run') && (bool) $this->option('dry-run'),
+            'resetNavigation' => $this->getDefinition()->hasOption('reset-navigation') && (bool) $this->option('reset-navigation'),
         ];
 
         $this->info('ran ' . $this->getName());
@@ -93,7 +97,7 @@ beforeEach(function (): void {
 
     // registerCommand() replaces a same-named entry — mandatory for noerd:update,
     // which would otherwise really run npm install and rewrite tailwind.config.js.
-    $kernel->registerCommand(new RecordingUpdateCommand('noerd:update', withBuild: true));
+    $kernel->registerCommand(new RecordingUpdateCommand('noerd:update', withBuild: true, extraOptions: ' {--dry-run : List only} {--reset-navigation : Reset}'));
     // Registered out of alphabetical order on purpose: the run must sort, not follow registration.
     $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-zz-beta'));
     $kernel->registerCommand(new RecordingUpdateCommand('noerd:update-zz-alpha'));
@@ -191,4 +195,21 @@ it('aborts when noerd is not installed', function (): void {
     expect($exitCode)->toBe(Command::FAILURE)
         ->and($output->fetch())->toContain('Noerd base package has not been installed yet.')
         ->and(UpdateAllRecorder::$calls)->toBeEmpty();
+});
+
+it('runs only the dry run of the core update with --dry-run', function (): void {
+    ($this->run)(['--dry-run' => true])->assertExitCode(0);
+
+    expect(UpdateAllRecorder::$calls)->toBe(['noerd:update'])
+        ->and(UpdateAllRecorder::$options['noerd:update']['dryRun'])->toBeTrue();
+});
+
+it('forwards --reset-navigation only to the commands that know it', function (): void {
+    $this->app[Kernel::class]->registerCommand(new RecordingUpdateCommand('noerd:update-zz-alpha', extraOptions: ' {--reset-navigation : Reset}'));
+
+    ($this->run)(['--force' => true, '--reset-navigation' => true])->assertExitCode(0);
+
+    expect(UpdateAllRecorder::$options['noerd:update']['resetNavigation'])->toBeTrue()
+        ->and(UpdateAllRecorder::$options['noerd:update-zz-alpha']['resetNavigation'])->toBeTrue()
+        ->and(UpdateAllRecorder::$calls)->toHaveCount(4);
 });

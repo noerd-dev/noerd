@@ -34,6 +34,7 @@ trait HasModuleInstallation
 {
     use InstallsNoerdModule {
         installOptions as protected sharedInstallOptions;
+        yamlVocabularyPaths as protected sharedYamlVocabularyPaths;
     }
 
     /** @var array{created_dirs: int, copied_files: int, skipped_files: int, overwritten_files: int} */
@@ -135,7 +136,29 @@ trait HasModuleInstallation
             ...$this->sharedInstallOptions(),
             'build' => 'Run npm build without asking (required to build in non-interactive runs)',
             'scaffold' => 'Silent post-scaffold run (noerd:make-app) — only the tenant assignment is asked',
+            'reset-navigation' => 'Replace the app navigation with the module template (an update keeps it otherwise)',
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function installValueOptions(): array
+    {
+        return [
+            'tenants' => 'Assign the app without asking: "all" or tenant ids ("1,3") — required to assign in non-interactive runs',
+        ];
+    }
+
+    /**
+     * The app's own host folder (app-configs/{key}) on top of what every module
+     * rewrites.
+     *
+     * @return list<string>
+     */
+    protected function yamlVocabularyPaths(): array
+    {
+        return [base_path('app-configs/' . $this->getModuleKey()), ...$this->sharedYamlVocabularyPaths()];
     }
 
     /**
@@ -186,14 +209,7 @@ trait HasModuleInstallation
         try {
             $this->publishAppConfigs($targetDir);
 
-            $navSource = $this->getSourceDir() . DIRECTORY_SEPARATOR . 'navigation.yml';
-            if (file_exists($navSource)) {
-                $this->installResults[$this->publishFile(
-                    $navSource,
-                    $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml',
-                    $this->getModuleKey() . '/navigation.yml',
-                )]++;
-            }
+            $this->publishUpdateNavigation($targetDir);
 
             $this->ensureRegistrationMigration();
             $this->publishModuleResources(update: true);
@@ -209,6 +225,47 @@ trait HasModuleInstallation
 
             return Command::FAILURE;
         }
+    }
+
+    /**
+     * The app navigation belongs to the host once it is published: the host
+     * adds entries (noerd:make-resource, a project's own screens), so an update
+     * copies the template only when the file is missing — or with
+     * --reset-navigation. --force does not touch it; it only overwrites the
+     * lists/details/pages copies.
+     */
+    protected function publishUpdateNavigation(string $targetDir): void
+    {
+        $navSource = $this->getSourceDir() . DIRECTORY_SEPARATOR . 'navigation.yml';
+        $navTarget = $targetDir . DIRECTORY_SEPARATOR . 'navigation.yml';
+
+        if (! file_exists($navSource)) {
+            return;
+        }
+
+        if (file_exists($navTarget) && ! $this->boolOption('reset-navigation')) {
+            $this->installResults['skipped_files']++;
+            $this->line("<comment>Kept:</comment> {$this->getModuleKey()}/navigation.yml (replace it with --reset-navigation)");
+
+            return;
+        }
+
+        $existed = file_exists($navTarget);
+
+        if (! copy($navSource, $navTarget)) {
+            throw new Exception("Failed to copy file: {$navSource} to {$navTarget}");
+        }
+
+        $this->installResults[$existed ? 'overwritten_files' : 'copied_files']++;
+        $this->line(($existed ? '<comment>Replaced:</comment> ' : '<info>Copying:</info> ') . "{$this->getModuleKey()}/navigation.yml");
+    }
+
+    /**
+     * Read a flag that a fixture's redefined signature may lack.
+     */
+    protected function boolOption(string $name): bool
+    {
+        return $this->input->hasOption($name) && (bool) $this->option($name);
     }
 
     /**
@@ -355,7 +412,11 @@ trait HasModuleInstallation
             return Command::FAILURE;
         }
 
-        $this->assignAppToTenants($appKey, compact: true, alsoAssign: $this->requiredAppKeysFor($appKey));
+        if ($this->tenantsOptionGiven()) {
+            $this->assignAppToTenantSelection($appKey);
+        } else {
+            $this->assignAppToTenants($appKey, compact: true, alsoAssign: $this->requiredAppKeysFor($appKey));
+        }
 
         return Command::SUCCESS;
     }
@@ -408,6 +469,24 @@ trait HasModuleInstallation
         }
 
         $this->line('');
+
+        // An explicit opt-in assigns without a prompt — the scriptable way.
+        if ($this->tenantsOptionGiven()) {
+            $this->assignAppToTenantSelection($appKey);
+
+            return;
+        }
+
+        // Without a person to ask, nothing is assigned: a deploy script must never
+        // hand an app to every tenant by accepting a prompt default.
+        if (! $this->input->isInteractive()) {
+            $this->comment("Non-interactive run: '{$this->getModuleName()}' was not assigned to any tenant.");
+            $this->comment('Assign it with --tenants=all (or --tenants=1,3) or afterwards with:');
+            $this->line('  php artisan noerd:assign-apps-to-tenant --tenant-id={id} --apps=' . $appKey);
+
+            return;
+        }
+
         if ($this->confirm('Would you like to assign the app to tenants now?', true)) {
             $this->assignAppToTenants($appKey, alsoAssign: $this->requiredAppKeysFor($appKey));
         }
@@ -416,6 +495,67 @@ trait HasModuleInstallation
         $this->comment('Note: On non-local systems (staging/production), tenant assignment');
         $this->comment('must be done manually after deployment using:');
         $this->line('  php artisan noerd:assign-apps-to-tenant');
+    }
+
+    /**
+     * Whether the run names its tenants (`--tenants=…`).
+     */
+    protected function tenantsOptionGiven(): bool
+    {
+        return $this->input->hasOption('tenants') && is_string($this->option('tenants')) && mb_trim($this->option('tenants')) !== '';
+    }
+
+    /**
+     * Assign the app (and its required apps) to the tenants of `--tenants`:
+     * `all` or a comma-separated list of tenant ids. ADDITIVE — a tenant that is
+     * not named keeps what it has. An unknown id assigns nothing and is reported.
+     */
+    protected function assignAppToTenantSelection(string $appKey): void
+    {
+        $app = TenantApp::where('name', $appKey)->first();
+
+        if (! $app) {
+            $this->warn("App '{$appKey}' not found in database.");
+
+            return;
+        }
+
+        $value = mb_trim((string) $this->option('tenants'));
+
+        if (mb_strtolower($value) === 'all') {
+            $tenants = Tenant::orderBy('name')->get();
+        } else {
+            $ids = array_values(array_filter(array_map('trim', explode(',', $value)), static fn(string $id): bool => $id !== ''));
+            $invalid = array_filter($ids, static fn(string $id): bool => ! ctype_digit($id));
+
+            if ($ids === [] || $invalid !== []) {
+                $this->error('--tenants expects "all" or tenant ids separated by commas (e.g. --tenants=1,3).');
+
+                return;
+            }
+
+            $tenants = Tenant::whereIn('id', array_map('intval', $ids))->orderBy('name')->get();
+            $unknown = array_diff(array_map('intval', $ids), $tenants->pluck('id')->map('intval')->all());
+
+            if ($unknown !== []) {
+                $this->error('Unknown tenant id(s): ' . implode(', ', $unknown) . ' — nothing was assigned.');
+
+                return;
+            }
+        }
+
+        if ($tenants->isEmpty()) {
+            $this->warn('No tenants found.');
+
+            return;
+        }
+
+        foreach ($tenants as $tenant) {
+            $tenant->assignApp($app);
+        }
+
+        $this->info("'{$app->title}' is now assigned to {$app->fresh()->tenants()->count()} tenant(s).");
+        $this->assignRequiredApps($this->requiredAppKeysFor($appKey), $tenants->pluck('id')->all());
     }
 
     /**
@@ -504,7 +644,7 @@ trait HasModuleInstallation
                     $this->line("<info>✓ '{$app->title}' assigned to '{$tenant->name}'</info>");
                 }
             } elseif (! $isSelected && $wasAssigned) {
-                $tenant->tenantApps()->detach($app->id);
+                $tenant->removeApp($app);
                 if (! $compact) {
                     $this->line("<comment>✗ '{$app->title}' removed from '{$tenant->name}'</comment>");
                 }

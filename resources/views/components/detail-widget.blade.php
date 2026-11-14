@@ -1,7 +1,8 @@
 @props([
     'title' => null,
     'component' => null,
-    'route' => null,
+    'showMoreRoute' => null,
+    'showMoreComponent' => null,
     'columns' => [],
     'arguments' => [],
     'wireKey' => null,
@@ -9,13 +10,15 @@
 
 @php
     // Mount the embedded list in minimal mode. showMore* let the "Show more" link
-    // re-open the same list as a full (non-minimal) modal, filtered identically.
+    // re-open the list as a full (non-minimal) modal, filtered identically: the
+    // widget's `showMoreModalRoute:` (URL kept), with `showMoreModalComponent:` —
+    // by default the embedded component itself — as the fallback.
     $params = array_merge($arguments, [
         'disableModal' => true,
         'minimal' => true,
         'minimalColumns' => $columns,
-        'showMoreComponent' => $component,
-        'showMoreRoute' => $route,
+        'showMoreComponent' => $showMoreComponent ?? $component,
+        'showMoreRoute' => $showMoreRoute,
         'showMoreArguments' => $arguments,
     ]);
 

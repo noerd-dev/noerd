@@ -12,7 +12,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Noerd\Helpers\AccessHelper;
+use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Models\Tenant;
 use Noerd\Support\SchemaColumnCache;
 
 /**
@@ -97,7 +100,7 @@ final class RelationTitleResolver
 
         $type = $this->registry->typeForColumn($fkColumn);
         $definition = $type !== null ? $this->registry->get($type) : null;
-        if ($definition?->modelClass !== null && class_exists($definition->modelClass)) {
+        if ($definition?->modelClass !== null && class_exists($definition->modelClass) && AccessHelper::canReadObject($definition->modelClass)) {
             foreach ($definition->modelClass::query()->findMany(array_values($pending)) as $model) {
                 $title = $definition->resolveTitle($model);
                 if ($title !== '') {
@@ -110,8 +113,9 @@ final class RelationTitleResolver
         if ($remaining !== []) {
             $table = Str::plural($base);
             $nameColumn = $this->nameColumn($table);
-            if ($nameColumn !== false) {
-                $names = $this->scopedQuery($table)
+            $query = $nameColumn !== false ? $this->scopedQuery($table) : null;
+            if ($query !== null) {
+                $names = $query
                     ->whereIn('id', array_values($remaining))
                     ->pluck($nameColumn, 'id');
                 foreach ($names as $id => $name) {
@@ -144,7 +148,7 @@ final class RelationTitleResolver
 
         $type = $this->registry->typeForColumn($fkColumn);
         $definition = $type !== null ? $this->registry->get($type) : null;
-        if ($definition !== null) {
+        if ($definition !== null && AccessHelper::canReadObject($definition->modelClass)) {
             $title = $definition->resolveTitleForValue($id);
             if ($title !== '') {
                 return $title;
@@ -153,8 +157,9 @@ final class RelationTitleResolver
 
         $table = Str::plural($base);
         $nameColumn = $this->nameColumn($table);
-        if ($nameColumn !== false) {
-            $name = $this->scopedQuery($table)->where('id', $id)->value($nameColumn);
+        $query = $nameColumn !== false ? $this->scopedQuery($table) : null;
+        if ($query !== null) {
+            $name = $query->where('id', $id)->value($nameColumn);
             if (is_string($name) && mb_trim($name) !== '') {
                 return $name;
             }
@@ -164,27 +169,43 @@ final class RelationTitleResolver
     }
 
     /**
-     * The convention lookup must never cross the tenant boundary. Prefer the
-     * Eloquent model behind the table (its global scopes — TenantScope above
-     * all — then apply); when no model can be found, fall back to the query
-     * builder and narrow it by tenant_id ourselves whenever the table has
-     * that column.
+     * The convention lookup must never cross the tenant boundary nor a read
+     * permission. Prefer the Eloquent model behind the table (its global
+     * scopes — TenantScope above all — then apply, and the object read
+     * permission of that model is asked); when no model can be found, the raw
+     * query builder is used ONLY for a table that has a tenant_id column,
+     * narrowed to the current tenant. A guessed table without one is never
+     * read — the cell shows the raw id. Null means: no lookup.
      */
-    private function scopedQuery(string $table): Builder|EloquentBuilder
+    private function scopedQuery(string $table): Builder|EloquentBuilder|null
     {
+        // `tenant_id` → the tenants table: only the names of tenants the user
+        // may work in, never an arbitrary tenant looked up by id.
+        if ($table === (new Tenant())->getTable()) {
+            $user = NoerdAuth::user();
+
+            if ($user === null) {
+                return null;
+            }
+
+            return $user->isSuperAdmin()
+                ? Tenant::query()
+                : Tenant::query()->whereIn('id', $user->tenants()->select('tenants.id'));
+        }
+
         $modelClass = $this->modelForTable($table);
 
         if ($modelClass !== null) {
-            return $modelClass::query();
+            return AccessHelper::canReadObject($modelClass) ? $modelClass::query() : null;
         }
 
-        $query = DB::table($table);
+        $tenantId = TenantHelper::currentTenantId();
 
-        if (SchemaColumnCache::hasColumn($table, 'tenant_id')) {
-            $query->where('tenant_id', TenantHelper::getSelectedTenantId());
+        if ($tenantId === null || ! SchemaColumnCache::hasColumn($table, 'tenant_id')) {
+            return null;
         }
 
-        return $query;
+        return DB::table($table)->where('tenant_id', $tenantId);
     }
 
     /**

@@ -22,7 +22,7 @@ trait HasEmailPreview
 
     abstract protected function getEmailRateLimitPrefix(): string;
 
-    abstract public function getSampleEmailData(): array;
+    abstract protected function getSampleEmailData(): array;
 
     #[Computed]
     public function canShowPreview(): bool

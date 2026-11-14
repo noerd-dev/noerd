@@ -50,12 +50,13 @@ final class FieldRules
     }
 
     /**
-     * Whether the field renders as text (the `display` theme), on the field or
-     * inherited from its block/layout.
+     * Whether the field renders as text (a text-only theme such as `display`),
+     * on the field or inherited from its block/layout — the ONE notion of
+     * "text only" the rules and the client write guard share.
      *
      * @param  array<string, mixed>  $field
      */
-    private static function rendersAsText(array $field, ?string $inheritedTheme): bool
+    public static function rendersAsText(array $field, ?string $inheritedTheme): bool
     {
         $theme = $field['theme'] ?? $inheritedTheme;
 

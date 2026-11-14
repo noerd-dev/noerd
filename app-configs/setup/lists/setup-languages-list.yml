@@ -7,7 +7,7 @@ searchableColumns:
   - code
 actions:
   - label: New Language
-    route: noerd.setup-language.detail
+    modalRoute: noerd.setup-language.detail
 columns:
   - field: code
     label: Code
@@ -25,4 +25,4 @@ columns:
     actions:
       - label: Edit
         heroicon: pencil-square
-        route: noerd.setup-language.detail
+        modalRoute: noerd.setup-language.detail

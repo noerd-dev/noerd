@@ -16,16 +16,15 @@
                 // out keeps the shortcut the YAML assigned.
                 $effectiveShortcut = $actionItem['shortcut'] ?? ($actionIndex === 0 ? config('noerd.keyboard_shortcuts.new_entry', 'n') : null);
                 $shortcut = $effectiveShortcut !== null
-                    ? \Noerd\Support\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['route'] ?? ''), $effectiveShortcut)
+                    ? \Noerd\Support\KeyboardShortcutHelper::parse('action_' . ($actionItem['action'] ?? $actionItem['modalRoute'] ?? $actionItem['modalComponent'] ?? ''), $effectiveShortcut)
                     : null;
-                // An action either opens a named Livewire route as a modal
-                // (route:) or calls a method on the list component (action:). The
-                // method name is interpolated into an Alpine expression, so only
-                // identifier characters of the YAML value survive.
+                // An action either opens a modal (modalRoute:, with modalComponent: as
+                // the fallback, or modalComponent: alone) or calls a method on the list
+                // component (action:). The method name is interpolated into an Alpine
+                // expression, so only identifier characters of the YAML value survive.
                 $actionMethod = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($actionItem['action'] ?? ''));
-                $clickExpression = isset($actionItem['route'])
-                    ? '$modalRoute(' . Js::from($actionItem['route']) . ', ' . Js::from($actionItem['arguments'] ?? []) . ')'
-                    : '$wire.' . $actionMethod . '(null, ' . Js::from($listRelations ?? []) . ')';
+                $clickExpression = \Noerd\Support\YamlModalTarget::clickExpression($actionItem, $actionItem['arguments'] ?? [])
+                    ?? '$wire.' . $actionMethod . '(null, ' . Js::from($listRelations ?? []) . ')';
             @endphp
             <div
                 @if ($shortcut !== null)

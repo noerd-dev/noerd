@@ -31,7 +31,8 @@ Example: `app-configs/inventory/lists/items-list.yml`
 title: Items
 actions:
   - label: New Item
-    route: inventory.item.detail
+    modalRoute: inventory.item.detail
+    modalComponent: inventory::item-detail
 disableSearch: false
 columns:
   - field: name
@@ -90,7 +91,7 @@ columns:
 | `wireModel` / `wireModelField` / `live` | For the `checkbox` type: the array property the checkbox binds to, an optional sub-key, and whether the binding is `wire:model.live` (see Inline Editing below) | / / `false` |
 | `translatable` | Marks the column as language-dependent — the cell gets a subtle blue background so an editor sees that the value belongs to the selected language (see [Languages](languages.md)) | `false` |
 | `action` | Livewire method called on cell click (receives the row id) | `openListRow` |
-| `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `route`, `modalComponent`, `action`, `confirm`, `heroicon` | |
+| `actions` | Array of row actions rendered as a dropdown in this column — entries support `label`, `modalRoute`, `modalComponent`, `action`, `confirm`, `heroicon` | |
 | `wireClick` / `wireClickField` | For `coloredText`: custom `wire:click` method plus the row field passed as its argument | / `id` |
 | `method` | Shows the result of a `#[ComputedValue]` model method instead of a stored value (see Computed Columns below) | |
 | `cell` | Key of a registered cell renderer that draws the cell instead of the type's default markup; `type` keeps deciding filter, sort, alignment, CSV and the formatted text (see Custom Cell Renderers below) | |
@@ -115,7 +116,7 @@ The CSV export writes amounts without the currency symbol.
 | `number` | Right-aligned number in the user's locale, at most 2 decimals (`FormatHelper::number()`) |
 | `currency` | Right-aligned amount in the tenant currency, written in the user's locale (`Noerd\Helpers\CurrencyHelper::format()`) |
 | `bool` | Read-only icon: green checkmark (true), red circle (false) |
-| `inverseBool` | Read-only icon: green checkmark when true, nothing when false |
+| `boolCheck` | Read-only icon: green checkmark when true, nothing when false |
 | `checkbox` | Editable checkbox bound to a component property via `wireModel` (see Inline Editing below) |
 | `badge` | Neutral badge; the raw value is translated to a label via the column's `options` (`value`/`label` pairs). Columns mirroring a paired detail `type: select` field get this automatically |
 | `badgeWithText` | Badge with optional text — the row value is an array with `badge`, `text` and an optional `variant` (`primary` default, `danger`, `success`, `warning`, `neutral`) |
@@ -123,10 +124,11 @@ The CSV export writes amounts without the currency symbol.
 | `customAttribute` | Value from the `custom_attributes` JSON column, normalized for display (translatable arrays are resolved to the active language) |
 | `coloredText` | Text with optional color classes; the row value may be an array with `text`, `class`, `prefix`, `prefixClass`, `icon` keys |
 | `preview` | A picture: the picture on top of the card in grid mode, a small square in the table and widget list. The row value is an image URL, or an array with `url` (image) or `icon` (heroicon name shown on a tile coloured by `class`, with a short `label` such as a file extension). The image fills its box cropped from the top edge, so a document thumbnail shows its head. The list row supplies the value — the core does not know where pictures come from. Never sortable or filterable; the CSV export writes the URL |
-| `relationLink` | Clickable chip that opens the related record as a modal: `route` (preferred) and/or `modalComponent` (fallback) name the target, `idField` the row field holding its id (default `id`), `idParam` the argument it is passed as (default `modelId`, in both modes). Without a resolvable target the value renders as plain text |
+| `relationLink` | Clickable chip that opens the related record as a modal: `modalRoute` (preferred) and/or `modalComponent` (fallback) name the target, `idField` the row field holding its id (default `id`), `idParam` the argument it is passed as (default `modelId`, in both modes). Without a resolvable target the value renders as plain text |
 
 **Automatic typing:** Columns without an explicit `type` are typed from the database schema
-(`boolean` → `bool`, numeric → `number`, `date`/`datetime` → matching type), and columns whose
+(`boolean` → `bool`, every integer, decimal and float spelling of MySQL, PostgreSQL and SQLite →
+`number`, `date`/`datetime`/`timestamp` and `time` → matching type; `year` stays text), and columns whose
 field mirrors a `type: select` field in the paired detail YAML (`{x}-list` → `{x}-detail`) render
 as translated badges automatically. An explicit `type` or own `options` always wins.
 
@@ -149,7 +151,7 @@ columns:
   - field: is_emergency
     label: Emergency
     width: 10
-    type: inverseBool
+    type: boolCheck
 ```
 
 ### Action columns
@@ -171,17 +173,17 @@ value, so an action column needs no `type`. The row id is always passed as the s
   column needs none.
 
 **The `action` column's dropdown** — each entry of `actions:` mirrors the
-[detail actions](detail-view.md#detail-actions) precedence: `route:` opens a route modal for the row
-record, `modalComponent:` is the fallback, and `action:` calls a method on the list component. An
-entry with a `route:` that is not registered and no `modalComponent:` is skipped, so YAML may
-reference an optional module safely.
+[detail actions](detail-view.md#detail-actions) precedence: `modalRoute:` opens a route modal for the
+row record, `modalComponent:` is the fallback (or the target alone), and `action:` calls a method on
+the list component. An entry with a `modalRoute:` that is not registered and no `modalComponent:` is
+skipped, so YAML may reference an optional module safely.
 
 | Key | Description |
 |-----|-------------|
 | `label` | Entry caption (translation key) |
-| `route` | Named route opened as a route modal with `modelId` = the row id |
-| `modalComponent` | Component modal opened with `modelId` = the row id; also the fallback for an unregistered `route` |
-| `action` | Method called on the list component as `method($id)` (used when neither `route` nor `modalComponent` is set) |
+| `modalRoute` | Named route opened as a route modal with `modelId` = the row id |
+| `modalComponent` | Component modal opened with `modelId` = the row id; also the fallback for an unregistered `modalRoute` |
+| `action` | Method called on the list component as `method($id)` (used when neither `modalRoute` nor `modalComponent` is set) |
 | `heroicon` | Optional icon before the label |
 | `confirm` | Optional confirmation prompt via `wire:confirm` (translation key); `action:` entries only |
 
@@ -218,7 +220,7 @@ Cells are read-only. The one editable column type is **`type: checkbox`**, which
       live: true
   ```
 
-`bool` and `inverseBool` cells are read-only icons — use `checkbox` for a toggleable boolean.
+`bool` and `boolCheck` cells are read-only icons — use `checkbox` for a toggleable boolean.
 
 ## Custom Cell Renderers (`cell:`)
 
@@ -460,15 +462,17 @@ actions:
     heroicon: arrow-up-tray
     style: secondary
   - label: New Item
-    route: inventory.item.detail
+    modalRoute: inventory.item.detail
+    modalComponent: inventory::item-detail
 ```
 
 | Property | Description |
 |----------|-------------|
 | `label` | Translation key for the button text |
-| `route` | Named route opened as a modal — use it for the "New …" button: it opens the detail route and writes `/inventory/item/new?modal=true` into the address bar |
-| `arguments` | (optional, with `route`) Arguments passed to the modal |
-| `action` | Livewire method called when no `route` is given. `action: listAction` is the component-based "New …" for a list whose detail has no route |
+| `modalRoute` | Named route opened as a modal — use it for the "New …" button: it opens the detail route and writes `/inventory/item/new?modal=true` into the address bar |
+| `modalComponent` | Component opened as a modal — the fallback while `modalRoute` is not registered, or the target on its own (an import dialog). An action whose `modalRoute` is not registered and that has no `modalComponent` is not rendered |
+| `arguments` | (optional, with `modalRoute`/`modalComponent`) Arguments passed to the modal |
+| `action` | Livewire method called when the action opens no modal. `action: listAction` is the component-based "New …" for a list whose detail has no route |
 | `heroicon` | (optional) Heroicon name for the button icon |
 | `style` | (optional) `secondary`; buttons are primary by default and render side by side |
 | `shortcut` | (optional) Keyboard shortcut of this button. The FIRST action defaults to `noerd.keyboard_shortcuts.new_entry` (`n`), further actions have none (see [Keyboard Shortcuts](keyboard-shortcuts.md)) |
@@ -556,7 +560,8 @@ columns:
   tenant-scoped query (firing model events, so observers/auditing still run). Wire it up purely from
   YAML; no per-list method is needed.
 - **List-specific actions** are public methods you add to the list component. They read the ticked ids
-  from `$this->selectedRecordIds`. Example — open the task-create modal for the selected records:
+  from `$this->selectedRecordIds`. A user without WRITE permission on the list's model neither sees
+  them nor can call them (the call is refused with 403); `deleteSelected` follows DELETE. Example — open the task-create modal for the selected records:
 
   ```php
   use Noerd\Facades\Noerd;

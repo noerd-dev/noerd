@@ -41,7 +41,7 @@ Both settings rows are memoized per request (`NoerdSettings::forTenant()`); a sa
 memo, `FormatHelper::clearCache()` / `CurrencyHelper::clearCache()` flush explicitly.
 
 A host may still **pin** a format for the whole installation through `config('noerd.format.*')`
-(`date`, `datetime`, `decimal_separator`, `thousands_separator`, `NOERD_FORMAT_*`). A pinned format
+(`date`, `datetime`, `time`, `decimal_separator`, `thousands_separator`, `NOERD_FORMAT_*`). A pinned format
 always wins over the locale — leave the keys unset to let the locale decide.
 
 ## API
@@ -124,6 +124,7 @@ the tenant id directly.
     'locale' => env('NOERD_FORMAT_LOCALE'),          // installation-wide fallback locale
     'date' => env('NOERD_FORMAT_DATE'),              // pins, normally unset
     'datetime' => env('NOERD_FORMAT_DATETIME'),
+    'time' => env('NOERD_FORMAT_TIME'),
     'decimal_separator' => env('NOERD_FORMAT_DECIMAL_SEPARATOR'),
     'thousands_separator' => env('NOERD_FORMAT_THOUSANDS_SEPARATOR'),
     'csv_delimiter' => env('NOERD_CSV_DELIMITER', ';'),

@@ -9,6 +9,7 @@ use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use Noerd\Services\PicklistRegistry;
 
 /**
@@ -27,19 +28,25 @@ final class ListFilter
 {
     public const KIND_PICKLIST = 'picklist';
 
+    public const KIND_YEARS = 'years';
+
+    public const KIND_MODEL = 'model';
+
     public const KIND_DATE_FROM = 'dateFrom';
 
     public const KIND_DATE_UNTIL = 'dateUntil';
 
+    /**
+     * The one filter vocabulary: the `type` of a list YAML `filters:` entry, of
+     * the array form and of toArray() — the views branch on the same names.
+     */
+    public const KINDS = [self::KIND_PICKLIST, self::KIND_YEARS, self::KIND_MODEL, self::KIND_DATE_FROM, self::KIND_DATE_UNTIL];
+
+    /** The kinds the date dropdown renders; every other kind is a picklist. */
+    public const DATE_KINDS = [self::KIND_DATE_FROM, self::KIND_DATE_UNTIL];
+
     /** The relative periods the date kinds offer next to a picked date. */
     public const DATE_PRESETS = ['today', 'this_week', 'this_month', 'last_month', 'this_quarter', 'last_quarter', 'this_year'];
-
-    /** The `type` the filter views branch on, per kind. */
-    private const VIEW_TYPES = [
-        self::KIND_PICKLIST => 'Picklist',
-        self::KIND_DATE_FROM => 'ShowFrom',
-        self::KIND_DATE_UNTIL => 'ShowUntil',
-    ];
 
     /** @var array<string, string>|null */
     private ?array $resolvedOptions = null;
@@ -82,7 +89,7 @@ final class ListFilter
      */
     public static function model(string $label, string $column, string $modelClass, string $labelColumn = 'name', ?Closure $scope = null): self
     {
-        return new self($label, $column, self::KIND_PICKLIST, function () use ($modelClass, $labelColumn, $scope): array {
+        return new self($label, $column, self::KIND_MODEL, function () use ($modelClass, $labelColumn, $scope): array {
             $query = $modelClass::query()->orderBy($labelColumn);
 
             if ($scope !== null) {
@@ -100,7 +107,7 @@ final class ListFilter
      */
     public static function years(string $label, string $column): self
     {
-        $filter = new self($label, $column, self::KIND_PICKLIST, function (?string $modelClass) use ($column): array {
+        $filter = new self($label, $column, self::KIND_YEARS, function (?string $modelClass) use ($column): array {
             if ($modelClass === null) {
                 return [];
             }
@@ -148,27 +155,35 @@ final class ListFilter
     }
 
     /**
-     * A filter from its array form — the shape `get{Name}ListFilter()` methods
-     * returned so far (`label`, `column`, `type` Picklist|ShowFrom|ShowUntil,
-     * `options` as `value => label`) and the list YAML `filters:` entry (`type`
-     * picklist|years|model|dateFrom|dateUntil, `options` as in a detail select,
-     * `optionsMethod` naming a PicklistRegistry provider, `model` + `labelColumn`,
-     * `default`). YAML labels are translation keys.
+     * A filter from its array form — the list YAML `filters:` entry and the
+     * array a `get{Name}ListFilter()` method may return: `label`, `column`,
+     * `type` (one of KINDS; missing = picklist), `options` as `value => label`
+     * or as in a detail select, `optionsMethod` naming a PicklistRegistry
+     * provider, `model` + `labelColumn`, `default`. YAML labels are translation
+     * keys.
      *
      * @param  array<string, mixed>  $filter
+     *
+     * @throws InvalidArgumentException for a type outside the vocabulary
      */
     public static function fromArray(array $filter, ?string $modelClass = null, bool $translate = false): self
     {
         $label = (string) ($filter['label'] ?? '');
         $label = $translate ? __($label) : $label;
         $column = (string) ($filter['column'] ?? '');
-        $type = (string) ($filter['type'] ?? self::KIND_PICKLIST);
+        $type = $filter['type'] ?? self::KIND_PICKLIST;
+
+        if (! is_string($type) || ! in_array($type, self::KINDS, true)) {
+            $shown = is_string($type) ? $type : get_debug_type($type);
+
+            throw new InvalidArgumentException("Unknown list filter type [{$shown}] on column [{$column}]. Known types: " . implode(', ', self::KINDS) . '.');
+        }
 
         $instance = match ($type) {
-            'ShowFrom', self::KIND_DATE_FROM => self::dateFrom($label, $column),
-            'ShowUntil', self::KIND_DATE_UNTIL => self::dateUntil($label, $column),
-            'years' => self::years($label, $column),
-            'model' => self::model($label, $column, (string) ($filter['model'] ?? ''), (string) ($filter['labelColumn'] ?? 'name')),
+            self::KIND_DATE_FROM => self::dateFrom($label, $column),
+            self::KIND_DATE_UNTIL => self::dateUntil($label, $column),
+            self::KIND_YEARS => self::years($label, $column),
+            self::KIND_MODEL => self::model($label, $column, (string) ($filter['model'] ?? ''), (string) ($filter['labelColumn'] ?? 'name')),
             default => self::options($label, $column, self::optionsFromArray($filter, $translate)),
         };
 
@@ -302,8 +317,8 @@ final class ListFilter
     }
 
     /**
-     * The array the filter views render: `label`, `column`, `type`
-     * (Picklist | ShowFrom | ShowUntil) and `options`.
+     * The array the filter views render: `label`, `column`, `type` (the kind,
+     * see KINDS) and `options`.
      *
      * @return array{label: string, column: string, type: string, options: array<string, string>}
      */
@@ -312,7 +327,7 @@ final class ListFilter
         return [
             'label' => $this->label,
             'column' => $this->column,
-            'type' => self::VIEW_TYPES[$this->kind],
+            'type' => $this->kind,
             'options' => $this->resolvedOptions(),
         ];
     }

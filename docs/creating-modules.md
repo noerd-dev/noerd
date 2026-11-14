@@ -48,7 +48,7 @@ it and stays re-runnable.
 - **Routes** (`routes/{module}-routes.php`): one group behind `['noerd', 'app-access:{module}']`
   (tenant must have the app assigned, see [Authentication](auth.md)) with the dashboard route
   `{module}`. `noerd:make-resource` appends the list and detail routes following the **naming
-  convention** that route modals, `newRoute:` navigation entries and relation fields depend on —
+  convention** that route modals, `newModalRoute:` navigation entries and relation fields depend on —
   `{module}.{entities}` (list) and `{module}.{entity}.detail` (single record) — with namespaced
   component references (`{module}::{entities}-list`).
 - **Dashboard**: `resources/views/components/{module}-dashboard.blade.php` (a `NoerdPage`), opened
@@ -70,7 +70,9 @@ it and stays re-runnable.
   (`composer.json` `require`). `Noerd\{Module}\Tests\` → `tests/` sits in the production
   `autoload` block, not in `autoload-dev`: Composer only dumps the dev autoload of the ROOT package,
   so a host would never find the module's test classes (`tests/Traits/`, a standalone `TestCase`)
-  otherwise. The command also
+  otherwise. A standalone `TestCase` extends `Noerd\Testing\ModuleTestCase` and needs
+  `orchestra/testbench` in the module's `require-dev` (see [Testing](testing.md#a-modules-own-testbench-suite)).
+  The command also
   adds `noerd/{module}` to the project's root `composer.json`.
 - **Service provider**: `src/Providers/{Module}ServiceProvider.php` extends
   `Noerd\Providers\NoerdModuleServiceProvider` and declares `protected string $moduleKey` plus
@@ -171,15 +173,22 @@ migration prompt or `composer require` call.
   defaults to the module name). It declares nothing else: `handle()` comes from the trait and
   runs `runModuleInstallation()` — that copies the YAML configs into `app-configs/{module}/`,
   registers the tenant app, asks which tenants get it, offers `php artisan migrate`, runs the
-  module's setup steps and offers the frontend build. The shared options `--force`, `--migrate`,
-  `--build` and `--scaffold` are added to the signature by the trait (a signature that declares one
-  of them keeps its own description). With `--scaffold` it runs silently right after
-  `noerd:make-app` — configs, registration and the tenant assignment question only. On a project
+  module's setup steps and offers the frontend build. The shared options `--force` (overwrite the
+  YAML copies), `--migrate`, `--build`, `--scaffold`, `--reset-navigation` and `--tenants=` are added
+  to the signature by the trait (a signature that declares one of them keeps its own description).
+  The tenant assignment is a question in an interactive run; a NON-interactive run assigns the app
+  only to the tenants `--tenants` names (`all` or ids `1,3`, additively) and otherwise assigns
+  nothing and prints the `noerd:assign-apps-to-tenant --tenant-id= --apps=` command for later. With
+  `--scaffold` it runs silently right after `noerd:make-app` — configs, registration and the tenant
+  assignment question only (without a terminal: every tenant). On a project
   where the base package is not installed yet, the command runs `noerd:install` first and then
   continues — installing a module is a valid first command in a fresh project.
 - **`noerd:update-{module}`** — a subclass of the install command that carries only its
   signature and description: the trait's `handle()` recognises the `noerd:update-` name and runs
-  `runModuleUpdate()`, which republishes, never migrates and never asks about tenants.
+  `runModuleUpdate()`, which republishes, never migrates and never asks about tenants. It keeps the
+  host's `app-configs/{module}/navigation.yml` (the host adds entries to it) — copied only when it
+  is missing, replaced only with `--reset-navigation`. The YAML vocabulary rewrite of a module run
+  covers only the files that module publishes and, for a local module, its own `app-configs/`.
   `noerd:update-all` discovers every command named `noerd:update-{module}` — a module without one
   silently drops out of the project-wide update.
 
@@ -335,7 +344,7 @@ $this->detailData['custom_attributes']['my_key'];
 | `src/Commands/` | `{Module}InstallCommand`, `{Module}UpdateCommand` |
 | `src/Models/` | Eloquent models (`$guarded`, `BelongsToTenant`) |
 | `src/Providers/` | ServiceProvider |
-| `tests/` | Pest tests: `tests/Feature/ModuleBoundaryTest.php` is generated (`assertModuleBoundary()`), the user fixture is `actingAsNoerdUserForApp()`, `tests/Traits/` holds only module-specific fixtures (see [Testing](testing.md)) |
+| `tests/` | Pest tests: `tests/Feature/ModuleBoundaryTest.php` is generated (`assertModuleBoundary()`), the user fixture is `actingAsNoerdUserForApp()` (the helpers load through `\Noerd\Testing\HelperLoader::load();` in the host's `tests/Pest.php`, which `noerd:make-module` adds), `tests/Traits/` holds only module-specific fixtures (see [Testing](testing.md)) |
 | `AGENTS.md`, `CLAUDE.md` | Contributor notes for humans and AI agents working on the module |
 
 ## Next Steps

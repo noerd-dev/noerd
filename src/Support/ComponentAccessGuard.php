@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 use Illuminate\Support\Str;
+use Noerd\Contracts\GuardsModalMount;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Middleware\ActionPermissionMiddleware;
 use Noerd\Middleware\AppAccessMiddleware;
+use Noerd\Middleware\ProfileMiddleware;
 use Noerd\Middleware\SetupMiddleware;
 
 /**
@@ -73,6 +75,8 @@ final class ComponentAccessGuard
      * survives an application boot, so a test process that boots several
      * applications has to reset it — the providers of the new app register
      * their own screens again.
+     *
+     * @internal Test API.
      */
     public static function flushRegisteredComponents(): void
     {
@@ -142,10 +146,12 @@ final class ComponentAccessGuard
      * The stack takes the component (or route) name from the browser and
      * mounts it without its route middleware, so a component that is ONLY
      * reachable through routes carrying an access middleware (`app-access:…`,
-     * `action-permission:…`, `setup`) keeps that requirement there: the user
-     * must satisfy the middleware of at least one of its routes. A component
-     * without a route (pickers, dialogs) or with one route that carries none
-     * of these middleware (screens shared by several apps) is not restricted.
+     * `action-permission:…`, `setup`, `profile`, or a module middleware
+     * implementing GuardsModalMount — by class, alias or inside a middleware
+     * group) keeps that requirement there: the user must satisfy every access
+     * middleware of at least one of its routes. A component without a route
+     * (pickers, dialogs) or with one route that carries none of these
+     * middleware (screens shared by several apps) is not restricted.
      *
      * Deliberately NOT part of allows(): a host that renders the component in
      * its own page (a public booking widget, an embedded list) has made that
@@ -188,15 +194,33 @@ final class ComponentAccessGuard
     }
 
     /**
-     * @param  array{apps: list<string>, actions: list<string>, admin: bool}  $requirement
+     * @param  array{apps: list<string>, actions: list<string>, admin: bool, profile: bool, guards: list<array{class: class-string<GuardsModalMount>, parameters: list<string>}>}  $requirement
      */
     private static function satisfies(array $requirement): bool
     {
-        if ($requirement['apps'] === [] && $requirement['actions'] === [] && ! $requirement['admin']) {
+        if ($requirement['apps'] === [] && $requirement['actions'] === [] && ! $requirement['admin'] && ! $requirement['profile'] && $requirement['guards'] === []) {
+            return true;
+        }
+
+        // A module middleware decides on its own rule — also for a guest (an
+        // employee portal guards another guard than the backend's).
+        foreach ($requirement['guards'] as $guard) {
+            if (! $guard['class']::allowsModalMount(...$guard['parameters'])) {
+                return false;
+            }
+        }
+
+        if ($requirement['apps'] === [] && $requirement['actions'] === [] && ! $requirement['admin'] && ! $requirement['profile']) {
             return true;
         }
 
         if (NoerdAuth::user() === null) {
+            return false;
+        }
+
+        // The person's own account (ProfileMiddleware): never reached by an
+        // administrator signed in as the person.
+        if ($requirement['profile'] && Impersonation::active()) {
             return false;
         }
 
@@ -220,10 +244,13 @@ final class ComponentAccessGuard
     /**
      * The access requirements of every Livewire route, keyed by
      * "{namespace}|{name}" of the component behind it — one entry per route.
+     * The middleware is resolved like the router does it (aliases and nested
+     * middleware groups expanded, excluded middleware dropped), so an access
+     * middleware hidden in a host-defined group is not overlooked.
      * Memoized per request for the current number of routes (tests and late
      * providers register routes at runtime).
      *
-     * @return array<string, list<array{apps: list<string>, actions: list<string>, admin: bool}>>
+     * @return array<string, list<array{apps: list<string>, actions: list<string>, admin: bool, profile: bool, guards: list<array{class: class-string<GuardsModalMount>, parameters: list<string>}>}>>
      */
     private static function routeRequirements(): array
     {
@@ -236,7 +263,6 @@ final class ComponentAccessGuard
             return $memo[$count];
         }
 
-        $aliases = $router->getMiddleware();
         $requirements = [];
 
         foreach ($routes as $route) {
@@ -246,17 +272,21 @@ final class ComponentAccessGuard
                 continue;
             }
 
-            $requirement = ['apps' => [], 'actions' => [], 'admin' => false];
+            $requirement = ['apps' => [], 'actions' => [], 'admin' => false, 'profile' => false, 'guards' => []];
 
-            foreach ($route->gatherMiddleware() as $middleware) {
+            foreach ($router->gatherRouteMiddleware($route) as $middleware) {
                 if (! is_string($middleware)) {
                     continue;
                 }
 
-                [$name, $parameters] = array_pad(explode(':', $middleware, 2), 2, '');
-                $class = $aliases[$name] ?? $name;
+                [$class, $parameters] = array_pad(explode(':', $middleware, 2), 2, '');
 
-                if (is_a($class, AppAccessMiddleware::class, true)) {
+                if (is_a($class, GuardsModalMount::class, true)) {
+                    $requirement['guards'][] = [
+                        'class' => $class,
+                        'parameters' => $parameters === '' ? [] : array_map(mb_trim(...), explode(',', $parameters)),
+                    ];
+                } elseif (is_a($class, AppAccessMiddleware::class, true)) {
                     $requirement['apps'] = array_values(array_filter(array_map(
                         static fn(string $app): string => mb_strtoupper(mb_trim($app)),
                         explode(',', $parameters),
@@ -265,6 +295,8 @@ final class ComponentAccessGuard
                     $requirement['actions'][] = mb_trim($parameters);
                 } elseif (is_a($class, SetupMiddleware::class, true)) {
                     $requirement['admin'] = true;
+                } elseif (is_a($class, ProfileMiddleware::class, true)) {
+                    $requirement['profile'] = true;
                 }
             }
 

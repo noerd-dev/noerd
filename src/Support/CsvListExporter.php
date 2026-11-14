@@ -34,6 +34,7 @@ final class CsvListExporter
         ?callable $format = null,
     ): StreamedResponse {
         $format ??= self::formatValue(...);
+        self::orderByKeyLast($query);
 
         return response()->streamDownload(function () use ($query, $columns, $prepareChunk, $prepareRow, $format): void {
             $handle = fopen('php://output', 'w');
@@ -100,6 +101,34 @@ final class CsvListExporter
         }
 
         return $value;
+    }
+
+    /**
+     * lazy() pages with LIMIT/OFFSET: over a sort that is not unique (the list's
+     * `name`, a status) the database may order equal rows differently per page,
+     * so the export would drop some rows and repeat others. The primary key as
+     * the last sort column makes the order total. A query without any order is
+     * left alone — lazy() orders it by the key itself.
+     */
+    private static function orderByKeyLast(Builder $query): void
+    {
+        $orders = $query->getQuery()->orders ?? [];
+        $model = $query->getModel();
+        $keyName = $model->getKeyName();
+
+        if ($orders === [] || $keyName === '') {
+            return;
+        }
+
+        $qualifiedKey = $model->getQualifiedKeyName();
+
+        foreach ($orders as $order) {
+            if (in_array($order['column'] ?? null, [$keyName, $qualifiedKey], true)) {
+                return;
+            }
+        }
+
+        $query->orderBy($qualifiedKey);
     }
 
     /**

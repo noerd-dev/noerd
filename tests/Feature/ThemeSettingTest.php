@@ -8,6 +8,7 @@ use Livewire\Livewire;
 use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\NoerdSettings;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
 use Noerd\Support\ThemeHelper;
 use Noerd\Tests\TestCase;
@@ -38,6 +39,11 @@ function setSystemTheme(?string $theme, bool $enforced = false): void
 
 beforeEach(function (): void {
     $tenant = Tenant::factory()->create();
+    // The theme setting is read for the tenant of the request — the signed-in
+    // user's selection.
+    $user = NoerdUser::factory()->create();
+    $user->tenants()->attach($tenant->id);
+    $this->actingAs($user);
     TenantHelper::setSelectedTenantId($tenant->id);
     TenantHelper::setSelectedApp('ZZTHEMEAPP');
     ThemeHelper::clearCache();

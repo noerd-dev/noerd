@@ -28,7 +28,6 @@ use Noerd\Commands\MakePageCommand;
 use Noerd\Commands\MakeResourceCommand;
 use Noerd\Commands\MakeTenantCommand;
 use Noerd\Commands\MakeThemeCommand;
-use Noerd\Commands\NoerdDemoCommand;
 use Noerd\Commands\NoerdInfoCommand;
 use Noerd\Commands\NoerdInstallCommand;
 use Noerd\Commands\NoerdUpdateAllCommand;
@@ -348,7 +347,6 @@ class NoerdServiceProvider extends ServiceProvider
                 MakeThemeCommand::class,
                 MakeAdminUserCommand::class,
                 MakeTenantCommand::class,
-                NoerdDemoCommand::class,
             ]);
         }
     }

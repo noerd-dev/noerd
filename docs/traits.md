@@ -45,6 +45,25 @@ Code that runs without a user names its tenant:
 
 A signed-in noerd user without a selected tenant sees no rows (the query is not thrown, it is empty).
 
+`TenantHelper::currentTenantId()` is the ONE answer to "the tenant of this request" (the
+`TenantContext`, else the signed-in user's selection) — the scope, the stamp, the settings and the
+theme read it. `$user->selected_tenant_id` reads the live session selection only for the user
+signed in on the noerd guard; any other user instance — every user in a command, a job or a token
+API — reads the persisted `noerd_user_settings.selected_tenant_id`, and assigning it there writes
+only the persisted setting, never the session. A test that creates a user with
+`selected_tenant_id` and then signs it in with `actingAs()` selects the tenant in the session itself
+(`TenantHelper::setSelectedTenantId()`), as `createNoerdUserForApp()` and the `NoerdUser` factory
+states do — a real sign-in restores it through the login listener.
+
+A client request never moves data across tenants: while a Livewire component processes a request
+of a signed-in noerd user (from hydration to dehydration — an update or an action from the browser),
+a `saving` record with a `tenant_id` other than `TenantHelper::currentTenantId()` (create) or with a
+changed `tenant_id` (update) throws `Noerd\Exceptions\TenantMismatchException`. Writing for another
+tenant on purpose — an operator screen, a provisioning step started from the backend — names it with
+`TenantContext::run($tenantId, …)` (or `TenantContext::system()`); `TenantSingleton::updateForTenant()`
+runs its save in the tenant it was given. Writes outside a client request — commands, jobs, test
+fixtures, the first mount of a page — are not checked.
+
 The trait does not touch `$fillable`; use `$guarded` (the noerd standard).
 
 ```php
@@ -79,7 +98,7 @@ the model's `tenantDefaults()`, `updateForTenant(array, ?int)` creates or update
 
 `Noerd\Traits\HasEmailPreview` adds an email preview modal and a rate-limited "send test email" action to a detail component that edits an email template (subject + markdown body with placeholders).
 
-**Abstract methods** the component must implement:
+**Abstract methods** the component must implement — all `protected`, they are not actions:
 
 | Method | Returns |
 |--------|---------|
@@ -191,9 +210,9 @@ be used on their own by a command that is not a module installer.
 `RequiresNoerdInstallation` (part of `InstallsNoerdModule`, also usable alone) contributes
 `ensureNoerdInstalled(?bool $autoInstall = null): bool`. On a project without `config/noerd.php` an
 INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself as a dependency — forwarding
-`--force`, `--migrate`, `--build`, `--demo`; no demo question, no closing callout, npm deferred to
-the module command — and aborts with the manual hint only when that installation did not complete.
-Every other command (update, scaffold, demo) aborts with the hint. `$autoInstall` overrides the
+`--force`, `--migrate`, `--build`; no closing callout, npm deferred to the module command — and
+aborts with the manual hint only when that installation did not complete. Every other command
+(update, scaffold) aborts with the hint. `$autoInstall` overrides the
 decision `shouldAutoInstallNoerd()` otherwise derives from the command name.
 
 ## GuardedByObjectPermission (Eloquent models)
@@ -231,7 +250,7 @@ scope. A test reaches one through Livewire's invade helper:
 (`noerd::noerd-user-page` and the embedded `noerd::noerd-user-detail`) so both entry points to the
 same account apply identical checks: `assignedToCurrentTenant()`, `authorizeTargetUser()` (the
 edited account must belong to a tenant the caller administers — `$modelId` is URL-bound and can be
-repointed after mount) and `deleteUserAccount()`. It is internal to those screens and not intended
+repointed after mount) and `deleteAccount()`. It is internal to those screens and not intended
 for module use.
 
 ## Helpers
@@ -249,7 +268,6 @@ its owning page:
 - **`NoerdAuth`** — guard-explicit access to the noerd user → [Authentication](auth.md)
 - **`AccessHelper`** — every permission check → [Permissions](permissions.md)
 - **`FormatHelper`**, **`CurrencyHelper`** — ICU formatting → [Currency, Numbers & Dates](formatting.md)
-- **`Noerd\Support\ThemeHelper`** — the tenant's form theme → [Themes](themes.md)
 - **`StaticConfigHelper`** — resolves every YAML config (lists, details, pages, settings,
   navigation, list views) →
   [Extension Registries](extension-registries.md#layout-overrides-noerdlayout-overrides-binding)
@@ -257,3 +275,12 @@ its owning page:
 - **`Noerd\Support\KeyboardShortcutHelper::parse($configKey, $default)`** — a configured shortcut string as
   modifier/key parts → [Keyboard Shortcuts](keyboard-shortcuts.md)
 - **`Noerd\Support\IconHelper::heroicons()`** — all outline heroicon names (used by the icon pickers)
+- **`Noerd\Support\SchemaColumnCache`** — `columns($table)` / `hasColumn($table, $column)`: the
+  schema columns of a table, cached for the process (Laravel's `Schema::hasColumn()` queries every
+  time); `clear()` after a migration in a long-running worker or a test
+- **`Noerd\Support\RequestState`** — request-scoped memos for static helpers: `$memo =
+  &RequestState::bucket('{module}.{memo}');` returns a reference to one named bucket,
+  `RequestState::forget('{module}.{memo}')` drops it after a write. The service is scoped, so Octane
+  requests and queued jobs never see the memo of the previous one
+- **`StaticConfigHelper::parseYamlFile($path)`** — parses a YAML file through the core's mtime-guarded
+  cache

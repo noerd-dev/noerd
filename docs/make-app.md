@@ -18,7 +18,7 @@ The command first asks **where** the app should live:
 
 Then it asks for:
 1. **App Title** - Display name (e.g., "Inventory Management")
-2. **App Name** - Unique identifier; normalized to uppercase with underscores (e.g., "INVENTORY")
+2. **App Name** - Unique identifier; normalized to uppercase words joined by hyphens (e.g., "INVENTORY", "my app" → "MY-APP"); letters, digits and hyphens, starting with a letter. Project and module use the same key
 3. **Icon** - Heroicon name (searchable); stored as `heroicon:outline:{name}`
 
 An app starts with its dashboard only. Record types (list + detail) are added afterwards with
@@ -28,10 +28,14 @@ An app starts with its dashboard only. Record types (list + detail) are added af
 
 Every app ships with its own dashboard, so there is nothing to ask about the app's route: the
 command runs `noerd:make-dashboard` for the new app and stores the generated route
-(`{app}.dashboard`, e.g. `inventory.dashboard`) as the app's main route. The scaffold consists of
+(`{app}`, e.g. `inventory` — the name a module's dashboard route carries too) as the app's main
+route. The scaffold consists of
 
+- `database/migrations/{timestamp}_add_{app}_tenant_app.php` — the idempotent migration that
+  registers the app (the same stub every module publishes). The command runs it right away; commit
+  it, so `php artisan migrate` registers the app on every other database (staging, production)
 - `resources/views/components/{app}-dashboard.blade.php` — the dashboard page (`NoerdPage`)
-- a `Route::livewire('{app}', '{app}-dashboard')->name('{app}.dashboard')` entry in `routes/web.php`,
+- a `Route::livewire('{app}', '{app}-dashboard')->name('{app}')` entry in `routes/web.php`,
   wrapped in the `noerd` + `app-access:{app}` middleware group
 - `app-configs/{app}/navigation.yml` with a first block that links the dashboard (an existing
   navigation only gets the dashboard entry inserted)
@@ -41,12 +45,12 @@ Within that command, you can assign that app to one or more tenants. You can als
 ```bash
 php artisan noerd:assign-apps-to-tenant
 # or non-interactive
-php artisan noerd:assign-apps-to-tenant --tenant-id=1
+php artisan noerd:assign-apps-to-tenant --tenant-id=1 --apps=INVENTORY --no-interaction
 ```
 
 ## Module
 
-The command hands the scaffold to `noerd:make-module`: the app name becomes the module key (`MY_APP` →
+The command hands the scaffold to `noerd:make-module`: the app name becomes the module key (`MY-APP` →
 `app-modules/my-app`), the title and the heroicon go into the generated install command, and the
 module gets its dashboard, the dashboard route and navigation, translations, the install/update
 commands and the agent guidelines — everything [Creating Modules](creating-modules.md) describes.

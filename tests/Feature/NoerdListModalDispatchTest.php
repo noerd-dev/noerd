@@ -159,7 +159,7 @@ describe('route fallback', function (): void {
             );
     });
 
-    it('passes relations through as a url-neutral argument', function (): void {
+    it('passes relations through as a modal argument', function (): void {
         Livewire::test(ZzRouteFallbackListComponent::class)
             ->call('listAction', null, ['accountId' => 9])
             ->assertDispatched(

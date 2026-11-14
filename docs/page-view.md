@@ -37,14 +37,14 @@ relations:
   - label: Items
     heroicon: cube
     relation: items
-    route: inventory.items
-    component: inventory::items-list
+    modalRoute: inventory.items
+    modalComponent: inventory::items-list
     arguments:
       warehouseId: $modelId
 widgets:
   - title: Stock Movements
-    route: inventory.stock-movements
     component: inventory::stock-movements-list
+    showMoreModalRoute: inventory.stock-movements
     columns:
       - item_name
       - quantity
@@ -58,13 +58,13 @@ widgets:
 | `detail` | The embedded detail Livewire component (full name, e.g. `inventory::warehouse-detail`). Drives the generic store roundtrip |
 | `quickCreate` | Opt-in for the narrow quick-create modal on new records (also sizes the modal via noerd-modal) |
 | `tabs` | Page-level tabs (e.g. Media, Activity Log) — rendered by the page blade via `<x-noerd::tabs>`; same properties as [detail tabs](detail-view.md#tab-properties) |
-| `relations` | Relation Box tiles (see [Relation Box](#relation-box) below). Each tile may carry `route:` next to `component:` |
+| `relations` | Relation Box tiles (see [Relation Box](#relation-box) below). Each tile opens `modalRoute:` with `modalComponent:` as the fallback, or `modalComponent:` alone |
 | `widgets` | Right-hand widget sidebar rendered by `<x-noerd::detail-grid>` / `<x-noerd::detail-widgets>` (see [Widgets](#widgets) below) |
 | `fields` | Optional field grid the page renders ITSELF (same syntax and [field types](field-types.md) as a detail YAML, `theme:` included) via `@include('noerd::components.detail.block', array_merge($pageLayout, ['modelId' => …, 'detailData' => $detailData]))` or `<x-noerd::tab-content :layout="$pageLayout" …>`. A page has no `validateFromLayout()` and no `store()` of its own for them — they are display and binding only. Typical use: a read-only block of facts in the `display` theme (see [Themes](themes.md#display-theme-read-only-text)), configurable per installation and through the layout-override hook |
 
 Both `relations` and `widgets` open a list NARROWED by the current record, so their
-`route:` resolves the component WITHOUT rewriting the browser URL — see
-[Modal System](modal.md#route-modals).
+`modalRoute:` / `showMoreModalRoute:` resolves the component WITHOUT rewriting the browser URL —
+see [Modal System](modal.md#modal-targets-in-yaml).
 
 ### Widgets
 
@@ -77,8 +77,9 @@ identical arguments. Nothing renders until the record is saved (`$modelId` is se
 | Property | Description |
 |----------|-------------|
 | `title` | (optional) Card heading (translation key) |
-| `component` | The list Livewire component embedded in the card (e.g. `inventory::stock-movements-list`) — also the "Show more" fallback when `route` is not registered |
-| `route` | (optional) Named list route the "Show more" link opens as a modal (URL not rewritten) |
+| `component` | The list Livewire component embedded (rendered) in the card (e.g. `inventory::stock-movements-list`) — also the "Show more" target unless `showMoreModalComponent` names another |
+| `showMoreModalRoute` | (optional) Named list route the "Show more" link opens as a modal (URL not rewritten) |
+| `showMoreModalComponent` | (optional) Component the "Show more" link opens — the fallback of `showMoreModalRoute`; defaults to `component` |
 | `columns` | Column `field` names of the list YAML shown in the card (the list's `minimalColumns`) |
 | `arguments` | Arguments passed to the list — for the card and the "Show more" modal alike; the `$modelId` token resolves to the current record id, `$property` to a public property of the page, static values pass through unchanged |
 
@@ -171,8 +172,8 @@ closes (`#[On('closeTopModal')]`).
 | `label` | Tile label (translation key) |
 | `heroicon` | Heroicon rendered before the label |
 | `relation` | Eloquent relationship method on the model used to count records (e.g. `items`). An unknown method yields a count of `0` instead of throwing |
-| `route` | Named route of the list, opened as a modal. The browser URL is deliberately NOT rewritten — the tile opens the list NARROWED by the current record, which a plain list route cannot express |
-| `component` | List component opened as a modal on click (e.g. `inventory::items-list`) — also the fallback when `route` is not registered |
+| `modalRoute` | Named route of the list, opened as a modal. The browser URL is deliberately NOT rewritten — the tile opens the list NARROWED by the current record, which a plain list route cannot express |
+| `modalComponent` | List component opened as a modal on click (e.g. `inventory::items-list`) — the fallback when `modalRoute` is not registered, or the target on its own. A tile that opens nothing is not shown |
 | `arguments` | Arguments passed to the modal; the `$modelId` token resolves to the current record id, `$property` to a public property of the page, static values pass through unchanged |
 
 An optional module can contribute tiles through the `RelationBoxRegistry` — e.g. an invoicing module

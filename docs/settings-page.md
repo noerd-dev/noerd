@@ -190,8 +190,8 @@ fields:
     helpText: Multiple addresses separated by commas.
 ```
 
-Loading goes through `StaticConfigHelper::getSettingsFields()`, which deliberately skips
-the layout-override hook and the tenant theme setting and forces `theme: settings`.
+The core loads the settings YAML without the layout-override hook and the tenant theme setting and
+forces `theme: settings`.
 Select options may come from component methods (`optionsMethod:` on `type: select`,
 `picklistField:` on `type: picklist`) exactly like in a detail YAML.
 

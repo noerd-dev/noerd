@@ -63,3 +63,20 @@ it('accepts every registered profile and no profile, but refuses an unknown one'
     expect(fn() => $this->tenant->setMemberProfile($this->user, 'NOT_A_PROFILE'))
         ->toThrow(InvalidArgumentException::class);
 });
+
+it('knows the only administrator of a tenant', function (): void {
+    $other = NoerdUser::factory()->create();
+    $this->tenant->addMember($this->user, Profile::Admin->value);
+    $this->tenant->addMember($other, Profile::User->value);
+
+    expect($this->tenant->isLastAdmin($this->user))->toBeTrue()
+        ->and($this->tenant->isLastAdmin($other))->toBeFalse()
+        ->and($this->tenant->wouldLoseLastAdmin($this->user, Profile::User->value))->toBeTrue()
+        ->and($this->tenant->wouldLoseLastAdmin($this->user))->toBeTrue()
+        ->and($this->tenant->wouldLoseLastAdmin($this->user, Profile::Admin->value))->toBeFalse();
+
+    $this->tenant->setMemberProfile($other, Profile::Admin->value);
+
+    expect($this->tenant->isLastAdmin($this->user))->toBeFalse()
+        ->and($this->tenant->wouldLoseLastAdmin($this->user, Profile::User->value))->toBeFalse();
+});

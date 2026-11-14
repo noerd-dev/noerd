@@ -124,7 +124,7 @@ it('counts nothing in the relation box of a model the user may not read', functi
     Livewire::test('noerd::relation-box', [
         'modelClass' => Tenant::class,
         'modelId' => $user->selected_tenant_id,
-        'relations' => [['label' => 'Users', 'relation' => 'users', 'component' => 'noerd::noerd-users-list']],
+        'relations' => [['label' => 'Users', 'relation' => 'users', 'modalComponent' => 'noerd::noerd-users-list']],
     ])->assertSet('resolvedRelations', []);
 });
 

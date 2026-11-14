@@ -118,8 +118,8 @@ describe('headerControls', function (): void {
 
         $html = Livewire::test(CollapsingHeaderListComponent::class)->assertOk()->html();
 
-        expect($html)->toContain('e.key.toLowerCase() === &quot;q&quot;')
-            ->not->toContain('e.key.toLowerCase() === &quot;n&quot;');
+        expect($html)->toContain('.toLowerCase() === &quot;q&quot;')
+            ->not->toContain('.toLowerCase() === &quot;n&quot;');
     });
 
     it('reports the search field and the CSV export', function (): void {

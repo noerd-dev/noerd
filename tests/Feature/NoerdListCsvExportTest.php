@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\Livewire;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Models\NoerdUser;
+use Noerd\Support\CsvListExporter;
 use Noerd\Tests\TestCase;
 use Noerd\Traits\NoerdList;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -48,6 +50,47 @@ it('streams a BOM-prefixed CSV with translated headers and typed values', functi
         ->and($csv)->toStartWith("\xEF\xBB\xBF")
         ->and($csv)->toContain("Name;Admin;Created\n")
         ->and($csv)->toContain("\"Alice Export\";Yes;\"2026-01-05 10:30\"\n");
+});
+
+it('pages a non-unique sort with the primary key as tie-breaker, so no row is dropped or repeated', function (): void {
+    foreach (range(1, CsvListExporter::CHUNK_SIZE + 5) as $i) {
+        NoerdUser::factory()->create(['name' => 'Same Name']);
+    }
+
+    $statements = [];
+    DB::listen(function ($query) use (&$statements): void {
+        $statements[] = $query->sql;
+    });
+
+    $response = CsvListExporter::stream(
+        NoerdUser::query()->orderBy('name'),
+        [['field' => 'id', 'label' => 'Id']],
+        'zz-export.csv',
+    );
+
+    ob_start();
+    $response->sendContent();
+    $csv = ob_get_clean();
+
+    $ids = array_slice(array_map(
+        fn(string $line): string => mb_trim($line, '"'),
+        array_filter(explode("\n", $csv)),
+    ), 1);
+
+    $selects = array_values(array_filter($statements, fn(string $sql): bool => str_contains($sql, 'from "noerd_users"')));
+
+    expect($selects)->not->toBeEmpty()
+        ->and($selects[0])->toContain('order by "name" asc, "noerd_users"."id" asc')
+        ->and($ids)->toHaveCount(NoerdUser::query()->count())
+        ->and(array_unique($ids))->toHaveCount(count($ids));
+});
+
+it('adds no second key ordering when the sort already contains the key', function (): void {
+    $query = NoerdUser::query()->orderBy('name')->orderBy('id');
+
+    CsvListExporter::stream($query, [['field' => 'id']], 'zz-export.csv');
+
+    expect(array_column($query->getQuery()->orders, 'column'))->toBe(['name', 'id']);
 });
 
 it('formats CSV values by column type', function (): void {
@@ -95,7 +138,7 @@ it('writes the array-shaped cell types as their display text and keeps a JSON te
     expect($list->format(['badge' => 'Open', 'text' => 'Alice'], ['type' => 'badgeWithText']))->toBe('Open Alice')
         ->and($list->format(['prefix' => '↳', 'text' => 'Child'], ['type' => 'coloredText']))->toBe('↳ Child')
         ->and($list->format(['de' => 'Haus', 'en' => 'House'], ['type' => 'customAttribute']))->toBe('House')
-        ->and($list->format(1, ['type' => 'inverseBool']))->toBe('Yes')
+        ->and($list->format(1, ['type' => 'boolCheck']))->toBe('Yes')
         ->and($list->format(['sap' => 'A-1'], ['type' => 'text']))->toBe('{"sap":"A-1"}')
         ->and($list->format(['sap' => 'A-1'], []))->toBe('{"sap":"A-1"}');
 });

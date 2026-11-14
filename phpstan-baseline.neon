@@ -13,28 +13,10 @@ parameters:
 			path: src/Commands/MakeCollectionCommand.php
 
 		-
-			message: '#^Call to function method_exists\(\) with Noerd\\Models\\NoerdUser and ''currentProfile'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Helpers/AccessHelper.php
-
-		-
-			message: '#^Call to function method_exists\(\) with Noerd\\Models\\NoerdUser and ''isAdmin'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Helpers/AccessHelper.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: src/Helpers/FormatHelper.php
-
-		-
-			message: '#^Method Noerd\\Helpers\\NoerdAuth\:\:user\(\) should return Noerd\\Models\\NoerdUser\|null but returns Illuminate\\Foundation\\Auth\\User\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Helpers/NoerdAuth.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
@@ -53,18 +35,6 @@ parameters:
 			identifier: property.notFound
 			count: 1
 			path: src/Livewire/Hooks/RelationFormPersistHook.php
-
-		-
-			message: '#^Access to an undefined property Noerd\\Models\\TenantApp\:\:\$pivot\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Middleware/AppAccessMiddleware.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\:\:namedAny\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: src/Middleware/AppAccessMiddleware.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$format_locale\.$#'

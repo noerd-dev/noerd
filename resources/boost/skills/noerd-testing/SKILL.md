@@ -24,15 +24,18 @@ content is wrong by definition:
 - ✓ Architecture guardrails are fine (a detail YAML has no `widgets:`/`relations:`; a page blade
   embeds the `detail:` its YAML names).
 
-## 2. Global helpers (`tests/helpers.php` in the noerd package)
+## 2. Global helpers (`src/Testing/helpers.php` in the noerd package)
 
-Not composer-autoloaded (test code must never load in production). Suites binding
-`Noerd\Tests\TestCase` get them for free; every other `tests/Pest.php` loads them once with
-`\Noerd\Tests\HelperLoader::load();` — never a hard-coded path, never a root `composer.json` entry.
+The test API of noerd is `Noerd\Testing\` (`TestCase`, `ModuleTestCase`, `HelperLoader`,
+`Concerns\CreatesSetupUser`). The helpers are not composer-autoloaded (test code must never load
+in production). Suites binding `Noerd\Testing\TestCase` get them for free; every other
+`tests/Pest.php` loads them once with `\Noerd\Testing\HelperLoader::load();` — never a hard-coded
+path, never a root `composer.json` entry. `Noerd\Tests\` is noerd's own unshipped suite — never
+reference it.
 
 | Helper | Use |
 |---|---|
-| `actingAsNoerdUserForApp($appKey, $tenantAttributes = [], $profile = null, $appAttributes = [])` | the module fixture: user on a fresh tenant that runs the app (row created, assigned via `Tenant::assignApp()`), tenant + app selected, authenticated on the noerd guard; `createNoerdUserForApp()` = the same without authentication, `ensureTenantApp('MEDIA')` = a further app row |
+| `actingAsNoerdUserForApp($appKey, $tenantAttributes = [], $profile = null, $appAttributes = [])` | the module fixture: user on a fresh tenant that runs the app (row created, assigned via `Tenant::assignApp()`), a member via `Tenant::addMember()` (a profile key must be registered), tenant + app selected, authenticated on the noerd guard; `createNoerdUserForApp()` = the same without authentication, `ensureTenantApp('MEDIA')` = a further app row |
 | `validDetailPayload(Model::class, $overrides)` | complete factory-sourced `detailData` for store-success tests |
 | `requiredLayoutFields($component)` | required field names from the live `pageLayout` for validation tests |
 | `registerTestLivewireRoute($uri, $component, $name)` | register a named `Route::livewire()` inside a test (route-vs-component mechanics) |
@@ -100,9 +103,12 @@ in the test that needs them.
   a user uses `Model::query()->ofTenant($tenantId)`; a factory `create()` outside a user passes
   `tenant_id`. Never set a global `TenantContext` in a fixture — a test of a command, job, webhook or
   public route without a user is the proof that the production code brings its own context.
-- A module's own Testbench suite (standalone CI) binds `Noerd\Tests\ModuleTestCase` with
+- A module's own Testbench suite (standalone CI) binds `Noerd\Testing\ModuleTestCase` with
   `protected array $moduleProviders = [...]` — the core setup plus the module's providers, each
   module linked into the skeleton; every test file still binds the module's TestCase via `uses()`.
+  The module requires `orchestra/testbench` in its `require-dev` (noerd only suggests it).
+- `Noerd\Testing\Concerns\CreatesSetupUser` (`createUserWithSetupAccess()`) brings no database
+  concern: `uses(TestCase::class, RefreshDatabase::class, CreatesSetupUser::class)`.
 - Module test traits live in `app-modules/{module}/tests/Traits/` and build on
   `actingAsNoerdUserForApp()` — never a hand-rolled tenant + user + `tenant_apps` fixture.
 

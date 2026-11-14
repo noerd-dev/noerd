@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Noerd\Database\Factories\TenantAppFactory;
 use Noerd\Helpers\StaticConfigHelper;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Relations\Pivot $pivot the tenant_app row (`is_hidden`, `sort_order`) when read through Tenant::tenantApps()
+ */
 class TenantApp extends Model
 {
     use HasFactory;

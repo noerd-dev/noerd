@@ -10,7 +10,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use InvalidArgumentException;
 use Noerd\Database\Factories\TenantFactory;
+use Noerd\Enums\Profile;
 use Noerd\Events\TenantAppAssigned;
+use Noerd\Events\TenantAppRemoved;
 use Noerd\Events\TenantMemberAdded;
 use Noerd\Events\TenantMemberRemoved;
 use Noerd\Services\ProfileRegistry;
@@ -25,6 +27,7 @@ use Noerd\Support\TenantContext;
  */
 class Tenant extends Authenticatable
 {
+    /** @use HasFactory<TenantFactory> */
     use HasFactory;
     use Notifiable;
 
@@ -92,6 +95,29 @@ class Tenant extends Authenticatable
     }
 
     /**
+     * Whether the account is the ONLY administrator of this tenant. The one
+     * rule behind "a tenant keeps at least one administrator": the user screen
+     * asks it before demoting or removing a member, the account deletion
+     * before the person deletes their own account.
+     */
+    public function isLastAdmin(NoerdUser $user): bool
+    {
+        $admins = $this->users()->wherePivot('profile_key', Profile::Admin->value);
+
+        return (clone $admins)->whereKey($user->getKey())->exists()
+            && ! $admins->whereKeyNot($user->getKey())->exists();
+    }
+
+    /**
+     * Whether giving the account $profileKey — or, with null, ending its
+     * membership — leaves this tenant without an administrator.
+     */
+    public function wouldLoseLastAdmin(NoerdUser $user, ?string $profileKey = null): bool
+    {
+        return $profileKey !== Profile::Admin->value && $this->isLastAdmin($user);
+    }
+
+    /**
      * End the account's membership in this tenant. The account itself stays —
      * it is an identity of the whole installation, deleted only by a super
      * admin or by the person. False when the account was no member.
@@ -109,6 +135,9 @@ class Tenant extends Authenticatable
         return true;
     }
 
+    /**
+     * @return BelongsToMany<TenantApp, $this>
+     */
     public function tenantApps(): BelongsToMany
     {
         return $this->belongsToMany(TenantApp::class, 'tenant_app')
@@ -119,21 +148,25 @@ class Tenant extends Authenticatable
 
     /**
      * Give this tenant an app. The ONE write path of an assignment — the apps
-     * screen, the install commands, the demo, provisioning — so every module
+     * screen, the install commands, provisioning — so every module
      * listening for TenantAppAssigned (an app folder, a hidden companion app)
      * hears every assignment. The event fires only for an app the tenant did
      * not hold before; a repeated call changes nothing and returns false.
      *
-     * @param  TenantApp|int|string  $app  the app row, its id or its name as stored
+     * A NAME is matched in any case (`crm` finds `CRM`, on every database) and
+     * must exist: an unknown name is a programming error — a typo, or an app
+     * whose tenant-app migration has not run — and throws instead of silently
+     * assigning nothing. An unknown id (a screen's client-supplied value)
+     * returns false.
+     *
+     * @param  TenantApp|int|string  $app  the app row, its id or its name in any case
      * @param  array{is_hidden?: bool, sort_order?: int}  $pivot  pivot values; the sort order defaults to the end of the tenant's app bar
+     *
+     * @throws InvalidArgumentException when no app carries the given name
      */
     public function assignApp(TenantApp|int|string $app, array $pivot = []): bool
     {
-        $tenantApp = match (true) {
-            $app instanceof TenantApp => $app,
-            is_int($app) => TenantApp::query()->find($app),
-            default => TenantApp::query()->where('name', $app)->first(),
-        };
+        $tenantApp = $this->resolveTenantApp($app);
 
         if (! $tenantApp instanceof TenantApp) {
             return false;
@@ -158,9 +191,42 @@ class Tenant extends Authenticatable
     }
 
     /**
-     * A new tenant is seeded with its default languages, the default countries
-     * and — in database mode — the setup collection definitions, inside its
-     * own tenant context: the creator (a console command, a sign-up, another
+     * Take an app away from this tenant — the counterpart of assignApp() and
+     * the ONE write path of a removal (the apps screen, the install commands,
+     * noerd:assign-apps-to-tenant), so every module listening for
+     * TenantAppRemoved hears every removal. The event fires only for an app the
+     * tenant held; a repeated call changes nothing and returns false. Data a
+     * module created for the app is never deleted here.
+     *
+     * Names are matched like assignApp(): in any case, and an unknown name
+     * throws. An unknown id returns false.
+     *
+     * @param  TenantApp|int|string  $app  the app row, its id or its name in any case
+     *
+     * @throws InvalidArgumentException when no app carries the given name
+     */
+    public function removeApp(TenantApp|int|string $app): bool
+    {
+        $tenantApp = $this->resolveTenantApp($app);
+
+        if (! $tenantApp instanceof TenantApp) {
+            return false;
+        }
+
+        if ($this->tenantApps()->detach($tenantApp->getKey()) === 0) {
+            return false;
+        }
+
+        $this->unsetRelation('tenantApps');
+
+        TenantAppRemoved::dispatch((int) $this->getKey(), (string) $tenantApp->name);
+
+        return true;
+    }
+
+    /**
+     * A new tenant is seeded with its default languages and the default
+     * countries, inside its own tenant context: the creator (a console command, a sign-up, another
      * tenant's admin) is not in it, and the defaults' own model hooks query
      * tenant-scoped relations.
      */
@@ -187,6 +253,19 @@ class Tenant extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @throws InvalidArgumentException when no app carries the given name
+     */
+    private function resolveTenantApp(TenantApp|int|string $app): ?TenantApp
+    {
+        return match (true) {
+            $app instanceof TenantApp => $app,
+            is_int($app) => TenantApp::query()->find($app),
+            default => TenantApp::query()->namedAny([$app])->first()
+                ?? throw new InvalidArgumentException("Unknown tenant app [{$app}]."),
+        };
     }
 
     private function assertProfileKey(?string $profileKey): void

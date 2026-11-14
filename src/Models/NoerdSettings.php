@@ -26,14 +26,14 @@ class NoerdSettings extends Model implements TenantSingletonContract
     protected $guarded = ['id'];
 
     /**
-     * The settings of a tenant (defaults to the selected tenant). Unlike the
+     * The settings of a tenant (defaults to the tenant of the request, TenantHelper::currentTenantId()). Unlike the
      * trait's lookup this one never throws: the formatting and theme helpers
      * run for guests too, and a page without any tenant gets an empty instance
      * whose null attributes fall back to the config.
      */
     public static function forTenant(?int $tenantId = null): static
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::currentTenantId();
 
         if ($tenantId === null) {
             return static::query()->newModelInstance();

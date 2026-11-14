@@ -140,7 +140,7 @@ describe('authorization', function (): void {
         $component = Livewire::test('noerd::relation-box', [
             'modelClass' => Tenant::class,
             'modelId' => $tenant->id,
-            'relations' => [['relation' => 'users', 'label' => 'Users', 'heroicon' => 'users']],
+            'relations' => [['relation' => 'users', 'label' => 'Users', 'heroicon' => 'users', 'modalComponent' => 'noerd::noerd-users-list']],
         ]);
 
         expect($component->get('resolvedRelations')[0]['count'])->toBe(1);

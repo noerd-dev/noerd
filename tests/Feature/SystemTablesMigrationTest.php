@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Noerd\Tests\TestCase;
 
@@ -68,19 +67,10 @@ it('no longer creates the table of the removed collection database mode', functi
     expect(Schema::hasTable('setup_collection_definitions'))->toBeFalse();
 });
 
-it('drops an empty definitions table of an older installation and keeps one that holds rows', function (): void {
-    $migration = require dirname(__DIR__, 2) . '/database/migrations/0002_01_01_000016_drop_setup_collection_definitions_table.php';
+it('ships no migration that drops the definitions table another package owns', function (): void {
+    $migrations = glob(dirname(__DIR__, 2) . '/database/migrations/*.php') ?: [];
 
-    Schema::create('setup_collection_definitions', function ($table): void {
-        $table->id();
-        $table->string('key');
-    });
-    DB::table('setup_collection_definitions')->insert(['key' => 'ZZ_KEPT']);
-
-    $migration->up();
-    expect(Schema::hasTable('setup_collection_definitions'))->toBeTrue();
-
-    DB::table('setup_collection_definitions')->delete();
-    $migration->up();
-    expect(Schema::hasTable('setup_collection_definitions'))->toBeFalse();
+    foreach ($migrations as $migration) {
+        expect((string) file_get_contents($migration))->not->toContain('setup_collection_definitions');
+    }
 });

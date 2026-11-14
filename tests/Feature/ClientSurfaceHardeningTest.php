@@ -354,25 +354,26 @@ describe('core details', function (): void {
 
         expect($tenantId)->not->toBeNull();
 
-        // $modelId is URL-bound and client-writable: repoint it after mounting.
+        // $modelId is URL-bound: a client update repointing it is put back.
         $component->set('modelId', 987654)
+            ->assertSet('modelId', null)
             ->set('detailData.name', 'Ghost')
             ->set('detailData.email', 'ghost@example.test')
             ->set("possibleTenants.{$tenantId}.hasAccess", true)
             ->call('store')
             ->assertHasNoErrors();
 
-        expect(NoerdUser::query()->count())->toBe($countBefore);
+        expect(NoerdUser::query()->whereKey(987654)->exists())->toBeFalse()
+            ->and(NoerdUser::query()->count())->toBe($countBefore + 1);
     });
 
     it('creates no setup collection entry under an id that does not resolve', function (): void {
-        $countBefore = SetupCollectionEntry::query()->count();
-
         Livewire::test('noerd::setup-collection-detail', ['collectionKey' => 'units'])
             ->set('modelId', 987654)
+            ->assertSet('modelId', null)
             ->set('detailData.name', 'Ghost')
             ->call('store');
 
-        expect(SetupCollectionEntry::query()->count())->toBe($countBefore);
+        expect(SetupCollectionEntry::query()->whereKey(987654)->exists())->toBeFalse();
     });
 });

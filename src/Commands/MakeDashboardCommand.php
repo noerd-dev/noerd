@@ -7,9 +7,12 @@ namespace Noerd\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Noerd\Commands\Concerns\GeneratesResourceFiles;
 use Noerd\Models\TenantApp;
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 
 class MakeDashboardCommand extends Command
 {
@@ -29,11 +32,23 @@ class MakeDashboardCommand extends Command
 
     /**
      * The route name of the dashboard generated for the given app — the target
-     * noerd:make-app stores as the app's main route.
+     * noerd:make-app stores as the app's main route. The same name in the
+     * project and in a module (noerd:make-module): `{app}`.
      */
     public static function routeNameFor(string $app): string
     {
-        return Str::lower($app) . '.dashboard';
+        return Str::lower($app);
+    }
+
+    /**
+     * Every name a dashboard route of the app has had — `{app}` and the earlier
+     * project name `{app}.dashboard` — so an existing one is found under either.
+     *
+     * @return list<string>
+     */
+    public static function routeNamesFor(string $app): array
+    {
+        return [self::routeNameFor($app), Str::lower($app) . '.dashboard'];
     }
 
     public function handle(): int
@@ -59,6 +74,23 @@ class MakeDashboardCommand extends Command
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * The name the app's dashboard route already carries (declared in the
+     * route file or registered), or null when it has none yet.
+     */
+    protected function existingDashboardRoute(): ?string
+    {
+        $content = $this->routeFileContent();
+
+        foreach (self::routeNamesFor($this->appConfigName) as $name) {
+            if (preg_match('/->name\(\s*[\'"]' . preg_quote($name, '/') . '[\'"]\s*\)/', $content) === 1 || Route::has($name)) {
+                return $name;
+            }
+        }
+
+        return null;
     }
 
     protected function createDashboardBlade(): string
@@ -87,15 +119,15 @@ class MakeDashboardCommand extends Command
 
     protected function addDashboardRoute(): void
     {
-        $content = $this->routeFileContent();
+        $existing = $this->existingDashboardRoute();
 
-        $routeName = self::routeNameFor($this->appConfigName);
-
-        if (str_contains($content, "'{$routeName}'")) {
-            $this->warn("Route '{$routeName}' already exists in {$this->routeFileDisplay()} — skipping.");
+        if ($existing !== null) {
+            $this->warn("Dashboard route '{$existing}' already exists — skipping.");
 
             return;
         }
+
+        $routeName = self::routeNameFor($this->appConfigName);
 
         $route = "Route::livewire('{$this->appConfigName}', '{$this->componentPrefix}{$this->appConfigName}-dashboard')->name('{$routeName}');";
 
@@ -112,7 +144,7 @@ class MakeDashboardCommand extends Command
      */
     protected function addDashboardNavigation(): void
     {
-        $routeName = self::routeNameFor($this->appConfigName);
+        $routeName = $this->existingDashboardRoute() ?? self::routeNameFor($this->appConfigName);
 
         foreach ($this->yamlBasePaths() as $base) {
             $navPath = "{$base}/navigation.yml";
@@ -125,38 +157,60 @@ class MakeDashboardCommand extends Command
 
             $content = $this->filesystem->get($navPath);
 
-            if (str_contains($content, "route: {$routeName}")) {
+            if ($this->navigationLinksDashboard($content)) {
                 $this->warn("Dashboard navigation entry already exists in {$navPath} — skipping.");
 
                 continue;
             }
 
-            $navEntry = "    - title: Dashboard\n"
-                . "      route: {$routeName}\n"
-                . "      heroicon: home";
+            $entry = ['title' => 'Dashboard', 'route' => $routeName, 'heroicon' => 'home'];
+            $navigation = Yaml::parse($content);
 
-            if (! $this->confirmStep("Add dashboard navigation entry to {$navPath}?\n<comment>{$navEntry}</comment>")) {
+            if (! is_array($navigation) || ! isset($navigation[0]) || ! is_array($navigation[0])) {
+                $this->warn("Navigation file has no app block: {$navPath} — skipping.");
+
                 continue;
             }
 
-            $blockMenusPos = mb_strpos($content, 'blockMenus:');
-            if ($blockMenusPos !== false) {
-                $afterBlockMenus = mb_strpos($content, "\n", $blockMenusPos);
-                if ($afterBlockMenus !== false) {
-                    $newContent = mb_substr($content, 0, $afterBlockMenus + 1)
-                        . $navEntry . "\n"
-                        . mb_substr($content, $afterBlockMenus + 1);
-                    $this->filesystem->put($navPath, $newContent);
-                    $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
-
-                    continue;
-                }
+            if (! $this->confirmStep("Add dashboard navigation entry to {$navPath}?\n<comment>" . Yaml::dump([$entry], 10, 2) . '</comment>')) {
+                continue;
             }
 
-            $content = mb_rtrim($content) . "\n" . $navEntry . "\n";
-            $this->filesystem->put($navPath, $content);
+            // The dashboard leads the first block — the entry the app opens with.
+            $blocks = is_array($navigation[0]['blockMenus'] ?? null) ? $navigation[0]['blockMenus'] : [];
+            if ($blocks === []) {
+                $blocks[] = ['title' => 'Overview', 'navigations' => []];
+            }
+            $first = array_key_first($blocks);
+            $blocks[$first]['navigations'] = [$entry, ...(array) ($blocks[$first]['navigations'] ?? [])];
+            $navigation[0]['blockMenus'] = $blocks;
+
+            $this->filesystem->put($navPath, Yaml::dump($navigation, 10, 2));
             $this->line("<info>Dashboard navigation added to:</info> {$navPath}");
         }
+    }
+
+    /**
+     * Whether an entry of the navigation already opens the dashboard — under
+     * either of its names (the app's own `route:` is not an entry).
+     */
+    protected function navigationLinksDashboard(string $content): bool
+    {
+        try {
+            $navigation = Yaml::parse($content);
+        } catch (ParseException) {
+            return false;
+        }
+
+        foreach ((array) (is_array($navigation) ? ($navigation[0]['blockMenus'] ?? []) : []) as $block) {
+            foreach ((array) (is_array($block) ? ($block['navigations'] ?? []) : []) as $entry) {
+                if (is_array($entry) && in_array($entry['route'] ?? null, self::routeNamesFor($this->appConfigName), true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

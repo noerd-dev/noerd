@@ -13,9 +13,8 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | Command | Description |
 |---------|-------------|
 | `noerd:install` | Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin |
-| `noerd:update` | Refresh the published setup app configs, `config/noerd.php`, frontend scaffold and public assets — no migration, no prompts for tenant or admin |
+| `noerd:update` | Refresh the published setup app configs, the frontend scaffold and public assets, rewrite the YAML vocabulary, report changed `config/noerd.php` keys — no migration, no prompts for tenant or admin |
 | `noerd:update-all` | Run `noerd:update` and every installed module's `noerd:update-{module}` command |
-| `noerd:demo` | Install demo data (models, migrations, views, configs, routes) |
 | `noerd:info` | Display the current Noerd version |
 | `noerd:lint` | Check the app-configs YAML for broken field types, routes, picklist providers and columns |
 
@@ -28,7 +27,7 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | `noerd:super-admin` | Grant or revoke the installation-wide super admin flag of a user |
 | `noerd:make-tenant` | Create a new tenant |
 | `noerd:make-app` | Create a new app (TenantApp) with its own dashboard that can be assigned to tenants |
-| `noerd:assign-apps-to-tenant` | Assign apps to a tenant with interactive selection |
+| `noerd:assign-apps-to-tenant` | Assign apps to a tenant — interactively, or scripted with `--tenant-id` and `--apps` |
 
 ### Scaffolding
 
@@ -41,34 +40,30 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | `noerd:make-collection` | Create a new collection YML file interactively |
 | `noerd:make-theme` | Scaffold a new form theme by copying the default theme folder |
 
-### Setup Collections
-
-| Command | Description |
-|---------|-------------|
-
 ## noerd:install
 
 Installs the Noerd Framework and performs basic configuration: publishes the setup app configs,
 `config/noerd.php` and the frontend files, patches `config/livewire.php`, publishes
-the public assets, runs the migrations, creates the default tenant and the first admin user and optionally
-installs the demo app (see [Installation](installation.md)).
+the public assets, runs the migrations and creates the default tenant and the first admin user (see
+[Installation](installation.md)).
 
 ```bash
 php artisan noerd:install
 # non-interactive (CI / deploy)
-php artisan noerd:install --force --migrate --build --demo --no-interaction
+php artisan noerd:install --force --migrate --build --no-interaction
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Overwrite existing files without asking |
-| `--migrate` | Run the migrations without asking — required to migrate in non-interactive runs; forwarded to `noerd:demo` as `--migrate --seed` |
+| `--force` | Overwrite the published setup YAML without asking (an existing `config/noerd.php` and the navigations are never overwritten, see [noerd:update](#noerdupdate)) |
+| `--migrate` | Run the migrations without asking — required to migrate in non-interactive runs (passed on as `migrate --force`, so a production database migrates too) |
 | `--build` | Run `npm run build` without asking — required to build in non-interactive runs |
-| `--demo` | Install the demo app without asking — required to install it in non-interactive runs |
+
+When the migration fails, the command stops with exit code 1 before it creates a tenant or an
+admin user.
 
 Run by a module install command on a fresh project (`noerd:install-cms`), the base installation
-skips the demo app question, hands `npm install` / `npm run build` to that command and prints no
-closing callout — see [Creating Modules](creating-modules.md#npm-runs-once-at-the-end).
+hands `npm install` / `npm run build` to that command and prints no closing callout — see [Creating Modules](creating-modules.md#npm-runs-once-at-the-end).
 
 The public assets (fonts + built Vite bundle) can also be republished on their own with
 `php artisan vendor:publish --tag=noerd-assets`.
@@ -76,23 +71,57 @@ The public assets (fonts + built Vite bundle) can also be republished on their o
 ## noerd:update
 
 Updates noerd content files without running the full installation setup: republishes the setup
-app configs, `config/noerd.php`, the frontend scaffold and the public assets
-(`public/vendor/noerd`). Run it after every package upgrade (or `noerd:update-all` to include the
-modules).
+app configs, the frontend scaffold and the public assets (`public/vendor/noerd`). Run it after
+every package upgrade (or `noerd:update-all` to include the modules).
+
+What it never overwrites — not even with `--force`:
+
+- **`config/noerd.php`** belongs to the host once it exists. The command compares it with the
+  package config and reports the keys the package added since (*missing*, nested ones as
+  `features.currency`) and the keys it no longer reads (*obsolete*); carry them over by hand. To
+  start over, delete the file and run the command again.
+- **The setup and profile navigation** (`app-configs/setup/navigation.yml`,
+  `app-configs/profile/navigation.yml`) carry the entries modules add. The command only ADDS what
+  the core ships and the host lacks (a missing block, an entry whose `route` appears nowhere) — host
+  and module entries, their order and their titles stay. An entry the core retired is removed (the
+  `config: noerd.collections.show_definitions_ui` entry of the former collections DB mode).
+  `--reset-navigation` replaces both files with the package template; module updates then add their
+  entries again.
 
 It also rewrites the project's `app-configs` — and the configs of the project's local modules — to
 the current YAML vocabulary: a renamed column type or key is replaced in place, comments and
-formatting stay as they are, and a file that is current is not touched. Every
-`noerd:update-{module}` does the same after it published its files. `noerd:lint` reports a file
-that still carries an old name.
+formatting stay as they are, block scalars (`description: |`) are left alone, and a file that is
+current is not touched. Modal targets are renamed by their PLACE in the parsed file (see
+[Modal System](modal.md#modal-targets-in-yaml)): `route:` of a list action, a row action, a
+`relationLink` column or a detail/page/settings action becomes `modalRoute:`, `route:` of a page
+widget `showMoreModalRoute:`, `component:` of a relation tile, of a tab without `number:` and of a
+navigation entry `modalComponent:`, `newRoute:` / `newComponent:` of a navigation entry
+`newModalRoute:` / `newModalComponent:`. A `route:` that navigates (navigation, tabs) and a
+`component:` that renders in place (embedded `lists:`, widgets, numbered tabs, quick menu,
+dashboard widgets) stay; a key inside a flow collection is left to `noerd:lint`. Every changed file
+is listed. A `noerd:update-{module}` does the same, but
+only for the files that module publishes and its own source. `noerd:lint` reports a file that still
+carries an old name.
+
+A host `tests/Pest.php` that loads the test helpers through the former `\Noerd\Tests\HelperLoader`
+(noerd 0.17) is rewritten to `\Noerd\Testing\HelperLoader` — once, and reported; `--dry-run` names
+it without writing. Other references to the former `Noerd\Tests\` test API (`ModuleTestCase`, the
+`CreatesSetupUser` trait) are left to the project (see [Testing](testing.md)).
+
+A `setup_collection_definitions` table that still holds rows (definitions stored in the database by a
+package that reads them from there) is never dropped. While no such package binds its repository,
+the core reads the YAML files only, and the command warns that the stored definitions are unused.
 
 ```bash
 php artisan noerd:update
+php artisan noerd:update --dry-run   # list the YAML files the rewrite would change, write nothing
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Overwrite existing files without asking |
+| `--force` | Overwrite the published setup YAML (lists, details, pages, settings) without asking |
+| `--reset-navigation` | Replace the setup and profile navigation with the package template |
+| `--dry-run` | Only run the YAML vocabulary rewrite without writing and list the files that would change — nothing else happens |
 | `--build` | Run npm build after update |
 
 ## noerd:update-all
@@ -102,53 +131,37 @@ Refreshes a project after pulling new module versions: runs `noerd:update` and t
 
 ```bash
 php artisan noerd:update-all --force
+php artisan noerd:update-all --dry-run
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Overwrite existing files without asking (forwarded to every sub-command) |
+| `--force` | Overwrite the published YAML copies without asking (forwarded to every sub-command) |
+| `--reset-navigation` | Replace every navigation with its template — forwarded to every command that knows the option (`noerd:update`, the tenant-app modules) |
+| `--dry-run` | Run only `noerd:update --dry-run`: it covers the project and every local module, no module command starts |
 | `--build` | Run npm build — applies to `noerd:update` only, no module command defines it |
 | `--except=` | Skip a command; module key or full name (`--except=inventory`, `--except=noerd:update`). Repeatable |
 
 **Run order:** `noerd:update` → the module updates alphabetically → commands implementing
 `Noerd\Contracts\RunsAfterModuleUpdates` last — the marker interface for a module update that
-touches what the core publishes (e.g. re-adding its entries to `app-configs/setup/navigation.yml`,
-which `noerd:update --force` rewrites from the core template).
+rewrites what the other updates publish. The module updates add their entries to the shared files
+(setup and profile navigation, quick-menu, dashboard widgets) idempotently, so their order does
+not matter.
 
 **Discovery** is dynamic: every command named `noerd:update-{module}` that is registered by a loaded
 service provider takes part — nothing is hardcoded, so a newly installed module is picked up
 automatically and a module that is not installed is simply absent.
 
-**Without `--force`** every sub-command asks per existing file (default: `skip`), so the command
+**Without `--force`** every sub-command asks per existing YAML file (default: `skip`), so the command
 warns and asks once up front whether to proceed. Combined with `--no-interaction` all existing files
 are skipped and only missing files are copied — a useful "top up a fresh checkout" mode.
 
-> `noerd:update --force` does more than copy YAML: it also overwrites `config/noerd.php`, scaffolds
-> the missing frontend files (see [Installation](installation.md#frontend)), runs `npm install` for
-> any dependency it added.
+> `noerd:update` also scaffolds the missing frontend files (see
+> [Installation](installation.md#frontend)) and runs `npm install` for any dependency it added.
 > Use `--except=noerd:update` to leave the core step out.
 
 **Failures do not abort the run.** Every command is executed, a summary table lists each one as
 `updated`, `failed` or `skipped`, and the exit code is non-zero if any of them failed.
-
-## noerd:demo
-
-Installs demo data into your project. This publishes a fully working Demo Customers app with model,
-migration, Blade components, YAML configuration, navigation, and routes. The demo app is
-automatically registered as a TenantApp and assigned to all tenants.
-
-```bash
-php artisan noerd:demo
-```
-
-| Option | Description |
-|--------|-------------|
-| `--force` | Overwrite existing files |
-| `--migrate` | Run the migrations — required to migrate in non-interactive runs (interactive runs ask) |
-| `--seed` | Seed the demo data — required to seed in non-interactive runs (interactive runs ask) |
-
-This command is also offered during `noerd:install` (which forwards its own `--migrate` as
-`--migrate --seed`). It can be run independently at any time.
 
 ## noerd:info
 
@@ -160,18 +173,30 @@ php artisan noerd:info
 
 ## noerd:lint
 
-Checks every YAML file below the host's `app-configs/` (plus each `--path`) against the registries
-and the routes, without rendering anything:
+Checks every YAML file below the host's `app-configs/` and the `app-configs/` of every local module
+(the templates their install commands publish), plus each `--path`, against the registries and the
+routes, without rendering anything:
 
 ```bash
 php artisan noerd:lint
-php artisan noerd:lint --path=app-modules/crm/app-configs --strict
+php artisan noerd:lint --project-only
+php artisan noerd:lint --path=vendor/noerd/crm/app-configs --strict
 ```
+
+Old names, column and filter types and navigation keys are checked twice: on the source lines and on
+the PARSED file, so flow style (`- {field: a, type: colored_text}`), quoted keys (`"type": …`),
+`type : …` and CRLF files are caught as well.
 
 | Severity | Found |
 |----------|-------|
-| error | a file that does not parse; a `*Relation` type no registry knows (rendering throws); a detail field without `name`; a list column without `field`; an action `route:` that is not registered and has no fallback (`modalComponent:`, `action:`, `url:`) |
-| warning | a field type no registry knows (it renders as a plain `<input type>`, e.g. `datetime` instead of `datetime-local`); a `picklistField:`/`optionsMethod:` that is neither a registered picklist provider nor a method of any component; a field that is `readonly` and `required`; flow-style YAML (an empty `[]`/`{}` is fine); an action `route:` that is not registered but has a fallback |
+| error | a file that does not parse; a file that starts with a UTF-8 BOM (the runtime reads it as part of the first key); a name of an earlier vocabulary (`type: colored_text`, `inverseBool`, a list column `type: boolean`, `block_menus:`); a list column type the core does not render (it falls back to text — a removed `type: id` included) or a filter type it does not know; the removed navigation key `sub_menu`; a modal target of the earlier vocabulary — `route:` of a list/detail action, a row action, a `relationLink` column, a relation tile or a widget, `component:` of a relation tile, a modal tab or a navigation entry, `newRoute:`/`newComponent:`, and anywhere outside a navigation `route:` next to `modalComponent:` (see [Modal System](modal.md#modal-targets-in-yaml)); a `*Relation` type no registry knows (rendering throws); a detail field without `name`; a list column without `field`; an action `modalRoute:` that is not registered and has no `modalComponent:` fallback (the button is not rendered) |
+| warning | a field type no registry knows (it renders as a plain `<input type>`, e.g. `datetime` instead of `datetime-local`); a `picklistField:`/`optionsMethod:` that is neither a registered picklist provider nor a method of any component; a field that is `readonly` and `required`; flow-style YAML (an empty `[]`/`{}` is fine); an action `modalRoute:` that is not registered but has a `modalComponent:` fallback |
+
+| Option | Description |
+|--------|-------------|
+| `--path=` | Further app-configs directories (a vendor module's). Repeatable |
+| `--project-only` | Check the project's `app-configs/` only, not the local modules |
+| `--strict` | Fail on warnings as well |
 
 The command exits with 1 on errors — with `--strict` on warnings as well — so it can guard a CI run.
 
@@ -247,10 +272,16 @@ Creates a new app (TenantApp) with its own dashboard, in the **project** or as a
 php artisan noerd:make-app
 ```
 
+Both modes name an app the same way: the key is uppercase words joined by hyphens (`My App`,
+`my_app` and `my-app` all become `MY-APP`; letters, digits and hyphens, starting with a letter), its
+folder `app-configs/my-app` and its dashboard route `my-app`. A project app is registered like a
+module: the idempotent tenant-app migration is written into `database/migrations/` and run, so the
+next `php artisan migrate` of a deployment registers the app too — commit the file.
+
 | Option | Description |
 |--------|-------------|
 | `--title=` | The display title of the app |
-| `--name=` | The unique name identifier of the app (uppercase) |
+| `--name=` | The unique name identifier of the app (normalized to `MY-APP`) |
 | `--icon=` | The heroicon of the app, in the stored form `heroicon:outline:{name}` (e.g. `heroicon:outline:users`); the wizard offers a searchable Heroicon picker. In `--module` mode a bare name (`users`) is accepted too and normalized |
 | `--route=` | Open an existing route (e.g. `inventory.index`) instead of generating a dashboard (project only) |
 | `--active=1` | Whether the app is active (`1` or `0`; project only) |
@@ -258,15 +289,19 @@ php artisan noerd:make-app
 
 ## noerd:assign-apps-to-tenant
 
-Assigns apps to a tenant with interactive selection.
+Assigns apps to a tenant. Interactively it shows every active app with the current selection and
+syncs the result (a deselected app is removed). With `--apps` it assigns without a prompt and
+removes nothing — the scriptable form a deployment uses.
 
 ```bash
 php artisan noerd:assign-apps-to-tenant
+php artisan noerd:assign-apps-to-tenant --tenant-id=1 --apps=crm --apps=media --no-interaction
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--tenant-id=` | The ID of the tenant to assign apps to |
+| `--tenant-id=` | The numeric ID of the tenant — required in non-interactive runs (the command never guesses a tenant); anything else is refused |
+| `--apps=` | App names to assign, case-insensitive. Repeatable. An unknown or inactive name assigns nothing |
 
 ## noerd:make-module
 
@@ -284,13 +319,17 @@ php artisan noerd:make-module inventory --title="Inventory" --icon=cube
 
 | Argument / Option | Description |
 |-------------------|-------------|
-| `name` | (optional) The name of the module in kebab-case (e.g. `inventory`); asked interactively when omitted |
+| `name` | (optional) The name of the module (e.g. `inventory`, `business-hours`, `shop2`), normalized to kebab-case; it must start with a letter and contain only letters, digits and hyphens. Asked interactively when omitted |
 | `--title=` | The display title of the tenant app (default: the module name as a headline) |
 | `--icon=` | The heroicon of the tenant app, as a bare name (`cube`) or in the stored form `heroicon:outline:cube`; the wizard offers a searchable Heroicon picker. Required in non-interactive runs |
 | `--no-hints` | Do not print the next steps (`noerd:make-app` runs them itself) |
 
-The generated `noerd:install-{module}` command accepts `--force`, `--migrate`, `--build` and
-`--scaffold` (the silent run `noerd:make-app` uses: only the tenant assignment is asked).
+The generated `noerd:install-{module}` command accepts `--force` (overwrite the YAML copies),
+`--migrate`, `--build`, `--scaffold` (the silent run `noerd:make-app` uses: only the tenant
+assignment is asked — without a terminal every tenant gets the app), `--reset-navigation` (an update
+keeps the host's `navigation.yml` otherwise) and `--tenants=all|1,3`. The tenant assignment is a
+question in an interactive run; a non-interactive run assigns the app only with `--tenants`
+(additively) and otherwise prints how to assign it later.
 
 ## noerd:make-resource
 
@@ -317,7 +356,7 @@ php artisan noerd:make-resource Invoice --app=inventory --only=list
 |-------------------|-------------|
 | `model` | The model class name (short name or FQCN) |
 | `--app=` | App name (e.g. `inventory`) — skips the interactive app selection |
-| `--only=` | `list` or `detail`: generate that half only. `--only=list` wires the list to a detail route that is declared already (row click, "New" action) and never asks for a missing one; `--only=detail` adds the detail with its route and leaves the list alone |
+| `--only=` | `list` or `detail`: generate that half only. `--only=list` declares `$detailRoute` on the list (row click, "New" action) whenever the detail route exists — declared in the app's route file or registered — and never asks for a missing one; without it the rows open the detail as a component modal (`$detailComponent`) and the command says so: add `$detailRoute` once the route exists. `--only=detail` adds the detail with its route and leaves the list alone |
 
 ### What it generates
 
@@ -329,6 +368,9 @@ The command creates four files:
 | Detail Blade | `resources/views/components/{entity}-detail.blade.php` |
 | List YAML | `app-configs/{app}/lists/{entities}-list.yml` |
 | Detail YAML | `app-configs/{app}/details/{entity}-detail.yml` |
+
+A YAML that exists already in every copy is kept and reported — the Blades and routes the run wrote
+are its result, the command still succeeds. An existing Blade stops the run before anything is written.
 
 ### Additional actions
 
@@ -362,8 +404,15 @@ columns are mapped by their database type:
 | `tinyint`, `boolean` | `checkbox` | `bool` |
 | `integer`, `bigint`, `smallint`, `decimal`, `float`, `double` | `number` | `number` |
 | `date` | `date` | `date` |
-| `datetime`, `timestamp` | `datetime` | `datetime` |
-| `json` | `textarea` | — |
+| `datetime`, `timestamp` | `datetime-local` | `datetime` |
+| `time` | `time` | `time` |
+| `json`, `jsonb` (or a column the model casts to `array`/`json`/`object`/`collection`) | — (left out) | — |
+
+- A `*_id` column for which a relation field type is registered becomes that type
+  (`customer_id` → `customerRelation`, `RelationFieldRegistry::typeForColumn()`); otherwise it
+  follows the table.
+- `required: true` is written only for a column that is NOT NULL **and** has no database default —
+  a column the database fills itself stays optional in the form.
 
 The generated list YAML contains at most 8 columns.
 
@@ -385,9 +434,11 @@ php artisan noerd:make-page sent-mails --app=inventory
 ## noerd:make-dashboard
 
 Generates a dashboard Blade file for an app (`resources/views/components/{app}-dashboard.blade.php`),
-adds the `{app}.dashboard` route to `routes/web.php` (inside the `noerd` + `app-access:{app}`
-middleware group) and links it from the app's `navigation.yml` — creating the navigation file when
-the app has none yet. `noerd:make-app` runs this command automatically for every new app in the
+adds the `{app}` route to `routes/web.php` (inside the `noerd` + `app-access:{app}` middleware
+group — the same name a module's dashboard route carries) and links it from the app's
+`navigation.yml` — creating the navigation file when the app has none yet. A dashboard route that
+exists already under `{app}` or under the earlier name `{app}.dashboard` (in the route file or
+registered) is kept, and no second route or navigation entry is added. `noerd:make-app` runs this command automatically for every new app in the
 project (a module gets its dashboard from `noerd:make-module`).
 
 ```bash

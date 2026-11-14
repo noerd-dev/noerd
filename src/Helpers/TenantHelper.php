@@ -11,6 +11,17 @@ use Noerd\Support\TenantContext;
 
 final class TenantHelper
 {
+    /**
+     * The selected-app values of the three contexts that are no tenant app —
+     * the setup area, the profile area and the apps overview (home). One place
+     * for the names the middleware writes and the shell compares.
+     */
+    public const SETUP_APP = 'SETUP';
+
+    public const PROFILE_APP = 'PROFILE';
+
+    public const HOME_APP = 'noerd-apps';
+
     // Request memo (RequestState bucket 'noerd.tenant'): the selected tenant is
     // read from a dozen call sites per render and Tenant::find() has no identity
     // map.

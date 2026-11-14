@@ -30,12 +30,14 @@ class ZzInstallFixtureCommand extends NoerdInstallCommand
     /** Neutralise every installation step and only record its name. */
     public static bool $recordStepsOnly = false;
 
+    /** @var array<string, int> exit code a recorded sub-command answers with (default 0) */
+    public static array $exitCodes = [];
+
     protected $signature = 'test:noerd-install
                             {--step=* : Installation steps to run in isolation}
                             {--force : Overwrite existing files}
                             {--migrate : Run migrations without asking}
-                            {--build : Run npm build without asking}
-                            {--demo : Install the demo app without asking}';
+                            {--build : Run npm build without asking}';
 
     public function handle(): int
     {
@@ -56,7 +58,7 @@ class ZzInstallFixtureCommand extends NoerdInstallCommand
     {
         static::$calledCommands[] = ['command' => $command, 'arguments' => $arguments];
 
-        return 0;
+        return static::$exitCodes[$command] ?? 0;
     }
 
     protected function publishSetupAppConfigs(): bool
@@ -95,19 +97,19 @@ class ZzInstallFixtureCommand extends NoerdInstallCommand
         $this->step('registerNoerdBoostPackage', fn() => parent::registerNoerdBoostPackage());
     }
 
-    protected function runMigrationsAndSetupAdmin(): void
+    protected function runMigrationsAndSetupAdmin(): bool
     {
-        $this->step('runMigrationsAndSetupAdmin', fn() => parent::runMigrationsAndSetupAdmin());
+        $result = true;
+        $this->step('runMigrationsAndSetupAdmin', function () use (&$result): void {
+            $result = parent::runMigrationsAndSetupAdmin();
+        });
+
+        return $result;
     }
 
     protected function runNpmBuild(): void
     {
         $this->step('runNpmBuild', fn() => parent::runNpmBuild());
-    }
-
-    protected function installDemoApp(): void
-    {
-        $this->step('installDemoApp', fn() => parent::installDemoApp());
     }
 
     protected function displayApplicationReady(): void
@@ -131,52 +133,29 @@ beforeEach(function (): void {
     ZzInstallFixtureCommand::$calledCommands = [];
     ZzInstallFixtureCommand::$steps = [];
     ZzInstallFixtureCommand::$recordStepsOnly = false;
+    ZzInstallFixtureCommand::$exitCodes = [];
 
     $this->app[Kernel::class]->registerCommand(new ZzInstallFixtureCommand());
 
     $this->calledCommandNames = fn(): array => array_column(ZzInstallFixtureCommand::$calledCommands, 'command');
 });
 
-describe('demo prompt', function (): void {
-    it('runs noerd:demo when the demo app prompt is confirmed', function (): void {
-        $this->artisan('test:noerd-install', ['--step' => ['installDemoApp'], '--force' => true])
-            ->expectsConfirmation('Would you like to install the Demo App?', 'yes')
-            ->assertExitCode(0);
-
-        expect(ZzInstallFixtureCommand::$calledCommands)
-            ->toHaveCount(1)
-            ->and(ZzInstallFixtureCommand::$calledCommands[0]['command'])->toBe('noerd:demo')
-            ->and(ZzInstallFixtureCommand::$calledCommands[0]['arguments'])->toBe(['--force' => true, '--migrate' => false, '--seed' => false]);
-    });
-
-    it('skips noerd:demo when the demo app prompt is declined', function (): void {
-        $this->artisan('test:noerd-install', ['--step' => ['installDemoApp']])
-            ->expectsConfirmation('Would you like to install the Demo App?')
-            ->expectsOutputToContain('Demo app will NOT be installed. You can run it later with: php artisan noerd:demo')
-            ->assertExitCode(0);
-
-        expect(ZzInstallFixtureCommand::$calledCommands)->toBeEmpty();
-    });
-
-    it('offers the demo app as the last installation step', function (): void {
+describe('step order', function (): void {
+    it('closes the installation with the ready callout, after every step that asks something', function (): void {
         ZzInstallFixtureCommand::$recordStepsOnly = true;
 
         $this->artisan('test:noerd-install')->assertExitCode(0);
 
         $steps = ZzInstallFixtureCommand::$steps;
+        $readyStep = array_search('displayApplicationReady', $steps, true);
 
-        expect($steps)->toContain('installDemoApp');
-
-        // The demo question used to be the very first prompt of noerd:install, which
-        // made users decide before seeing anything. It must stay at the end of the
-        // flow — behind every other step that asks something.
-        $demoStep = array_search('installDemoApp', $steps, true);
+        expect($readyStep)->not->toBeFalse('The ready callout did not run');
 
         foreach (['publishNoerdConfig', 'setupFrontendAssets', 'registerNoerdBoostPackage', 'runMigrationsAndSetupAdmin', 'runNpmBuild'] as $earlierStep) {
             $earlierStepIndex = array_search($earlierStep, $steps, true);
 
             expect($earlierStepIndex)->not->toBeFalse("Step {$earlierStep} did not run")
-                ->and($demoStep)->toBeGreaterThan($earlierStepIndex, "The demo prompt must come after {$earlierStep}");
+                ->and($readyStep)->toBeGreaterThan($earlierStepIndex, "The ready callout must come after {$earlierStep}");
         }
     });
 });
@@ -184,22 +163,21 @@ describe('demo prompt', function (): void {
 /*
  | noerd:install must be safe under --no-interaction: prompts default to "yes"
  | interactively, but a scripted run (CI, deploy) must NEVER inherit those
- | defaults — migrations, npm build, admin setup and the demo app all require
- | an explicit opt-in flag. Admin credentials cannot be prompted at all, so
- | that step is always skipped with a pointer to noerd:make-admin-user.
+ | defaults — migrations, npm build and admin setup all require an explicit
+ | opt-in flag. Admin credentials cannot be prompted at all, so that step is
+ | always skipped with a pointer to noerd:make-admin-user.
  */
 describe('non-interactive', function (): void {
     beforeEach(function (): void {
         $this->runOptInSteps = fn(array $parameters = []) => $this->artisan(
             'test:noerd-install',
-            array_merge(['--step' => ['runMigrationsAndSetupAdmin', 'installDemoApp']], $parameters),
+            array_merge(['--step' => ['runMigrationsAndSetupAdmin']], $parameters),
         );
     });
 
-    it('skips migrations, admin setup and the demo app in a non-interactive run without flags', function (): void {
+    it('skips migrations and admin setup in a non-interactive run without flags', function (): void {
         ($this->runOptInSteps)(['--no-interaction' => true])
             ->expectsOutputToContain('Non-interactive run: skipping migrations. Pass --migrate to run them.')
-            ->expectsOutputToContain('Non-interactive run: skipping the demo app. Pass --demo to install it.')
             ->assertExitCode(0);
 
         expect(ZzInstallFixtureCommand::$calledCommands)->toBeEmpty();
@@ -212,27 +190,32 @@ describe('non-interactive', function (): void {
 
         ($this->runOptInSteps)(['--migrate' => true, '--no-interaction' => true])
             ->expectsOutputToContain('Non-interactive run: skipping admin setup.')
-            ->expectsOutputToContain('Non-interactive run: skipping the demo app. Pass --demo to install it.')
             ->assertExitCode(0);
 
-        expect(($this->calledCommandNames)())->toContain('migrate')
-            ->not->toContain('noerd:demo');
+        expect(($this->calledCommandNames)())->toContain('migrate');
+
+        // In production `migrate` asks before it runs — a scripted run must answer it.
+        $migrate = collect(ZzInstallFixtureCommand::$calledCommands)->firstWhere('command', 'migrate');
+        expect($migrate['arguments'])->toMatchArray(['--force' => true]);
     });
 
-    it('installs the demo app non-interactively only with the --demo flag', function (): void {
-        ($this->runOptInSteps)(['--demo' => true, '--no-interaction' => true])
+    it('creates neither tenant nor admin when the migration fails', function (): void {
+        ZzInstallFixtureCommand::$exitCodes['migrate'] = 1;
+
+        $this->artisan('test:noerd-install', ['--step' => ['runMigrationsAndSetupAdmin'], '--migrate' => true, '--no-interaction' => true])
+            ->expectsOutputToContain('php artisan migrate failed')
             ->assertExitCode(0);
 
-        expect(($this->calledCommandNames)())->toContain('noerd:demo');
+        expect(($this->calledCommandNames)())->toBe(['migrate'])
+            ->and(Tenant::count())->toBe(0);
     });
 
-    it('still asks the demo question in interactive runs', function (): void {
+    it('still asks the migration question in interactive runs', function (): void {
         ($this->runOptInSteps)()
             ->expectsConfirmation('Would you like to run "php artisan migrate" now?')
-            ->expectsConfirmation('Would you like to install the Demo App?', 'yes')
             ->assertExitCode(0);
 
-        expect(($this->calledCommandNames)())->toContain('noerd:demo');
+        expect(ZzInstallFixtureCommand::$calledCommands)->toBeEmpty();
     });
 });
 
@@ -297,25 +280,38 @@ describe('config publishing', function (): void {
         expect(File::get($this->configPath))->toBe($before);
     });
 
-    it('reports missing top-level keys and keeps the file without --force', function (): void {
+    it('reports missing keys and keeps the file', function (): void {
         File::put($this->configPath, "<?php\n\nreturn ['routes' => ['prefix' => 'noerd']];\n");
 
         ($this->publishConfig)()
-            ->expectsOutputToContain('missing new top-level keys')
+            ->expectsOutputToContain('missing new keys')
             ->assertExitCode(0);
 
         expect(File::get($this->configPath))->toContain("['prefix' => 'noerd']");
     });
 
-    it('overwrites with --force without writing a .bak backup', function (): void {
-        File::put($this->configPath, "<?php\n\nreturn ['routes' => ['prefix' => 'custom']];\n");
+    it('never overwrites an existing config, not even with --force', function (): void {
+        $config = "<?php\n\nreturn ['routes' => ['prefix' => 'custom']];\n";
+        File::put($this->configPath, $config);
 
         ($this->publishConfig)(['--force' => true])
-            ->expectsOutputToContain('Published config/noerd.php successfully.')
+            ->expectsOutputToContain('is never overwritten')
             ->assertExitCode(0);
 
-        expect(File::exists($this->configPath . '.bak'))->toBeFalse()
-            ->and(File::get($this->configPath))->not->toContain("'prefix' => 'custom'");
+        expect(File::get($this->configPath))->toBe($config)
+            ->and(File::exists($this->configPath . '.bak'))->toBeFalse();
+    });
+
+    it('names missing nested keys and keys the package no longer reads', function (): void {
+        $stub = require dirname(__DIR__, 2) . '/config/noerd.php';
+        unset($stub['features']['currency']);
+        $stub['zz_retired'] = true;
+        File::put($this->configPath, '<?php return ' . var_export($stub, true) . ';');
+
+        ($this->publishConfig)()
+            ->expectsOutputToContain('missing new keys: features.currency')
+            ->expectsOutputToContain('no longer reads: zz_retired')
+            ->assertExitCode(0);
     });
 });
 

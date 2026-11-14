@@ -22,21 +22,40 @@ use RecursiveIteratorIterator;
 trait PublishesConfigDirectory
 {
     /**
-     * Rewrite the project's app-configs — and the configs of its local modules
-     * — to the current YAML vocabulary (YamlVocabularyMigrator). Runs on every
-     * install and update, BEFORE anything is written into those files, and
-     * changes nothing once the files are current.
+     * Rewrite YAML to the current vocabulary (YamlVocabularyMigrator) and list
+     * every file that changed. Runs on every install and update, BEFORE anything
+     * is written into those files, and changes nothing once the files are
+     * current. Without paths it covers the project's app-configs AND the
+     * configs of its local modules (`noerd:update`); a module passes only what
+     * it publishes and its own source (yamlVocabularyPaths()). A dry run writes
+     * nothing and lists what would change.
+     *
+     * @param  list<string>|null  $paths  directories or files; null = project + every local module
+     * @return list<string> the files that were (or would be) rewritten
      */
-    protected function migrateYamlVocabulary(): void
+    protected function migrateYamlVocabulary(?array $paths = null, bool $dryRun = false): array
     {
-        $directories = [base_path('app-configs'), ...(glob(ModulesPath::absolute('*/app-configs'), GLOB_ONLYDIR) ?: [])];
-        $changed = app(YamlVocabularyMigrator::class)->migrate($directories);
+        $paths ??= [base_path('app-configs'), ...(glob(ModulesPath::absolute('*/app-configs'), GLOB_ONLYDIR) ?: [])];
+        $changed = app(YamlVocabularyMigrator::class)->migrate($paths, $dryRun);
 
         if ($changed === []) {
-            return;
+            if ($dryRun) {
+                $this->line('<info>Every YAML file already uses the current vocabulary.</info>');
+            }
+
+            return [];
         }
 
-        $this->line(sprintf('<info>Updated %d YAML file(s) to the current vocabulary.</info>', count($changed)));
+        $this->line(sprintf(
+            $dryRun ? '<comment>%d YAML file(s) would be updated to the current vocabulary:</comment>' : '<info>Updated %d YAML file(s) to the current vocabulary:</info>',
+            count($changed),
+        ));
+
+        foreach ($changed as $file) {
+            $this->line('  ' . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file));
+        }
+
+        return $changed;
     }
 
     /**

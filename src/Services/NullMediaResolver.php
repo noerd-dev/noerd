@@ -59,6 +59,14 @@ final class NullMediaResolver implements MediaResolverContract
         return '/storage/' . $path;
     }
 
+    /**
+     * Without a library there is no id: the reference is the stored URL.
+     */
+    public function storeUploadedFileReference(mixed $uploadedFile): ?string
+    {
+        return $this->storeUploadedFile($uploadedFile);
+    }
+
     public function isAvailable(): bool
     {
         return false;

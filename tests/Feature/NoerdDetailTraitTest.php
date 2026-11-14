@@ -59,6 +59,12 @@ beforeEach(function (): void {
         '        label: Nested',
         '        type: text',
         '        required: true',
+        '  - name: detailData.customer_id',
+        '    label: Customer',
+        '    type: text',
+        '  - name: detailData.address.city',
+        '    label: City',
+        '    type: text',
     ]));
 });
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Noerd\Helpers;
 
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Support\Facades\Auth;
@@ -42,14 +41,16 @@ final class NoerdAuth
     }
 
     /**
-     * The signed-in account of the noerd guard — always a NoerdUser, since the
-     * guard's provider is the noerd_users table.
-     *
-     * @return NoerdUser|null
+     * The signed-in account of the noerd guard as a NoerdUser — null for a
+     * guest and for anything else a host's guard definition might hand back
+     * (a host-tuned provider model that is no NoerdUser), so every caller can
+     * rely on the NoerdUser API.
      */
-    public static function user(): ?Authenticatable
+    public static function user(): ?NoerdUser
     {
-        return self::guard()->user();
+        $user = self::guard()->user();
+
+        return $user instanceof NoerdUser ? $user : null;
     }
 
     public static function id(): int|string|null

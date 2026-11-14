@@ -43,7 +43,7 @@ class SetupMiddleware
             abort(403);
         }
 
-        TenantHelper::setSelectedApp('SETUP');
+        TenantHelper::setSelectedApp(TenantHelper::SETUP_APP);
 
         return $next($request);
     }

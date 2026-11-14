@@ -6,7 +6,7 @@
             readonly
             id="{{ $fieldName }}"
             value="{{ $displayTitle }}"
-            @click="@if($displayTitle) $wire.openDetail() @elseif(! $readonly) $modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $this->selectionContext() }}', listActionMethod: 'selectAction'}) @endif"
+            @click="@if($displayTitle) $wire.openDetail() @elseif(! $readonly) $modal({{ \Illuminate\Support\Js::from((string) $listComponent) }}, {id: {{ \Illuminate\Support\Js::from($modelId ?: null) }}, context: {{ \Illuminate\Support\Js::from($this->selectionContext()) }}, listActionMethod: 'selectAction'}) @endif"
         />
 
         @if ($displayTitle && ! $readonly)
@@ -22,7 +22,7 @@
 
         @if (! $readonly)
             <x-noerd::button
-                @click="$modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $this->selectionContext() }}', listActionMethod: 'selectAction'})"
+                @click="$modal({{ \Illuminate\Support\Js::from((string) $listComponent) }}, {id: {{ \Illuminate\Support\Js::from($modelId ?: null) }}, context: {{ \Illuminate\Support\Js::from($this->selectionContext()) }}, listActionMethod: 'selectAction'})"
                 aria-label="{{ __('Search') }}"
                 class="mt-0! ml-1! h-9! rounded-none px-2!"
                 type="button"

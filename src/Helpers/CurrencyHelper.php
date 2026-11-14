@@ -36,7 +36,7 @@ final class CurrencyHelper
     public const DEFAULT_CURRENCY = 'EUR';
 
     /** @var array<string, array{code: string, symbol: string, decimal_separator: string, thousands_separator: string, symbol_position: string}> */
-    protected static array $configCache = [];
+    private static array $configCache = [];
 
     /**
      * The ISO currency code of a tenant (defaults to the selected tenant);

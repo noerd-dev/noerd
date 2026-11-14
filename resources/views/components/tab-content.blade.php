@@ -45,9 +45,9 @@
     <x-noerd::tab-panels>
         @foreach ($tabs as $tab)
             @php
-                // Only a numbered tab is a panel: component, modalRoute and route tabs
-                // open a modal or navigate, they have no inline content.
-                if (isset($tab['component']) || ! isset($tab['number'])) {
+                // Only a numbered tab is a panel: modalRoute, modalComponent and route
+                // tabs open a modal or navigate, they have no inline content.
+                if (isset($tab['modalRoute']) || isset($tab['modalComponent']) || ! isset($tab['number'])) {
                     continue;
                 }
 

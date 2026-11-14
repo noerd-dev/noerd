@@ -6,7 +6,9 @@ namespace Noerd\Commands\Concerns;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 use Noerd\Commands\Support\ModuleInstallContext;
+use Noerd\Support\ModulesPath;
 use ReflectionClass;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -102,6 +104,17 @@ trait InstallsNoerdModule
     }
 
     /**
+     * The shared options that take a value (`--tenants=all`), added like
+     * installOptions(). A tenant app adds --tenants.
+     *
+     * @return array<string, string> option name => description
+     */
+    protected function installValueOptions(): array
+    {
+        return [];
+    }
+
+    /**
      * Declare the shared options on the command definition — before the input
      * is bound, which is why this runs from the constructor.
      */
@@ -112,6 +125,12 @@ trait InstallsNoerdModule
         foreach ($this->installOptions() as $name => $description) {
             if (! $definition->hasOption($name)) {
                 $definition->addOption(new InputOption($name, null, InputOption::VALUE_NONE, $description));
+            }
+        }
+
+        foreach ($this->installValueOptions() as $name => $description) {
+            if (! $definition->hasOption($name)) {
+                $definition->addOption(new InputOption($name, null, InputOption::VALUE_REQUIRED, $description));
             }
         }
     }
@@ -247,7 +266,43 @@ trait InstallsNoerdModule
 
         // After publishing (a module released before a rename ships the old
         // names) and before ensureModuleSetup() writes into the navigation.
-        $this->migrateYamlVocabulary();
+        $this->migrateYamlVocabulary($this->yamlVocabularyPaths());
+    }
+
+    /**
+     * What this module's run rewrites to the current YAML vocabulary: the host
+     * copies of the files it publishes and — for a LOCAL module (below the
+     * modules path) — its own app-configs source. Never another module's files:
+     * those belong to that module's update (and noerd:update covers them all).
+     *
+     * @return list<string> directories or files
+     */
+    protected function yamlVocabularyPaths(): array
+    {
+        $paths = [];
+        $appConfigsDir = $this->getAppConfigsDir();
+
+        if ($appConfigsDir !== null) {
+            $paths[] = base_path('app-configs/' . basename($appConfigsDir));
+        }
+
+        $setupSource = $this->getModuleRoot() . '/app-configs/setup';
+        if (is_dir($setupSource)) {
+            foreach (File::allFiles($setupSource) as $file) {
+                $paths[] = base_path('app-configs/setup/' . $file->getRelativePathname());
+            }
+        }
+
+        $ownConfigs = $this->getModuleRoot() . '/app-configs';
+        $modulesRoot = realpath(ModulesPath::absolute());
+        $moduleRoot = realpath($this->getModuleRoot());
+
+        if (is_dir($ownConfigs) && $modulesRoot !== false && $moduleRoot !== false
+            && str_starts_with($moduleRoot, $modulesRoot . DIRECTORY_SEPARATOR)) {
+            $paths[] = $ownConfigs;
+        }
+
+        return $paths;
     }
 
     /**

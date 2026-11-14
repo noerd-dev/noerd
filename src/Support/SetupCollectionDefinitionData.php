@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Noerd\Support;
 
 /**
- * @internal
+ * The normalised shape of one setup collection definition — what every
+ * SetupCollectionDefinitionRepositoryContract implementation returns, whether
+ * it reads the YAML files or a database (an extension package).
  */
 final class SetupCollectionDefinitionData
 {

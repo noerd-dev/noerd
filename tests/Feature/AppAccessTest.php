@@ -32,6 +32,20 @@ describe('gate', function (): void {
             ->and(AccessHelper::canAccessApp(''))->toBeTrue();
     });
 
+    it('hands the app gate the UPPERCASE app name, whatever case the caller used', function (): void {
+        $received = [];
+        Gate::define(AccessHelper::APP_GATE, function (?NoerdUser $user, string $appName) use (&$received): bool {
+            $received[] = $appName;
+
+            return $appName === 'ZZ_CASE_PROBE';
+        });
+
+        expect(AccessHelper::canAccessApp('zz_case_probe'))->toBeTrue()
+            ->and(AccessHelper::canAccessApp(' Zz_Case_Probe '))->toBeTrue()
+            ->and(AccessHelper::canAccessApp('ZZ_CASE_PROBE'))->toBeTrue()
+            ->and($received)->toBe(['ZZ_CASE_PROBE', 'ZZ_CASE_PROBE', 'ZZ_CASE_PROBE']);
+    });
+
     it('canUseApp requires tenant assignment AND app permission', function (): void {
         // No tenant selected: nothing is assigned.
         expect(AccessHelper::canUseApp('ANYTHING'))->toBeFalse();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Traits;
 
 use Noerd\Helpers\TenantHelper;
+use Noerd\Scopes\TenantScope;
 use Noerd\Support\RequestState;
 use Noerd\Support\TenantContext;
 use RuntimeException;
@@ -18,8 +19,8 @@ use RuntimeException;
  * row is read for every cell of a list), dropped on save and delete.
  *
  * The lookup names the tenant explicitly: with no argument it takes the current
- * tenant context — the signed-in user's selection, or the tenant a job or
- * command entered — and refuses to guess when there is none.
+ * tenant (TenantHelper::currentTenantId(): the tenant a job or command entered,
+ * else the signed-in user's selection) and refuses to guess when there is none.
  *
  * A model using the trait declares `implements TenantSingletonContract`, which
  * is what the settings page and other generic code key off.
@@ -54,8 +55,8 @@ trait TenantSingleton
     public static function forTenant(?int $tenantId = null): static
     {
         // The tenant a job or command entered first, then the selection of the
-        // signed-in user.
-        $tenantId ??= TenantContext::current() ?? TenantHelper::getSelectedTenantId();
+        // signed-in user — the one resolver TenantScope reads as well.
+        $tenantId ??= TenantHelper::currentTenantId();
 
         if ($tenantId === null) {
             throw new RuntimeException(sprintf(
@@ -70,9 +71,11 @@ trait TenantSingleton
             return $memo[$tenantId];
         }
 
-        // Every global scope is lifted on purpose: a tenant scope would hide
-        // another tenant's row from a job, and a singleton never soft-deletes.
-        $row = static::query()->withoutGlobalScopes()->where('tenant_id', $tenantId)->first();
+        // Only the tenant filter is lifted — the tenant is named explicitly, and
+        // a model without BelongsToTenant has no such scope at all. Every other
+        // global scope of the model stays applied.
+        $query = static::query()->withoutGlobalScope(TenantScope::class);
+        $row = $query->where($query->qualifyColumn('tenant_id'), $tenantId)->first();
 
         $row ??= static::query()->newModelInstance()->forceFill(['tenant_id' => $tenantId] + static::tenantDefaults());
 
@@ -97,7 +100,12 @@ trait TenantSingleton
     {
         $row = static::forTenant($tenantId);
         $row->fill($attributes);
-        $row->save();
+
+        // The tenant is named explicitly here, so the write runs in its context:
+        // a user request may update another tenant's singleton on purpose (an
+        // operator screen, a provisioning step) without tripping the tenant
+        // guard of BelongsToTenant.
+        TenantContext::run((int) $row->getAttribute('tenant_id'), fn(): bool => $row->save());
 
         return $row;
     }

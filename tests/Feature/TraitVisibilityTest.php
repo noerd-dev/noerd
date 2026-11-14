@@ -6,8 +6,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Exceptions\MethodNotFoundException;
 use Livewire\Livewire;
 use Noerd\Livewire\Hooks\ServerOnlyMethodsHook;
+use Noerd\Livewire\RelationFieldBase;
 use Noerd\Models\NoerdUser;
 use Noerd\Tests\TestCase;
+use Noerd\Traits\HasEmailPreview;
 use Noerd\Traits\NoerdComponentShared;
 use Noerd\Traits\NoerdDetail;
 use Noerd\Traits\NoerdList;
@@ -75,7 +77,24 @@ it('keeps the helpers the views and components call protected, never public', fu
     [NoerdPositionRow::class, 'initPositionRow'],
     [NoerdPositionRow::class, 'editablePositionValues'],
     [NoerdPositionRow::class, 'positionColumnCount'],
+    [NoerdPositionRow::class, 'loadPosition'],
+    [NoerdPositionRow::class, 'position'],
+    [NoerdPage::class, 'closeModalProcess'],
+    [HasEmailPreview::class, 'getSampleEmailData'],
+    [RelationFieldBase::class, 'selectionContext'],
+    [RelationFieldBase::class, 'numberedRowField'],
 ]);
+
+it('closes a detail through the closeModal action, never through closeModalProcess', function (): void {
+    $this->actingAs(NoerdUser::factory()->adminUser()->withSelectedApp('setup')->create());
+
+    Livewire::test('noerd::setup-language-detail')
+        ->call('closeModal')
+        ->assertDispatched('closeTopModal');
+
+    expect(fn() => Livewire::test('noerd::setup-language-detail')->call('closeModalProcess', 'noerd::setup-languages-list'))
+        ->toThrow(MethodNotFoundException::class);
+});
 
 it('has no public alias of componentName() any more', function (): void {
     expect(method_exists(NoerdComponentShared::class, 'getComponentName'))->toBeFalse();

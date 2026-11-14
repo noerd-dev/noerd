@@ -32,11 +32,12 @@
         ->filter(fn(array $action): bool => $modelId || ($action['requiresId'] ?? true) === false)
         ->filter(fn(array $action): bool => empty($action['viewExists'])
             || \Illuminate\Support\Facades\View::exists($action['viewExists']))
-        // A route: action whose route is not registered survives only with a
+        // A modalRoute: action whose route is not registered survives only with a
         // modalComponent fallback, so an optional module may contribute YAML safely.
-        ->filter(fn(array $action): bool => empty($action['route'])
-            || \Illuminate\Support\Facades\Route::has($action['route'])
-            || ! empty($action['modalComponent']))
+        // An action naming no target at all (a key of an earlier vocabulary) is dropped.
+        ->filter(fn(array $action): bool => \Noerd\Support\YamlModalTarget::declares($action)
+            ? \Noerd\Support\YamlModalTarget::opens($action)
+            : array_key_exists('url', $action) || ! empty($action['action']))
         // A url: action without a resolvable URL is dropped instead of rendering a dead link.
         ->filter(fn(array $action): bool => ! array_key_exists('url', $action)
             || $resolveActionUrl($action) !== null)
@@ -71,16 +72,11 @@
             @php
                 $modalArguments = \Noerd\Support\LayoutArguments::resolve($action['arguments'] ?? [], $modelId, $__livewire ?? null);
 
-                // An unregistered route drops to the modalComponent branch (the
-                // filter above already removed actions that have neither).
-                $actionRoute = $action['route'] ?? null;
-                $actionRoute = $actionRoute && \Illuminate\Support\Facades\Route::has($actionRoute)
-                    ? $actionRoute
-                    : null;
+                // modalRoute: opens a route modal, modalComponent: is its fallback (or
+                // the target alone); the filter above removed actions that open neither.
+                $actionModal = \Noerd\Support\YamlModalTarget::clickExpression($action, $modalArguments);
 
-                $actionUrl = $actionRoute || ! empty($action['modalComponent'])
-                    ? null
-                    : $resolveActionUrl($action);
+                $actionUrl = $actionModal ? null : $resolveActionUrl($action);
 
                 $actionShow = $resolveActionCondition($action);
             @endphp
@@ -99,12 +95,10 @@
             @else
                 <button
                     type="button"
-                    @if ($actionShow || $actionRoute || ! empty($action['modalComponent'])) x-data @endif
+                    @if ($actionShow || $actionModal) x-data @endif
                     @if ($actionShow) x-show="{{ $actionShow }}" @endif
-                    @if ($actionRoute)
-                        x-on:click="$modalRoute({{ \Illuminate\Support\Js::from($actionRoute) }},{{ \Illuminate\Support\Js::from($modalArguments) }}, null, null, null, {{ \Illuminate\Support\Js::from(array_filter(['fallbackComponent' => $action['modalComponent'] ?? null])) }})"
-                    @elseif (! empty($action['modalComponent']))
-                        x-on:click="$modal({{ \Illuminate\Support\Js::from($action['modalComponent']) }}, {{ \Illuminate\Support\Js::from($modalArguments) }})"
+                    @if ($actionModal)
+                        x-on:click="{{ $actionModal }}"
                     @else
                         wire:click="{{ $action['action'] }}"
                         wire:loading.attr="disabled"
@@ -116,7 +110,7 @@
                     @if (! empty($action['heroicon']))
                         <x-icon name="{{ $action['heroicon'] }}" class="h-4 w-4 text-gray-500" />
                     @endif
-                    @if (empty($actionRoute) && empty($action['modalComponent']) && ! empty($action['loading']))
+                    @if (! $actionModal && ! empty($action['loading']))
                         <span
                             wire:loading.remove
                             wire:target="{{ $action['action'] }}"

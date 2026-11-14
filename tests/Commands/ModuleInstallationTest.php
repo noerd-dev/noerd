@@ -386,3 +386,93 @@ describe('boost registration', function (): void {
             ->and(ZzModuleInstallFixtureCommand::$boostUpdateCalls)->toBe(0);
     });
 });
+
+/*
+ | A non-interactive install never hands the app to tenants by accepting a
+ | prompt default: it assigns only what --tenants names. (Laravel Prompts count
+ | as interactive in tests unless --no-interaction is passed explicitly.)
+ */
+describe('tenant opt-in', function (): void {
+    beforeEach(function (): void {
+        registerZzModuleApp();
+        File::ensureDirectoryExists(base_path('app-configs/' . ZZ_MODULE_KEY));
+        $this->tenantA = Noerd\Models\Tenant::factory()->create(['name' => 'Zz A']);
+        $this->tenantB = Noerd\Models\Tenant::factory()->create(['name' => 'Zz B']);
+        $this->assignedIds = fn(): array => TenantApp::where('name', ZZ_MODULE_APP_KEY)->first()->tenants()->pluck('tenants.id')->map('intval')->sort()->values()->all();
+    });
+
+    it('assigns nothing without --tenants in a non-interactive run and says how to', function (): void {
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--no-interaction' => true])
+            ->expectsOutputToContain('was not assigned to any tenant')
+            ->expectsOutputToContain('noerd:assign-apps-to-tenant')
+            ->assertExitCode(0);
+
+        expect(($this->assignedIds)())->toBe([]);
+    });
+
+    it('assigns every tenant with --tenants=all', function (): void {
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--no-interaction' => true, '--tenants' => 'all'])->assertExitCode(0);
+
+        expect(($this->assignedIds)())->toBe([$this->tenantA->id, $this->tenantB->id]);
+    });
+
+    it('assigns the named tenants additively and refuses unknown ids', function (): void {
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--no-interaction' => true, '--tenants' => (string) $this->tenantB->id])->assertExitCode(0);
+        expect(($this->assignedIds)())->toBe([$this->tenantB->id]);
+
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--no-interaction' => true, '--tenants' => $this->tenantA->id . ',99999'])
+            ->expectsOutputToContain('Unknown tenant id(s): 99999')
+            ->assertExitCode(0);
+        expect(($this->assignedIds)())->toBe([$this->tenantB->id]);
+
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--no-interaction' => true, '--tenants' => (string) $this->tenantA->id])->assertExitCode(0);
+        expect(($this->assignedIds)())->toBe([$this->tenantA->id, $this->tenantB->id]);
+    });
+});
+
+describe('app navigation on update', function (): void {
+    it('keeps the published navigation, also with --force, and replaces it only with --reset-navigation', function (): void {
+        registerZzModuleApp();
+        $target = base_path('app-configs/' . ZZ_MODULE_KEY . '/navigation.yml');
+        File::ensureDirectoryExists(dirname($target));
+        File::put($target, "- title: Host edited\n");
+
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--no-interaction' => true])->assertExitCode(0);
+        expect(File::get($target))->toBe("- title: Host edited\n");
+
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--force' => true, '--reset-navigation' => true, '--no-interaction' => true])->assertExitCode(0);
+        expect(Yaml::parse(File::get($target))[0]['title'])->toBe('Zz Install Fixture');
+    });
+
+    it('publishes a missing navigation on update', function (): void {
+        registerZzModuleApp();
+        File::ensureDirectoryExists(base_path('app-configs/' . ZZ_MODULE_KEY));
+
+        $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--no-interaction' => true])->assertExitCode(0);
+
+        expect(File::exists(base_path('app-configs/' . ZZ_MODULE_KEY . '/navigation.yml')))->toBeTrue();
+    });
+});
+
+describe('yaml vocabulary', function (): void {
+    it('rewrites only the files of this module, never another module\'s', function (): void {
+        registerZzModuleApp();
+        $own = base_path('app-configs/' . ZZ_MODULE_KEY . '/lists/zz-list.yml');
+        $foreign = base_path('app-configs/zz-foreign-app/lists/zz-list.yml');
+        File::ensureDirectoryExists(dirname($own));
+        File::ensureDirectoryExists(dirname($foreign));
+        File::put($own, "columns:\n  - field: a\n    type: colored_text\n");
+        File::put($foreign, "columns:\n  - field: a\n    type: colored_text\n");
+
+        try {
+            $this->artisan('noerd:install-' . ZZ_MODULE_KEY, ['--no-interaction' => true])
+                ->expectsOutputToContain('app-configs/' . ZZ_MODULE_KEY . '/lists/zz-list.yml')
+                ->assertExitCode(0);
+
+            expect(File::get($own))->toContain('type: coloredText')
+                ->and(File::get($foreign))->toContain('type: colored_text');
+        } finally {
+            File::deleteDirectory(base_path('app-configs/zz-foreign-app'));
+        }
+    });
+});

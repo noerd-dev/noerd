@@ -25,19 +25,37 @@ use Throwable;
  */
 final class ListColumnIntrospection
 {
-    /** DB column type → list column type. Types missing here render as text. */
+    /**
+     * DB column type (the `type_name` Schema::getColumns() reports on MySQL/
+     * MariaDB, PostgreSQL and SQLite) → list column type. Types missing here
+     * render as text — `year` on purpose: the number format would group it
+     * (`2.026`).
+     */
     public const COLUMN_TYPE_MAP = [
         'tinyint' => 'bool',
         'boolean' => 'bool',
+        'bool' => 'bool',
+        'int' => 'number',
         'integer' => 'number',
         'bigint' => 'number',
+        'mediumint' => 'number',
         'smallint' => 'number',
+        'int2' => 'number',
+        'int4' => 'number',
+        'int8' => 'number',
         'decimal' => 'number',
+        'numeric' => 'number',
         'float' => 'number',
+        'float4' => 'number',
+        'float8' => 'number',
         'double' => 'number',
+        'real' => 'number',
         'date' => 'date',
         'datetime' => 'datetime',
         'timestamp' => 'datetime',
+        'timestamptz' => 'datetime',
+        'time' => 'time',
+        'timetz' => 'time',
     ];
 
     private const ARRAY_CASTS = ['array', 'json', 'object', 'collection'];

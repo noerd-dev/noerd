@@ -28,7 +28,7 @@ final class ThemeHelper
      */
     public static function forTenant(?int $tenantId = null): array
     {
-        $tenantId ??= TenantHelper::getSelectedTenantId();
+        $tenantId ??= TenantHelper::currentTenantId();
 
         if ($tenantId === null) {
             return self::configFallback();

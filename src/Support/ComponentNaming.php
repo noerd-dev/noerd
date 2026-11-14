@@ -28,6 +28,17 @@ final class ComponentNaming
     }
 
     /**
+     * The event that refreshes a list after a modal it opened (or a record of
+     * it) closed: `refreshList-{name}` with the name shortened to the part
+     * after the last dot — the form the modal stack of noerd/modal dispatches
+     * for its `source` (`booking::bookings.bookings-list` → `refreshList-bookings-list`).
+     */
+    public static function refreshListEvent(string $component): string
+    {
+        return 'refreshList-' . Str::afterLast($component, '.');
+    }
+
+    /**
      * The singular entity of a list component (`push-distribution-lists-list` →
      * `push-distribution-list`), or null when the component is no list. Only the
      * LAST `-list` is the suffix — an entity may itself end in "list".
@@ -51,16 +62,6 @@ final class ComponentNaming
         $entity = self::listEntity($listComponent);
 
         return $entity === null ? null : Str::camel($entity) . 'Selected';
-    }
-
-    /**
-     * The `?{entity}Id` query parameter that deep-links a record of the list.
-     */
-    public static function deepLinkParam(string $listComponent): ?string
-    {
-        $entity = self::listEntity($listComponent);
-
-        return $entity === null ? null : Str::camel($entity) . 'Id';
     }
 
     /**

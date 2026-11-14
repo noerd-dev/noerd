@@ -318,3 +318,18 @@ it('registers a css variable for every color of the brand preset', function (): 
         expect($css)->toContain('--color-' . $key . ':');
     }
 });
+
+it('writes an empty object of the host back as an object', function (): void {
+    writeScaffoldFile('package.json', json_encode([
+        'private' => true,
+        'overrides' => new stdClass(),
+        'scripts' => new stdClass(),
+    ], JSON_PRETTY_PRINT));
+
+    (new FrontendScaffolder(scaffoldPath()))->scaffold();
+
+    $written = File::get(scaffoldPath('package.json'));
+
+    expect($written)->toContain('"overrides": {}')
+        ->and(json_decode($written, true)['scripts'])->toHaveKey('build');
+});

@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Traits\NoerdDetail;
 
@@ -17,7 +18,7 @@ new class extends Component {
     public function mount(): void
     {
         if (! $this->modelId) {
-            $this->modelId = NoerdAuth::user()->selected_tenant_id;
+            $this->modelId = TenantHelper::currentTenantId();
         }
 
         $this->authorizeTenant();
@@ -55,7 +56,7 @@ new class extends Component {
         $tenant->name = $this->detailData['name'];
         $tenant->save();
 
-        $this->storeProcess($tenant);
+        $this->finishStore($tenant);
     }
 } ?>
 

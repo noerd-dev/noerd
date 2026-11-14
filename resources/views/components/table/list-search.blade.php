@@ -20,7 +20,7 @@
         x-ref="searchInput"
         @focus="searchFocused = true"
         @blur="searchFocused = false"
-        @keydown.escape="$refs.searchInput.blur()"
+        @keydown.escape="if (searchFocused) { $event.preventDefault(); $event.stopPropagation(); $refs.searchInput.blur() }"
         placeholder="{{ __('Search') }}"
         wire:model.live.debounce.300ms="search"
         type="text"

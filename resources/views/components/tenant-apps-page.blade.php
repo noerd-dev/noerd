@@ -25,7 +25,7 @@ new class extends Component {
         $assignedIds = $tenant->tenantApps()->pluck('tenant_apps.id')->map(fn($id): int => (int) $id)->all();
 
         if (in_array($appId, $assignedIds, true)) {
-            $tenant->tenantApps()->detach($appId);
+            $tenant->removeApp($appId);
         } else {
             $tenant->assignApp($appId);
         }

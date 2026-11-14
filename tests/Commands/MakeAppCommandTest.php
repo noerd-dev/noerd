@@ -26,6 +26,7 @@ beforeEach(function (): void {
     $this->existingDashboards = File::glob(base_path('resources/views/components/*-dashboard.blade.php'));
     $this->existingAppConfigs = File::directories(base_path('app-configs'));
     $this->existingModules = File::directories(base_path('app-modules'));
+    $this->existingMigrations = File::glob(database_path('migrations/*.php'));
 });
 
 afterEach(function (): void {
@@ -58,6 +59,12 @@ afterEach(function (): void {
             File::deleteDirectory($appConfig);
         }
     }
+
+    foreach (File::glob(database_path('migrations/*.php')) as $migration) {
+        if (! in_array($migration, $this->existingMigrations, true)) {
+            File::delete($migration);
+        }
+    }
 });
 
 it('successfully creates a app with all parameters', function (): void {
@@ -68,14 +75,35 @@ it('successfully creates a app with all parameters', function (): void {
         '--active' => '1',
     ])->assertExitCode(0);
 
-    // Verify the app was created in the database
-    expect(TenantApp::where('name', 'TEST_APP')->exists())->toBeTrue();
+    // One naming scheme with the module mode: TEST_APP → TEST-APP, dashboard route `{app}`.
+    expect(TenantApp::where('name', 'TEST-APP')->exists())->toBeTrue();
 
-    $app = TenantApp::where('name', 'TEST_APP')->first();
+    $app = TenantApp::where('name', 'TEST-APP')->first();
     expect($app->title)->toBe('Test Application');
     expect($app->icon)->toBe('icons.test');
-    expect($app->route)->toBe('test_app.dashboard');
+    expect($app->route)->toBe('test-app');
     expect($app->is_active)->toBeTrue();
+});
+
+it('registers the project app through the idempotent migration a deployment runs', function (): void {
+    $this->artisan('noerd:make-app', [
+        '--title' => 'Zz Registered',
+        '--name' => 'ZZ_REGISTERED',
+        '--icon' => 'icons.zz',
+    ])->assertExitCode(0);
+
+    $migrations = File::glob(database_path('migrations/*_add_zz-registered_tenant_app.php'));
+    expect($migrations)->toHaveCount(1);
+
+    // A fresh database (the next deployment) registers the app from the file alone.
+    TenantApp::where('name', 'ZZ-REGISTERED')->delete();
+    (require $migrations[0])->up();
+
+    expect(TenantApp::where('name', 'ZZ-REGISTERED')->value('route'))->toBe('zz-registered');
+
+    // Idempotent: running it again keeps one row.
+    (require $migrations[0])->up();
+    expect(TenantApp::where('name', 'ZZ-REGISTERED')->count())->toBe(1);
 });
 
 it('scaffolds a dashboard for the new app and uses its route without asking', function (): void {
@@ -85,7 +113,7 @@ it('scaffolds a dashboard for the new app and uses its route without asking', fu
         '--icon' => 'icons.tb',
     ])->assertExitCode(0);
 
-    expect(TenantApp::where('name', 'TB')->value('route'))->toBe('tb.dashboard');
+    expect(TenantApp::where('name', 'TB')->value('route'))->toBe('tb');
 
     $dashboard = base_path('resources/views/components/tb-dashboard.blade.php');
     $stub = File::get(dirname(__DIR__, 2) . '/src/Commands/stubs/resource/dashboard.blade.stub');
@@ -94,7 +122,7 @@ it('scaffolds a dashboard for the new app and uses its route without asking', fu
 
     $routes = File::get(base_path('routes/web.php'));
     expect($routes)
-        ->toContain("Route::livewire('tb', 'tb-dashboard')->name('tb.dashboard');")
+        ->toContain("Route::livewire('tb', 'tb-dashboard')->name('tb');")
         ->toContain("Route::middleware(['noerd', 'app-access:tb'])");
 
     $navigation = base_path('app-configs/tb/navigation.yml');
@@ -103,8 +131,8 @@ it('scaffolds a dashboard for the new app and uses its route without asking', fu
     $parsed = Symfony\Component\Yaml\Yaml::parse(File::get($navigation));
     expect($parsed[0]['title'])->toBe('Time Booking')
         ->and($parsed[0]['name'])->toBe('tb')
-        ->and($parsed[0]['route'])->toBe('tb.dashboard')
-        ->and($parsed[0]['blockMenus'][0]['navigations'][0]['route'])->toBe('tb.dashboard');
+        ->and($parsed[0]['route'])->toBe('tb')
+        ->and($parsed[0]['blockMenus'][0]['navigations'][0]['route'])->toBe('tb');
 });
 
 it('creates the routes file when the project has none yet', function (): void {
@@ -119,20 +147,20 @@ it('creates the routes file when the project has none yet', function (): void {
     $routes = File::get(base_path('routes/web.php'));
     expect($routes)
         ->toStartWith("<?php\n")
-        ->toContain("->name('fresh.dashboard');");
+        ->toContain("->name('fresh');");
 });
 
 it('keeps an existing navigation and only inserts the dashboard entry', function (): void {
-    File::ensureDirectoryExists(base_path('app-configs/existing_nav'));
-    File::put(base_path('app-configs/existing_nav/navigation.yml'), implode("\n", [
+    File::ensureDirectoryExists(base_path('app-configs/existing-nav'));
+    File::put(base_path('app-configs/existing-nav/navigation.yml'), implode("\n", [
         '- title: Existing',
-        '  name: existing_nav',
-        '  route: existing_nav.dashboard',
+        '  name: existing-nav',
+        '  route: existing-nav',
         '  blockMenus:',
         '    - title: Overview',
         '      navigations:',
         '        - title: Things',
-        '          route: existing_nav.things',
+        '          route: existing-nav.things',
         '          heroicon: cube',
         '',
     ]));
@@ -143,8 +171,24 @@ it('keeps an existing navigation and only inserts the dashboard entry', function
         '--icon' => 'icons.existing',
     ])->assertExitCode(0);
 
-    $parsed = Symfony\Component\Yaml\Yaml::parse(File::get(base_path('app-configs/existing_nav/navigation.yml')));
-    expect($parsed[0]['blockMenus'][0]['navigations'][0]['route'])->toBe('existing_nav.things');
+    // The app's own `route:` is no entry: the dashboard leads the first block, the rest stays.
+    $parsed = Symfony\Component\Yaml\Yaml::parse(File::get(base_path('app-configs/existing-nav/navigation.yml')));
+    expect(array_column($parsed[0]['blockMenus'][0]['navigations'], 'route'))->toBe(['existing-nav', 'existing-nav.things']);
+});
+
+it('never adds a second dashboard route or entry under the earlier route name', function (): void {
+    File::ensureDirectoryExists(base_path('routes'));
+    File::append(base_path('routes/web.php'), "\nRoute::livewire('zzold', 'zzold-dashboard')->name('zzold.dashboard');\n");
+    File::ensureDirectoryExists(base_path('app-configs/zzold'));
+    File::put(base_path('app-configs/zzold/navigation.yml'), "- title: Zz Old\n  name: zzold\n  route: zzold.dashboard\n  blockMenus:\n    - title: Overview\n      navigations:\n        - title: Dashboard\n          route: zzold.dashboard\n          heroicon: home\n");
+    $navigationBefore = File::get(base_path('app-configs/zzold/navigation.yml'));
+
+    $this->artisan('noerd:make-dashboard', ['--app' => 'zzold', '--no-interaction' => true])
+        ->expectsOutputToContain("Dashboard route 'zzold.dashboard' already exists")
+        ->assertExitCode(0);
+
+    expect(mb_substr_count(File::get(base_path('routes/web.php')), "zzold-dashboard')"))->toBe(1)
+        ->and(File::get(base_path('app-configs/zzold/navigation.yml')))->toBe($navigationBefore);
 });
 
 it('points the app at an explicit route and skips the dashboard scaffold', function (): void {
@@ -155,9 +199,9 @@ it('points the app at an explicit route and skips the dashboard scaffold', funct
         '--route' => 'custom.index',
     ])->assertExitCode(0);
 
-    expect(TenantApp::where('name', 'CUSTOM_ROUTE')->value('route'))->toBe('custom.index')
-        ->and(File::exists(base_path('resources/views/components/custom_route-dashboard.blade.php')))->toBeFalse()
-        ->and(File::exists(base_path('app-configs/custom_route/navigation.yml')))->toBeFalse();
+    expect(TenantApp::where('name', 'CUSTOM-ROUTE')->value('route'))->toBe('custom.index')
+        ->and(File::exists(base_path('resources/views/components/custom-route-dashboard.blade.php')))->toBeFalse()
+        ->and(File::exists(base_path('app-configs/custom-route/navigation.yml')))->toBeFalse();
 });
 
 it('creates an inactive tenant app when active is set to 0', function (): void {
@@ -168,7 +212,7 @@ it('creates an inactive tenant app when active is set to 0', function (): void {
         '--active' => '0',
     ])->assertExitCode(0);
 
-    $app = TenantApp::where('name', 'INACTIVE_APP')->first();
+    $app = TenantApp::where('name', 'INACTIVE-APP')->first();
     expect($app->is_active)->toBeFalse();
 });
 
@@ -179,7 +223,7 @@ it('defaults to active when active parameter is not provided', function (): void
         '--icon' => 'icons.default',
     ])->assertExitCode(0);
 
-    $app = TenantApp::where('name', 'DEFAULT_ACTIVE')->first();
+    $app = TenantApp::where('name', 'DEFAULT-ACTIVE')->first();
     expect($app->is_active)->toBeTrue();
 });
 
@@ -203,11 +247,15 @@ it('rejects invalid app input', function (array $options, string $error): void {
     ],
     'special characters in the name' => [
         ['--title' => 'Special Chars App', '--name' => 'SPECIAL-CHARS!', '--icon' => 'icons.test'],
-        'App name must contain only uppercase letters and underscores (e.g., CMS, MEDIA, MY_APP).',
+        'App name must start with a letter and contain only letters, digits and hyphens (e.g., CMS, MEDIA, MY-APP, SHOP2).',
+    ],
+    'a leading digit' => [
+        ['--title' => 'Digit App', '--name' => '2SHOP', '--icon' => 'icons.test'],
+        'App name must start with a letter and contain only letters, digits and hyphens (e.g., CMS, MEDIA, MY-APP, SHOP2).',
     ],
 ]);
 
-it('normalizes the app name to the uppercase underscore form', function (string $input, string $expected): void {
+it('normalizes the app name to the uppercase hyphen form of the module mode', function (string $input, string $expected): void {
     $this->artisan('noerd:make-app', [
         '--title' => 'Normalized App',
         '--name' => $input,
@@ -216,10 +264,11 @@ it('normalizes the app name to the uppercase underscore form', function (string 
 
     expect(TenantApp::where('name', $expected)->exists())->toBeTrue();
 })->with([
-    'lowercase with space' => ['lowercase app', 'LOWERCASE_APP'],
-    'hyphens' => ['hyphen-name', 'HYPHEN_NAME'],
-    'uppercase with space' => ['SPACED NAME', 'SPACED_NAME'],
-    'underscores kept' => ['UNDERSCORE_NAME_APP', 'UNDERSCORE_NAME_APP'],
+    'lowercase with space' => ['lowercase app', 'LOWERCASE-APP'],
+    'hyphens kept' => ['hyphen-name', 'HYPHEN-NAME'],
+    'uppercase with space' => ['SPACED NAME', 'SPACED-NAME'],
+    'underscores' => ['UNDERSCORE_NAME_APP', 'UNDERSCORE-NAME-APP'],
+    'digits' => ['shop2', 'SHOP2'],
     'single word' => ['SINGLE', 'SINGLE'],
 ]);
 
@@ -227,7 +276,7 @@ it('fails when app name already exists', function (): void {
     // First, create an app
     TenantApp::create([
         'title' => 'Existing App',
-        'name' => 'EXISTING_APP',
+        'name' => 'EXISTING-APP',
         'icon' => 'icons.existing',
         'route' => 'existing.route',
         'is_active' => true,
@@ -239,10 +288,10 @@ it('fails when app name already exists', function (): void {
         '--name' => 'EXISTING_APP',
         '--icon' => 'icons.duplicate',
     ])
-        ->expectsOutput("App with name 'EXISTING_APP' already exists.")
+        ->expectsOutput("App with name 'EXISTING-APP' already exists.")
         ->assertExitCode(1);
 
-    expect(File::exists(base_path('resources/views/components/existing_app-dashboard.blade.php')))->toBeFalse();
+    expect(File::exists(base_path('resources/views/components/existing-app-dashboard.blade.php')))->toBeFalse();
 });
 
 it('scaffolds the app as a module and leaves the registration to its install command', function (): void {

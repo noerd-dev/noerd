@@ -79,7 +79,8 @@ new class extends Component {
 title: Things
 actions:
   - label: New Thing
-    route: module.thing.detail        # or `action: listAction` when no route exists
+    modalRoute: module.thing.detail   # or `action: listAction` when no route exists
+    modalComponent: module::thing-detail   # fallback while the route is not registered
 columns:
   - field: name
     label: Name
@@ -91,7 +92,8 @@ columns:
 ```
 
 Checklist of optional YAML features (all generic, never re-implement in the component):
-- `actions:` — several header buttons (`route:` / `action:`, `heroicon`, `style: secondary`); they
+- `actions:` — several header buttons (`modalRoute:` + `modalComponent:` / `modalComponent:` /
+  `action:`, `heroicon`, `style: secondary`; `route:` never opens a modal); they
   render on the header's title row, while search, filters and the pagination summary render on
   the filter row below it (the filters scroll horizontally, nothing wraps) — never hand-build
   either row

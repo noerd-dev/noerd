@@ -72,16 +72,28 @@ afterEach(function (): void {
     File::delete(base_path('app-configs/setup/details/zz-store-guard-detail.yml'));
 });
 
-it('never inserts a record under a modelId the scoped query cannot resolve', function (): void {
+it('never inserts a record under a modelId the client repoints', function (): void {
     $unresolvable = 987654;
 
+    // The client cannot repoint the form: the update is put back, the form
+    // stays a new one and store() creates under its own key.
     $component = Livewire::test('zz-store-guard-detail');
     $component->set('modelId', $unresolvable)
+        ->assertSet('modelId', null)
         ->set('detailData', ['name' => 'Injected', 'uuid' => (string) Str::uuid()])
         ->call('store');
 
-    expect(Tenant::query()->whereKey($unresolvable)->exists())->toBeFalse()
-        ->and(Tenant::query()->where('name', 'Injected')->exists())->toBeFalse();
+    expect(Tenant::query()->whereKey($unresolvable)->exists())->toBeFalse();
+});
+
+it('never inserts a record under a modelId the scoped query cannot resolve', function (): void {
+    $unresolvable = 987654;
+
+    // A URL-bound id that resolves to nothing closes the form and is dropped.
+    Livewire::test('zz-store-guard-detail', ['modelId' => $unresolvable])
+        ->assertSet('modelId', null);
+
+    expect(Tenant::query()->whereKey($unresolvable)->exists())->toBeFalse();
 });
 
 it('still creates a record when no modelId is given and updates an existing one', function (): void {

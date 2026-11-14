@@ -26,6 +26,8 @@
     @isset($option['value'])
         <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
     @else
-        <option>{{ __($option) }}</option>
+        {{-- The label is translated, the submitted value never is: without an
+             explicit value the browser would post the translated text. --}}
+        <option value="{{ $option }}">{{ __($option) }}</option>
     @endisset
 @endforeach

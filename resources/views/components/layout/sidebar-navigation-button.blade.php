@@ -14,10 +14,11 @@ new class extends Component {
     $activeClass = $isActive ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50';
 
     // `route:` means NAVIGATE (and drives $isActive above), so opening an entry as
-    // a modal uses `modalRoute:`; `component:` stays as the fallback.
+    // a modal uses `modalRoute:`; `modalComponent:` is its fallback, or the modal
+    // target on its own.
     $naviModalRoute = ($navi['modalRoute'] ?? null);
     $naviModalRoute = $naviModalRoute && \Illuminate\Support\Facades\Route::has($naviModalRoute) ? $naviModalRoute : null;
-    $naviModalComponent = $navi['component'] ?? null;
+    $naviModalComponent = $navi['modalComponent'] ?? null;
     $opensAsModal = $naviModalRoute || $naviModalComponent;
     $naviArguments = is_array($navi['arguments'] ?? null) ? $navi['arguments'] : [];
 

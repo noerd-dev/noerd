@@ -9,6 +9,9 @@ use Illuminate\Support\Str;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
 
+/**
+ * @extends Factory<Tenant>
+ */
 class TenantFactory extends Factory
 {
     protected $model = Tenant::class;

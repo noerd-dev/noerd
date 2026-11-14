@@ -125,8 +125,7 @@ beforeEach(function (): void {
 describe('ComponentNaming', function (): void {
     it('takes only the last -list as the suffix', function (): void {
         expect(ComponentNaming::listEntity('push::push-distribution-lists-list'))->toBe('push-distribution-list')
-            ->and(ComponentNaming::selectEvent('push::push-distribution-lists-list'))->toBe('pushDistributionListSelected')
-            ->and(ComponentNaming::deepLinkParam('crm::accounts-list'))->toBe('accountId');
+            ->and(ComponentNaming::selectEvent('push::push-distribution-lists-list'))->toBe('pushDistributionListSelected');
     });
 
     it('drops namespace and subfolder for the entity but keeps them for the paired detail', function (): void {

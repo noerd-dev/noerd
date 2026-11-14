@@ -7,7 +7,7 @@ use Noerd\Helpers\TenantHelper;
 new class extends Component {
     public function openHome(): void
     {
-        TenantHelper::setSelectedApp('noerd-apps');
+        TenantHelper::setSelectedApp(TenantHelper::HOME_APP);
         $this->redirect(route('noerd.apps'), navigate: true);
     }
 

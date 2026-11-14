@@ -2,14 +2,13 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Js;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Services\RelationBoxRegistry;
 use Noerd\Support\LayoutArguments;
+use Noerd\Support\YamlModalTarget;
 
 new class extends Component {
     // Established by the hosting page at mount; a client UPDATE must never
@@ -24,7 +23,12 @@ new class extends Component {
     #[Locked]
     public array $relations = [];
 
-    /** @var array<int, array{label: string, heroicon: string, component: string, route: string, count: int, arguments: array<string, mixed>}> */
+    /**
+     * Built on the server only: `click` is an Alpine expression rendered as is.
+     *
+     * @var array<int, array{label: string, heroicon: string, click: string, count: int}>
+     */
+    #[Locked]
     public array $resolvedRelations = [];
 
     public function mount(): void
@@ -107,13 +111,22 @@ new class extends Component {
 
     /**
      * @param  array<string, mixed>  $tile
-     * @return array{label: string, heroicon: string, component: string, route: string, count: int, arguments: array<string, mixed>}|null
+     * @return array{label: string, heroicon: string, click: string, count: int}|null
      */
     private function resolveTile(array $tile, Model $model): ?array
     {
         $visible = $tile['visible'] ?? null;
 
         if ($visible instanceof Closure && ! $visible($model)) {
+            return null;
+        }
+
+        // A tile opens the related list NARROWED by the current record, which a
+        // plain list route cannot express — so the route only resolves the
+        // component, the browser URL stays put (rewriteUrl: false).
+        $click = YamlModalTarget::clickExpression($tile, $this->resolveArguments($tile['arguments'] ?? []), ['rewriteUrl' => false]);
+
+        if ($click === null) {
             return null;
         }
 
@@ -126,15 +139,11 @@ new class extends Component {
             default => 0,
         };
 
-        $route = $tile['route'] ?? null;
-
         return [
             'label' => $tile['label'] ?? '',
             'heroicon' => $tile['heroicon'] ?? 'rectangle-stack',
-            'component' => $tile['component'] ?? '',
-            'route' => $route && Route::has($route) ? $route : '',
+            'click' => $click,
             'count' => $count,
-            'arguments' => $this->resolveArguments($tile['arguments'] ?? []),
         ];
     }
 
@@ -150,16 +159,9 @@ new class extends Component {
 
 <div class="grid grid-cols-6 gap-4 pb-6">
     @foreach($resolvedRelations as $relation)
-        {{-- A tile opens the related list NARROWED by the current record, which a
-             plain list route cannot express — so the route only resolves the
-             component, the browser URL stays put (rewriteUrl: false). --}}
         <button type="button"
            wire:key="relation-{{ $loop->index }}"
-           @if ($relation['route'])
-               @click="$modalRoute({{ Js::from($relation['route']) }}, {{ Js::from($relation['arguments']) }}, null, null, null, {rewriteUrl: false, fallbackComponent: {{ Js::from($relation['component'] ?: null) }}})"
-           @else
-               @click="$modal({{ Js::from($relation['component']) }}, {{ Js::from($relation['arguments']) }})"
-           @endif
+           @click="{{ $relation['click'] }}"
            class="bg-white border border-gray-300 hover:bg-gray-50 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-left w-full">
             <x-icon name="{{ $relation['heroicon'] }}" class="w-5 h-5 shrink-0 text-gray-800"/>
             <span class="text-sm text-gray-600 truncate">{{ __($relation['label']) }} ({{ $relation['count'] }})</span>

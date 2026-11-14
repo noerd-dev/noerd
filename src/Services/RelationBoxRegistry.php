@@ -15,9 +15,10 @@ use Noerd\Support\SortedRegistrations;
  * a registration ceases to exist with its module (same reasoning as the
  * ComponentSlotsRegistry).
  *
- * A tile mirrors the YAML relation shape (`label`, `heroicon`, `component`
- * and/or `route`, `arguments` with the '$modelId' token) plus keys YAML
- * cannot express:
+ * A tile mirrors the YAML relation shape (`label`, `heroicon`, `modalRoute`
+ * with `modalComponent` as the fallback or `modalComponent` alone, `arguments`
+ * with the '$modelId' token; a tile that opens nothing is not shown) plus keys
+ * YAML cannot express:
  * - count:   Closure(Model): int  — for counts the host model has no relation
  *            method for (e.g. accounting counting a party's invoices)
  * - visible: Closure(Model): bool — e.g. hide the tile when the tenant lacks

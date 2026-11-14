@@ -228,8 +228,12 @@ protected function getYearListFilter(): ListFilter
 | `->apply(fn (Builder $query, string $value) => …)` | The constraint of a virtual column (see below) |
 | `->manual()` | The component applies the filter in its own query |
 
-A `get{Name}ListFilter()` method may also return the array form (`['label' => …, 'column' => …, 'type' => 'Picklist', 'options' => […]]`,
-also `ShowFrom` / `ShowUntil`) — `ListFilter::fromArray()` turns it into a filter.
+A `get{Name}ListFilter()` method may also return the array form — the same keys and the same
+`type` names as a YAML `filters:` entry (`['label' => …, 'column' => …, 'type' => 'picklist', 'options' => […]]`;
+`picklist`, `years`, `model`, `dateFrom`, `dateUntil`, missing = `picklist`) —
+`ListFilter::fromArray()` turns it into a filter and throws `InvalidArgumentException` for any other
+type. `noerd:update` rewrites the earlier spellings `Picklist` / `ShowFrom` / `ShowUntil` in a list
+YAML; PHP code returning them has to be changed by hand.
 
 Extract a shared filter into a trait (`app-modules/{module}/src/Traits/{Name}FilterTrait.php`,
 holding nothing but the `get{Name}ListFilter()` method) so several lists can use it. Override

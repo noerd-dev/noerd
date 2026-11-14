@@ -20,6 +20,7 @@ use Noerd\Support\Positions\PositionColumnResolver;
 use Noerd\Support\ThemeContext;
 use Noerd\Support\ThemeHelper;
 use RuntimeException;
+use Throwable;
 
 /**
  * Base trait for `*-page` components: page chrome (tabs, modal lifecycle,
@@ -139,14 +140,13 @@ trait NoerdPage
         $this->initPage();
     }
 
-    public function closeModalProcess(?string $source = null): void
+    /**
+     * Closes the modal from the view (`wire:click="closeModal"`) and refreshes
+     * the paired list.
+     */
+    public function closeModal(): void
     {
-        $this->currentTab = 1;
-
-        $this->dispatch('closeTopModal');
-        if ($source) {
-            $this->dispatch('refreshList-' . Str::afterLast($source, '.'));
-        }
+        $this->closeModalProcess($this->getListComponent());
     }
 
     /**
@@ -346,6 +346,21 @@ trait NoerdPage
     }
 
     /**
+     * Closes the top modal and refreshes the list $source names — the tail of a
+     * custom delete() or of any server-side flow that ends the dialog. Not an
+     * action: the browser calls closeModal().
+     */
+    protected function closeModalProcess(?string $source = null): void
+    {
+        $this->currentTab = 1;
+
+        $this->dispatch('closeTopModal');
+        if ($source) {
+            $this->dispatch(ComponentNaming::refreshListEvent($source));
+        }
+    }
+
+    /**
      * Runs after the page mirrored its embedded detail's form state (e.g. to
      * refresh a live preview).
      */
@@ -492,7 +507,8 @@ trait NoerdPage
     /**
      * Load the record identified by $modelId into $detailData (or keep the fresh
      * model for a new record). Returns false when the id no longer resolves — the
-     * modal is closed and the caller must stop mounting.
+     * modal is closed and the caller must stop mounting. On a full page load of
+     * this component's own route an unresolvable id aborts with 404 instead.
      */
     protected function loadDetailModel(Model $model, string $modelClass): bool
     {
@@ -508,11 +524,24 @@ trait NoerdPage
             $model = $query->find($this->modelId);
 
             if (! $model) {
+                // An id that does not resolve (deleted, mistyped, or a record of
+                // another tenant the scope hides) is a 404 when it was opened as
+                // the page itself — never an empty "new" form that would create a
+                // record on save. Inside a modal the modal closes instead.
+                if ($this->rendersAsFullPage()) {
+                    abort(404);
+                }
+
                 $this->modelId = null;
                 $this->dispatch('closeTopModal');
 
                 return false;
             }
+
+            // The id came from the URL: keep the record's real key, never the
+            // raw string a lenient database cast matched (`1,a`), so whatever
+            // renders $modelId afterwards sees a clean value.
+            $this->modelId = $model->getKey();
         }
 
         $this->detailData = collect($model->toArray())
@@ -649,6 +678,36 @@ trait NoerdPage
             $this->componentName(),
             Str::camel(class_basename($this->detailModel)),
         ));
+    }
+
+    /**
+     * Whether this component is rendered as the page of the current request: a
+     * full page load (no Livewire update request) of a Route::livewire() route
+     * whose component is this one, not embedded in a host page. A component
+     * mounted inside the modal stack mounts during a Livewire update request,
+     * an embedded detail carries `embedded`.
+     */
+    private function rendersAsFullPage(): bool
+    {
+        if ($this->embedded || request()->hasHeader('X-Livewire')) {
+            return false;
+        }
+
+        $routeComponent = request()->route()?->getAction('livewire_component');
+
+        if (! is_string($routeComponent) || $routeComponent === '') {
+            return false;
+        }
+
+        try {
+            $routeClass = class_exists($routeComponent)
+                ? $routeComponent
+                : app('livewire.factory')->resolveComponentClass($routeComponent);
+        } catch (Throwable) {
+            return false;
+        }
+
+        return $this instanceof $routeClass;
     }
 
     /**

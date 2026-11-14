@@ -14,7 +14,7 @@ uses(TestCase::class, RefreshDatabase::class);
 /*
  | Tenant::assignApp() is the one way an app reaches a tenant: it attaches the
  | pivot row once and fires TenantAppAssigned for the newly held app, whatever
- | path (screen, installer, demo, provisioning) called it.
+ | path (screen, installer, provisioning) called it.
  */
 
 beforeEach(function (): void {
@@ -45,13 +45,21 @@ it('numbers a new app behind the ones the tenant already holds', function (): vo
         ->toBe([$this->app1->id => 7, $this->app2->id => 8]);
 });
 
-it('accepts the app by id or by its stored name and refuses an unknown one', function (): void {
+it('accepts the app by id or by its name in any case and refuses an unknown id', function (): void {
     expect($this->tenant->assignApp($this->app1->id))->toBeTrue()
-        ->and($this->tenant->assignApp('ZZ_TWO'))->toBeTrue()
-        ->and($this->tenant->assignApp('ZZ_MISSING'))->toBeFalse()
+        ->and($this->tenant->assignApp('zz_two'))->toBeTrue()
         ->and($this->tenant->assignApp(999999))->toBeFalse();
 
+    expect($this->tenant->tenantApps()->pluck('name')->sort()->values()->all())->toBe(['ZZ_ONE', 'ZZ_TWO']);
     Event::assertDispatchedTimes(TenantAppAssigned::class, 2);
+});
+
+it('throws for an unknown app name instead of assigning nothing', function (): void {
+    expect(fn() => $this->tenant->assignApp('ZZ_MISSING'))
+        ->toThrow(InvalidArgumentException::class, 'ZZ_MISSING');
+
+    expect($this->tenant->tenantApps()->count())->toBe(0);
+    Event::assertNotDispatched(TenantAppAssigned::class);
 });
 
 it('keeps the pivot values handed in', function (): void {

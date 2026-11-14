@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Noerd\Commands\Support;
 
 use JsonException;
+use stdClass;
 
 /**
  * Creates or patches the Vite/Tailwind frontend scaffold of a host application.
@@ -150,14 +151,18 @@ final class FrontendScaffolder
         }
 
         try {
-            $manifest = json_decode($existing, true, 512, JSON_THROW_ON_ERROR);
+            // Objects, not arrays: an empty `{}` of the host (`"overrides": {}`) must be
+            // written back as an object — as an array it would become `[]`.
+            $manifest = json_decode($existing, false, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             $this->record('package.json', self::ACTION_WARNING, 'Invalid JSON, left untouched: ' . $exception->getMessage());
 
             return;
         }
 
-        if (! is_array($manifest)) {
+        if (! $manifest instanceof stdClass
+            || (isset($manifest->scripts) && ! $manifest->scripts instanceof stdClass)
+            || (isset($manifest->devDependencies) && ! $manifest->devDependencies instanceof stdClass)) {
             $this->record('package.json', self::ACTION_WARNING, 'Unexpected structure, left untouched.');
 
             return;
@@ -166,8 +171,10 @@ final class FrontendScaffolder
         $added = [];
 
         foreach (self::SCRIPTS as $name => $command) {
-            if (! isset($manifest['scripts'][$name])) {
-                $manifest['scripts'][$name] = $command;
+            $manifest->scripts ??= new stdClass();
+
+            if (! isset($manifest->scripts->{$name})) {
+                $manifest->scripts->{$name} = $command;
                 $added[] = 'script ' . $name;
             }
         }
@@ -175,17 +182,18 @@ final class FrontendScaffolder
         foreach ($packages as $name => $constraint) {
             // A package already declared as a runtime dependency must not be duplicated into
             // devDependencies, and an existing version range is never changed.
-            if (isset($manifest['dependencies'][$name]) || isset($manifest['devDependencies'][$name])) {
+            if (isset($manifest->dependencies->{$name}) || isset($manifest->devDependencies->{$name})) {
                 continue;
             }
 
-            $manifest['devDependencies'][$name] = $constraint;
+            $manifest->devDependencies ??= new stdClass();
+            $manifest->devDependencies->{$name} = $constraint;
             $this->missingNpmPackages[] = $name . '@' . $constraint;
             $added[] = $name;
         }
 
-        if (isset($manifest['devDependencies'])) {
-            $manifest['devDependencies'] = $this->sortByKey($manifest['devDependencies']);
+        if (isset($manifest->devDependencies)) {
+            $manifest->devDependencies = (object) $this->sortByKey((array) $manifest->devDependencies);
         }
 
         if ($added === []) {
@@ -454,9 +462,9 @@ final class FrontendScaffolder
     }
 
     /**
-     * @param  array<string, mixed>  $manifest
+     * @param  array<string, mixed>|stdClass  $manifest
      */
-    private function renderJson(array $manifest): string
+    private function renderJson(array|stdClass $manifest): string
     {
         return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL;
     }

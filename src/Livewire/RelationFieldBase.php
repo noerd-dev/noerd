@@ -8,6 +8,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Noerd\Facades\Noerd;
+use Noerd\Helpers\AccessHelper;
 use Noerd\Support\RelationFieldDefinition;
 
 /**
@@ -110,7 +111,7 @@ abstract class RelationFieldBase extends Component
      * the owner id so a selection only lands in the field that opened the
      * picker — a custom renderer opens its picker with exactly this value.
      */
-    public function selectionContext(): string
+    protected function selectionContext(): string
     {
         return $this->owner ? $this->fieldName . '@' . $this->owner : $this->fieldName;
     }
@@ -120,7 +121,7 @@ abstract class RelationFieldBase extends Component
      *
      * @return array<string, mixed>
      */
-    public function numberedRowField(): array
+    protected function numberedRowField(): array
     {
         return [
             'name' => $this->fieldName,
@@ -178,7 +179,10 @@ abstract class RelationFieldBase extends Component
     {
         $definition = $this->activeDefinition();
 
+        // The title is read off the related record: only for a user who may read
+        // that model — the field then shows the raw value's absence, not a name.
         $this->displayTitle = $definition && $this->value !== null && $this->value !== ''
+            && AccessHelper::canReadObject($definition->modelClass)
             ? $definition->resolveTitleForValue($this->value)
             : '';
     }

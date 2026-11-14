@@ -67,14 +67,19 @@ new class extends Component {
         && config('noerd.features.new_tenant');
 @endphp
 
-<x-noerd::action-menu align="left" width="w-56" wrapperClass="relative hidden lg:flex" panelClass="top-full">
+{{-- Reachable on every screen width: below `lg` the trigger shrinks to its icon
+     (the tenant name stays readable for screen readers), the menu is the same. --}}
+<x-noerd::action-menu align="left" width="w-56" wrapperClass="relative flex" panelClass="top-full">
     <x-slot:trigger>
         <x-noerd::button variant="pill"
                          icon="building-office-2"
                          @click="open = ! open"
+                         class="relative"
+                         x-bind:aria-expanded="open"
+                         aria-haspopup="true"
                          title="{{ __('Switch Tenant') }}">
-            <span class="max-w-[12rem] truncate">{{ $currentTenantName }}</span>
-            <x-icon name="chevron-down" mini class="ml-1 h-4 w-4 shrink-0" />
+            <span class="max-w-[12rem] truncate max-lg:sr-only">{{ $currentTenantName }}</span>
+            <x-icon name="chevron-down" mini class="ml-1 h-4 w-4 shrink-0 max-lg:hidden" />
         </x-noerd::button>
     </x-slot:trigger>
 

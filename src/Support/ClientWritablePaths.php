@@ -11,12 +11,18 @@ use Illuminate\Support\Str;
  * resolved field layout (`$pageLayout`, a locked property) plus the paths a
  * component declares for hand-built inputs (`additionalDetailFields()`).
  *
- * Two kinds of paths are protected:
- * - a field marked `readonly: true` — the browser only renders the control as
- *   read-only, so the value must not be changeable through a crafted update;
+ * Three kinds of paths are protected:
+ * - a field marked `readonly: true`, and a field rendered as text (a text-only
+ *   theme such as `display`, on the field, its block or the whole layout — see
+ *   FieldRules::rendersAsText()) — the browser shows no editable control, so
+ *   the value must not be changeable through a crafted update;
  * - everything below a NESTED ROOT that is not a bound field: a key the layout
  *   binds only through nested paths (`detailData.custom_attributes.sap_number`)
- *   must not let the client add or replace the other keys of that array.
+ *   must not let the client add or replace the other keys of that array;
+ * - every top-level key of a BOUND PROPERTY that no field declares: once the
+ *   layout binds `detailData.*`, a crafted update of `detailData.tenant_id` or
+ *   `detailData.id` is no input of the form (fail-closed — also when the layout
+ *   carries no readonly field and no nested root).
  *
  * Server-side writes are never affected — this only describes the client channel.
  *
@@ -36,24 +42,14 @@ final class ClientWritablePaths
     /**
      * @param  array<int, mixed>  $fields
      * @param  array<int, mixed>  $additional  full field names of hand-built inputs
+     * @param  string|null  $layoutTheme  the theme of the whole layout (`$pageLayout['theme']`)
      */
-    public static function fromLayout(array $fields, array $additional = []): self
+    public static function fromLayout(array $fields, array $additional = [], ?string $layoutTheme = null): self
     {
         $readonly = [];
         $writable = [];
 
-        LayoutFields::walk($fields, function (array $field) use (&$readonly, &$writable): void {
-            $name = $field['name'] ?? null;
-            if (! is_string($name) || ! str_contains($name, '.') || ComputedFields::isComputed($field)) {
-                return;
-            }
-
-            if (! empty($field['readonly'])) {
-                $readonly[] = $name;
-            } else {
-                $writable[] = $name;
-            }
-        });
+        self::collect($fields, $layoutTheme, $readonly, $writable);
 
         foreach ($additional as $name) {
             if (is_string($name) && str_contains($name, '.')) {
@@ -80,7 +76,9 @@ final class ClientWritablePaths
             ? (fn(): array => $this->additionalDetailFields())->call($component)
             : [];
 
-        return self::fromLayout(is_array($fields) ? $fields : [], $additional);
+        $theme = $component->pageLayout['theme'] ?? null;
+
+        return self::fromLayout(is_array($fields) ? $fields : [], $additional, is_string($theme) ? $theme : null);
     }
 
     /**
@@ -98,6 +96,20 @@ final class ClientWritablePaths
      */
     public function allows(string $fullPath): bool
     {
+        $property = Str::before($fullPath, '.');
+
+        if (in_array($property, $this->boundProperties(), true)) {
+            // Replacing the whole bound property may smuggle in any key.
+            if (! str_contains($fullPath, '.')) {
+                return false;
+            }
+
+            $key = Str::before(Str::after($fullPath, $property . '.'), '.');
+            if (! in_array($key, $this->declaredKeysOf($property), true)) {
+                return false;
+            }
+        }
+
         foreach ($this->readonly as $path) {
             if (self::touches($fullPath, $path)) {
                 return false;
@@ -122,15 +134,33 @@ final class ClientWritablePaths
     }
 
     /**
-     * The component properties holding protected paths (`detailData`, …).
+     * The component properties holding protected paths (`detailData`, …): every
+     * property a field of the layout (or a declared hand-built input) binds.
      *
      * @return list<string>
      */
     public function properties(): array
     {
-        $roots = array_merge($this->readonly, array_keys($this->nestedRoots()));
+        return $this->boundProperties();
+    }
 
-        return array_values(array_unique(array_map(fn(string $path): string => Str::before($path, '.'), $roots)));
+    /**
+     * The top-level keys of one property a field declares (`name`,
+     * `custom_attributes`, …) — every other key is no input of the form.
+     *
+     * @return list<string>
+     */
+    public function declaredKeysOf(string $property): array
+    {
+        $keys = [];
+
+        foreach (array_merge($this->readonly, $this->writable) as $path) {
+            if (str_starts_with($path, $property . '.')) {
+                $keys[] = Str::before(Str::after($path, $property . '.'), '.');
+            }
+        }
+
+        return array_values(array_unique($keys));
     }
 
     /**
@@ -163,6 +193,41 @@ final class ClientWritablePaths
     }
 
     /**
+     * Sort the named fields into readonly and writable paths, depth-first
+     * through `type: block` groups, a block's theme inherited by its fields.
+     *
+     * @param  array<int, mixed>  $fields
+     * @param  list<string>  $readonly
+     * @param  list<string>  $writable
+     */
+    private static function collect(array $fields, ?string $inheritedTheme, array &$readonly, array &$writable): void
+    {
+        foreach ($fields as $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+
+            if (($field['type'] ?? null) === 'block') {
+                $blockTheme = is_string($field['theme'] ?? null) ? $field['theme'] : $inheritedTheme;
+                self::collect(is_array($field['fields'] ?? null) ? $field['fields'] : [], $blockTheme, $readonly, $writable);
+
+                continue;
+            }
+
+            $name = $field['name'] ?? null;
+            if (! is_string($name) || ! str_contains($name, '.') || ComputedFields::isComputed($field)) {
+                continue;
+            }
+
+            if (! empty($field['readonly']) || FieldRules::rendersAsText($field, $inheritedTheme)) {
+                $readonly[] = $name;
+            } else {
+                $writable[] = $name;
+            }
+        }
+    }
+
+    /**
      * @param  list<string>  $paths
      * @return list<string>
      */
@@ -177,6 +242,17 @@ final class ClientWritablePaths
         }
 
         return $relative;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function boundProperties(): array
+    {
+        return array_values(array_unique(array_map(
+            fn(string $path): string => Str::before($path, '.'),
+            array_merge($this->readonly, $this->writable),
+        )));
     }
 
     /**

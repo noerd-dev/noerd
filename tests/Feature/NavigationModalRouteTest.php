@@ -26,22 +26,22 @@ beforeEach(function (): void {
 });
 
 describe('modal routes', function (): void {
-    it('renders the + button as $modalRoute for newRoute', function (): void {
+    it('renders the + button as $modalRoute for newModalRoute', function (): void {
         $html = renderNavigationElement([
             'title' => 'Accounts',
             'route' => 'zz.nav.accounts',
-            'newRoute' => 'zz.nav.account.detail',
+            'newModalRoute' => 'zz.nav.account.detail',
         ]);
 
         expect($html)->toContain('$modalRoute(')
             ->toContain('zz.nav.account.detail');
     });
 
-    it('keeps the + button on $modal for newComponent', function (): void {
+    it('keeps the + button on $modal for newModalComponent', function (): void {
         $html = renderNavigationElement([
             'title' => 'Accounts',
             'route' => 'zz.nav.accounts',
-            'newComponent' => 'zz::account-detail',
+            'newModalComponent' => 'zz::account-detail',
         ]);
 
         expect($html)->toContain('$modal(')
@@ -49,12 +49,12 @@ describe('modal routes', function (): void {
             ->not->toContain('$modalRoute(');
     });
 
-    it('prefers newRoute over newComponent and keeps the component as fallback', function (): void {
+    it('prefers newModalRoute over newModalComponent and keeps the component as fallback', function (): void {
         $html = renderNavigationElement([
             'title' => 'Accounts',
             'route' => 'zz.nav.accounts',
-            'newRoute' => 'zz.nav.account.detail',
-            'newComponent' => 'zz::account-detail',
+            'newModalRoute' => 'zz.nav.account.detail',
+            'newModalComponent' => 'zz::account-detail',
         ]);
 
         expect($html)->toContain('$modalRoute(')
@@ -62,12 +62,12 @@ describe('modal routes', function (): void {
             ->toContain('zz::account-detail');
     });
 
-    it('falls back to newComponent when newRoute is not registered', function (): void {
+    it('falls back to newModalComponent when newModalRoute is not registered', function (): void {
         $html = renderNavigationElement([
             'title' => 'Accounts',
             'route' => 'zz.nav.accounts',
-            'newRoute' => 'zz.nav.route.that.does.not.exist',
-            'newComponent' => 'zz::account-detail',
+            'newModalRoute' => 'zz.nav.route.that.does.not.exist',
+            'newModalComponent' => 'zz::account-detail',
         ]);
 
         expect($html)->toContain('$modal(')
@@ -97,11 +97,11 @@ describe('modal routes', function (): void {
             ->not->toContain('$modal(');
     });
 
-    it('opens the + button in the narrow panel for a quickCreate newRoute', function (): void {
+    it('opens the + button in the narrow panel for a quickCreate newModalRoute', function (): void {
         $html = renderNavigationElement([
             'title' => 'Accounts',
             'route' => 'zz.nav.accounts',
-            'newRoute' => 'zz.nav.account.detail',
+            'newModalRoute' => 'zz.nav.account.detail',
             'quickCreate' => true,
         ]);
 
@@ -113,7 +113,7 @@ describe('modal routes', function (): void {
     it('passes the entry arguments to the modal it opens', function (): void {
         $html = renderNavigationElement([
             'title' => 'Accounts',
-            'component' => 'zz::accounts-list',
+            'modalComponent' => 'zz::accounts-list',
             'arguments' => ['accountType' => 'vip'],
         ]);
 
@@ -167,7 +167,7 @@ describe('unregistered routes', function (): void {
           link: /zz-somewhere
         -
           title: 'Zz Modal Entry'
-          component: zz-some-modal
+          modalComponent: zz-some-modal
 YAML);
 
         $admin = NoerdUser::factory()->adminUser()->create();

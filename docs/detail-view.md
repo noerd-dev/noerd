@@ -23,7 +23,7 @@ tabs:
     label: Pricing
   - label: Stock Movements
     modalRoute: inventory.item.movements
-    component: inventory::stock-movements-list
+    modalComponent: inventory::stock-movements-list
     arguments:
       itemId: $modelId
     requiresId: true
@@ -77,8 +77,8 @@ plus the Blade slots below) or a **link** that opens something else. Tabs are re
 | `number` | Panel index (1-based) |
 | `label` | Tab label (translation key) |
 | `modalRoute` | Named route opened as a MODAL via `$modalRoute(...)` instead of switching panels — for an addressable target (see [Modals](modal.md#route-modals)). The tab also carries the route's URL as `href` (cmd/ctrl-click, "open in new tab"); `routeParameters` fills the route parameters |
-| `component` | Livewire component opened as a MODAL via `$modal(...)` — it is never embedded inline. Also the fallback for a `modalRoute` that is not registered |
-| `arguments` | Arguments passed to the modal (`modalRoute` and `component`): the `$modelId` token resolves to the current record id, `$property` to any public property of the component, everything else passes through unchanged |
+| `modalComponent` | Livewire component opened as a MODAL via `$modal(...)` — it is never embedded inline. Also the fallback for a `modalRoute` that is not registered |
+| `arguments` | Arguments passed to the modal (`modalRoute` and `modalComponent`): the `$modelId` token resolves to the current record id, `$property` to any public property of the component, everything else passes through unchanged |
 | `route` | Named route the tab navigates to (`wire:navigate`); rendered active while the current request matches it |
 | `requiresId` | Only show the tab when editing an existing record |
 | `permission` | Gate ability required to see the tab; `permissionModel` (optional) is passed as the ability's model argument |
@@ -88,7 +88,7 @@ plus the Blade slots below) or a **link** that opens something else. Tabs are re
 
 `requiresId`, `permission` and `viewExists` are evaluated on the server
 (`Noerd\Support\TabVisibility::renders()`), `showIf` / `showIfNot` become an Alpine `x-show`
-(`Noerd\Support\FieldVisibility`).
+built by the core.
 
 ### `<x-noerd::tab-content>` Slots
 
@@ -117,7 +117,7 @@ named slots — no hand-rolled panels needed:
 </x-noerd::tab-content>
 ```
 
-Tabs with `component:`/`modalRoute:` open a modal and render no panel; without a `tabs:` key
+Tabs with `modalComponent:`/`modalRoute:` open a modal and render no panel; without a `tabs:` key
 the fields render as a single panel and no tab bar. In quick-create mode only the required (or
 `quickCreate: true`) fields render as one column and every slot is skipped.
 
@@ -383,9 +383,12 @@ app(PositionTableRegistry::class)->register('accounting::invoice-detail', Invoic
 </x-noerd::positions.section>
 ```
 
-**Row component** — `Noerd\Traits\NoerdPositionRow` provides `$position`, `$row` (attribute → value,
-the `wire:model` target), the `#[Locked]` `$columns`, `$theme` and `$number`. A row component never
-calls `detailTheme()` itself — it has no page layout:
+**Row component** — `Noerd\Traits\NoerdPositionRow` provides `$row` (attribute → value, the
+`wire:model` target), the `#[Locked]` `$columns`, `$theme` and `$number`, and the position's record.
+The record is never a public property: the row keeps the `#[Locked]` `$positionClass` and `$positionId`
+and loads the record once per request — read it as `$this->position` (a computed property) or
+`$this->loadPosition()`. `initPositionRow()` takes the saved record, or its key plus the model class as
+fifth argument. A row component never calls `detailTheme()` itself — it has no page layout:
 
 ```php
 use Noerd\Traits\NoerdPositionRow;
@@ -430,13 +433,16 @@ new class extends Component
   Because `$columns` is locked, a client cannot add a field — a tampered `row.*` key is never written.
 - `positionColumnCount()` is the column count plus the action column; `positions.row` adds the
   number column itself in a numbering theme.
-- `delete()` deletes the position and dispatches `positionDeleted`; override it when needed.
+- `delete()` deletes the position (only with the write permission of the position model) and
+  dispatches `positionDeleted`; override it when needed.
+- A row whose record cannot be loaded any more (deleted in the meantime) writes nothing: the
+  write guard refuses its `store()`/`delete()`.
 
 ## Detail Actions
 
 Action buttons render as a row above the form — for record-level operations such as "Archive" or
 "Generate PDF". A button calls a public Livewire method of the detail component (`action:`), opens
-a modal (`route:` / `modalComponent:`) or is a link (`url:`).
+a modal (`modalRoute:` / `modalComponent:`) or is a link (`url:`).
 
 ### Automatic Rendering
 
@@ -477,11 +483,11 @@ fields:
 | Property | Description |
 |----------|-------------|
 | `label` | Button label (translation key) |
-| `route` | Named `Route::livewire()` route opened as a modal (preferred for record targets) |
-| `modalComponent` | Livewire component opened as a modal — also the fallback when `route` is not registered |
+| `modalRoute` | Named `Route::livewire()` route opened as a modal (preferred for record targets) |
+| `modalComponent` | Livewire component opened as a modal — also the fallback when `modalRoute` is not registered |
 | `url` | Renders the action as a plain link (`<a href>`) instead of a button — either a literal URL (`http…` / `/…`) or a key in the `urls` map (see [Link Actions](#link-actions)) |
 | `newTab` | Only with `url:` — defaults to `true` (`target="_blank"`). Set to `false` to open in the same tab |
-| `action` | Livewire method called via `wire:click` (used when neither `route`, `modalComponent` nor `url` is set) |
+| `action` | Livewire method called via `wire:click` (used when neither `modalRoute`, `modalComponent` nor `url` is set) |
 | `heroicon` | Optional heroicon rendered before the label |
 | `confirm` | Optional confirmation prompt shown via `wire:confirm` (translation key) |
 | `loading` | Only with `action:` — alternate label shown while the method runs (`wire:loading`, translation key); the button is disabled meanwhile |
@@ -490,14 +496,16 @@ fields:
 | `showIfNot` | The negated form of `showIf`. Both may sit on the same action and are combined with AND |
 | `viewExists` | Optional view name — the button is hidden when that view is not registered, so YAML may reference an optional module safely |
 
-Precedence is `route:` → `modalComponent:` → `url:` → `action:`. A `route:` action whose route is
-not registered and that has no `modalComponent` is not rendered at all. See
-[Modal System](modal.md#route-modals) for when a route is the right target.
+Precedence is `modalRoute:` → `modalComponent:` → `url:` → `action:`. A `modalRoute:` action whose
+route is not registered and that has no `modalComponent` is not rendered at all. See
+[Modal System](modal.md#modal-targets-in-yaml) for the vocabulary every YAML shares and
+[Route modal or component modal?](modal.md#route-modal-or-component-modal) for when a route is the
+right target.
 
 ```yaml
 actions:
   - label: Open Supplier
-    route: inventory.supplier.detail
+    modalRoute: inventory.supplier.detail
     modalComponent: inventory::supplier-detail   # fallback if the route is not registered
     viewExists: inventory::components.supplier-detail
     heroicon: building-office
@@ -670,7 +678,10 @@ new class extends Component {
 </x-noerd::page>
 ```
 
-The trait defaults hydrate `$detailData` from `$detailModel` on mount, validate via
+The trait defaults hydrate `$detailData` from `$detailModel` on mount. A `$modelId` that does not
+resolve on mount (deleted, mistyped, or another tenant's record hidden by the tenant scope) never
+falls back to an empty "new" form: opened as the page of its own `Route::livewire()` route the
+request answers 404, inside the modal stack the modal closes and the mount stops. The trait defaults validate via
 `validateFromLayout()` and persist `$this->writableDetailData($modelClass)` on `store()`: with a
 `$modelId` the record is resolved through the scoped query (`find()`) and updated
 (`fill()->save()`) — an id that does not resolve for this user (another tenant's, a deleted or an
@@ -711,12 +722,21 @@ the property to `true` after persisting.
 channel of every `NoerdPage`/`NoerdDetail` component (`Noerd\Support\ClientWritablePaths` derives
 the rules from `$pageLayout`, a locked property):
 
-- a field with `readonly: true` keeps the value the server rendered — a crafted
-  `$wire.set('detailData.code', …)`, a replaced `detailData` array or a client-dispatched
+- a field with `readonly: true` — and a field rendered as text (a text-only theme such as
+  `display`, on the field, its block or the whole layout) — keeps the value the server rendered: a
+  crafted `$wire.set('detailData.code', …)`, a replaced `detailData` array or a client-dispatched
   `setFieldValue` is discarded;
 - a key the layout binds only through nested paths — `custom_attributes` above all — is a
   NESTED ROOT: the client may change exactly the bound paths below it
   (`detailData.custom_attributes.sap_number`); every other key keeps the server's value.
+- fail-closed for every property a field binds (`detailData`, a settings page's properties): a
+  top-level key that no field and no `additionalDetailFields()` entry declares keeps the server's
+  value — `detailData.tenant_id`, `detailData.id` or any other column a crafted update adds is put
+  back (or dropped when the server never had it), also when the layout has no readonly field and no
+  nested root, and also for a hand-written `store()` that mass-assigns `$detailData`;
+- `$modelId` keeps the record the form was mounted with: a client update repointing it is put back,
+  so `store()`/`delete()` never act on another record with the form state of the first one. A
+  hosting page adopting the id of a newly created embedded record does so server-side.
 
 The values are reverted, not rejected: a read-only currency input still sends its parsed value on
 blur, and that must not break the page. Server-side writes — `mount()`, actions, `*Selected`
@@ -724,8 +744,9 @@ handlers, a value a component writes into a readonly field before `store()` — 
 channel and are untouched.
 
 An input the Blade binds without a layout field
-(`wire:model="detailData.custom_attributes.sap_number"`, or every field of a hand-built `*-page`
-that uses the default `store()`) must be declared, as full field names:
+(`wire:model="detailData.custom_attributes.sap_number"`, a hand-built `detailData.sort` input next to
+the form, or every field of a hand-built `*-page` that uses the default `store()`) must be declared,
+as full field names — otherwise its input is reverted on every update:
 
 ```php
 protected function additionalDetailFields(): array
@@ -822,7 +843,7 @@ Initial field values are **not** such a case either: they are configuration and 
 - **validateFromLayout():** Validates every shown field: `required:`, the rules of its type and its `validation:` list (plus relation-form rules) — see [Field Types](field-types.md#validation)
 - **getListComponent():** Derives the list refreshed on close from the component name (`item-detail` → `items-list`, namespace kept); override it when the list does not follow the plural convention
 - **componentName():** The name the YAML, session keys and trait events resolve by (Livewire's component name, `NoerdComponentShared`); override `getDetailComponent()` for a component that renders another component's detail YAML
-- The Eloquent model is **never** stored as a property of a detail or page component (the one exception is a position row: `NoerdPositionRow::$position`)
+- The Eloquent model is **never** stored as a property of a detail or page component (a position row keeps only the `#[Locked]` class and key and loads its record per request)
 - **tenant_id:** Do not set `tenant_id` manually in `store()`. Models using the `BelongsToTenant` trait have `tenant_id` assigned automatically on creation.
 - **Extension slots:** `<x-noerd::detail-slot name="item-below-form" :modelId="$modelId" />` marks a position where other modules mount their own Livewire components — see [ComponentSlotsRegistry](extension-registries.md#componentslotsregistry)
 
@@ -863,11 +884,13 @@ Initial field values are **not** such a case either: they are configuration and 
 The browser posts a whole selection to Livewire in ONE request, and PHP refuses a request holding
 more than `max_file_uploads` files (20 by default) or more than `post_max_size` bytes — before any
 application code runs, with nothing in the log and nothing on the screen. The dropzone therefore
-reads both limits (`Noerd\Support\UploadLimits`) and uploads a larger selection in consecutive
+reads both limits itself and uploads a larger selection in consecutive
 batches that fit (`Uploading 20 of 40...`); `files-updated` fires once per batch rather than once
 per selection. Nothing is configurable and nothing in a consuming module has to change —
 `max_file_uploads` is a PHP-level limit no validation rule can raise. A batch the server still
-refuses (a proxy limit, a failed request) surfaces as a message on the dropzone.
+refuses (a proxy limit, a failed request) surfaces as one message on the dropzone and ends the
+upload, so the dropzone is usable again at once. A selection dropped while an upload runs is queued
+and uploaded right after it.
 
 ## Naming Conventions
 

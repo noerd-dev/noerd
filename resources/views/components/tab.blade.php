@@ -2,7 +2,8 @@
 
 @php
     // `route:` navigates, `modalRoute:` opens the record's own route as a modal.
-    // `component:` remains the fallback for an unregistered modalRoute.
+    // `component` (the tab's YAML `modalComponent:`) is the fallback for an
+    // unregistered modalRoute, or the modal target on its own.
     $tabModalRoute = $modalRoute && \Illuminate\Support\Facades\Route::has($modalRoute) ? $modalRoute : null;
     $opensAsModal = $tabModalRoute || $component;
 @endphp
@@ -14,7 +15,7 @@
             role="tab"
             @click="currentTab = {{ $tabNumber }}"
             :aria-selected="currentTab == {{ $tabNumber }}"
-            class="mr-6 -mb-[1px] cursor-pointer border-b-2 border-transparent text-gray-600 hover:border-gray-500 focus:outline-none focus-visible:outline-none"
+            class="mr-6 -mb-[1px] cursor-pointer border-b-2 border-transparent text-gray-600 hover:border-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-border focus-visible:rounded-sm"
             :class="{'border-brand-primary! text-black!': currentTab == {{ $tabNumber }} }"
         >
             <span class="group inline-flex items-center rounded-sm border-b-2 border-transparent p-0 py-3 text-sm">
@@ -30,7 +31,7 @@
             @if ($external) target="_blank" @else wire:navigate @endif
             href="{{ route($route, $routeParameters ?? null) }}"
             @class([
-                '-mb-[1px] border-b-2 text-gray-600 mr-6 hover:border-gray-500 focus:outline-none focus-visible:outline-none',
+                '-mb-[1px] border-b-2 text-gray-600 mr-6 hover:border-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-border focus-visible:rounded-sm',
                 'border-brand-primary! text-black!' => $active,
                 'border-transparent' => !$active,
             ])
@@ -55,10 +56,12 @@
             : '$modal(' . \Illuminate\Support\Js::from($component) . ', ' . \Illuminate\Support\Js::from($arguments ?? []) . ')';
     @endphp
     <div class="mr-6 -mb-[1px] inline-flex items-center border-b-2 border-transparent hover:border-gray-500">
-        <a
-            @if ($componentRouteUrl) href="{{ $componentRouteUrl }}" @endif
+        {{-- With a URL the tab is a link (cmd/ctrl-click opens the page); without
+             one it is a button, so the keyboard reaches it as well. --}}
+        <{{ $componentRouteUrl ? 'a' : 'button' }}
+            @if ($componentRouteUrl) href="{{ $componentRouteUrl }}" @else type="button" @endif
             @click="if (! $event.metaKey && ! $event.ctrlKey) { $event.preventDefault(); {{ $clickExpression }}; }"
-            class="cursor-pointer text-gray-600 focus:outline-none focus-visible:outline-none"
+            class="cursor-pointer text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-border focus-visible:rounded-sm"
         >
             <span class="group inline-flex items-center rounded-sm border-b-2 border-transparent p-0 py-3 text-sm">
                 {{-- The label stays the first flex item: an SVG in front would become the
@@ -67,6 +70,6 @@
                 {{-- Marks the tab as opening its own modal instead of an inline panel. --}}
                 <x-icon name="square-2-stack" data-modal-tab-icon="true" class="ml-1 h-4 w-4 shrink-0 text-gray-400" />
             </span>
-        </a>
+        </{{ $componentRouteUrl ? 'a' : 'button' }}>
     </div>
 @endif

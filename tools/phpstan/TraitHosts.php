@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Noerd\Commands\Concerns\HasModuleInstallation;
 use Noerd\Commands\Concerns\PublishesAuditMigration;
+use Noerd\Testing\Concerns\CreatesSetupUser;
 use Noerd\Traits\AdministersNoerdUsers;
 use Noerd\Traits\GuardedByObjectPermission;
 use Noerd\Traits\HasEmailPreview;
@@ -17,6 +18,7 @@ use Noerd\Traits\NoerdList;
 use Noerd\Traits\NoerdPage;
 use Noerd\Traits\NoerdPositionRow;
 use Noerd\Traits\NoerdSettingsPage;
+use Noerd\Traits\OpensTenantApps;
 use Noerd\Traits\SetupLanguageFilter;
 
 /*
@@ -57,7 +59,7 @@ final class EmailPreviewHost extends Component
 {
     use HasEmailPreview;
 
-    public function getSampleEmailData(): array
+    protected function getSampleEmailData(): array
     {
         return [];
     }
@@ -122,4 +124,14 @@ final class ModuleInstallCommandHost extends Command
     {
         return '';
     }
+}
+
+final class AppLauncherHost extends Component
+{
+    use OpensTenantApps;
+}
+
+final class SetupUserTestHost
+{
+    use CreatesSetupUser;
 }

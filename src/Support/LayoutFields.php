@@ -70,4 +70,59 @@ final class LayoutFields
 
         return $fields;
     }
+
+    /**
+     * Whether a field name is safe to render into the form's bindings: letters
+     * (umlauts included), digits, `_`, `.`, space, `/` and `-` — the characters
+     * real column paths use (`detailData.Kante A oben`), and nothing that can
+     * end a string or form an expression in a directive (quotes, parentheses,
+     * `;`, `=`, backticks, `<`, `>`, `$`, `{`, `}`).
+     */
+    public static function isSafeName(mixed $name): bool
+    {
+        return is_string($name) && $name !== '' && preg_match('/^[\p{L}\p{N}_. \/-]+$/u', $name) === 1;
+    }
+
+    /**
+     * Drop every field (blocks recursed) whose `name` is set but not a safe name
+     * ({@see isSafeName()}). A layout is configuration — the YAML, or a layout
+     * override a tenant stored — and field names end up in `wire:model`,
+     * `wire:click` (`type: button`) and Alpine expressions; one crafted name
+     * must not become script. A field without a name (spacer, block) stays.
+     *
+     * @param  array<int, mixed>  $fields
+     * @param  (callable(string): void)|null  $onDropped  told the name of every dropped field
+     * @return array<int, mixed>
+     */
+    public static function withoutUnsafeNames(array $fields, ?callable $onDropped = null): array
+    {
+        $kept = [];
+
+        foreach ($fields as $field) {
+            if (! is_array($field)) {
+                $kept[] = $field;
+
+                continue;
+            }
+
+            if (($field['type'] ?? null) === 'block') {
+                $field['fields'] = self::withoutUnsafeNames(is_array($field['fields'] ?? null) ? $field['fields'] : [], $onDropped);
+                $kept[] = $field;
+
+                continue;
+            }
+
+            if (array_key_exists('name', $field) && ! self::isSafeName($field['name'])) {
+                if ($onDropped !== null) {
+                    $onDropped(is_scalar($field['name']) ? (string) $field['name'] : get_debug_type($field['name']));
+                }
+
+                continue;
+            }
+
+            $kept[] = $field;
+        }
+
+        return $kept;
+    }
 }

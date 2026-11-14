@@ -95,7 +95,7 @@ new class extends \Noerd\Livewire\RelationFieldComponent {}; ?>
 
 <div>
     {{-- custom markup; open the picker exactly like the generic template: --}}
-    {{-- @click="$modal('{{ $listComponent }}', {id: {{ $modelId ?: 'null' }}, context: '{{ $this->selectionContext() }}', listActionMethod: 'selectAction'})" --}}
+    {{-- @click="$modal({{ \Illuminate\Support\Js::from((string) $listComponent) }}, {id: {{ \Illuminate\Support\Js::from($modelId ?: null) }}, context: {{ \Illuminate\Support\Js::from($this->selectionContext()) }}, listActionMethod: 'selectAction'})" --}}
 </div>
 ```
 
@@ -161,7 +161,7 @@ allowed type that is not registered (its module is not installed) is dropped fro
 - **Read-only:** `readonly` is enforced on the server — a read-only field ignores a selection and
   `clear()`; hiding the affordances is not the guard
 - **Owner scoping:** the detail block passes the owning detail's Livewire id as `owner`. The
-  picker context becomes `{fieldName}@{owner}` (`RelationFieldComponent::selectionContext()`) and
+  picker context becomes `{fieldName}@{owner}` (`RelationFieldBase::selectionContext()`, protected — a custom renderer calls it from its own view) and
   `setFieldValue` carries the owner, so two stacked details sharing a field name never adopt each
   other's selection
 - **Validation messages:** the field receives the owning detail's error bag entries for its
@@ -187,4 +187,4 @@ by editing the two templates — no PHP is duplicated.
 The numbered templates render inside `<x-noerd::detail.numbered-row>` and need the row number:
 `RelationFieldRegistry` puts `number` into the component props whenever the field carries one — the
 detail block numbers fields in a theme with `numbersRows`, and a `number:` declared in the YAML
-travels in every theme. The base class exposes it as `$this->numberedRowField()`.
+travels in every theme. The base class exposes it to its views as the protected `$this->numberedRowField()`.

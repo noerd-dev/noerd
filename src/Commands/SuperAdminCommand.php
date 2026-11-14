@@ -12,8 +12,8 @@ use Noerd\Models\NoerdUser;
  * Grants or revokes the installation-level super admin flag. The flag is
  * deliberately NOT editable from any screen ($guarded on the model): a tenant
  * admin must never be able to promote an account to administer the whole
- * installation, so the console is the only way in — and, with --revoke, the
- * only way out.
+ * installation, so the console is the only way in (this command, or
+ * noerd:make-admin-user --super-admin) — and, with --revoke, the only way out.
  */
 class SuperAdminCommand extends Command
 {
@@ -77,8 +77,10 @@ class SuperAdminCommand extends Command
         }
 
         // Without any super admin nobody administers the installation as a
-        // whole any more (unassigned accounts, tenants without an admin).
-        // noerd:install can bootstrap one again, but that is a deliberate step.
+        // whole any more (unassigned accounts, tenants without an admin). Only
+        // the console grants one again (this command, or noerd:make-admin-user
+        // --super-admin) — noerd:install creates its first admin only while the
+        // installation has no user at all.
         $isLast = NoerdUser::query()->where('super_admin', true)->whereKeyNot($user->id)->doesntExist();
 
         if ($isLast && ! $this->option('force')) {
