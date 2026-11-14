@@ -16,7 +16,7 @@ use Throwable;
  * configs, the package config, the frontend scaffold, the Livewire layout and
  * the public assets. Both commands run the exact same sequence
  * (publishNoerdContent()) — install adds the one-time setup on top (migrations,
- * tenant, admin user, demo app), update only re-publishes.
+ * tenant, admin user), update only re-publishes.
  */
 trait PublishesNoerdContent
 {

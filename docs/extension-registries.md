@@ -525,7 +525,7 @@ Gate::define(AccessHelper::APP_GATE, function (?Authenticatable $user, string $a
 ## Tenant App Assignment (`Tenant::assignApp()` / `removeApp()`)
 
 An app reaches a tenant through ONE method, whatever triggers it — the Setup → Apps screen, a module's
-`noerd:install-{module}` (including the apps it requires), `noerd:install`, `noerd:demo`, a copied tenant,
+`noerd:install-{module}` (including the apps it requires), `noerd:install`, a copied tenant,
 a provisioning service:
 
 ```php

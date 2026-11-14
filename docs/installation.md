@@ -27,8 +27,6 @@ The install command can be run in a fresh or an existing Laravel application. It
 3. **Create an admin user** — the first user of the installation, a super admin. When users already
    exist the step is skipped; promote one with `php artisan noerd:promote-admin {user}` (an ID or email).
 4. **Run `npm run build`** — compiles the frontend assets (see [Frontend](#frontend)).
-5. **Install the Demo App (recommended)** — a working Demo Customers app with model, migration, YAML
-   configuration and navigation (see [Example Application](example-application.md)).
 
 Every skipped step can be run later with the respective [Artisan command](artisan-commands.md). The
 closing box names the next step: `php artisan dev` starts the local development processes.
@@ -39,7 +37,7 @@ publishes `config/noerd.php`, sets `component_layout` in `config/livewire.php` t
 the public assets to `public/vendor/noerd` (`vendor:publish --tag=noerd-assets`). What only a project
 with LOCAL modules needs — the `app-modules/` directory, its Composer path repository and the
 `Modules` test suite in `phpunit.xml` — is set up by `noerd:make-module` with the first module. Non-interactive
-runs (CI) pass `--force --migrate --build --demo` explicitly — see
+runs (CI) pass `--force --migrate --build` explicitly — see
 [noerd:install](artisan-commands.md#noerdinstall).
 
 ### Created Tables
@@ -136,7 +134,7 @@ If [Laravel Boost](ai-agents.md) is installed, `noerd:install` and `noerd:update
 
 ## Verification
 
-You should now have access to `/noerd-apps` with your created user. If you installed the demo data, you will see a working Demo Customers app with a list and detail view — ready to explore and use as a reference for building your own apps.
+You should now have access to `/noerd-apps` with your created user. Create your first app with `php artisan noerd:make-app` and its first list and detail with `php artisan noerd:make-resource` (see [Creating Apps](make-app.md)).
 
 ## Next Steps
 

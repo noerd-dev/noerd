@@ -148,7 +148,7 @@ class Tenant extends Authenticatable
 
     /**
      * Give this tenant an app. The ONE write path of an assignment — the apps
-     * screen, the install commands, the demo, provisioning — so every module
+     * screen, the install commands, provisioning — so every module
      * listening for TenantAppAssigned (an app folder, a hidden companion app)
      * hears every assignment. The event fires only for an app the tenant did
      * not hold before; a repeated call changes nothing and returns false.

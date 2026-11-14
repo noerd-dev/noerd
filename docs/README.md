@@ -9,7 +9,6 @@ Documentation for the Noerd framework — a YAML-driven modular framework for La
 ### Getting started
 
 - [Installation](installation.md) — requirements, `noerd:install`, created tables, routes and the frontend scaffold
-- [Example Application](example-application.md) — the Demo Customers app installed by `noerd:demo`, as a reference
 - [Creating Apps](make-app.md) — register a tenant app with its own dashboard, in the project or as a module (`noerd:make-app`)
 - [Creating Modules](creating-modules.md) — scaffold a module with `noerd:make-module`, install/update commands, custom attributes
 - [Artisan Commands](artisan-commands.md) — every `noerd:*` command with its options

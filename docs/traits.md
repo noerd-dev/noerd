@@ -210,9 +210,9 @@ be used on their own by a command that is not a module installer.
 `RequiresNoerdInstallation` (part of `InstallsNoerdModule`, also usable alone) contributes
 `ensureNoerdInstalled(?bool $autoInstall = null): bool`. On a project without `config/noerd.php` an
 INSTALL command (`noerd:install-{module}`) runs `noerd:install` itself as a dependency — forwarding
-`--force`, `--migrate`, `--build`, `--demo`; no demo question, no closing callout, npm deferred to
-the module command — and aborts with the manual hint only when that installation did not complete.
-Every other command (update, scaffold, demo) aborts with the hint. `$autoInstall` overrides the
+`--force`, `--migrate`, `--build`; no closing callout, npm deferred to the module command — and
+aborts with the manual hint only when that installation did not complete. Every other command
+(update, scaffold) aborts with the hint. `$autoInstall` overrides the
 decision `shouldAutoInstallNoerd()` otherwise derives from the command name.
 
 ## GuardedByObjectPermission (Eloquent models)

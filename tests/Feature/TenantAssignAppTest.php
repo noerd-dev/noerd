@@ -14,7 +14,7 @@ uses(TestCase::class, RefreshDatabase::class);
 /*
  | Tenant::assignApp() is the one way an app reaches a tenant: it attaches the
  | pivot row once and fires TenantAppAssigned for the newly held app, whatever
- | path (screen, installer, demo, provisioning) called it.
+ | path (screen, installer, provisioning) called it.
  */
 
 beforeEach(function (): void {

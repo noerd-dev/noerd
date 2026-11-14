@@ -338,7 +338,7 @@ it('publishes the config', function (): void {
   path (`app()->useStoragePath(...)`) and restore it in a `finally`.
 - **The base package is installed on the fly:** `noerd:install-{module}` runs `noerd:install` when
   `config/noerd.php` is missing. A test that does not want the real installer registers a stand-in
-  declaring the same options (`--force`, `--migrate`, `--build`, `--demo`), so a forwarded option
+  declaring the same options (`--force`, `--migrate`, `--build`), so a forwarded option
   never makes the input throw:
 
 ```php

@@ -1,6 +1,5 @@
 # Keep dist installs (Packagist archives) lean: ship only what consumers need
 # at runtime. NOT excluded on purpose:
-# - demo/        -> read at runtime by noerd:demo (NoerdDemoCommand)
 # - dist/        -> the prebuilt frontend bundle published to public/vendor/noerd
 # - docs/        -> the Boost guideline and skills point agents at docs/*.md
 #   (AGENTS.md / CLAUDE.md are the contributor guide of this repository and

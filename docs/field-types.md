@@ -448,7 +448,6 @@ $article->tags()->sync($this->tagIds);
 
 The save itself follows [Custom Store / Delete Logic](detail-view.md#custom-store--delete-logic).
 `optionsMethod` is resolved with `method_exists` on the detail component (no registry fallback).
-Reference: `demo/views/demo-customer-detail.blade.php`.
 
 ## Media Types
 

@@ -25,8 +25,7 @@ class NoerdInstallCommand extends Command
     protected $signature = 'noerd:install
                             {--force : Overwrite existing files without asking}
                             {--migrate : Run migrations without asking (required to migrate in non-interactive runs)}
-                            {--build : Run npm build without asking (required to build in non-interactive runs)}
-                            {--demo : Install the demo app without asking (required to install it in non-interactive runs)}';
+                            {--build : Run npm build without asking (required to build in non-interactive runs)}';
 
     protected $description = 'Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin';
 
@@ -44,7 +43,6 @@ class NoerdInstallCommand extends Command
             }
 
             $this->runNpmBuild();
-            $this->installDemoApp();
             $this->displayApplicationReady();
 
             return self::SUCCESS;
@@ -59,55 +57,6 @@ class NoerdInstallCommand extends Command
     protected function getModuleRoot(): string
     {
         return dirname(__DIR__, 2);
-    }
-
-    /**
-     * Ask whether to install the demo app and run noerd:demo on confirmation.
-     * Non-interactive runs never install the demo implicitly — a CI/deploy
-     * invocation must opt in with --demo instead of inheriting the prompt default.
-     *
-     * Installed for a module (`noerd:install-cms` on a fresh project), the question
-     * is skipped unless that command was given --demo: someone installing a module
-     * is setting up that module, not looking for the demo.
-     */
-    protected function installDemoApp(): void
-    {
-        if (ModuleInstallContext::isDependencyInstall() && ! $this->boolOption('demo')) {
-            return;
-        }
-
-        $this->newLine();
-
-        $shouldInstallDemo = $this->boolOption('demo');
-
-        if (! $shouldInstallDemo && ! $this->input->isInteractive()) {
-            $this->line('<comment>Non-interactive run: skipping the demo app. Pass --demo to install it.</comment>');
-
-            return;
-        }
-
-        if (! $shouldInstallDemo) {
-            $shouldInstallDemo = confirm(
-                label: 'Would you like to install the Demo App?',
-                default: true,
-                hint: 'DemoCustomer with lists & details',
-            );
-        }
-
-        if (! $shouldInstallDemo) {
-            $this->line('<comment>Demo app will NOT be installed. You can run it later with: php artisan noerd:demo</comment>');
-
-            return;
-        }
-
-        // `--demo` of a scripted install is the opt-in: the demo goes to every
-        // tenant of the fresh installation. An interactive run lets the demo ask.
-        $this->call('noerd:demo', [
-            '--force' => $this->option('force'),
-            '--migrate' => $this->boolOption('migrate'),
-            '--seed' => $this->boolOption('migrate'),
-            ...($this->input->isInteractive() ? [] : ['--tenants' => 'all']),
-        ]);
     }
 
     /**

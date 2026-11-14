@@ -15,7 +15,6 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 | `noerd:install` | Install noerd: publish the setup app configs, config and assets, then migrate and create the first admin |
 | `noerd:update` | Refresh the published setup app configs, the frontend scaffold and public assets, rewrite the YAML vocabulary, report changed `config/noerd.php` keys — no migration, no prompts for tenant or admin |
 | `noerd:update-all` | Run `noerd:update` and every installed module's `noerd:update-{module}` command |
-| `noerd:demo` | Install demo data (models, migrations, views, configs, routes) |
 | `noerd:info` | Display the current Noerd version |
 | `noerd:lint` | Check the app-configs YAML for broken field types, routes, picklist providers and columns |
 
@@ -45,28 +44,26 @@ In addition, every installed app module ships its own `noerd:install-{module}` a
 
 Installs the Noerd Framework and performs basic configuration: publishes the setup app configs,
 `config/noerd.php` and the frontend files, patches `config/livewire.php`, publishes
-the public assets, runs the migrations, creates the default tenant and the first admin user and optionally
-installs the demo app (see [Installation](installation.md)).
+the public assets, runs the migrations and creates the default tenant and the first admin user (see
+[Installation](installation.md)).
 
 ```bash
 php artisan noerd:install
 # non-interactive (CI / deploy)
-php artisan noerd:install --force --migrate --build --demo --no-interaction
+php artisan noerd:install --force --migrate --build --no-interaction
 ```
 
 | Option | Description |
 |--------|-------------|
 | `--force` | Overwrite the published setup YAML without asking (an existing `config/noerd.php` and the navigations are never overwritten, see [noerd:update](#noerdupdate)) |
-| `--migrate` | Run the migrations without asking — required to migrate in non-interactive runs (passed on as `migrate --force`, so a production database migrates too); forwarded to `noerd:demo` as `--migrate --seed` |
+| `--migrate` | Run the migrations without asking — required to migrate in non-interactive runs (passed on as `migrate --force`, so a production database migrates too) |
 | `--build` | Run `npm run build` without asking — required to build in non-interactive runs |
-| `--demo` | Install the demo app without asking — required to install it in non-interactive runs, where it is assigned to every tenant (`noerd:demo --tenants=all`) |
 
 When the migration fails, the command stops with exit code 1 before it creates a tenant or an
 admin user.
 
 Run by a module install command on a fresh project (`noerd:install-cms`), the base installation
-skips the demo app question, hands `npm install` / `npm run build` to that command and prints no
-closing callout — see [Creating Modules](creating-modules.md#npm-runs-once-at-the-end).
+hands `npm install` / `npm run build` to that command and prints no closing callout — see [Creating Modules](creating-modules.md#npm-runs-once-at-the-end).
 
 The public assets (fonts + built Vite bundle) can also be republished on their own with
 `php artisan vendor:publish --tag=noerd-assets`.
@@ -165,30 +162,6 @@ are skipped and only missing files are copied — a useful "top up a fresh check
 
 **Failures do not abort the run.** Every command is executed, a summary table lists each one as
 `updated`, `failed` or `skipped`, and the exit code is non-zero if any of them failed.
-
-## noerd:demo
-
-Installs demo data into your project. This publishes a fully working Demo Customers app with model,
-migration, Blade components, YAML configuration, navigation, and routes (`demo.customers`,
-`demo.customer.detail`, …). After the migrations the demo app is registered as a TenantApp and
-assigned to the tenants you choose: an interactive run asks, a non-interactive run assigns only with
-`--tenants`.
-
-```bash
-php artisan noerd:demo
-php artisan noerd:demo --migrate --seed --tenants=all --no-interaction
-```
-
-| Option | Description |
-|--------|-------------|
-| `--force` | Overwrite existing files |
-| `--migrate` | Run the migrations — required to migrate in non-interactive runs (interactive runs ask) |
-| `--seed` | Seed the demo data — required to seed in non-interactive runs (interactive runs ask) |
-| `--tenants=` | Assign the demo app without asking: `all` or tenant ids (`1,3`) — required to assign it in non-interactive runs |
-
-This command is also offered during `noerd:install` (which forwards its own `--migrate` as
-`--migrate --seed`, and `--tenants=all` in a non-interactive run). It can be run independently at
-any time.
 
 ## noerd:info
 

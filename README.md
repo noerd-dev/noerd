@@ -28,7 +28,7 @@ php artisan noerd:make-resource Customer
 ```
 
 - `noerd:install` publishes the config and the frontend scaffold (Vite, Tailwind CSS 4), runs the
-  migrations, creates the default tenant and an admin user, and optionally installs demo data.
+  migrations and creates the default tenant and an admin user.
 - `noerd:make-app` asks where the app lives (project or an `app-modules/` package), for a
   title, a name and an icon, scaffolds a dashboard for the app and offers to assign it to your
   tenants. Use `noerd:assign-apps-to-tenant` to change that later.
@@ -72,8 +72,7 @@ in-repo index.
 
 ## Demo
 
-A hosted demo is available at https://demo.noerd.dev. Locally, `php artisan noerd:demo` installs
-the Demo Customers app into your project (see the Example Application page of the docs).
+A hosted demo is available at https://demo.noerd.dev.
 
 ## Requirements
 
@@ -88,10 +87,10 @@ A full CRUD screen is two YAML files (a list and a detail) plus two slim compone
 `noerd:make-resource` generates for you — the list declares its model and detail route, the detail
 its model, nothing else.
 
-**`app-configs/demo/lists/demo-customers-list.yml`** (excerpt)
+**`app-configs/sales/lists/customers-list.yml`** (excerpt)
 
 ```yaml
-title: Demo Customers
+title: Customers
 defaultSort:
   field: name
   direction: asc
@@ -99,8 +98,8 @@ searchableColumns:
   - name
   - company_name
 actions:
-  - label: New Demo Customer
-    modalRoute: demo.customer.detail
+  - label: New Customer
+    modalRoute: sales.customer.detail
 columns:
   - field: name
     label: Name
@@ -114,10 +113,9 @@ columns:
     type: date
 ```
 
-The detail form is configured the same way (`details/demo-customer-detail.yml`: tabs, fields with
-`type`, `colspan`, `required`). Both files ship with the package (`demo/app-configs/demo/`) and are
-installed by `php artisan noerd:demo` — see the
-[Example Application](docs/example-application.md).
+The detail form is configured the same way (`details/customer-detail.yml`: tabs, fields with
+`type`, `colspan`, `required`). `php artisan noerd:make-resource Customer` writes both files from
+the model's columns — see [List View](docs/list-view.md) and [Detail View](docs/detail-view.md).
 
 ## Need Help?
 

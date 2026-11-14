@@ -15,7 +15,7 @@ trait RequiresNoerdInstallation
      * An INSTALL command is a legitimate entry point into a fresh project, so
      * `noerd:install-{module}` runs `noerd:install` for the user instead of
      * dead-ending with an instruction to run it by hand. Every other command
-     * (update, scaffold, demo) keeps asking for it — see shouldAutoInstallNoerd().
+     * (update, scaffold) keeps asking for it — see shouldAutoInstallNoerd().
      *
      * @param  bool|null  $autoInstall  null = decide from the command name
      */
@@ -40,9 +40,9 @@ trait RequiresNoerdInstallation
     }
 
     /**
-     * Only an install command installs the base package on the fly: an update,
-     * a scaffold run or the demo installer is never the first command a fresh
-     * project is expected to run.
+     * Only an install command installs the base package on the fly: an update
+     * or a scaffold run is never the first command a fresh project is expected
+     * to run.
      */
     protected function shouldAutoInstallNoerd(): bool
     {
@@ -59,9 +59,9 @@ trait RequiresNoerdInstallation
         $this->line('');
 
         // As a dependency: the base installer leaves out everything that belongs to
-        // a run the user started himself — the demo app question, the frontend
-        // build (handed over to this command) and its closing "Application ready"
-        // callout, so the run ends with the module's own one.
+        // a run the user started himself — the frontend build (handed over to this
+        // command) and its closing "Application ready" callout, so the run ends
+        // with the module's own one.
         $exitCode = (int) ModuleInstallContext::asDependency(
             fn(): int => $this->call('noerd:install', $this->noerdInstallOptions()),
         );
@@ -96,7 +96,7 @@ trait RequiresNoerdInstallation
     {
         $options = [];
 
-        foreach (['force', 'migrate', 'build', 'demo'] as $option) {
+        foreach (['force', 'migrate', 'build'] as $option) {
             if ($this->getDefinition()->hasOption($option) && (bool) $this->option($option)) {
                 $options['--' . $option] = true;
             }
