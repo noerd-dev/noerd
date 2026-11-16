@@ -345,5 +345,12 @@
     "Default Locale": "Standard-Gebietsschema",
     "Default Language": "Standardsprache",
     "Number and date format for documents (PDFs, receipts, e-mails) and the preset for new users": "Zahlen- und Datumsformat für Dokumente (PDFs, Belege, E-Mails) und Vorgabe für neue Benutzer",
-    "Interface language preselected for new users": "Vorausgewählte Oberflächensprache für neue Benutzer"
+    "Interface language preselected for new users": "Vorausgewählte Oberflächensprache für neue Benutzer",
+    "Delete tenant": "Mandant löschen",
+    "Delete tenant :name?": "Mandant :name löschen?",
+    "The tenant cannot be deleted yet:": "Der Mandant kann noch nicht gelöscht werden:",
+    "The tenant and all of its data will be permanently deleted. User accounts stay; they only lose their access to this tenant. This cannot be undone.": "Der Mandant und alle seine Daten werden endgültig gelöscht. Benutzerkonten bleiben bestehen und verlieren nur den Zugang zu diesem Mandanten. Dies kann nicht rückgängig gemacht werden.",
+    "Type the name of the tenant to confirm": "Geben Sie zur Bestätigung den Namen des Mandanten ein",
+    "The name does not match the tenant.": "Der Name stimmt nicht mit dem Mandanten überein.",
+    "You are working in this tenant. Switch to another tenant first.": "Sie arbeiten gerade in diesem Mandanten. Wechseln Sie zuerst in einen anderen Mandanten."
 }

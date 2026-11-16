@@ -72,6 +72,7 @@ use Noerd\Services\ProfileRegistry;
 use Noerd\Services\RelationBoxRegistry;
 use Noerd\Services\RelationFieldRegistry;
 use Noerd\Services\RelationTitleResolver;
+use Noerd\Services\TenantDeletionService;
 use Noerd\Services\ThemeRegistry;
 use Noerd\Support\BuiltInFieldTypes;
 use Noerd\Support\FieldContext;
@@ -98,6 +99,7 @@ class NoerdServiceProvider extends ServiceProvider
     public array $singletons = [
         ActionPermissionRegistry::class => ActionPermissionRegistry::class,
         ProfileRegistry::class => ProfileRegistry::class,
+        TenantDeletionService::class => TenantDeletionService::class,
         DynamicNavigationRegistry::class => DynamicNavigationRegistry::class,
         ComponentSlotsRegistry::class => ComponentSlotsRegistry::class,
         RelationBoxRegistry::class => RelationBoxRegistry::class,

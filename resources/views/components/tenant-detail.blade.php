@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Component;
+use Noerd\Facades\Noerd;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
@@ -12,8 +13,6 @@ new class extends Component {
     public ?string $detailPrimary = 'tenantId';
 
     public $detailModel = Tenant::class;
-
-    protected bool $deletable = false;
 
     public function mount(): void
     {
@@ -58,6 +57,28 @@ new class extends Component {
 
         $this->finishStore($tenant);
     }
+
+    /**
+     * Only a super admin deletes a tenant — a tenant admin manages its members,
+     * never the tenant itself.
+     */
+    public function canDeleteObject(): bool
+    {
+        return (bool) $this->modelId && (bool) NoerdAuth::user()?->isSuperAdmin();
+    }
+
+    /**
+     * Opens the confirmation, which names what keeps the tenant and asks for
+     * its name before anything is deleted.
+     */
+    public function delete(): void
+    {
+        if (! $this->canDeleteObject()) {
+            return;
+        }
+
+        Noerd::modal('noerd::tenant-delete-modal', ['tenantId' => (int) $this->modelId]);
+    }
 } ?>
 
 <x-noerd::page>
@@ -68,6 +89,6 @@ new class extends Component {
     <x-noerd::tab-content :layout="$pageLayout" :modelId="$modelId" />
 
     <x-slot:footer>
-        <x-noerd::delete-save-bar :showDelete="false" />
+        <x-noerd::delete-save-bar :showDelete="true" :deleteLabel="__('Delete tenant')" />
     </x-slot:footer>
 </x-noerd::page>

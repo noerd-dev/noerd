@@ -38,6 +38,8 @@ final class ComponentAccessGuard
         'noerd::noerd-user-detail',
         'noerd::tenants-list',
         'noerd::tenant-detail',
+        // Deletes a tenant; re-checks the super admin itself.
+        'noerd::tenant-delete-modal',
         'noerd::create-tenant',
         // The inner worker of create-tenant: it holds the actual tenant
         // creation (incl. attaching the caller to the new ADMIN profile), so it
