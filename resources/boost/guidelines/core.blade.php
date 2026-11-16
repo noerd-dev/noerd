@@ -221,6 +221,12 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   a held app. A name matches in any case; an unknown name throws `InvalidArgumentException`. Taking an
   app away is `Tenant::removeApp($app)` (event `Noerd\Events\TenantAppRemoved`, no-op for an app the
   tenant does not hold) — never `tenantApps()->detach()`.
+- Deleting a tenant is a SUPER ADMIN decision and goes ONLY through
+  `Noerd\Services\TenantDeletionService::delete($tenant)` (never `$tenant->delete()`): memberships end through
+  `removeMember()`, then `Noerd\Events\TenantDeleting` (in the transaction — delete the rows without a cascading
+  `tenant_id` foreign key) and `TenantDeleted` after the commit (release files). A module whose records must
+  outlive the tenant registers `registerBlocker(fn (Tenant $tenant): ?string => …)` in its provider
+  (`docs/permissions.md`, "Deleting a tenant").
 - Every check goes through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
   `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`); create and
   write are separate (`canSaveObject()` on details/pages drives the save chrome and the

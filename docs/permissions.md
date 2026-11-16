@@ -110,6 +110,44 @@ every tenant of the installation.
   A tenant admin sees the apps of their tenant there and may reorder and hide
   them, nothing more; a tenant they create starts without apps, while a super
   admin's new tenant copies the apps of the selected one.
+- The only one who deletes a tenant (Setup → Tenants → tenant → "Delete
+  tenant"). See [Deleting a tenant](#deleting-a-tenant).
+
+### Deleting a tenant
+
+`Noerd\Services\TenantDeletionService::delete($tenant)` is the ONE way a
+tenant row goes; the caller checks the super admin. The confirmation
+(`noerd::tenant-delete-modal`) lists the reasons against the deletion and asks
+for the tenant's name. The deletion runs in one transaction:
+
+1. every membership ends through `Tenant::removeMember()` (modules hear
+   `TenantMemberRemoved`; the accounts stay, a super admin deletes an account
+   that belongs to no tenant any more under the users list filter "Without
+   tenant"),
+2. every account's selection of the tenant is cleared,
+3. `Noerd\Events\TenantDeleting` fires — a module deletes the rows whose
+   tenant column has NO cascading foreign key here; a listener that throws
+   rolls everything back,
+4. the tenant row is deleted and every table with a cascading `tenant_id`
+   foreign key follows,
+5. after the commit `Noerd\Events\TenantDeleted` (`tenantId`, `tenantName`)
+   fires — the place to release stored files and other resources outside the
+   database.
+
+A module whose records must outlive the tenant (invoices under a retention
+period, a domain still registered) registers a blocker in its provider's
+`boot()`; while one answers with a reason, the deletion is refused:
+
+```php
+app(TenantDeletionService::class)->registerBlocker(
+    fn (Tenant $tenant): ?string => Invoice::where('tenant_id', $tenant->id)->exists()
+        ? __('The tenant has invoices that must be kept.')
+        : null,
+);
+```
+
+The confirmation also refuses the tenant the super admin is working in — the
+session would keep pointing at a tenant that no longer exists.
 
 ## Impersonation ("Login as user")
 
