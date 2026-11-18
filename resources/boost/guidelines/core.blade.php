@@ -213,7 +213,9 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   profile area (`profile` middleware) is closed — a module's profile page needs no guard of its own.
 - A membership is written ONLY through `Tenant::addMember($user, $profileKey)` / `setMemberProfile()` /
   `removeMember()` (events `TenantMemberAdded` / `TenantMemberRemoved`) — never `tenants()->attach()`/`detach()`.
-  Removing the last membership keeps the account. A tenant admin manages memberships only; the account
+  Removing the last membership keeps the account; `removeMember()` also forgets the tenant as the
+  account's selection (setting and session). Code resolving a tenant from a user's persisted selection
+  (a token API) still checks `$user->canAccessTenant($tenantId)`. A tenant admin manages memberships only; the account
   (name, e-mail, password, deletion) belongs to the person and the super admin (`docs/permissions.md`).
 - Assigning an app to a tenant is a SUPER ADMIN decision (a tenant admin only reorders and hides).
   System flows assign ALWAYS through `Tenant::assignApp($app, $pivot)` — never

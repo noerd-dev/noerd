@@ -15,6 +15,8 @@ use Noerd\Events\TenantAppAssigned;
 use Noerd\Events\TenantAppRemoved;
 use Noerd\Events\TenantMemberAdded;
 use Noerd\Events\TenantMemberRemoved;
+use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\TenantHelper;
 use Noerd\Services\ProfileRegistry;
 use Noerd\Support\DefaultCountries;
 use Noerd\Support\TenantContext;
@@ -121,6 +123,11 @@ class Tenant extends Authenticatable
      * End the account's membership in this tenant. The account itself stays —
      * it is an identity of the whole installation, deleted only by a super
      * admin or by the person. False when the account was no member.
+     *
+     * The tenant stops being the account's selection as well (persisted and,
+     * for the signed-in account, in the session): nothing that resolves the
+     * tenant from the selection — a token API, the next login — may land in a
+     * tenant the account no longer belongs to.
      */
     public function removeMember(NoerdUser $user): bool
     {
@@ -129,6 +136,7 @@ class Tenant extends Authenticatable
         }
 
         $this->forgetMemberships($user);
+        $this->forgetSelection($user);
 
         TenantMemberRemoved::dispatch((int) $this->getKey(), (int) $user->getKey());
 
@@ -272,6 +280,37 @@ class Tenant extends Authenticatable
     {
         if ($profileKey !== null && ! app(ProfileRegistry::class)->has($profileKey)) {
             throw new InvalidArgumentException("Unknown profile [{$profileKey}].");
+        }
+    }
+
+    /**
+     * Drop this tenant as the account's selection — the persisted setting and,
+     * when the account is the signed-in one, the session. Only a selection that
+     * points at THIS tenant changes; a super admin keeps it, because they may
+     * work in every tenant without a membership. The next request falls back
+     * like a user without a selection (InitializeTenantSession,
+     * EnsureTenantMembership).
+     */
+    private function forgetSelection(NoerdUser $user): void
+    {
+        if ($user->isSuperAdmin()) {
+            return;
+        }
+
+        $tenantId = (int) $this->getKey();
+
+        UserSetting::query()
+            ->where('user_id', $user->getKey())
+            ->where('selected_tenant_id', $tenantId)
+            ->update(['selected_tenant_id' => null]);
+
+        $user->unsetRelation('userSetting');
+
+        $signedIn = NoerdAuth::user();
+
+        if ($signedIn !== null && $signedIn->is($user) && TenantHelper::getSelectedTenantId() === $tenantId) {
+            session()->forget(['noerd.selected_tenant_id', 'noerd.selected_app']);
+            TenantHelper::clearCache();
         }
     }
 

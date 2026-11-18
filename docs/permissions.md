@@ -71,6 +71,11 @@ gives the account access to one tenant, with one profile.
   password form and no account deletion — the account belongs to the person (their
   profile) and to the super admin. A tenant admin opens only accounts that belong
   to a tenant they administer; any other account is added by its e-mail address.
+- When a membership ends, the tenant also stops being the account's selection — the
+  persisted `noerd_user_settings.selected_tenant_id` and, for the signed-in account, the
+  session — so the account falls back to another tenant it belongs to (or none) on its next
+  request. Code that resolves the tenant from a persisted selection without a session (a
+  token API) still checks `$user->canAccessTenant($tenantId)` before acting in it.
 - Removing the last membership keeps the account. It can be added again by e-mail;
   a super admin finds it under the users list filter "Without tenant" and deletes
   it there ("Delete Account" in the record's action menu — never one's own account,
