@@ -20,6 +20,15 @@
         >
             <span class="group inline-flex items-center rounded-sm border-b-2 border-transparent p-0 py-3 text-sm">
                 {{ $slot }}
+                {{-- A refused save marks every tab that holds a field with an error
+                     (noerdPage.errorTabs); typeof covers tabs outside a page scope. --}}
+                <span
+                    x-show="typeof errorTabs !== 'undefined' && errorTabs.includes({{ $tabNumber }})"
+                    data-noerd-tab-error
+                    class="ml-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-red-600"
+                >
+                    <span class="sr-only">{{ __('Contains errors') }}</span>
+                </span>
             </span>
         </button>
     </div>

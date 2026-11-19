@@ -72,6 +72,52 @@ final class LayoutFields
     }
 
     /**
+     * The tabs (ascending, unique) that hold the named fields — what a failed
+     * validation needs to lead the reader to its errors. A top-level field sits
+     * on its `tab:` (tab 1 without one) and a field inside a `type: block` on
+     * the tab of its outermost block, the rule the tab panels are filled by. A
+     * name matches its field exactly or as a path below it
+     * (`detailData.positions.0.amount` → `detailData.positions`); a name the
+     * layout does not declare belongs to no tab.
+     *
+     * @param  array<int, mixed>  $fields
+     * @param  array<int, string>  $names
+     * @return list<int>
+     */
+    public static function tabsOf(array $fields, array $names): array
+    {
+        $tabs = [];
+
+        foreach ($fields as $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+
+            $tab = (int) ($field['tab'] ?? 1);
+
+            self::walk([$field], function (array $leaf) use ($names, $tab, &$tabs): void {
+                $fieldName = $leaf['name'] ?? null;
+
+                if (! is_string($fieldName) || $fieldName === '') {
+                    return;
+                }
+
+                foreach ($names as $name) {
+                    if ($name === $fieldName || str_starts_with($name, $fieldName . '.')) {
+                        $tabs[$tab] = $tab;
+
+                        return;
+                    }
+                }
+            });
+        }
+
+        sort($tabs);
+
+        return $tabs;
+    }
+
+    /**
      * Whether a field name is safe to render into the form's bindings: letters
      * (umlauts included), digits, `_`, `.`, space, `/` and `-` — the characters
      * real column paths use (`detailData.Kante A oben`), and nothing that can

@@ -716,6 +716,35 @@ after three seconds. A component with a save action that does not use the save b
 a screen with custom footer buttons — renders it in its footer instead of a status banner and sets
 the property to `true` after persisting.
 
+**A refused save.** A save the validation refuses is never silent, whatever tab the reader is on and
+whichever component owns the Save button. After every save action (`store`, `save`, `update`, the
+hosting page's `storeDetail-{detail}` included) the `ValidationFeedbackHook` dispatches a browser
+event from the saving component to the page chrome around it: `noerd-validation-failed` with `tabs`
+— the tabs holding the fields with an error (`LayoutFields::tabsOf()`) — or `noerd-validation-passed`.
+The page marks those tabs with a red dot, opens the first one unless the reader already looks at one
+of them, scrolls to the first error and shows `<x-noerd::error-indicator />` ("Not saved – please
+check the marked fields") in the save bar until a save passes. `validate()`, `validateFromLayout()`
+and `addError()` are all covered; an error on a key the layout does not declare belongs to no tab
+and only shows the indicator. A component with custom footer buttons renders the indicator itself.
+`validateFromLayout()` names a field by its translated YAML `label` in the message.
+
+The outcome is the one of THIS save: the hook empties the error bag before the save runs (Livewire
+keeps it across requests), so an error left by live validation or an earlier action never turns a
+passing save into "Not saved". A built-in save the user may not run is skipped without a report.
+A save action with another name opts in with the attribute — it only reports, permissions stay the
+method's own business (no `WriteGuardHook`, no relation-form persistence):
+
+```php
+use Noerd\Attributes\ReportsSaveOutcome;
+
+#[ReportsSaveOutcome]
+public function confirm(): void
+{
+    $this->validateFromLayout();
+    // …
+}
+```
+
 ### What the Client May Change
 
 `Noerd\Livewire\Hooks\ClientWriteGuardHook` guards the Livewire update

@@ -588,6 +588,10 @@ document.addEventListener('alpine:init', () => {
         // max-height and the header space reserved for the panel controls.
         isModal: false,
         isNestedPage: false,
+        // The outcome of the last save (ValidationFeedbackHook): the tabs holding a
+        // field with an error, and whether the save was refused at all.
+        errorTabs: [],
+        saveFailed: false,
         _parsedShortcuts: {},
         _keydownHandler: null,
 
@@ -637,6 +641,37 @@ document.addEventListener('alpine:init', () => {
             if (active && active !== document.body && this.$el.contains(active) && typeof active.blur === 'function') {
                 active.blur();
             }
+        },
+
+        // A refused save must not be silent: mark the tabs with an error, open the
+        // first one unless the reader already looks at one of them, and bring the
+        // first error of the open tab into view.
+        validationFailed(detail) {
+            const tabs = Array.isArray(detail?.tabs) ? detail.tabs.map(Number) : [];
+
+            this.errorTabs = tabs;
+            this.saveFailed = true;
+
+            if (tabs.length > 0 && ! tabs.includes(Number(this.currentTab))) {
+                this.currentTab = tabs[0];
+            }
+
+            this.$nextTick(() => this.revealFirstError());
+        },
+
+        validationPassed() {
+            this.errorTabs = [];
+            this.saveFailed = false;
+        },
+
+        revealFirstError() {
+            const error = [...this.$el.querySelectorAll('[data-noerd-field-error]')].find((el) => {
+                const panel = el.closest('[data-noerd-tab-panel]');
+
+                return ! panel || Number(panel.dataset.noerdTabPanel) === Number(this.currentTab);
+            });
+
+            error?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         },
 
         destroy() {

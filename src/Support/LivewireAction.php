@@ -21,6 +21,20 @@ final class LivewireAction
     public const HOST_STORE_LISTENER = 'storeFromHost';
 
     /**
+     * The actions every hook treats as a save: guarded by the WriteGuardHook,
+     * followed by the relation-form persistence and reported to the page.
+     */
+    public const SAVE_ACTIONS = ['store', 'save', 'update'];
+
+    /**
+     * Whether the effective method (see effectiveMethod()) is a save.
+     */
+    public static function isSave(string $effectiveMethod): bool
+    {
+        return in_array($effectiveMethod, self::SAVE_ACTIONS, true);
+    }
+
+    /**
      * @param  array<int, mixed>  $params
      */
     public static function effectiveMethod(object $component, string $method, array $params): string

@@ -29,6 +29,7 @@ final class NoerdHooks
         EmptyNumberFieldHook::class,
         ComponentAccessHook::class,
         TenantWriteGuardHook::class,
+        ValidationFeedbackHook::class,
     ];
 
     public static function register(): void

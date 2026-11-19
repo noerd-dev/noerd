@@ -21,6 +21,7 @@
 <div {{ $attributes->merge(['class' => 'ml-auto']) }} x-data="{ showButtons: false }">
     <div class="ml-auto flex gap-2">
         <x-noerd::success-indicator class="mt-2 mr-2" />
+        <x-noerd::error-indicator class="mt-2 mr-2" />
 
         @if ($deleteMessage)
             <x-noerd::button
