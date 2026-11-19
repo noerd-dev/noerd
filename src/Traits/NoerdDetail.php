@@ -168,7 +168,8 @@ trait NoerdDetail
      * Validate using rules from pageLayout YAML configuration.
      * Fields with 'required: true' will be validated as required. Declared
      * relation forms additionally contribute their validateUsing() rules —
-     * applied exactly when the form carries data and would be persisted.
+     * applied exactly when the form carries data and would be persisted. A
+     * failed validation is reported to the page by ValidationFeedbackHook.
      */
     protected function validateFromLayout(): void
     {
@@ -203,8 +204,32 @@ trait NoerdDetail
         }
 
         if (! empty($rules)) {
-            $this->validate($rules, $messages);
+            $this->validate($rules, $messages, $this->validationLabels(array_keys($rules)));
         }
+    }
+
+    /**
+     * The translated YAML label of every validated field, so a message names the
+     * field the way the form does ("Country") instead of its binding
+     * ("detail data.billing address.country code").
+     *
+     * @param  array<int, string>  $names
+     * @return array<string, string>
+     */
+    protected function validationLabels(array $names): array
+    {
+        $labels = [];
+
+        LayoutFields::walk($this->pageLayout['fields'] ?? [], function (array $field) use ($names, &$labels): void {
+            $name = $field['name'] ?? null;
+            $label = $field['label'] ?? null;
+
+            if (is_string($name) && is_string($label) && $label !== '' && in_array($name, $names, true)) {
+                $labels[$name] = __($label);
+            }
+        });
+
+        return $labels;
     }
 
     /**

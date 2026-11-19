@@ -58,6 +58,11 @@
             deleteMessage: @js(__('Are you sure you want to delete this entry?')),
         })"
         data-noerd-page
+        {{-- The outcome of a save, dispatched by ValidationFeedbackHook from this page
+             or a detail embedded in it; stopped here, so a page behind or around this
+             one never reacts. typeof keeps an older published bundle from throwing. --}}
+        x-on:noerd-validation-failed.stop="typeof validationFailed === 'function' && validationFailed($event.detail)"
+        x-on:noerd-validation-passed.stop="typeof validationPassed === 'function' && validationPassed()"
         @class(['flex flex-col', '-mx-(--noerd-page-inset)' => $disableModal])
         @unless ($disableModal)
             {{-- isModal / isNestedPage are resolved by noerdPage: only the outermost page

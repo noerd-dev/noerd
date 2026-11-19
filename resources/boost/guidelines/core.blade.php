@@ -299,6 +299,12 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   both protected; a Blade button closes the dialog with `wire:click="closeModal"`. A screen whose records are never deleted
   declares `protected bool $deletable = false;` (button, shortcut and `delete()` disappear at once) —
   never an empty `delete()` override, never a YAML key.
+- A refused save is reported by the core (`ValidationFeedbackHook`): after `store`/`save`/`update` the
+  page marks the tabs holding a field with an error, opens the first one and shows
+  `<x-noerd::error-indicator />` in the save bar — never a per-module error banner or tab switch. A save
+  action with another name opts in with `#[Noerd\Attributes\ReportsSaveOutcome]`; a screen with custom
+  footer buttons (no `<x-noerd::delete-save-bar>`) renders `<x-noerd::error-indicator />` next to its
+  `<x-noerd::success-indicator />` itself.
 - Values derived from the loaded record are read in `protected function detailLoaded(Model $model): void`
   (runs with `$detailData` filled, for an existing record — eager-loaded with `protected array $detailWith`
   — and the fresh model of a new one), NEVER by re-finding the record in `mount()`. A preselected

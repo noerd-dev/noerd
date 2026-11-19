@@ -30,8 +30,6 @@ abstract class DetailSaveHook extends NoerdComponentHook
 {
     protected const TRAITS = [NoerdDetail::class];
 
-    private const SAVE_ACTIONS = ['store', 'save', 'update'];
-
     abstract protected function afterSave(Component $component, Model $record): void;
 
     public function call($method, $params, $returnEarly, $metadata, $componentContext): callable
@@ -44,7 +42,7 @@ abstract class DetailSaveHook extends NoerdComponentHook
         $wasCreate = empty($this->component->modelId ?? null);
 
         return function ($return) use ($effective, $wasCreate): void {
-            if (! in_array($effective, self::SAVE_ACTIONS, true)) {
+            if (! LivewireAction::isSave($effective)) {
                 return;
             }
 

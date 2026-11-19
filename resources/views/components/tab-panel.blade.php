@@ -13,6 +13,7 @@
 --}}
 <div
     @if ($show) x-show="{{ $show }}" @endif
+    data-noerd-tab-panel="{{ $number }}"
     {{ $attributes->merge(['class' => 'min-h-0 overflow-y-auto -mx-6 px-6 -mb-8 pb-8']) }}
     :class="currentTab === {{ $number }} ? 'visible' : 'invisible pointer-events-none'"
 >
