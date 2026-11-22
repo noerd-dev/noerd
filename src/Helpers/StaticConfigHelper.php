@@ -283,6 +283,31 @@ final class StaticConfigHelper
         return $runtime[$cacheKey] = self::buildNavigationStructure($currentApp);
     }
 
+    /**
+     * Whether the navigation of the selected app links a route as a page —
+     * as the route of an entry or of a single-entry block.
+     */
+    public static function navigationLinksRoute(string $routeName): bool
+    {
+        foreach ((self::getNavigationStructure()[0]['blockMenus'] ?? []) as $block) {
+            if (! is_array($block)) {
+                continue;
+            }
+
+            if (($block['route'] ?? null) === $routeName) {
+                return true;
+            }
+
+            foreach ((array) ($block['navigations'] ?? []) as $navi) {
+                if (is_array($navi) && ($navi['route'] ?? null) === $routeName) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static function getCurrentApp(): ?string
     {
         $selectedApp = TenantHelper::getSelectedApp();
