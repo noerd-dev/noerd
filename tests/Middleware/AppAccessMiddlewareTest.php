@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Helpers\AccessHelper;
@@ -230,4 +232,75 @@ describe('shared routes', function (): void {
 
         zzHandle($this->middleware, $this->user, 'zzbase', 'zzplus');
     })->throws(NoerdException::class, 'ZZBASE');
+});
+
+describe('pages the selected app links', function (): void {
+    function zzHandleRoute(AppAccessMiddleware $middleware, NoerdUser $user, string $routeName, string ...$apps): Response
+    {
+        $request = Request::create('/zz-linked', 'GET');
+        $request->setUserResolver(fn() => $user);
+        $request->setRouteResolver(fn() => (new Route('GET', 'zz-linked', fn() => 'OK'))->name($routeName));
+
+        return $middleware->handle($request, fn() => response('OK'), ...$apps);
+    }
+
+    beforeEach(function (): void {
+        $this->user = NoerdUser::factory()->withExampleTenant()->create();
+        $this->actingAs($this->user);
+
+        registerTestLivewireRoute('zz-linked/hours', 'noerd-test::theme-test', 'zz.linked.hours');
+
+        $this->navigationPath = base_path('app-configs/zzshop/navigation.yml');
+        File::ensureDirectoryExists(dirname($this->navigationPath));
+        File::put($this->navigationPath, <<<'YAML'
+-
+  title: Zz Shop
+  name: zzshop
+  route: zzshop
+  blockMenus:
+    -
+      title: Settings
+      submenu: true
+      navigations:
+        -
+          title: Hours
+          route: zz.linked.hours
+YAML);
+    });
+
+    afterEach(function (): void {
+        File::deleteDirectory(dirname($this->navigationPath));
+    });
+
+    it('keeps the selected app when its navigation links the page of another visible app', function (): void {
+        zzAttachApp('ZZSHOP', hidden: false);
+        zzAttachApp('ZZBOOKING', hidden: false);
+        TenantHelper::setSelectedApp('ZZSHOP');
+
+        $response = zzHandleRoute($this->middleware, $this->user, 'zz.linked.hours', 'zzbooking');
+
+        expect($response->getContent())->toBe('OK')
+            ->and(TenantHelper::getSelectedApp())->toBe('ZZSHOP');
+    });
+
+    it('switches to the route app when the selected app does not link the page', function (): void {
+        zzAttachApp('ZZSHOP', hidden: false);
+        zzAttachApp('ZZBOOKING', hidden: false);
+        TenantHelper::setSelectedApp('ZZSHOP');
+
+        zzHandleRoute($this->middleware, $this->user, 'zz.other.page', 'zzbooking');
+
+        expect(TenantHelper::getSelectedApp())->toBe('ZZBOOKING');
+    });
+
+    it('does not keep a selected app the user may not access, even when it links the page', function (): void {
+        zzAttachApp('ZZSHOP', hidden: false);
+        zzAttachApp('ZZBOOKING', hidden: false);
+        TenantHelper::setSelectedApp('ZZSHOP');
+        Gate::define(AccessHelper::APP_GATE, fn($user, string $app): bool => mb_strtolower($app) !== 'zzshop');
+
+        zzHandleRoute($this->middleware, $this->user, 'zz.linked.hours', 'zzbooking');
+
+        expect(TenantHelper::getSelectedApp())->toBe('ZZBOOKING');
+    });
 });

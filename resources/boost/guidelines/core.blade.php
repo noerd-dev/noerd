@@ -87,6 +87,10 @@ folder — read the page before building the feature. Paths such as `src/…`, `
 - **Icons are heroicons:** navigation `heroicon: cog-6-tooth`; tenant-app icons stored as
   `heroicon:outline:{name}` (`getAppIcon()` of the install command). A module ships no icon file;
   only when no heroicon fits, a Blade icon `{module}::icons.app`.
+- **Long groups of settings are a sub-navigation:** a block of `blockMenus` with `submenu: true`
+  (optional `heroicon:`) shows as ONE entry that opens its entries with a "Back" link; the page of the
+  current route opens it directly. Never build a nested navigation any other way.
+  Reference: `docs/navigation.md` ("Sub-navigations").
 - Every app ships its own dashboard (`noerd:make-app` / `noerd:make-module` scaffold it; the app tile
   opens it, never a list). Project and module app share one naming scheme: app key `MY-APP` (letters,
   digits, hyphens), folder `app-configs/my-app`, dashboard route `my-app`; a project app is registered

@@ -39,7 +39,8 @@ only when the file is missing (`--force` does not touch it); `--reset-navigation
 | `title` | Block heading (translation key). Users can collapse a block; the state is kept in the session |
 | `navigations` | The entries of the block (see below) |
 | `route` | A block with a `route` and no `navigations` renders as a single top-level entry. `config:` / `superAdmin:` are entry keys and are not evaluated on it |
-| `heroicon` | Icon for the single-entry form |
+| `heroicon` | Icon for the single-entry form and for the entry of a sub-navigation |
+| `submenu` | `true` shows the block as a [sub-navigation](#sub-navigations): one entry that opens the block's entries |
 | `style` | `list` (default) or `buttons` — renders the block's entries as buttons |
 | `dynamic` | Provider type resolved through the `DynamicNavigationRegistry` — the block's entries are generated at runtime (e.g. the Setup collections). See [Extension Registries](extension-registries.md) |
 
@@ -83,6 +84,33 @@ registered route (`link:` and `modalComponent:` always pass). This keeps navigat
 optional module that owns the route is not installed — stale entries simply disappear instead of
 breaking the sidebar.
 
+## Sub-navigations
+
+A long group of entries — typically the settings of an app — does not need to fill the sidebar. Mark
+its block with `submenu: true`:
+
+```yaml
+    - title: Settings
+      submenu: true
+      heroicon: cog-6-tooth   # optional
+      navigations:
+        - title: General
+          route: inventory.settings
+          heroicon: adjustments-horizontal
+        - title: Printers
+          route: printers
+          heroicon: printer
+```
+
+- The navigation shows the block as ONE entry (its `heroicon`, its title and a chevron) in the place of
+  the block. Clicking it slides the sidebar to the block's entries, headed by a "Back" link and the
+  block title; "Back" slides back to the navigation. Switching changes no page.
+- When the current page is an entry of a sub-navigation, the sidebar opens in that sub-navigation.
+- `style: buttons` applies to the entries inside the sub-navigation. A sub-navigation is never
+  collapsed — the session state of collapsed blocks does not apply to it.
+- The entries are filtered like every other entry (see [Entries are filtered by target existence](#entries-are-filtered-by-target-existence)); a sub-navigation whose entries are all
+  filtered out disappears.
+
 ## Full Example
 
 `app-configs/inventory/navigation.yml`
@@ -118,6 +146,8 @@ breaking the sidebar.
           external: true
           heroicon: globe-alt
     - title: Settings
+      submenu: true
+      heroicon: cog-6-tooth
       navigations:
         - title: Settings
           route: inventory.settings

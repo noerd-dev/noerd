@@ -22,6 +22,7 @@ new class extends Component {
     $routeName = $navi['route'] ?? '';
     $routeExists = $routeName !== '' && \Illuminate\Support\Facades\Route::has($routeName);
     $hasTarget = isset($navi['link']) || $opensAsModal || $routeExists;
+    $isActive = \Noerd\Support\NavigationSubmenus::isActiveEntry($navi, request());
 @endphp
 
 {{-- The root <li> must be the FIRST element of this view and start on its own
@@ -32,7 +33,7 @@ new class extends Component {
      nested <div> instead — and the whole entry loses its markup the moment the
      sidebar re-renders. Keep the conditional INSIDE the root element. --}}
 
-<li class="{{ $hasTarget ? '' : 'hidden' }} {{ (isset($navi['link']) ? request()->is(ltrim($navi['link'], '/')) : request()->routeIs($navi['route'] ?? null))  ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
+<li class="{{ $hasTarget ? '' : 'hidden' }} {{ $isActive ? 'bg-brand-primary/5' : '' }} flex group hover:bg-brand-navi-hover rounded-lg pr-1">
     @if ($hasTarget)
     @if ($opensAsModal)
         <button type="button"
@@ -54,7 +55,7 @@ new class extends Component {
     @isset($navi['link'])
         <a wire:navigate href="{{ $navi['link'] }}" @isset($navi['external']) target="_blank" @endisset
         @click="if(! isDesktop) showSidebar = false"
-        class="{{ request()->is(ltrim($navi['link'], '/'))  ? 'border-brand-primary!' : '' }} border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
+        class="{{ $isActive ? 'border-brand-primary!' : '' }} border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset
@@ -72,7 +73,7 @@ new class extends Component {
     @else
         <a wire:navigate href="{{ route($routeName) }}" @isset($navi['external']) target="_blank" @endisset
         @click="if(! isDesktop) showSidebar = false"
-        class="{{ request()->routeIs($routeName)  ? 'border-brand-primary! ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
+        class="{{ $isActive ? 'border-brand-primary! ' : '' }} flex-1 border-l-2 -ml-6 pl-9 group-hover:border-gray-500  border-transparent group flex gap-x-1 text-gray-900 p-1.5 px-1 text-sm">
             @isset($navi['heroicon'])
                 <x-icon name="{{$navi['heroicon']}}" class="w-4 h-4 mr-2 text-gray-800"/>
             @endisset

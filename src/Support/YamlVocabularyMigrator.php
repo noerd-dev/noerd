@@ -92,7 +92,7 @@ final class YamlVocabularyMigrator
      * @var array<string, string> key => what to do instead
      */
     public const REMOVED_NAVIGATION_KEYS = [
-        'sub_menu' => 'nested menus are not supported — list the entries in a block of `blockMenus`',
+        'sub_menu' => 'list the entries in a block of `blockMenus` — mark the block `submenu: true` to show it as a sub-navigation',
     ];
 
     /**

@@ -11,6 +11,7 @@ use Noerd\Enums\NoerdExceptionType;
 use Noerd\Exceptions\NoerdException;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Helpers\StaticConfigHelper;
 use Noerd\Helpers\TenantHelper;
 use Noerd\Models\Tenant;
 use Noerd\Models\TenantApp;
@@ -28,6 +29,12 @@ use Symfony\Component\HttpFoundation\Response;
  * the screens of another app (liefertool pulls PRODUCT in, booking-members
  * keeps BOOKING) and is refused by the app switcher, so the user stays in the
  * app they came from and keeps its navigation and its app-configs.
+ *
+ *
+ * The same holds for a page the selected app LINKS in its navigation: a
+ * liefertool user opening the business hours (a booking route) stays in
+ * liefertool even when the tenant also runs a visible booking app. Access is
+ * still decided by the route's own apps above — only the selection is kept.
  */
 class AppAccessMiddleware
 {
@@ -86,7 +93,7 @@ class AppAccessMiddleware
             );
         }
 
-        $this->selectApp($tenant, $accessible[0], $accessible, $assignedRows);
+        $this->selectApp($tenant, $accessible[0], $accessible, $assignedRows, $request->route()?->getName());
 
         return $next($request);
     }
@@ -94,21 +101,32 @@ class AppAccessMiddleware
     /**
      * Decide which app the navigation shows for this request.
      *
-     * The selected app is kept when it is one of the route's own apps, or when
-     * the route belongs to a hidden app and the selected app is one the tenant
-     * runs and the user may access. Otherwise the first VISIBLE assigned
+     * The selected app is kept when it is one of the route's own apps, when its
+     * navigation links the route, or when the route belongs to a hidden app —
+     * the latter two only while the tenant runs the selected app and the user
+     * may access it. Otherwise the first VISIBLE assigned
      * candidate is selected — a hidden one only as the very last resort (no
      * selection yet, or one that is no longer valid for this tenant).
      *
      * @param  list<string>  $assigned  lowercase names of the route's apps the tenant runs and the user may access, in route order
      * @param  Collection<int, TenantApp>  $assignedRows  their rows with the pivot
+     * @param  string|null  $routeName  the name of the requested route
      */
-    private function selectApp(Tenant $tenant, string $matchingApp, array $assigned, Collection $assignedRows): void
+    private function selectApp(Tenant $tenant, string $matchingApp, array $assigned, Collection $assignedRows, ?string $routeName): void
     {
         $selected = TenantHelper::getSelectedApp();
         $selectedLower = $selected ? mb_strtolower($selected) : null;
 
         if ($selectedLower !== null && in_array($selectedLower, $assigned, true)) {
+            return;
+        }
+
+        // The selected app links this page in its navigation: stay in it.
+        if ($selectedLower !== null
+            && $routeName !== null
+            && $this->tenantRunsApp($tenant, $selectedLower)
+            && AccessHelper::canAccessApp($selectedLower)
+            && StaticConfigHelper::navigationLinksRoute($routeName)) {
             return;
         }
 

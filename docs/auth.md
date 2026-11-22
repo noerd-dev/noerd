@@ -67,7 +67,9 @@ an app that only backs the screens of another app) is never selected: the user k
 came from, with its navigation and its `app-configs/{app}/` YAML, as long as that app is assigned
 and accessible. For a route shared by several apps (`app-access:booking,booking-members`) the
 selected app is kept when it is one of them; otherwise the first visible one in route order is
-selected. Without it, any authenticated user of
+selected. The selected app is also kept for a page its navigation links (an entry `route:`): a
+Liefertool user opening the business hours — a booking route — stays in Liefertool even when the
+tenant runs a visible booking app as well. Access is still decided by the route's apps. Without it, any authenticated user of
 any tenant app can open the module's screens. The `noerd:make-module` scaffolder and the
 `noerd:make-*` generators emit routes wrapped in `['noerd', 'app-access:{app}']` (see
 [Creating Modules](creating-modules.md)).
@@ -76,7 +78,7 @@ any tenant app can open the module's screens. The `noerd:make-module` scaffolder
 
 | Alias | Middleware | Purpose |
 |-------|------------|---------|
-| `app-access:{app}` | `AppAccessMiddleware` | The tenant must have the app assigned and the app gate must allow it; also selects the app in the session (a hidden app never — the current app is kept) |
+| `app-access:{app}` | `AppAccessMiddleware` | The tenant must have the app assigned and the app gate must allow it; also selects the app in the session (a hidden app never, nor when the current app's navigation links the route — the current app is kept) |
 | `setup` | `SetupMiddleware` | The `/setup` area — tenant admins only (`NoerdUser::isAdmin()`) |
 | `profile` | `ProfileMiddleware` | The profile area — every signed-in person; selects the hidden `PROFILE` app so the sidebar shows `app-configs/profile/navigation.yml`, refused (403) while an administrator is signed in as the person (see [Navigation](navigation.md#setup-and-profile-navigation)) |
 | `action-permission:{key}` | `ActionPermissionMiddleware` | A registered named action must be allowed for the user (see [Permissions](permissions.md#named-action-checks)) |
