@@ -31,7 +31,7 @@ final class NavigationSubmenus
      * The key of the first sub-navigation holding the page of the request, or
      * null when the page belongs to none.
      *
-     * @param  array<int|string, array<string, mixed>>  $blocks
+     * @param  array<int|string, mixed>  $blocks
      */
     public static function activeIndex(array $blocks, Request $request): int|string|null
     {
