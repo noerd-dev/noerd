@@ -8,9 +8,7 @@ new class extends Component {
 
 @php
     $routeName = $navi['route'] ?? '';
-    $isActive = isset($navi['link'])
-        ? request()->is(ltrim($navi['link'], '/'))
-        : request()->routeIs($routeName);
+    $isActive = \Noerd\Support\NavigationSubmenus::isActiveEntry($navi, request());
     $activeClass = $isActive ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50';
 
     // `route:` means NAVIGATE (and drives $isActive above), so opening an entry as

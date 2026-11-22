@@ -103,6 +103,13 @@ flat in `lists/`. Block-style YAML only. Navigation icons are heroicons:
           heroicon: cube
           newModalRoute: module.thing.detail        # the "+" opens an empty record as a route modal
           newModalComponent: module::thing-detail   # fallback when the route is not registered
+    - title: Settings
+      submenu: true                                 # one entry that opens the block as a sub-navigation
+      heroicon: cog-6-tooth
+      navigations:
+        - title: General
+          route: module.settings
+          heroicon: adjustments-horizontal
 ```
 
 ## 4. Translations
