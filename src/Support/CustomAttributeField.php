@@ -48,7 +48,7 @@ final readonly class CustomAttributeField
      */
     public function optionValues(): array
     {
-        return array_values(array_map(fn(array $option): string => (string) ($option['value'] ?? ''), $this->options));
+        return array_map(fn(array $option): string => $option['value'], $this->options);
     }
 
     /**

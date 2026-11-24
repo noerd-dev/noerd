@@ -434,7 +434,7 @@ number/currency → numeric, date → `Y-m-d`, checkbox → boolean, select → 
 `sometimes` on an update) and `describe()` answers the field for an API.
 
 **Default:** `Noerd\Services\NullCustomAttributeDefinitions`, bound with `singletonIf` — no model has
-any custom attribute. A module managing definitions (noerd-plus) rebinds it in its `register()`.
+any custom attribute. A module managing definitions rebinds it in its `register()`.
 
 ### ComputedColumnRegistry
 
