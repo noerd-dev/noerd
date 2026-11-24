@@ -355,5 +355,7 @@
     "The tenant and all of its data will be permanently deleted. User accounts stay; they only lose their access to this tenant. This cannot be undone.": "Der Mandant und alle seine Daten werden endgültig gelöscht. Benutzerkonten bleiben bestehen und verlieren nur den Zugang zu diesem Mandanten. Dies kann nicht rückgängig gemacht werden.",
     "Type the name of the tenant to confirm": "Geben Sie zur Bestätigung den Namen des Mandanten ein",
     "The name does not match the tenant.": "Der Name stimmt nicht mit dem Mandanten überein.",
-    "You are working in this tenant. Switch to another tenant first.": "Sie arbeiten gerade in diesem Mandanten. Wechseln Sie zuerst in einen anderen Mandanten."
+    "You are working in this tenant. Switch to another tenant first.": "Sie arbeiten gerade in diesem Mandanten. Wechseln Sie zuerst in einen anderen Mandanten.",
+    "Placeholder": "Platzhalter",
+    "Insert placeholder": "Platzhalter einfügen"
 }

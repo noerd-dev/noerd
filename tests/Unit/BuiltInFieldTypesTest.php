@@ -58,6 +58,31 @@ it('lets a select build its options from a component method at render time', fun
     expect($props['field']['options'] ?? null)->toBe([['value' => 'a', 'label' => 'A']]);
 });
 
+it('lets a rich-text field take its placeholders from a component method at render time', function (): void {
+    $registry = new FieldTypeRegistry();
+    BuiltInFieldTypes::register($registry);
+
+    $component = new class {
+        /** @return array<string, string> */
+        public function zzLetterPlaceholders(): array
+        {
+            return ['{{name}}' => 'Contact person', '{{city}}' => 'City'];
+        }
+    };
+
+    $props = $registry->get('richText')?->resolveProps(
+        ['name' => 'detailData.body', 'type' => 'richText', 'placeholdersMethod' => 'zzLetterPlaceholders'],
+        $component,
+    );
+
+    expect($props['field']['placeholders'] ?? null)->toBe(['{{name}}' => 'Contact person', '{{city}}' => 'City']);
+
+    // Without a method the field offers none.
+    $props = $registry->get('richText')?->resolveProps(['name' => 'detailData.body', 'type' => 'richText'], $component);
+
+    expect($props['field'])->not->toHaveKey('placeholders');
+});
+
 it('hands the icon field its current value from the component', function (): void {
     $registry = new FieldTypeRegistry();
     BuiltInFieldTypes::register($registry);

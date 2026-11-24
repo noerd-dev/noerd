@@ -10,7 +10,7 @@ use Noerd\Services\FieldTypeRegistry;
 /**
  * The detail field types the package ships, registered on the FieldTypeRegistry
  * by the service provider. Most are a plain Blade partial receiving the field
- * array — those come from ONE map; only the three types needing extra props
+ * array — those come from ONE map; only the types needing extra props
  * keep a resolver of their own. A type whose template exists in the default
  * theme only is registered on the theme template itself (ThemeElementResolver
  * walks the theme chain from the basename); the `noerd::components.forms.*`
@@ -26,7 +26,6 @@ final class BuiltInFieldTypes
         'setupCollectionSelect' => 'noerd::components.forms.setup-collection-select',
         'belongsToMany' => 'themes::default.belongs-to-many',
         'checkbox' => 'noerd::components.forms.checkbox',
-        'richText' => 'themes::default.rich-text',
         'translatableRichText' => 'themes::default.translatable-rich-text',
         'translatableText' => 'noerd::components.forms.translatable-text',
         'translatableTextarea' => 'noerd::components.forms.translatable-textarea',
@@ -63,6 +62,27 @@ final class BuiltInFieldTypes
                     }
 
                     $field['options'] = $options;
+                }
+
+                return ['field' => $field];
+            },
+        ));
+
+        // A rich-text editor may offer placeholders to insert, named by a component
+        // method (`placeholdersMethod`) returning token => label.
+        $registry->register('richText', FieldTypeDefinition::include(
+            'themes::default.rich-text',
+            resolver: function (array $field, mixed $component, mixed $detailData, mixed $modelId): array {
+                $placeholdersMethod = $field['placeholdersMethod'] ?? null;
+
+                if ($placeholdersMethod && $component && method_exists($component, $placeholdersMethod)) {
+                    $placeholders = [];
+
+                    foreach ($component->{$placeholdersMethod}() as $token => $label) {
+                        $placeholders[(string) $token] = (string) $label;
+                    }
+
+                    $field['placeholders'] = $placeholders;
                 }
 
                 return ['field' => $field];
