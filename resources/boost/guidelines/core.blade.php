@@ -278,6 +278,10 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
 - Modules are NEVER modified for one project's fields — neither code nor YAML. Project fields live in the
   `custom_attributes` JSON column: the column migration in the PROJECT root, the
   `'custom_attributes' => 'array'` cast in the module model, rename migrations in the module.
+- Code writing custom attributes WITHOUT a form (an MCP tool, an import) learns the tenant's keys, types and
+  rules only through `Noerd\Contracts\CustomAttributeDefinitionsContract::fieldsFor($modelClass, $tenantId)`
+  (`CustomAttributeField::rules()`), never from the module storing the definitions. Reference:
+  `docs/extension-registries.md`.
 - Read as `$model->custom_attributes['my_key']` / `$this->detailData['custom_attributes']['my_key']` in
   project-level views that override the module's.
 - An input the Blade binds without a layout field (`wire:model="detailData.custom_attributes.my_key"`,

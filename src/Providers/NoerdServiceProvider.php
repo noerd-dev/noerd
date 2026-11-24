@@ -34,6 +34,7 @@ use Noerd\Commands\NoerdUpdateAllCommand;
 use Noerd\Commands\NoerdUpdateCommand;
 use Noerd\Commands\PromoteAdminCommand;
 use Noerd\Commands\SuperAdminCommand;
+use Noerd\Contracts\CustomAttributeDefinitionsContract;
 use Noerd\Contracts\MediaResolverContract;
 use Noerd\Contracts\SetupCollectionDefinitionRepositoryContract;
 use Noerd\Helpers\CurrencyHelper;
@@ -65,6 +66,7 @@ use Noerd\Services\FieldTypeRegistry;
 use Noerd\Services\ListCellRendererRegistry;
 use Noerd\Services\NavigationService;
 use Noerd\Services\NoerdManager;
+use Noerd\Services\NullCustomAttributeDefinitions;
 use Noerd\Services\NullMediaResolver;
 use Noerd\Services\PicklistRegistry;
 use Noerd\Services\PositionTableRegistry;
@@ -134,6 +136,7 @@ class NoerdServiceProvider extends ServiceProvider
         $this->app->scoped(RequestState::class);
         $this->app->scoped(TenantContext::class);
         $this->app->singletonIf(MediaResolverContract::class, NullMediaResolver::class);
+        $this->app->singletonIf(CustomAttributeDefinitionsContract::class, NullCustomAttributeDefinitions::class);
         // Providers of list columns / detail fields without a stored value; the
         // core computes `method:` itself, packages register further providers.
         $this->app->singleton(ComputedColumnRegistry::class, function (): ComputedColumnRegistry {
