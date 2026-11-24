@@ -64,6 +64,17 @@ final class NoerdAuth
     }
 
     /**
+     * Whether people sign in with e-mail and password. Off
+     * (`noerd.features.password_login`), the login page shows only what modules
+     * put into the login slot (single sign-on) and every password screen —
+     * login form, reset, own and administered password — is refused.
+     */
+    public static function passwordLoginEnabled(): bool
+    {
+        return (bool) config('noerd.features.password_login', true);
+    }
+
+    /**
      * @internal Read by the core provider when it registers the noerd guard.
      */
     public static function providerName(): string

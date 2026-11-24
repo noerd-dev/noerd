@@ -9,11 +9,18 @@ use Noerd\Helpers\NoerdAuth;
 new #[Layout('noerd::layouts.auth')] class extends Component {
     public string $email = '';
 
+    public function mount(): void
+    {
+        abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
+    }
+
     /**
      * Send a password reset link to the provided email address.
      */
     public function sendPasswordResetLink(): void
     {
+        abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
+
         $this->validate([
             'email' => ['required', 'string', 'email'],
         ]);

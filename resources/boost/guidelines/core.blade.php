@@ -215,6 +215,11 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   `NoerdUser::canAccessTenant()` / `accessibleTenants()`, never `$user->tenants`. An impersonation
   ("Login as user") is bound to the selected tenant: the account's memberships shrink to it and the
   profile area (`profile` middleware) is closed — a module's profile page needs no guard of its own.
+- Further ways to sign in (single sign-on) are a MODULE: its buttons go into the
+  `ComponentSlotsRegistry::AUTH_LOGIN` slot of the login page and it signs in through
+  `NoerdAuth::guard()->login($user)` — never a change of the core login. Whether the password login
+  exists is `NoerdAuth::passwordLoginEnabled()` (`noerd.features.password_login`); every password
+  screen asks it (`docs/auth.md`).
 - A membership is written ONLY through `Tenant::addMember($user, $profileKey)` / `setMemberProfile()` /
   `removeMember()` (events `TenantMemberAdded` / `TenantMemberRemoved`) — never `tenants()->attach()`/`detach()`.
   Removing the last membership keeps the account; `removeMember()` also forgets the tenant as the

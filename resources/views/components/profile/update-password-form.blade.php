@@ -21,6 +21,7 @@ new class extends Component
         // The person's own account: never changed by an administrator signed
         // in as them (see Impersonation).
         abort_if(Impersonation::active(), 403);
+        abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
 
         try {
             $validated = $this->validate([

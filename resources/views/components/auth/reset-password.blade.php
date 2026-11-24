@@ -24,6 +24,8 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
      */
     public function mount(string $token): void
     {
+        abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
+
         $this->token = $token;
         $this->email = (string) request()->input('email', '');
     }
@@ -33,6 +35,8 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
      */
     public function resetPassword(): void
     {
+        abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
+
         $this->validate([
             'token' => ['required'],
             'email' => ['required', 'string', 'email'],
