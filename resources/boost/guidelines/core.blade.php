@@ -375,7 +375,7 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
 - **Another component's form:** a review or preview screen renders the TARGET's YAML with
   `StaticConfigHelper::getComponentFields('accounting::expense-detail', Expense::class)` and never
   changes the target; `validateFromLayout()` and relation fields work, the target's PHP
-  (`optionsMethod` methods, `*Selected` side effects, `mount()`/`store()` formatting) does not come along
+  (`optionsMethod` / `placeholdersMethod` methods, `*Selected` side effects, `mount()`/`store()` formatting) does not come along
   — gate with the target model's `can*Object()` overrides.
 - **Computed values:** a list column or detail field with `method:` shows a public, parameterless model
   method marked `#[Noerd\Attributes\ComputedValue(with: [...])]` (never an `$appends` entry or a

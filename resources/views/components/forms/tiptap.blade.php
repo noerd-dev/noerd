@@ -1,4 +1,7 @@
-@props(['field', 'content' => '', 'readonly' => false, 'hasError' => null])
+@props(['field', 'content' => '', 'readonly' => false, 'hasError' => null, 'placeholders' => []])
+
+{{-- `placeholders` (token => label, e.g. `{{name}}` => "Contact person") adds a menu to the
+     toolbar that inserts the token at the cursor; the owner of the field replaces them. --}}
 
 @php
     // The validation error is keyed on the field name; a translatable field
@@ -218,6 +221,36 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                     </svg>
                 </button>
+
+                @if (! empty($placeholders))
+                    <div class="mx-1 h-6 w-px bg-gray-300"></div>
+
+                    <x-noerd::action-menu align="left" width="w-64">
+                        <x-slot:trigger>
+                            <button
+                                type="button"
+                                @click.prevent="open = ! open"
+                                class="flex items-center gap-1 rounded px-1.5 py-1 text-xs font-medium transition-colors hover:bg-gray-200"
+                                title="{{ __('Insert placeholder') }}"
+                                aria-label="{{ __('Insert placeholder') }}"
+                                data-noerd-placeholder-menu
+                            >
+                                <span class="font-mono">{ }</span>
+                                {{ __('Placeholder') }}
+                            </button>
+                        </x-slot:trigger>
+
+                        @foreach ($placeholders as $token => $placeholderLabel)
+                            <x-noerd::action-menu-item
+                                @click.prevent="command().insertContent({{ \Illuminate\Support\Js::from($token) }}).run()"
+                                data-noerd-placeholder="{{ $token }}"
+                            >
+                                <span class="flex-1">{{ __($placeholderLabel) }}</span>
+                                <span class="font-mono text-xs text-gray-400">{{ $token }}</span>
+                            </x-noerd::action-menu-item>
+                        @endforeach
+                    </x-noerd::action-menu>
+                @endif
 
                 <div class="flex-1"></div>
 
