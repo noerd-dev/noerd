@@ -20,7 +20,7 @@ YAMLs ([Settings Pages](settings-page.md)) — all three render through the same
 | `*Relation` | Registered relation field type such as `itemRelation` or `pageRelation` | Livewire component `noerd::noerd-relation-field` (`components/noerd-relation-field.blade.php`), markup from the theme's `relation-field.blade.php` |
 | `image` | Image selection from Media library | `image.blade.php` |
 | `file` | File upload | `file.blade.php` |
-| `richText` | TipTap WYSIWYG editor | `rich-text.blade.php` |
+| `richText` | TipTap WYSIWYG editor, optionally with a placeholder menu (`placeholdersMethod`) | `rich-text.blade.php` |
 | `translatableText` | Multi-language text field | `translatable-text.blade.php` |
 | `translatableTextarea` | Multi-language textarea | `translatable-textarea.blade.php` |
 | `translatableRichText` | Multi-language rich text editor | `translatable-rich-text.blade.php` |
@@ -576,6 +576,27 @@ TipTap WYSIWYG editor. `readonly: true` makes the editor non-editable.
   back into the editor.
 - Render stored content with `<x-noerd::rich-text :content="…" />`, which passes it through
   `Noerd\Support\HtmlSanitizer` — never with `{!! !!}`.
+
+**Placeholders.** `placeholdersMethod:` names a public method of the component returning
+`token => label`. The toolbar then offers a "Placeholder" menu that inserts the token at the
+cursor, so nobody has to type or know the syntax. The core only inserts the text — the owner of
+the field defines the tokens and replaces them where the content is used (e.g. a letter per
+recipient). Readonly editors show no menu.
+
+```yaml
+- name: detailData.body
+  label: Letter text
+  type: richText
+  placeholdersMethod: letterPlaceholders
+```
+
+```php
+/** @return array<string, string> */
+public function letterPlaceholders(): array
+{
+    return ['{{name}}' => __('Contact person'), '{{city}}' => __('City')];
+}
+```
 
 ## Translatable Fields
 

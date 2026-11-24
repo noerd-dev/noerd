@@ -25,7 +25,7 @@
 <div {{ $attributes->merge(['class' => '']) }}>
     <x-noerd::input-label for="{{ $name }}" :value="__($label)" />
 
-    <x-noerd::forms.tiptap :field="$name" :content="$contentValue" :readonly="$readonly" />
+    <x-noerd::forms.tiptap :field="$name" :content="$contentValue" :readonly="$readonly" :placeholders="$field['placeholders'] ?? []" />
 
     <x-noerd::input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

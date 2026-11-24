@@ -146,6 +146,61 @@ it('keeps the tab when the same component type reopens', function (): void {
     expect($page->currentTab)->toBe(3);
 });
 
+it('keeps the tab a page load names even after another component type', function (): void {
+    session(['noerd.lastDetailComponent' => 'other-component']);
+    request()->query->set('tab', '4');
+
+    $page = new NoerdPageFixturePage();
+    $page->currentTab = 4;
+    $page->mountNoerdPage();
+
+    expect($page->currentTab)->toBe(4);
+});
+
+it('restores the tab of a routed modal reopened after a reload', function (): void {
+    session(['noerd.lastDetailComponent' => 'other-component']);
+    session()->flash('noerd-modal.open', [
+        'component' => 'zz-fixture-page',
+        'arguments' => ['modelId' => 9],
+        'url' => 'https://example.test/party/9?modal=true&tab=4',
+    ]);
+
+    $page = new NoerdPageFixturePage();
+    $page->modelId = 9;
+    $page->mountNoerdPage();
+
+    expect($page->currentTab)->toBe(4);
+});
+
+it('keeps its own tab when the page below a reopened routed modal is another record of the same type', function (): void {
+    session(['noerd.lastDetailComponent' => 'zz-fixture-page']);
+    session()->flash('noerd-modal.open', [
+        'component' => 'zz-fixture-page',
+        'arguments' => ['modelId' => 9],
+        'url' => 'https://example.test/party/9?modal=true&tab=4',
+    ]);
+    request()->query->set('tab', '2');
+
+    $page = new NoerdPageFixturePage();
+    $page->modelId = 5;
+    $page->currentTab = 2;
+    $page->mountNoerdPage();
+
+    expect($page->currentTab)->toBe(2);
+});
+
+it('ignores the url tab during livewire requests', function (): void {
+    session(['noerd.lastDetailComponent' => 'other-component']);
+    request()->query->set('tab', '4');
+    request()->headers->set('X-Livewire', '1');
+
+    $page = new NoerdPageFixturePage();
+    $page->currentTab = 4;
+    $page->mountNoerdPage();
+
+    expect($page->currentTab)->toBe(1);
+});
+
 it('leaves the tab session untouched for embedded components', function (): void {
     session(['noerd.lastDetailComponent' => 'zz-fixture-page']);
 

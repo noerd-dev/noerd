@@ -283,6 +283,10 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
 - Modules are NEVER modified for one project's fields — neither code nor YAML. Project fields live in the
   `custom_attributes` JSON column: the column migration in the PROJECT root, the
   `'custom_attributes' => 'array'` cast in the module model, rename migrations in the module.
+- Code writing custom attributes WITHOUT a form (an MCP tool, an import) learns the tenant's keys, types and
+  rules only through `Noerd\Contracts\CustomAttributeDefinitionsContract::fieldsFor($modelClass, $tenantId)`
+  (`CustomAttributeField::rules()`), never from the module storing the definitions. Reference:
+  `docs/extension-registries.md`.
 - Read as `$model->custom_attributes['my_key']` / `$this->detailData['custom_attributes']['my_key']` in
   project-level views that override the module's.
 - An input the Blade binds without a layout field (`wire:model="detailData.custom_attributes.my_key"`,
@@ -380,7 +384,7 @@ YAMLs are pure model forms: `title`, `description`, `theme`, `quickCreate`, `tab
 - **Another component's form:** a review or preview screen renders the TARGET's YAML with
   `StaticConfigHelper::getComponentFields('accounting::expense-detail', Expense::class)` and never
   changes the target; `validateFromLayout()` and relation fields work, the target's PHP
-  (`optionsMethod` methods, `*Selected` side effects, `mount()`/`store()` formatting) does not come along
+  (`optionsMethod` / `placeholdersMethod` methods, `*Selected` side effects, `mount()`/`store()` formatting) does not come along
   — gate with the target model's `can*Object()` overrides.
 - **Computed values:** a list column or detail field with `method:` shows a public, parameterless model
   method marked `#[Noerd\Attributes\ComputedValue(with: [...])]` (never an `$appends` entry or a
