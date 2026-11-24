@@ -155,7 +155,9 @@ A create modal has no record id — the conventional `{modelId}` param then carr
 `new` sentinel (`/inventory/item/new?modal=true`), which `NoerdPage::prepareRoutedModal()`
 maps back to `null`. Reloading such a URL reopens the record as a modal over the last full
 page the user visited (`RoutedModal::redirectToRoutedModal()`, shared by `NoerdPage` and
-`NoerdList`). That page is recorded by the `RememberPageUrl` middleware of the `noerd` route
+`NoerdList`), on the tab its URL names (`?tab=`). A page load that names a tab — a reload, a
+pasted link — always opens on it; only a tab carried over from a record of another type falls
+back to the first one. That page is recorded by the `RememberPageUrl` middleware of the `noerd` route
 group: only a successful HTML response counts, so a PDF or download opened in another tab never
 becomes the page a reloaded modal returns to.
 

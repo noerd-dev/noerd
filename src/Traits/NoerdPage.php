@@ -100,6 +100,16 @@ trait NoerdPage
             return;
         }
 
+        // A page load names its tab explicitly (a reload, a pasted link) — it wins
+        // over the carried-over-tab reset below.
+        $requestedTab = $this->tabOfPageLoad();
+
+        if ($requestedTab !== null) {
+            $this->currentTab = $requestedTab;
+
+            return;
+        }
+
         // READ ONLY. The matching write happens when the component renders —
         // mount() re-runs on every modal-stack update (@teleport re-mounts
         // Livewire children), so it must stay free of side effects.
@@ -716,6 +726,57 @@ trait NoerdPage
      * /crm/account/new) to null and performs the ?modal=true redirect. Returns
      * true when a redirect was issued and mounting should stop.
      */
+    /**
+     * The tab a real page load asks for: the `tab` of the URL itself, or — while
+     * the modal stack reopens this record after redirectToRoutedModal() — the
+     * `tab` of the flashed routed-modal URL (the redirect target's URL carries
+     * none). Livewire requests never count: there the tab is the client's state.
+     */
+    private function tabOfPageLoad(): ?int
+    {
+        if (request()->hasHeader('X-Livewire')) {
+            return null;
+        }
+
+        $flash = session('noerd-modal.open');
+
+        if (is_array($flash) && $this->isFlashedRoutedModal($flash)) {
+            parse_str((string) parse_url($flash['url'], PHP_URL_QUERY), $query);
+        } else {
+            $query = request()->query();
+        }
+
+        $tab = filter_var($query['tab'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return $tab === false ? null : $tab;
+    }
+
+    /**
+     * Whether the flashed routed modal is THIS record: the same component with
+     * the same identity. The page the user was sent back to may be a full page
+     * of the same component type showing another record — it keeps its own tab.
+     *
+     * @param  array<string, mixed>  $flash
+     */
+    private function isFlashedRoutedModal(array $flash): bool
+    {
+        if (($flash['component'] ?? null) !== $this->componentName() || ! is_string($flash['url'] ?? null)) {
+            return false;
+        }
+
+        foreach ((array) ($flash['arguments'] ?? []) as $name => $value) {
+            if (! property_exists($this, $name) || ! is_scalar($this->{$name} ?? '') || ! is_scalar($value ?? '')) {
+                return false;
+            }
+
+            if ((string) ($this->{$name} ?? '') !== (string) ($value ?? '')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function prepareRoutedModal(): bool
     {
         if ($this->modelId === 'new') {
