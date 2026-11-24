@@ -10,6 +10,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Services\ComponentSlotsRegistry;
 
 new #[Layout('noerd::layouts.auth')] class extends Component {
     #[Validate('required|string|email')]
@@ -21,10 +22,22 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     public bool $remember = false;
 
     /**
+     * The further ways in a module put on the login page (single sign-on).
+     *
+     * @return list<string>
+     */
+    public function loginComponents(): array
+    {
+        return app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::AUTH_LOGIN);
+    }
+
+    /**
      * Handle an incoming authentication request.
      */
     public function login(): void
     {
+        abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
+
         $this->validate();
 
         $this->ensureIsNotRateLimited();
@@ -87,7 +100,32 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     }
 }; ?>
 
-<x-noerd::auth-shell :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')">
+@php
+    $loginComponents = $this->loginComponents();
+    $passwordLogin = NoerdAuth::passwordLoginEnabled();
+@endphp
+
+<x-noerd::auth-shell
+    :title="__('Log in to your account')"
+    :description="$passwordLogin ? __('Enter your email and password below to log in') : __('Choose how you want to log in')"
+>
+    @if ($loginComponents !== [])
+        <div class="space-y-3">
+            @foreach ($loginComponents as $loginComponent)
+                <livewire:dynamic-component :component="$loginComponent" :key="$loginComponent" />
+            @endforeach
+        </div>
+    @endif
+
+    @if ($passwordLogin && $loginComponents !== [])
+        <div class="relative my-6 flex items-center" aria-hidden="true">
+            <div class="flex-grow border-t border-gray-200"></div>
+            <span class="mx-3 text-xs text-gray-500">{{ __('or') }}</span>
+            <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+    @endif
+
+    @if ($passwordLogin)
     <form wire:submit="login" class="space-y-6">
         {{-- Email Address --}}
         <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
@@ -115,4 +153,5 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
             </x-noerd::button>
         </div>
     </form>
+    @endif
 </x-noerd::auth-shell>

@@ -34,7 +34,7 @@ new class extends Component {
     {
         $admin = NoerdAuth::user();
 
-        if (! $admin?->isAdmin() || ! $this->userId) {
+        if (! NoerdAuth::passwordLoginEnabled() || ! $admin?->isAdmin() || ! $this->userId) {
             return false;
         }
 

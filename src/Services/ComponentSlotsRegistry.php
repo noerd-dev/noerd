@@ -8,7 +8,7 @@ use Noerd\Support\SortedRegistrations;
 
 /**
  * Livewire components a module mounts at a named spot of the noerd chrome: the
- * top bar (TOP_BAR), the list header (LIST_HEADER_ACTIONS), the head row of a
+ * top bar (TOP_BAR), the login page (AUTH_LOGIN), the list header (LIST_HEADER_ACTIONS), the head row of a
  * detail's first form block (DETAIL_HEADER_ACTIONS) and the named extension
  * slots a detail marks with `<x-noerd::detail-slot name="…">`. The host only
  * marks the position; a module registers its component in its provider's
@@ -22,6 +22,12 @@ final class ComponentSlotsRegistry
     public const LIST_HEADER_ACTIONS = 'list-header-actions';
 
     public const DETAIL_HEADER_ACTIONS = 'detail-header-actions';
+
+    /**
+     * The login page, above the e-mail/password form — sign-in buttons of
+     * further ways in (single sign-on). Components render for guests.
+     */
+    public const AUTH_LOGIN = 'auth-login';
 
     /** @var array<string, list<array{component: string, sort: int}>> */
     private array $slots = [];

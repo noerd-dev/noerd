@@ -29,7 +29,7 @@
     "Assigned Apps": "Zugewiesene Apps",
     "Available Apps": "Verfügbare Apps",
     "Back": "Zurück",
-    "Back to home":"Zurück zur Startseite",
+    "Back to home": "Zurück zur Startseite",
     "Back to login": "Zurück zur Anmeldung",
     "Blockquote": "Zitat",
     "Bold": "Fett",
@@ -356,6 +356,8 @@
     "Type the name of the tenant to confirm": "Geben Sie zur Bestätigung den Namen des Mandanten ein",
     "The name does not match the tenant.": "Der Name stimmt nicht mit dem Mandanten überein.",
     "You are working in this tenant. Switch to another tenant first.": "Sie arbeiten gerade in diesem Mandanten. Wechseln Sie zuerst in einen anderen Mandanten.",
+    "or": "oder",
+    "Choose how you want to log in": "Wählen Sie, wie Sie sich anmelden möchten",
     "Placeholder": "Platzhalter",
     "Insert placeholder": "Platzhalter einfügen"
 }

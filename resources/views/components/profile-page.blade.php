@@ -18,7 +18,9 @@ new class extends Component {}; ?>
         <livewire:noerd::profile.update-profile-information-form />
     </x-noerd::profile-section>
 
-    <x-noerd::profile-section>
-        <livewire:noerd::profile.update-password-form />
-    </x-noerd::profile-section>
+    @if (\Noerd\Helpers\NoerdAuth::passwordLoginEnabled())
+        <x-noerd::profile-section>
+            <livewire:noerd::profile.update-password-form />
+        </x-noerd::profile-section>
+    @endif
 </x-noerd::page>

@@ -18,8 +18,8 @@ provider is always `Noerd\Models\NoerdUser` on the `noerd_users` table — the f
 nor the table is configurable.
 
 The names are fixed: the guard is `noerd`, the provider and the password broker are `noerd_users`
-(`NoerdAuth::GUARD`, `NoerdAuth::PROVIDER`, `NoerdAuth::BROKER`). There is no auth section in
-`config/noerd.php`. noerd never changes `auth.defaults.guard` / `auth.defaults.passwords`: the
+(`NoerdAuth::GUARD`, `NoerdAuth::PROVIDER`, `NoerdAuth::BROKER`). `config/noerd.php` holds no
+guard settings — only the switch `features.password_login` (see below). noerd never changes `auth.defaults.guard` / `auth.defaults.passwords`: the
 noerd route groups select the noerd guard per request (see below), so routes protected by the
 bare `auth` middleware alias keep resolving the host's default guard.
 
@@ -40,6 +40,26 @@ itself and `php artisan route:cache` never sees a duplicate.
 `/login` still works on a plain noerd installation: an **unnamed** redirect to the prefixed login
 route. Because it is unnamed and registered before the host's routes, a starter kit that claims the
 `/login` URI simply overrides it — the redirect only serves hosts without their own login.
+
+## Further ways in: the login slot and the password switch
+
+The login page renders every Livewire component a module registers in the `AUTH_LOGIN` slot of
+the `ComponentSlotsRegistry`, above the e-mail/password form (separated by "or"):
+
+```php
+app(ComponentSlotsRegistry::class)->register(ComponentSlotsRegistry::AUTH_LOGIN, 'sso::login-buttons');
+```
+
+That is how a single sign-on module (e.g. `noerd/sso` with Google or Microsoft) adds its buttons —
+the core ships no provider and no OAuth dependency. The module signs the person in with
+`NoerdAuth::guard()->login($user)`, so `RecordLogin` and `InitializeTenantSession` run as for a
+password login; a person without a tenant lands on `noerd.no-tenant`.
+
+`config('noerd.features.password_login')` (`NOERD_PASSWORD_LOGIN`, default `true`) switches the
+password login off: the login page shows only the slot, `login()` and the forgot/reset screens
+answer 404, the own password form disappears from the profile and nobody may set another
+account's password. `NoerdAuth::passwordLoginEnabled()` is the one place that reads the switch.
+The console (`noerd:make-admin-user`) stays the emergency way in.
 
 ## Route middleware groups
 

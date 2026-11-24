@@ -29,6 +29,9 @@ return [
     'features' => [
         'new_tenant' => env('NOERD_NEW_TENANT_FEATURE_ENABLED', true),
         'currency' => env('NOERD_CURRENCY_ENABLED', true),
+        // Off: no e-mail/password login, no password reset and no password
+        // forms — sign-in only through the login slot (e.g. noerd/sso).
+        'password_login' => env('NOERD_PASSWORD_LOGIN', true),
     ],
 
     /*
