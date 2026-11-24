@@ -383,7 +383,7 @@ public function boot(): void
 
 ## Overridable Null Bindings
 
-Two contracts are bound to inert default implementations so the core works without the optional module that provides the real one. A module takes over by rebinding the contract in its service provider's `register()`.
+Contracts are bound to inert default implementations so the core works without the optional module that provides the real one. A module takes over by rebinding the contract in its service provider's `register()`.
 
 ### MediaResolverContract
 
@@ -415,6 +415,26 @@ public function register(): void
     );
 }
 ```
+
+### CustomAttributeDefinitionsContract
+
+The custom attributes a tenant defined for a model (the keys of its `custom_attributes` JSON column),
+for code that writes them WITHOUT a detail form — an MCP tool, an import. Such code never reads the
+definitions from the module that stores them.
+
+**Contract** (`Noerd\Contracts\CustomAttributeDefinitionsContract`):
+
+| Method | Description |
+|--------|-------------|
+| `fieldsFor(string $modelClass, int $tenantId): array` | The ACTIVE definitions of the model's table for that tenant, in display order, as `Noerd\Support\CustomAttributeField` |
+
+`CustomAttributeField` carries `key`, `label`, `type`, `required` and `options` (a select's
+`{value, label}` pairs); `rules(bool $update)` validates a value by its type (text → string,
+number/currency → numeric, date → `Y-m-d`, checkbox → boolean, select → one of the option values;
+`sometimes` on an update) and `describe()` answers the field for an API.
+
+**Default:** `Noerd\Services\NullCustomAttributeDefinitions`, bound with `singletonIf` — no model has
+any custom attribute. A module managing definitions (noerd-plus) rebinds it in its `register()`.
 
 ### ComputedColumnRegistry
 
