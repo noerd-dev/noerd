@@ -219,7 +219,8 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   `ComponentSlotsRegistry::AUTH_LOGIN` slot of the login page and it signs in through
   `NoerdAuth::guard()->login($user)` — never a change of the core login. Whether the password login
   exists is `NoerdAuth::passwordLoginEnabled()` (`noerd.features.password_login`); every password
-  screen asks it (`docs/auth.md`).
+  screen asks it, and while it is off the noerd user provider (`Support\NoerdUserProvider`, driver
+  `noerd`) ignores "remember me" cookies (`docs/auth.md`).
 - A membership is written ONLY through `Tenant::addMember($user, $profileKey)` / `setMemberProfile()` /
   `removeMember()` (events `TenantMemberAdded` / `TenantMemberRemoved`) — never `tenants()->attach()`/`detach()`.
   Removing the last membership keeps the account; `removeMember()` also forgets the tenant as the
