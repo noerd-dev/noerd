@@ -18,6 +18,7 @@ use Noerd\Models\NoerdUser;
 use Noerd\Models\SetupLanguage;
 use Noerd\Models\Tenant;
 use Noerd\Providers\NoerdServiceProvider;
+use Noerd\Support\NoerdUserProvider;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -36,7 +37,7 @@ describe('runtime guard registration', function (): void {
         ]);
 
         expect(config('auth.providers.noerd_users'))->toBe([
-            'driver' => 'eloquent',
+            'driver' => NoerdUserProvider::DRIVER,
             'model' => NoerdUser::class,
         ]);
 

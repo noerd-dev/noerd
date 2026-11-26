@@ -80,6 +80,7 @@ use Noerd\Support\BuiltInFieldTypes;
 use Noerd\Support\FieldContext;
 use Noerd\Support\ListColumnIntrospection;
 use Noerd\Support\ModelMethodColumns;
+use Noerd\Support\NoerdUserProvider;
 use Noerd\Support\RequestState;
 use Noerd\Support\SchemaColumnCache;
 use Noerd\Support\ShellState;
@@ -196,6 +197,7 @@ class NoerdServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->bootResources();
+        $this->bootUserProvider();
         $this->bootEventListeners();
         $this->bootRouting();
         $this->bootRegistries();
@@ -376,6 +378,18 @@ class NoerdServiceProvider extends ServiceProvider
     }
 
     /**
+     * The driver of the noerd user provider: Eloquent, except that a
+     * "remember me" cookie signs nobody in while the password login is off.
+     */
+    private function bootUserProvider(): void
+    {
+        $this->app['auth']->provider(
+            NoerdUserProvider::DRIVER,
+            fn($app, array $config): NoerdUserProvider => new NoerdUserProvider($app['hash'], $config['model']),
+        );
+    }
+
+    /**
      * Register noerd's dedicated auth guard, user provider and password
      * broker at runtime. The host's config/auth.php is never written to,
      * and any key the host already defines wins over the injection. The
@@ -398,7 +412,7 @@ class NoerdServiceProvider extends ServiceProvider
 
         if (config("auth.providers.{$provider}") === null) {
             config(["auth.providers.{$provider}" => [
-                'driver' => 'eloquent',
+                'driver' => NoerdUserProvider::DRIVER,
                 'model' => NoerdUser::class,
             ]]);
         }

@@ -82,3 +82,18 @@ describe('password login switched off', function (): void {
             ->assertForbidden();
     });
 });
+
+describe('remember me cookie', function (): void {
+    it('signs the person in while the password login is on', function (): void {
+        $user = NoerdUser::factory()->create(['remember_token' => 'zz-remember-token']);
+
+        expect(auth('noerd')->getProvider()->retrieveByToken($user->id, 'zz-remember-token')?->getAuthIdentifier())->toBe($user->id);
+    });
+
+    it('signs nobody in while the password login is off', function (): void {
+        config(['noerd.features.password_login' => false]);
+        $user = NoerdUser::factory()->create(['remember_token' => 'zz-remember-token']);
+
+        expect(auth('noerd')->getProvider()->retrieveByToken($user->id, 'zz-remember-token'))->toBeNull();
+    });
+});

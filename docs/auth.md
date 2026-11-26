@@ -58,7 +58,10 @@ password login; a person without a tenant lands on `noerd.no-tenant`.
 `config('noerd.features.password_login')` (`NOERD_PASSWORD_LOGIN`, default `true`) switches the
 password login off: the login page shows only the slot, `login()` and the forgot/reset screens
 answer 404, the own password form disappears from the profile and nobody may set another
-account's password. `NoerdAuth::passwordLoginEnabled()` is the one place that reads the switch.
+account's password. A "remember me" cookie handed out by the password form no longer signs anybody
+in either: the noerd guard's user provider (`Noerd\Support\NoerdUserProvider`, driver `noerd`)
+ignores it while the switch is off, so a person has to pass the sign-in provider again.
+`NoerdAuth::passwordLoginEnabled()` is the one place that reads the switch.
 The console (`noerd:make-admin-user`) stays the emergency way in.
 
 ## Route middleware groups
