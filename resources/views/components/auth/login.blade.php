@@ -11,10 +11,11 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Services\ComponentSlotsRegistry;
+use Noerd\Support\LandingPage;
 
 new #[Layout('noerd::layouts.auth')] class extends Component {
-    #[Validate('required|string|email')]
-    public string $email = '';
+    /** The e-mail address of the account — or its username, while usernames are switched on. */
+    public string $login = '';
 
     #[Validate('required|string')]
     public string $password = '';
@@ -34,27 +35,30 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     /**
      * Handle an incoming authentication request.
      */
-    public function login(): void
+    public function authenticate(): void
     {
         abort_unless(NoerdAuth::passwordLoginEnabled(), 404);
 
-        $this->validate();
+        $this->validate([
+            'login' => NoerdAuth::usernameLoginEnabled() ? 'required|string|max:255' : 'required|string|email',
+            'password' => 'required|string',
+        ]);
 
         $this->ensureIsNotRateLimited();
 
-        if (! NoerdAuth::guard()->attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        if (! NoerdAuth::guard()->attempt(['login' => $this->login, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
             RateLimiter::hit($this->ipThrottleKey());
 
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                'login' => __('auth.failed'),
             ]);
         }
 
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
-        $this->redirect(session()->pull('url.intended', route('noerd.apps', absolute: false)), navigate: false);
+        $this->redirect(session()->pull('url.intended') ?? LandingPage::path(), navigate: false);
     }
 
     /**
@@ -79,7 +83,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
         $seconds = RateLimiter::availableIn($key);
 
         throw ValidationException::withMessages([
-            'email' => __('auth.throttle', [
+            'login' => __('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -91,7 +95,7 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
      */
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->email) . '|' . request()->ip());
+        return Str::transliterate(Str::lower(mb_trim($this->login)) . '|' . request()->ip());
     }
 
     protected function ipThrottleKey(): string
@@ -103,11 +107,16 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
 @php
     $loginComponents = $this->loginComponents();
     $passwordLogin = NoerdAuth::passwordLoginEnabled();
+    $usernameLogin = NoerdAuth::usernameLoginEnabled();
 @endphp
 
 <x-noerd::auth-shell
     :title="__('Log in to your account')"
-    :description="$passwordLogin ? __('Enter your email and password below to log in') : __('Choose how you want to log in')"
+    :description="match (true) {
+        ! $passwordLogin => __('Choose how you want to log in'),
+        $usernameLogin => __('Enter your email address or username and your password below to log in'),
+        default => __('Enter your email and password below to log in'),
+    }"
 >
     @if ($loginComponents !== [])
         <div class="space-y-3">
@@ -126,9 +135,13 @@ new #[Layout('noerd::layouts.auth')] class extends Component {
     @endif
 
     @if ($passwordLogin)
-    <form wire:submit="login" class="space-y-6">
-        {{-- Email Address --}}
-        <x-noerd::forms.input name="email" type="email" label="{{ __('Email address') }}" />
+    <form wire:submit="authenticate" class="space-y-6">
+        {{-- Email address — or username, while usernames are switched on --}}
+        @if ($usernameLogin)
+            <x-noerd::forms.input name="login" type="text" label="{{ __('Email address or username') }}" />
+        @else
+            <x-noerd::forms.input name="login" type="email" label="{{ __('Email address') }}" />
+        @endif
 
         {{-- Password --}}
         <div>

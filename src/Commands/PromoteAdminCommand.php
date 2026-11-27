@@ -48,7 +48,7 @@ class PromoteAdminCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info("Processing user: {$user->name} ({$user->email})");
+        $this->info("Processing user: {$user->name} ({$user->loginName()})");
 
         $isAlreadyAdmin = $user->isAdminOfAnyTenant();
         if ($isAlreadyAdmin) {

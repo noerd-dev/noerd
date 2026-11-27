@@ -52,7 +52,8 @@ stored key for such modules; `currentProfile()` resolves only the built-in enum 
 ## Accounts and memberships
 
 An ACCOUNT (`noerd_users`) is an identity of the whole installation: one e-mail
-address, one password, any number of memberships. A MEMBERSHIP (`users_tenants`)
+address and/or one username (see [Authentication](auth.md#signing-in-e-mail-address-or-username)),
+one password, any number of memberships. A MEMBERSHIP (`users_tenants`)
 gives the account access to one tenant, with one profile.
 
 - Memberships are written ONLY through the tenant: `Tenant::addMember($user, $profileKey)`,
@@ -189,6 +190,7 @@ Every check goes through `Noerd\Helpers\AccessHelper`:
 | `canDeleteObject($modelClass)` | `noerd.object-delete` | Delete records (delete button, bulk delete) |
 | `canPerformAction($actionKey)` | `noerd.action` | Perform a named action declared in code (see below) |
 | `canUseApp(...$appNames)` | — | Convenience for app-bound chrome: at least one of the apps is ASSIGNED to the selected tenant and `canAccessApp()` allows it. No tenant → false |
+| `canUseAppAs($user, $tenantId, ...$appNames)` | `noerd.access-app` | `canUseApp()` for a NAMED person in a NAMED tenant, without a session: the person may work in the tenant, one of the apps is assigned to it, and the gate is asked for that person inside the tenant's context. For a token API ("may this account sign in to the app?") and recipient lists |
 | `canPassGate($ability)` | any | A host-defined gate or policy ability (the YAML `policy:` key of quick-menu buttons and dashboard widgets): a `Gate::define()`d ability is checked as such, anything else against the `Tenant` policy. Guests → false |
 
 The gate names are constants on `AccessHelper` (`APP_GATE`, `OBJECT_READ_GATE`,

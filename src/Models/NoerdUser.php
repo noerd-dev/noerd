@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use InvalidArgumentException;
 use Noerd\Database\Factories\NoerdUserFactory;
 use Noerd\Enums\Profile;
 use Noerd\Helpers\NoerdAuth;
@@ -27,6 +28,14 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     /** @use HasFactory<NoerdUserFactory> */
     use HasFactory;
     use Notifiable;
+
+    /**
+     * What a username looks like: lowercase, no "@" — so a username can never
+     * be mistaken for (or collide with) an e-mail address.
+     */
+    public const USERNAME_PATTERN = '/^[a-z0-9][a-z0-9._-]*$/';
+
+    public const USERNAME_MAX_LENGTH = 64;
 
     protected $table = 'noerd_users';
 
@@ -44,6 +53,30 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     private ?array $pendingSelectedTenantId = null;
 
     /**
+     * The account a sign-in name belongs to: an e-mail address (it contains an
+     * "@") or — while usernames are switched on (NoerdAuth::usernameLoginEnabled())
+     * — a username. Both are unique across the installation and compared
+     * without regard to case. The ONE lookup of every sign-in (the login
+     * screen, an app's token API).
+     */
+    public static function findForLogin(string $login): ?self
+    {
+        $login = mb_strtolower(mb_trim($login));
+
+        if ($login === '') {
+            return null;
+        }
+
+        if (str_contains($login, '@')) {
+            return static::query()->whereRaw('LOWER(email) = ?', [$login])->first();
+        }
+
+        return NoerdAuth::usernameLoginEnabled()
+            ? static::query()->where('username', $login)->first()
+            : null;
+    }
+
+    /**
      * The framework notification links to route('password.reset') — a name
      * noerd does not claim. Send noerd's own notification instead, which
      * builds the link from the noerd.password.reset route.
@@ -53,6 +86,15 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new NoerdResetPassword($token));
+    }
+
+    /**
+     * The name the person signs in with, as shown to them: the username when
+     * the account has one, its e-mail address otherwise.
+     */
+    public function loginName(): string
+    {
+        return (string) ($this->username ?? $this->email);
     }
 
     /**
@@ -118,7 +160,7 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
             return mb_strtoupper($initials);
         }
 
-        return mb_strtoupper(mb_substr($this->email, 0, 2));
+        return mb_strtoupper(mb_substr($this->loginName(), 0, 2));
     }
 
     /**
@@ -243,6 +285,27 @@ class NoerdUser extends Authenticatable implements HasLocalePreference
 
     protected static function booted(): void
     {
+        static::saving(function (self $user): void {
+            // A blank sign-in name is no name; a username is stored lowercase.
+            // The e-mail address keeps the case it was entered in.
+            $email = mb_trim((string) $user->email);
+            $username = mb_strtolower(mb_trim((string) $user->username));
+
+            $user->email = $email === '' ? null : $email;
+            $user->username = $username === '' ? null : $username;
+
+            if ($user->email === null && $user->username === null) {
+                throw new InvalidArgumentException('An account needs an e-mail address or a username.');
+            }
+
+            if ($user->username !== null && (
+                mb_strlen($user->username) > self::USERNAME_MAX_LENGTH
+                || preg_match(self::USERNAME_PATTERN, $user->username) !== 1
+            )) {
+                throw new InvalidArgumentException("The username [{$user->username}] is not valid.");
+            }
+        });
+
         static::saved(function (self $user): void {
             if ($user->pendingSelectedTenantId !== null) {
                 [$value] = $user->pendingSelectedTenantId;

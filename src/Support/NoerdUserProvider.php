@@ -7,6 +7,7 @@ namespace Noerd\Support;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Noerd\Helpers\NoerdAuth;
+use Noerd\Models\NoerdUser;
 use SensitiveParameter;
 
 /**
@@ -14,10 +15,25 @@ use SensitiveParameter;
  * off (`noerd.features.password_login`), a "remember me" cookie no longer
  * signs anybody in: it was handed out by the password form, and a person who
  * may only sign in through a provider must pass that provider again.
+ *
+ * Credentials carrying `login` name the account by its e-mail address or its
+ * username (NoerdUser::findForLogin()).
  */
 class NoerdUserProvider extends EloquentUserProvider
 {
     public const DRIVER = 'noerd';
+
+    /**
+     * @param  array<string, mixed>  $credentials
+     */
+    public function retrieveByCredentials(#[SensitiveParameter] array $credentials): ?Authenticatable
+    {
+        if (array_key_exists('login', $credentials)) {
+            return is_string($credentials['login']) ? NoerdUser::findForLogin($credentials['login']) : null;
+        }
+
+        return parent::retrieveByCredentials($credentials);
+    }
 
     /**
      * @param  mixed  $identifier

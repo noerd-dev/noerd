@@ -1,6 +1,6 @@
 @props([
     'audits' => [],
-    /** user id => email; resolved here when the caller does not pass it. */
+    /** user id => sign-in name; resolved here when the caller does not pass it. */
     'userEmails' => null,
 ])
 
@@ -8,7 +8,7 @@
     $auditUserEmails = $userEmails ?? \Noerd\Models\NoerdUser::whereIn(
         'id',
         collect($audits)->pluck('user_id')->filter()->unique(),
-    )->pluck('email', 'id');
+    )->get(['id', 'email', 'username'])->mapWithKeys(fn (\Noerd\Models\NoerdUser $user): array => [$user->id => $user->loginName()]);
 @endphp
 
 <table class="min-w-full divide-y divide-gray-100" style="table-layout: fixed">

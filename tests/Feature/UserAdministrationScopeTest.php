@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Noerd\Enums\Profile;
 use Noerd\Helpers\NoerdAuth;
@@ -265,4 +267,82 @@ it('keeps a super admin unrestricted across tenants', function (): void {
     TenantHelper::setSelectedTenantId(Tenant::factory()->create()->id);
 
     expect($user->fresh()->isAdmin())->toBeTrue();
+});
+
+it('offers no username and requires the e-mail address while usernames are switched off', function (): void {
+    $component = Livewire::test('noerd::noerd-user-detail');
+    $possible = $component->get('possibleTenants');
+    $possible[$this->tenantA->id]['hasAccess'] = true;
+
+    expect(collect($component->get('pageLayout.fields'))->pluck('name'))->not->toContain('detailData.username');
+
+    $component->set('detailData.name', 'Lager Sieben')
+        ->set('detailData.username', 'lager.7')
+        ->set('possibleTenants', $possible)
+        ->call('store')
+        ->assertHasErrors(['detailData.email']);
+
+    expect(NoerdUser::where('username', 'lager.7')->exists())->toBeFalse();
+});
+
+it('creates an account that signs in with a username and shows its password once', function (): void {
+    config(['noerd.features.username_login' => true]);
+    Notification::fake();
+
+    $component = Livewire::test('noerd::noerd-user-detail');
+    $possible = $component->get('possibleTenants');
+    $possible[$this->tenantA->id]['hasAccess'] = true;
+
+    $component->set('detailData.name', 'Lager Sieben')
+        ->set('detailData.username', 'Lager.7')
+        ->set('possibleTenants', $possible)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    $user = NoerdUser::findForLogin('lager.7');
+    $password = $component->get('initialPassword');
+
+    expect($user)->not->toBeNull()
+        ->and($user->email)->toBeNull()
+        ->and($user->tenants->contains($this->tenantA->id))->toBeTrue()
+        ->and($password)->toBeString()
+        ->and(Hash::check($password, $user->password))->toBeTrue();
+
+    Notification::assertNothingSent();
+});
+
+it('asks for an e-mail address or a username and refuses a username with an at sign', function (): void {
+    config(['noerd.features.username_login' => true]);
+    $component = Livewire::test('noerd::noerd-user-detail');
+    $possible = $component->get('possibleTenants');
+    $possible[$this->tenantA->id]['hasAccess'] = true;
+
+    $component->set('detailData.name', 'Nobody')
+        ->set('possibleTenants', $possible)
+        ->call('store')
+        ->assertHasErrors(['detailData.email']);
+
+    $component->set('detailData.username', 'jane@example.com')
+        ->call('store')
+        ->assertHasErrors(['detailData.username']);
+});
+
+it('adds the existing account of a username instead of creating a second one', function (): void {
+    config(['noerd.features.username_login' => true]);
+    Notification::fake();
+
+    $existing = NoerdUser::factory()->create(['email' => null, 'username' => 'schicht.a']);
+
+    $component = Livewire::test('noerd::noerd-user-detail');
+    $possible = $component->get('possibleTenants');
+    $possible[$this->tenantA->id]['hasAccess'] = true;
+
+    $component->set('detailData.username', 'schicht.a')
+        ->set('possibleTenants', $possible)
+        ->call('store')
+        ->assertHasNoErrors();
+
+    expect(NoerdUser::where('username', 'schicht.a')->count())->toBe(1)
+        ->and($existing->fresh()->tenants->contains($this->tenantA->id))->toBeTrue()
+        ->and($component->get('initialPassword'))->toBeNull();
 });

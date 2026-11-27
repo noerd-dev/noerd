@@ -91,9 +91,9 @@ describe('login flow', function (): void {
         $user = NoerdUser::factory()->create(['password' => bcrypt('password')]);
 
         Livewire::test('noerd::auth.login')
-            ->set('email', $user->email)
+            ->set('login', $user->email)
             ->set('password', 'password')
-            ->call('login')
+            ->call('authenticate')
             ->assertRedirect('/noerd-apps');
 
         expect(Auth::guard('noerd')->check())->toBeTrue();

@@ -138,3 +138,20 @@ it('renders no version footer without a configured version', function (): void {
 
     expect(Livewire::test('noerd::layout.app-bar')->html())->not->toContain('text-[10px] text-gray-500');
 });
+
+it('hosts the app bar in a layout of a module\'s own design', function (): void {
+    $user = NoerdUser::factory()->withExampleTenant()->create();
+    $this->actingAs($user);
+    zzAttachAppBarApp($user, ['title' => 'Hosted Probe App', 'name' => 'ZZ_HOSTED_PROBE']);
+    Noerd\Helpers\TenantHelper::clearCache();
+
+    $html = Illuminate\Support\Facades\Blade::render(
+        '<x-noerd::app-bar-host><p>the page of the module</p></x-noerd::app-bar-host>',
+    );
+
+    expect($html)->toContain('the page of the module')
+        ->toContain('Hosted Probe App')
+        // The state and the width the bar reads come from the host, not from the backend layout.
+        ->toContain('showAppbar: true')
+        ->toContain('--sidebar-apps-width:');
+});

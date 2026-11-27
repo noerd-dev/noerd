@@ -40,6 +40,14 @@ new class extends Component {
     public bool $accountEditable = true;
 
     public bool $sendPasswordResetMail = true;
+
+    /**
+     * The password of an account created without an e-mail address — nobody
+     * could send it a link, so the administrator hands this one over. Shown
+     * once, never stored in readable form.
+     */
+    #[Locked]
+    public ?string $initialPassword = null;
     public string $userLocale = 'en';
     public string $userFormatLocale = Locales::DEFAULT;
 
@@ -86,6 +94,10 @@ new class extends Component {
             $this->lockAccountFields();
         }
 
+        if (! NoerdAuth::usernameLoginEnabled()) {
+            $this->dropUsernameField();
+        }
+
         // One query for the edited user's tenant assignments instead of one
         // per tenant. Mounts re-run on every modal-stack update, so this
         // loop must stay cheap.
@@ -107,12 +119,22 @@ new class extends Component {
 
     public function store(): void
     {
-        // "Add User" with an address that already has an account adds that
-        // account (like an invitation that applies at once) — its name and
-        // password stay the person's.
+        // A username is stored lowercase — compare and validate what will be
+        // stored. While usernames are switched off the form has no such field,
+        // and a crafted one is ignored.
+        if (! NoerdAuth::usernameLoginEnabled()) {
+            unset($this->detailData['username']);
+        } elseif (is_string($this->detailData['username'] ?? null)) {
+            $this->detailData['username'] = mb_strtolower(mb_trim($this->detailData['username']));
+        }
+
+        // "Add User" with an address or a username that already has an account
+        // adds that account (like an invitation that applies at once) — its
+        // name and password stay the person's.
         $existing = $this->modelId
             ? null
-            : NoerdUser::where('email', (string) ($this->detailData['email'] ?? ''))->first();
+            : (NoerdUser::findForLogin((string) ($this->detailData['email'] ?? ''))
+                ?? NoerdUser::findForLogin((string) ($this->detailData['username'] ?? '')));
 
         // $possibleTenants is client state: only the tenants this administrator
         // may assign count, so a crafted entry can neither satisfy the
@@ -158,10 +180,10 @@ new class extends Component {
 
         // 'password' is deliberately NOT writable here: an existing account's
         // password is set through the dedicated user-update-password form. Name
-        // and e-mail belong to the person — only a super admin or the person
-        // changes them.
+        // e-mail and username belong to the person — only a super admin or the
+        // person changes them.
         if ($this->accountEditable && $this->canManageAccount()) {
-            $user->fill(collect($this->detailData)->only(['name', 'email'])->toArray())->save();
+            $user->fill(collect($this->detailData)->only(['name', 'email', ...(NoerdAuth::usernameLoginEnabled() ? ['username'] : [])])->toArray())->save();
         }
 
         $this->applyTenantAccess($user, removeUnchecked: true, notify: true);
@@ -179,9 +201,15 @@ new class extends Component {
      */
     private function storeRules(?NoerdUser $existing): array
     {
-        $rules = [
-            'detailData.email' => ['required', 'string', 'email', 'max:255'],
-        ];
+        // With usernames switched on an account signs in with its e-mail
+        // address or its username — one of the two is enough, and an "@"
+        // belongs to the address only. Otherwise the address is required.
+        $rules = NoerdAuth::usernameLoginEnabled()
+            ? [
+                'detailData.email' => ['nullable', 'required_without:detailData.username', 'string', 'email', 'max:255'],
+                'detailData.username' => ['nullable', 'string', 'max:' . NoerdUser::USERNAME_MAX_LENGTH, 'regex:' . NoerdUser::USERNAME_PATTERN],
+            ]
+            : ['detailData.email' => ['required', 'string', 'email', 'max:255']];
 
         if (! $this->modelId) {
             $rules['tenantAccess'] = ['array', 'min:1', new AtLeastOneTrue()];
@@ -197,6 +225,10 @@ new class extends Component {
         } elseif ($this->accountEditable) {
             $rules['detailData.name'] = ['required', 'string', 'max:255'];
             $rules['detailData.email'][] = Rule::unique('noerd_users', 'email')->ignore($this->modelId);
+
+            if (isset($rules['detailData.username'])) {
+                $rules['detailData.username'][] = Rule::unique('noerd_users', 'username')->ignore($this->modelId);
+            }
         }
 
         // Every registered profile is assignable — the built-in ones and the
@@ -214,13 +246,22 @@ new class extends Component {
 
     private function createAccount(): void
     {
+        $email = mb_trim((string) ($this->detailData['email'] ?? ''));
+
+        // With an address the person sets the password through the reset link
+        // and the placeholder is never known to anybody. Without one there is
+        // no link to send: the account starts with a password the administrator
+        // hands over (the person changes it in their profile).
+        $password = $email === '' ? Str::password(12, symbols: false) : Str::random(32);
+
         $user = NoerdUser::create([
             'name' => $this->detailData['name'],
-            'email' => $this->detailData['email'],
-            // No password needed - the person sets it through the reset link;
-            // this placeholder is never known to anybody.
-            'password' => bcrypt(Str::random(32)),
+            'email' => $email,
+            'username' => $this->detailData['username'] ?? null,
+            'password' => bcrypt($password),
         ]);
+
+        $this->initialPassword = $email === '' ? $password : null;
 
         $this->applyTenantAccess($user, removeUnchecked: false, notify: false);
 
@@ -229,7 +270,7 @@ new class extends Component {
         $user->locale = $this->userLocale;
         $user->format_locale = Locales::isSupported($this->userFormatLocale) ? $this->userFormatLocale : FormatHelper::tenantLocale();
 
-        if ($this->sendPasswordResetMail) {
+        if ($this->sendPasswordResetMail && $user->email !== null) {
             NoerdAuth::broker()->sendResetLink(['email' => $user->email]);
         }
 
@@ -269,7 +310,7 @@ new class extends Component {
 
                 if ($tenant->addMember($user, $profileKey)) {
                     if ($notify && ! $user->is($admin)) {
-                        $user->notify(new AddedToTenantNotification($tenant->name, (string) ($admin->name ?: $admin->email)));
+                        $user->notify(new AddedToTenantNotification($tenant->name, (string) ($admin->name ?: $admin->loginName())));
                     }
                 } else {
                     $tenant->setMemberProfile($user, $profileKey);
@@ -375,14 +416,26 @@ new class extends Component {
     }
 
     /**
-     * Name and e-mail are shown, not edited, when the account is not this
-     * administrator's to manage — the YAML cannot say "read-only once saved".
+     * The username field only exists while usernames are switched on
+     * (NoerdAuth::usernameLoginEnabled()) — the YAML cannot ask a feature flag.
+     */
+    private function dropUsernameField(): void
+    {
+        $this->pageLayout['fields'] = array_values(array_filter(
+            $this->pageLayout['fields'] ?? [],
+            fn(array $field): bool => ($field['name'] ?? null) !== 'detailData.username',
+        ));
+    }
+
+    /**
+     * Name, e-mail and username are shown, not edited, when the account is not
+     * this administrator's to manage — the YAML cannot say "read-only once saved".
      */
     private function lockAccountFields(): void
     {
         $this->pageLayout['fields'] = LayoutFields::map(
             $this->pageLayout['fields'] ?? [],
-            fn(array $field): array => in_array($field['name'] ?? null, ['detailData.name', 'detailData.email'], true)
+            fn(array $field): array => in_array($field['name'] ?? null, ['detailData.name', 'detailData.email', 'detailData.username'], true)
                 ? array_merge($field, ['readonly' => true])
                 : $field,
         );
@@ -396,17 +449,24 @@ new class extends Component {
 
     <x-noerd::tab-content :layout="$pageLayout">
         <x-slot:tab1>
+            @if ($initialPassword !== null)
+                <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p>{{ __('This account has no e-mail address, so no link could be sent. Hand this password to the person — it is shown only once:') }}</p>
+                    <p class="mt-2 font-mono text-base font-semibold select-all">{{ $initialPassword }}</p>
+                </div>
+            @endif
+
             @if(!isset($modelId))
                 <x-noerd::checkbox
                     wire:model="sendPasswordResetMail"
                     name="sendPasswordResetMail">
-                    {{ __('Send the user an email with a link to set their password.') }}
+                    {{ __('Send the user an email with a link to set their password (accounts with an e-mail address).') }}
                 </x-noerd::checkbox>
             @endif
 
             @unless($accountEditable)
                 <p class="text-sm text-gray-500">
-                    {{ __('Name and e-mail belong to the person — they change them in their profile.') }}
+                    {{ __('Name, e-mail and username belong to the person — they change them in their profile.') }}
                 </p>
             @endunless
 

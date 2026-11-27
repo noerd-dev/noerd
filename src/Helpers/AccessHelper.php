@@ -6,7 +6,9 @@ namespace Noerd\Helpers;
 
 use Illuminate\Support\Facades\Gate;
 use Noerd\Enums\Profile;
+use Noerd\Models\NoerdUser;
 use Noerd\Models\Tenant;
+use Noerd\Support\TenantContext;
 
 /**
  * Authorization checks for the generic noerd chrome, layered in two stages:
@@ -96,6 +98,49 @@ final class AccessHelper
         }
 
         return false;
+    }
+
+    /**
+     * canUseApp() for a NAMED person in a NAMED tenant — for the places that
+     * know both without a session: a token API deciding whether an account may
+     * sign in to an app, a recipient list asking who of a tenant uses an app.
+     * The person must be able to work in the tenant, one of the apps must be
+     * assigned to it, and the `noerd.access-app` gate is asked for that person
+     * inside the tenant's context (so a gate reads the right membership).
+     *
+     * @param  string  ...$appNames  tenant_apps.name in any case; ONE usable app suffices
+     */
+    public static function canUseAppAs(NoerdUser $user, int $tenantId, string ...$appNames): bool
+    {
+        if (! $user->canAccessTenant($tenantId)) {
+            return false;
+        }
+
+        $assignedNames = Tenant::query()->find($tenantId)?->tenantApps
+            ->pluck('name')
+            ->map(fn($name): string => mb_strtoupper((string) $name))
+            ->flip();
+
+        if ($assignedNames === null) {
+            return false;
+        }
+
+        return TenantContext::run($tenantId, function () use ($user, $appNames, $assignedNames): bool {
+            foreach ($appNames as $appName) {
+                $appName = mb_strtoupper(mb_trim($appName));
+
+                if (! isset($assignedNames[$appName])) {
+                    continue;
+                }
+
+                // Without a gate the profile baseline lets every member open an app.
+                if (! Gate::has(self::APP_GATE) || Gate::forUser($user)->allows(self::APP_GATE, $appName)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     /**

@@ -55,7 +55,7 @@ class SuperAdminCommand extends Command
     private function grant(NoerdUser $user): int
     {
         if ($user->isSuperAdmin()) {
-            $this->warn("User '{$user->name}' ({$user->email}) already is a super admin.");
+            $this->warn("User '{$user->name}' ({$user->loginName()}) already is a super admin.");
 
             return self::SUCCESS;
         }
@@ -63,7 +63,7 @@ class SuperAdminCommand extends Command
         $user->super_admin = true;
         $user->save();
 
-        $this->info("User '{$user->name}' ({$user->email}) is now a super admin.");
+        $this->info("User '{$user->name}' ({$user->loginName()}) is now a super admin.");
 
         return self::SUCCESS;
     }
@@ -71,7 +71,7 @@ class SuperAdminCommand extends Command
     private function revoke(NoerdUser $user): int
     {
         if (! $user->isSuperAdmin()) {
-            $this->warn("User '{$user->name}' ({$user->email}) is not a super admin.");
+            $this->warn("User '{$user->name}' ({$user->loginName()}) is not a super admin.");
 
             return self::SUCCESS;
         }
@@ -84,7 +84,7 @@ class SuperAdminCommand extends Command
         $isLast = NoerdUser::query()->where('super_admin', true)->whereKeyNot($user->id)->doesntExist();
 
         if ($isLast && ! $this->option('force')) {
-            $this->error("User '{$user->name}' ({$user->email}) is the last super admin of this installation. Pass --force to revoke anyway.");
+            $this->error("User '{$user->name}' ({$user->loginName()}) is the last super admin of this installation. Pass --force to revoke anyway.");
 
             return self::FAILURE;
         }
@@ -92,7 +92,7 @@ class SuperAdminCommand extends Command
         $user->super_admin = false;
         $user->save();
 
-        $this->info("User '{$user->name}' ({$user->email}) is no longer a super admin.");
+        $this->info("User '{$user->name}' ({$user->loginName()}) is no longer a super admin.");
 
         return self::SUCCESS;
     }

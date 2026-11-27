@@ -32,6 +32,9 @@ return [
         // Off: no e-mail/password login, no password reset and no password
         // forms — sign-in only through the login slot (e.g. noerd/sso).
         'password_login' => env('NOERD_PASSWORD_LOGIN', true),
+        // On: an account may sign in with a username instead of its e-mail
+        // address, and may exist without an address. Off: e-mail only.
+        'username_login' => env('NOERD_USERNAME_LOGIN', false),
     ],
 
     /*
