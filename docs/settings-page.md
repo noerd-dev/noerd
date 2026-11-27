@@ -209,3 +209,32 @@ select options from component methods (`currencyOptions()`, `localeOptions()`, `
 defaults set in a custom `mount()`, and a custom `store()` with extra validation and cache
 busting that ends in the trait tail. Trait mechanics are covered by
 `tests/Feature/SettingsPageTraitTest.php` and `tests/Feature/SettingsPageWriteGuardTest.php`.
+
+## Switches for yes/no settings
+
+A boolean setting on a hand-built screen is a switch, never a select with "Yes" and "No":
+
+```blade
+<x-noerd::toggle-group :title="__('Checkout')" :description="__('What the customer sees before ordering.')">
+    <x-noerd::toggle wire:model="settings.use_vouchers" :label="__('Enable vouchers?')" />
+    <x-noerd::toggle wire:model.live="settings.get_email"
+                     :label="__('E-mail for each order?')"
+                     :description="__('Sent to the addresses below.')">
+        @if ($settings['get_email'])
+            <x-slot:below>
+                <x-noerd::text-input wire:model="settings.notification_emails" />
+            </x-slot:below>
+        @endif
+    </x-noerd::toggle>
+</x-noerd::toggle-group>
+```
+
+- `<x-noerd::toggle>` binds like a checkbox — the value is a boolean. Props: `label`,
+  `description`, `disabled`, `id`; the default slot replaces the label, the `below` slot holds
+  content that belongs to the row (an input shown while the switch is on).
+- One row: label and hint on the left, the switch on the right. Inside `<x-noerd::toggle-group>`
+  (optional `title`, `description`) the rows share one card with dividers; outside a group a
+  toggle renders as a bare row.
+- The switch takes the brand colour (`brand-primary`) when on, springs across and stretches while
+  pressed; keyboard focus shows an outline. Filters with a third "all" state stay selects.
+

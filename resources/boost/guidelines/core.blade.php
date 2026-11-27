@@ -72,6 +72,8 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   never another `x-data="{ open: false }"` + `role="menu"` panel; a record's menu goes into the
   `actions` slot of `<x-noerd::tabs>`. Only a popover carrying a form keeps its own Alpine scope.
   Reference: `docs/action-menu.md`.
+- **Yes/no settings are switches:** a hand-built boolean input is `<x-noerd::toggle wire:model.live="…" :label="…" :description="…" />`
+  (binds a boolean), never a select with "Yes"/"No" options. Filters with a third "all" state stay selects.
 - **File uploads** are the shipped `<livewire:noerd::dropzone wire:model="files" :rules="[...]" multiple />`,
   never a hand-rolled `WithFileUploads` drop target. The dropzone uploads in batches that fit PHP's
   `max_file_uploads`/`post_max_size` (the dropzone reads them itself) — never work around an upload limit
@@ -97,6 +99,10 @@ folder — read the page before building the feature. Paths such as `src/…`, `
   through the same idempotent tenant-app migration as a module. Record types are added with `noerd:make-resource {Model} --app={app}`
   (`--only=list|detail`) once model and migration exist; for a module app the generators write into
   the module (`{app}::` components, `routes/{app}-routes.php`, both YAML copies).
+- **The start page belongs to the core:** a module shows something on the apps overview (`noerd.apps`,
+  above the app tiles — announcements, notices) ONLY by registering a Livewire component on
+  `ComponentSlotsRegistry::APPS_OVERVIEW` in its provider's `boot()`; the component decides itself
+  whether it renders anything. Never a change of `noerd::noerd-apps` for a module.
 - Code comments, Artisan prompts and documentation are English. Tests are Pest. YAML is block style
   (never `{ key: value }` / `[a, b]`).
 - **Default sort and header filters are configuration:** `defaultSort:` (`field:`, `direction:`) and

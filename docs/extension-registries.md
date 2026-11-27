@@ -24,11 +24,14 @@ have no `all()`; `ComputedColumnRegistry::get()` takes a column or field entry i
 
 Livewire components a module mounts at a named spot of the noerd chrome. The host only marks the
 position; the module registers its component from its service provider's `boot()`, and the
-registration disappears with the module. Three slots are built in — `ComponentSlotsRegistry::TOP_BAR`
+registration disappears with the module. These slots are built in — `ComponentSlotsRegistry::TOP_BAR`
 (the right-hand slot of the top bar, between the quick menu and the setup cog / profile dropdown, on
-every backend page), `LIST_HEADER_ACTIONS` and `DETAIL_HEADER_ACTIONS` (the module-contributed
-header actions, see [header-actions.md](header-actions.md)) — and a detail marks further named
-slots with `<x-noerd::detail-slot>` (below).
+every backend page), `APPS_OVERVIEW` (the apps overview `noerd.apps`, the start page after the
+login, above the app tiles — announcements and notices; a component there renders full width and
+shows nothing while it has nothing to say), `AUTH_LOGIN` (the login page, see [auth.md](auth.md)),
+`LIST_HEADER_ACTIONS` and `DETAIL_HEADER_ACTIONS` (the module-contributed header actions, see
+[header-actions.md](header-actions.md)) — and a detail marks further named slots with
+`<x-noerd::detail-slot>` (below).
 
 **API** (`Noerd\Services\ComponentSlotsRegistry`):
 
