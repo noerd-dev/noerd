@@ -29,6 +29,13 @@ final class ComponentSlotsRegistry
      */
     public const AUTH_LOGIN = 'auth-login';
 
+    /**
+     * The apps overview (the start page after the login), above the app tiles —
+     * announcements and notices of a module. Components render for every signed-in
+     * user and decide themselves whether they show anything.
+     */
+    public const APPS_OVERVIEW = 'apps-overview';
+
     /** @var array<string, list<array{component: string, sort: int}>> */
     private array $slots = [];
 

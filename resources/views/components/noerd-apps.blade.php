@@ -1,16 +1,29 @@
 <?php
 
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Noerd\Helpers\AccessHelper;
 use Noerd\Helpers\NoerdAuth;
 use Noerd\Helpers\TenantHelper;
+use Noerd\Services\ComponentSlotsRegistry;
 use Noerd\Traits\OpensTenantApps;
 
 new class extends Component {
     use OpensTenantApps;
 
+    /**
+     * Components modules registered for the apps overview (`ComponentSlotsRegistry::APPS_OVERVIEW`),
+     * rendered above the app tiles. Each one decides itself whether it renders anything.
+     *
+     * @var list<string>
+     */
+    #[Locked]
+    public array $overviewComponents = [];
+
     public function mount(): void
     {
+        $this->overviewComponents = app(ComponentSlotsRegistry::class)->get(ComponentSlotsRegistry::APPS_OVERVIEW);
+
         $user = NoerdAuth::user();
         $selectedTenantId = TenantHelper::getSelectedTenantId();
 
@@ -32,6 +45,10 @@ new class extends Component {
         $selectedTenant = TenantHelper::getSelectedTenant();
         $selectedApp = TenantHelper::getSelectedApp();
     @endphp
+
+    @foreach($overviewComponents as $overviewComponent)
+        @livewire($overviewComponent, [], key('apps-overview-'.$overviewComponent))
+    @endforeach
 
     <div class="mb-12">
         <div class="flex flex-wrap">
