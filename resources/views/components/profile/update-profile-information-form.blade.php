@@ -13,8 +13,8 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->name = NoerdAuth::user()->name ?? NoerdAuth::user()->email;
-        $this->email = NoerdAuth::user()->email;
+        $this->name = NoerdAuth::user()->name ?? NoerdAuth::user()->loginName();
+        $this->email = (string) NoerdAuth::user()->email;
     }
 
     public function updateProfileInformation(): void
@@ -27,8 +27,9 @@ new class extends Component {
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
+            // An account that signs in with a username needs no address.
             'email' => [
-                'required',
+                $user->username === null ? 'required' : 'nullable',
                 'string',
                 'lowercase',
                 'email',
@@ -37,7 +38,7 @@ new class extends Component {
             ],
         ]);
 
-        $user->fill($validated);
+        $user->fill([...$validated, 'email' => ($validated['email'] ?? '') === '' ? null : $validated['email']]);
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
@@ -89,10 +90,18 @@ new class extends Component {
             <x-noerd::input-error class="mt-2" :messages="$errors->get('name')"/>
         </div>
 
+        @if (NoerdAuth::user()->username !== null)
+            <div>
+                <x-noerd::input-label for="username" :value="__('Username')"/>
+                <x-noerd::text-input id="username" name="username" type="text" class="mt-1 block w-full" readonly disabled
+                              value="{{ NoerdAuth::user()->username }}"/>
+            </div>
+        @endif
+
         <div>
             <x-noerd::input-label for="email" :value="__('Email')"/>
-            <x-noerd::text-input wire:model="email" id="email" name="email" type="email" class="mt-1 block w-full" required
-                          autocomplete="username"/>
+            <x-noerd::text-input wire:model="email" id="email" name="email" type="email" class="mt-1 block w-full"
+                          :required="NoerdAuth::user()->username === null" autocomplete="email"/>
             <x-noerd::input-error class="mt-2" :messages="$errors->get('email')"/>
 
             @if (NoerdAuth::user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! NoerdAuth::user()->hasVerifiedEmail())

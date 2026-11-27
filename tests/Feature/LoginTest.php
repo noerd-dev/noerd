@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
+use Noerd\Enums\Profile;
 use Noerd\Listeners\RecordLogin;
 use Noerd\Models\NoerdLogin;
 use Noerd\Models\NoerdUser;
+use Noerd\Models\Tenant;
+use Noerd\Models\TenantApp;
 use Noerd\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -19,10 +23,10 @@ uses(TestCase::class, RefreshDatabase::class);
 function zzSubmitLogin(NoerdUser $user, string $password = 'password', bool $remember = false)
 {
     return Livewire::test('noerd::auth.login')
-        ->set('email', $user->email)
+        ->set('login', $user->email)
         ->set('password', $password)
         ->set('remember', $remember)
-        ->call('login');
+        ->call('authenticate');
 }
 
 describe('login flow', function (): void {
@@ -41,13 +45,13 @@ describe('login flow', function (): void {
             'password' => bcrypt('password'),
         ]);
 
-        zzSubmitLogin($user, 'wrong-password')->assertHasErrors(['email']);
+        zzSubmitLogin($user, 'wrong-password')->assertHasErrors(['login']);
     });
 
     it('requires email and password', function (): void {
         Livewire::test('noerd::auth.login')
-            ->call('login')
-            ->assertHasErrors(['email', 'password']);
+            ->call('authenticate')
+            ->assertHasErrors(['login', 'password']);
     });
 
     it('rate limits login attempts', function (): void {
@@ -56,16 +60,123 @@ describe('login flow', function (): void {
         ]);
 
         $component = Livewire::test('noerd::auth.login')
-            ->set('email', $user->email);
+            ->set('login', $user->email);
 
         for ($i = 0; $i < 5; $i++) {
             $component->set('password', 'wrong-password')
-                ->call('login');
+                ->call('authenticate');
         }
 
         $component->set('password', 'wrong-password')
-            ->call('login')
-            ->assertHasErrors(['email']);
+            ->call('authenticate')
+            ->assertHasErrors(['login']);
+    });
+});
+
+describe('landing page', function (): void {
+    /** A tenant with the given apps (name => route), each route registered. */
+    function zzTenantWithApps(array $apps): Tenant
+    {
+        $tenant = Tenant::factory()->create();
+
+        foreach ($apps as $name => $route) {
+            Route::get("/{$route}", fn() => 'ok')->name($route);
+            $tenant->assignApp(TenantApp::create([
+                'title' => $name,
+                'name' => $name,
+                'icon' => 'noerd::icons.app',
+                'route' => $route,
+                'is_active' => true,
+            ]));
+        }
+
+        return $tenant;
+    }
+
+    it('takes a person who can open exactly one app straight to it', function (): void {
+        $tenant = zzTenantWithApps(['ZZ_ONLY' => 'zz-only']);
+        $user = NoerdUser::factory()->create(['password' => bcrypt('password')]);
+        $tenant->addMember($user, Profile::User->value);
+
+        zzSubmitLogin($user)->assertRedirect('/zz-only');
+    });
+
+    it('keeps the home for several apps and for an administrator', function (): void {
+        $several = zzTenantWithApps(['ZZ_ONE' => 'zz-one', 'ZZ_TWO' => 'zz-two']);
+        $user = NoerdUser::factory()->create(['password' => bcrypt('password')]);
+        $several->addMember($user, Profile::User->value);
+
+        zzSubmitLogin($user)->assertRedirect(route('noerd.apps', absolute: false));
+
+        auth('noerd')->logout();
+
+        $single = zzTenantWithApps(['ZZ_ADMIN_ONLY' => 'zz-admin-only']);
+        $admin = NoerdUser::factory()->create(['password' => bcrypt('password')]);
+        $single->addMember($admin, Profile::Admin->value);
+
+        zzSubmitLogin($admin)->assertRedirect(route('noerd.apps', absolute: false));
+    });
+});
+
+describe('sign-in name', function (): void {
+    beforeEach(fn() => config(['noerd.features.username_login' => true]));
+
+    it('takes an e-mail address only while usernames are switched off', function (): void {
+        config(['noerd.features.username_login' => false]);
+
+        NoerdUser::factory()->create(['username' => 'm.muster', 'password' => bcrypt('password')]);
+
+        Livewire::test('noerd::auth.login')
+            ->assertSee(__('Email address'))
+            ->assertDontSee(__('Email address or username'))
+            ->set('login', 'm.muster')
+            ->set('password', 'password')
+            ->call('authenticate')
+            ->assertHasErrors(['login']);
+
+        expect(auth('noerd')->check())->toBeFalse()
+            ->and(NoerdUser::findForLogin('m.muster'))->toBeNull();
+    });
+
+    it('signs in with the username', function (): void {
+        $user = NoerdUser::factory()->create(['username' => 'm.muster', 'password' => bcrypt('password')]);
+
+        Livewire::test('noerd::auth.login')
+            ->set('login', ' M.Muster ')
+            ->set('password', 'password')
+            ->call('authenticate')
+            ->assertHasNoErrors();
+
+        expect(auth('noerd')->id())->toBe($user->id);
+    });
+
+    it('signs in an account without an e-mail address', function (): void {
+        $user = NoerdUser::factory()->create(['email' => null, 'username' => 'lager7', 'password' => bcrypt('password')]);
+
+        Livewire::test('noerd::auth.login')
+            ->set('login', 'lager7')
+            ->set('password', 'password')
+            ->call('authenticate')
+            ->assertHasNoErrors();
+
+        expect(auth('noerd')->id())->toBe($user->id)
+            ->and($user->loginName())->toBe('lager7')
+            ->and($user->initials())->not->toBe('');
+    });
+
+    it('finds the e-mail address whatever its case', function (): void {
+        $user = NoerdUser::factory()->create(['email' => 'Jane.Doe@example.com']);
+
+        expect(NoerdUser::findForLogin('jane.doe@EXAMPLE.com')?->id)->toBe($user->id)
+            ->and(NoerdUser::findForLogin('jane.doe'))->toBeNull()
+            ->and(NoerdUser::findForLogin(''))->toBeNull();
+    });
+
+    it('refuses an account without any sign-in name and a username that looks like an address', function (): void {
+        expect(fn() => NoerdUser::factory()->create(['email' => null, 'username' => null]))
+            ->toThrow(InvalidArgumentException::class)
+            ->and(fn() => NoerdUser::factory()->create(['username' => 'jane@example.com']))
+            ->toThrow(InvalidArgumentException::class);
     });
 });
 
@@ -86,7 +197,7 @@ describe('login recording', function (): void {
     it('records nothing for a failed login', function (): void {
         $user = NoerdUser::factory()->create(['password' => bcrypt('password')]);
 
-        zzSubmitLogin($user, 'wrong-password')->assertHasErrors(['email']);
+        zzSubmitLogin($user, 'wrong-password')->assertHasErrors(['login']);
 
         expect(NoerdLogin::count())->toBe(0);
     });
@@ -157,4 +268,16 @@ describe('login recording', function (): void {
 
         expect($user->latestLogin()->first())->toBeNull();
     });
+});
+
+it('submits the form to an action that is no public property of the component', function (): void {
+    // In the browser `$wire.{name}` answers a property before a method: a
+    // form submitting to the name of a property sends no request at all.
+    $component = Livewire::test('noerd::auth.login');
+
+    preg_match('/wire:submit="([^"]+)"/', $component->html(), $matches);
+
+    expect($matches[1] ?? null)->not->toBeNull()
+        ->and(method_exists($component->instance(), $matches[1]))->toBeTrue()
+        ->and(property_exists($component->instance(), $matches[1]))->toBeFalse();
 });

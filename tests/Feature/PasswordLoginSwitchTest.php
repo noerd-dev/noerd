@@ -16,13 +16,13 @@ describe('login slot', function (): void {
 
         Livewire::test('noerd::auth.login')
             ->assertSee('Sign in with Zz-Provider')
-            ->assertSeeHtml('wire:submit="login"')
+            ->assertSeeHtml('wire:submit="authenticate"')
             ->assertSee(__('or'));
     });
 
     it('renders no separator without registered components', function (): void {
         Livewire::test('noerd::auth.login')
-            ->assertSeeHtml('wire:submit="login"')
+            ->assertSeeHtml('wire:submit="authenticate"')
             ->assertDontSee('Sign in with Zz-Provider');
     });
 });
@@ -37,16 +37,16 @@ describe('password login switched off', function (): void {
 
         Livewire::test('noerd::auth.login')
             ->assertSee('Sign in with Zz-Provider')
-            ->assertDontSeeHtml('wire:submit="login"');
+            ->assertDontSeeHtml('wire:submit="authenticate"');
     });
 
     it('refuses a password login', function (): void {
         $user = NoerdUser::factory()->create(['password' => bcrypt('password')]);
 
         Livewire::test('noerd::auth.login')
-            ->set('email', $user->email)
+            ->set('login', $user->email)
             ->set('password', 'password')
-            ->call('login')
+            ->call('authenticate')
             ->assertStatus(404);
 
         expect(auth('noerd')->check())->toBeFalse();

@@ -133,18 +133,18 @@ it('locks the login of one address after failures on many accounts', function ()
 
     foreach (range(1, 20) as $i) {
         Livewire::test('noerd::auth.login')
-            ->set('email', "nobody{$i}@example.test")
+            ->set('login', "nobody{$i}@example.test")
             ->set('password', 'wrong')
-            ->call('login');
+            ->call('authenticate');
     }
 
     $user = NoerdUser::factory()->create(['password' => bcrypt('password')]);
 
     Livewire::test('noerd::auth.login')
-        ->set('email', $user->email)
+        ->set('login', $user->email)
         ->set('password', 'password')
-        ->call('login')
-        ->assertHasErrors(['email']);
+        ->call('authenticate')
+        ->assertHasErrors(['login']);
 
     RateLimiter::clear('noerd-login|127.0.0.1');
 });

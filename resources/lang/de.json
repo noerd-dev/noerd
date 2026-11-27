@@ -115,7 +115,7 @@
     "Email Preview": "E-Mail-Vorschau",
     "Enforce in Setup": "Zwingend durchsetzen im Setup",
     "Ensure your account is using a long, random password to stay secure.": "Stellen Sie sicher, dass Ihr Konto ein langes, zufälliges Passwort verwendet, um die Sicherheit zu gewährleisten.",
-    "Enter your email and password below to log in": "Geben Sie unten Ihre E-Mail-Adresse und Ihr Passwort ein, um sich anzumelden.",
+    "Enter your email address or username and your password below to log in": "Geben Sie unten Ihre E-Mail-Adresse oder Ihren Benutzernamen und Ihr Passwort ein, um sich anzumelden.",
     "Enter your email to receive a password reset link": "Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.",
     "Enter your new password below": "Geben Sie unten Ihr neues Passwort ein",
     "Entries": "Einträge",
@@ -247,7 +247,7 @@
     "Select your preferred language for the user interface.": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
     "selected": "ausgewählt",
     "Send email": "E-Mail senden",
-    "Send the user an email with a link to set their password.": "Dem Benutzer eine E-Mail mit einem Link zum Festlegen des Passworts senden.",
+    "Send the user an email with a link to set their password (accounts with an e-mail address).": "Dem Benutzer eine E-Mail mit einem Link zum Festlegen des Passworts senden (Konten mit E-Mail-Adresse).",
     "Service": "Leistung",
     "Set Password": "Passwort setzen",
     "Settings": "Einstellungen",
@@ -341,7 +341,7 @@
     "Remove from tenant": "Aus Mandant entfernen",
     "Without tenant": "Ohne Mandant",
     "Delete this account for good? It loses the access to every tenant.": "Dieses Konto endgültig löschen? Es verliert den Zugang zu allen Mandanten.",
-    "Name and e-mail belong to the person — they change them in their profile.": "Name und E-Mail gehören der Person – sie ändert sie in ihrem Profil.",
+    "Name, e-mail and username belong to the person — they change them in their profile.": "Name, E-Mail und Benutzername gehören der Person – sie ändert sie in ihrem Profil.",
     "You were added to :tenant": "Du wurdest zu :tenant hinzugefügt",
     ":name added you to :tenant.": ":name hat dich zu :tenant hinzugefügt.",
     "Sign in with your existing account and switch to the tenant in the top bar.": "Melde dich mit deinem bestehenden Konto an und wechsle oben in der Leiste zum Mandanten.",
@@ -359,5 +359,9 @@
     "or": "oder",
     "Choose how you want to log in": "Wählen Sie, wie Sie sich anmelden möchten",
     "Placeholder": "Platzhalter",
-    "Insert placeholder": "Platzhalter einfügen"
+    "Insert placeholder": "Platzhalter einfügen",
+    "Email address or username": "E-Mail oder Benutzername",
+    "Username": "Benutzername",
+    "This account has no e-mail address, so no link could be sent. Hand this password to the person — it is shown only once:": "Dieses Konto hat keine E-Mail-Adresse, deshalb konnte kein Link versendet werden. Geben Sie der Person dieses Passwort – es wird nur einmal angezeigt:",
+    "Enter your email and password below to log in": "Geben Sie unten Ihre E-Mail-Adresse und Ihr Passwort ein, um sich anzumelden."
 }

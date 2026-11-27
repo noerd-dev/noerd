@@ -17,7 +17,7 @@ new class extends Component {
 
     public array $audits = [];
 
-    /** @var array<int, string> user id => email */
+    /** @var array<int, string> user id => sign-in name */
     public array $userEmails = [];
 
     public function mount(): void
@@ -41,7 +41,8 @@ new class extends Component {
 
         $this->audits = $model->audits()->latest('id')->get()->toArray();
         $this->userEmails = NoerdUser::whereIn('id', collect($this->audits)->pluck('user_id')->filter()->unique())
-            ->pluck('email', 'id')
+            ->get(['id', 'email', 'username'])
+            ->mapWithKeys(fn(NoerdUser $user): array => [$user->id => $user->loginName()])
             ->all();
     }
 }; ?>

@@ -46,6 +46,40 @@ describe('gate', function (): void {
             ->and($received)->toBe(['ZZ_CASE_PROBE', 'ZZ_CASE_PROBE', 'ZZ_CASE_PROBE']);
     });
 
+    it('canUseAppAs answers for a named person in a named tenant without a session', function (): void {
+        $tenant = Tenant::factory()->create();
+        $other = Tenant::factory()->create();
+        $member = NoerdUser::factory()->create();
+        $tenant->addMember($member, 'USER');
+
+        $app = TenantApp::create([
+            'title' => 'Named Probe App',
+            'name' => 'ZZ_NAMED_PROBE',
+            'icon' => 'noerd::icons.app',
+            'route' => 'zz-named-probe',
+            'is_active' => true,
+        ]);
+        $tenant->assignApp($app);
+        $other->assignApp($app);
+
+        // Nobody is signed in: the answer comes from the arguments alone.
+        expect(AccessHelper::canUseAppAs($member, $tenant->id, 'zz_named_probe'))->toBeTrue()
+            ->and(AccessHelper::canUseAppAs($member, $tenant->id, 'ZZ_UNASSIGNED_PROBE'))->toBeFalse()
+            // Assigned to the other tenant too, but the person is no member there.
+            ->and(AccessHelper::canUseAppAs($member, $other->id, 'ZZ_NAMED_PROBE'))->toBeFalse();
+
+        // The gate is asked for that person inside that tenant's context.
+        $asked = [];
+        Gate::define(AccessHelper::APP_GATE, function (?NoerdUser $user, string $appName) use (&$asked): bool {
+            $asked[] = [$user?->id, TenantHelper::currentTenantId(), $appName];
+
+            return false;
+        });
+
+        expect(AccessHelper::canUseAppAs($member, $tenant->id, 'ZZ_NAMED_PROBE'))->toBeFalse()
+            ->and($asked)->toBe([[$member->id, $tenant->id, 'ZZ_NAMED_PROBE']]);
+    });
+
     it('canUseApp requires tenant assignment AND app permission', function (): void {
         // No tenant selected: nothing is assigned.
         expect(AccessHelper::canUseApp('ANYTHING'))->toBeFalse();

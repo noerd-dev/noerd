@@ -185,6 +185,27 @@ reordered and retitled there — a core entry that was deleted comes back with t
 `noerd:update --reset-navigation` replaces both files with the package template. An entry whose
 route does not exist is skipped at render time.
 
+## The app bar in a layout of your own
+
+A module whose screens have their OWN design — an intranet, a kiosk — but whose people still
+switch to their other apps wraps its page in `<x-noerd::app-bar-host>`:
+
+```blade
+<body>
+    <x-noerd::app-bar-host>
+        {{-- the page in the module's design --}}
+        {{ $slot }}
+    </x-noerd::app-bar-host>
+</body>
+```
+
+It renders the same app bar as the backend (`<livewire:noerd::layout.app-bar />`: the apps of
+the selected tenant the person may open) and supplies what `noerd::layouts.app` otherwise does —
+the bar's state, its width (`width` prop, default `config('noerd.sidebar.apps_width')`) and the
+brand colours, scoped to the bar. The slot is indented by the bar's width on a desktop; on a phone
+the bar stays hidden until the page dispatches the window event `noerd-app-bar-toggle`. The layout
+loads `<x-noerd::assets />` and the host's stylesheet like every noerd page.
+
 ## Next Steps
 
 Continue with [Create a List View](list-view.md) to display data in tables.

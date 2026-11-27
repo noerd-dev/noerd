@@ -4,6 +4,9 @@ fields:
   - name: detailData.email
     label: Email
     type: email
+  - name: detailData.username
+    label: Username
+    type: text
   - name: detailData.name
     label: Name
     type: text

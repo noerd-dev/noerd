@@ -75,6 +75,17 @@ final class NoerdAuth
     }
 
     /**
+     * Whether an account may sign in with a USERNAME instead of its e-mail
+     * address (`noerd.features.username_login`, off by default). On, the
+     * login field takes either, an account may exist without an address and
+     * Setup → Users offers the username. Off, noerd signs in by e-mail only.
+     */
+    public static function usernameLoginEnabled(): bool
+    {
+        return (bool) config('noerd.features.username_login', false);
+    }
+
+    /**
      * @internal Read by the core provider when it registers the noerd guard.
      */
     public static function providerName(): string

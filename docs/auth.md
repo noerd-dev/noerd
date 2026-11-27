@@ -23,6 +23,30 @@ guard settings — only the switch `features.password_login` (see below). noerd 
 noerd route groups select the noerd guard per request (see below), so routes protected by the
 bare `auth` middleware alias keep resolving the host's default guard.
 
+## Signing in: e-mail address or username
+
+By default an account signs in with its e-mail address. With
+`config('noerd.features.username_login')` (`NOERD_USERNAME_LOGIN=true`, default `false`) it signs
+in with its e-mail address OR its username: the login screen then has one field for both and
+Setup → Users offers the username. Both are unique across the installation, and an account carries
+at least one of them, so a person without a mailbox still gets an account. Switched off, the login
+takes an address only and a username finds nobody. A username is stored lowercase and never contains
+an "@" (`NoerdUser::USERNAME_PATTERN`), so it can never be mistaken for an address.
+
+- `NoerdAuth::usernameLoginEnabled()` is the switch. `NoerdUser::findForLogin($login)` is the ONE
+  lookup of every sign-in and honours it (an "@" means the address, compared without regard to
+  case; a username only while the switch is on). The noerd guard uses it for credentials carrying `login`:
+  `NoerdAuth::guard()->attempt(['login' => $login, 'password' => $password])`. A module that signs
+  accounts in elsewhere (a token API for an app) uses the same lookup — never `where('email', …)`.
+- `$user->loginName()` is the name to SHOW: the username when there is one, the address otherwise.
+  `$user->email` may be null — never assume an address.
+- An account without an address gets no mail: no reset link, no "added to tenant" notice. When an
+  administrator creates one (Setup → Users), the screen shows a generated password ONCE to hand
+  over; the person changes it in their profile, and only a super admin sets it again later.
+- After signing in without an intended page, a person who can open exactly ONE app of the tenant
+  lands in that app instead of the home (`Noerd\Support\LandingPage`); administrators always land
+  on the home.
+
 ## Routes & URL prefix
 
 noerd's core screens live under a configurable URL prefix (default `noerd`, set via
@@ -56,7 +80,7 @@ the core ships no provider and no OAuth dependency. The module signs the person 
 password login; a person without a tenant lands on `noerd.no-tenant`.
 
 `config('noerd.features.password_login')` (`NOERD_PASSWORD_LOGIN`, default `true`) switches the
-password login off: the login page shows only the slot, `login()` and the forgot/reset screens
+password login off: the login page shows only the slot, `authenticate()` and the forgot/reset screens
 answer 404, the own password form disappears from the profile and nobody may set another
 account's password. A "remember me" cookie handed out by the password form no longer signs anybody
 in either: the noerd guard's user provider (`Noerd\Support\NoerdUserProvider`, driver `noerd`)

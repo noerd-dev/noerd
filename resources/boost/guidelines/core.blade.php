@@ -207,6 +207,13 @@ folder — read the page before building the feature. Paths such as `src/…`, `
 ### Permissions, Profiles & Action Checks
 Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-registries.md`
 "Authorization gates") — never hand-roll per-module checks:
+- An account signs in with its e-mail address — or, with `noerd.features.username_login`
+  (`NOERD_USERNAME_LOGIN`, off by default; `NoerdAuth::usernameLoginEnabled()`), with its e-mail
+  address OR its username (both unique across the installation, at least one set;
+  `noerd_users.email` may be NULL). Look an account up by its sign-in name ONLY with
+  `NoerdUser::findForLogin($login)` (guard: `attempt(['login' => …, 'password' => …])`), show it with
+  `$user->loginName()` — never `where('email', …)` for a sign-in, never assume an address. An account
+  without an address gets no mail (`docs/auth.md`).
 - ONE profile per user and tenant: `Noerd\Enums\Profile` (Admin/User/ReadOnly) in
   `users_tenants.profile_key`, hardcoded, no CRUD; the baseline when no gate is defined. Modules
   register further profiles via `app(ProfileRegistry::class)->register(key, label)`.
@@ -240,7 +247,8 @@ Authorization is generic and two-staged (`docs/permissions.md`, `docs/extension-
   outlive the tenant registers `registerBlocker(fn (Tenant $tenant): ?string => …)` in its provider
   (`docs/permissions.md`, "Deleting a tenant").
 - Every check goes through `Noerd\Helpers\AccessHelper` (`canAccessApp`, `canReadObject`,
-  `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`); create and
+  `canWriteObject`, `canCreateObject`, `canDeleteObject`, `canPerformAction`, `canUseApp`, and
+  `canUseAppAs($user, $tenantId, …)` where no session names person and tenant — a token API); create and
   write are separate (`canSaveObject()` on details/pages drives the save chrome and the
   `store()`/`delete()` guards, `WriteGuardHook` included). Never a manual `isAdmin()` for object access.
 - Models read by hand-built queries opt into the query-level read guard with

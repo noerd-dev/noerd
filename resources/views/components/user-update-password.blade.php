@@ -114,7 +114,7 @@ new class extends Component {
             </div>
             <div class="flex gap-4 px-3 py-2">
                 <dt class="w-24 shrink-0 text-gray-500">{{ __('Email') }}</dt>
-                <dd class="min-w-0 truncate font-medium text-gray-900">{{ $this->targetUser->email }}</dd>
+                <dd class="min-w-0 truncate font-medium text-gray-900">{{ $this->targetUser->loginName() }}</dd>
             </div>
         </dl>
     @endif
