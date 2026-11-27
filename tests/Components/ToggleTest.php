@@ -19,13 +19,13 @@ it('renders a switch bound like a checkbox with its label and hint', function ()
         ->toContain('for="zz-toggle"')
         ->toContain('Zz label')
         ->toContain('Zz hint')
-        ->not->toContain('disabled');
+        ->not->toMatch('/<input[^>]*\sdisabled[\s>]/');
 });
 
 it('disables the switch', function (): void {
     $html = Blade::render('<x-noerd::toggle wire:model="zz" label="Zz" :disabled="true" />');
 
-    expect($html)->toContain('disabled')->toContain('cursor-not-allowed');
+    expect($html)->toMatch('/<input[^>]*\sdisabled[\s>]/')->toContain('cursor-not-allowed');
 });
 
 it('renders the switches of a toggle group as padded rows of one card', function (): void {
